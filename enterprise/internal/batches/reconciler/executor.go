@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/repos"
 	"github.com/sourcegraph/sourcegraph/internal/types"
+	"github.com/sourcegraph/sourcegraph/internal/usagestats"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 )
 
@@ -141,6 +143,33 @@ func (e *executor) Run(ctx context.Context, plan *Plan) (err error) {
 	}
 
 	return e.tx.UpdateChangeset(ctx, e.ch)
+}
+
+type changesetPublishedEventArg struct {
+	ChangesetID      int64  `json:"changeset_id"`
+	CampaignID       int64  `json:"campaign_id"`
+	PublicationState string `json:"publication_state"`
+}
+
+func (e *executor) logChangesetPublished(ctx context.Context) error {
+	campaign, err := loadBatchChange(ctx, e.tx, e.ch.OwnedByBatchChangeID)
+	if err != nil {
+		return errors.Wrap(err, "failed to load owning campaign")
+	}
+	arg := &changesetPublishedEventArg{
+		ChangesetID:      e.ch.ID,
+		CampaignID:       campaign.ID,
+		PublicationState: string(e.ch.PublicationState),
+	}
+
+	jsonArg, err := json.Marshal(arg)
+	if err != nil {
+		return err
+	}
+
+	usagestats.LogBackendEvent(e.tx.DB(), campaign.LastApplierID, "ChangesetPublished", jsonArg)
+
+	return nil
 }
 
 func (e *executor) buildChangesetSource(repo *types.Repo, extSvc *types.ExternalService) (repos.ChangesetSource, error) {
@@ -298,7 +327,8 @@ func (e *executor) publishChangeset(ctx context.Context, asDraft bool) (err erro
 	}
 	// Set the changeset to published.
 	e.ch.PublicationState = batches.ChangesetPublicationStatePublished
-	return nil
+
+	return e.logChangesetPublished(ctx)
 }
 
 func (e *executor) syncChangeset(ctx context.Context) error {

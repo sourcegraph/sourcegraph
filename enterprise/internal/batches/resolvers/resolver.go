@@ -96,6 +96,23 @@ func checkLicense() error {
 // Changes feature is disabled.
 const maxUnlicensedChangesets = 5
 
+type campaignSpecCreatedArg struct {
+	ChangesetSpecsCount int `json:"changeset_specs_count"`
+}
+
+type campaignEventArg struct {
+	CampaignID int64 `json:"campaign_id"`
+}
+
+func logBackendEvent(ctx context.Context, db dbutil.DB, name string, args interface{}) error {
+	actor := actor.FromContext(ctx)
+	jsonArg, err := json.Marshal(args)
+	if err != nil {
+		return err
+	}
+	return usagestats.LogBackendEvent(db, actor.UID, name, jsonArg)
+}
+
 func (r *Resolver) ChangesetByID(ctx context.Context, id graphql.ID) (graphqlbackend.ChangesetResolver, error) {
 	if err := batchChangesEnabled(ctx); err != nil {
 		return nil, err
@@ -296,6 +313,11 @@ func (r *Resolver) CreateBatchChange(ctx context.Context, args *graphqlbackend.C
 		return nil, err
 	}
 
+	arg := &campaignEventArg{CampaignID: batchChange.ID}
+	if err := logBackendEvent(ctx, r.store.DB(), "CampaignCreated", arg); err != nil {
+		return nil, err
+	}
+
 	return &batchChangeResolver{store: r.store, batchChange: batchChange}, nil
 }
 
@@ -341,6 +363,11 @@ func (r *Resolver) ApplyBatchChange(ctx context.Context, args *graphqlbackend.Ap
 		} else if err == service.ErrMatchingBatchChangeExists {
 			return nil, ErrMatchingBatchChangeExists{}
 		}
+		return nil, err
+	}
+
+	arg := &campaignEventArg{CampaignID: batchChange.ID}
+	if err := logBackendEvent(ctx, r.store.DB(), "CampaignCreatedOrUpdated", arg); err != nil {
 		return nil, err
 	}
 
@@ -394,7 +421,8 @@ func (r *Resolver) CreateBatchSpec(ctx context.Context, args *graphqlbackend.Cre
 		return nil, err
 	}
 
-	if err := logBatchSpecCreated(ctx, r.store.DB(), &opts); err != nil {
+	eventArg := &campaignSpecCreatedArg{ChangesetSpecsCount: len(opts.ChangesetSpecRandIDs)}
+	if err := logBackendEvent(ctx, r.store.DB(), "CampaignSpecCreated", eventArg); err != nil {
 		return nil, err
 	}
 
@@ -404,24 +432,6 @@ func (r *Resolver) CreateBatchSpec(ctx context.Context, args *graphqlbackend.Cre
 	}
 
 	return specResolver, nil
-}
-
-func logBatchSpecCreated(ctx context.Context, db dbutil.DB, opts *service.CreateBatchSpecOpts) error {
-	// Log an analytics event when a BatchSpec has been created.
-	// See internal/usagestats/batches.go.
-	actor := actor.FromContext(ctx)
-
-	type eventArg struct {
-		ChangesetSpecsCount int `json:"changeset_specs_count"`
-	}
-	arg := eventArg{ChangesetSpecsCount: len(opts.ChangesetSpecRandIDs)}
-
-	jsonArg, err := json.Marshal(arg)
-	if err != nil {
-		return err
-	}
-
-	return usagestats.LogBackendEvent(db, actor.UID, "CampaignSpecCreated", json.RawMessage(jsonArg))
 }
 
 func (r *Resolver) CreateChangesetSpec(ctx context.Context, args *graphqlbackend.CreateChangesetSpecArgs) (graphqlbackend.ChangesetSpecResolver, error) {
@@ -525,6 +535,15 @@ func (r *Resolver) DeleteBatchChange(ctx context.Context, args *graphqlbackend.D
 	svc := service.New(r.store)
 	// 🚨 SECURITY: DeleteBatchChange checks whether current user is authorized.
 	err = svc.DeleteBatchChange(ctx, batchChangeID)
+	if err != nil {
+		return nil, err
+	}
+
+	arg := &campaignEventArg{CampaignID: batchChangeID}
+	if err := logBackendEvent(ctx, r.store.DB(), "CampaignDeleted", arg); err != nil {
+		return nil, err
+	}
+
 	return &graphqlbackend.EmptyResponse{}, err
 }
 
@@ -751,6 +770,11 @@ func (r *Resolver) CloseBatchChange(ctx context.Context, args *graphqlbackend.Cl
 	batchChange, err := svc.CloseBatchChange(ctx, batchChangeID, args.CloseChangesets)
 	if err != nil {
 		return nil, errors.Wrap(err, "closing batch change")
+	}
+
+	arg := &campaignEventArg{CampaignID: batchChangeID}
+	if err := logBackendEvent(ctx, r.store.DB(), "CampaignClosed", arg); err != nil {
+		return nil, err
 	}
 
 	return &batchChangeResolver{store: r.store, batchChange: batchChange}, nil
