@@ -1154,6 +1154,9 @@ type CampaignsUsageStatistics struct {
 	// This number *could* go down, since it's not based on event logs, but
 	// so far (Nov 2020) we never cleaned up changesets in the database.
 	ManualChangesetsMergedCount int32
+
+	ContributorsCount int64
+	UsersCount int64
 }
 
 // NOTE: DO NOT alter this struct without making a symmetric change

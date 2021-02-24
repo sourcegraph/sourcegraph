@@ -64,13 +64,40 @@ FROM event_logs
 WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDetailsPageAfterCreate', 'ViewCampaignDetailsPageAfterUpdate');
 `
 
-	err := dbconn.Global.QueryRowContext(ctx, eventLogsCountsQuery).Scan(
+	if err := dbconn.Global.QueryRowContext(ctx, eventLogsCountsQuery).Scan(
 		&stats.CampaignSpecsCreatedCount,
 		&stats.ChangesetSpecsCreatedCount,
 		&stats.ViewCampaignApplyPageCount,
 		&stats.ViewCampaignDetailsPageAfterCreateCount,
 		&stats.ViewCampaignDetailsPageAfterUpdateCount,
-	)
+	); err != nil {
+		return nil, err
+	}
 
-	return &stats, err
+	const contributorsQuery = `
+SELECT
+    count(distinct user_id)
+FROM event_logs
+WHERE name IN ('CampaignSpecCreated', 'CampaignCreated', 'CampaignCreatedOrUpdated', 'CampaignClosed', 'CampaignDeleted', 'ViewCampaignApplyPage');
+`
+
+	if err := dbconn.Global.QueryRowContext(ctx, contributorsQuery).Scan(
+		&stats.ContributorsCount,
+	); err != nil {
+		return nil, err
+	}
+
+	const usersQuery = `
+SELECT
+    count(distinct user_id)
+FROM event_logs
+WHERE name IN ('CampaignSpecCreated', 'CampaignCreated', 'CampaignCreatedOrUpdated', 'CampaignClosed', 'CampaignDeleted', 'ViewCampaignApplyPage', 'ViewCampaignDetailsPagePage', 'ViewCampaignsListPage');
+`
+	if err := dbconn.Global.QueryRowContext(ctx, contributorsQuery).Scan(
+		&stats.UsersCount,
+	); err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
 }
