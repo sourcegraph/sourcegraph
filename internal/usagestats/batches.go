@@ -2,6 +2,9 @@ package usagestats
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/keegancsmith/sqlf"
 
 	"github.com/sourcegraph/sourcegraph/internal/database/dbconn"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -26,6 +29,7 @@ FROM batch_changes;
 
 	const changesetCountsQuery = `
 SELECT
+    COUNT(*)                        FILTER (WHERE owned_by_batch_change_id IS NOT NULL AND publication_state = 'UNPUBLISHED') AS action_changesets_unpublished,
     COUNT(*)                        FILTER (WHERE owned_by_batch_change_id IS NOT NULL AND publication_state = 'PUBLISHED') AS action_changesets,
     COALESCE(SUM(diff_stat_added)   FILTER (WHERE owned_by_batch_change_id IS NOT NULL AND publication_state = 'PUBLISHED'), 0) AS action_changesets_diff_stat_added_sum,
     COALESCE(SUM(diff_stat_changed) FILTER (WHERE owned_by_batch_change_id IS NOT NULL AND publication_state = 'PUBLISHED'), 0) AS action_changesets_diff_stat_changed_sum,
@@ -39,6 +43,7 @@ SELECT
 FROM changesets;
 `
 	if err := dbconn.Global.QueryRowContext(ctx, changesetCountsQuery).Scan(
+		&stats.ActionChangesetsUnpublishedCount,
 		&stats.ActionChangesetsCount,
 		&stats.ActionChangesetsDiffStatAddedSum,
 		&stats.ActionChangesetsDiffStatChangedSum,
@@ -74,28 +79,40 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 		return nil, err
 	}
 
-	const contributorsQuery = `
-SELECT
-    count(distinct user_id)
-FROM event_logs
-WHERE name IN ('CampaignSpecCreated', 'CampaignCreated', 'CampaignCreatedOrUpdated', 'CampaignClosed', 'CampaignDeleted', 'ViewCampaignApplyPage');
-`
+	queryUniqueEventLogUsers := func(events []*sqlf.Query) *sql.Row {
+		q := sqlf.Sprintf(
+			`SELECT count(distinct user_id) FROM event_logs WHERE name IN (%s);`,
+			sqlf.Join(events, ","),
+		)
 
-	if err := dbconn.Global.QueryRowContext(ctx, contributorsQuery).Scan(
-		&stats.ContributorsCount,
-	); err != nil {
+		return dbconn.Global.QueryRowContext(ctx, q.Query(sqlf.PostgresBindVar), q.Args())
+	}
+
+	var contributorEvents = []*sqlf.Query{
+		sqlf.Sprintf("CampaignSpecCreated"),
+		sqlf.Sprintf("CampaignCreated"),
+		sqlf.Sprintf("CampaignCreatedOrUpdated"),
+		sqlf.Sprintf("CampaignClosed"),
+		sqlf.Sprintf("CampaignDeleted"),
+		sqlf.Sprintf("ViewCampaignApplyPage"),
+	}
+
+	if err := queryUniqueEventLogUsers(contributorEvents).Scan(&stats.ContributorsCount); err != nil {
 		return nil, err
 	}
 
-	const usersQuery = `
-SELECT
-    count(distinct user_id)
-FROM event_logs
-WHERE name IN ('CampaignSpecCreated', 'CampaignCreated', 'CampaignCreatedOrUpdated', 'CampaignClosed', 'CampaignDeleted', 'ViewCampaignApplyPage', 'ViewCampaignDetailsPagePage', 'ViewCampaignsListPage');
-`
-	if err := dbconn.Global.QueryRowContext(ctx, contributorsQuery).Scan(
-		&stats.UsersCount,
-	); err != nil {
+	var usersEvents = []*sqlf.Query{
+		sqlf.Sprintf("CampaignSpecCreated"),
+		sqlf.Sprintf("CampaignCreated"),
+		sqlf.Sprintf("CampaignCreatedOrUpdated"),
+		sqlf.Sprintf("CampaignClosed"),
+		sqlf.Sprintf("CampaignDeleted"),
+		sqlf.Sprintf("ViewCampaignApplyPage"),
+		sqlf.Sprintf("ViewCampaignDetailsPagePage"),
+		sqlf.Sprintf("ViewCampaignsListPage"),
+	}
+
+	if err := queryUniqueEventLogUsers(usersEvents).Scan(&stats.UsersCount); err != nil {
 		return nil, err
 	}
 

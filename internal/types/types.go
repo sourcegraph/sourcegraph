@@ -1115,6 +1115,13 @@ type CampaignsUsageStatistics struct {
 	// specs were not used and cleaned up.
 	ChangesetSpecsCreatedCount int32
 
+	// ActionChangesetsUnpublishedCount is the number of changesets in the
+	// database that have not been published but belong to a campaign.
+	// This number *could* go down, since it's not
+	// based on event logs, but so far (Nov 2020) we never cleaned up
+	// changesets in the database.
+	ActionChangesetsUnpublishedCount int32
+
 	// ActionChangesetsCount is the number of changesets published on code hosts by campaigns. This number
 	// *could* go down, since it's not based on event logs, but so far
 	// (Nov 2020) we never cleaned up changesets in the database.
@@ -1155,7 +1162,18 @@ type CampaignsUsageStatistics struct {
 	// so far (Nov 2020) we never cleaned up changesets in the database.
 	ManualChangesetsMergedCount int32
 
+	// ContributorsCount is the count of unique users that have logged a
+	// "contributing" campaigns event, such as "CampaignCreated".
+	//
+	// See `contributorsEvents` in `GetCampaignsUsageStatistics` for a full list
+	// of events.
 	ContributorsCount int64
+
+	// UsersCount is the count of unique users that have logged a
+	// "using" campaigns event, such as "ViewCampaignsListPage" and also "CampaignCreated".
+	//
+	// See `contributorsEvents` in `GetCampaignsUsageStatistics` for a full
+	// list of events.
 	UsersCount int64
 }
 
