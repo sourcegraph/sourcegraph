@@ -143,6 +143,7 @@ func (e *executor) Run(ctx context.Context, plan *Plan) (err error) {
 	return e.tx.UpdateChangeset(ctx, e.ch)
 }
 
+<<<<<<< HEAD:enterprise/internal/batches/reconciler/executor.go
 // type changesetPublishedEventArg struct {
 // 	ChangesetID      int64  `json:"changeset_id"`
 // 	CampaignID       int64  `json:"campaign_id"`
@@ -171,6 +172,8 @@ func (e *executor) Run(ctx context.Context, plan *Plan) (err error) {
 // }
 //
 
+=======
+>>>>>>> 145a97ced2 (Remove logging of ChangesetPublishedEvent):enterprise/internal/campaigns/reconciler/executor.go
 func (e *executor) buildChangesetSource(repo *types.Repo, extSvc *types.ExternalService) (repos.ChangesetSource, error) {
 	sources, err := e.sourcer(extSvc)
 	if err != nil {
@@ -327,7 +330,6 @@ func (e *executor) publishChangeset(ctx context.Context, asDraft bool) (err erro
 	// Set the changeset to published.
 	e.ch.PublicationState = batches.ChangesetPublicationStatePublished
 
-	// return e.logChangesetPublished(ctx)
 	return nil
 }
 
