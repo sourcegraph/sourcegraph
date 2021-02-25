@@ -75,12 +75,31 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		INSERT INTO event_logs
 			(id, name, argument, url, user_id, anonymous_user_id, source, version, timestamp)
 		VALUES
+		-- User 23, creates a campaign and closes it
 			(1, 'CampaignSpecCreated', '{"changeset_specs_count": 3}', '', 23, '', 'backend', 'version', now()),
 			(2, 'CampaignSpecCreated', '{"changeset_specs_count": 1}', '', 23, '', 'backend', 'version', now()),
 			(3, 'CampaignSpecCreated', '{}', '', 23, '', 'backend', 'version', now()),
-			(4, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/apply/RANDID', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(5, 'ViewCampaignDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(6, 'ViewCampaignDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now())
+			(4, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/apply/RANDID', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(5, 'CampaignCreated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
+			(6, 'ViewCampaignDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(7, 'ViewCampaignDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(8, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(9, 'CampaignCreatedOrUpdated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
+			(10, 'CampaignClosed', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
+			(11, 'CampaignDeleted', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
+		-- User 24, creates a campaign and closes it
+			(14, 'CampaignSpecCreated', '{}', '', 24, '', 'backend', 'version', now()),
+			(15, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/apply/RANDID-2', 24, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(16, 'CampaignCreated', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
+			(17, 'ViewCampaignDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/foobar-files', 24, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(18, 'ViewCampaignDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/foobar-files', 24, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(19, 'CampaignCreatedOrUpdated', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
+			(20, 'CampaignClosed', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
+			(21, 'CampaignDeleted', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
+		-- User 25, only views the campaigns
+			(27, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(28, 'ViewCampaignsListPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(29, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/foobar-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now())
 	`)
 	if err != nil {
 		t.Fatal(err)
@@ -112,8 +131,10 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 			-- created by batch change
 			(4, $1, 'github', 1, 'OPEN',   'PUBLISHED', 5, 7, 9),
 			(5, $1, 'github', 1, 'OPEN',   'PUBLISHED', NULL, NULL, NULL),
-			(6, $1, 'github', 2, 'MERGED', 'PUBLISHED', 9, 7, 5),
-			(7, $1, 'github', 2, 'MERGED', 'PUBLISHED', NULL, NULL, NULL)
+			(6, $1, 'github', 2, NULL,     'UNPUBLISHED', 9, 7, 5),
+			(7, $1, 'github', 2, 'MERGED', 'PUBLISHED', 9, 7, 5),
+			(8, $1, 'github', 2, 'MERGED', 'PUBLISHED', NULL, NULL, NULL),
+			(9, $1, 'github', 2, NULL,     'UNPUBLISHED', 9, 7, 5)
 	`, repo.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -123,11 +144,12 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := &types.CampaignsUsageStatistics{
-		ViewCampaignApplyPageCount:               1,
-		ViewCampaignDetailsPageAfterCreateCount:  1,
-		ViewCampaignDetailsPageAfterUpdateCount:  1,
+		ViewCampaignApplyPageCount:               2,
+		ViewCampaignDetailsPageAfterCreateCount:  2,
+		ViewCampaignDetailsPageAfterUpdateCount:  2,
 		CampaignsCount:                           2,
 		CampaignsClosedCount:                     1,
+		ActionChangesetsUnpublishedCount:         2,
 		ActionChangesetsCount:                    4,
 		ActionChangesetsDiffStatAddedSum:         14,
 		ActionChangesetsDiffStatChangedSum:       14,
@@ -138,8 +160,10 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		ActionChangesetsMergedDiffStatDeletedSum: 5,
 		ManualChangesetsCount:                    2,
 		ManualChangesetsMergedCount:              1,
-		CampaignSpecsCreatedCount:                3,
+		CampaignSpecsCreatedCount:                4,
 		ChangesetSpecsCreatedCount:               4,
+		ContributorsCount:                        2,
+		UsersCount:                               3,
 	}
 	if diff := cmp.Diff(want, have); diff != "" {
 		t.Fatal(diff)

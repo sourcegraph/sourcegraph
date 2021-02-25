@@ -81,20 +81,20 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 
 	queryUniqueEventLogUsers := func(events []*sqlf.Query) *sql.Row {
 		q := sqlf.Sprintf(
-			`SELECT count(distinct user_id) FROM event_logs WHERE name IN (%s);`,
+			`SELECT COUNT(DISTINCT user_id) FROM event_logs WHERE name IN (%s);`,
 			sqlf.Join(events, ","),
 		)
 
-		return dbconn.Global.QueryRowContext(ctx, q.Query(sqlf.PostgresBindVar), q.Args())
+		return dbconn.Global.QueryRowContext(ctx, q.Query(sqlf.PostgresBindVar), q.Args()...)
 	}
 
 	var contributorEvents = []*sqlf.Query{
-		sqlf.Sprintf("CampaignSpecCreated"),
-		sqlf.Sprintf("CampaignCreated"),
-		sqlf.Sprintf("CampaignCreatedOrUpdated"),
-		sqlf.Sprintf("CampaignClosed"),
-		sqlf.Sprintf("CampaignDeleted"),
-		sqlf.Sprintf("ViewCampaignApplyPage"),
+		sqlf.Sprintf("%q", "CampaignSpecCreated"),
+		sqlf.Sprintf("%q", "CampaignCreated"),
+		sqlf.Sprintf("%q", "CampaignCreatedOrUpdated"),
+		sqlf.Sprintf("%q", "CampaignClosed"),
+		sqlf.Sprintf("%q", "CampaignDeleted"),
+		sqlf.Sprintf("%q", "ViewCampaignApplyPage"),
 	}
 
 	if err := queryUniqueEventLogUsers(contributorEvents).Scan(&stats.ContributorsCount); err != nil {
@@ -102,14 +102,14 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 	}
 
 	var usersEvents = []*sqlf.Query{
-		sqlf.Sprintf("CampaignSpecCreated"),
-		sqlf.Sprintf("CampaignCreated"),
-		sqlf.Sprintf("CampaignCreatedOrUpdated"),
-		sqlf.Sprintf("CampaignClosed"),
-		sqlf.Sprintf("CampaignDeleted"),
-		sqlf.Sprintf("ViewCampaignApplyPage"),
-		sqlf.Sprintf("ViewCampaignDetailsPagePage"),
-		sqlf.Sprintf("ViewCampaignsListPage"),
+		sqlf.Sprintf("%q", "CampaignSpecCreated"),
+		sqlf.Sprintf("%q", "CampaignCreated"),
+		sqlf.Sprintf("%q", "CampaignCreatedOrUpdated"),
+		sqlf.Sprintf("%q", "CampaignClosed"),
+		sqlf.Sprintf("%q", "CampaignDeleted"),
+		sqlf.Sprintf("%q", "ViewCampaignApplyPage"),
+		sqlf.Sprintf("%q", "ViewCampaignDetailsPagePage"),
+		sqlf.Sprintf("%q", "ViewCampaignsListPage"),
 	}
 
 	if err := queryUniqueEventLogUsers(usersEvents).Scan(&stats.UsersCount); err != nil {
