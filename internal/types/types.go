@@ -1162,19 +1162,19 @@ type CampaignsUsageStatistics struct {
 	// so far (Nov 2020) we never cleaned up changesets in the database.
 	ManualChangesetsMergedCount int32
 
-	// ContributorsCount is the count of unique users that have logged a
+	// CurrentMonthContributorsCount is the count of unique users that have logged a
 	// "contributing" campaigns event, such as "CampaignCreated".
 	//
 	// See `contributorsEvents` in `GetCampaignsUsageStatistics` for a full list
 	// of events.
-	ContributorsCount int64
+	CurrentMonthContributorsCount int64
 
-	// UsersCount is the count of unique users that have logged a
+	// CurrentMonthUsersCount is the count of unique users that have logged a
 	// "using" campaigns event, such as "ViewCampaignsListPage" and also "CampaignCreated".
 	//
 	// See `contributorsEvents` in `GetCampaignsUsageStatistics` for a full
 	// list of events.
-	UsersCount int64
+	CurrentMonthUsersCount int64
 }
 
 // NOTE: DO NOT alter this struct without making a symmetric change

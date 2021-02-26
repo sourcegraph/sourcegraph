@@ -75,19 +75,19 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		INSERT INTO event_logs
 			(id, name, argument, url, user_id, anonymous_user_id, source, version, timestamp)
 		VALUES
-		-- User 23, creates a campaign and closes it
-			(1, 'CampaignSpecCreated', '{"changeset_specs_count": 3}', '', 23, '', 'backend', 'version', now()),
-			(2, 'CampaignSpecCreated', '{"changeset_specs_count": 1}', '', 23, '', 'backend', 'version', now()),
-			(3, 'CampaignSpecCreated', '{}', '', 23, '', 'backend', 'version', now()),
-			(4, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/apply/RANDID', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(5, 'CampaignCreated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
-			(6, 'ViewCampaignDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(7, 'ViewCampaignDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(8, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(9, 'CampaignCreatedOrUpdated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
-			(10, 'CampaignClosed', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
-			(11, 'CampaignDeleted', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', now()),
-		-- User 24, creates a campaign and closes it
+		-- User 23, created a campaign last month and closes it
+			(1, 'CampaignSpecCreated', '{"changeset_specs_count": 3}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(2, 'CampaignSpecCreated', '{"changeset_specs_count": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(3, 'CampaignSpecCreated', '{}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(4, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/apply/RANDID', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(5, 'CampaignCreated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(6, 'ViewCampaignDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(7, 'ViewCampaignDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(8, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(9, 'CampaignCreatedOrUpdated', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(10, 'CampaignClosed', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(11, 'CampaignDeleted', '{"campaign_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+		-- User 24, created a campaign today and closes it
 			(14, 'CampaignSpecCreated', '{}', '', 24, '', 'backend', 'version', now()),
 			(15, 'ViewCampaignApplyPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/apply/RANDID-2', 24, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
 			(16, 'CampaignCreated', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
@@ -96,7 +96,7 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 			(19, 'CampaignCreatedOrUpdated', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
 			(20, 'CampaignClosed', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
 			(21, 'CampaignDeleted', '{"campaign_id": 2}', '', 24, '', 'backend', 'version', now()),
-		-- User 25, only views the campaigns
+		-- User 25, only views the campaigns, today
 			(27, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/gitignore-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
 			(28, 'ViewCampaignsListPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
 			(29, 'ViewCampaignDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/campaigns/foobar-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now())
@@ -105,7 +105,7 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Create batch changes 1, 2.
+	// Create batch changes 1, 2, 3, 4, 5, 6, 7, 8..
 	_, err = db.Exec(`
 		INSERT INTO batch_changes
 			(id, name, batch_spec_id, last_applied_at, namespace_user_id, closed_at)
@@ -162,8 +162,8 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		ManualChangesetsMergedCount:              1,
 		CampaignSpecsCreatedCount:                4,
 		ChangesetSpecsCreatedCount:               4,
-		ContributorsCount:                        2,
-		UsersCount:                               3,
+		CurrentMonthContributorsCount:            1,
+		CurrentMonthUsersCount:                   2,
 	}
 	if diff := cmp.Diff(want, have); diff != "" {
 		t.Fatal(diff)

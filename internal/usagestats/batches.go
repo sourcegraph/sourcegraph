@@ -79,9 +79,9 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 		return nil, err
 	}
 
-	queryUniqueEventLogUsers := func(events []*sqlf.Query) *sql.Row {
+	queryUniqueEventLogUsersCurrentMonth := func(events []*sqlf.Query) *sql.Row {
 		q := sqlf.Sprintf(
-			`SELECT COUNT(DISTINCT user_id) FROM event_logs WHERE name IN (%s);`,
+			`SELECT COUNT(DISTINCT user_id) FROM event_logs WHERE name IN (%s) AND timestamp >= date_trunc('month', CURRENT_DATE);`,
 			sqlf.Join(events, ","),
 		)
 
@@ -97,7 +97,7 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 		sqlf.Sprintf("%q", "ViewCampaignApplyPage"),
 	}
 
-	if err := queryUniqueEventLogUsers(contributorEvents).Scan(&stats.ContributorsCount); err != nil {
+	if err := queryUniqueEventLogUsersCurrentMonth(contributorEvents).Scan(&stats.CurrentMonthContributorsCount); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ WHERE name IN ('CampaignSpecCreated', 'ViewCampaignApplyPage', 'ViewCampaignDeta
 		sqlf.Sprintf("%q", "ViewCampaignsListPage"),
 	}
 
-	if err := queryUniqueEventLogUsers(usersEvents).Scan(&stats.UsersCount); err != nil {
+	if err := queryUniqueEventLogUsersCurrentMonth(usersEvents).Scan(&stats.CurrentMonthUsersCount); err != nil {
 		return nil, err
 	}
 
