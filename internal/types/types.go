@@ -1175,6 +1175,36 @@ type CampaignsUsageStatistics struct {
 	// See `contributorsEvents` in `GetCampaignsUsageStatistics` for a full
 	// list of events.
 	CurrentMonthUsersCount int64
+
+	CampaignsCohorts []*CampaignsCohort
+}
+
+// NOTE: DO NOT alter this struct without making a symmetric change
+// to the updatecheck handler. This struct is marshalled and sent to
+// BigQuery, which requires the input match its schema exactly.
+type CampaignsCohort struct {
+	// Week is the week of this cohort and is used to group campaigns by their
+	// creation date.
+	Week string
+
+	// CampaignsClosed is the number of campaigns that were created in Week and
+	// are currently closed.
+	CampaignsClosed int64
+
+	// CampaignsOpen is the number of campaigns that were created in Week and
+	// are currently open.
+	CampaignsOpen int64
+
+	// The following are the counts of the changesets that are currently
+	// attached to the campaigns in this cohort.
+
+	ChangesetsImported        int64
+	ChangesetsUnpublished     int64
+	ChangesetsPublished       int64
+	ChangesetsPublishedOpen   int64
+	ChangesetsPublishedDraft  int64
+	ChangesetsPublishedMerged int64
+	ChangesetsPublishedClosed int64
 }
 
 // NOTE: DO NOT alter this struct without making a symmetric change
