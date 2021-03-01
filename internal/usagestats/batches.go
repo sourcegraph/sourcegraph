@@ -125,7 +125,7 @@ cohort_campaigns as (
   FROM
     campaigns
   WHERE
-    created_at >= now() - (INTERVAL '12 months')
+    created_at >= NOW() - (INTERVAL '12 months')
 ),
 changeset_counts AS (
   SELECT
@@ -148,7 +148,7 @@ campaign_counts AS (
     COUNT(distinct id) FILTER (WHERE closed_at IS NULL)     AS open
   FROM campaigns
   WHERE
-    created_at >= now() - (INTERVAL '12 months')
+    created_at >= NOW() - (INTERVAL '12 months')
   GROUP BY date_trunc('week', campaigns.created_at)::date
 )
 SELECT to_char(campaign_counts.creation_week, 'yyyy-mm-dd')           AS creation_week,
