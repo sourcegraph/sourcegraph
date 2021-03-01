@@ -143,8 +143,12 @@ export const SiteAdminPingsPage: React.FunctionComponent<Props> = props => {
                     Batch changes usage data
                     <ul>
                         <li>Total count of page views on the batch change apply page</li>
-                        <li>Total count of page views on the batch change details page after creating a campaige</li>
-                        <li>Total count of page views on the batch change details page after updating a campaige</li>
+                        <li>
+                            Total count of page views on the batch change details page after creating a batch change
+                        </li>
+                        <li>
+                            Total count of page views on the batch change details page after updating a batch change
+                        </li>
                         <li>Total count of created changeset specs</li>
                         <li>Total count of created batch specs</li>
                         <li>Total count of created batch changes</li>
@@ -155,6 +159,17 @@ export const SiteAdminPingsPage: React.FunctionComponent<Props> = props => {
                         <li>Aggregate counts of lines changed, added, deleted in merged changeset</li>
                         <li>Total count of changesets manually added to a batch change</li>
                         <li>Total count of changesets manually added to a batch change that have been merged</li>
+                        <li>
+                            Aggregate counts of unique monthly users, by:
+                            <ul>
+                                <li>Whether they are contributed to campaigns</li>
+                                <li>Whether they only viewed campaigns</li>
+                            </ul>
+                        </li>
+                        <li>
+                            Weekly campaign (open, closed) and changesets counts (imported, published, unpublished,
+                            open, draft, merged, closed) for campaign cohorts created in the last 12 months
+                        </li>
                     </ul>
                 </li>
                 <li>

@@ -63,6 +63,10 @@ By default, Sourcegraph also aggregates usage and performance metrics for some p
   - Aggregate counts of lines changed, added, deleted in all merged changesets
   - Total count of changesets manually added to a campaign
   - Total count of changesets manually added to a campaign that have been merged
+  - Aggregate counts of unique monthly users, by:
+    - Whether they are contributed to campaigns
+    - Whether they only viewed campaigns
+  - Weekly campaign (open, closed) and changesets counts (imported, published, unpublished, open, draft, merged, closed) for campaign cohorts created in the last 12 months
 - Aggregated counts of users created, deleted, retained, resurrected and churned within the month
 - Saved searches usage data
   - Count of saved searches
