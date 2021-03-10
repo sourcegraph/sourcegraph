@@ -86,6 +86,10 @@ func repoShortName(name api.RepoName) string {
 	return strings.Join(split[1:], "/")
 }
 
+type serveErrorHandler func(w http.ResponseWriter, r *http.Request, err error, statusCode int)
+
+var mockNewCommon func(w http.ResponseWriter, r *http.Request, title string, serveError serveErrorHandler) (*Common, error)
+
 // newCommon builds a *Common data structure, returning an error if one occurs.
 //
 // In the event of the repository having been renamed, the request is handled
@@ -101,7 +105,11 @@ func repoShortName(name api.RepoName) string {
 //
 // In the case of a repository that is cloning, a Common data structure is
 // returned but it has an incomplete RevSpec.
-func newCommon(w http.ResponseWriter, r *http.Request, title string, serveError func(w http.ResponseWriter, r *http.Request, err error, statusCode int)) (*Common, error) {
+func newCommon(w http.ResponseWriter, r *http.Request, title string, serveError serveErrorHandler) (*Common, error) {
+	if mockNewCommon != nil {
+		return mockNewCommon(w, r, title, serveError)
+	}
+
 	common := &Common{
 		Injected: InjectedHTML{
 			HeadTop:    template.HTML(conf.Get().HtmlHeadTop),
