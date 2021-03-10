@@ -361,8 +361,7 @@ describe('codeHost', () => {
                         },
                     },
                 ])
-                await services.textDocumentDecoration
-                    .getDecorations({ uri: 'git://foo?1#/bar.ts' })
+                await wrapRemoteObservable(extensionHostAPI.getTextDecorations({ viewerId: activeEditor.viewerId }))
                     .pipe(
                         filter(
                             decorations =>
@@ -545,7 +544,7 @@ describe('codeHost', () => {
         })
 
         test('removes code views and models', async () => {
-            const { services } = await integrationTestContext(undefined, {
+            const { extensionAPI } = await integrationTestContext(undefined, {
                 roots: [],
                 viewers: [],
             })
@@ -589,7 +588,8 @@ describe('codeHost', () => {
                     platformContext: createMockPlatformContext(),
                 })
             )
-            await from(services.viewer.viewerUpdates).pipe(skip(1), take(1)).toPromise()
+            // await from(services.viewer.viewerUpdates).pipe(skip(1), take(1)).toPromise()
+            await extensionAPI.internal.sync()
             expect([...services.viewer.viewers.values()]).toEqual([
                 {
                     viewerId: 'viewer#0',
