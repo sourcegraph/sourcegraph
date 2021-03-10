@@ -2,10 +2,6 @@ import classNames from 'classnames'
 import React, { useCallback, useEffect } from 'react'
 import { ActionsNavItems, ActionsNavItemsProps } from '../../../shared/src/actions/ActionsNavItems'
 import { CommandListPopoverButton, CommandListPopoverButtonProps } from '../../../shared/src/commandPalette/CommandList'
-import {
-    EditorCompletionWidget,
-    EditorCompletionWidgetProps,
-} from '../../../shared/src/components/completion/EditorCompletionWidget'
 import { isErrorLike } from '../../../shared/src/util/errors'
 import { HoverOverlay, HoverOverlayProps } from '../../../shared/src/hover/HoverOverlay'
 import { useLocalStorage } from '../util/useLocalStorage'
@@ -91,17 +87,3 @@ export const WebActionsNavItems: React.FunctionComponent<ActionsNavItemsProps> =
     />
 )
 WebActionsNavItems.displayName = 'WebActionsNavItems'
-
-const completionWidgetListItemClassName = 'completion-widget-dropdown__item d-flex align-items-center p-2'
-
-export const WebEditorCompletionWidget: React.FunctionComponent<EditorCompletionWidgetProps> = props => (
-    <EditorCompletionWidget
-        {...props}
-        listClassName="completion-widget-dropdown d-block list-unstyled rounded p-0 m-0 mt-3"
-        listItemClassName={completionWidgetListItemClassName}
-        selectedListItemClassName="completion-widget-dropdown__item--selected"
-        loadingClassName={completionWidgetListItemClassName}
-        noResultsClassName={completionWidgetListItemClassName}
-    />
-)
-WebEditorCompletionWidget.displayName = 'WebEditorCompletionWidget'
