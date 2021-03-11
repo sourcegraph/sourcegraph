@@ -22,9 +22,9 @@ stringdata() {
 }
 
 stringdata aws_codecommit.schema.json AWSCodeCommitSchemaJSON
+stringdata batch_spec.schema.json BatchSpecSchemaJSON
 stringdata bitbucket_cloud.schema.json BitbucketCloudSchemaJSON
 stringdata bitbucket_server.schema.json BitbucketServerSchemaJSON
-stringdata campaign_spec.schema.json CampaignSpecSchemaJSON
 stringdata changeset_spec.schema.json ChangesetSpecSchemaJSON
 stringdata github.schema.json GitHubSchemaJSON
 stringdata gitlab.schema.json GitLabSchemaJSON

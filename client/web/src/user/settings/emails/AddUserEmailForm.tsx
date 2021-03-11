@@ -1,6 +1,5 @@
 import React, { FunctionComponent, useMemo, useState } from 'react'
 import classNames from 'classnames'
-import * as H from 'history'
 
 import { AddUserEmailResult, AddUserEmailVariables } from '../../../graphql-operations'
 import { gql, dataOrThrowErrors } from '../../../../../shared/src/graphql/graphql'
@@ -16,14 +15,13 @@ import { LoaderInput } from '../../../../../branded/src/components/LoaderInput'
 interface Props {
     user: string
     onDidAdd: () => void
-    history: H.History
 
     className?: string
 }
 
 type Status = undefined | 'loading' | ErrorLike
 
-export const AddUserEmailForm: FunctionComponent<Props> = ({ user, className, onDidAdd, history }) => {
+export const AddUserEmailForm: FunctionComponent<Props> = ({ user, className, onDidAdd }) => {
     const [statusOrError, setStatusOrError] = useState<Status>()
 
     const [emailState, nextEmailFieldChange, emailInputReference, overrideEmailState] = useInputValidation(
@@ -118,7 +116,7 @@ export const AddUserEmailForm: FunctionComponent<Props> = ({ user, className, on
                     </small>
                 )}
             </form>
-            {isErrorLike(statusOrError) && <ErrorAlert className="mt-2" error={statusOrError} history={history} />}
+            {isErrorLike(statusOrError) && <ErrorAlert className="mt-2" error={statusOrError} />}
         </div>
     )
 }

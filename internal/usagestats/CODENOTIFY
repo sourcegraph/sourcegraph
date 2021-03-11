@@ -1,2 +1,2 @@
-campaigns.go @eseliger
-campaigns_test.go @eseliger
+batches.go @eseliger
+batches_test.go @eseliger

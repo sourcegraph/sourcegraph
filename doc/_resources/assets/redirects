@@ -88,10 +88,6 @@
 /dev/architecture/search-pagination      /dev/background-information/architecture/search-pagination 308
 /dev/architecture/architecture.dot	/dev/background-information/architecture/architecture.dot 308
 /dev/architecture/architecture.svg	/dev/background-information/architecture/architecture.svg 308
-/dev/campaigns_database_layout.dot	/dev/background-information/campaigns/campaigns_database_layout.dot 308
-/dev/campaigns_database_layout.svg	/dev/background-information/campaigns/campaigns_database_layout.svg 308
-/dev/campaigns_design 	            /dev/background-information/campaigns/campaigns_design  308
-/dev/campaigns_development 	        /dev/background-information/campaigns/index  308
 /dev/codeintel/architecture 	    /dev/background-information/codeintel/architecture 308
 /dev/codeintel/deployment 	        /dev/background-information/codeintel/deployment 308
 /dev/codeintel/diagrams/architecture.dot	/dev/background-information/codeintel/diagrams/architecture.dot 308
@@ -169,13 +165,63 @@
 /user/quick_links   /user/personalization/quick_links 308
 /user/themes    /user/personalization/themes 308
 
-/user/automation    /user/campaigns 308
-/user/campaigns/examples    /campaigns/tutorials 308
-/user/campaigns/managing_access /campaigns/explanations/permissions_in_campaigns 308
-/dev/automation_development /dev/background-information/campaigns/index 308
-/campaigns/campaign_spec_yaml_reference /campaigns/references/campaign_spec_yaml_reference 308
-
 /user/search /code_search 308
-/user/campaigns /campaigns 308
 /user/code_intelligence /code_intelligence 308
 /user /getting-started 308
+
+
+/user/automation                         /batch_changes 308
+/user/campaigns                          /batch_changes 308
+/user/campaigns/examples                 /batch_changes/tutorials 308
+/user/campaigns/managing_access          /batch_changes/explanations/permissions_in_batch_changes 308
+/dev/campaigns_database_layout.dot	     /dev/background-information/batch_changes/batch_changes_database_layout.dot 308
+/dev/campaigns_database_layout.svg	     /dev/background-information/batch_changes/batch_changes_database_layout.svg 308
+/dev/campaigns_design 	                 /dev/background-information/batch_changes/batch_changes_design  308
+/dev/campaigns_development 	             /dev/background-information/batch_changes/index  308
+/dev/automation_development              /dev/background-information/batch_changes/index 308
+/campaigns/campaign_spec_yaml_reference /campaigns/references/batch_spec_yaml_reference 308
+
+
+/dev/background-information/campaigns/campaigns_database_layout.svg /dev/background-information/batch_changes/batch_changes_database_layout.svg 308
+/dev/background-information/campaigns/campaigns_database_layout.dot /dev/background-information/batch_changes/batch_changes_database_layout.dot 308
+
+/campaigns/explanations/how_src_executes_a_campaign_spec /batch_changes/explanations/how_src_executes_a_batch_spec 308
+/campaigns/explanations/reexecuting_campaign_specs_multiple_times /batch_changes/explanations/reexecuting_batch_specs_multiple_times 308
+/campaigns/explanations/permissions_in_batch_changes /batch_changes/explanations/permissions_in_batch_changes 308
+/campaigns/explanations/introduction_to_batch_changes /batch_changes/explanations/introduction_to_batch_changes 308
+/campaigns/explanations/batch_changes_design /batch_changes/explanations/batch_changes_design 308
+/campaigns/explanations /batch_changes/explanations 308
+/campaigns/references/requirements /batch_changes/references/requirements 308
+/campaigns/references/troubleshooting /batch_changes/references/troubleshooting 308
+/campaigns/references/name-change /batch_changes/references/name-change 308
+/campaigns/references/campaign_spec_yaml_reference /batch_changes/references/batch_spec_yaml_reference 308
+/campaigns/references/faq /batch_changes/references/faq 308
+/campaigns/references/campaign_spec_templating /batch_changes/references/batch_spec_templating 308
+/campaigns/references /batch_changes/references 308
+/campaigns/tutorials/update_base_images_in_dockerfiles /batch_changes/tutorials/update_base_images_in_dockerfiles 308
+/campaigns/tutorials/updating_go_import_statements /batch_changes/tutorials/updating_go_import_statements 308
+/campaigns/tutorials/refactor_go_comby /batch_changes/tutorials/refactor_go_comby 308
+/campaigns/tutorials/search_and_replace_specific_terms /batch_changes/tutorials/search_and_replace_specific_terms 308
+/campaigns/tutorials /batch_changes/tutorials 308
+/campaigns/how-tos/creating_changesets_per_project_in_monorepos /batch_changes/how-tos/creating_changesets_per_project_in_monorepos 308
+/campaigns/how-tos/handling_errored_changesets /batch_changes/how-tos/handling_errored_changesets 308
+/campaigns/how-tos/creating_multiple_changesets_in_large_repositories /batch_changes/how-tos/creating_multiple_changesets_in_large_repositories 308
+/campaigns/how-tos/site_admin_configuration /batch_changes/how-tos/site_admin_configuration 308
+/campaigns/how-tos/publishing_changesets /batch_changes/how-tos/publishing_changesets 308
+/campaigns/how-tos/viewing_batch_changes /batch_changes/how-tos/viewing_batch_changes 308
+/campaigns/how-tos/updating_a_batch_change /batch_changes/how-tos/updating_a_batch_change 308
+/campaigns/how-tos/configuring_user_credentials /batch_changes/how-tos/configuring_user_credentials 308
+/campaigns/how-tos/closing_or_deleting_a_batch_change /batch_changes/how-tos/closing_or_deleting_a_batch_change 308
+/campaigns/how-tos/creating_a_batch_change /batch_changes/how-tos/creating_a_batch_change 308
+/campaigns/how-tos/tracking_existing_changesets /batch_changes/how-tos/tracking_existing_changesets 308
+/campaigns/how-tos /batch_changes/how-tos 308
+/campaigns/quickstart /batch_changes/quickstart 308
+/campaigns /batch_changes 308
+
+/cli/references/campaigns/apply /cli/references/batch/apply 308
+/cli/references/campaigns/index /cli/references/batch/index 308
+/cli/references/campaigns/new /cli/references/batch/new 308
+/cli/references/campaigns/preview /cli/references/batch/preview 308
+/cli/references/campaigns/repositories /cli/references/batch/repositories 308
+/cli/references/campaigns/validate /cli/references/batch/validate 308
+/cli/references/campaigns /cli/references/batch 308

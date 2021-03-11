@@ -1,6 +1,7 @@
-import { Filter } from './token'
+import { Filter, Literal } from './token'
 import { SearchSuggestion } from '../suggestions'
 import { Omit } from 'utility-types'
+import { selectorCompletion } from './selectFilter'
 
 export enum FilterType {
     after = 'after',
@@ -108,7 +109,7 @@ export const resolveNegatedFilter = (filter: NegatedFilters): NegatableFilter =>
 interface BaseFilterDefinition {
     alias?: string
     description: string
-    discreteValues?: string[]
+    discreteValues?: (value: Literal | undefined) => string[]
     suggestions?: SearchSuggestion['__typename'] | string[]
     default?: string
     /** Whether the filter may only be used 0 or 1 times in a query. */
@@ -146,7 +147,6 @@ export const LANGUAGES: string[] = [
     'swift',
     'typescript',
 ]
-export const SELECTORS: string[] = ['repo', 'file', 'content', 'symbol', 'commit']
 
 export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
     Record<Exclude<FilterType, NegatableFilter>, BaseFilterDefinition> = {
@@ -166,7 +166,7 @@ export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
     },
     [FilterType.case]: {
         description: 'Treat the search pattern as case-sensitive.',
-        discreteValues: ['yes', 'no'],
+        discreteValues: () => ['yes', 'no'],
         default: 'no',
         singular: true,
     },
@@ -199,12 +199,12 @@ export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
         suggestions: 'File',
     },
     [FilterType.fork]: {
-        discreteValues: ['yes', 'no', 'only'],
+        discreteValues: () => ['yes', 'no', 'only'],
         description: 'Include results from forked repositories.',
         singular: true,
     },
     [FilterType.index]: {
-        discreteValues: ['yes', 'no', 'only'],
+        discreteValues: () => ['yes', 'no', 'only'],
         description: 'Include results from indexed repositories',
         singular: true,
     },
@@ -219,7 +219,7 @@ export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
             `${negated ? 'Exclude' : 'Include only'} Commits with messages matching a certain string`,
     },
     [FilterType.patterntype]: {
-        discreteValues: ['regexp', 'literal', 'structural'],
+        discreteValues: () => ['regexp', 'literal', 'structural'],
         description: 'The pattern type (regexp, literal, structural) in use',
         singular: true,
     },
@@ -249,12 +249,12 @@ export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
         singular: true,
     },
     [FilterType.select]: {
-        discreteValues: SELECTORS,
+        discreteValues: value => selectorCompletion(value),
         description: 'Selects the kind of result to display.',
         singular: true,
     },
     [FilterType.stable]: {
-        discreteValues: ['yes', 'no'],
+        discreteValues: () => ['yes', 'no'],
         default: 'no',
         description: 'Forces search to return a stable result ordering (currently limited to file content matches).',
         singular: true,
@@ -265,10 +265,10 @@ export const FILTERS: Record<NegatableFilter, NegatableFilterDefinition> &
     },
     [FilterType.type]: {
         description: 'Limit results to the specified type.',
-        discreteValues: ['diff', 'commit', 'symbol', 'repo', 'path', 'file'],
+        discreteValues: () => ['diff', 'commit', 'symbol', 'repo', 'path', 'file'],
     },
     [FilterType.visibility]: {
-        discreteValues: ['any', 'private', 'public'],
+        discreteValues: () => ['any', 'private', 'public'],
         description: 'Include results from repositories with the matching visibility (private, public, any).',
         singular: true,
     },
@@ -330,13 +330,17 @@ export const resolveFilter = (
 /**
  * Checks whether a discrete value is valid for a given filter, accounting for valid aliases.
  */
-const isValidDiscreteValue = (definition: NegatableFilterDefinition | BaseFilterDefinition, value: string): boolean => {
-    if (!definition.discreteValues || definition.discreteValues.includes(value)) {
+const isValidDiscreteValue = (
+    definition: NegatableFilterDefinition | BaseFilterDefinition,
+    input: Literal,
+    value: string
+): boolean => {
+    if (!definition.discreteValues || definition.discreteValues(input).includes(value)) {
         return true
     }
 
-    const validDiscreteValuesForDefinition = Object.keys(discreteValueAliases).filter(key =>
-        definition.discreteValues?.includes(key)
+    const validDiscreteValuesForDefinition = Object.keys(discreteValueAliases).filter(
+        key => !definition.discreteValues || definition.discreteValues(input).includes(key)
     )
 
     for (const discreteValue of validDiscreteValuesForDefinition) {
@@ -359,16 +363,10 @@ export const validateFilter = (
         return { valid: false, reason: 'Invalid filter type.' }
     }
     const { definition } = typeAndDefinition
-    if (
-        definition.discreteValues &&
-        (!value ||
-            (value.type !== 'literal' && value.type !== 'quoted') ||
-            (value.type === 'literal' && !isValidDiscreteValue(definition, value.value)) ||
-            (value.type === 'quoted' && !isValidDiscreteValue(definition, value.quotedValue)))
-    ) {
+    if (definition.discreteValues && (!value || !isValidDiscreteValue(definition, value, value.value))) {
         return {
             valid: false,
-            reason: `Invalid filter value, expected one of: ${definition.discreteValues.join(', ')}.`,
+            reason: `Invalid filter value, expected one of: ${definition.discreteValues(value).join(', ')}.`,
         }
     }
     return { valid: true }

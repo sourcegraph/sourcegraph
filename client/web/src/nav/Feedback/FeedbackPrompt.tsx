@@ -135,13 +135,7 @@ const FeedbackPromptContent: React.FunctionComponent<ContentProps> = ({ closePro
                         disabled={loading}
                     />
                     {error && (
-                        <ErrorAlert
-                            error={error}
-                            history={history}
-                            icon={false}
-                            className="mt-3"
-                            prefix="Error submitting feedback"
-                        />
+                        <ErrorAlert error={error} icon={false} className="mt-3" prefix="Error submitting feedback" />
                     )}
                     <LoaderButton
                         role="menuitem"

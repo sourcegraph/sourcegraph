@@ -1,6 +1,6 @@
 # GraphQL integration tests
 
-This directory contains GraphQL-based integration tests in the form of standard Go tests.
+This directory contains API-based integration tests in the form of standard Go tests. It is called gqltest since most of our API is GraphQL. However, the test suite has been extended to test other endpoints such as streaming search.
 
 ## How to set up credentials
 

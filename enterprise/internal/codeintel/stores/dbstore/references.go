@@ -5,13 +5,13 @@ import (
 
 	"github.com/opentracing/opentracing-go/log"
 
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/database/batch"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
 // UpdatePackageReferences inserts reference data tied to the given upload.
-func (s *Store) UpdatePackageReferences(ctx context.Context, references []lsifstore.PackageReference) (err error) {
+func (s *Store) UpdatePackageReferences(ctx context.Context, dumpID int, references []semantic.PackageReference) (err error) {
 	ctx, endObservation := s.operations.updatePackageReferences.With(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("numReferences", len(references)),
 	}})
@@ -29,7 +29,7 @@ func (s *Store) UpdatePackageReferences(ctx context.Context, references []lsifst
 			filter = []byte{}
 		}
 
-		if err := inserter.Insert(ctx, r.DumpID, r.Scheme, r.Name, r.Version, filter); err != nil {
+		if err := inserter.Insert(ctx, dumpID, r.Scheme, r.Name, r.Version, filter); err != nil {
 			return err
 		}
 	}

@@ -38,7 +38,7 @@ Code intelligence surfaces data (for example: doc comments for a symbol) and act
 
 By default, Sourcegraph provides imprecise [search-based code intelligence](../../../code_intelligence/explanations/search_based_code_intelligence.md). This reuses all the architecture that makes search fast, but it can result in false positives (for example: finding two definitions for a symbol, or references that aren't actually references), or false negatives (for example: not able to find the definition or all references). This is the default because it works with no extra configuration and is pretty good for many use cases and languages. We support a lot of languages this way because it only requires writing a few regular expressions.
 
-With some setup, customer can enable [precise code intelligence](../../../code_intelligence/explanations/precise_code_intelligence.md). Repositories add a step to their build pipeline that computes the index for that revision of code and uploads it to Sourcegraph. We have to write language specific indexers, so adding precise code intel support for new languages is a non-trivial task.
+With some setup, customers can enable [precise code intelligence](../../../code_intelligence/explanations/precise_code_intelligence.md). Repositories add a step to their build pipeline that computes the index for that revision of code and uploads it to Sourcegraph. We have to write language specific indexers, so adding precise code intel support for new languages is a non-trivial task.
 
 If you want to learn more about code intelligence:
 
@@ -46,20 +46,20 @@ If you want to learn more about code intelligence:
 - [Code intelligence developer documentation](../codeintel/index.md)
 - [Available indexers](../../../code_intelligence/references/indexers.md)
 
-## Campaigns
+## Batch changes
 
-Campaigns create and manage large scale code changes across projects, repositories, and code hosts.
+Batch changes (formerly known as [campaigns](../../../batch_changes/references/name-change.md)) create and manage large scale code changes across projects, repositories, and code hosts.
 
-To create a campaign, users write a [campaign spec](../../../campaigns/references/campaign_spec_yaml_reference.md), which is a YAML file that specifies the changes that should be performed, and the repositories that they should be performed upon — either through a Sourcegraph search, or by declaring them directly. This spec is then executed by [src-cli](#src-cli) on the user's machine (or in CI, or some other environment controlled by the user), which results in [changeset specs](../../../campaigns/explanations/introduction_to_campaigns.md#changeset-spec) that are sent to Sourcegraph. These changeset specs are then applied by Sourcegraph to create one or more changesets per repository. (A changeset is a pull request or merge request, depending on the code host.)
+To create a batch change, users write a [batch spec](../../../batch_changes/references/batch_spec_yaml_reference.md), which is a YAML file that specifies the changes that should be performed, and the repositories that they should be performed upon — either through a Sourcegraph search, or by declaring them directly. This spec is then executed by [src-cli](#src-cli) on the user's machine (or in CI, or some other environment controlled by the user), which results in [changeset specs](../../../batch_changes/explanations/introduction_to_batch_changes.md#changeset-spec) that are sent to Sourcegraph. These changeset specs are then applied by Sourcegraph to create one or more changesets per repository. (A changeset is a pull request or merge request, depending on the code host.)
 
-Once created, changesets are monitored by Sourcegraph, and their current review and CI status can be viewed on the campaign's page, providing a single pane of glass view of all the changesets created as part of the campaign. The campaign can be updated at any time by re-applying the original campaign spec: this will transparently add or remove changesets in repositories that now match or don't match the original search as needed.
+Once created, changesets are monitored by Sourcegraph, and their current review and CI status can be viewed on the batch change's page, providing a single pane of glass view of all the changesets created as part of the batch change. The batch change can be updated at any time by re-applying the original batch spec: this will transparently add or remove changesets in repositories that now match or don't match the original search as needed.
 
-If you want to learn more about campaigns:
+If you want to learn more about batch changes:
 
-- [Campaign product documentation](../../../campaigns/index.md)
-- [Campaign design principles](../../../campaigns/explanations/campaigns_design.md)
-- [Campaign developer documentation](../campaigns/index.md)
-- [How `src` executes a campaign spec](../../../campaigns/explanations/how_src_executes_a_campaign_spec.md)
+- [Batch changes product documentation](../../../batch_changes/index.md)
+- [Batch changes design principles](../../../batch_changes/explanations/batch_changes_design.md)
+- [Batch changes developer documentation](../batch_changes/index.md)
+- [How `src` executes a batch spec](../../../batch_changes/explanations/how_src_executes_a_batch_spec.md)
 
 ## Code insights
 
@@ -69,7 +69,7 @@ Sample use cases for this are for tracking migrations, usage of libraries across
 
 Code insights are currently feature-flagged - set `"experimentalFeatures": { "codeInsights": true }` in your user settings to enable them.
 
-Code insights currently work through [**extensions**](#sourcegraph-extension-aPI).
+Code insights currently work through [**extensions**](#sourcegraph-extension-api).
 A code insight extension can register a _view provider_ that contributes a graph to either the repository/directory page, the [search homepage](https://sourcegraph.com/search), or the [global "Insights" dashboard](https://sourcegraph.com/insights) reachable from the navbar.
 It is called on-demand on the client (the browser) to return the data needed for the chart.
 _How_ that extension produces the data is up to the extension - it can run search queries, query code intelligence data or analyze Git data using the Sourcegraph GraphQL API, or it can query an external service using its public API, e.g. Codecov.
@@ -146,7 +146,7 @@ If you want to learn more about our extension API:
 
 src-cli, or `src`, is a command line tool that users can run locally to interact with Sourcegraph.
 
-src-cli is written in Go, and distributed as a standalone binary for Windows, macOS, and Linux. Its features include [running searches](../../../cli/references/search.md), managing Sourcegraph, and [executing campaigns](../../../campaigns/quickstart.md#create-the-campaign). src-cli is an integral part of the [campaigns product](#campaigns).
+src-cli is written in Go, and distributed as a standalone binary for Windows, macOS, and Linux. Its features include [running searches](../../../cli/references/search.md), managing Sourcegraph, and [executing batch changes](../../../batch_changes/quickstart.md#create-the-batch-change). src-cli is an integral part of the [batch changes product](#batch-changes).
 
 Note that src-cli is not contained within the Sourcegraph monorepo, and has its own release cadence.
 
@@ -205,7 +205,7 @@ You can click on each component to jump to its respective code repository or sub
 <object data="/dev/background-information/architecture/architecture.svg" type="image/svg+xml" style="width:100%; height: 100%">
 </object>
 
-Note that almost every service has a link back to the frontend, from which is gathers configuration updates.
+Note that almost every service has a link back to the frontend, from which it gathers configuration updates.
 These edges are omitted for clarity.
 
 ## Other resources

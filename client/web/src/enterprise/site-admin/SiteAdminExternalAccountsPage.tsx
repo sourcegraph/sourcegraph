@@ -45,7 +45,6 @@ export class SiteAdminExternalAccountsPage extends React.Component<Props> {
         const nodeProps: Omit<ExternalAccountNodeProps, 'node'> = {
             onDidUpdate: this.onDidUpdateExternalAccount,
             showUser: true,
-            history: this.props.history,
         }
 
         return (

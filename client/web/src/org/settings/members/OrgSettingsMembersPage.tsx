@@ -116,7 +116,7 @@ class UserNode extends React.PureComponent<UserNodeProps, UserNodeState> {
                     </div>
                 </div>
                 {isErrorLike(this.state.removalOrError) && (
-                    <ErrorAlert className="mt-2" error={this.state.removalOrError} history={this.props.history} />
+                    <ErrorAlert className="mt-2" error={this.state.removalOrError} />
                 )}
             </li>
         )
@@ -192,7 +192,6 @@ export class OrgSettingsMembersPage extends React.PureComponent<Props, State> {
                         authenticatedUser={this.props.authenticatedUser}
                         onOrganizationUpdate={this.props.onOrganizationUpdate}
                         onDidUpdateOrganizationMembers={this.onDidUpdateOrganizationMembers}
-                        history={this.props.history}
                     />
                 )}
                 <FilteredConnection<GQL.IUser, Omit<UserNodeProps, 'node'>>

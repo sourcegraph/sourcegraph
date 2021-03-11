@@ -24,8 +24,12 @@ export const enterpriseRoutes: readonly LayoutRouteProps<{}>[] = [
     },
     {
         path: '/campaigns',
-        render: lazyComponent(() => import('./campaigns/global/GlobalCampaignsArea'), 'GlobalCampaignsArea'),
-        condition: props => props.showCampaigns,
+        render: ({ match }) => <Redirect to={match.path.replace('/campaigns', '/batch-changes')} />,
+    },
+    {
+        path: '/batch-changes',
+        render: lazyComponent(() => import('./batches/global/GlobalBatchChangesArea'), 'GlobalBatchChangesArea'),
+        condition: props => props.showBatchChanges,
     },
     {
         path: '/stats',

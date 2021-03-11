@@ -8,7 +8,7 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     # Run on commit status success on branch main, ignoring bot events
-    if: ${{ contains(github.event.branches.*.name, 'main') && github.event.state == 'success' && github.event.context == 'buildkite/sourcegraph' }}
+    if: ${{ contains(github.event.branches.*.name, 'main') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2

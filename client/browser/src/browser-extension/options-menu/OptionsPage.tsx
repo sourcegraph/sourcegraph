@@ -102,7 +102,7 @@ export const OptionsPage: React.FunctionComponent<OptionsPageProps> = ({
                             value={isActivated}
                             onToggle={onToggleActivated}
                             title={`Toggle to ${isActivated ? 'disable' : 'enable'} extension`}
-                            ariaLabel="Toggle browser extension"
+                            aria-label="Toggle browser extension"
                         />
                     </div>
                 </div>

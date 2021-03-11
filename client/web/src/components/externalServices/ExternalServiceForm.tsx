@@ -59,11 +59,11 @@ export const ExternalServiceForm: React.FunctionComponent<Props> = ({
     )
     return (
         <Form className="external-service-form" onSubmit={onSubmit}>
-            {error && <ErrorAlert error={error} history={history} />}
+            {error && <ErrorAlert error={error} />}
             {warning && (
                 <div className="alert alert-warning">
                     <h4>Warning</h4>
-                    <ErrorMessage error={warning} history={history} />
+                    <ErrorMessage error={warning} />
                 </div>
             )}
             {hideDisplayNameField || (

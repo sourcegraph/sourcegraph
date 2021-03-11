@@ -140,21 +140,21 @@ export const SiteAdminPingsPage: React.FunctionComponent<Props> = props => {
                     language
                 </li>
                 <li>
-                    Campaign usage data
+                    Batch changes usage data
                     <ul>
-                        <li>Total count of page views on the campaign apply page</li>
-                        <li>Total count of page views on the campaign details page after creating a campaige</li>
-                        <li>Total count of page views on the campaign details page after updating a campaige</li>
+                        <li>Total count of page views on the batch change apply page</li>
+                        <li>Total count of page views on the batch change details page after creating a campaige</li>
+                        <li>Total count of page views on the batch change details page after updating a campaige</li>
                         <li>Total count of created changeset specs</li>
-                        <li>Total count of created campaign specs</li>
-                        <li>Total count of created campaigns</li>
-                        <li>Total count of closed campaigns</li>
-                        <li>Total count of changesets created by campaigns</li>
+                        <li>Total count of created batch specs</li>
+                        <li>Total count of created batch changes</li>
+                        <li>Total count of closed batch changes</li>
+                        <li>Total count of changesets created by batch changes</li>
                         <li>Aggregate counts of lines changed, added, deleted in changeset</li>
-                        <li>Total count of changesets created by campaigns that have been merged</li>
+                        <li>Total count of changesets created by batch changes that have been merged</li>
                         <li>Aggregate counts of lines changed, added, deleted in merged changeset</li>
-                        <li>Total count of changesets manually added to a campaign</li>
-                        <li>Total count of changesets manually added to a campaign that have been merged</li>
+                        <li>Total count of changesets manually added to a batch change</li>
+                        <li>Total count of changesets manually added to a batch change that have been merged</li>
                     </ul>
                 </li>
                 <li>

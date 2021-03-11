@@ -127,7 +127,7 @@ func TestUserCredentials_Delete(t *testing.T) {
 
 	t.Run("extant", func(t *testing.T) {
 		scope := UserCredentialScope{
-			Domain:              UserCredentialDomainCampaigns,
+			Domain:              UserCredentialDomainBatches,
 			UserID:              user.ID,
 			ExternalServiceType: "github",
 			ExternalServiceID:   "https://github.com",
@@ -174,7 +174,7 @@ func TestUserCredentials_GetByID(t *testing.T) {
 
 	t.Run("extant", func(t *testing.T) {
 		scope := UserCredentialScope{
-			Domain:              UserCredentialDomainCampaigns,
+			Domain:              UserCredentialDomainBatches,
 			UserID:              user.ID,
 			ExternalServiceType: "github",
 			ExternalServiceID:   "https://github.com",
@@ -201,7 +201,7 @@ func TestUserCredentials_GetByScope(t *testing.T) {
 	ctx, user := setUpUserCredentialTest(t, db)
 
 	scope := UserCredentialScope{
-		Domain:              UserCredentialDomainCampaigns,
+		Domain:              UserCredentialDomainBatches,
 		UserID:              user.ID,
 		ExternalServiceType: "github",
 		ExternalServiceID:   "https://github.com",
@@ -247,13 +247,13 @@ func TestUserCredentials_List(t *testing.T) {
 	ctx, user := setUpUserCredentialTest(t, db)
 
 	githubScope := UserCredentialScope{
-		Domain:              UserCredentialDomainCampaigns,
+		Domain:              UserCredentialDomainBatches,
 		UserID:              user.ID,
 		ExternalServiceType: "github",
 		ExternalServiceID:   "https://github.com",
 	}
 	gitlabScope := UserCredentialScope{
-		Domain:              UserCredentialDomainCampaigns,
+		Domain:              UserCredentialDomainBatches,
 		UserID:              user.ID,
 		ExternalServiceType: "gitlab",
 		ExternalServiceID:   "https://gitlab.com",
@@ -328,11 +328,11 @@ func TestUserCredentials_List(t *testing.T) {
 
 	for name, opts := range map[string]UserCredentialsListOpts{
 		"no options":   {},
-		"domain only":  {Scope: UserCredentialScope{Domain: UserCredentialDomainCampaigns}},
+		"domain only":  {Scope: UserCredentialScope{Domain: UserCredentialDomainBatches}},
 		"user ID only": {Scope: UserCredentialScope{UserID: user.ID}},
 		"domain and user ID": {
 			Scope: UserCredentialScope{
-				Domain: UserCredentialDomainCampaigns,
+				Domain: UserCredentialDomainBatches,
 				UserID: user.ID,
 			},
 		},

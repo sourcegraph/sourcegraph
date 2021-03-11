@@ -102,7 +102,7 @@ export const CodeIntelIndexConfigurationPage: FunctionComponent<CodeIntelIndexCo
     }
 
     return fetchError ? (
-        <ErrorAlert prefix="Error fetching index configuration" error={fetchError} history={history} />
+        <ErrorAlert prefix="Error fetching index configuration" error={fetchError} />
     ) : (
         <div className="code-intel-index-configuration web-content">
             <PageTitle title="Precise code intelligence index configuration" />
@@ -115,7 +115,7 @@ export const CodeIntelIndexConfigurationPage: FunctionComponent<CodeIntelIndexCo
                 .
             </p>
 
-            {saveError && <ErrorAlert prefix="Error saving index configuration" error={saveError} history={history} />}
+            {saveError && <ErrorAlert prefix="Error saving index configuration" error={saveError} />}
 
             <DynamicallyImportedMonacoSettingsEditor
                 value={configuration || ''}

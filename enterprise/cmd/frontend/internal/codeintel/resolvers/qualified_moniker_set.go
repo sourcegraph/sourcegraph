@@ -3,11 +3,11 @@ package resolvers
 import (
 	"strings"
 
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 type qualifiedMonikerSet struct {
-	monikers       []lsifstore.QualifiedMonikerData
+	monikers       []semantic.QualifiedMonikerData
 	monikerHashMap map[string]struct{}
 }
 
@@ -19,7 +19,7 @@ func newQualifiedMonikerSet() *qualifiedMonikerSet {
 
 // add the given qualified moniker to the set if it is distinct from all elements
 // currently in the set.
-func (s *qualifiedMonikerSet) add(qualifiedMoniker lsifstore.QualifiedMonikerData) {
+func (s *qualifiedMonikerSet) add(qualifiedMoniker semantic.QualifiedMonikerData) {
 	monikerHash := strings.Join([]string{
 		qualifiedMoniker.PackageInformationData.Name,
 		qualifiedMoniker.PackageInformationData.Version,

@@ -38,7 +38,7 @@ const ContributionsTable: React.FunctionComponent<{ contributionGroups: Contribu
                         <h3>
                             {group.title} ({group.rows.length})
                         </h3>
-                        {group.error && <ErrorAlert className="mt-1" error={group.error} history={history} />}
+                        {group.error && <ErrorAlert className="mt-1" error={group.error} />}
                         <table className="table mb-5">
                             <thead>
                                 <tr>
@@ -159,11 +159,7 @@ export class RegistryExtensionContributionsPage extends React.PureComponent<Prop
                     {this.props.extension.manifest === null ? (
                         <ExtensionNoManifestAlert extension={this.props.extension} />
                     ) : isErrorLike(this.props.extension.manifest) ? (
-                        <ErrorAlert
-                            error={this.props.extension.manifest}
-                            prefix="Error parsing extension manifest"
-                            history={this.props.history}
-                        />
+                        <ErrorAlert error={this.props.extension.manifest} prefix="Error parsing extension manifest" />
                     ) : (
                         <ContributionsTable
                             contributionGroups={toContributionsGroups(this.props.extension.manifest)}

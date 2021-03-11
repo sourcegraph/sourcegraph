@@ -1,6 +1,6 @@
 # Enterprise Getting Started Guide
 
-If you're deploying a new Enterprise instance, this page covers our most frequently referenced pieces of documentation. Admins will be interested in the documentation for their specific deployment method; users will want to check out info on our search syntax, operators, campaigns, and browser extension.
+If you're deploying a new Enterprise instance, this page covers our most frequently referenced pieces of documentation. Admins will be interested in the documentation for their specific deployment method; users will want to check out info on our search syntax, operators, batch changes, and browser extension.
 
 ## Admin articles
 
@@ -36,5 +36,5 @@ If you're deploying a new Enterprise instance, this page covers our most frequen
 ## User articles
 - [Search syntax](../code_search/reference/queries.md)
 - [Search operators](../code_search/reference/queries.md#keywords-all-searches)
-- [Example campaigns](../campaigns/tutorials/index.md)
+- [Example batch changes](../batch_changes/tutorials/index.md)
 - [Sourcegraph browser extension](../integration/browser_extension.md)

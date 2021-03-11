@@ -1,6 +1,9 @@
 package http
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 // EventMatch is an interface which only the top level match event types
 // implement. Use this for your results slice rather than interface{}.
@@ -136,4 +139,19 @@ func (t MatchType) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("unknown MatchType: %d", t)
 	}
 
+}
+
+func (t *MatchType) UnmarshalJSON(b []byte) error {
+	if bytes.Equal(b, []byte(`"file"`)) {
+		*t = FileMatchType
+	} else if bytes.Equal(b, []byte(`"repo"`)) {
+		*t = RepoMatchType
+	} else if bytes.Equal(b, []byte(`"symbol"`)) {
+		*t = SymbolMatchType
+	} else if bytes.Equal(b, []byte(`"commit"`)) {
+		*t = CommitMatchType
+	} else {
+		return fmt.Errorf("unknown MatchType: %s", b)
+	}
+	return nil
 }

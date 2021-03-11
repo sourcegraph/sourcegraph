@@ -21,6 +21,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -389,23 +390,23 @@ func ignoreSizeMax(name string, patterns []string) bool {
 }
 
 var (
-	cacheSizeBytes = prometheus.NewGauge(prometheus.GaugeOpts{
+	cacheSizeBytes = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "searcher_store_cache_size_bytes",
 		Help: "The total size of items in the on disk cache.",
 	})
-	evictions = prometheus.NewCounter(prometheus.CounterOpts{
+	evictions = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "searcher_store_evictions",
 		Help: "The total number of items evicted from the cache.",
 	})
-	fetching = prometheus.NewGauge(prometheus.GaugeOpts{
+	fetching = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "searcher_store_fetching",
 		Help: "The number of fetches currently running.",
 	})
-	fetchQueueSize = prometheus.NewGauge(prometheus.GaugeOpts{
+	fetchQueueSize = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "searcher_store_fetch_queue_size",
 		Help: "The number of fetch jobs enqueued.",
 	})
-	fetchFailed = prometheus.NewCounter(prometheus.CounterOpts{
+	fetchFailed = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "searcher_store_fetch_failed",
 		Help: "The total number of archive fetches that failed.",
 	})
@@ -420,12 +421,4 @@ type temporaryError struct {
 
 func (temporaryError) Temporary() bool {
 	return true
-}
-
-func init() {
-	prometheus.MustRegister(cacheSizeBytes)
-	prometheus.MustRegister(evictions)
-	prometheus.MustRegister(fetching)
-	prometheus.MustRegister(fetchQueueSize)
-	prometheus.MustRegister(fetchFailed)
 }

@@ -87,8 +87,7 @@ func (cs *clusterScanner) runEventLoop() {
 func (cs *clusterScanner) watchEndpointEvents() (bool, error) {
 
 	// TODO(Dax): Rewrite this to used NewSharedInformerFactory from k8s/client-go
-
-	watcher, err := cs.client.Endpoints(metav1.NamespaceAll).Watch(metav1.ListOptions{})
+	watcher, err := cs.client.Endpoints(cs.namespace).Watch(metav1.ListOptions{})
 	if err != nil {
 		return false, fmt.Errorf("k8s client.Watch error: %w", err)
 	}
@@ -114,7 +113,7 @@ func (cs *clusterScanner) watchEndpointEvents() (bool, error) {
 // It derives the appropriate port from the prometheus.io/port annotation.
 func (cs *clusterScanner) scanCluster() {
 
-	// Get services from all namespaces
+	// Get services from the current namespace
 	services, err := cs.client.Services(cs.namespace).List(metav1.ListOptions{})
 	if err != nil {
 		log15.Error("k8s failed to list services", "error", err)

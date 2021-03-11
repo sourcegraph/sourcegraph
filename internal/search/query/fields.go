@@ -32,7 +32,6 @@ const (
 	FieldIndex     = "index"
 	FieldCount     = "count"  // Searches that specify `count:` will fetch at least that number of results, or the full result set
 	FieldStable    = "stable" // Forces search to return a stable result ordering (currently limited to file content matches).
-	FieldMax       = "max"    // Deprecated alias for count
 	FieldTimeout   = "timeout"
 	FieldCombyRule = "rule"
 	FieldSelect    = "select"
@@ -70,7 +69,6 @@ var allFields = map[string]struct{}{
 	FieldIndex:              empty,
 	FieldCount:              empty,
 	FieldStable:             empty,
-	FieldMax:                empty,
 	FieldTimeout:            empty,
 	FieldCombyRule:          empty,
 	FieldRev:                empty,

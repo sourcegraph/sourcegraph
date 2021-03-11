@@ -72,12 +72,6 @@ const SiteSchemaJSON = `{
             }
           }
         },
-        "automation": {
-          "description": "DEPRECATED: Enables the experimental code change management campaigns feature. This field has been deprecated in favour of campaigns.enabled",
-          "type": "string",
-          "enum": ["enabled", "disabled"],
-          "default": "enabled"
-        },
         "structuralSearch": {
           "description": "Enables structural search.",
           "type": "string",
@@ -264,29 +258,32 @@ const SiteSchemaJSON = `{
       ],
       "group": "Experimental"
     },
-    "automation.readAccess.enabled": {
-      "description": "DEPRECATED: The automation feature was renamed to campaigns. Use ` + "`" + `campaigns.readAccess.enabled` + "`" + ` instead.",
-      "type": "boolean",
-      "!go": { "pointer": true },
-      "group": "Campaigns"
-    },
     "campaigns.enabled": {
-      "description": "Enables/disables the campaigns feature.",
+      "description": "DEPRECATED: Use batchChanges.enabled instead. Enables/disables the campaigns feature.",
       "type": "boolean",
       "!go": { "pointer": true },
       "group": "Campaigns",
       "default": true
     },
-    "campaigns.readAccess.enabled": {
-      "description": "DEPRECATED: Enables read-only access to campaigns for non-site-admin users. This doesn't have an effect anymore.",
+    "campaigns.restrictToAdmins": {
+      "description": "DEPRECATED: Use batchChanges.restrictToAdmins instead. When enabled, only site admins can create and apply campaigns.",
       "type": "boolean",
       "!go": { "pointer": true },
-      "group": "Campaigns"
-    },
-    "campaigns.restrictToAdmins": {
-      "description": "When enabled, only site admins can create and apply campaigns.",
-      "type": "boolean",
       "group": "Campaigns",
+      "default": false
+    },
+    "batchChanges.enabled": {
+      "description": "Enables/disables the Batch Changes feature.",
+      "type": "boolean",
+      "!go": { "pointer": true },
+      "group": "BatchChanges",
+      "default": true
+    },
+    "batchChanges.restrictToAdmins": {
+      "description": "When enabled, only site admins can create and apply batch changes.",
+      "type": "boolean",
+      "!go": { "pointer": true },
+      "group": "BatchChanges",
       "default": false
     },
     "codeIntelAutoIndexing.enabled": {

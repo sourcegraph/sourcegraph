@@ -42,7 +42,6 @@ func searchRepositories(ctx context.Context, db dbutil.DB, args *search.TextPara
 		query.FieldDefault:            {},
 		query.FieldIndex:              {},
 		query.FieldCount:              {},
-		query.FieldMax:                {},
 		query.FieldTimeout:            {},
 		query.FieldFork:               {},
 		query.FieldArchived:           {},

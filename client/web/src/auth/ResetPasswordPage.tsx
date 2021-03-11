@@ -54,7 +54,7 @@ class ResetPasswordInitForm extends React.PureComponent<ResetPasswordInitFormPro
         return (
             <>
                 {isErrorLike(this.state.submitOrError) && (
-                    <ErrorAlert className="mt-2" error={this.state.submitOrError} history={this.props.history} />
+                    <ErrorAlert className="mt-2" error={this.state.submitOrError} />
                 )}
                 <Form
                     className="reset-password-page__form signin-signup-form border rounded p-4 mb-3"
@@ -168,7 +168,7 @@ class ResetPasswordCodeForm extends React.PureComponent<ResetPasswordCodeFormPro
         return (
             <>
                 {isErrorLike(this.state.submitOrError) && (
-                    <ErrorAlert className="mt-2" error={this.state.submitOrError} history={this.props.history} />
+                    <ErrorAlert className="mt-2" error={this.state.submitOrError} />
                 )}
                 <Form
                     className="reset-password-page__form signin-signup-form border rounded p-4 mb-3"

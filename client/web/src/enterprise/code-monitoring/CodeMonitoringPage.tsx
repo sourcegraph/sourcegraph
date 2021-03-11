@@ -17,7 +17,7 @@ import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import { SettingsCascadeProps } from '../../../../shared/src/settings/settings'
 import { Settings } from '../../schema/settings.schema'
 import { CodeMonitoringLogo } from './CodeMonitoringLogo'
-import { StatusBadge } from '../../components/StatusBadge'
+import { FeedbackBadge } from '../../components/FeedbackBadge'
 
 export interface CodeMonitoringPageProps
     extends Pick<CodeMonitoringProps, 'fetchUserCodeMonitors' | 'toggleCodeMonitorEnabled'>,
@@ -74,7 +74,7 @@ export const CodeMonitoringPage: React.FunctionComponent<CodeMonitoringPageProps
         <div className="code-monitoring-page">
             <PageTitle title="Code Monitoring" />
             <PageHeader
-                annotation={<StatusBadge status="prototype" feedback={{ mailto: 'support@sourcegraph.com' }} />}
+                annotation={<FeedbackBadge status="prototype" feedback={{ mailto: 'support@sourcegraph.com' }} />}
                 path={[
                     {
                         icon: CodeMonitoringLogo,

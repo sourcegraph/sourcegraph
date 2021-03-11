@@ -18,7 +18,6 @@ import { userURL } from '../../user'
 import { OrgAvatar } from '../OrgAvatar'
 import { OrgAreaPageProps } from './OrgArea'
 import { ErrorAlert } from '../../components/alerts'
-import * as H from 'history'
 import { OrganizationInvitationResponseType } from '../../../../shared/src/graphql-operations'
 import {
     RespondToOrganizationInvitationResult,
@@ -30,7 +29,6 @@ interface Props extends OrgAreaPageProps {
 
     /** Called when the viewer responds to the invitation. */
     onDidRespondToInvitation: () => void
-    history: H.History
 }
 
 interface State {
@@ -164,11 +162,7 @@ export const OrgInvitationPage = withAuthenticatedUser(
                                     </button>
                                 </div>
                                 {isErrorLike(this.state.submissionOrError) && (
-                                    <ErrorAlert
-                                        className="my-2"
-                                        error={this.state.submissionOrError}
-                                        history={this.props.history}
-                                    />
+                                    <ErrorAlert className="my-2" error={this.state.submissionOrError} />
                                 )}
                                 {this.state.submissionOrError === 'loading' && (
                                     <LoadingSpinner className="icon-inline" />

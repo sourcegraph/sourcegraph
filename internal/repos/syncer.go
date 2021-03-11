@@ -241,7 +241,7 @@ func (s *Syncer) SyncExternalService(ctx context.Context, tx *Store, externalSer
 		// should behave as if zero repos were found. This is so that revoked tokens
 		// cause repos to be removed correctly.
 		if !unauthorized && !accountSuspended {
-			return errors.Wrap(err, "fetching from code host")
+			return errors.Wrap(err, "fetching from code host "+svc.DisplayName)
 		}
 		log15.Warn("Non fatal error during sync", "externalService", svc.ID, "unauthorized", unauthorized, "accountSuspended", accountSuspended)
 	}

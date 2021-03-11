@@ -51,13 +51,13 @@ export const ExternalServiceWebhook: React.FunctionComponent<Props> = ({ externa
 
     return (
         <div className="alert alert-info">
-            <h3>Campaign webhooks</h3>
+            <h3>Batch changes webhooks</h3>
             {description}
             <CopyableText className="mb-2" text={webhookURL} size={webhookURL.length} />
             <p className="mb-0">
                 Note that only{' '}
-                <a href="https://docs.sourcegraph.com/user/campaigns" target="_blank" rel="noopener noreferrer">
-                    Campaigns
+                <a href="https://docs.sourcegraph.com/user/batch_changes" target="_blank" rel="noopener noreferrer">
+                    batch changes
                 </a>{' '}
                 make use of this webhook. To enable webhooks to trigger repository updates on Sourcegraph,{' '}
                 <a href="https://docs.sourcegraph.com/admin/repo/webhooks" target="_blank" rel="noopener noreferrer">

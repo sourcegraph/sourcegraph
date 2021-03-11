@@ -10,7 +10,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/timeutil"
 )
 
-// Store exposes methods to read and write campaigns domain models
+// Store exposes methods to read and write codemonitors domain models
 // from persistent storage.
 type Store struct {
 	*basestore.Store

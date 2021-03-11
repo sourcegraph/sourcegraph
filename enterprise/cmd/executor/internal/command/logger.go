@@ -34,10 +34,7 @@ func (l *Logger) Log(entry workerutil.ExecutionLogEntry) {
 
 // Entries returns a copy of the stored log entries.
 func (l *Logger) Entries() (entries []workerutil.ExecutionLogEntry) {
-	for _, entry := range l.entries {
-		entries = append(entries, entry)
-	}
-
+	entries = append(entries, l.entries...)
 	return entries
 }
 

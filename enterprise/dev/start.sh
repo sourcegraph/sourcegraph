@@ -10,7 +10,7 @@ if [ ! -d "$DEV_PRIVATE_PATH" ]; then
 fi
 
 # Warn if dev-private needs to be updated.
-required_commit="eff6cce71f6b147f61567d19f16cbf03da0d7696"
+required_commit="158d265ddcc7c7233421e35d4997b27300de39b8"
 if ! git -C "$DEV_PRIVATE_PATH" merge-base --is-ancestor $required_commit HEAD; then
   echo "Error: You need to update dev-private to a commit that incorporates https://github.com/sourcegraph/dev-private/commit/$required_commit."
   echo

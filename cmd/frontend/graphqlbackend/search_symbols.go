@@ -19,23 +19,12 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/gituri"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
 	"github.com/sourcegraph/sourcegraph/internal/search"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
-	"github.com/sourcegraph/sourcegraph/internal/symbols/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/internal/trace/ot"
 	"github.com/sourcegraph/sourcegraph/internal/vcs/git"
 )
-
-// SearchSymbolResult is a result from symbol search.
-type SearchSymbolResult struct {
-	symbol  protocol.Symbol
-	baseURI *gituri.URI
-	lang    string
-}
-
-func (s *SearchSymbolResult) uri() *gituri.URI {
-	return s.baseURI.WithFilePath(s.symbol.Path)
-}
 
 var mockSearchSymbols func(ctx context.Context, args *search.TextParameters, limit int) (res []*FileMatchResolver, stats *streaming.Stats, err error)
 
@@ -200,21 +189,21 @@ func searchSymbolsInRepo(ctx context.Context, db dbutil.DB, repoRevs *search.Rep
 	fileMatches := make([]*FileMatchResolver, 0)
 
 	for _, symbol := range symbols {
-		symbolRes := &SearchSymbolResult{
-			symbol:  symbol,
-			baseURI: baseURI,
-			lang:    strings.ToLower(symbol.Language),
+		symbolRes := &result.SymbolMatch{
+			Symbol:  symbol,
+			BaseURI: baseURI,
+			Lang:    strings.ToLower(symbol.Language),
 		}
-		uri := makeFileMatchURI(repoResolver.URL(), inputRev, symbolRes.uri().Fragment)
+		uri := makeFileMatchURI(repoResolver.URL(), inputRev, symbolRes.URI().Fragment)
 		if fileMatch, ok := fileMatchesByURI[uri]; ok {
 			fileMatch.FileMatch.Symbols = append(fileMatch.FileMatch.Symbols, symbolRes)
 		} else {
 			fileMatch := &FileMatchResolver{
 				db: db,
-				FileMatch: FileMatch{
-					Path:     symbolRes.symbol.Path,
-					Symbols:  []*SearchSymbolResult{symbolRes},
-					uri:      uri,
+				FileMatch: result.FileMatch{
+					Path:     symbolRes.Symbol.Path,
+					Symbols:  []*result.SymbolMatch{symbolRes},
+					URI:      uri,
 					Repo:     repoRevs.Repo,
 					CommitID: commitID,
 				},
@@ -273,7 +262,7 @@ func unescapePattern(pattern string) string {
 // data member that currently exposes line content: the symbols Pattern member,
 // which has the form /^ ... $/. We find the offset of the symbol name in this
 // line, after escaping the Pattern.
-func computeSymbolOffset(s protocol.Symbol) int {
+func computeSymbolOffset(s result.Symbol) int {
 	if s.Pattern == "" {
 		return 0
 	}
@@ -284,7 +273,7 @@ func computeSymbolOffset(s protocol.Symbol) int {
 	return 0
 }
 
-func symbolRange(s protocol.Symbol) lsp.Range {
+func symbolRange(s result.Symbol) lsp.Range {
 	offset := computeSymbolOffset(s)
 	return lsp.Range{
 		Start: lsp.Position{Line: s.Line - 1, Character: offset},

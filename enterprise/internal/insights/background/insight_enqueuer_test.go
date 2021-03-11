@@ -93,6 +93,7 @@ func Test_discoverAndEnqueueInsights(t *testing.T) {
   {
     "SeriesID": "s:087855E6A24440837303FD8A252E9893E8ABDFECA55B61AC83DA1B521906626E",
     "SearchQuery": "errorf count:9999999",
+    "RecordTime": null,
     "ID": 0,
     "State": "queued",
     "FailureMessage": null,
@@ -106,6 +107,7 @@ func Test_discoverAndEnqueueInsights(t *testing.T) {
   {
     "SeriesID": "s:7FBD292BF97936C4B6397688CFFB05DEA95E650C3D5B653AAEA8F77BBD25CE93",
     "SearchQuery": "fmt.Printf count:9999999",
+    "RecordTime": null,
     "ID": 0,
     "State": "queued",
     "FailureMessage": null,
@@ -119,6 +121,7 @@ func Test_discoverAndEnqueueInsights(t *testing.T) {
   {
     "SeriesID": "s:FB8CFBB7C7C28834957FBE1B830EDD79C5E710FD55B0ACF246C0D7267C5462B4",
     "SearchQuery": "gitserver.Exec count:9999999",
+    "RecordTime": null,
     "ID": 0,
     "State": "queued",
     "FailureMessage": null,
@@ -132,6 +135,7 @@ func Test_discoverAndEnqueueInsights(t *testing.T) {
   {
     "SeriesID": "s:2B55C7CE2EB30BFFAF1F0276E525B36BB71908E3893A27F416F62A3E23542566",
     "SearchQuery": "gitserver.Close count:9999999",
+    "RecordTime": null,
     "ID": 0,
     "State": "queued",
     "FailureMessage": null,

@@ -35,7 +35,6 @@ export class UserSettingsExternalAccountsPage extends React.Component<Props> {
         const nodeProps: Omit<ExternalAccountNodeProps, 'node'> = {
             onDidUpdate: this.onDidUpdateExternalAccount,
             showUser: false,
-            history: this.props.history,
         }
 
         return (

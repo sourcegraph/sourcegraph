@@ -40,8 +40,13 @@ const (
 	// FeatureBranding is whether custom branding of this Sourcegraph instance has been purchased.
 	FeatureBranding Feature = "branding"
 
-	// FeatureCampaigns is whether campaigns on this Sourcegraph instance has been purchased.
+	// FeatureCampaigns is whether campaigns (now: batch changes) on this Sourcegraph instance has been purchased.
+	//
+	// DEPRECATED: See FeatureBatchChanges.
 	FeatureCampaigns Feature = "campaigns"
+
+	// FeatureBatchChanges is whether Batch Changes on this Sourcegraph instance has been purchased.
+	FeatureBatchChanges Feature = "batch-changes"
 
 	// FeatureMonitoring is whether monitoring on this Sourcegraph instance has been purchased.
 	FeatureMonitoring Feature = "monitoring"
@@ -60,6 +65,7 @@ var planFeatures = map[Plan][]Feature{
 		FeatureRemoteExtensionsAllowDisallow,
 		FeatureBranding,
 		FeatureCampaigns,
+		FeatureBatchChanges,
 		FeatureMonitoring,
 		FeatureBackupAndRestore,
 	},

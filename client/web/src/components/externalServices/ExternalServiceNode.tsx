@@ -65,7 +65,7 @@ export const ExternalServiceNode: React.FunctionComponent<ExternalServiceNodePro
                     </button>
                 </div>
             </div>
-            {isErrorLike(isDeleting) && <ErrorAlert className="mt-2" error={isDeleting} history={history} />}
+            {isErrorLike(isDeleting) && <ErrorAlert className="mt-2" error={isDeleting} />}
         </li>
     )
 }

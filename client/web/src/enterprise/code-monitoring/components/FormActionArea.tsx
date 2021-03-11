@@ -188,13 +188,16 @@ export const FormActionArea: React.FunctionComponent<ActionAreaProps> = ({
                         )}
                     </div>
                     <div className="d-flex align-items-center my-4">
-                        <Toggle
-                            title="Enabled"
-                            value={emailNotificationEnabled}
-                            onToggle={toggleEmailNotificationEnabled}
-                            className="mr-2"
-                        />
-                        Enabled
+                        <div>
+                            <Toggle
+                                title="Enabled"
+                                value={emailNotificationEnabled}
+                                onToggle={toggleEmailNotificationEnabled}
+                                className="mr-2"
+                                aria-labelledby="action-area__enable-toggle"
+                            />
+                        </div>
+                        <span id="action-area__enable-toggle">{emailNotificationEnabled ? 'Enabled' : 'Disabled'}</span>
                     </div>
                     <div>
                         <button
@@ -219,12 +222,14 @@ export const FormActionArea: React.FunctionComponent<ActionAreaProps> = ({
                             <span className="text-muted test-existing-action-email">{authenticatedUser.email}</span>
                         </div>
                         <div className="d-flex align-items-center">
-                            <Toggle
-                                title="Enabled"
-                                value={emailNotificationEnabled}
-                                onToggle={toggleEmailNotificationEnabled}
-                                className="mr-3"
-                            />
+                            <div>
+                                <Toggle
+                                    title="Enabled"
+                                    value={emailNotificationEnabled}
+                                    onToggle={toggleEmailNotificationEnabled}
+                                    className="mr-3"
+                                />
+                            </div>
                             <button type="button" className="btn btn-link p-0 text-left test-edit-action">
                                 Edit
                             </button>

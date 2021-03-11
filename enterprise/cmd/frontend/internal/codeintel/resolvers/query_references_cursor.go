@@ -5,21 +5,22 @@ import (
 	"encoding/json"
 
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 // referencesCursor stores (enough of) the state of a previous References request used to
 // calculate the offset into the result set to be returned by the current request.
 type referencesCursor struct {
-	AdjustedUploads           []cursorAdjustedUpload           `json:"adjustedUploads"`
-	DefinitionUploadIDs       []int                            `json:"definitionUploadIDs"`
-	DefinitionUploadIDsCached bool                             `json:"definitionUploadIDsCached"`
-	OrderedMonikers           []lsifstore.QualifiedMonikerData `json:"orderedMonikers"`
-	RemotePhase               bool                             `json:"remotePhase"`
-	LocalOffset               int                              `json:"localOffset"`
-	LocalBatchOffset          int                              `json:"localBatchOffset"`
-	BatchIDs                  []int                            `json:"batchIDs"`
-	RemoteOffset              int                              `json:"remoteOffset"`
-	RemoteBatchOffset         int                              `json:"remoteBatchOffset"`
+	AdjustedUploads           []cursorAdjustedUpload          `json:"adjustedUploads"`
+	DefinitionUploadIDs       []int                           `json:"definitionUploadIDs"`
+	DefinitionUploadIDsCached bool                            `json:"definitionUploadIDsCached"`
+	OrderedMonikers           []semantic.QualifiedMonikerData `json:"orderedMonikers"`
+	RemotePhase               bool                            `json:"remotePhase"`
+	LocalOffset               int                             `json:"localOffset"`
+	LocalBatchOffset          int                             `json:"localBatchOffset"`
+	BatchIDs                  []int                           `json:"batchIDs"`
+	RemoteOffset              int                             `json:"remoteOffset"`
+	RemoteBatchOffset         int                             `json:"remoteBatchOffset"`
 }
 
 type cursorAdjustedUpload struct {

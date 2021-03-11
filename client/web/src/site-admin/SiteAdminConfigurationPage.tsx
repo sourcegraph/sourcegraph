@@ -263,6 +263,7 @@ export class SiteAdminConfigurationPage extends React.Component<Props, State> {
                                 // UI to be rendered correctly in the navbar and the sidebar.
                                 const keys: (keyof SiteConfiguration)[] = [
                                     'campaigns.enabled',
+                                    'batchChanges.enabled',
                                     'codeIntelAutoIndexing.enabled',
                                 ]
 
@@ -333,12 +334,7 @@ export class SiteAdminConfigurationPage extends React.Component<Props, State> {
         const alerts: JSX.Element[] = []
         if (this.state.error) {
             alerts.push(
-                <ErrorAlert
-                    key="error"
-                    className="site-admin-configuration-page__alert"
-                    error={this.state.error}
-                    history={this.props.history}
-                />
+                <ErrorAlert key="error" className="site-admin-configuration-page__alert" error={this.state.error} />
             )
         }
         if (this.state.reloadStartedAt) {

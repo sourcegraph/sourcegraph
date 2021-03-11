@@ -9,6 +9,7 @@
 | `-exclude-repos` | when specified, add these repositories to the exclusion list |  |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
 | `-id` | ID of the external service to edit |  |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
 | `-name` | exact name of the external service to edit |  |
 | `-rename` | when specified, renames the external service |  |
 | `-trace` | Log the trace ID for requests. See https://docs.sourcegraph.com/admin/observability/tracing | `false` |
@@ -26,6 +27,8 @@ Usage of 'src extsvc edit':
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
   -id string
     	ID of the external service to edit
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -name string
     	exact name of the external service to edit
   -rename string

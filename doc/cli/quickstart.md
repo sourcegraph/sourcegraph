@@ -63,6 +63,6 @@ This should result in this output:
 
 You've run your first search from the command line! 🎉🎉
 
-You can now explore the [range of commands `src` provides](references/index.md), including the extensive support for [campaigns](../../campaigns/index.md).
+You can now explore the [range of commands `src` provides](references/index.md), including the extensive support for [batch changes](../../batch_changes/index.md).
 
 To learn what else you can do with `src`, see "[CLI](index.md)" in the Sourcegraph documentation.

@@ -9,7 +9,7 @@ import { Link } from '../../../shared/src/components/Link'
 import GearIcon from 'mdi-react/GearIcon'
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import { PageHeader } from '../components/PageHeader'
-import { StatusBadge } from '../components/StatusBadge'
+import { FeedbackBadge } from '../components/FeedbackBadge'
 import { Page } from '../components/Page'
 import { TelemetryProps } from '../../../shared/src/telemetry/telemetryService'
 import { getCombinedViews } from './backend'
@@ -41,7 +41,7 @@ export const InsightsPage: React.FunctionComponent<InsightsPageProps> = props =>
         <div className="w-100">
             <Page>
                 <PageHeader
-                    annotation={<StatusBadge status="prototype" feedback={{ mailto: 'support@sourcegraph.com' }} />}
+                    annotation={<FeedbackBadge status="prototype" feedback={{ mailto: 'support@sourcegraph.com' }} />}
                     path={[{ icon: InsightsIcon, text: 'Code insights' }]}
                     actions={
                         <>

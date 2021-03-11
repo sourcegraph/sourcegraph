@@ -1,5 +1,5 @@
 import * as Monaco from 'monaco-editor'
-import { Token, Pattern, Literal, PatternKind, CharacterRange } from './token'
+import { Token, Pattern, Literal, PatternKind, CharacterRange, createLiteral } from './token'
 import { RegExpParser, visitRegExpAST } from 'regexpp'
 import {
     Alternative,
@@ -445,11 +445,9 @@ const mapPathMeta = (token: Literal): DecoratedToken[] => {
             continue
         }
         if (token.value[current] === '/') {
-            tokens.push({
-                type: 'literal',
-                range: { start: offset + start, end: offset + current - 1 },
-                value: token.value.slice(start, current),
-            })
+            tokens.push(
+                createLiteral(token.value.slice(start, current), { start: offset + start, end: offset + current - 1 })
+            )
             tokens.push({
                 type: 'metaPath',
                 range: { start: offset + current, end: offset + current + 1 },
@@ -463,11 +461,7 @@ const mapPathMeta = (token: Literal): DecoratedToken[] => {
         current = current + 1
     }
     // Push last token.
-    tokens.push({
-        type: 'literal',
-        range: { start: offset + start, end: offset + current },
-        value: token.value.slice(start, current),
-    })
+    tokens.push(createLiteral(token.value.slice(start, current), { start: offset + start, end: offset + current }))
     return tokens
 }
 
@@ -781,11 +775,7 @@ const decorateRepoRevision = (token: Literal): DecoratedToken[] => {
     const offset = token.range.start
 
     return [
-        ...mapPathMetaForRegexp({
-            type: 'literal',
-            value: repo,
-            range: { start: offset, end: offset + repo.length },
-        }),
+        ...mapPathMetaForRegexp(createLiteral(repo, { start: offset, end: offset + repo.length })),
         {
             type: 'metaRepoRevisionSeparator',
             value: '@',
@@ -794,14 +784,12 @@ const decorateRepoRevision = (token: Literal): DecoratedToken[] => {
                 end: offset + repo.length + 1,
             },
         },
-        ...mapRevisionMeta({
-            type: 'literal',
-            value: revision,
-            range: {
+        ...mapRevisionMeta(
+            createLiteral(revision, {
                 start: token.range.start + repo.length + 1,
                 end: token.range.start + repo.length + 1 + revision.length,
-            },
-        }),
+            })
+        ),
     ]
 }
 
@@ -813,7 +801,7 @@ const decorateContext = (token: Literal): DecoratedToken[] => {
     const { start, end } = token.range
     return [
         { type: 'metaContextPrefix', range: { start, end: start + 1 }, value: '@' },
-        { type: 'literal', range: { start: start + 1, end }, value: token.value.slice(1) },
+        createLiteral(token.value.slice(1), { start: start + 1, end }),
     ]
 }
 
@@ -859,13 +847,7 @@ export const decorate = (token: Token): DecoratedToken[] => {
                 token.field.value.toLowerCase().match(/rev|revision/i) &&
                 token.value.type === 'literal'
             ) {
-                decorated.push(
-                    ...mapRevisionMeta({
-                        type: 'literal',
-                        value: token.value.value,
-                        range: token.value.range,
-                    })
-                )
+                decorated.push(...mapRevisionMeta(createLiteral(token.value.value, token.value.range)))
             } else if (token.value && token.value.type === 'literal' && hasRegexpValue(token.field.value)) {
                 // Highlight fields with regexp values.
                 if (hasPathLikeValue(token.field.value) && token.value?.type === 'literal') {

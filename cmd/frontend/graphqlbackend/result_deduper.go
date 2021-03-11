@@ -20,11 +20,11 @@ func NewDeduper() *searchResultDeduper {
 // a previously added SearchResultResolver if the URL has already been seen
 func (d *searchResultDeduper) Add(r SearchResultResolver) {
 	if fileMatch, ok := r.ToFileMatch(); ok {
-		if prev, seen := d.seenFileMatches[fileMatch.uri]; seen {
+		if prev, seen := d.seenFileMatches[fileMatch.URI]; seen {
 			prev.appendMatches(fileMatch)
 			return
 		}
-		d.seenFileMatches[fileMatch.uri] = fileMatch
+		d.seenFileMatches[fileMatch.URI] = fileMatch
 		return
 	}
 
@@ -58,7 +58,7 @@ func (d *searchResultDeduper) Add(r SearchResultResolver) {
 func (d *searchResultDeduper) Seen(r SearchResultResolver) (ok bool) {
 	switch v := r.(type) {
 	case *FileMatchResolver:
-		_, ok = d.seenFileMatches[v.uri]
+		_, ok = d.seenFileMatches[v.URI]
 	case *RepositoryResolver:
 		_, ok = d.seenRepoMatches[v.URL()]
 	case *CommitSearchResultResolver:

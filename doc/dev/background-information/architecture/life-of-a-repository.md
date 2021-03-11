@@ -54,7 +54,7 @@ type Source interface {
 
 ## Syncing
 
-We keep a list of all repositories on Sourcegraph in the [`repo` table](https://sourcegraph.com/github.com/sourcegraph/sourcegraph@v3.14.0/-/blob/cmd/frontend/db/schema.md#table-public-repo). This is so to provide a code host independent list of repositories on Sourcegraph that we can quickly query. `repo-updater` will periodically list all repositories from all sources and update the table. We need to list everything so we can detect which repositories to delete. See [`Syncer.Sync`](https://sourcegraph.com/github.com/sourcegraph/sourcegraph@v3.14.0/-/blob/cmd/repo-updater/repos/syncer.go#L101) for details.
+We keep a list of all repositories on Sourcegraph in the [`repo` table](https://sourcegraph.com/github.com/sourcegraph/sourcegraph@v3.14.0/-/blob/cmd/frontend/db/schema.md#table-public-repo). This is to provide a code host independent list of repositories on Sourcegraph that we can quickly query. `repo-updater` will periodically sync each code host connection in the background. It compares the list of repos configured with those in our `repo` table and ensures that thet are consistent. See [`Syncer.SyncExternalServices`](https://sourcegraph.com/github.com/sourcegraph/sourcegraph@v3.25.0/-/blob/internal/repos/syncer.go#L166) for details.
 
 ## Git Update Scheduler
 

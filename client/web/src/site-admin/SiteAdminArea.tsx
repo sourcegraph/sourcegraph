@@ -1,6 +1,6 @@
 import MapSearchIcon from 'mdi-react/MapSearchIcon'
-import * as React from 'react'
-import { Route, RouteComponentProps, Switch } from 'react-router'
+import React, { useLayoutEffect, useRef } from 'react'
+import { Route, RouteComponentProps, Switch, useLocation } from 'react-router'
 import { ActivationProps } from '../../../shared/src/components/activation/Activation'
 import * as GQL from '../../../shared/src/graphql/schema'
 import { PlatformContextProps } from '../../../shared/src/platform/context'
@@ -13,6 +13,8 @@ import { SiteAdminSidebar, SiteAdminSideBarGroups } from './SiteAdminSidebar'
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import { TelemetryProps } from '../../../shared/src/telemetry/telemetryService'
 import { AuthenticatedUser } from '../auth'
+import { PageHeader } from '../components/PageHeader'
+import { Page } from '../components/Page'
 
 const NotFoundPage: React.ComponentType<{}> = () => (
     <HeroPage
@@ -55,6 +57,16 @@ interface SiteAdminAreaProps
 }
 
 const AuthenticatedSiteAdminArea: React.FunctionComponent<SiteAdminAreaProps> = props => {
+    const { pathname } = useLocation()
+
+    const reference = useRef<HTMLDivElement>(null)
+
+    useLayoutEffect(() => {
+        if (reference.current) {
+            reference.current.scrollIntoView()
+        }
+    }, [pathname])
+
     // If not site admin, redirect to sign in.
     if (!props.authenticatedUser.siteAdmin) {
         return <NotSiteAdminPage />
@@ -72,31 +84,36 @@ const AuthenticatedSiteAdminArea: React.FunctionComponent<SiteAdminAreaProps> = 
     }
 
     return (
-        <div className="site-admin-area d-flex container my-3">
-            <SiteAdminSidebar className="flex-0 mr-3" groups={props.sideBarGroups} />
-            <div className="flex-bounded">
-                <ErrorBoundary location={props.location}>
-                    <React.Suspense fallback={<LoadingSpinner className="icon-inline m-2" />}>
-                        <Switch>
-                            {props.routes.map(
-                                /* eslint-disable react/jsx-no-bind */
-                                ({ render, path, exact, condition = () => true }) => (
-                                    <Route
-                                        // see https://github.com/ReactTraining/react-router/issues/4578#issuecomment-334489490
-                                        key="hardcoded-key"
-                                        path={props.match.url + path}
-                                        exact={exact}
-                                        render={routeComponentProps => render({ ...context, ...routeComponentProps })}
-                                    />
-                                )
-                                /* eslint-enable react/jsx-no-bind */
-                            )}
-                            <Route component={NotFoundPage} />
-                        </Switch>
-                    </React.Suspense>
-                </ErrorBoundary>
+        <Page>
+            <PageHeader path={[{ text: 'Site Admin' }]} />
+            <div className="site-admin-area d-flex my-3" ref={reference}>
+                <SiteAdminSidebar className="sidebar flex-0 mr-3" groups={props.sideBarGroups} />
+                <div className="flex-bounded">
+                    <ErrorBoundary location={props.location}>
+                        <React.Suspense fallback={<LoadingSpinner className="icon-inline m-2" />}>
+                            <Switch>
+                                {props.routes.map(
+                                    /* eslint-disable react/jsx-no-bind */
+                                    ({ render, path, exact, condition = () => true }) => (
+                                        <Route
+                                            // see https://github.com/ReactTraining/react-router/issues/4578#issuecomment-334489490
+                                            key="hardcoded-key"
+                                            path={props.match.url + path}
+                                            exact={exact}
+                                            render={routeComponentProps =>
+                                                render({ ...context, ...routeComponentProps })
+                                            }
+                                        />
+                                    )
+                                    /* eslint-enable react/jsx-no-bind */
+                                )}
+                                <Route component={NotFoundPage} />
+                            </Switch>
+                        </React.Suspense>
+                    </ErrorBoundary>
+                </div>
             </div>
-        </div>
+        </Page>
     )
 }
 

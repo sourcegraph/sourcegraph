@@ -5,7 +5,7 @@ env:
 
 steps:
 - command:
-  - COVERAGE_INSTRUMENT=true dev/ci/yarn-run.sh build-storybook
+  - COVERAGE_INSTRUMENT=true NODE_OPTIONS="--max_old_space_size=4096" dev/ci/yarn-run.sh build-storybook
   - yarn run cover-storybook
   - yarn nyc report -r json
   - bash <(curl -s https://codecov.io/bash) -c -F typescript -F storybook

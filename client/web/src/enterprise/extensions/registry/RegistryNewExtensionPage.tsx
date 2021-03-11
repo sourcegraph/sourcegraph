@@ -182,7 +182,6 @@ export const RegistryNewExtensionPage = withAuthenticatedUser(
                                 publishersOrError={this.state.publishersOrError}
                                 onChange={this.onPublisherChange}
                                 disabled={this.state.creationOrError === 'loading'}
-                                history={this.props.history}
                             />
                             <RegistryExtensionNameFormGroup
                                 value={this.state.name}
@@ -223,11 +222,7 @@ export const RegistryNewExtensionPage = withAuthenticatedUser(
                             </button>
                         </Form>
                         {isErrorLike(this.state.creationOrError) && (
-                            <ErrorAlert
-                                className="mt-3"
-                                error={this.state.creationOrError}
-                                history={this.props.history}
-                            />
+                            <ErrorAlert className="mt-3" error={this.state.creationOrError} />
                         )}
                     </ModalPage>
                 </>

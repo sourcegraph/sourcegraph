@@ -7,6 +7,6 @@ To learn more about the generator, see the top-level program: https://github.com
 */
 package monitoring
 
-//go:generate go run github.com/princjef/gomarkdoc/cmd/gomarkdoc --repository.url "https://github.com/sourcegraph/sourcegraph" --repository.default-branch main -o README.md .
+//go:generate go run -mod=mod github.com/princjef/gomarkdoc/cmd/gomarkdoc --repository.url "https://github.com/sourcegraph/sourcegraph" --repository.default-branch main -o README.md .
 
 import _ "github.com/princjef/gomarkdoc" // Pin version of godoc-to-markdown generator

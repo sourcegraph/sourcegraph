@@ -1,5 +1,4 @@
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
-import * as H from 'history'
 import DeleteIcon from 'mdi-react/DeleteIcon'
 import InformationOutlineIcon from 'mdi-react/InformationOutlineIcon'
 import React, { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
@@ -24,7 +23,6 @@ export interface CodeIntelUploadPageProps extends RouteComponentProps<{ id: stri
     now?: () => Date
     /** Scheduler for the refresh timer */
     scheduler?: SchedulerLike
-    history: H.History
 }
 
 const REFRESH_INTERVAL_MS = 5000
@@ -39,7 +37,6 @@ export const CodeIntelUploadPage: FunctionComponent<CodeIntelUploadPageProps> = 
     match: {
         params: { id },
     },
-    history,
     fetchLsifUpload = defaultFetchUpload,
     telemetryService,
     now,
@@ -91,12 +88,12 @@ export const CodeIntelUploadPage: FunctionComponent<CodeIntelUploadPageProps> = 
     return deletionOrError === 'deleted' ? (
         <Redirect to="." />
     ) : isErrorLike(deletionOrError) ? (
-        <ErrorAlert prefix="Error deleting LSIF upload" error={deletionOrError} history={history} />
+        <ErrorAlert prefix="Error deleting LSIF upload" error={deletionOrError} />
     ) : (
         <div className="site-admin-lsif-upload-page w-100 web-content">
             <PageTitle title="Code intelligence - uploads" />
             {isErrorLike(uploadOrError) ? (
-                <ErrorAlert prefix="Error loading LSIF upload" error={uploadOrError} history={history} />
+                <ErrorAlert prefix="Error loading LSIF upload" error={uploadOrError} />
             ) : !uploadOrError ? (
                 <LoadingSpinner className="icon-inline" />
             ) : (
@@ -135,7 +132,6 @@ export const CodeIntelUploadPage: FunctionComponent<CodeIntelUploadPageProps> = 
                         failure={uploadOrError.failure}
                         typeName="upload"
                         pluralTypeName="uploads"
-                        history={history}
                         className={classNamesByState.get(uploadOrError.state)}
                     />
                     {uploadOrError.isLatestForRepo && (

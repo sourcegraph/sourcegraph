@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-enry/go-enry/v2"
 	"github.com/pkg/errors"
@@ -193,6 +194,14 @@ func validateField(field, value string, negated bool, seen map[string]struct{}) 
 		return nil
 	}
 
+	isDuration := func() error {
+		_, err := time.ParseDuration(value)
+		if err != nil {
+			return errors.New(`invalid value for field 'timeout' (examples: "timeout:2s", "timeout:200ms")`)
+		}
+		return nil
+	}
+
 	isLanguage := func() error {
 		_, ok := enry.GetLanguageByAlias(value)
 		if !ok {
@@ -245,10 +254,6 @@ func validateField(field, value string, negated bool, seen map[string]struct{}) 
 		FieldFile:
 		return satisfies(isValidRegexp)
 	case
-		FieldFork,
-		FieldArchived:
-		return satisfies(isSingular, isNotNegated)
-	case
 		FieldLang:
 		return satisfies(isLanguage)
 	case
@@ -275,7 +280,9 @@ func validateField(field, value string, negated bool, seen map[string]struct{}) 
 		FieldMessage:
 		return satisfies(isValidRegexp)
 	case
-		FieldIndex:
+		FieldIndex,
+		FieldFork,
+		FieldArchived:
 		return satisfies(isSingular, isNotNegated, isYesNoOnly)
 	case
 		FieldCount:
@@ -284,10 +291,11 @@ func validateField(field, value string, negated bool, seen map[string]struct{}) 
 		FieldStable:
 		return satisfies(isSingular, isBoolean, isNotNegated)
 	case
-		FieldMax,
-		FieldTimeout,
 		FieldCombyRule:
 		return satisfies(isSingular, isNotNegated)
+	case
+		FieldTimeout:
+		return satisfies(isSingular, isNotNegated, isDuration)
 	case
 		FieldRev:
 		return satisfies(isSingular, isNotNegated)
@@ -464,7 +472,7 @@ func ParseYesNoOnly(s string) YesNoOnly {
 
 func ContainsRefGlobs(q Q) bool {
 	containsRefGlobs := false
-	if repoFilterValues, _ := q.RegexpPatterns(FieldRepo); len(repoFilterValues) > 0 {
+	if repoFilterValues, _ := q.Repositories(); len(repoFilterValues) > 0 {
 		for _, v := range repoFilterValues {
 			repoRev := strings.SplitN(v, "@", 2)
 			if len(repoRev) == 1 { // no revision

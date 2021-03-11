@@ -9,9 +9,9 @@ site_monitoring.go @bobheadxi
 *search*.go @rvantonder
 *zoekt*.go @rvantonder
 
-# Campaigns
-campaigns.go @LawnGnome
-campaigns.go @eseliger
+# Batch changes
+batches.go @LawnGnome
+batches.go @eseliger
 
 # Insights
 insights.go @slimsag

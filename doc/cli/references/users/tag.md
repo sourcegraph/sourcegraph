@@ -7,6 +7,7 @@
 |------|-------------|---------------|
 | `-dump-requests` | Log GraphQL requests and responses to stdout | `false` |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
 | `-remove` | Remove the tag. (default: add the tag | `false` |
 | `-tag` | The tag to set on the user. (required) |  |
 | `-trace` | Log the trace ID for requests. See https://docs.sourcegraph.com/admin/observability/tracing | `false` |
@@ -21,6 +22,8 @@ Usage of 'src users tag':
     	Log GraphQL requests and responses to stdout
   -get-curl
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -remove
     	Remove the tag. (default: add the tag
   -tag string

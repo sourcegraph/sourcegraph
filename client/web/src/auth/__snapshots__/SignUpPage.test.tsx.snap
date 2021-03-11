@@ -182,6 +182,7 @@ exports[`SignUpPage renders sign up page (cloud) 1`] = `
         </div>
         <div
           className="mb-2"
+          onClick={[Function]}
         >
           <a
             className="btn btn-secondary btn-block"

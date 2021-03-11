@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbconn"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtesting"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -24,7 +25,7 @@ func TestDatabasePackageInformation(t *testing.T) {
 	} else if !exists {
 		t.Errorf("no package information")
 	} else {
-		expected := PackageInformationData{
+		expected := semantic.PackageInformationData{
 			Name:    "github.com/sourcegraph/lsif-go",
 			Version: "v0.0.0-ad3507cbeb18",
 		}

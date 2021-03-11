@@ -13,7 +13,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
-	campaignApitest "github.com/sourcegraph/sourcegraph/enterprise/internal/campaigns/resolvers/apitest"
+	batchesApitest "github.com/sourcegraph/sourcegraph/enterprise/internal/batches/resolvers/apitest"
 	cm "github.com/sourcegraph/sourcegraph/enterprise/internal/codemonitors"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codemonitors/email"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codemonitors/resolvers/apitest"
@@ -421,7 +421,7 @@ func queryByUser(ctx context.Context, t *testing.T, schema *graphql.Schema, r *R
 		"actionCursor": relay.MarshalID(monitorActionEventKind, 1),
 	}
 	response := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, input, &response, queryByUserFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, input, &response, queryByUserFmtStr)
 
 	triggerEventEndCursor := string(relay.MarshalID(monitorTriggerEventKind, 1))
 	actionEventEndCursor := string(relay.MarshalID(monitorActionEventKind, 2))
@@ -635,7 +635,7 @@ func TestEditCodeMonitor(t *testing.T) {
 		"user2ID":   ns2,
 	}
 	got := apitest.UpdateCodeMonitorResponse{}
-	campaignApitest.MustExec(ctx, t, schema, updateInput, &got, editMonitor)
+	batchesApitest.MustExec(ctx, t, schema, updateInput, &got, editMonitor)
 
 	want := apitest.UpdateCodeMonitorResponse{
 		UpdateCodeMonitor: apitest.Monitor{
@@ -765,7 +765,7 @@ func recipientPaging(ctx context.Context, t *testing.T, schema *graphql.Schema, 
 		"recipientCursor": string(relay.MarshalID(monitorActionEmailRecipientKind, 1)),
 	}
 	got := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, queryInput, &got, recipientsPagingFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, queryInput, &got, recipientsPagingFmtStr)
 
 	want := apitest.Response{
 		User: apitest.User{
@@ -826,7 +826,7 @@ func queryByID(ctx context.Context, t *testing.T, schema *graphql.Schema, r *Res
 		"id": m.ID(),
 	}
 	response := apitest.Node{}
-	campaignApitest.MustExec(ctx, t, schema, input, &response, queryMonitorByIDFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, input, &response, queryMonitorByIDFmtStr)
 
 	want := apitest.Node{
 		Node: apitest.Monitor{
@@ -951,7 +951,7 @@ func monitorPaging(ctx context.Context, t *testing.T, schema *graphql.Schema, us
 		"monitorCursor": string(relay.MarshalID(MonitorKind, 1)),
 	}
 	got := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, queryInput, &got, monitorPagingFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, queryInput, &got, monitorPagingFmtStr)
 
 	want := apitest.Response{
 		User: apitest.User{
@@ -988,7 +988,7 @@ func actionPaging(ctx context.Context, t *testing.T, schema *graphql.Schema, use
 		"actionCursor": string(relay.MarshalID(monitorActionEmailKind, 1)),
 	}
 	got := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, queryInput, &got, actionPagingFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, queryInput, &got, actionPagingFmtStr)
 
 	want := apitest.Response{
 		User: apitest.User{
@@ -1039,7 +1039,7 @@ func triggerEventPaging(ctx context.Context, t *testing.T, schema *graphql.Schem
 		"triggerEventCursor": relay.MarshalID(monitorTriggerEventKind, 1),
 	}
 	got := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, queryInput, &got, triggerEventPagingFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, queryInput, &got, triggerEventPagingFmtStr)
 
 	want := apitest.Response{
 		User: apitest.User{
@@ -1093,7 +1093,7 @@ func actionEventPaging(ctx context.Context, t *testing.T, schema *graphql.Schema
 		"actionEventCursor": relay.MarshalID(monitorActionEventKind, 1),
 	}
 	got := apitest.Response{}
-	campaignApitest.MustExec(ctx, t, schema, queryInput, &got, actionEventPagingFmtStr)
+	batchesApitest.MustExec(ctx, t, schema, queryInput, &got, actionEventPagingFmtStr)
 
 	want := apitest.Response{
 		User: apitest.User{

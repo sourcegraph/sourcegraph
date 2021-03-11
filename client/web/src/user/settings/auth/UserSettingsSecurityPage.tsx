@@ -1,6 +1,5 @@
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import * as React from 'react'
-import { RouteComponentProps } from 'react-router'
 import { Subject, Subscription } from 'rxjs'
 import { catchError, filter, mergeMap, tap } from 'rxjs/operators'
 import { PasswordInput } from '../../../auth/SignInSignUpCommon'
@@ -40,7 +39,7 @@ interface UserExternalAccountsResult {
     }
 }
 
-interface Props extends RouteComponentProps<{}> {
+interface Props {
     user: UserAreaUserFields
     authenticatedUser: AuthenticatedUser
     context: Pick<SourcegraphContext, 'authProviders'>
@@ -202,9 +201,7 @@ export class UserSettingsSecurityPage extends React.Component<Props, State> {
                     </div>
                 )}
 
-                {this.state.error && (
-                    <ErrorAlert className="mb-3" error={this.state.error} history={this.props.history} />
-                )}
+                {this.state.error && <ErrorAlert className="mb-3" error={this.state.error} />}
 
                 {this.state.saved && <div className="alert alert-success mb-3">Password changed!</div>}
 

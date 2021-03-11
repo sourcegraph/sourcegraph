@@ -92,7 +92,7 @@ const commonProps = () =>
         availableSearchContexts: [],
         defaultSearchContextSpec: '',
         authRequired: false,
-        showCampaigns: false,
+        showBatchChanges: false,
         authenticatedUser: authUser,
         repogroupMetadata: python2To3Metadata,
         globbing: false,

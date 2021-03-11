@@ -30,6 +30,18 @@ interface Repo {
     private: boolean
 }
 
+interface GitHubConfig {
+    repos: string[]
+    token: 'REDACTED'
+    url: string
+}
+interface GitLabConfig {
+    projectQuery: string[]
+    projects: { name: string }[]
+    token: 'REDACTED'
+    url: string
+}
+
 const PER_PAGE = 25
 const SIX_SECONDS = 6000
 const EIGHT_SECONDS = 8000
@@ -81,19 +93,10 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
     const [query, setQuery] = useState('')
     const [codeHostFilter, setCodeHostFilter] = useState('')
     const [codeHosts, setCodeHosts] = useState(initialCodeHostState)
+    const [showTextArea, setShowTextArea] = useState(false)
     const [fetchingRepos, setFetchingRepos] = useState<initialFetchingReposState>()
 
-    interface GitHubConfig {
-        repos: string[]
-        token: 'REDACTED'
-        url: string
-    }
-    interface GitLabConfig {
-        projectQuery: string[]
-        projects: { name: string }[]
-        token: 'REDACTED'
-        url: string
-    }
+    const toggleTextArea = useCallback(() => setShowTextArea(!showTextArea), [showTextArea])
 
     useCallback(() => {
         // first we should load code hosts
@@ -346,7 +349,8 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
 
                             // if the lastSyncAt has changed for all hosts then we're done
                             if (result.nodes.every(codeHost => codeHost.lastSyncAt !== syncTimes.get(codeHost.id))) {
-                                onUserRepositoriesUpdate()
+                                const repoCount = result.nodes.reduce((sum, codeHost) => sum + codeHost.repoCount, 0)
+                                onUserRepositoriesUpdate(repoCount)
                                 // push the user back to the repo list page
                                 history.push(routingPrefix + '/repositories')
                                 // cancel the repeatUntil
@@ -403,7 +407,7 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
                         className="mb-0 user-settings-repos__text-coming-soon
 "
                     >
-                        Sync all my repositories (coming soon)
+                        Sync all repositories (coming soon)
                     </p>
                     <p
                         className="user-settings-repos__text-coming-soon
@@ -578,20 +582,20 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
             <PageTitle title="Manage Repositories" />
             <h2 className="mb-2">Manage Repositories</h2>
             <p className="text-muted">
-                Choose which repositories to sync with Sourcegraph so you can search all your code in one place.
+                Choose repositories to sync with Sourcegraph to search code you care about all in one place
             </p>
             <ul className="list-group">
-                <li className="list-group-item p-0 user-settings-repos__container" key="body">
-                    <div className="p-4" key="description">
+                <li className="list-group-item p-0 user-settings-repos__container" key="from-code-hosts">
+                    <div className="p-4">
                         <h3>Your repositories</h3>
                         <p className="text-muted">
-                            Repositories you own or collaborate on from{' '}
+                            Repositories you own or collaborate on from your{' '}
                             <Link className="text-primary" to={`${routingPrefix}/code-hosts`}>
                                 connected code hosts
                             </Link>
                         </p>
                         <div className="alert alert-primary">
-                            Coming soon: search your private repositories with Sourcegraph Cloud.{' '}
+                            Coming soon: search private repositories with Sourcegraph Cloud.{' '}
                             <Link
                                 to="https://share.hsforms.com/1copeCYh-R8uVYGCpq3s4nw1n7ku"
                                 target="_blank"
@@ -609,7 +613,7 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
                             selectionState.radio === 'selected' && (
                                 <div className="ml-4">
                                     {filterControls}
-                                    {repoState.error !== '' && <ErrorAlert error={repoState.error} history={history} />}
+                                    {repoState.error !== '' && <ErrorAlert error={repoState.error} />}
                                     <table role="grid" className="table">
                                         {
                                             // if we're selecting repos, and the repos are still loading, display the loading animation
@@ -632,6 +636,29 @@ export const UserSettingsManageRepositoriesPage: React.FunctionComponent<Props> 
                                 </div>
                             )
                         }
+                    </div>
+                </li>
+                <li className="list-group-item p-0 user-settings-repos__container" key="add-textarea">
+                    <div className="p-4 text-muted">
+                        <h3 className="text-muted">Other public repositories (coming soon)</h3>
+                        <p className="text-muted">Public repositories on GitHub and GitLab</p>
+                        <input
+                            disabled={true}
+                            id="add-public-repos"
+                            className="mr-2 mt-2"
+                            type="checkbox"
+                            onChange={toggleTextArea}
+                            checked={showTextArea}
+                        />
+                        <label htmlFor="add-public-repos">Sync specific public repositories by URL</label>
+
+                        {showTextArea && (
+                            <div className="form-group ml-4 mt-3">
+                                <p className="mb-2">Repositories to sync</p>
+                                <textarea className="form-control" rows={5} />
+                                <p className="text-muted mt-2">Specify with complete URLs. One repository per line.</p>
+                            </div>
+                        )}
                     </div>
                 </li>
             </ul>

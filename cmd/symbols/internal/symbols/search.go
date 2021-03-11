@@ -18,8 +18,10 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 	nettrace "golang.org/x/net/trace"
 
-	"github.com/sourcegraph/sourcegraph/internal/symbols/protocol"
+	"github.com/sourcegraph/sourcegraph/cmd/symbols/internal/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/trace/ot"
+
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 )
 
 // maxFileSize is the limit on file size in bytes. Only files smaller than this are processed.
@@ -48,7 +50,8 @@ func (s *Service) handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) search(ctx context.Context, args protocol.SearchArgs) (result *protocol.SearchResult, err error) {
+func (s *Service) search(ctx context.Context, args protocol.SearchArgs) (*result.Symbols, error) {
+	var err error
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -85,13 +88,11 @@ func (s *Service) search(ctx context.Context, args protocol.SearchArgs) (result 
 	}
 	defer db.Close()
 
-	result = &protocol.SearchResult{}
-	res, err := filterSymbols(ctx, db, args)
+	result, err := filterSymbols(ctx, db, args)
 	if err != nil {
 		return nil, err
 	}
-	result.Symbols = res
-	return result, nil
+	return &result, nil
 }
 
 // getDBFile returns the path to the sqlite3 database for the repo@commit
@@ -134,7 +135,7 @@ func isLiteralEquality(expr string) (ok bool, lit string, err error) {
 	return true, string(r.Sub[1].Rune), nil
 }
 
-func filterSymbols(ctx context.Context, db *sqlx.DB, args protocol.SearchArgs) (res []protocol.Symbol, err error) {
+func filterSymbols(ctx context.Context, db *sqlx.DB, args protocol.SearchArgs) (res []result.Symbol, err error) {
 	span, _ := ot.StartSpanFromContext(ctx, "filterSymbols")
 	defer func() {
 		if err != nil {
@@ -237,7 +238,7 @@ type symbolInDB struct {
 	FileLimited bool
 }
 
-func symbolToSymbolInDB(symbol protocol.Symbol) symbolInDB {
+func symbolToSymbolInDB(symbol result.Symbol) symbolInDB {
 	return symbolInDB{
 		Name:          symbol.Name,
 		NameLowercase: strings.ToLower(symbol.Name),
@@ -255,8 +256,8 @@ func symbolToSymbolInDB(symbol protocol.Symbol) symbolInDB {
 	}
 }
 
-func symbolInDBToSymbol(symbolInDB symbolInDB) protocol.Symbol {
-	return protocol.Symbol{
+func symbolInDBToSymbol(symbolInDB symbolInDB) result.Symbol {
+	return result.Symbol{
 		Name:       symbolInDB.Name,
 		Path:       symbolInDB.Path,
 		Line:       symbolInDB.Line,
@@ -338,7 +339,7 @@ func (s *Service) writeAllSymbolsToNewDB(ctx context.Context, dbFile string, rep
 		return err
 	}
 
-	err = s.parseUncached(ctx, repoName, commitID, func(symbol protocol.Symbol) error {
+	err = s.parseUncached(ctx, repoName, commitID, func(symbol result.Symbol) error {
 		symbolInDBValue := symbolToSymbolInDB(symbol)
 		_, err := insertStatement.Exec(&symbolInDBValue)
 		return err

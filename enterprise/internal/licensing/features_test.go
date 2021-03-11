@@ -73,18 +73,23 @@ func TestCheckFeature(t *testing.T) {
 		check(t, FeatureBranding, license(plan(enterprise), string(FeatureBranding)), true)
 	})
 
-	t.Run(string(FeatureCampaigns), func(t *testing.T) {
-		check(t, FeatureCampaigns, nil, false)
+	testBatchChanges := func(feature Feature) func(*testing.T) {
+		return func(t *testing.T) {
+			check(t, feature, nil, false)
 
-		check(t, FeatureCampaigns, license("starter"), false)
-		check(t, FeatureCampaigns, license(plan(oldEnterpriseStarter)), false)
-		check(t, FeatureCampaigns, license(plan(oldEnterprise)), true)
-		check(t, FeatureCampaigns, license(), true)
+			check(t, feature, license("starter"), false)
+			check(t, feature, license(plan(oldEnterpriseStarter)), false)
+			check(t, feature, license(plan(oldEnterprise)), true)
+			check(t, feature, license(), true)
 
-		check(t, FeatureCampaigns, license(plan(team)), false)
-		check(t, FeatureCampaigns, license(plan(enterprise)), false)
-		check(t, FeatureCampaigns, license(plan(enterprise), string(FeatureCampaigns)), true)
-	})
+			check(t, feature, license(plan(team)), false)
+			check(t, feature, license(plan(enterprise)), false)
+			check(t, feature, license(plan(enterprise), string(feature)), true)
+		}
+	}
+	// FeatureCampaigns is deprecated but should behave like BatchChanges.
+	t.Run(string(FeatureCampaigns), testBatchChanges(FeatureCampaigns))
+	t.Run(string(FeatureBatchChanges), testBatchChanges(FeatureBatchChanges))
 
 	t.Run(string(FeatureMonitoring), func(t *testing.T) {
 		check(t, FeatureMonitoring, nil, false)

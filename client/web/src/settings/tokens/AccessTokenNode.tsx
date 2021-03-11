@@ -8,7 +8,6 @@ import { Timestamp } from '../../components/time/Timestamp'
 import { userURL } from '../../user'
 import { AccessTokenCreatedAlert } from './AccessTokenCreatedAlert'
 import { ErrorAlert } from '../../components/alerts'
-import * as H from 'history'
 import {
     AccessTokenFields,
     CreateAccessTokenResult,
@@ -60,7 +59,6 @@ export interface AccessTokenNodeProps {
     showSubject: boolean
 
     afterDelete: () => void
-    history: H.History
 }
 
 export const AccessTokenNode: React.FunctionComponent<AccessTokenNodeProps> = ({
@@ -68,7 +66,6 @@ export const AccessTokenNode: React.FunctionComponent<AccessTokenNodeProps> = ({
     showSubject,
     newToken,
     afterDelete,
-    history,
 }) => {
     const [isDeleting, setIsDeleting] = useState<boolean | Error>(false)
     const onDeleteAccessToken = useCallback(async () => {
@@ -136,7 +133,7 @@ export const AccessTokenNode: React.FunctionComponent<AccessTokenNodeProps> = ({
                     >
                         Delete
                     </button>
-                    {isErrorLike(isDeleting) && <ErrorAlert className="mt-2" error={isDeleting} history={history} />}
+                    {isErrorLike(isDeleting) && <ErrorAlert className="mt-2" error={isDeleting} />}
                 </div>
             </div>
             {newToken && node.id === newToken.id && (

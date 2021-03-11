@@ -4,7 +4,7 @@
 
 
 * [`api`](api.md)
-* [`campaigns`](campaigns/index.md)
+* [`batch`](batch/index.md)
 * [`config`](config/index.md)
 * [`extensions`](extensions/index.md)
 * [`extsvc`](extsvc/index.md)

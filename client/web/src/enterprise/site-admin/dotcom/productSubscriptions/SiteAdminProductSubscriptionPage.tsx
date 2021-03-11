@@ -138,7 +138,7 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<Props> = 
             {productSubscription === LOADING ? (
                 <LoadingSpinner className="icon-inline" />
             ) : isErrorLike(productSubscription) ? (
-                <ErrorAlert className="my-2" error={productSubscription} history={history} />
+                <ErrorAlert className="my-2" error={productSubscription} />
             ) : (
                 <>
                     <h2>Product subscription {productSubscription.name}</h2>
@@ -151,7 +151,7 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<Props> = 
                         >
                             Archive
                         </button>
-                        {isErrorLike(archival) && <ErrorAlert className="mt-2" error={archival} history={history} />}
+                        {isErrorLike(archival) && <ErrorAlert className="mt-2" error={archival} />}
                     </div>
                     <div className="card mt-3">
                         <div className="card-header">Details</div>
@@ -219,7 +219,6 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<Props> = 
                                 <SiteAdminGenerateProductLicenseForSubscriptionForm
                                     subscriptionID={productSubscription.id}
                                     onGenerate={onLicenseUpdate}
-                                    history={history}
                                 />
                             </div>
                         )}

@@ -77,7 +77,7 @@ export const UserSubscriptionsProductSubscriptionPage: React.FunctionComponent<P
             {productSubscription === LOADING ? (
                 <LoadingSpinner className="icon-inline" />
             ) : isErrorLike(productSubscription) ? (
-                <ErrorAlert className="my-2" error={productSubscription} history={history} />
+                <ErrorAlert className="my-2" error={productSubscription} />
             ) : (
                 <>
                     <h2>Subscription {productSubscription.name}</h2>

@@ -84,7 +84,7 @@ func requestWantsTracing(r *http.Request) bool {
 	}
 	// PERF: Avoid parsing RawQuery if "trace=" is not present
 	if strings.Contains(r.URL.RawQuery, "trace=") {
-		v := r.URL.Query().Get("trace")
+		v := r.URL.Query().Get(traceQuery)
 		b, _ := strconv.ParseBool(v)
 		return b
 	}

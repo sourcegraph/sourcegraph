@@ -12,6 +12,7 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // SplitRepositoryNameWithOwner splits a GitHub repository's "owner/name" string into "owner" and "name", with
@@ -100,14 +101,10 @@ func (c *V3Client) cachedGetRepository(ctx context.Context, key string, getRepos
 	return repo, nil
 }
 
-var reposGitHubCacheCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+var reposGitHubCacheCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "src_repos_github_cache_hit",
 	Help: "Counts cache hits and misses for GitHub repo metadata.",
 }, []string{"type"})
-
-func init() {
-	prometheus.MustRegister(reposGitHubCacheCounter)
-}
 
 type cachedRepo struct {
 	Repository

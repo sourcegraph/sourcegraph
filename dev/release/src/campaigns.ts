@@ -127,7 +127,7 @@ export async function addToCampaign(
 }
 
 /**
- * Subset of campaign spec: https://docs.sourcegraph.com/campaigns/references/campaign_spec_yaml_reference
+ * Subset of campaign spec: https://docs.sourcegraph.com/batch_changes/references/batch_spec_yaml_reference
  */
 interface CampaignSpec {
     name: string

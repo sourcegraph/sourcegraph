@@ -1,5 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Toggle aria 1`] = `
+<Toggle
+  aria-describedby="test-id-1"
+  aria-label="test toggle"
+  aria-labelledby="test-id-2"
+>
+  <button
+    aria-describedby="test-id-1"
+    aria-label="test toggle"
+    aria-labelledby="test-id-2"
+    className="toggle"
+    onClick={[Function]}
+    role="switch"
+    type="button"
+    value={0}
+  >
+    <span
+      className="toggle__bar"
+    />
+    <span
+      className="toggle__bar-shadow"
+    />
+    <span
+      className="toggle__knob"
+    />
+  </button>
+</Toggle>
+`;
+
 exports[`Toggle className 1`] = `
 <Toggle
   className="c"

@@ -18,12 +18,12 @@ exports[`NavLinks authed Sourcegraph.com /foo 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -50,17 +50,17 @@ exports[`NavLinks authed Sourcegraph.com /foo 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -104,12 +104,12 @@ exports[`NavLinks authed Sourcegraph.com /foo 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -136,9 +136,9 @@ exports[`NavLinks authed Sourcegraph.com /foo 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
             </span>
           </a>
         </button>
@@ -736,12 +736,12 @@ exports[`NavLinks authed Sourcegraph.com /search 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -768,17 +768,17 @@ exports[`NavLinks authed Sourcegraph.com /search 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -822,12 +822,12 @@ exports[`NavLinks authed Sourcegraph.com /search 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -854,9 +854,9 @@ exports[`NavLinks authed Sourcegraph.com /search 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
             </span>
           </a>
         </button>
@@ -1464,12 +1464,12 @@ exports[`NavLinks authed self-hosted /foo 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -1496,17 +1496,17 @@ exports[`NavLinks authed self-hosted /foo 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -1550,12 +1550,12 @@ exports[`NavLinks authed self-hosted /foo 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -1582,9 +1582,9 @@ exports[`NavLinks authed self-hosted /foo 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
             </span>
           </a>
         </button>
@@ -2163,12 +2163,12 @@ exports[`NavLinks authed self-hosted /search 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -2195,17 +2195,17 @@ exports[`NavLinks authed self-hosted /search 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -2249,12 +2249,12 @@ exports[`NavLinks authed self-hosted /search 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -2281,9 +2281,9 @@ exports[`NavLinks authed self-hosted /search 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
             </span>
           </a>
         </button>
@@ -2872,12 +2872,12 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -2904,17 +2904,17 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -2958,12 +2958,12 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -2990,9 +2990,55 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="docs"
+            href="/help"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              Docs
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="about"
+            href="https://about.sourcegraph.com"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              About
             </span>
           </a>
         </button>
@@ -3000,37 +3046,43 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
     </div>
   </li>
   <li
-    class="nav-item mx-1"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-primary"
-      href="/sign-in"
-    >
-      Sign in
-    </a>
-  </li>
-  <li
-    class="nav-item"
-  >
-    <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="docs"
       href="/help"
       rel="noopener"
       target="_blank"
     >
-      Docs
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        Docs
+      </span>
     </a>
   </li>
   <li
-    class="nav-item"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="about"
       href="https://about.sourcegraph.com"
       rel="noopener"
       target="_blank"
     >
-      About
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        About
+      </span>
     </a>
   </li>
   <li
@@ -3065,6 +3117,26 @@ exports[`NavLinks unauthed Sourcegraph.com /foo 1`] = `
       </svg>
     </span>
   </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-secondary"
+      href="/sign-in"
+    >
+      Log in
+    </a>
+  </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-primary"
+      href="/sign-up"
+    >
+      Sign up
+    </a>
+  </li>
 </ul>
 `;
 
@@ -3076,12 +3148,12 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -3108,17 +3180,17 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -3162,12 +3234,12 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -3194,9 +3266,55 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="docs"
+            href="/help"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              Docs
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="about"
+            href="https://about.sourcegraph.com"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              About
             </span>
           </a>
         </button>
@@ -3204,37 +3322,43 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
     </div>
   </li>
   <li
-    class="nav-item mx-1"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-primary"
-      href="/sign-in"
-    >
-      Sign in
-    </a>
-  </li>
-  <li
-    class="nav-item"
-  >
-    <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="docs"
       href="/help"
       rel="noopener"
       target="_blank"
     >
-      Docs
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        Docs
+      </span>
     </a>
   </li>
   <li
-    class="nav-item"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="about"
       href="https://about.sourcegraph.com"
       rel="noopener"
       target="_blank"
     >
-      About
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        About
+      </span>
     </a>
   </li>
   <li
@@ -3269,6 +3393,26 @@ exports[`NavLinks unauthed Sourcegraph.com /search 1`] = `
       </svg>
     </span>
   </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-secondary"
+      href="/sign-in"
+    >
+      Log in
+    </a>
+  </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-primary"
+      href="/sign-up"
+    >
+      Sign up
+    </a>
+  </li>
 </ul>
 `;
 
@@ -3290,12 +3434,12 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -3322,17 +3466,17 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -3376,12 +3520,12 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -3408,9 +3552,32 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="docs"
+            href="/help"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              Docs
             </span>
           </a>
         </button>
@@ -3418,25 +3585,23 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
     </div>
   </li>
   <li
-    class="nav-item mx-1"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-primary"
-      href="/sign-in"
-    >
-      Sign in
-    </a>
-  </li>
-  <li
-    class="nav-item"
-  >
-    <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="docs"
       href="/help"
       rel="noopener"
       target="_blank"
     >
-      Docs
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        Docs
+      </span>
     </a>
   </li>
   <li
@@ -3471,6 +3636,26 @@ exports[`NavLinks unauthed self-hosted /foo 1`] = `
       </svg>
     </span>
   </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-secondary"
+      href="/sign-in"
+    >
+      Log in
+    </a>
+  </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-primary"
+      href="/sign-up"
+    >
+      Sign up
+    </a>
+  </li>
 </ul>
 `;
 
@@ -3482,12 +3667,12 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
     class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-      data-testid="campaigns"
-      href="/campaigns"
+      class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+      data-testid="batch-changes"
+      href="/batch-changes"
     >
       <svg
-        class="icon-inline"
+        class="icon-inline mr-1"
         fill="currentColor"
         height="20"
         viewBox="0 -3 38 38"
@@ -3514,17 +3699,17 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
         />
       </svg>
       <span
-        class="inline-block ml-1"
+        class="inline-block"
       >
-        Campaigns
+        Batch Changes
       </span>
     </a>
   </li>
   <li
-    class="nav-item d-lg-none"
+    class="nav-item nav-item--dropdown d-lg-none"
   >
     <div
-      class="menu-nav-item btn-group"
+      class="btn-group"
     >
       <a
         aria-expanded="false"
@@ -3568,12 +3753,12 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
           type="button"
         >
           <a
-            class="nav-link btn btn-link text-decoration-none d-flex align-items-center"
-            data-testid="campaigns"
-            href="/campaigns"
+            class="d-flex align-items-center nav-link btn btn-link text-decoration-none"
+            data-testid="batch-changes"
+            href="/batch-changes"
           >
             <svg
-              class="icon-inline"
+              class="icon-inline mr-1"
               fill="currentColor"
               height="20"
               viewBox="0 -3 38 38"
@@ -3600,9 +3785,32 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
               />
             </svg>
             <span
-              class="inline-block ml-1"
+              class="inline-block"
             >
-              Campaigns
+              Batch Changes
+            </span>
+          </a>
+        </button>
+        <button
+          class="dropdown-item"
+          role="menuitem"
+          tabindex="0"
+          type="button"
+        >
+          <a
+            class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+            data-testid="docs"
+            href="/help"
+            rel="noopener"
+            target="_blank"
+          >
+            <svg
+              class="icon-inline mr-1"
+            />
+            <span
+              class="inline-block"
+            >
+              Docs
             </span>
           </a>
         </button>
@@ -3610,25 +3818,23 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
     </div>
   </li>
   <li
-    class="nav-item mx-1"
+    class="nav-item d-none d-lg-block"
   >
     <a
-      class="nav-link btn btn-primary"
-      href="/sign-in"
-    >
-      Sign in
-    </a>
-  </li>
-  <li
-    class="nav-item"
-  >
-    <a
-      class="nav-link"
+      class="d-flex align-items-center nav-link nav-link--with-icon-placeholder btn btn-link text-decoration-none"
+      data-testid="docs"
       href="/help"
       rel="noopener"
       target="_blank"
     >
-      Docs
+      <svg
+        class="icon-inline mr-1"
+      />
+      <span
+        class="inline-block"
+      >
+        Docs
+      </span>
     </a>
   </li>
   <li
@@ -3662,6 +3868,26 @@ exports[`NavLinks unauthed self-hosted /search 1`] = `
         />
       </svg>
     </span>
+  </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-secondary"
+      href="/sign-in"
+    >
+      Log in
+    </a>
+  </li>
+  <li
+    class="nav-item mx-1"
+  >
+    <a
+      class="nav-link btn btn-primary"
+      href="/sign-up"
+    >
+      Sign up
+    </a>
   </li>
 </ul>
 `;

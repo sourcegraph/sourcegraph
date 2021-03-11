@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/uber/gonduit"
 	"github.com/uber/gonduit/core"
 	"github.com/uber/gonduit/requests"
@@ -18,15 +19,11 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 )
 
-var requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name:    "src_phabricator_request_duration_seconds",
 	Help:    "Time (in seconds) spent on request.",
 	Buckets: prometheus.DefBuckets,
 }, []string{"category", "code"})
-
-func init() {
-	prometheus.MustRegister(requestDuration)
-}
 
 type meteredConn struct {
 	gonduit.Conn

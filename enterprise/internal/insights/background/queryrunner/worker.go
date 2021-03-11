@@ -82,6 +82,7 @@ func EnqueueJob(ctx context.Context, workerBaseStore *basestore.Store, job *Job)
 			enqueueJobFmtStr,
 			job.SeriesID,
 			job.SearchQuery,
+			job.RecordTime,
 			job.State,
 			job.ProcessAfter,
 		),
@@ -94,9 +95,10 @@ const enqueueJobFmtStr = `
 INSERT INTO insights_query_runner_jobs (
 	series_id,
 	search_query,
+	record_time,
 	state,
 	process_after
-) VALUES (%s, %s, %s, %s)
+) VALUES (%s, %s, %s, %s, %s)
 RETURNING id
 `
 
@@ -120,6 +122,7 @@ const dequeueJobFmtStr = `
 SELECT
 	series_id,
 	search_query,
+	record_time,
 	id,
 	state,
 	failure_message,
@@ -142,6 +145,7 @@ type Job struct {
 	// Query runner fields.
 	SeriesID    string
 	SearchQuery string
+	RecordTime  *time.Time // If non-nil, record results at this time instead of the time at which search results were found.
 
 	// Standard/required dbworker fields. If enqueuing a job, these may all be zero values except State.
 	//
@@ -183,6 +187,7 @@ func doScanJobs(rows *sql.Rows, err error) ([]*Job, error) {
 			// Query runner fields.
 			&j.SeriesID,
 			&j.SearchQuery,
+			&j.RecordTime,
 
 			// Standard/required dbworker fields.
 			&j.ID,
@@ -212,4 +217,5 @@ func doScanJobs(rows *sql.Rows, err error) ([]*Job, error) {
 var jobsColumns = append([]*sqlf.Query{
 	sqlf.Sprintf("insights_query_runner_jobs.series_id"),
 	sqlf.Sprintf("insights_query_runner_jobs.search_query"),
+	sqlf.Sprintf("insights_query_runner_jobs.record_time"),
 }, dbworkerstore.DefaultColumnExpressions()...)

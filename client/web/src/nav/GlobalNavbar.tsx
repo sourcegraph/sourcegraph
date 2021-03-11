@@ -55,7 +55,7 @@ interface Props
     onNavbarQueryChange: (queryState: QueryState) => void
     isSourcegraphDotCom: boolean
     isSearchRelatedPage: boolean
-    showCampaigns: boolean
+    showBatchChanges: boolean
     routes: readonly LayoutRouteProps<{}>[]
 
     // Whether globbing is enabled for filters.

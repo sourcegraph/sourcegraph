@@ -16,6 +16,7 @@ Site administrators are the admins responsible for deploying, managing, and conf
 - [Configuration](config/index.md)
 - [Adding Git repositories](repo/add.md) (from a code host or clone URL)
 - [HTTP and HTTPS/SSL configuration](http_https_configuration.md)
+  - [Adding SSL (HTTPS) to Sourcegraph with a self-signed certificate](ssl_https_self_signed_cert_nginx.md)
 - [Monorepo](monorepo.md)
 - [Repository webhooks](repo/webhooks.md)
 - [User authentication](auth/index.md)
@@ -38,6 +39,7 @@ Site administrators are the admins responsible for deploying, managing, and conf
 - [Pings](pings.md)
 - [Usage statistics](usage_statistics.md)
 - [User feedback surveys](user_surveys.md)
+- [Beta and prototype features](beta_and_prototype_features.md)
 
 ## Integrations
 

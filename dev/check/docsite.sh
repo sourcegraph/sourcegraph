@@ -15,5 +15,6 @@ echo
   echo
   echo Errors found in Markdown documentation files. Fix the errors in doc/ and try again.
   echo
+  echo "^^^ +++"
   exit 1
 }

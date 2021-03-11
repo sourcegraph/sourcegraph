@@ -176,7 +176,7 @@ The following are two recommendations for installing these dependencies:
     # $REDIS_DATA_DIR should be an absolute path to a folder where you intend to store Redis data
     ```
 
-    You need to have Redis running when you start the dev server later on. If you have issues running Docker, try [adding your user to the docker group][dockerGroup], and/or [updating the socket file persimissions][socketPermissions], or try running these commands under `sudo`.
+    You need to have Redis running when you start the dev server later on. If you have issues running Docker, try [adding your user to the docker group][dockerGroup], and/or [updating the socket file permissions][socketPermissions], or try running these commands under `sudo`.
 
     [dockerGroup]: https://stackoverflow.com/a/48957722
     [socketPermissions]: https://stackoverflow.com/a/51362528
@@ -191,7 +191,7 @@ We use asdf in buildkite to lock the versions of the tools that we use on a per-
 
 #### asdf binary
 
-See the [installation instructions on the official asdf documentation](https://asdf-vm.com/#/core-manage-asdf-vm?id=install-asdf-vm).
+See the [installation instructions on the official asdf documentation](https://asdf-vm.com/#/core-manage-asdf?id=install).
 
 #### Plugins
 

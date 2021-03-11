@@ -21,6 +21,7 @@ import (
 type Interface interface {
 	SeriesPoints(ctx context.Context, opts SeriesPointsOpts) ([]SeriesPoint, error)
 	RecordSeriesPoint(ctx context.Context, v RecordSeriesPointArgs) error
+	DistinctSeriesWithData(ctx context.Context, from, to time.Time) ([]string, error)
 }
 
 var _ Interface = &Store{}
@@ -147,7 +148,7 @@ SELECT sub.time_bucket,
 	SUM(sub.max),
 	sub.metadata
 FROM (
-	SELECT time_bucket(INTERVAL '12 hours', time) AS time_bucket,
+	SELECT time_bucket(INTERVAL '15 days', time) AS time_bucket,
 		MAX(value),
 		m.metadata,
 		series_id,

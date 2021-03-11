@@ -4,11 +4,11 @@ import { userAreaRoutes } from '../../user/area/routes'
 import { UserAreaRoute, UserAreaRouteContext } from '../../user/area/UserArea'
 import { enterpriseNamespaceAreaRoutes } from '../namespaces/routes'
 import { lazyComponent } from '../../util/lazyComponent'
-import { NamespaceCampaignsAreaProps } from '../campaigns/global/GlobalCampaignsArea'
+import { NamespaceBatchChangesAreaProps } from '../batches/global/GlobalBatchChangesArea'
 
-const NamespaceCampaignsArea = lazyComponent<NamespaceCampaignsAreaProps, 'NamespaceCampaignsArea'>(
-    () => import('../campaigns/global/GlobalCampaignsArea'),
-    'NamespaceCampaignsArea'
+const NamespaceBatchChangesArea = lazyComponent<NamespaceBatchChangesAreaProps, 'NamespaceBatchChangesArea'>(
+    () => import('../batches/global/GlobalBatchChangesArea'),
+    'NamespaceBatchChangesArea'
 )
 
 export const enterpriseUserAreaRoutes: readonly UserAreaRoute[] = [
@@ -28,7 +28,11 @@ export const enterpriseUserAreaRoutes: readonly UserAreaRoute[] = [
     },
     {
         path: '/campaigns',
-        render: props => <NamespaceCampaignsArea {...props} namespaceID={props.user.id} />,
-        condition: props => !props.isSourcegraphDotCom && window.context.campaignsEnabled,
+        render: ({ location }) => <Redirect to={location.pathname.replace('/campaigns', '/batch-changes')} />,
+    },
+    {
+        path: '/batch-changes',
+        render: props => <NamespaceBatchChangesArea {...props} namespaceID={props.user.id} />,
+        condition: props => !props.isSourcegraphDotCom && window.context.batchChangesEnabled,
     },
 ]

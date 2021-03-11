@@ -1,5 +1,4 @@
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
-import * as H from 'history'
 import DeleteIcon from 'mdi-react/DeleteIcon'
 import React, { FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
 import { Redirect, RouteComponentProps } from 'react-router'
@@ -23,7 +22,6 @@ export interface CodeIntelIndexPageProps extends RouteComponentProps<{ id: strin
     now?: () => Date
     /** Scheduler for the refresh timer */
     scheduler?: SchedulerLike
-    history: H.History
 }
 
 const REFRESH_INTERVAL_MS = 5000
@@ -38,7 +36,6 @@ export const CodeIntelIndexPage: FunctionComponent<CodeIntelIndexPageProps> = ({
     match: {
         params: { id },
     },
-    history,
     telemetryService,
     fetchLsifIndex = defaultFetchLsifIndex,
     now,
@@ -85,12 +82,12 @@ export const CodeIntelIndexPage: FunctionComponent<CodeIntelIndexPageProps> = ({
     return deletionOrError === 'deleted' ? (
         <Redirect to="." />
     ) : isErrorLike(deletionOrError) ? (
-        <ErrorAlert prefix="Error deleting LSIF index record" error={deletionOrError} history={history} />
+        <ErrorAlert prefix="Error deleting LSIF index record" error={deletionOrError} />
     ) : (
         <div className="site-admin-lsif-index-page w-100 web-content">
             <PageTitle title="Code intelligence - auto-indexing" />
             {isErrorLike(indexOrError) ? (
-                <ErrorAlert prefix="Error loading LSIF index" error={indexOrError} history={history} />
+                <ErrorAlert prefix="Error loading LSIF index" error={indexOrError} />
             ) : !indexOrError ? (
                 <LoadingSpinner className="icon-inline" />
             ) : (
@@ -119,7 +116,6 @@ export const CodeIntelIndexPage: FunctionComponent<CodeIntelIndexPageProps> = ({
                         failure={indexOrError.failure}
                         typeName="index"
                         pluralTypeName="indexes"
-                        history={history}
                         className={classNamesByState.get(indexOrError.state)}
                     />
                     <div className="card mb-3">

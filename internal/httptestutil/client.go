@@ -122,6 +122,7 @@ func (c *Client) DoJSON(method, url string, in, out interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	if ct := resp.Header.Get("content-type"); !strings.HasPrefix(ct, "application/json") {
 		return fmt.Errorf("content type %q is not JSON", ct)
 	}

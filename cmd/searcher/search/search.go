@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	nettrace "golang.org/x/net/trace"
 
@@ -271,32 +272,25 @@ func validateParams(p *protocol.Request) error {
 const megabyte = float64(1000 * 1000)
 
 var (
-	running = prometheus.NewGauge(prometheus.GaugeOpts{
+	running = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "searcher_service_running",
 		Help: "Number of running search requests.",
 	})
-	archiveSize = prometheus.NewHistogram(prometheus.HistogramOpts{
+	archiveSize = promauto.NewHistogram(prometheus.HistogramOpts{
 		Name:    "searcher_service_archive_size_bytes",
 		Help:    "Observes the size when an archive is searched.",
 		Buckets: []float64{1 * megabyte, 10 * megabyte, 100 * megabyte, 500 * megabyte, 1000 * megabyte, 5000 * megabyte},
 	})
-	archiveFiles = prometheus.NewHistogram(prometheus.HistogramOpts{
+	archiveFiles = promauto.NewHistogram(prometheus.HistogramOpts{
 		Name:    "searcher_service_archive_files",
 		Help:    "Observes the number of files when an archive is searched.",
 		Buckets: []float64{100, 1000, 10000, 50000, 100000},
 	})
-	requestTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	requestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "searcher_service_request_total",
 		Help: "Number of returned search requests.",
 	}, []string{"code"})
 )
-
-func init() {
-	prometheus.MustRegister(running)
-	prometheus.MustRegister(archiveSize)
-	prometheus.MustRegister(archiveFiles)
-	prometheus.MustRegister(requestTotal)
-}
 
 type badRequestError struct{ msg string }
 

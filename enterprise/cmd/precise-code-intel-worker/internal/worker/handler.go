@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/lsif/correlation"
 	store "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/uploadstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/lsif/conversion"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/workerutil"
@@ -86,9 +86,9 @@ func (h *handler) handle(ctx context.Context, workerStore dbworkerstore.Store, d
 	}
 
 	return false, withUploadData(ctx, h.uploadStore, upload.ID, func(r io.Reader) (err error) {
-		groupedBundleData, err := correlation.Correlate(ctx, r, upload.ID, upload.Root, getChildren)
+		groupedBundleData, err := conversion.Correlate(ctx, r, upload.ID, upload.Root, getChildren)
 		if err != nil {
-			return errors.Wrap(err, "correlation.Correlate")
+			return errors.Wrap(err, "conversion.Correlate")
 		}
 
 		if err := writeData(ctx, h.lsifStore, upload.ID, groupedBundleData); err != nil {
@@ -101,10 +101,10 @@ func (h *handler) handle(ctx context.Context, workerStore dbworkerstore.Store, d
 		// any other changes but still commit the transaction as a whole.
 		if err := inTransaction(ctx, dbStore, func(tx DBStore) error {
 			// Update package and package reference data to support cross-repo queries.
-			if err := tx.UpdatePackages(ctx, groupedBundleData.Packages); err != nil {
+			if err := tx.UpdatePackages(ctx, upload.ID, groupedBundleData.Packages); err != nil {
 				return errors.Wrap(err, "store.UpdatePackages")
 			}
-			if err := tx.UpdatePackageReferences(ctx, groupedBundleData.PackageReferences); err != nil {
+			if err := tx.UpdatePackageReferences(ctx, upload.ID, groupedBundleData.PackageReferences); err != nil {
 				return errors.Wrap(err, "store.UpdatePackageReferences")
 			}
 
@@ -207,7 +207,7 @@ func withUploadData(ctx context.Context, uploadStore uploadstore.Store, id int, 
 }
 
 // writeData transactionally writes the given grouped bundle data into the given LSIF store.
-func writeData(ctx context.Context, lsifStore LSIFStore, id int, groupedBundleData *correlation.GroupedBundleDataChans) (err error) {
+func writeData(ctx context.Context, lsifStore LSIFStore, id int, groupedBundleData *conversion.GroupedBundleDataChans) (err error) {
 	tx, err := lsifStore.Transact(ctx)
 	if err != nil {
 		return err

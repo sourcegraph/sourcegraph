@@ -80,8 +80,8 @@ export interface SourcegraphContext extends Pick<Required<SiteConfiguration>, 'e
     /** Whether signup is allowed on the site. */
     allowSignup: boolean
 
-    /** Whether the campaigns feature is enabled on the site. */
-    campaignsEnabled: boolean
+    /** Whether the batch changes feature is enabled on the site. */
+    batchChangesEnabled: boolean
 
     /** Whether the code intel auto-indexer feature is enabled on the site. */
     codeIntelAutoIndexingEnabled: boolean

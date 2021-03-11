@@ -1,7 +1,7 @@
 import { storiesOf } from '@storybook/react'
 import React from 'react'
 import { WebStory } from '../components/WebStory'
-import { CampaignsNavItem } from '../enterprise/campaigns/global/nav/CampaignsNavItem'
+import { BatchChangesNavItem } from '../enterprise/batches/global/nav/BatchChangesNavItem'
 import { CodeMonitoringNavItem } from '../enterprise/code-monitoring/CodeMonitoringNavItem'
 import { InsightsNavItem } from '../insights/InsightsNavLink'
 import { MenuNavItem } from './MenuNavItem'
@@ -14,7 +14,7 @@ add(
         <WebStory>
             {() => (
                 <MenuNavItem openByDefault={true}>
-                    <CampaignsNavItem />
+                    <BatchChangesNavItem />
                     <InsightsNavItem />
                     <CodeMonitoringNavItem />
                 </MenuNavItem>

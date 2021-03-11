@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"github.com/sourcegraph/go-lsp"
-
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
 )
 

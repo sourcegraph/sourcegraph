@@ -2,7 +2,6 @@ package background
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -28,7 +27,7 @@ func newInsightEnqueuer(ctx context.Context, workerBaseStore *basestore.Store, s
 		metrics.WithCountHelp("Total number of insights enqueuer executions"),
 	)
 	operation := observationContext.Operation(observation.Op{
-		Name:    fmt.Sprintf("Enqueuer.Run"),
+		Name:    "Enqueuer.Run",
 		Metrics: metrics,
 	})
 

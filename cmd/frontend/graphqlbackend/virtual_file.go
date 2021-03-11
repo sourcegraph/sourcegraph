@@ -7,17 +7,14 @@ import (
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/externallink"
-	"github.com/sourcegraph/sourcegraph/internal/highlight"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/highlight"
 )
 
 // FileContentFunc is a closure that returns the contents of a file and is used by the VirtualFileResolver.
 type FileContentFunc func(ctx context.Context) (string, error)
-
-func init() {
-	prometheus.MustRegister(highlightHistogram)
-}
 
 func NewVirtualFileResolver(stat os.FileInfo, fileContent FileContentFunc) *virtualFileResolver {
 	return &virtualFileResolver{
@@ -83,7 +80,7 @@ func (r *virtualFileResolver) Binary(ctx context.Context) (bool, error) {
 	return highlight.IsBinary([]byte(content)), nil
 }
 
-var highlightHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+var highlightHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
 	Name: "virtual_fileserver_highlight_req",
 	Help: "This measures the time for highlighting requests",
 })

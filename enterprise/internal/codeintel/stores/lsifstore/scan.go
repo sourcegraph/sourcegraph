@@ -3,12 +3,13 @@ package lsifstore
 import (
 	"database/sql"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 )
 
 type QualifiedDocumentData struct {
 	UploadID int
-	KeyedDocumentData
+	semantic.KeyedDocumentData
 }
 
 // scanDocumentData reads qualified document data from the given row object.
@@ -34,8 +35,8 @@ func (s *Store) scanDocumentData(rows *sql.Rows, queryErr error) (_ []QualifiedD
 // makeDocumentVisitor returns a function that accepts a mapping function, reads
 // document values from the given row object and calls the mapping function on each
 // decoded document.
-func (s *Store) makeDocumentVisitor(rows *sql.Rows, queryErr error) func(func(string, DocumentData)) error {
-	return func(f func(string, DocumentData)) (err error) {
+func (s *Store) makeDocumentVisitor(rows *sql.Rows, queryErr error) func(func(string, semantic.DocumentData)) error {
+	return func(f func(string, semantic.DocumentData)) (err error) {
 		if queryErr != nil {
 			return queryErr
 		}
@@ -102,8 +103,8 @@ func (s *Store) scanSingleDocumentDataObject(rows *sql.Rows) (QualifiedDocumentD
 // makeResultChunkVisitor returns a function that accepts a mapping function, reads
 // result chunk values from the given row object and calls the mapping function on
 // each decoded result set.
-func (s *Store) makeResultChunkVisitor(rows *sql.Rows, queryErr error) func(func(int, ResultChunkData)) error {
-	return func(f func(int, ResultChunkData)) (err error) {
+func (s *Store) makeResultChunkVisitor(rows *sql.Rows, queryErr error) func(func(int, semantic.ResultChunkData)) error {
+	return func(f func(int, semantic.ResultChunkData)) (err error) {
 		if queryErr != nil {
 			return queryErr
 		}
@@ -130,7 +131,7 @@ func (s *Store) makeResultChunkVisitor(rows *sql.Rows, queryErr error) func(func
 
 type QualifiedMonikerLocations struct {
 	DumpID int
-	MonikerLocations
+	semantic.MonikerLocations
 }
 
 // scanQualifiedMonikerLocations reads moniker locations values from the given row object.

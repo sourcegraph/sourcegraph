@@ -205,7 +205,7 @@ const _ProductSubscriptionForm: React.FunctionComponent<Props & ReactStripeEleme
                     <div className="col-md-6">
                         <ProductSubscriptionUserCountFormControl value={userCount} onChange={setUserCount} />
                         <h4 className="mt-2 mb-0">Plan</h4>
-                        <ProductPlanFormControl value={billingPlanID} onChange={setBillingPlanID} history={history} />
+                        <ProductPlanFormControl value={billingPlanID} onChange={setBillingPlanID} />
                     </div>
                     <div className="col-md-6 mt-3 mt-md-0">
                         <h3 className="mt-2 mb-0">Billing</h3>
@@ -266,8 +266,8 @@ const _ProductSubscriptionForm: React.FunctionComponent<Props & ReactStripeEleme
                     </div>
                 </div>
             </Form>
-            {isErrorLike(paymentToken) && <ErrorAlert className="mt-3" error={paymentToken} history={history} />}
-            {isErrorLike(submissionState) && <ErrorAlert className="mt-3" error={submissionState} history={history} />}
+            {isErrorLike(paymentToken) && <ErrorAlert className="mt-3" error={paymentToken} />}
+            {isErrorLike(submissionState) && <ErrorAlert className="mt-3" error={submissionState} />}
         </div>
     )
 }

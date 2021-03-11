@@ -10,10 +10,10 @@ import {
     Literal,
     Pattern,
     Filter,
-    Quoted,
     KeywordKind,
     PatternKind,
     CharacterRange,
+    createLiteral,
 } from './token'
 
 /**
@@ -108,7 +108,7 @@ const oneOf = <T>(...scanners: Scanner<T>[]): Scanner<T> => (input, start) => {
  * A {@link Scanner} that will attempt to scan delimited strings for an arbitrary
  * delimiter. `\` is treated as an escape character for the delimited string.
  */
-const quoted = (delimiter: string): Scanner<Quoted> => (input, start) => {
+const quoted = (delimiter: string): Scanner<Literal> => (input, start) => {
     if (input[start] !== delimiter) {
         return { type: 'error', expected: delimiter, at: start }
     }
@@ -122,7 +122,7 @@ const quoted = (delimiter: string): Scanner<Quoted> => (input, start) => {
     return {
         type: 'success',
         // end + 1 as `end` is currently the index of the quote in the string.
-        term: { type: 'quoted', quotedValue: input.slice(start + 1, end), range: { start, end: end + 1 } },
+        term: createLiteral(input.slice(start + 1, end), { start, end: end + 1 }, true),
     }
 }
 
@@ -136,7 +136,7 @@ const character = (character: string): Scanner<Literal> => (input, start) => {
     }
     return {
         type: 'success',
-        term: { type: 'literal', value: character, range: { start, end: start + 1 } },
+        term: createLiteral(character, { start, end: start + 1 }),
     }
 }
 
@@ -272,11 +272,7 @@ export const scanBalancedLiteral: Scanner<Literal> = (input, start) => {
 
     return {
         type: 'success',
-        term: {
-            type: 'literal',
-            value: result.join(''),
-            range: { start, end: adjustedStart },
-        },
+        term: createLiteral(result.join(''), { start, end: adjustedStart }),
     }
 }
 
@@ -319,7 +315,7 @@ const filterKeyword = scanToken(new RegExp(`-?(${filterTypeKeysWithAliases.join(
 
 const filterDelimiter = character(':')
 
-const filterValue = oneOf<Quoted | Literal>(quoted('"'), quoted("'"), scanBalancedLiteral, literal)
+const filterValue = oneOf<Literal>(quoted('"'), quoted("'"), scanBalancedLiteral, literal)
 
 const openingParen = scanToken(/\(/, (_input, range): OpeningParen => ({ type: 'openingParen', range }))
 

@@ -335,6 +335,27 @@ const SettingsSchemaJSON = `{
         "pointer": true
       }
     },
+    "insights.displayLocation.insightsPage": {
+      "type": "boolean",
+      "default": true,
+      "!go": {
+        "pointer": true
+      }
+    },
+    "insights.displayLocation.directory": {
+      "type": "boolean",
+      "default": true,
+      "!go": {
+        "pointer": true
+      }
+    },
+    "insights.displayLocation.homepage": {
+      "type": "boolean",
+      "default": true,
+      "!go": {
+        "pointer": true
+      }
+    },
     "insights": {
       "description": "EXPERIMENTAL: Code Insights",
       "type": "array",

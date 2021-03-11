@@ -35,6 +35,11 @@ type RepoNotFoundErr struct {
 	Name api.RepoName
 }
 
+func IsRepoNotFoundErr(err error) bool {
+	_, ok := err.(*RepoNotFoundErr)
+	return ok
+}
+
 func (e *RepoNotFoundErr) Error() string {
 	if e.Name != "" {
 		return fmt.Sprintf("repo not found: name=%q", e.Name)
@@ -534,6 +539,10 @@ type ReposListOptions struct {
 	// UseOr decides between ANDing or ORing the predicates together.
 	UseOr bool
 
+	// IncludeUserPublicRepos will include repos from the user_public_repos table if this field is true, and the user_id
+	// is non-zero. Note that these are not repos owned by this user, just ones they are interested in.
+	IncludeUserPublicRepos bool
+
 	*LimitOffset
 }
 
@@ -661,7 +670,11 @@ func (s *RepoStore) list(ctx context.Context, tr *trace.Trace, minimal bool, opt
 				JOIN external_service_repos esr ON repo.id = esr.repo_id
 				JOIN external_services es ON esr.external_service_id = es.id
 		`)
-		conds = append(conds, sqlf.Sprintf("es.namespace_user_id = %d AND es.deleted_at IS NULL", opt.UserID))
+		if opt.IncludeUserPublicRepos {
+			conds = append(conds, sqlf.Sprintf("(es.namespace_user_id = %d OR EXISTS (SELECT 1 FROM user_public_repos WHERE user_id = %d AND repo_id = repo.id)) AND es.deleted_at IS NULL", opt.UserID, opt.UserID))
+		} else {
+			conds = append(conds, sqlf.Sprintf("es.namespace_user_id = %d AND es.deleted_at IS NULL", opt.UserID))
+		}
 	}
 
 	queryConds := sqlf.Sprintf("TRUE")
@@ -718,7 +731,15 @@ WHERE
       AND es.deleted_at IS NULL
       AND repo.deleted_at IS NULL
       AND %s
-`, cloneClause, cloneClause)
+
+UNION
+
+SELECT repo.id, repo.name FROM repo
+WHERE
+	EXISTS (SELECT 1 FROM user_public_repos WHERE repo_id = repo.id)
+	AND repo.deleted_at IS NULL
+	AND %s
+`, cloneClause, cloneClause, cloneClause)
 
 	rows, err := s.Query(ctx, q)
 	if err != nil {

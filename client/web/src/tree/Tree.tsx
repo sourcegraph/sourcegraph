@@ -304,7 +304,6 @@ export class Tree extends React.PureComponent<Props, State> {
                     activeNode={this.state.activeNode}
                     activePath={this.props.activePath}
                     depth={0}
-                    history={this.props.history}
                     location={this.props.location}
                     repoName={this.props.repoName}
                     revision={this.props.revision}

@@ -126,9 +126,7 @@ export const ExternalServicePage: React.FunctionComponent<Props> = ({
             )}
             <h2>Update synced repositories</h2>
             {externalServiceOrError === undefined && <LoadingSpinner className="icon-inline" />}
-            {isErrorLike(externalServiceOrError) && (
-                <ErrorAlert className="mb-3" error={externalServiceOrError} history={history} />
-            )}
+            {isErrorLike(externalServiceOrError) && <ErrorAlert className="mb-3" error={externalServiceOrError} />}
             {externalServiceCategory && (
                 <div className="mb-3">
                     <ExternalServiceCard {...externalServiceCategory} />

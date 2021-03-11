@@ -6,4 +6,4 @@ package srccli
 // as the suggested download with this instance.
 //
 // At the time of a Sourcegraph release, this is always the latest src-cli version.
-const MinimumVersion = "3.25.0"
+const MinimumVersion = "3.26.0"

@@ -93,33 +93,41 @@ exports[`FormActionArea Error is shown if code monitor has empty description 1`]
     <div
       className="d-flex align-items-center my-4"
     >
-      <Toggle
-        className="mr-2"
-        onToggle={[Function]}
-        title="Enabled"
-        value={true}
-      >
-        <button
-          aria-checked={true}
-          className="toggle mr-2"
-          onClick={[Function]}
-          role="switch"
+      <div>
+        <Toggle
+          aria-labelledby="action-area__enable-toggle"
+          className="mr-2"
+          onToggle={[Function]}
           title="Enabled"
-          type="button"
-          value={1}
+          value={true}
         >
-          <span
-            className="toggle__bar toggle__bar--on"
-          />
-          <span
-            className="toggle__bar-shadow toggle__bar-shadow--on"
-          />
-          <span
-            className="toggle__knob toggle__knob--on"
-          />
-        </button>
-      </Toggle>
-      Enabled
+          <button
+            aria-checked={true}
+            aria-labelledby="action-area__enable-toggle"
+            className="toggle mr-2"
+            onClick={[Function]}
+            role="switch"
+            title="Enabled"
+            type="button"
+            value={1}
+          >
+            <span
+              className="toggle__bar toggle__bar--on"
+            />
+            <span
+              className="toggle__bar-shadow toggle__bar-shadow--on"
+            />
+            <span
+              className="toggle__knob toggle__knob--on"
+            />
+          </button>
+        </Toggle>
+      </div>
+      <span
+        id="action-area__enable-toggle"
+      >
+        Enabled
+      </span>
     </div>
     <div>
       <button

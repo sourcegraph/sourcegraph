@@ -113,7 +113,7 @@ func TestSearchSuggestions(t *testing.T) {
 				t.Errorf("got %q, want %q", args.PatternInfo.Pattern, want)
 			}
 			fm := mkFileMatch(db, &types.RepoName{Name: "repo"}, "dir/file")
-			fm.uri = "git://repo?rev#dir/file"
+			fm.URI = "git://repo?rev#dir/file"
 			fm.CommitID = "rev"
 			return []*FileMatchResolver{fm}, &streaming.Stats{}, nil
 		}
@@ -173,7 +173,7 @@ func TestSearchSuggestions(t *testing.T) {
 			}
 			mk := func(name api.RepoName, path string) *FileMatchResolver {
 				fm := mkFileMatch(db, &types.RepoName{Name: name}, path)
-				fm.uri = fileMatchURI(name, "rev", path)
+				fm.URI = fileMatchURI(name, "rev", path)
 				fm.CommitID = "rev"
 				return fm
 			}

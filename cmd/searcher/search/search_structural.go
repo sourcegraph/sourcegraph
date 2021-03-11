@@ -11,6 +11,7 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/cmd/searcher/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -325,11 +326,7 @@ func structuralSearchWithZoekt(ctx context.Context, p *protocol.Request) (matche
 	return matches, limitHit, false, err
 }
 
-var requestTotalStructuralSearch = prometheus.NewCounterVec(prometheus.CounterOpts{
+var requestTotalStructuralSearch = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "searcher_service_request_total_structural_search",
 	Help: "Number of returned structural search requests.",
 }, []string{"language"})
-
-func init() {
-	prometheus.MustRegister(requestTotalStructuralSearch)
-}

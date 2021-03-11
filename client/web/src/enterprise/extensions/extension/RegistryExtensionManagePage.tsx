@@ -155,7 +155,6 @@ export const RegistryExtensionManagePage = withAuthenticatedUser(
                             value={publisher.id}
                             publishersOrError={[publisher]}
                             disabled={true}
-                            history={this.props.history}
                         />
                         <RegistryExtensionNameFormGroup
                             className="registry-extension-manage-page__input"
@@ -185,9 +184,7 @@ export const RegistryExtensionManagePage = withAuthenticatedUser(
                             )}
                         </button>
                     </Form>
-                    {isErrorLike(this.state.updateOrError) && (
-                        <ErrorAlert error={this.state.updateOrError} history={this.props.history} />
-                    )}
+                    {isErrorLike(this.state.updateOrError) && <ErrorAlert error={this.state.updateOrError} />}
                     <div className="card mt-5 registry-extension-manage-page__other-actions">
                         <div className="card-header">Other actions</div>
                         <div className="card-body">

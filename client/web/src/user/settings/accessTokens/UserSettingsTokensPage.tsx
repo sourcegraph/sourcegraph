@@ -91,7 +91,6 @@ export const UserSettingsTokensPage: React.FunctionComponent<Props> = ({
                     afterDelete: onDeleteAccessToken,
                     showSubject: false,
                     newToken,
-                    history,
                 }}
                 updates={accessTokenUpdates}
                 hideSearch={true}

@@ -48,7 +48,7 @@ func (m gitlabAuthzProviderParams) URN() string {
 
 func (m gitlabAuthzProviderParams) Validate() []string { return nil }
 
-func (m gitlabAuthzProviderParams) FetchUserPerms(context.Context, *extsvc.Account) ([]extsvc.RepoID, extsvc.RepoIDType, error) {
+func (m gitlabAuthzProviderParams) FetchUserPerms(context.Context, *extsvc.Account) (*authz.ExternalUserPermissions, error) {
 	panic("should never be called")
 }
 

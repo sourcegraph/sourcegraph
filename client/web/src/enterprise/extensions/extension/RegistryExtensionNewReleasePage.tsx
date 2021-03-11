@@ -180,7 +180,7 @@ export const RegistryExtensionNewReleasePage = withAuthenticatedUser<Props>(
                                                 <LoadingSpinner className="icon-inline" />
                                             </div>
                                         ) : isErrorLike(bundleOrError) ? (
-                                            <ErrorAlert error={bundleOrError} history={history} />
+                                            <ErrorAlert error={bundleOrError} />
                                         ) : (
                                             <DynamicallyImportedMonacoSettingsEditor
                                                 id="registry-extension-new-release-page__bundle"
@@ -218,7 +218,7 @@ export const RegistryExtensionNewReleasePage = withAuthenticatedUser<Props>(
                                         </span>
                                     ))}
                             </div>
-                            {isErrorLike(updateOrError) && <ErrorAlert error={updateOrError} history={history} />}
+                            {isErrorLike(updateOrError) && <ErrorAlert error={updateOrError} />}
                         </Form>
                     </>
                 ) : (

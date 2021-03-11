@@ -273,11 +273,7 @@ export const BlobPage: React.FunctionComponent<Props> = props => {
         return (
             <>
                 {alwaysRender}
-                <HeroPage
-                    icon={AlertCircleIcon}
-                    title="Error"
-                    subtitle={<ErrorMessage error={blobInfoOrError} history={props.history} />}
-                />
+                <HeroPage icon={AlertCircleIcon} title="Error" subtitle={<ErrorMessage error={blobInfoOrError} />} />
             </>
         )
     }

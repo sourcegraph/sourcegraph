@@ -5,11 +5,14 @@
 
 | Name | Description | Default Value |
 |------|-------------|---------------|
+| `-display` | Limit the number of results that are displayed. Only supported together with stream flag. Statistics continue to report all results. | `-1` |
 | `-dump-requests` | Log GraphQL requests and responses to stdout | `false` |
 | `-explain-json` | Explain the JSON output schema and exit. | `false` |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
-| `-json` | Whether or not to output results as JSON | `false` |
-| `-less` | Pipe output to 'less -R' (only if stdout is terminal, and not json flag) | `true` |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
+| `-json` | Whether or not to output results as JSON. | `false` |
+| `-less` | Pipe output to 'less -R' (only if stdout is terminal, and not json flag). | `true` |
+| `-stream` | Consume results as stream. Streaming search only supports a subset of flags and parameters: trace, insecure-skip-verify, display. | `false` |
 | `-trace` | Log the trace ID for requests. See https://docs.sourcegraph.com/admin/observability/tracing | `false` |
 
 
@@ -17,16 +20,22 @@
 
 ```
 Usage of 'src search':
+  -display int
+    	Limit the number of results that are displayed. Only supported together with stream flag. Statistics continue to report all results. (default -1)
   -dump-requests
     	Log GraphQL requests and responses to stdout
   -explain-json
     	Explain the JSON output schema and exit.
   -get-curl
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -json
-    	Whether or not to output results as JSON
+    	Whether or not to output results as JSON.
   -less
-    	Pipe output to 'less -R' (only if stdout is terminal, and not json flag) (default true)
+    	Pipe output to 'less -R' (only if stdout is terminal, and not json flag). (default true)
+  -stream
+    	Consume results as stream. Streaming search only supports a subset of flags and parameters: trace, insecure-skip-verify, display.
   -trace
     	Log the trace ID for requests. See https://docs.sourcegraph.com/admin/observability/tracing
 

@@ -25,6 +25,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/mutablelimiter"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/filter"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/searcher"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs/git"
@@ -35,81 +36,21 @@ const maxUnindexedRepoRevSearchesPerQuery = 200
 // A global limiter on number of concurrent searcher searches.
 var textSearchLimiter = mutablelimiter.New(32)
 
-type FileMatch struct {
-	Path        string
-	LineMatches []*LineMatch
-	LimitHit    bool
-
-	Symbols  []*SearchSymbolResult `json:"-"`
-	uri      string                `json:"-"`
-	Repo     *types.RepoName       `json:"-"`
-	CommitID api.CommitID          `json:"-"`
-	// InputRev is the Git revspec that the user originally requested to search. It is used to
-	// preserve the original revision specifier from the user instead of navigating them to the
-	// absolute commit ID when they select a result.
-	InputRev *string `json:"-"`
-}
-
-func (fm *FileMatch) ResultCount() int {
-	rc := len(fm.Symbols)
-	for _, m := range fm.LineMatches {
-		rc += len(m.OffsetAndLengths)
-	}
-	if rc == 0 {
-		return 1 // 1 to count "empty" results like type:path results
-	}
-	return rc
-}
-
-// appendMatches appends the line matches from src as well as updating match
-// counts and limit.
-func (fm *FileMatch) appendMatches(src *FileMatch) {
-	fm.LineMatches = append(fm.LineMatches, src.LineMatches...)
-	fm.Symbols = append(fm.Symbols, src.Symbols...)
-	fm.LimitHit = fm.LimitHit || src.LimitHit
-}
-
-// Limit will mutate fm such that it only has limit results. limit is a number
-// greater than 0.
-//
-//   if limit >= ResultCount then nothing is done and we return limit - ResultCount.
-//   if limit < ResultCount then ResultCount becomes limit and we return 0.
-func (fm *FileMatch) Limit(limit int) int {
-	// Check if we need to limit.
-	if after := limit - fm.ResultCount(); after >= 0 {
-		return after
-	}
-
-	// Invariant: limit > 0
-	for i, m := range fm.LineMatches {
-		after := limit - len(m.OffsetAndLengths)
-		if after <= 0 {
-			fm.Symbols = nil
-			fm.LineMatches = fm.LineMatches[:i+1]
-			m.OffsetAndLengths = m.OffsetAndLengths[:limit]
-			return 0
-		}
-		limit = after
-	}
-
-	fm.Symbols = fm.Symbols[:limit]
-	return 0
-}
-
 // FileMatchResolver is a resolver for the GraphQL type `FileMatch`
 type FileMatchResolver struct {
-	FileMatch
+	result.FileMatch
 
 	RepoResolver *RepositoryResolver
 	db           dbutil.DB
 }
 
+// Equal provides custom comparison which is used by go-cmp
 func (fm *FileMatchResolver) Equal(other *FileMatchResolver) bool {
 	return reflect.DeepEqual(fm, other)
 }
 
 func (fm *FileMatchResolver) Key() string {
-	return fm.uri
+	return fm.URI
 }
 
 func (fm *FileMatchResolver) File() *GitTreeEntryResolver {
@@ -146,7 +87,7 @@ func (fm *FileMatchResolver) RevSpec() *gitRevSpec {
 }
 
 func (fm *FileMatchResolver) Resource() string {
-	return fm.uri
+	return fm.URI
 }
 
 func (fm *FileMatchResolver) Symbols() []symbolResolver {
@@ -185,7 +126,7 @@ func (fm *FileMatchResolver) path() string {
 // appendMatches appends the line matches from src as well as updating match
 // counts and limit.
 func (fm *FileMatchResolver) appendMatches(src *FileMatchResolver) {
-	fm.FileMatch.appendMatches(&src.FileMatch)
+	fm.FileMatch.AppendMatches(&src.FileMatch)
 }
 
 func (fm *FileMatchResolver) ResultCount() int32 {
@@ -201,9 +142,15 @@ func (fm *FileMatchResolver) Select(t filter.SelectPath) SearchResultResolver {
 		fm.FileMatch.Symbols = nil
 		return fm
 	case filter.Symbol:
-		// Only return file match if symbols exist
 		if len(fm.FileMatch.Symbols) > 0 {
-			fm.FileMatch.LineMatches = nil
+			fm.FileMatch.LineMatches = nil // Only return symbol match if symbols exist
+			if len(t.Fields) > 0 {
+				filteredSymbols := filter.SelectSymbolKind(fm.FileMatch.Symbols, t.Fields[0])
+				if len(filteredSymbols) == 0 {
+					return nil // Remove file match if there are no symbol results after filtering
+				}
+				fm.FileMatch.Symbols = filteredSymbols
+			}
 			return fm
 		}
 		return nil
@@ -220,16 +167,8 @@ func (fm *FileMatchResolver) Select(t filter.SelectPath) SearchResultResolver {
 	return nil
 }
 
-// LineMatch is the struct used by vscode to receive search results for a line
-type LineMatch struct {
-	Preview          string
-	OffsetAndLengths [][2]int32
-	LineNumber       int32
-	LimitHit         bool
-}
-
 type lineMatchResolver struct {
-	*LineMatch
+	*result.LineMatch
 }
 
 func (lm lineMatchResolver) Preview() string {
@@ -295,13 +234,13 @@ func searchFilesInRepo(ctx context.Context, db dbutil.DB, searcherURLs *endpoint
 	repoResolver := NewRepositoryResolver(db, repo.ToRepo())
 	resolvers := make([]*FileMatchResolver, 0, len(matches))
 	for _, fm := range matches {
-		lineMatches := make([]*LineMatch, 0, len(fm.LineMatches))
+		lineMatches := make([]*result.LineMatch, 0, len(fm.LineMatches))
 		for _, lm := range fm.LineMatches {
 			ranges := make([][2]int32, 0, len(lm.OffsetAndLengths))
 			for _, ol := range lm.OffsetAndLengths {
 				ranges = append(ranges, [2]int32{int32(ol[0]), int32(ol[1])})
 			}
-			lineMatches = append(lineMatches, &LineMatch{
+			lineMatches = append(lineMatches, &result.LineMatch{
 				Preview:          lm.Preview,
 				OffsetAndLengths: ranges,
 				LineNumber:       int32(lm.LineNumber),
@@ -311,12 +250,12 @@ func searchFilesInRepo(ctx context.Context, db dbutil.DB, searcherURLs *endpoint
 
 		resolvers = append(resolvers, &FileMatchResolver{
 			db: db,
-			FileMatch: FileMatch{
+			FileMatch: result.FileMatch{
 				Path:        fm.Path,
 				LineMatches: lineMatches,
 				LimitHit:    fm.LimitHit,
 				Repo:        repo,
-				uri:         workspace + fm.Path,
+				URI:         workspace + fm.Path,
 				CommitID:    commit,
 				InputRev:    &rev,
 			},

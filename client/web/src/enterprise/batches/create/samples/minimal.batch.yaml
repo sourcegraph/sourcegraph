@@ -1,0 +1,3 @@
+name: my-batch-change
+# Add your own description, query, steps, changesetTemplate, etc.
+# See https://docs.sourcegraph.com/user/batch_changes for help.

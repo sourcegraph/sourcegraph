@@ -22,50 +22,16 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/filter"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs/git"
 )
 
-type CommitSearchResult struct {
-	commit         git.Commit
-	repoName       types.RepoName
-	refs           []string
-	sourceRefs     []string
-	messagePreview *highlightedString
-	diffPreview    *highlightedString
-	body           string
-	highlights     []*highlightedRange
-}
-
-// ResultCount for CommitSearchResult returns the number of highlights if there
-// are highlights and 1 otherwise. We implemented this method because we want to
-// return a more meaningful result count for streaming while maintaining backward
-// compatibility for our GraphQL API. The GraphQL API calls ResultCount on the
-// resolver, while streaming calls ResultCount on CommitSearchResult.
-func (r *CommitSearchResult) ResultCount() int {
-	if n := len(r.highlights); n > 0 {
-		return n
-	}
-	// Queries such as type:commit after:"1 week ago" don't have highlights. We count
-	// those results as 1.
-	return 1
-}
-
-func (r *CommitSearchResult) Limit(limit int) int {
-	if len(r.highlights) == 0 {
-		return limit - 1 // just counting the commit
-	} else if len(r.highlights) > limit {
-		r.highlights = r.highlights[:limit]
-		return 0
-	}
-	return limit - len(r.highlights)
-}
-
 // CommitSearchResultResolver is a resolver for the GraphQL type `CommitSearchResult`
 type CommitSearchResultResolver struct {
-	CommitSearchResult
+	result.CommitMatch
 
 	db dbutil.DB
 
@@ -90,15 +56,15 @@ func (r *CommitSearchResultResolver) Commit() *GitCommitResolver {
 		if r.gitCommitResolver != nil {
 			return
 		}
-		repoResolver := NewRepositoryResolver(r.db, r.repoName.ToRepo())
-		r.gitCommitResolver = toGitCommitResolver(repoResolver, r.db, r.commit.ID, &r.commit)
+		repoResolver := NewRepositoryResolver(r.db, r.RepoName.ToRepo())
+		r.gitCommitResolver = toGitCommitResolver(repoResolver, r.db, r.CommitMatch.Commit.ID, &r.CommitMatch.Commit)
 	})
 	return r.gitCommitResolver
 }
 
 func (r *CommitSearchResultResolver) Refs() []*GitRefResolver {
-	out := make([]*GitRefResolver, 0, len(r.refs))
-	for _, ref := range r.refs {
+	out := make([]*GitRefResolver, 0, len(r.CommitMatch.Refs))
+	for _, ref := range r.CommitMatch.Refs {
 		out = append(out, &GitRefResolver{
 			repo: r.Commit().Repository(),
 			name: ref,
@@ -108,8 +74,8 @@ func (r *CommitSearchResultResolver) Refs() []*GitRefResolver {
 }
 
 func (r *CommitSearchResultResolver) SourceRefs() []*GitRefResolver {
-	out := make([]*GitRefResolver, 0, len(r.sourceRefs))
-	for _, ref := range r.refs {
+	out := make([]*GitRefResolver, 0, len(r.CommitMatch.SourceRefs))
+	for _, ref := range r.CommitMatch.SourceRefs {
 		out = append(out, &GitRefResolver{
 			repo: r.Commit().Repository(),
 			name: ref,
@@ -118,16 +84,27 @@ func (r *CommitSearchResultResolver) SourceRefs() []*GitRefResolver {
 	return out
 }
 
-func (r *CommitSearchResultResolver) MessagePreview() *highlightedString { return r.messagePreview }
-func (r *CommitSearchResultResolver) DiffPreview() *highlightedString    { return r.diffPreview }
+func (r *CommitSearchResultResolver) MessagePreview() *highlightedStringResolver {
+	if r.CommitMatch.MessagePreview == nil {
+		return nil
+	}
+	return &highlightedStringResolver{*r.CommitMatch.MessagePreview}
+}
+
+func (r *CommitSearchResultResolver) DiffPreview() *highlightedStringResolver {
+	if r.CommitMatch.DiffPreview == nil {
+		return nil
+	}
+	return &highlightedStringResolver{*r.CommitMatch.DiffPreview}
+}
 
 func (r *CommitSearchResultResolver) Icon() string {
 	return "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTE3LDEyQzE3LDE0LjQyIDE1LjI4LDE2LjQ0IDEzLDE2LjlWMjFIMTFWMTYuOUM4LjcyLDE2LjQ0IDcsMTQuNDIgNywxMkM3LDkuNTggOC43Miw3LjU2IDExLDcuMVYzSDEzVjcuMUMxNS4yOCw3LjU2IDE3LDkuNTggMTcsMTJNMTIsOUEzLDMgMCAwLDAgOSwxMkEzLDMgMCAwLDAgMTIsMTVBMywzIDAgMCwwIDE1LDEyQTMsMyAwIDAsMCAxMiw5WiIgLz48L3N2Zz4="
 }
 
 func (r *CommitSearchResultResolver) Label() Markdown {
-	message := r.commit.Message.Subject()
-	author := r.commit.Author.Name
+	message := r.CommitMatch.Commit.Message.Subject()
+	author := r.CommitMatch.Commit.Author.Name
 	repoName := displayRepoName(r.Commit().Repository().Name())
 	repoURL := r.Commit().Repository().URL()
 	url := r.Commit().URL()
@@ -141,14 +118,18 @@ func (r *CommitSearchResultResolver) URL() string {
 }
 
 func (r *CommitSearchResultResolver) Detail() Markdown {
-	commitHash := r.commit.ID.Short()
+	commitHash := r.CommitMatch.Commit.ID.Short()
 	timeagoConfig := timeago.NoMax(timeago.English)
-	detail := fmt.Sprintf("[`%v` %v](%v)", commitHash, timeagoConfig.Format(r.commit.Author.Date), r.Commit().URL())
+	detail := fmt.Sprintf("[`%v` %v](%v)", commitHash, timeagoConfig.Format(r.CommitMatch.Commit.Author.Date), r.Commit().URL())
 	return Markdown(detail)
 }
 
 func (r *CommitSearchResultResolver) Matches() []*searchResultMatchResolver {
-	match := &searchResultMatchResolver{body: r.body, highlights: r.highlights, url: r.Commit().URL()}
+	match := &searchResultMatchResolver{
+		body:       r.CommitMatch.Body.Value,
+		highlights: r.CommitMatch.Body.Highlights,
+		url:        r.Commit().URL(),
+	}
 	matches := []*searchResultMatchResolver{match}
 	return matches
 }
@@ -415,10 +396,10 @@ func logCommitSearchResultsToResolvers(ctx context.Context, db dbutil.DB, op *se
 		commit := rawResult.Commit
 
 		var (
-			diffPreview     *highlightedString
-			messagePreview  *highlightedString
+			diffPreview     *result.HighlightedString
+			messagePreview  *result.HighlightedString
 			matchBody       string
-			matchHighlights []*highlightedRange
+			matchHighlights []result.HighlightedRange
 		)
 		// TODO(sqs): properly combine message: and term values for type:commit searches
 		if !op.Diff {
@@ -430,33 +411,35 @@ func logCommitSearchResultsToResolvers(ctx context.Context, db dbutil.DB, op *se
 				pat, err := regexp.Compile(patString)
 				if err == nil {
 					messagePreview = highlightMatches(pat, []byte(commit.Message))
-					matchHighlights = messagePreview.highlights
+					matchHighlights = messagePreview.Highlights
 				}
 			} else {
-				messagePreview = &highlightedString{value: string(commit.Message)}
+				messagePreview = &result.HighlightedString{Value: string(commit.Message)}
 			}
 			matchBody = "```COMMIT_EDITMSG\n" + string(rawResult.Commit.Message) + "\n```"
 		}
 
 		if rawResult.Diff != nil && op.Diff {
-			diffPreview = &highlightedString{
-				value:      rawResult.Diff.Raw,
-				highlights: fromVCSHighlights(rawResult.DiffHighlights),
+			diffPreview = &result.HighlightedString{
+				Value:      rawResult.Diff.Raw,
+				Highlights: fromVCSHighlights(rawResult.DiffHighlights),
 			}
 			matchBody, matchHighlights = cleanDiffPreview(fromVCSHighlights(rawResult.DiffHighlights), rawResult.Diff.Raw)
 		}
 
 		results[i] = &CommitSearchResultResolver{
 			db: db,
-			CommitSearchResult: CommitSearchResult{
-				commit:         rawResult.Commit,
-				refs:           rawResult.Refs,
-				sourceRefs:     rawResult.SourceRefs,
-				messagePreview: messagePreview,
-				diffPreview:    diffPreview,
-				body:           matchBody,
-				highlights:     matchHighlights,
-				repoName:       repoName,
+			CommitMatch: result.CommitMatch{
+				Commit:         rawResult.Commit,
+				Refs:           rawResult.Refs,
+				SourceRefs:     rawResult.SourceRefs,
+				MessagePreview: messagePreview,
+				DiffPreview:    diffPreview,
+				Body: result.HighlightedString{
+					Value:      matchBody,
+					Highlights: matchHighlights,
+				},
+				RepoName: repoName,
 			},
 		}
 	}
@@ -464,7 +447,7 @@ func logCommitSearchResultsToResolvers(ctx context.Context, db dbutil.DB, op *se
 	return results, nil
 }
 
-func cleanDiffPreview(highlights []*highlightedRange, rawDiffResult string) (string, []*highlightedRange) {
+func cleanDiffPreview(highlights []result.HighlightedRange, rawDiffResult string) (string, []result.HighlightedRange) {
 	// A map of line number to number of lines that have been ignored before the particular line number.
 	lineByCountIgnored := make(map[int]int32)
 	// The line numbers of lines that were ignored.
@@ -497,14 +480,14 @@ func cleanDiffPreview(highlights []*highlightedRange, rawDiffResult string) (str
 	for n := range highlights {
 		// For each highlight, adjust the line number by the number of lines that were
 		// ignored in the diff before.
-		linesIgnored := lineByCountIgnored[int(highlights[n].line)]
-		if ignoredLineNumbers[int(highlights[n].line)-1] {
+		linesIgnored := lineByCountIgnored[int(highlights[n].Line)]
+		if ignoredLineNumbers[int(highlights[n].Line)-1] {
 			// Effectively remove highlights that were on ignored lines by setting
 			// line to -1.
-			highlights[n].line = -1
+			highlights[n].Line = -1
 		}
 		if linesIgnored > 0 {
-			highlights[n].line = highlights[n].line - linesIgnored
+			highlights[n].Line = highlights[n].Line - linesIgnored
 		}
 	}
 
@@ -520,24 +503,23 @@ func displayRepoName(repoPath string) string {
 	return strings.Join(parts, "/")
 }
 
-func highlightMatches(pattern *regexp.Regexp, data []byte) *highlightedString {
+func highlightMatches(pattern *regexp.Regexp, data []byte) *result.HighlightedString {
 	const maxMatchesPerLine = 25 // arbitrary
 
-	var highlights []*highlightedRange
+	var highlights []result.HighlightedRange
 	for i, line := range bytes.Split(data, []byte("\n")) {
 		for _, match := range pattern.FindAllIndex(line, maxMatchesPerLine) {
-			highlights = append(highlights, &highlightedRange{
-				line:      int32(i + 1),
-				character: int32(utf8.RuneCount(line[:match[0]])),
-				length:    int32(utf8.RuneCount(line[:match[1]]) - utf8.RuneCount(line[:match[0]])),
+			highlights = append(highlights, result.HighlightedRange{
+				Line:      int32(i + 1),
+				Character: int32(utf8.RuneCount(line[:match[0]])),
+				Length:    int32(utf8.RuneCount(line[:match[1]]) - utf8.RuneCount(line[:match[0]])),
 			})
 		}
 	}
-	hls := &highlightedString{
-		value:      string(data),
-		highlights: highlights,
+	return &result.HighlightedString{
+		Value:      string(data),
+		Highlights: highlights,
 	}
-	return hls
 }
 
 // resolveCommitParameters creates parameters for commit search from tp. It

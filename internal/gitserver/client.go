@@ -26,6 +26,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -328,14 +329,10 @@ func (c *Client) P4Exec(ctx context.Context, host, user, password string, args .
 	}
 }
 
-var deadlineExceededCounter = prometheus.NewCounter(prometheus.CounterOpts{
+var deadlineExceededCounter = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "src_gitserver_client_deadline_exceeded",
 	Help: "Times that Client.sendExec() returned context.DeadlineExceeded",
 })
-
-func init() {
-	prometheus.MustRegister(deadlineExceededCounter)
-}
 
 // Cmd represents a command to be executed remotely.
 type Cmd struct {

@@ -37,7 +37,6 @@ import { ThemeProps } from '../../../shared/src/theme'
 import { FileDecorationsByPath } from '../../../shared/src/api/extension/flatExtensionApi'
 
 export interface TreeLayerProps extends AbsoluteRepo, ExtensionsControllerProps, ThemeProps {
-    history: H.History
     location: H.Location
     activeNode: TreeNode
     activePath: string
@@ -312,7 +311,6 @@ export class TreeLayer extends React.Component<TreeLayerProps, TreeLayerState> {
                                                     style={treePadding(this.props.depth, true)}
                                                     error={treeOrError}
                                                     prefix="Error loading file tree"
-                                                    history={this.props.history}
                                                 />
                                             ) : (
                                                 treeOrError && (

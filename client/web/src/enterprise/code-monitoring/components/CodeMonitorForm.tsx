@@ -217,12 +217,15 @@ export const CodeMonitorForm: React.FunctionComponent<CodeMonitorFormProps> = ({
                                 value={currentCodeMonitorState.enabled}
                                 onToggle={onEnabledChange}
                                 className="mr-2"
+                                aria-describedby="code-monitor-form__toggle-description"
                             />{' '}
                         </div>
-                        <div className="flex-column">
-                            <div>Active</div>
+                        <div className="flex-column" id="code-monitor-form__toggle-description">
+                            <div>{currentCodeMonitorState.enabled ? 'Active' : 'Inactive'}</div>
                             <div className="text-muted">
-                                Code monitor will watch for the trigger and run actions in response
+                                {currentCodeMonitorState.enabled
+                                    ? 'Code monitor will watch for the trigger and run actions in response'
+                                    : 'Code monitor will not respond to trigger events'}
                             </div>
                         </div>
                     </div>

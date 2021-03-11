@@ -88,20 +88,22 @@ export const SearchPage: React.FunctionComponent<SearchPageProps> = props => {
 
     useEffect(() => props.telemetryService.logViewEvent('Home'), [props.telemetryService])
 
-    const codeInsightsEnabled =
-        !isErrorLike(props.settingsCascade.final) && !!props.settingsCascade.final?.experimentalFeatures?.codeInsights
+    const showCodeInsights =
+        !isErrorLike(props.settingsCascade.final) &&
+        !!props.settingsCascade.final?.experimentalFeatures?.codeInsights &&
+        props.settingsCascade.final['insights.displayLocation.homepage'] !== false
 
     const views = useObservable(
         useMemo(
             () =>
-                codeInsightsEnabled
+                showCodeInsights
                     ? getCombinedViews(
                           ContributableViewContainer.Homepage,
                           {},
                           props.extensionsController.services.view
                       )
                     : EMPTY,
-            [codeInsightsEnabled, props.extensionsController.services.view]
+            [showCodeInsights, props.extensionsController.services.view]
         )
     )
     return (

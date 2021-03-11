@@ -7,6 +7,7 @@
 |------|-------------|---------------|
 | `-dump-requests` | Log GraphQL requests and responses to stdout | `false` |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
 | `-overwrite` | Overwrite the entire settings with the value given in -value (not just a single property). | `false` |
 | `-property` | The name of the settings property to set. |  |
 | `-subject` | The ID of the settings subject whose settings to edit. (default: authenticated user) |  |
@@ -23,6 +24,8 @@ Usage of 'src config edit':
     	Log GraphQL requests and responses to stdout
   -get-curl
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -overwrite
     	Overwrite the entire settings with the value given in -value (not just a single property).
   -property string

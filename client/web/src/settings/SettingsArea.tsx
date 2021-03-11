@@ -18,7 +18,6 @@ import { eventLogger } from '../tracking/eventLogger'
 import { mergeSettingsSchemas } from './configuration'
 import { SettingsPage } from './SettingsPage'
 import { ErrorMessage } from '../components/alerts'
-import * as H from 'history'
 import { TelemetryProps } from '../../../shared/src/telemetry/telemetryService'
 import { AuthenticatedUser } from '../auth'
 import { Scalars } from '../../../shared/src/graphql-operations'
@@ -53,7 +52,6 @@ export interface SettingsAreaPageProps extends SettingsAreaPageCommonProps {
 interface Props extends SettingsAreaPageCommonProps, RouteComponentProps<{}> {
     className?: string
     extraHeader?: JSX.Element
-    history: H.History
 }
 
 const LOADING = 'loading' as const
@@ -125,7 +123,7 @@ export class SettingsArea extends React.Component<Props, State> {
                 <HeroPage
                     icon={AlertCircleIcon}
                     title="Error"
-                    subtitle={<ErrorMessage error={this.state.dataOrError} history={this.props.history} />}
+                    subtitle={<ErrorMessage error={this.state.dataOrError} />}
                 />
             )
         }

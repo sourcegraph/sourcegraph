@@ -122,7 +122,8 @@ export function logUserEvent(event: UserEvent): void {
  * Log a raw user action (used to allow site admins on a Sourcegraph instance
  * to see a count of unique users on a daily, weekly, and monthly basis).
  *
- * Not used at all for public/sourcegraph.com usage.
+ * When invoked on a non-Sourcegraph.com instance, this data is stored in the
+ * instance's database, and not sent to Sourcegraph.com.
  */
 export function logEvent(event: string, eventProperties?: unknown): void {
     requestGraphQL<LogEventResult, LogEventVariables>(

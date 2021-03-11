@@ -207,7 +207,7 @@ export const RepoRevisionContainer: React.FunctionComponent<RepoRevisionContaine
             <HeroPage
                 icon={AlertCircleIcon}
                 title="Error"
-                subtitle={<ErrorMessage error={props.resolvedRevisionOrError} history={props.history} />}
+                subtitle={<ErrorMessage error={props.resolvedRevisionOrError} />}
             />
         )
     }

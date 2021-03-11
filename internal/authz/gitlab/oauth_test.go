@@ -29,7 +29,7 @@ func TestOAuthProvider_FetchUserPerms(t *testing.T) {
 		p := newOAuthProvider(OAuthProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, _, err := p.FetchUserPerms(context.Background(), nil)
+		_, err := p.FetchUserPerms(context.Background(), nil)
 		want := "no account provided"
 		got := fmt.Sprintf("%v", err)
 		if got != want {
@@ -41,7 +41,7 @@ func TestOAuthProvider_FetchUserPerms(t *testing.T) {
 		p := newOAuthProvider(OAuthProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, _, err := p.FetchUserPerms(context.Background(),
+		_, err := p.FetchUserPerms(context.Background(),
 			&extsvc.Account{
 				AccountSpec: extsvc.AccountSpec{
 					ServiceType: extsvc.TypeGitHub,
@@ -90,7 +90,7 @@ func TestOAuthProvider_FetchUserPerms(t *testing.T) {
 	)
 
 	authData := json.RawMessage(`{"access_token": "my_access_token"}`)
-	repoIDs, _, err := p.FetchUserPerms(context.Background(),
+	repoIDs, err := p.FetchUserPerms(context.Background(),
 		&extsvc.Account{
 			AccountSpec: extsvc.AccountSpec{
 				ServiceType: extsvc.TypeGitLab,
@@ -106,7 +106,7 @@ func TestOAuthProvider_FetchUserPerms(t *testing.T) {
 	}
 
 	expRepoIDs := []extsvc.RepoID{"1", "2", "3"}
-	if diff := cmp.Diff(expRepoIDs, repoIDs); diff != "" {
+	if diff := cmp.Diff(expRepoIDs, repoIDs.Exacts); diff != "" {
 		t.Fatal(diff)
 	}
 }

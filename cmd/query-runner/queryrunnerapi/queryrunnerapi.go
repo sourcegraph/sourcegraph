@@ -105,6 +105,7 @@ func (c *client) post(path string, data interface{}) error {
 	if err != nil {
 		return errors.Wrap(err, "Post "+u.String())
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusOK {
 		return nil
 	}

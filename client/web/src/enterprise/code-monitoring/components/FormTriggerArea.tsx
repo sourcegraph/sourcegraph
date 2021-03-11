@@ -44,12 +44,8 @@ export const FormTriggerArea: React.FunctionComponent<TriggerAreaProps> = ({
                                 filter =>
                                     filter.type === 'filter' &&
                                     resolveFilter(filter.field.value)?.type === FilterType.type &&
-                                    ((filter.value?.type === 'literal' &&
-                                        filter.value &&
-                                        isDiffOrCommit(filter.value.value)) ||
-                                        (filter.value?.type === 'quoted' &&
-                                            filter.value &&
-                                            isDiffOrCommit(filter.value.quotedValue)))
+                                    filter.value &&
+                                    isDiffOrCommit(filter.value.value)
                             )
                             if (!hasTypeDiffOrCommitFilter) {
                                 return 'Code monitors require queries to specify either `type:commit` or `type:diff`.'

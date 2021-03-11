@@ -2,6 +2,8 @@
 
 echo "--- shellcheck"
 
+trap "echo ^^^ +++" ERR
+
 set -e
 
 cd "$(dirname "${BASH_SOURCE[0]}")"/../..

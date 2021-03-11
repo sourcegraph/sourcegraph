@@ -90,7 +90,7 @@ export const ExternalServicesPage: React.FunctionComponent<Props> = ({
                         className="btn btn-primary test-goto-add-external-service-page"
                         to={`${routingPrefix}/external-services/new`}
                     >
-                        <AddIcon className="icon-inline" /> Add repositories
+                        <AddIcon className="icon-inline" /> Add code host
                     </Link>
                 )}
             </div>

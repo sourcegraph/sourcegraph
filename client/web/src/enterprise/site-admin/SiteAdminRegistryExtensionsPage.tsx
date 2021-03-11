@@ -123,7 +123,7 @@ class RegistryExtensionNodeSiteAdminRow extends React.PureComponent<
                     </div>
                 </div>
                 {isErrorLike(this.state.deletionOrError) && (
-                    <ErrorAlert className="mt-2" error={this.state.deletionOrError} history={this.props.history} />
+                    <ErrorAlert className="mt-2" error={this.state.deletionOrError} />
                 )}
             </li>
         )

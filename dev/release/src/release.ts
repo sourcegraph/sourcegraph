@@ -32,7 +32,7 @@ export type StepID =
     | 'release:status'
     | 'release:create-candidate'
     | 'release:stage'
-    | 'release:add-to-campaign'
+    | 'release:add-to-batch-change'
     | 'release:finalize'
     | 'release:close'
     // util
@@ -357,7 +357,7 @@ cc @${config.captainGitHubUsername}
                             `comby -in-place 'latestReleaseDockerComposeOrPureDocker = newBuild(":[1]")' "latestReleaseDockerComposeOrPureDocker = newBuild(\\"${release.version}\\")" cmd/frontend/internal/app/updatecheck/handler.go`,
 
                             // Support current release as the "previous release" going forward
-                            `comby -in-place 'env["MINIMUM_UPGRADEABLE_VERSION"] = ":[1]"' 'env["MINIMUM_UPGRADEABLE_VERSION"] = "${release.version}"' enterprise/dev/ci/ci/*.go`,
+                            `comby -in-place 'env["MINIMUM_UPGRADEABLE_VERSION"] = ":[1]"' 'env["MINIMUM_UPGRADEABLE_VERSION"] = "${release.version}"' enterprise/dev/ci/internal/ci/*.go`,
 
                             // Add a stub to add upgrade guide entries
                             notPatchRelease
@@ -471,10 +471,10 @@ Campaign: ${campaignURL}`,
         },
     },
     {
-        id: 'release:add-to-campaign',
-        description: 'Manually add a change to a release campaign',
+        id: 'release:add-to-batch-change',
+        description: 'Manually add a change to a release batch change',
         argNames: ['changeRepo', 'changeID'],
-        // Example: yarn run release release:add-to-campaign sourcegraph/about 1797
+        // Example: yarn run release release:add-to-batch-change sourcegraph/about 1797
         run: async (config, changeRepo, changeID) => {
             const { upcoming: release } = await releaseVersions(config)
             if (!changeRepo || !changeID) {

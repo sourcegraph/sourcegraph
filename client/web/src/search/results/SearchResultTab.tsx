@@ -53,10 +53,7 @@ export const SearchResultTabHeader: React.FunctionComponent<Props> = ({
         // we can check whether this tab should be active.
         for (const token of scannedQuery.term) {
             if (token.type === 'filter' && token.field.value === 'type' && token.value) {
-                typeInQuery =
-                    token.value.type === 'literal'
-                        ? (token.value.value as SearchType)
-                        : (token.value.quotedValue as SearchType)
+                typeInQuery = token.value.value as SearchType
             }
         }
     }

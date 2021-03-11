@@ -3,7 +3,6 @@ package graphqlbackend
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -21,6 +20,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs/git"
 	"github.com/sourcegraph/sourcegraph/schema"
@@ -251,7 +251,7 @@ func testStringResult(result SearchSuggestionResolver) string {
 	case languageSuggestionResolver:
 		name = "lang:" + r.lang.name
 	case symbolSuggestionResolver:
-		name = "symbol:" + r.symbol.symbol.Name
+		name = "symbol:" + r.symbol.Symbol.Name
 	default:
 		panic("never here")
 	}
@@ -353,49 +353,6 @@ func TestQuoteSuggestions(t *testing.T) {
 			t.Errorf("description is '%s', want it to contain 'regexp'", alert.description)
 		}
 	})
-}
-
-func TestQueryForStableResults(t *testing.T) {
-	cases := []struct {
-		query           string
-		wantStableCount int32
-		wantError       error
-	}{
-		{
-			query:           "foo stable:yes",
-			wantStableCount: 30,
-		},
-		{
-			query:           "foo stable:yes count:1000",
-			wantStableCount: 1000,
-		},
-		{
-			query:     "foo stable:yes count:5001",
-			wantError: fmt.Errorf("Stable searches are limited to at max count:%d results. Consider removing 'stable:', narrowing the search with 'repo:', or using the paginated search API.", maxSearchResultsPerPaginatedRequest),
-		},
-	}
-	for _, c := range cases {
-		t.Run("query for stable results", func(t *testing.T) {
-			queryInfo, _ := query.ParseLiteral(c.query)
-			args, queryInfo, err := queryForStableResults(&SearchArgs{}, queryInfo)
-			if err != nil {
-				if !reflect.DeepEqual(err, c.wantError) {
-					t.Errorf("Got error %v, want %v", err, c.wantError)
-				}
-				return
-			}
-			if diff := cmp.Diff(*args.First, c.wantStableCount); diff != "" {
-				t.Error(diff)
-			}
-			// Ensure type:file is set.
-			fileValue := "file"
-			wantTypeValue := query.Value{String: &fileValue}
-			gotTypeValues := queryInfo.Fields()["type"]
-			if len(gotTypeValues) != 1 && *gotTypeValues[0] != wantTypeValue {
-				t.Errorf("Query %s sets stable:yes but is not transformed with type:file.", c.query)
-			}
-		})
-	}
 }
 
 func TestVersionContext(t *testing.T) {
@@ -558,12 +515,12 @@ func mkFileMatch(db dbutil.DB, repo *types.RepoName, path string, lineNumbers ..
 			Name: "repo",
 		}
 	}
-	var lines []*LineMatch
+	var lines []*result.LineMatch
 	for _, n := range lineNumbers {
-		lines = append(lines, &LineMatch{LineNumber: n})
+		lines = append(lines, &result.LineMatch{LineNumber: n})
 	}
-	return mkFileMatchResolver(db, FileMatch{
-		uri:         fileMatchURI(repo.Name, "", path),
+	return mkFileMatchResolver(db, result.FileMatch{
+		URI:         fileMatchURI(repo.Name, "", path),
 		Path:        path,
 		LineMatches: lines,
 		Repo:        repo,

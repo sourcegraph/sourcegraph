@@ -21,7 +21,7 @@ export function getDiagnostics(tokens: Token[], patternType: SearchPatternType):
                 message: validationResult.reason,
                 ...toMonacoRange(field.range),
             })
-        } else if (token.type === 'quoted') {
+        } else if (token.type === 'literal' && token.quoted) {
             if (patternType === SearchPatternType.literal) {
                 diagnostics.push({
                     severity: Monaco.MarkerSeverity.Warning,

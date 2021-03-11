@@ -49,7 +49,7 @@ exports[`CodeMonitoringListPage Code monitoring page with 10 results 1`] = `
         </AnchorLink>
       }
       annotation={
-        <StatusBadge
+        <FeedbackBadge
           feedback={
             Object {
               "mailto": "support@sourcegraph.com",
@@ -75,7 +75,7 @@ exports[`CodeMonitoringListPage Code monitoring page with 10 results 1`] = `
           <small
             className="text-muted d-block mb-2"
           >
-            <StatusBadge
+            <FeedbackBadge
               feedback={
                 Object {
                   "mailto": "support@sourcegraph.com",
@@ -86,12 +86,18 @@ exports[`CodeMonitoringListPage Code monitoring page with 10 results 1`] = `
               <div
                 className="d-flex align-items-center"
               >
-                <span
-                  className="badge badge-warning text-uppercase mr-2"
+                <Badge
+                  className="text-uppercase"
+                  status="prototype"
                 >
-                  prototype
-                </span>
+                  <span
+                    className="badge badge--capitalized d-inline-flex align-items-center badge-warning text-uppercase"
+                  >
+                    prototype
+                  </span>
+                </Badge>
                 <a
+                  className="ml-2"
                   href="mailto:support@sourcegraph.com"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -99,7 +105,7 @@ exports[`CodeMonitoringListPage Code monitoring page with 10 results 1`] = `
                   Share feedback
                 </a>
               </div>
-            </StatusBadge>
+            </FeedbackBadge>
           </small>
           <h1
             className="flex-grow-1 d-block m-0"
@@ -1725,7 +1731,7 @@ exports[`CodeMonitoringListPage Code monitoring page with less than 10 results 1
         </AnchorLink>
       }
       annotation={
-        <StatusBadge
+        <FeedbackBadge
           feedback={
             Object {
               "mailto": "support@sourcegraph.com",
@@ -1751,7 +1757,7 @@ exports[`CodeMonitoringListPage Code monitoring page with less than 10 results 1
           <small
             className="text-muted d-block mb-2"
           >
-            <StatusBadge
+            <FeedbackBadge
               feedback={
                 Object {
                   "mailto": "support@sourcegraph.com",
@@ -1762,12 +1768,18 @@ exports[`CodeMonitoringListPage Code monitoring page with less than 10 results 1
               <div
                 className="d-flex align-items-center"
               >
-                <span
-                  className="badge badge-warning text-uppercase mr-2"
+                <Badge
+                  className="text-uppercase"
+                  status="prototype"
                 >
-                  prototype
-                </span>
+                  <span
+                    className="badge badge--capitalized d-inline-flex align-items-center badge-warning text-uppercase"
+                  >
+                    prototype
+                  </span>
+                </Badge>
                 <a
+                  className="ml-2"
                   href="mailto:support@sourcegraph.com"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -1775,7 +1787,7 @@ exports[`CodeMonitoringListPage Code monitoring page with less than 10 results 1
                   Share feedback
                 </a>
               </div>
-            </StatusBadge>
+            </FeedbackBadge>
           </small>
           <h1
             className="flex-grow-1 d-block m-0"
@@ -2442,7 +2454,7 @@ exports[`CodeMonitoringListPage Code monitoring page with more than 10 results 1
         </AnchorLink>
       }
       annotation={
-        <StatusBadge
+        <FeedbackBadge
           feedback={
             Object {
               "mailto": "support@sourcegraph.com",
@@ -2468,7 +2480,7 @@ exports[`CodeMonitoringListPage Code monitoring page with more than 10 results 1
           <small
             className="text-muted d-block mb-2"
           >
-            <StatusBadge
+            <FeedbackBadge
               feedback={
                 Object {
                   "mailto": "support@sourcegraph.com",
@@ -2479,12 +2491,18 @@ exports[`CodeMonitoringListPage Code monitoring page with more than 10 results 1
               <div
                 className="d-flex align-items-center"
               >
-                <span
-                  className="badge badge-warning text-uppercase mr-2"
+                <Badge
+                  className="text-uppercase"
+                  status="prototype"
                 >
-                  prototype
-                </span>
+                  <span
+                    className="badge badge--capitalized d-inline-flex align-items-center badge-warning text-uppercase"
+                  >
+                    prototype
+                  </span>
+                </Badge>
                 <a
+                  className="ml-2"
                   href="mailto:support@sourcegraph.com"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -2492,7 +2510,7 @@ exports[`CodeMonitoringListPage Code monitoring page with more than 10 results 1
                   Share feedback
                 </a>
               </div>
-            </StatusBadge>
+            </FeedbackBadge>
           </small>
           <h1
             className="flex-grow-1 d-block m-0"

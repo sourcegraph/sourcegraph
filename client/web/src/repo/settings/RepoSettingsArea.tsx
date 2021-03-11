@@ -11,7 +11,6 @@ import { RepoSettingsSidebar, RepoSettingsSideBarGroups } from './RepoSettingsSi
 import { RouteDescriptor } from '../../util/contributions'
 import { ErrorMessage } from '../../components/alerts'
 import { asError, ErrorLike, isErrorLike } from '../../../../shared/src/util/errors'
-import * as H from 'history'
 import { useObservable } from '../../../../shared/src/util/useObservable'
 import { BreadcrumbSetters } from '../../components/Breadcrumbs'
 import { AuthenticatedUser } from '../../auth'
@@ -38,7 +37,6 @@ interface Props extends RouteComponentProps<{}>, BreadcrumbSetters, ThemeProps, 
     repoSettingsSidebarGroups: RepoSettingsSideBarGroups
     repo: RepositoryFields
     authenticatedUser: AuthenticatedUser | null
-    history: H.History
 }
 
 /**
@@ -63,13 +61,7 @@ export const RepoSettingsArea: React.FunctionComponent<Props> = ({
         return null
     }
     if (isErrorLike(repoOrError)) {
-        return (
-            <HeroPage
-                icon={AlertCircleIcon}
-                title="Error"
-                subtitle={<ErrorMessage error={repoOrError.message} history={props.history} />}
-            />
-        )
+        return <HeroPage icon={AlertCircleIcon} title="Error" subtitle={<ErrorMessage error={repoOrError.message} />} />
     }
     if (repoOrError === null) {
         return <NotFoundPage />

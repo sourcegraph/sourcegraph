@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/codecommit"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // Repository is an AWS CodeCommit repository.
@@ -83,14 +84,10 @@ func (c *Client) cachedGetRepository(ctx context.Context, arn string) (*Reposito
 	return repo, nil
 }
 
-var reposCacheCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+var reposCacheCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "src_repos_awscodecommit_cache_hit",
 	Help: "Counts cache hits and misses for AWS CodeCommit repo metadata.",
 }, []string{"type"})
-
-func init() {
-	prometheus.MustRegister(reposCacheCounter)
-}
 
 type cachedRepo struct {
 	Repository

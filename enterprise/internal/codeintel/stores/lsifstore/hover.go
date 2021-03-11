@@ -6,6 +6,7 @@ import (
 	"github.com/keegancsmith/sqlf"
 	"github.com/opentracing/opentracing-go/log"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -25,7 +26,7 @@ func (s *Store) Hover(ctx context.Context, bundleID int, path string, line, char
 	}
 
 	traceLog(log.Int("numRanges", len(documentData.Document.Ranges)))
-	ranges := FindRanges(documentData.Document.Ranges, line, character)
+	ranges := semantic.FindRanges(documentData.Document.Ranges, line, character)
 	traceLog(log.Int("numIntersectingRanges", len(ranges)))
 
 	for _, r := range ranges {

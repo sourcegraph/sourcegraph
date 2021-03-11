@@ -24,12 +24,16 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	searchbackend "github.com/sourcegraph/sourcegraph/internal/search/backend"
+	"github.com/sourcegraph/sourcegraph/internal/search/filter"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/searcher"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/vcs/git"
 	"github.com/sourcegraph/sourcegraph/schema"
+
+	"github.com/hexops/autogold"
 )
 
 func TestSearchFilesInRepos(t *testing.T) {
@@ -39,12 +43,12 @@ func TestSearchFilesInRepos(t *testing.T) {
 		repoName := repo.Name
 		switch repoName {
 		case "foo/one":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		case "foo/two":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		case "foo/empty":
 			return nil, false, nil
@@ -128,16 +132,16 @@ func TestSearchFilesInReposStream(t *testing.T) {
 		repoName := repo.Name
 		switch repoName {
 		case "foo/one":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		case "foo/two":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		case "foo/three":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		default:
 			return nil, false, errors.New("Unexpected repo")
@@ -202,8 +206,8 @@ func TestSearchFilesInRepos_multipleRevsPerRepo(t *testing.T) {
 		repoName := repo.Name
 		switch repoName {
 		case "foo":
-			return []*FileMatchResolver{mkFileMatchResolver(db, FileMatch{
-				uri: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
+			return []*FileMatchResolver{mkFileMatchResolver(db, result.FileMatch{
+				URI: "git://" + string(repoName) + "?" + rev + "#" + "main.go",
 			})}, false, nil
 		default:
 			panic("unexpected repo")
@@ -244,7 +248,7 @@ func TestSearchFilesInRepos_multipleRevsPerRepo(t *testing.T) {
 
 	resultURIs := make([]string, len(results))
 	for i, result := range results {
-		resultURIs[i] = result.uri
+		resultURIs[i] = result.URI
 	}
 	sort.Strings(resultURIs)
 
@@ -400,7 +404,7 @@ func TestLimitSearcherRepos(t *testing.T) {
 }
 
 func TestFileMatch_Limit(t *testing.T) {
-	desc := func(fm *FileMatch) string {
+	desc := func(fm *result.FileMatch) string {
 		parts := []string{fmt.Sprintf("symbols=%d", len(fm.Symbols))}
 		for _, lm := range fm.LineMatches {
 			parts = append(parts, fmt.Sprintf("lm=%d", len(lm.OffsetAndLengths)))
@@ -408,12 +412,12 @@ func TestFileMatch_Limit(t *testing.T) {
 		return strings.Join(parts, " ")
 	}
 
-	f := func(lineMatches []LineMatch, symbols []int, limitInput uint32) bool {
-		fm := &FileMatch{
+	f := func(lineMatches []result.LineMatch, symbols []int, limitInput uint32) bool {
+		fm := &result.FileMatch{
 			// SearchSymbolResult fails to generate due to private fields. So
 			// we just generate a slice of ints and use its length. This is
 			// fine for limit which only looks at the slice and not in it.
-			Symbols: make([]*SearchSymbolResult, len(symbols)),
+			Symbols: make([]*result.SymbolMatch, len(symbols)),
 		}
 		// We don't use *LineMatch as args since quick can generate nil.
 		for _, lm := range lineMatches {
@@ -446,12 +450,12 @@ func TestFileMatch_Limit(t *testing.T) {
 
 	cases := []struct {
 		Name        string
-		LineMatches []LineMatch
+		LineMatches []result.LineMatch
 		Symbols     int
 		Limit       int
 	}{{
 		Name: "1 line match",
-		LineMatches: []LineMatch{{
+		LineMatches: []result.LineMatch{{
 			OffsetAndLengths: [][2]int32{{1, 1}},
 		}},
 		Limit: 1,
@@ -470,4 +474,29 @@ func TestFileMatch_Limit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSelect(t *testing.T) {
+	data := FileMatchResolver{
+		FileMatch: result.FileMatch{
+			Symbols: []*result.SymbolMatch{
+				{Symbol: result.Symbol{Name: "a()", Kind: "func"}},
+				{Symbol: result.Symbol{Name: "b()", Kind: "function"}},
+				{Symbol: result.Symbol{Name: "var c", Kind: "variable"}},
+			},
+		},
+	}
+
+	test := func(input string) string {
+		selectPath, _ := filter.SelectPathFromString(input)
+		symbols := data.Select(selectPath).(*FileMatchResolver).FileMatch.Symbols
+		var values []string
+		for _, s := range symbols {
+			values = append(values, s.Symbol.Name+":"+s.Symbol.Kind)
+		}
+		return strings.Join(values, ", ")
+	}
+
+	autogold.Want("filter any symbol", "a():func, b():function, var c:variable").Equal(t, test("symbol"))
+	autogold.Want("filter symbol kind variable", "var c:variable").Equal(t, test("symbol.variable"))
 }

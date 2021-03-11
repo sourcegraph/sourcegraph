@@ -1,5 +1,4 @@
 import React, { useState, FunctionComponent, useCallback } from 'react'
-import * as H from 'history'
 
 import { requestGraphQL } from '../../../backend/graphql'
 import { gql, dataOrThrowErrors } from '../../../../../shared/src/graphql/graphql'
@@ -17,7 +16,6 @@ interface Props {
     user: string
     emails: UserEmail[]
     onDidSet: () => void
-    history: H.History
 
     className?: string
 }
@@ -28,7 +26,7 @@ type Status = undefined | 'loading' | ErrorLike
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const findPrimaryEmail = (emails: UserEmail[]): string => emails.find(email => email.isPrimary)!.email
 
-export const SetUserPrimaryEmailForm: FunctionComponent<Props> = ({ user, emails, onDidSet, className, history }) => {
+export const SetUserPrimaryEmailForm: FunctionComponent<Props> = ({ user, emails, onDidSet, className }) => {
     const [primaryEmail, setPrimaryEmail] = useState<string>(findPrimaryEmail(emails))
     const [statusOrError, setStatusOrError] = useState<Status>()
 
@@ -99,7 +97,7 @@ export const SetUserPrimaryEmailForm: FunctionComponent<Props> = ({ user, emails
                     className="btn btn-primary"
                 />
             </Form>
-            {isErrorLike(statusOrError) && <ErrorAlert className="mt-2" error={statusOrError} history={history} />}
+            {isErrorLike(statusOrError) && <ErrorAlert className="mt-2" error={statusOrError} />}
         </div>
     )
 }

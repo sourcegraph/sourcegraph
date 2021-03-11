@@ -1,0 +1,35 @@
+.batch-change-node {
+    &__badge {
+        width: 100%;
+        @include media-breakpoint-down(xs) {
+            width: fit-content;
+            // Make it full width in the current row.
+            grid-column: 1 / -1;
+        }
+    }
+    &__title {
+        @include media-breakpoint-down(sm) {
+            // Emulate h4 on sm and xs devices.
+            font-size: 0.875rem;
+            line-height: (20/14);
+            font-weight: 600;
+        }
+    }
+    &__content {
+        @include media-breakpoint-down(xs) {
+            width: fit-content;
+            // Make it full width in the current row.
+            grid-column: 1 / -1;
+        }
+        min-width: 0;
+    }
+    &__separator {
+        // Make it full width in the current row.
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--border-color-2);
+        @include media-breakpoint-down(xs) {
+            margin-top: 1rem;
+            padding-bottom: 1rem;
+        }
+    }
+}

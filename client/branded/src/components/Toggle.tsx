@@ -18,7 +18,9 @@ interface Props {
     /** The title attribute (tooltip). */
     title?: string
 
-    ariaLabel?: string
+    'aria-label'?: string
+    'aria-labelledby'?: string
+    'aria-describedby'?: string
 
     disabled?: boolean
     tabIndex?: number
@@ -39,7 +41,9 @@ export const Toggle: React.FunctionComponent<Props> = ({
     onToggle,
     onClick,
     dataTest,
-    ariaLabel,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledby,
+    'aria-describedby': ariaDescribedby,
 }) => {
     function onButtonClick(event: React.MouseEvent<HTMLButtonElement>): void {
         event.stopPropagation()
@@ -64,6 +68,8 @@ export const Toggle: React.FunctionComponent<Props> = ({
             role="switch"
             aria-checked={value}
             aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledby}
+            aria-describedby={ariaDescribedby}
             data-test={dataTest}
         >
             <span

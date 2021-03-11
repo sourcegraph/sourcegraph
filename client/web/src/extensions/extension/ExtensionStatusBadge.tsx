@@ -1,5 +1,5 @@
 import React from 'react'
-import { StatusBadge } from '../../components/StatusBadge'
+import { Badge } from '../../components/Badge'
 
 /**
  * Shows a "WIP" badge for extensions.
@@ -7,12 +7,13 @@ import { StatusBadge } from '../../components/StatusBadge'
 export const ExtensionStatusBadge: React.FunctionComponent<{ viewerCanAdminister: boolean }> = ({
     viewerCanAdminister,
 }) => (
-    <StatusBadge
+    <Badge
         status="wip"
         tooltip={
             viewerCanAdminister
                 ? 'Remove "WIP" from the title when this extension is ready for use.'
                 : 'Work in progress (not ready for use)'
         }
+        className="text-uppercase"
     />
 )

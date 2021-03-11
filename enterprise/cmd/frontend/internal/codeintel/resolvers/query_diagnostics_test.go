@@ -8,6 +8,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -18,11 +19,11 @@ func TestDiagnostics(t *testing.T) {
 	mockPositionAdjuster := noopPositionAdjuster()
 
 	diagnostics := []lsifstore.Diagnostic{
-		{DiagnosticData: lsifstore.DiagnosticData{Code: "c1"}},
-		{DiagnosticData: lsifstore.DiagnosticData{Code: "c2"}},
-		{DiagnosticData: lsifstore.DiagnosticData{Code: "c3"}},
-		{DiagnosticData: lsifstore.DiagnosticData{Code: "c4"}},
-		{DiagnosticData: lsifstore.DiagnosticData{Code: "c5"}},
+		{DiagnosticData: semantic.DiagnosticData{Code: "c1"}},
+		{DiagnosticData: semantic.DiagnosticData{Code: "c2"}},
+		{DiagnosticData: semantic.DiagnosticData{Code: "c3"}},
+		{DiagnosticData: semantic.DiagnosticData{Code: "c4"}},
+		{DiagnosticData: semantic.DiagnosticData{Code: "c5"}},
 	}
 
 	mockLSIFStore.DiagnosticsFunc.PushReturn(diagnostics[0:1], 1, nil)
@@ -56,11 +57,11 @@ func TestDiagnostics(t *testing.T) {
 	}
 
 	expectedDiagnostics := []AdjustedDiagnostic{
-		{Dump: uploads[0], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub1/", DiagnosticData: lsifstore.DiagnosticData{Code: "c1"}}},
-		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: lsifstore.DiagnosticData{Code: "c2"}}},
-		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: lsifstore.DiagnosticData{Code: "c3"}}},
-		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: lsifstore.DiagnosticData{Code: "c4"}}},
-		{Dump: uploads[2], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub3/", DiagnosticData: lsifstore.DiagnosticData{Code: "c5"}}},
+		{Dump: uploads[0], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub1/", DiagnosticData: semantic.DiagnosticData{Code: "c1"}}},
+		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: semantic.DiagnosticData{Code: "c2"}}},
+		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: semantic.DiagnosticData{Code: "c3"}}},
+		{Dump: uploads[1], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub2/", DiagnosticData: semantic.DiagnosticData{Code: "c4"}}},
+		{Dump: uploads[2], AdjustedCommit: "deadbeef", Diagnostic: lsifstore.Diagnostic{Path: "sub3/", DiagnosticData: semantic.DiagnosticData{Code: "c5"}}},
 	}
 	if diff := cmp.Diff(expectedDiagnostics, adjustedDiagnostics); diff != "" {
 		t.Errorf("unexpected diagnostics (-want +got):\n%s", diff)

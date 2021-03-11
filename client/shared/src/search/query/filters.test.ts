@@ -1,5 +1,5 @@
 import { escapeSpaces, validateFilter } from './filters'
-import { Literal, Quoted } from './token'
+import { Literal, createLiteral } from './token'
 
 expect.addSnapshotSerializer({
     serialize: value => value as string,
@@ -11,7 +11,7 @@ describe('validateFilter()', () => {
         description: string
         filterType: string
         expected: ReturnType<typeof validateFilter>
-        token: Literal | Quoted
+        token: Literal
     }
     const range = { start: 0, end: 1 }
     const TESTCASES: TestCase[] = [
@@ -19,49 +19,49 @@ describe('validateFilter()', () => {
             description: 'Valid repo filter',
             filterType: 'repo',
             expected: { valid: true },
-            token: { type: 'literal', value: 'a', range },
+            token: createLiteral('a', range),
         },
         {
             description: 'Valid repo filter - quoted value',
             filterType: 'repo',
             expected: { valid: true },
-            token: { type: 'quoted', quotedValue: 'a', range },
+            token: createLiteral('a', range, true),
         },
         {
             description: 'Valid repo filter - alias',
-            filterType: 'repo',
+            filterType: 'r',
             expected: { valid: true },
-            token: { type: 'quoted', quotedValue: 'a', range },
+            token: createLiteral('a', range, true),
         },
         {
             description: 'Invalid filter type',
             filterType: 'repoo',
             expected: { valid: false, reason: 'Invalid filter type.' },
-            token: { type: 'literal', value: 'a', range },
+            token: createLiteral('a', range),
         },
         {
             description: 'Valid case filter',
             filterType: 'case',
             expected: { valid: true },
-            token: { type: 'literal', value: 'yes', range },
+            token: createLiteral('yes', range),
         },
         {
             description: 'Valid quoted value for case filter',
             filterType: 'case',
             expected: { valid: true },
-            token: { type: 'quoted', quotedValue: 'yes', range },
+            token: createLiteral('yes', range, true),
         },
         {
             description: 'Invalid literal value for case filter',
             filterType: 'case',
             expected: { valid: false, reason: 'Invalid filter value, expected one of: yes, no.' },
-            token: { type: 'literal', value: 'yess', range },
+            token: createLiteral('yess', range, true),
         },
         {
             description: 'Valid case-insensitive repo filter',
             filterType: 'RePo',
             expected: { valid: true },
-            token: { type: 'literal', value: 'a', range },
+            token: createLiteral('a', range, true),
         },
     ]
 

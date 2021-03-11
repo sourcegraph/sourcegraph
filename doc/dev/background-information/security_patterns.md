@@ -12,7 +12,7 @@ Current forms of authorization in Sourcegraph include:
 
  - Site admin roles
  - Organization memberships
- - Campaigns permissions
+ - Batch changes permissions
  - Repository permissions
  - Same-user validation
 
@@ -26,4 +26,4 @@ In Sourcegraph, there are two places to enforce authorization, both equally impo
     - Some endpoints are restricted to certain users (e.g. site admins or the same user).
     - Be aware that any backend failure has potential to indicate unauthorized information about private resources. Therefore, halt the process as soon as we identify an unauthorized request, and behave as if the resource does not exist at all.
 - At the database layer:
-    - The database is our source of truth for authorization, especially for repository and campaigns permissions. Enforcing authorization at this layer is absolutely necessary.
+    - The database is our source of truth for authorization, especially for repository and batch changes permissions. Enforcing authorization at this layer is absolutely necessary.

@@ -19,10 +19,10 @@ export const enterpriseUserSettingsSideBarItems: UserSettingsSidebarItems = {
             condition: () => authExp,
         },
         {
-            to: '/campaigns',
-            label: 'Campaigns',
+            to: '/batch-changes',
+            label: 'Batch Changes',
             condition: ({ isSourcegraphDotCom, user: { viewerCanAdminister } }) =>
-                !isSourcegraphDotCom && window.context.campaignsEnabled && viewerCanAdminister,
+                !isSourcegraphDotCom && window.context.batchChangesEnabled && viewerCanAdminister,
         },
         ...userSettingsSideBarItems.account.slice(2),
         {

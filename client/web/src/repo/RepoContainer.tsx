@@ -334,13 +334,7 @@ export const RepoContainer: React.FunctionComponent<RepoContainerProps> = props 
         if (isRepoNotFoundErrorLike(repoOrError)) {
             return <RepositoryNotFoundPage repo={repoName} viewerCanAdminister={viewerCanAdminister} />
         }
-        return (
-            <HeroPage
-                icon={AlertCircleIcon}
-                title="Error"
-                subtitle={<ErrorMessage error={repoOrError} history={props.history} />}
-            />
-        )
+        return <HeroPage icon={AlertCircleIcon} title="Error" subtitle={<ErrorMessage error={repoOrError} />} />
     }
 
     const repoMatchURL = '/' + encodeURIPathComponent(repoName)

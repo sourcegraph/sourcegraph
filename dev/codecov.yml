@@ -10,14 +10,13 @@ coverage:
           - cmd/symbols
           - enterprise/cmd/precise-code-intel-*
           - enterprise/internal/codeintel
-      campaigns:
+      batches:
         informational: true
         paths:
-          - cmd/frontend/graphqlbackend/campaigns.go
-          - enterprise/cmd/frontend/internal/campaigns
-          - internal/campaigns
-          - enterprise/internal/campaigns
-          - client/web/src/enterprise/campaigns
+          - cmd/frontend/graphqlbackend/batches.go
+          - internal/batches
+          - enterprise/internal/batches
+          - client/web/src/enterprise/batches
       search:
         informational: true
         paths:

@@ -128,11 +128,7 @@ export class ApiConsole extends React.PureComponent<Props, State> {
                         <LoadingSpinner className="icon-inline" /> Loading…
                     </span>
                 ) : isErrorLike(this.state.graphiqlOrError) ? (
-                    <ErrorAlert
-                        prefix="Error loading API console"
-                        error={this.state.graphiqlOrError}
-                        history={this.props.history}
-                    />
+                    <ErrorAlert prefix="Error loading API console" error={this.state.graphiqlOrError} />
                 ) : (
                     this.renderGraphiQL()
                 )}

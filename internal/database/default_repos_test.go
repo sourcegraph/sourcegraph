@@ -128,6 +128,11 @@ func TestListDefaultRepos(t *testing.T) {
 			INSERT INTO repo(id, name) VALUES (13, 'github.com/foo/bar13');
 			INSERT INTO external_services(id, kind, display_name, config, cloud_default) VALUES (101, 'github', 'github', '{}', true);
 			INSERT INTO external_service_repos VALUES (101, 13, 'https://github.com/foo/bar13');
+
+			-- insert a repo only referenced by a cloud_default external service, but also in user_public_repos
+			INSERT INTO repo(id, name) VALUES (14, 'github.com/foo/bar14');
+			INSERT INTO external_service_repos VALUES (101, 14, 'https://github.com/foo/bar14');
+			INSERT INTO user_public_repos(user_id, repo_id, repo_uri) VALUES (1, 14, 'github.com/foo/bar/14')
 		`)
 		if err != nil {
 			t.Fatal(err)
@@ -148,6 +153,10 @@ func TestListDefaultRepos(t *testing.T) {
 			{
 				ID:   api.RepoID(11),
 				Name: "github.com/foo/bar11",
+			},
+			{
+				ID:   api.RepoID(14),
+				Name: "github.com/foo/bar14",
 			},
 		}
 		// expect 2 repos, the user added repo and the one that is referenced in the default repos table

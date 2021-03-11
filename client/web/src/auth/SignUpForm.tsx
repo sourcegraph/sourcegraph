@@ -6,7 +6,6 @@ import { enterpriseTrial, signupTerms } from '../util/features'
 import { EmailInput, PasswordInput, UsernameInput } from './SignInSignUpCommon'
 import { ErrorAlert } from '../components/alerts'
 import classNames from 'classnames'
-import * as H from 'history'
 import { OrDivider } from './OrDivider'
 import GithubIcon from 'mdi-react/GithubIcon'
 import { Observable, of } from 'rxjs'
@@ -38,7 +37,6 @@ interface SignUpFormProps {
     doSignUp: (args: SignUpArguments) => Promise<void>
 
     buttonLabel?: string
-    history: H.History
     context: Pick<SourcegraphContext, 'authProviders' | 'sourcegraphDotComMode'>
 }
 
@@ -47,13 +45,7 @@ const preventDefault = (event: React.FormEvent): void => event.preventDefault()
 /**
  * The form for creating an account
  */
-export const SignUpForm: React.FunctionComponent<SignUpFormProps> = ({
-    doSignUp,
-    history,
-    buttonLabel,
-    className,
-    context,
-}) => {
+export const SignUpForm: React.FunctionComponent<SignUpFormProps> = ({ doSignUp, buttonLabel, className, context }) => {
     const [loading, setLoading] = useState(false)
     const [requestedTrial, setRequestedTrial] = useState(false)
     const [error, setError] = useState<Error | null>(null)
@@ -119,9 +111,15 @@ export const SignUpForm: React.FunctionComponent<SignUpFormProps> = ({
 
     const externalAuthProviders = context.authProviders.filter(provider => !provider.isBuiltin)
 
+    const onClickExternalAuthSignup = useCallback(
+        (serviceType: string): React.MouseEventHandler => event => {
+            eventLogger.log('externalAuthSignupClicked', { type: serviceType })
+        },
+        []
+    )
     return (
         <>
-            {error && <ErrorAlert className="mt-4 mb-0" error={error} history={history} />}
+            {error && <ErrorAlert className="mt-4 mb-0" error={error} />}
             {/* Using  <form /> to set 'valid' + 'is-invaild' at the input level */}
             {/* eslint-disable-next-line react/forbid-elements */}
             <form
@@ -261,7 +259,7 @@ export const SignUpForm: React.FunctionComponent<SignUpFormProps> = ({
                             // Use index as key because display name may not be unique. This is OK
                             // here because this list will not be updated during this component's lifetime.
                             /* eslint-disable react/no-array-index-key */
-                            <div className="mb-2" key={index}>
+                            <div className="mb-2" key={index} onClick={onClickExternalAuthSignup(provider.serviceType)}>
                                 <a href={provider.authenticationURL} className="btn btn-secondary btn-block">
                                     {provider.serviceType === 'github' ? (
                                         <GithubIcon className="icon-inline" />

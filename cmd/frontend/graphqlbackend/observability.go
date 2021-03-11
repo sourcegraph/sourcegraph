@@ -6,24 +6,20 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 )
 
-var testMetricWarning = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+var testMetricWarning = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "observability_test_metric_warning",
 	Help: "Value is 1 if warning test alert should be firing, 0 otherwise - triggered using triggerObservabilityTestAlert",
 }, nil)
 
-var testMetricCritical = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+var testMetricCritical = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "observability_test_metric_critical",
 	Help: "Value is 1 if critical test alert should be firing, 0 otherwise - triggered using triggerObservabilityTestAlert",
 }, nil)
-
-func init() {
-	prometheus.MustRegister(testMetricWarning)
-	prometheus.MustRegister(testMetricCritical)
-}
 
 func (r *schemaResolver) TriggerObservabilityTestAlert(ctx context.Context, args *struct {
 	Level string

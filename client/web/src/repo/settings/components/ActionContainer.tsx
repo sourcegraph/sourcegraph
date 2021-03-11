@@ -96,7 +96,7 @@ export class ActionContainer extends React.PureComponent<Props, State> {
                 details={
                     <>
                         {this.state.error ? (
-                            <ErrorAlert className="mb-0 mt-3" error={this.state.error} history={this.props.history} />
+                            <ErrorAlert className="mb-0 mt-3" error={this.state.error} />
                         ) : (
                             this.props.info
                         )}

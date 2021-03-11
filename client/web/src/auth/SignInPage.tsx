@@ -47,9 +47,7 @@ export const SignInPage: React.FunctionComponent<SignInPageProps> = props => {
             </div>
         ) : (
             <div className="mb-4 signin-page__container pb-5">
-                {error && (
-                    <ErrorAlert className="mt-4 mb-0 text-left" error={error} icon={false} history={props.history} />
-                )}
+                {error && <ErrorAlert className="mt-4 mb-0 text-left" error={error} icon={false} />}
                 <div
                     className={classNames(
                         'signin-signup-form signin-form test-signin-form rounded p-4 my-3',

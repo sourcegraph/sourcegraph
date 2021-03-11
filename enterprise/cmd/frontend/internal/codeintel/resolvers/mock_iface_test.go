@@ -11,6 +11,7 @@ import (
 	gitserver "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/gitserver"
 	dbstore "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	lsifstore "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	semantic "github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 // MockDBStore is a mock implementation of the DBStore interface (from the
@@ -87,7 +88,7 @@ func NewMockDBStore() *MockDBStore {
 			},
 		},
 		DefinitionDumpsFunc: &DBStoreDefinitionDumpsFunc{
-			defaultHook: func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error) {
+			defaultHook: func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error) {
 				return nil, nil
 			},
 		},
@@ -157,7 +158,7 @@ func NewMockDBStore() *MockDBStore {
 			},
 		},
 		ReferenceIDsAndFiltersFunc: &DBStoreReferenceIDsAndFiltersFunc{
-			defaultHook: func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
+			defaultHook: func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
 				return nil, 0, nil
 			},
 		},
@@ -350,15 +351,15 @@ func (c DBStoreCommitGraphMetadataFuncCall) Results() []interface{} {
 // DBStoreDefinitionDumpsFunc describes the behavior when the
 // DefinitionDumps method of the parent MockDBStore instance is invoked.
 type DBStoreDefinitionDumpsFunc struct {
-	defaultHook func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error)
-	hooks       []func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error)
+	defaultHook func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error)
+	hooks       []func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error)
 	history     []DBStoreDefinitionDumpsFuncCall
 	mutex       sync.Mutex
 }
 
 // DefinitionDumps delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockDBStore) DefinitionDumps(v0 context.Context, v1 []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error) {
+func (m *MockDBStore) DefinitionDumps(v0 context.Context, v1 []semantic.QualifiedMonikerData) ([]dbstore.Dump, error) {
 	r0, r1 := m.DefinitionDumpsFunc.nextHook()(v0, v1)
 	m.DefinitionDumpsFunc.appendCall(DBStoreDefinitionDumpsFuncCall{v0, v1, r0, r1})
 	return r0, r1
@@ -367,7 +368,7 @@ func (m *MockDBStore) DefinitionDumps(v0 context.Context, v1 []lsifstore.Qualifi
 // SetDefaultHook sets function that is called when the DefinitionDumps
 // method of the parent MockDBStore instance is invoked and the hook queue
 // is empty.
-func (f *DBStoreDefinitionDumpsFunc) SetDefaultHook(hook func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error)) {
+func (f *DBStoreDefinitionDumpsFunc) SetDefaultHook(hook func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error)) {
 	f.defaultHook = hook
 }
 
@@ -375,7 +376,7 @@ func (f *DBStoreDefinitionDumpsFunc) SetDefaultHook(hook func(context.Context, [
 // DefinitionDumps method of the parent MockDBStore instance invokes the
 // hook at the front of the queue and discards it. After the queue is empty,
 // the default hook function is invoked for any future action.
-func (f *DBStoreDefinitionDumpsFunc) PushHook(hook func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error)) {
+func (f *DBStoreDefinitionDumpsFunc) PushHook(hook func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -384,7 +385,7 @@ func (f *DBStoreDefinitionDumpsFunc) PushHook(hook func(context.Context, []lsifs
 // SetDefaultReturn calls SetDefaultDefaultHook with a function that returns
 // the given values.
 func (f *DBStoreDefinitionDumpsFunc) SetDefaultReturn(r0 []dbstore.Dump, r1 error) {
-	f.SetDefaultHook(func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error) {
+	f.SetDefaultHook(func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error) {
 		return r0, r1
 	})
 }
@@ -392,12 +393,12 @@ func (f *DBStoreDefinitionDumpsFunc) SetDefaultReturn(r0 []dbstore.Dump, r1 erro
 // PushReturn calls PushDefaultHook with a function that returns the given
 // values.
 func (f *DBStoreDefinitionDumpsFunc) PushReturn(r0 []dbstore.Dump, r1 error) {
-	f.PushHook(func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error) {
+	f.PushHook(func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error) {
 		return r0, r1
 	})
 }
 
-func (f *DBStoreDefinitionDumpsFunc) nextHook() func(context.Context, []lsifstore.QualifiedMonikerData) ([]dbstore.Dump, error) {
+func (f *DBStoreDefinitionDumpsFunc) nextHook() func(context.Context, []semantic.QualifiedMonikerData) ([]dbstore.Dump, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -435,7 +436,7 @@ type DBStoreDefinitionDumpsFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 []lsifstore.QualifiedMonikerData
+	Arg1 []semantic.QualifiedMonikerData
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 []dbstore.Dump
@@ -1926,15 +1927,15 @@ func (c DBStoreMarkRepositoryAsDirtyFuncCall) Results() []interface{} {
 // ReferenceIDsAndFilters method of the parent MockDBStore instance is
 // invoked.
 type DBStoreReferenceIDsAndFiltersFunc struct {
-	defaultHook func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)
-	hooks       []func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)
+	defaultHook func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)
+	hooks       []func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)
 	history     []DBStoreReferenceIDsAndFiltersFuncCall
 	mutex       sync.Mutex
 }
 
 // ReferenceIDsAndFilters delegates to the next hook function in the queue
 // and stores the parameter and result values of this invocation.
-func (m *MockDBStore) ReferenceIDsAndFilters(v0 context.Context, v1 int, v2 string, v3 []lsifstore.QualifiedMonikerData, v4 int, v5 int) (dbstore.PackageReferenceScanner, int, error) {
+func (m *MockDBStore) ReferenceIDsAndFilters(v0 context.Context, v1 int, v2 string, v3 []semantic.QualifiedMonikerData, v4 int, v5 int) (dbstore.PackageReferenceScanner, int, error) {
 	r0, r1, r2 := m.ReferenceIDsAndFiltersFunc.nextHook()(v0, v1, v2, v3, v4, v5)
 	m.ReferenceIDsAndFiltersFunc.appendCall(DBStoreReferenceIDsAndFiltersFuncCall{v0, v1, v2, v3, v4, v5, r0, r1, r2})
 	return r0, r1, r2
@@ -1943,7 +1944,7 @@ func (m *MockDBStore) ReferenceIDsAndFilters(v0 context.Context, v1 int, v2 stri
 // SetDefaultHook sets function that is called when the
 // ReferenceIDsAndFilters method of the parent MockDBStore instance is
 // invoked and the hook queue is empty.
-func (f *DBStoreReferenceIDsAndFiltersFunc) SetDefaultHook(hook func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)) {
+func (f *DBStoreReferenceIDsAndFiltersFunc) SetDefaultHook(hook func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)) {
 	f.defaultHook = hook
 }
 
@@ -1951,7 +1952,7 @@ func (f *DBStoreReferenceIDsAndFiltersFunc) SetDefaultHook(hook func(context.Con
 // ReferenceIDsAndFilters method of the parent MockDBStore instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *DBStoreReferenceIDsAndFiltersFunc) PushHook(hook func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)) {
+func (f *DBStoreReferenceIDsAndFiltersFunc) PushHook(hook func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1960,7 +1961,7 @@ func (f *DBStoreReferenceIDsAndFiltersFunc) PushHook(hook func(context.Context, 
 // SetDefaultReturn calls SetDefaultDefaultHook with a function that returns
 // the given values.
 func (f *DBStoreReferenceIDsAndFiltersFunc) SetDefaultReturn(r0 dbstore.PackageReferenceScanner, r1 int, r2 error) {
-	f.SetDefaultHook(func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
+	f.SetDefaultHook(func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
 		return r0, r1, r2
 	})
 }
@@ -1968,12 +1969,12 @@ func (f *DBStoreReferenceIDsAndFiltersFunc) SetDefaultReturn(r0 dbstore.PackageR
 // PushReturn calls PushDefaultHook with a function that returns the given
 // values.
 func (f *DBStoreReferenceIDsAndFiltersFunc) PushReturn(r0 dbstore.PackageReferenceScanner, r1 int, r2 error) {
-	f.PushHook(func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
+	f.PushHook(func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
 		return r0, r1, r2
 	})
 }
 
-func (f *DBStoreReferenceIDsAndFiltersFunc) nextHook() func(context.Context, int, string, []lsifstore.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
+func (f *DBStoreReferenceIDsAndFiltersFunc) nextHook() func(context.Context, int, string, []semantic.QualifiedMonikerData, int, int) (dbstore.PackageReferenceScanner, int, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -2018,7 +2019,7 @@ type DBStoreReferenceIDsAndFiltersFuncCall struct {
 	Arg2 string
 	// Arg3 is the value of the 4th argument passed to this method
 	// invocation.
-	Arg3 []lsifstore.QualifiedMonikerData
+	Arg3 []semantic.QualifiedMonikerData
 	// Arg4 is the value of the 5th argument passed to this method
 	// invocation.
 	Arg4 int
@@ -2843,7 +2844,7 @@ type MockLSIFStore struct {
 func NewMockLSIFStore() *MockLSIFStore {
 	return &MockLSIFStore{
 		BulkMonikerResultsFunc: &LSIFStoreBulkMonikerResultsFunc{
-			defaultHook: func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error) {
+			defaultHook: func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error) {
 				return nil, 0, nil
 			},
 		},
@@ -2868,13 +2869,13 @@ func NewMockLSIFStore() *MockLSIFStore {
 			},
 		},
 		MonikersByPositionFunc: &LSIFStoreMonikersByPositionFunc{
-			defaultHook: func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error) {
+			defaultHook: func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error) {
 				return nil, nil
 			},
 		},
 		PackageInformationFunc: &LSIFStorePackageInformationFunc{
-			defaultHook: func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error) {
-				return lsifstore.PackageInformationData{}, false, nil
+			defaultHook: func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error) {
+				return semantic.PackageInformationData{}, false, nil
 			},
 		},
 		RangesFunc: &LSIFStoreRangesFunc{
@@ -2928,15 +2929,15 @@ func NewMockLSIFStoreFrom(i LSIFStore) *MockLSIFStore {
 // BulkMonikerResults method of the parent MockLSIFStore instance is
 // invoked.
 type LSIFStoreBulkMonikerResultsFunc struct {
-	defaultHook func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error)
-	hooks       []func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error)
+	defaultHook func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error)
+	hooks       []func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error)
 	history     []LSIFStoreBulkMonikerResultsFuncCall
 	mutex       sync.Mutex
 }
 
 // BulkMonikerResults delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockLSIFStore) BulkMonikerResults(v0 context.Context, v1 string, v2 []int, v3 []lsifstore.MonikerData, v4 int, v5 int) ([]lsifstore.Location, int, error) {
+func (m *MockLSIFStore) BulkMonikerResults(v0 context.Context, v1 string, v2 []int, v3 []semantic.MonikerData, v4 int, v5 int) ([]lsifstore.Location, int, error) {
 	r0, r1, r2 := m.BulkMonikerResultsFunc.nextHook()(v0, v1, v2, v3, v4, v5)
 	m.BulkMonikerResultsFunc.appendCall(LSIFStoreBulkMonikerResultsFuncCall{v0, v1, v2, v3, v4, v5, r0, r1, r2})
 	return r0, r1, r2
@@ -2945,7 +2946,7 @@ func (m *MockLSIFStore) BulkMonikerResults(v0 context.Context, v1 string, v2 []i
 // SetDefaultHook sets function that is called when the BulkMonikerResults
 // method of the parent MockLSIFStore instance is invoked and the hook queue
 // is empty.
-func (f *LSIFStoreBulkMonikerResultsFunc) SetDefaultHook(hook func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error)) {
+func (f *LSIFStoreBulkMonikerResultsFunc) SetDefaultHook(hook func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error)) {
 	f.defaultHook = hook
 }
 
@@ -2953,7 +2954,7 @@ func (f *LSIFStoreBulkMonikerResultsFunc) SetDefaultHook(hook func(context.Conte
 // BulkMonikerResults method of the parent MockLSIFStore instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *LSIFStoreBulkMonikerResultsFunc) PushHook(hook func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error)) {
+func (f *LSIFStoreBulkMonikerResultsFunc) PushHook(hook func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -2962,7 +2963,7 @@ func (f *LSIFStoreBulkMonikerResultsFunc) PushHook(hook func(context.Context, st
 // SetDefaultReturn calls SetDefaultDefaultHook with a function that returns
 // the given values.
 func (f *LSIFStoreBulkMonikerResultsFunc) SetDefaultReturn(r0 []lsifstore.Location, r1 int, r2 error) {
-	f.SetDefaultHook(func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error) {
+	f.SetDefaultHook(func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error) {
 		return r0, r1, r2
 	})
 }
@@ -2970,12 +2971,12 @@ func (f *LSIFStoreBulkMonikerResultsFunc) SetDefaultReturn(r0 []lsifstore.Locati
 // PushReturn calls PushDefaultHook with a function that returns the given
 // values.
 func (f *LSIFStoreBulkMonikerResultsFunc) PushReturn(r0 []lsifstore.Location, r1 int, r2 error) {
-	f.PushHook(func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error) {
+	f.PushHook(func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error) {
 		return r0, r1, r2
 	})
 }
 
-func (f *LSIFStoreBulkMonikerResultsFunc) nextHook() func(context.Context, string, []int, []lsifstore.MonikerData, int, int) ([]lsifstore.Location, int, error) {
+func (f *LSIFStoreBulkMonikerResultsFunc) nextHook() func(context.Context, string, []int, []semantic.MonikerData, int, int) ([]lsifstore.Location, int, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -3019,7 +3020,7 @@ type LSIFStoreBulkMonikerResultsFuncCall struct {
 	Arg2 []int
 	// Arg3 is the value of the 4th argument passed to this method
 	// invocation.
-	Arg3 []lsifstore.MonikerData
+	Arg3 []semantic.MonikerData
 	// Arg4 is the value of the 5th argument passed to this method
 	// invocation.
 	Arg4 int
@@ -3535,15 +3536,15 @@ func (c LSIFStoreHoverFuncCall) Results() []interface{} {
 // MonikersByPosition method of the parent MockLSIFStore instance is
 // invoked.
 type LSIFStoreMonikersByPositionFunc struct {
-	defaultHook func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error)
-	hooks       []func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error)
+	defaultHook func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error)
+	hooks       []func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error)
 	history     []LSIFStoreMonikersByPositionFuncCall
 	mutex       sync.Mutex
 }
 
 // MonikersByPosition delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockLSIFStore) MonikersByPosition(v0 context.Context, v1 int, v2 string, v3 int, v4 int) ([][]lsifstore.MonikerData, error) {
+func (m *MockLSIFStore) MonikersByPosition(v0 context.Context, v1 int, v2 string, v3 int, v4 int) ([][]semantic.MonikerData, error) {
 	r0, r1 := m.MonikersByPositionFunc.nextHook()(v0, v1, v2, v3, v4)
 	m.MonikersByPositionFunc.appendCall(LSIFStoreMonikersByPositionFuncCall{v0, v1, v2, v3, v4, r0, r1})
 	return r0, r1
@@ -3552,7 +3553,7 @@ func (m *MockLSIFStore) MonikersByPosition(v0 context.Context, v1 int, v2 string
 // SetDefaultHook sets function that is called when the MonikersByPosition
 // method of the parent MockLSIFStore instance is invoked and the hook queue
 // is empty.
-func (f *LSIFStoreMonikersByPositionFunc) SetDefaultHook(hook func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error)) {
+func (f *LSIFStoreMonikersByPositionFunc) SetDefaultHook(hook func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error)) {
 	f.defaultHook = hook
 }
 
@@ -3560,7 +3561,7 @@ func (f *LSIFStoreMonikersByPositionFunc) SetDefaultHook(hook func(context.Conte
 // MonikersByPosition method of the parent MockLSIFStore instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *LSIFStoreMonikersByPositionFunc) PushHook(hook func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error)) {
+func (f *LSIFStoreMonikersByPositionFunc) PushHook(hook func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -3568,21 +3569,21 @@ func (f *LSIFStoreMonikersByPositionFunc) PushHook(hook func(context.Context, in
 
 // SetDefaultReturn calls SetDefaultDefaultHook with a function that returns
 // the given values.
-func (f *LSIFStoreMonikersByPositionFunc) SetDefaultReturn(r0 [][]lsifstore.MonikerData, r1 error) {
-	f.SetDefaultHook(func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error) {
+func (f *LSIFStoreMonikersByPositionFunc) SetDefaultReturn(r0 [][]semantic.MonikerData, r1 error) {
+	f.SetDefaultHook(func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushDefaultHook with a function that returns the given
 // values.
-func (f *LSIFStoreMonikersByPositionFunc) PushReturn(r0 [][]lsifstore.MonikerData, r1 error) {
-	f.PushHook(func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error) {
+func (f *LSIFStoreMonikersByPositionFunc) PushReturn(r0 [][]semantic.MonikerData, r1 error) {
+	f.PushHook(func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error) {
 		return r0, r1
 	})
 }
 
-func (f *LSIFStoreMonikersByPositionFunc) nextHook() func(context.Context, int, string, int, int) ([][]lsifstore.MonikerData, error) {
+func (f *LSIFStoreMonikersByPositionFunc) nextHook() func(context.Context, int, string, int, int) ([][]semantic.MonikerData, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -3632,7 +3633,7 @@ type LSIFStoreMonikersByPositionFuncCall struct {
 	Arg4 int
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 [][]lsifstore.MonikerData
+	Result0 [][]semantic.MonikerData
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error
@@ -3654,15 +3655,15 @@ func (c LSIFStoreMonikersByPositionFuncCall) Results() []interface{} {
 // PackageInformation method of the parent MockLSIFStore instance is
 // invoked.
 type LSIFStorePackageInformationFunc struct {
-	defaultHook func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error)
-	hooks       []func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error)
+	defaultHook func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error)
+	hooks       []func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error)
 	history     []LSIFStorePackageInformationFuncCall
 	mutex       sync.Mutex
 }
 
 // PackageInformation delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockLSIFStore) PackageInformation(v0 context.Context, v1 int, v2 string, v3 string) (lsifstore.PackageInformationData, bool, error) {
+func (m *MockLSIFStore) PackageInformation(v0 context.Context, v1 int, v2 string, v3 string) (semantic.PackageInformationData, bool, error) {
 	r0, r1, r2 := m.PackageInformationFunc.nextHook()(v0, v1, v2, v3)
 	m.PackageInformationFunc.appendCall(LSIFStorePackageInformationFuncCall{v0, v1, v2, v3, r0, r1, r2})
 	return r0, r1, r2
@@ -3671,7 +3672,7 @@ func (m *MockLSIFStore) PackageInformation(v0 context.Context, v1 int, v2 string
 // SetDefaultHook sets function that is called when the PackageInformation
 // method of the parent MockLSIFStore instance is invoked and the hook queue
 // is empty.
-func (f *LSIFStorePackageInformationFunc) SetDefaultHook(hook func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error)) {
+func (f *LSIFStorePackageInformationFunc) SetDefaultHook(hook func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error)) {
 	f.defaultHook = hook
 }
 
@@ -3679,7 +3680,7 @@ func (f *LSIFStorePackageInformationFunc) SetDefaultHook(hook func(context.Conte
 // PackageInformation method of the parent MockLSIFStore instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *LSIFStorePackageInformationFunc) PushHook(hook func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error)) {
+func (f *LSIFStorePackageInformationFunc) PushHook(hook func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -3687,21 +3688,21 @@ func (f *LSIFStorePackageInformationFunc) PushHook(hook func(context.Context, in
 
 // SetDefaultReturn calls SetDefaultDefaultHook with a function that returns
 // the given values.
-func (f *LSIFStorePackageInformationFunc) SetDefaultReturn(r0 lsifstore.PackageInformationData, r1 bool, r2 error) {
-	f.SetDefaultHook(func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error) {
+func (f *LSIFStorePackageInformationFunc) SetDefaultReturn(r0 semantic.PackageInformationData, r1 bool, r2 error) {
+	f.SetDefaultHook(func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error) {
 		return r0, r1, r2
 	})
 }
 
 // PushReturn calls PushDefaultHook with a function that returns the given
 // values.
-func (f *LSIFStorePackageInformationFunc) PushReturn(r0 lsifstore.PackageInformationData, r1 bool, r2 error) {
-	f.PushHook(func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error) {
+func (f *LSIFStorePackageInformationFunc) PushReturn(r0 semantic.PackageInformationData, r1 bool, r2 error) {
+	f.PushHook(func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error) {
 		return r0, r1, r2
 	})
 }
 
-func (f *LSIFStorePackageInformationFunc) nextHook() func(context.Context, int, string, string) (lsifstore.PackageInformationData, bool, error) {
+func (f *LSIFStorePackageInformationFunc) nextHook() func(context.Context, int, string, string) (semantic.PackageInformationData, bool, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -3748,7 +3749,7 @@ type LSIFStorePackageInformationFuncCall struct {
 	Arg3 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 lsifstore.PackageInformationData
+	Result0 semantic.PackageInformationData
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 bool

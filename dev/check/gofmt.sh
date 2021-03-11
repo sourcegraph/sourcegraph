@@ -15,5 +15,6 @@ if [ -z "$DIFF" ]; then
 else
   echo "ERROR: gofmt check failed:"
   echo "$DIFF"
+  echo "^^^ +++"
   exit 1
 fi

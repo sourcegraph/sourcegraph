@@ -23,8 +23,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/cloneurls"
 	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/cloneurls"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
@@ -337,19 +337,19 @@ func prometheusGraphQLRequestName(requestName string) string {
 	return "other"
 }
 
-func NewSchema(db dbutil.DB, campaigns CampaignsResolver, codeIntel CodeIntelResolver, insights InsightsResolver, authz AuthzResolver, codeMonitors CodeMonitorsResolver, license LicenseResolver) (*graphql.Schema, error) {
+func NewSchema(db dbutil.DB, batchChanges BatchChangesResolver, codeIntel CodeIntelResolver, insights InsightsResolver, authz AuthzResolver, codeMonitors CodeMonitorsResolver, license LicenseResolver) (*graphql.Schema, error) {
 	resolver := &schemaResolver{
 		db: db,
 
-		CampaignsResolver: defaultCampaignsResolver{},
-		AuthzResolver:     defaultAuthzResolver{},
-		CodeIntelResolver: defaultCodeIntelResolver{},
-		InsightsResolver:  defaultInsightsResolver{},
-		LicenseResolver:   defaultLicenseResolver{},
+		BatchChangesResolver: defaultBatchChangesResolver{},
+		AuthzResolver:        defaultAuthzResolver{},
+		CodeIntelResolver:    defaultCodeIntelResolver{},
+		InsightsResolver:     defaultInsightsResolver{},
+		LicenseResolver:      defaultLicenseResolver{},
 	}
-	if campaigns != nil {
-		EnterpriseResolvers.campaignsResolver = campaigns
-		resolver.CampaignsResolver = campaigns
+	if batchChanges != nil {
+		EnterpriseResolvers.batchChangesResolver = batchChanges
+		resolver.BatchChangesResolver = batchChanges
 	}
 	if codeIntel != nil {
 		EnterpriseResolvers.codeIntelResolver = codeIntel
@@ -427,9 +427,36 @@ func (r *NodeResolver) ToMonitorTriggerEvent() (MonitorTriggerEventResolver, boo
 	return n, ok
 }
 
-func (r *NodeResolver) ToCampaign() (CampaignResolver, bool) {
-	n, ok := r.Node.(CampaignResolver)
-	return n, ok
+// TODO(campaigns-deprecation): This should be removed once we remove campaigns completely
+func (r *NodeResolver) ToCampaign() (BatchChangeResolver, bool) {
+	if n, ok := r.Node.(BatchChangeResolver); ok {
+		return n, n.ActAsCampaign()
+	}
+	return nil, false
+}
+
+// TODO(campaigns-deprecation): This should be removed once we remove campaigns completely
+func (r *NodeResolver) ToCampaignSpec() (BatchSpecResolver, bool) {
+	if n, ok := r.Node.(BatchSpecResolver); ok {
+		return n, n.ActAsCampaignSpec()
+	}
+	return nil, false
+}
+
+func (r *NodeResolver) ToBatchChange() (BatchChangeResolver, bool) {
+	if n, ok := r.Node.(BatchChangeResolver); ok {
+		// TODO(campaigns-deprecation): This should be removed once we remove campaigns completely
+		return n, !n.ActAsCampaign()
+	}
+	return nil, false
+}
+
+func (r *NodeResolver) ToBatchSpec() (BatchSpecResolver, bool) {
+	if n, ok := r.Node.(BatchSpecResolver); ok {
+		// TODO(campaigns-deprecation): This should be removed once we remove campaigns completely
+		return n, !n.ActAsCampaignSpec()
+	}
+	return nil, false
 }
 
 func (r *NodeResolver) ToExternalChangeset() (ExternalChangesetResolver, bool) {
@@ -453,11 +480,6 @@ func (r *NodeResolver) ToChangesetEvent() (ChangesetEventResolver, bool) {
 	return n, ok
 }
 
-func (r *NodeResolver) ToCampaignSpec() (CampaignSpecResolver, bool) {
-	n, ok := r.Node.(CampaignSpecResolver)
-	return n, ok
-}
-
 func (r *NodeResolver) ToHiddenChangesetSpec() (HiddenChangesetSpecResolver, bool) {
 	n, ok := r.Node.(ChangesetSpecResolver)
 	if !ok {
@@ -474,8 +496,14 @@ func (r *NodeResolver) ToVisibleChangesetSpec() (VisibleChangesetSpecResolver, b
 	return n.ToVisibleChangesetSpec()
 }
 
+// TODO(campaigns-deprecation): This should be removed once we remove campaigns completely
 func (r *NodeResolver) ToCampaignsCredential() (CampaignsCredentialResolver, bool) {
 	n, ok := r.Node.(CampaignsCredentialResolver)
+	return n, ok
+}
+
+func (r *NodeResolver) ToBatchChangesCredential() (BatchChangesCredentialResolver, bool) {
+	n, ok := r.Node.(BatchChangesCredentialResolver)
 	return n, ok
 }
 
@@ -570,7 +598,7 @@ func (r *NodeResolver) ToOutOfBandMigration() (*outOfBandMigrationResolver, bool
 // uses subresolvers which are globals. Enterprise-only resolvers are assigned
 // to a field of EnterpriseResolvers.
 type schemaResolver struct {
-	CampaignsResolver
+	BatchChangesResolver
 	AuthzResolver
 	CodeIntelResolver
 	InsightsResolver
@@ -586,13 +614,13 @@ var EnterpriseResolvers = struct {
 	codeIntelResolver    CodeIntelResolver
 	insightsResolver     InsightsResolver
 	authzResolver        AuthzResolver
-	campaignsResolver    CampaignsResolver
+	batchChangesResolver BatchChangesResolver
 	codeMonitorsResolver CodeMonitorsResolver
 	licenseResolver      LicenseResolver
 }{
 	codeIntelResolver:    defaultCodeIntelResolver{},
 	authzResolver:        defaultAuthzResolver{},
-	campaignsResolver:    defaultCampaignsResolver{},
+	batchChangesResolver: defaultBatchChangesResolver{},
 	codeMonitorsResolver: defaultCodeMonitorsResolver{},
 	licenseResolver:      defaultLicenseResolver{},
 }
@@ -619,14 +647,20 @@ func (r *schemaResolver) nodeByID(ctx context.Context, id graphql.ID) (Node, err
 		return accessTokenByID(ctx, r.db, id)
 	case "Campaign":
 		return r.CampaignByID(ctx, id)
+	case "BatchChange":
+		return r.BatchChangeByID(ctx, id)
 	case "CampaignSpec":
 		return r.CampaignSpecByID(ctx, id)
+	case "BatchSpec":
+		return r.BatchSpecByID(ctx, id)
 	case "ChangesetSpec":
 		return r.ChangesetSpecByID(ctx, id)
 	case "Changeset":
 		return r.ChangesetByID(ctx, id)
 	case "CampaignsCredential":
 		return r.CampaignsCredentialByID(ctx, id)
+	case "BatchChangesCredential":
+		return r.BatchChangesCredentialByID(ctx, id)
 	case "ProductLicense":
 		if f := ProductLicenseByID; f != nil {
 			return f(ctx, r.db, id)

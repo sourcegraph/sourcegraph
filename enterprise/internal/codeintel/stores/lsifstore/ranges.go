@@ -7,6 +7,7 @@ import (
 	"github.com/keegancsmith/sqlf"
 	"github.com/opentracing/opentracing-go/log"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -30,16 +31,16 @@ func (s *Store) Ranges(ctx context.Context, bundleID int, path string, startLine
 	}
 
 	traceLog(log.Int("numRanges", len(documentData.Document.Ranges)))
-	ranges := FindRangesInWindow(documentData.Document.Ranges, startLine, endLine)
+	ranges := semantic.FindRangesInWindow(documentData.Document.Ranges, startLine, endLine)
 	traceLog(log.Int("numIntersectingRanges", len(ranges)))
 
-	definitionResultIDs := extractResultIDs(ranges, func(r RangeData) ID { return r.DefinitionResultID })
+	definitionResultIDs := extractResultIDs(ranges, func(r semantic.RangeData) semantic.ID { return r.DefinitionResultID })
 	definitionLocations, _, err := s.locations(ctx, bundleID, definitionResultIDs, MaximumRangesDefinitionLocations, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	referenceResultIDs := extractResultIDs(ranges, func(r RangeData) ID { return r.ReferenceResultID })
+	referenceResultIDs := extractResultIDs(ranges, func(r semantic.RangeData) semantic.ID { return r.ReferenceResultID })
 	referenceLocations, err := s.locationsWithinFile(ctx, bundleID, referenceResultIDs, path, documentData.Document)
 	if err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ SELECT dump_id, path, data FROM lsif_data_documents WHERE dump_id = %s AND path 
 // locationsWithinFile queries the file-local locations associated with the given definition or reference
 // identifiers. Like locations, this method returns a map from result set identifiers to another map from
 // document paths to locations within that document.
-func (s *Store) locationsWithinFile(ctx context.Context, bundleID int, ids []ID, path string, documentData DocumentData) (_ map[ID][]Location, err error) {
+func (s *Store) locationsWithinFile(ctx context.Context, bundleID int, ids []semantic.ID, path string, documentData semantic.DocumentData) (_ map[semantic.ID][]Location, err error) {
 	ctx, traceLog, endObservation := s.operations.locationsWithinFile.WithAndLogger(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 		log.Int("numIDs", len(ids)),
@@ -101,7 +102,7 @@ func (s *Store) locationsWithinFile(ctx context.Context, bundleID int, ids []ID,
 
 	// Hydrate the locations result set by replacing range ids with their actual data from their
 	// containing document. This refines the map constructed in the previous step.
-	locationsByResultID := make(map[ID][]Location, len(ids))
+	locationsByResultID := make(map[semantic.ID][]Location, len(ids))
 	totalCount := s.readRangesFromDocument(bundleID, rangeIDsByResultID, locationsByResultID, path, documentData, traceLog)
 	traceLog(log.Int("numLocations", totalCount))
 

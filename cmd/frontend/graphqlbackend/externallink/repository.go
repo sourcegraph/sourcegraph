@@ -10,6 +10,7 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -132,11 +133,7 @@ func linksForRepository(ctx context.Context, db dbutil.DB, repo *types.Repo) (ph
 	return phabRepo, link, serviceType
 }
 
-var linksForRepositoryFailed = prometheus.NewCounter(prometheus.CounterOpts{
+var linksForRepositoryFailed = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "src_graphql_links_for_repository_failed_total",
 	Help: "The total number of times the GraphQL field LinksForRepository failed.",
 })
-
-func init() {
-	prometheus.MustRegister(linksForRepositoryFailed)
-}

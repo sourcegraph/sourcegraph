@@ -46,12 +46,12 @@ func TestHandle(t *testing.T) {
 		},
 		CliSteps: []executor.CliStep{
 			{
-				Commands: []string{"campaigns", "help"},
+				Commands: []string{"batch", "help"},
 				Dir:      "",
 				Env:      []string{},
 			},
 			{
-				Commands: []string{"campaigns", "apply", "-f", "spec.yaml"},
+				Commands: []string{"batch", "apply", "-f", "spec.yaml"},
 				Dir:      "cmpg",
 				Env:      []string{"BAR=BAZ"},
 			},
@@ -102,8 +102,8 @@ func TestHandle(t *testing.T) {
 	expectedCommands := [][]string{
 		{"/bin/sh", "42.0_linux@deadbeef.sh"},
 		{"/bin/sh", "42.1_linux@deadbeef.sh"},
-		{"src", "campaigns", "help"},
-		{"src", "campaigns", "apply", "-f", "spec.yaml"},
+		{"src", "batch", "help"},
+		{"src", "batch", "apply", "-f", "spec.yaml"},
 	}
 	if diff := cmp.Diff(expectedCommands, commands); diff != "" {
 		t.Errorf("unexpected commands (-want +got):\n%s", diff)

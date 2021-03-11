@@ -52,12 +52,13 @@ func clean(base string) error {
 }
 
 func build(base string) error {
-	// The right way to do this would be to build and run src-cli from git: we
 	// Since we don't want to pollute the local go.mod or go.sum, but we also
 	// need an isolated environment, we're going to set up an isolated directory
-	// to build src-cli. Some day https://github.com/golang/go/issues/40276 will
+	// to build src-cli. Some day https://github.com/golang/go/issues/43684 will
 	// have its solution merged and we might be able to avoid all of this with a
-	// go:generate one-liner.
+	// go:generate one-liner that calls `go install
+	// github.com/sourcegraph/src-cli/cmd/src@main`, but we're not quite there
+	// yet.
 
 	dir, err := ioutil.TempDir("", "src-cli-doc-gen")
 	if err != nil {
@@ -73,7 +74,7 @@ func build(base string) error {
 	// src-cli (and its dependencies) rely on a go.mod replacement of our
 	// upstream YAML library with our own fork. Unfortunately, doing a simple
 	// `go build` (or whatever) with the src-cli URL fails as a result, since
-	// campaignutils will try to call a method that doesn't exist on the
+	// batch-change-utils will try to call a method that doesn't exist on the
 	// upstream library.
 	//
 	// Since replacements only happen locally, we have to set up the same

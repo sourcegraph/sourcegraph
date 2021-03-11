@@ -86,6 +86,9 @@ func SetupGlobalTestDB(t testing.TB) {
 
 // GetDB calls SetupGlobalTestDB and returns dbconn.Global.
 // It is meant to ease the migration away from dbconn.Global.
+//
+// New callers and callers actually wishing to migrate fully away from a global DB connection
+// should use the new ../dbtest package instead of this one.
 func GetDB(t testing.TB) *sql.DB {
 	SetupGlobalTestDB(t)
 	return dbconn.Global

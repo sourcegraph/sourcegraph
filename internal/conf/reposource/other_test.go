@@ -60,7 +60,7 @@ func TestOtherCloneURLToRepoName(t *testing.T) {
 			urls: []urlToRepoNameErr{
 				{"ssh://thaddeus@gerrit.com:12345/repos/repo1", "repo1", nil},
 				{"ssh://thaddeus@asdf.com/repos/repo1", "", nil},
-				{"ssh://thaddeus@gerrit.com:12345/asdf/repo1", "", urlMismatchErr{"ssh://thaddeus@gerrit.com:12345/asdf/repo1", "ssh://thaddeus@gerrit.com:12345/repos"}},
+				{"ssh://thaddeus@gerrit.com:12345/asdf/repo1", "", nil},
 			},
 		},
 	}

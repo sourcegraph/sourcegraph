@@ -16,7 +16,7 @@ import (
 // A Namespace is a username or an organization name. No user may have a username that is equal to
 // an organization name, and vice versa. This property means that a username or organization name
 // serves as a namespace for other objects that are owned by the user or organization, such as
-// campaigns and extensions.
+// batch changes and extensions.
 type Namespace struct {
 	// Name is the canonical-case name of the namespace (which is unique among all namespace
 	// types). For a user, this is the username. For an organization, this is the organization name.

@@ -42,6 +42,11 @@ $green: $oc-green-7;
 $teal: $oc-teal-7;
 $cyan: $oc-cyan-3;
 
+// Logo colors
+$logo-orange: #f96216;
+$logo-blue: #00b4f2;
+$logo-purple: #b200f8;
+
 $primary: $blue;
 $secondary: #2b3750;
 $success: $green;
@@ -78,6 +83,9 @@ $text-muted: var(--text-muted);
     --danger: #{$danger};
     --merged: #{$merged};
     --color-border-active: #329af0;
+    --logo-orange: #{$logo-orange};
+    --logo-blue: #{$logo-blue};
+    --logo-purple: #{$logo-purple};
 }
 .theme-light {
     // Affects default browser styles
@@ -90,6 +98,7 @@ $text-muted: var(--text-muted);
     --color-bg-3: #{$gray-04};
     --color-bg-4: #{$gray-02};
     --color-bg-5: #{$gray-13};
+    --color-bg-6: #{$gray-13};
     --color-text-3: #{rgba($gray-17, 0.5)};
     --mark-bg: #{$mark-bg-light};
     --text-muted: #6d727c;
@@ -122,6 +131,7 @@ $text-muted: var(--text-muted);
     --color-bg-3: #{$gray-19};
     --color-bg-4: #{$gray-22};
     --color-bg-5: #{$gray-17};
+    --color-bg-6: #{$gray-06};
     --color-text-3: #{rgba(#ffffff, 0.5)};
     --mark-bg: #{$mark-bg-dark};
     --text-muted: #{$gray-07};

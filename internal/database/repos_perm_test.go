@@ -38,8 +38,8 @@ func (p *fakeProvider) ServiceID() string             { return p.codeHost.Servic
 func (p *fakeProvider) URN() string                   { return extsvc.URN(p.codeHost.ServiceType, 0) }
 func (p *fakeProvider) Validate() (problems []string) { return nil }
 
-func (p *fakeProvider) FetchUserPerms(context.Context, *extsvc.Account) ([]extsvc.RepoID, extsvc.RepoIDType, error) {
-	return nil, extsvc.RepoIDExact, nil
+func (p *fakeProvider) FetchUserPerms(context.Context, *extsvc.Account) (*authz.ExternalUserPermissions, error) {
+	return nil, nil
 }
 
 func (p *fakeProvider) FetchRepoPerms(context.Context, *extsvc.Repository) ([]extsvc.AccountID, error) {

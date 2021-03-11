@@ -129,7 +129,7 @@ To run integration tests for the web app:
 
 1. Run `yarn watch-web` in the repository root in a separate terminal to watch files and build a JavaScript bundle. You can also launch it as the VS Code task "Watch web app".
   - Alternatively, `yarn build-web` will only build a bundle once.
-  - If you need to build an Enterprise bundle (to test Enterprise features such as Campaigns), set `ENTERPRISE=1`
+  - If you need to build an Enterprise bundle (to test Enterprise features such as Batch Changes), set `ENTERPRISE=1`
 1. Run `yarn test-integration` in the repository root to run the tests.
 
 A Sourcegraph instance does not need to be running, because all backend interactions are stubbed.

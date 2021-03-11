@@ -1124,7 +1124,7 @@ matches.
 Filter out stale repositories that don’t contain commits past the specified time
 frame. This parameter is experimental.
 
-**Example:** `-repohasfile:Dockerfile docker` [↗](https://sourcegraph.com/search?q=-repohasfile:Dockerfile+docker&patternType=regexp)
+**Example:** `repo:github\.com/sourcegraph repohascommitafter:"1 week ago"` [↗](https://sourcegraph.com/search?q=context:global+repo:github%5C.com/sourcegraph+repohascommitafter:%221+week+ago%22&patternType=literal)
 
 ### Count
 
@@ -1266,7 +1266,7 @@ both private and public repositories.
 </div>
 
 Set whether the pattern should run a literal search, regular expression search,
-or a structural search pattern. This parameter is available as a commannd-line and
+or a structural search pattern. This parameter is available as a command-line and
 accessibility option, and synonymous with the visual [search pattern](#search-pattern) toggles.
 in [search pattern](#search-pattern).
 

@@ -17,7 +17,7 @@ import (
 // it is also used during maintenance tasks such as recloning/migrating/etc.
 type RepositoryLocker struct {
 	// mu protects status
-	mu sync.Mutex
+	mu sync.RWMutex
 	// status tracks directories that are locked. The value is the status. If
 	// a directory is in status, the directory is locked.
 	status map[GitDir]string
@@ -50,9 +50,9 @@ func (rl *RepositoryLocker) TryAcquire(dir GitDir, initialStatus string) (lock *
 // Status returns the status of the locked directory dir. If dir is not
 // locked, then locked is false.
 func (rl *RepositoryLocker) Status(dir GitDir) (status string, locked bool) {
-	rl.mu.Lock()
+	rl.mu.RLock()
+	defer rl.mu.RUnlock()
 	status, locked = rl.status[dir]
-	rl.mu.Unlock()
 	return
 }
 
@@ -70,20 +70,22 @@ type RepositoryLock struct {
 // this is a noop.
 func (l *RepositoryLock) SetStatus(status string) {
 	l.locker.mu.Lock()
+	defer l.locker.mu.Unlock()
+
 	// Ensure this is still locked before updating the status
 	if !l.done {
 		l.locker.status[l.dir] = status
 	}
-	l.locker.mu.Unlock()
 }
 
 // Release releases the lock.
 func (l *RepositoryLock) Release() {
 	l.locker.mu.Lock()
+	defer l.locker.mu.Unlock()
+
 	// Prevent double release
 	if !l.done {
 		delete(l.locker.status, l.dir)
 		l.done = true
 	}
-	l.locker.mu.Unlock()
 }

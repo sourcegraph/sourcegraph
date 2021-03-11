@@ -43,6 +43,7 @@ const FILTER_TYPE_COMPLETIONS: Omit<Monaco.languages.CompletionItem, 'range'>[] 
                 {
                     ...completionItem,
                     label: `-${label}`,
+                    insertText: `-${label}:`,
                     filterText: `-${label}`,
                     detail: FILTERS[filterType].description(true),
                 },
@@ -300,7 +301,7 @@ export async function getCompletionItems(
                         // Set the current value as filterText, so that all dynamic suggestions
                         // returned by the server are displayed. otherwise, if the current filter value
                         // is a regex pattern, Monaco's filtering might hide some suggestions.
-                        filterText: value && (value?.type === 'literal' ? value.value : value.quotedValue),
+                        filterText: value?.value,
                         range: value ? toMonacoRange(value.range) : defaultRange,
                         command: COMPLETION_ITEM_SELECTED,
                     })),
@@ -308,7 +309,7 @@ export async function getCompletionItems(
         }
         if (resolvedFilter.definition.discreteValues) {
             return {
-                suggestions: resolvedFilter.definition.discreteValues.map(
+                suggestions: resolvedFilter.definition.discreteValues(token.value).map(
                     (label, index): Monaco.languages.CompletionItem => ({
                         label,
                         sortText: index.toString(), // suggestions sort by order in the list, not alphabetically.

@@ -73,41 +73,64 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
     }
     startOpen={true}
   >
-    <Button
-      className="streaming-skipped-item pt-3 pb-0 w-100 streaming-skipped-item--warn"
-      color="secondary"
-      disabled={false}
-      onClick={[Function]}
-      tag="button"
+    <div
+      className="streaming-skipped-item pt-2 w-100 streaming-skipped-item--warn"
     >
-      <button
-        aria-label={null}
-        className="streaming-skipped-item pt-3 pb-0 w-100 streaming-skipped-item--warn btn btn-secondary"
+      <Button
+        className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+        color="secondary"
         disabled={false}
         onClick={[Function]}
-        type="button"
+        onKeyDown={[Function]}
+        tag="button"
       >
-        <h4
-          className="d-flex align-items-center mb-0 w-100"
+        <button
+          aria-label={null}
+          className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0 btn btn-secondary"
+          disabled={false}
+          onClick={[Function]}
+          onKeyDown={[Function]}
+          type="button"
         >
-          <Memo(AlertCircleIcon)
-            className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
-          />
-          <span
-            className="flex-grow-1 text-left"
+          <h4
+            className="d-flex align-items-center mb-0 w-100"
           >
-            Error loading results
-          </span>
-          <Memo(ChevronDownIcon)
-            className="icon-inline flex-shrink-0"
-          />
-        </h4>
-        <Collapse
+            <Memo(AlertCircleIcon)
+              className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
+            />
+            <span
+              className="flex-grow-1 text-left"
+            >
+              Error loading results
+            </span>
+            <Memo(ChevronDownIcon)
+              className="icon-inline flex-shrink-0"
+            />
+          </h4>
+        </button>
+      </Button>
+      <Collapse
+        appear={false}
+        enter={true}
+        exit={true}
+        in={false}
+        isOpen={true}
+        mountOnEnter={false}
+        onEnter={[Function]}
+        onEntered={[Function]}
+        onEntering={[Function]}
+        onExit={[Function]}
+        onExited={[Function]}
+        onExiting={[Function]}
+        tag="div"
+        timeout={350}
+        unmountOnExit={false}
+      >
+        <Transition
           appear={false}
           enter={true}
           exit={true}
-          in={false}
-          isOpen={true}
+          in={true}
           mountOnEnter={false}
           onEnter={[Function]}
           onEntered={[Function]}
@@ -115,54 +138,37 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
           onExit={[Function]}
           onExited={[Function]}
           onExiting={[Function]}
-          tag="div"
           timeout={350}
           unmountOnExit={false}
         >
-          <Transition
-            appear={false}
-            enter={true}
-            exit={true}
-            in={true}
-            mountOnEnter={false}
-            onEnter={[Function]}
-            onEntered={[Function]}
-            onEntering={[Function]}
-            onExit={[Function]}
-            onExited={[Function]}
-            onExiting={[Function]}
-            timeout={350}
-            unmountOnExit={false}
+          <div
+            className="collapse show"
+            style={Object {}}
           >
-            <div
-              className="collapse show"
-              style={Object {}}
-            >
-              <Markdown
-                className="streaming-skipped-item__message mt-2 text-left"
-                dangerousInnerHTML="<p>There was a network error retrieving search results. Check your Internet connection and try again.</p>
+            <Markdown
+              className="streaming-skipped-item__message text-left py-1"
+              dangerousInnerHTML="<p>There was a network error retrieving search results. Check your Internet connection and try again.</p>
 "
-                history="[History]"
-              >
-                <div
-                  className="streaming-skipped-item__message mt-2 text-left markdown"
-                  dangerouslySetInnerHTML={
-                    Object {
-                      "__html": "<p>There was a network error retrieving search results. Check your Internet connection and try again.</p>
+              history="[History]"
+            >
+              <div
+                className="streaming-skipped-item__message text-left py-1 markdown"
+                dangerouslySetInnerHTML={
+                  Object {
+                    "__html": "<p>There was a network error retrieving search results. Check your Internet connection and try again.</p>
 ",
-                    }
                   }
-                  onClick={[Function]}
-                />
-              </Markdown>
-            </div>
-          </Transition>
-        </Collapse>
-        <div
-          className="streaming-skipped-item__bottom-border-spacer mt-3"
-        />
-      </button>
-    </Button>
+                }
+                onClick={[Function]}
+              />
+            </Markdown>
+          </div>
+        </Transition>
+      </Collapse>
+      <div
+        className="streaming-skipped-item__bottom-border-spacer mt-2"
+      />
+    </div>
   </SkippedMessage>
   <SkippedMessage
     history="[History]"
@@ -181,41 +187,64 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
     }
     startOpen={false}
   >
-    <Button
-      className="streaming-skipped-item pt-3 pb-0 w-100 streaming-skipped-item--warn"
-      color="secondary"
-      disabled={false}
-      onClick={[Function]}
-      tag="button"
+    <div
+      className="streaming-skipped-item pt-2 w-100 streaming-skipped-item--warn"
     >
-      <button
-        aria-label={null}
-        className="streaming-skipped-item pt-3 pb-0 w-100 streaming-skipped-item--warn btn btn-secondary"
+      <Button
+        className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+        color="secondary"
         disabled={false}
         onClick={[Function]}
-        type="button"
+        onKeyDown={[Function]}
+        tag="button"
       >
-        <h4
-          className="d-flex align-items-center mb-0 w-100"
+        <button
+          aria-label={null}
+          className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0 btn btn-secondary"
+          disabled={false}
+          onClick={[Function]}
+          onKeyDown={[Function]}
+          type="button"
         >
-          <Memo(AlertCircleIcon)
-            className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
-          />
-          <span
-            className="flex-grow-1 text-left"
+          <h4
+            className="d-flex align-items-center mb-0 w-100"
           >
-            Search timed out
-          </span>
-          <Memo(ChevronLeftIcon)
-            className="icon-inline flex-shrink-0"
-          />
-        </h4>
-        <Collapse
+            <Memo(AlertCircleIcon)
+              className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
+            />
+            <span
+              className="flex-grow-1 text-left"
+            >
+              Search timed out
+            </span>
+            <Memo(ChevronLeftIcon)
+              className="icon-inline flex-shrink-0"
+            />
+          </h4>
+        </button>
+      </Button>
+      <Collapse
+        appear={false}
+        enter={true}
+        exit={true}
+        in={false}
+        isOpen={false}
+        mountOnEnter={false}
+        onEnter={[Function]}
+        onEntered={[Function]}
+        onEntering={[Function]}
+        onExit={[Function]}
+        onExited={[Function]}
+        onExiting={[Function]}
+        tag="div"
+        timeout={350}
+        unmountOnExit={false}
+      >
+        <Transition
           appear={false}
           enter={true}
           exit={true}
           in={false}
-          isOpen={false}
           mountOnEnter={false}
           onEnter={[Function]}
           onEntered={[Function]}
@@ -223,54 +252,37 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
           onExit={[Function]}
           onExited={[Function]}
           onExiting={[Function]}
-          tag="div"
           timeout={350}
           unmountOnExit={false}
         >
-          <Transition
-            appear={false}
-            enter={true}
-            exit={true}
-            in={false}
-            mountOnEnter={false}
-            onEnter={[Function]}
-            onEntered={[Function]}
-            onEntering={[Function]}
-            onExit={[Function]}
-            onExited={[Function]}
-            onExiting={[Function]}
-            timeout={350}
-            unmountOnExit={false}
+          <div
+            className="collapse"
+            style={Object {}}
           >
-            <div
-              className="collapse"
-              style={Object {}}
-            >
-              <Markdown
-                className="streaming-skipped-item__message mt-2 text-left"
-                dangerousInnerHTML="<p>Search timed out</p>
+            <Markdown
+              className="streaming-skipped-item__message text-left py-1"
+              dangerousInnerHTML="<p>Search timed out</p>
 "
-                history="[History]"
-              >
-                <div
-                  className="streaming-skipped-item__message mt-2 text-left markdown"
-                  dangerouslySetInnerHTML={
-                    Object {
-                      "__html": "<p>Search timed out</p>
+              history="[History]"
+            >
+              <div
+                className="streaming-skipped-item__message text-left py-1 markdown"
+                dangerouslySetInnerHTML={
+                  Object {
+                    "__html": "<p>Search timed out</p>
 ",
-                    }
                   }
-                  onClick={[Function]}
-                />
-              </Markdown>
-            </div>
-          </Transition>
-        </Collapse>
-        <div
-          className="streaming-skipped-item__bottom-border-spacer mt-3"
-        />
-      </button>
-    </Button>
+                }
+                onClick={[Function]}
+              />
+            </Markdown>
+          </div>
+        </Transition>
+      </Collapse>
+      <div
+        className="streaming-skipped-item__bottom-border-spacer mt-2"
+      />
+    </div>
   </SkippedMessage>
   <SkippedMessage
     history="[History]"
@@ -289,41 +301,64 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
     }
     startOpen={false}
   >
-    <Button
-      className="streaming-skipped-item pt-3 pb-0 w-100"
-      color="secondary"
-      disabled={false}
-      onClick={[Function]}
-      tag="button"
+    <div
+      className="streaming-skipped-item pt-2 w-100"
     >
-      <button
-        aria-label={null}
-        className="streaming-skipped-item pt-3 pb-0 w-100 btn btn-secondary"
+      <Button
+        className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+        color="secondary"
         disabled={false}
         onClick={[Function]}
-        type="button"
+        onKeyDown={[Function]}
+        tag="button"
       >
-        <h4
-          className="d-flex align-items-center mb-0 w-100"
+        <button
+          aria-label={null}
+          className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0 btn btn-secondary"
+          disabled={false}
+          onClick={[Function]}
+          onKeyDown={[Function]}
+          type="button"
         >
-          <Memo(InformationOutlineIcon)
-            className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
-          />
-          <span
-            className="flex-grow-1 text-left"
+          <h4
+            className="d-flex align-items-center mb-0 w-100"
           >
-            10k forked repositories excluded
-          </span>
-          <Memo(ChevronLeftIcon)
-            className="icon-inline flex-shrink-0"
-          />
-        </h4>
-        <Collapse
+            <Memo(InformationOutlineIcon)
+              className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
+            />
+            <span
+              className="flex-grow-1 text-left"
+            >
+              10k forked repositories excluded
+            </span>
+            <Memo(ChevronLeftIcon)
+              className="icon-inline flex-shrink-0"
+            />
+          </h4>
+        </button>
+      </Button>
+      <Collapse
+        appear={false}
+        enter={true}
+        exit={true}
+        in={false}
+        isOpen={false}
+        mountOnEnter={false}
+        onEnter={[Function]}
+        onEntered={[Function]}
+        onEntering={[Function]}
+        onExit={[Function]}
+        onExited={[Function]}
+        onExiting={[Function]}
+        tag="div"
+        timeout={350}
+        unmountOnExit={false}
+      >
+        <Transition
           appear={false}
           enter={true}
           exit={true}
           in={false}
-          isOpen={false}
           mountOnEnter={false}
           onEnter={[Function]}
           onEntered={[Function]}
@@ -331,54 +366,37 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
           onExit={[Function]}
           onExited={[Function]}
           onExiting={[Function]}
-          tag="div"
           timeout={350}
           unmountOnExit={false}
         >
-          <Transition
-            appear={false}
-            enter={true}
-            exit={true}
-            in={false}
-            mountOnEnter={false}
-            onEnter={[Function]}
-            onEntered={[Function]}
-            onEntering={[Function]}
-            onExit={[Function]}
-            onExited={[Function]}
-            onExiting={[Function]}
-            timeout={350}
-            unmountOnExit={false}
+          <div
+            className="collapse"
+            style={Object {}}
           >
-            <div
-              className="collapse"
-              style={Object {}}
-            >
-              <Markdown
-                className="streaming-skipped-item__message mt-2 text-left"
-                dangerousInnerHTML="<p>10k forked repositories excluded</p>
+            <Markdown
+              className="streaming-skipped-item__message text-left py-1"
+              dangerousInnerHTML="<p>10k forked repositories excluded</p>
 "
-                history="[History]"
-              >
-                <div
-                  className="streaming-skipped-item__message mt-2 text-left markdown"
-                  dangerouslySetInnerHTML={
-                    Object {
-                      "__html": "<p>10k forked repositories excluded</p>
+              history="[History]"
+            >
+              <div
+                className="streaming-skipped-item__message text-left py-1 markdown"
+                dangerouslySetInnerHTML={
+                  Object {
+                    "__html": "<p>10k forked repositories excluded</p>
 ",
-                    }
                   }
-                  onClick={[Function]}
-                />
-              </Markdown>
-            </div>
-          </Transition>
-        </Collapse>
-        <div
-          className="streaming-skipped-item__bottom-border-spacer mt-3"
-        />
-      </button>
-    </Button>
+                }
+                onClick={[Function]}
+              />
+            </Markdown>
+          </div>
+        </Transition>
+      </Collapse>
+      <div
+        className="streaming-skipped-item__bottom-border-spacer mt-2"
+      />
+    </div>
   </SkippedMessage>
   <SkippedMessage
     history="[History]"
@@ -397,41 +415,64 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
     }
     startOpen={false}
   >
-    <Button
-      className="streaming-skipped-item pt-3 pb-0 w-100"
-      color="secondary"
-      disabled={false}
-      onClick={[Function]}
-      tag="button"
+    <div
+      className="streaming-skipped-item pt-2 w-100"
     >
-      <button
-        aria-label={null}
-        className="streaming-skipped-item pt-3 pb-0 w-100 btn btn-secondary"
+      <Button
+        className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+        color="secondary"
         disabled={false}
         onClick={[Function]}
-        type="button"
+        onKeyDown={[Function]}
+        tag="button"
       >
-        <h4
-          className="d-flex align-items-center mb-0 w-100"
+        <button
+          aria-label={null}
+          className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0 btn btn-secondary"
+          disabled={false}
+          onClick={[Function]}
+          onKeyDown={[Function]}
+          type="button"
         >
-          <Memo(InformationOutlineIcon)
-            className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
-          />
-          <span
-            className="flex-grow-1 text-left"
+          <h4
+            className="d-flex align-items-center mb-0 w-100"
           >
-            60k archived repositories excluded
-          </span>
-          <Memo(ChevronLeftIcon)
-            className="icon-inline flex-shrink-0"
-          />
-        </h4>
-        <Collapse
+            <Memo(InformationOutlineIcon)
+              className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
+            />
+            <span
+              className="flex-grow-1 text-left"
+            >
+              60k archived repositories excluded
+            </span>
+            <Memo(ChevronLeftIcon)
+              className="icon-inline flex-shrink-0"
+            />
+          </h4>
+        </button>
+      </Button>
+      <Collapse
+        appear={false}
+        enter={true}
+        exit={true}
+        in={false}
+        isOpen={false}
+        mountOnEnter={false}
+        onEnter={[Function]}
+        onEntered={[Function]}
+        onEntering={[Function]}
+        onExit={[Function]}
+        onExited={[Function]}
+        onExiting={[Function]}
+        tag="div"
+        timeout={350}
+        unmountOnExit={false}
+      >
+        <Transition
           appear={false}
           enter={true}
           exit={true}
           in={false}
-          isOpen={false}
           mountOnEnter={false}
           onEnter={[Function]}
           onEntered={[Function]}
@@ -439,54 +480,37 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
           onExit={[Function]}
           onExited={[Function]}
           onExiting={[Function]}
-          tag="div"
           timeout={350}
           unmountOnExit={false}
         >
-          <Transition
-            appear={false}
-            enter={true}
-            exit={true}
-            in={false}
-            mountOnEnter={false}
-            onEnter={[Function]}
-            onEntered={[Function]}
-            onEntering={[Function]}
-            onExit={[Function]}
-            onExited={[Function]}
-            onExiting={[Function]}
-            timeout={350}
-            unmountOnExit={false}
+          <div
+            className="collapse"
+            style={Object {}}
           >
-            <div
-              className="collapse"
-              style={Object {}}
-            >
-              <Markdown
-                className="streaming-skipped-item__message mt-2 text-left"
-                dangerousInnerHTML="<p>60k archived repositories excluded</p>
+            <Markdown
+              className="streaming-skipped-item__message text-left py-1"
+              dangerousInnerHTML="<p>60k archived repositories excluded</p>
 "
-                history="[History]"
-              >
-                <div
-                  className="streaming-skipped-item__message mt-2 text-left markdown"
-                  dangerouslySetInnerHTML={
-                    Object {
-                      "__html": "<p>60k archived repositories excluded</p>
+              history="[History]"
+            >
+              <div
+                className="streaming-skipped-item__message text-left py-1 markdown"
+                dangerouslySetInnerHTML={
+                  Object {
+                    "__html": "<p>60k archived repositories excluded</p>
 ",
-                    }
                   }
-                  onClick={[Function]}
-                />
-              </Markdown>
-            </div>
-          </Transition>
-        </Collapse>
-        <div
-          className="streaming-skipped-item__bottom-border-spacer mt-3"
-        />
-      </button>
-    </Button>
+                }
+                onClick={[Function]}
+              />
+            </Markdown>
+          </div>
+        </Transition>
+      </Collapse>
+      <div
+        className="streaming-skipped-item__bottom-border-spacer mt-2"
+      />
+    </div>
   </SkippedMessage>
   <SkippedMessage
     history="[History]"
@@ -505,41 +529,64 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
     }
     startOpen={false}
   >
-    <Button
-      className="streaming-skipped-item pt-3 pb-0 w-100"
-      color="secondary"
-      disabled={false}
-      onClick={[Function]}
-      tag="button"
+    <div
+      className="streaming-skipped-item pt-2 w-100"
     >
-      <button
-        aria-label={null}
-        className="streaming-skipped-item pt-3 pb-0 w-100 btn btn-secondary"
+      <Button
+        className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+        color="secondary"
         disabled={false}
         onClick={[Function]}
-        type="button"
+        onKeyDown={[Function]}
+        tag="button"
       >
-        <h4
-          className="d-flex align-items-center mb-0 w-100"
+        <button
+          aria-label={null}
+          className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0 btn btn-secondary"
+          disabled={false}
+          onClick={[Function]}
+          onKeyDown={[Function]}
+          type="button"
         >
-          <Memo(InformationOutlineIcon)
-            className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
-          />
-          <span
-            className="flex-grow-1 text-left"
+          <h4
+            className="d-flex align-items-center mb-0 w-100"
           >
-            1 archived
-          </span>
-          <Memo(ChevronLeftIcon)
-            className="icon-inline flex-shrink-0"
-          />
-        </h4>
-        <Collapse
+            <Memo(InformationOutlineIcon)
+              className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0"
+            />
+            <span
+              className="flex-grow-1 text-left"
+            >
+              1 archived
+            </span>
+            <Memo(ChevronLeftIcon)
+              className="icon-inline flex-shrink-0"
+            />
+          </h4>
+        </button>
+      </Button>
+      <Collapse
+        appear={false}
+        enter={true}
+        exit={true}
+        in={false}
+        isOpen={false}
+        mountOnEnter={false}
+        onEnter={[Function]}
+        onEntered={[Function]}
+        onEntering={[Function]}
+        onExit={[Function]}
+        onExited={[Function]}
+        onExiting={[Function]}
+        tag="div"
+        timeout={350}
+        unmountOnExit={false}
+      >
+        <Transition
           appear={false}
           enter={true}
           exit={true}
           in={false}
-          isOpen={false}
           mountOnEnter={false}
           onEnter={[Function]}
           onEntered={[Function]}
@@ -547,54 +594,37 @@ exports[`StreamingProgressSkippedPopover should render correctly 1`] = `
           onExit={[Function]}
           onExited={[Function]}
           onExiting={[Function]}
-          tag="div"
           timeout={350}
           unmountOnExit={false}
         >
-          <Transition
-            appear={false}
-            enter={true}
-            exit={true}
-            in={false}
-            mountOnEnter={false}
-            onEnter={[Function]}
-            onEntered={[Function]}
-            onEntering={[Function]}
-            onExit={[Function]}
-            onExited={[Function]}
-            onExiting={[Function]}
-            timeout={350}
-            unmountOnExit={false}
+          <div
+            className="collapse"
+            style={Object {}}
           >
-            <div
-              className="collapse"
-              style={Object {}}
-            >
-              <Markdown
-                className="streaming-skipped-item__message mt-2 text-left"
-                dangerousInnerHTML="<p>By default we exclude archived repositories. Include them with <code>archived:yes</code> in your query.</p>
+            <Markdown
+              className="streaming-skipped-item__message text-left py-1"
+              dangerousInnerHTML="<p>By default we exclude archived repositories. Include them with <code>archived:yes</code> in your query.</p>
 "
-                history="[History]"
-              >
-                <div
-                  className="streaming-skipped-item__message mt-2 text-left markdown"
-                  dangerouslySetInnerHTML={
-                    Object {
-                      "__html": "<p>By default we exclude archived repositories. Include them with <code>archived:yes</code> in your query.</p>
+              history="[History]"
+            >
+              <div
+                className="streaming-skipped-item__message text-left py-1 markdown"
+                dangerouslySetInnerHTML={
+                  Object {
+                    "__html": "<p>By default we exclude archived repositories. Include them with <code>archived:yes</code> in your query.</p>
 ",
-                    }
                   }
-                  onClick={[Function]}
-                />
-              </Markdown>
-            </div>
-          </Transition>
-        </Collapse>
-        <div
-          className="streaming-skipped-item__bottom-border-spacer mt-3"
-        />
-      </button>
-    </Button>
+                }
+                onClick={[Function]}
+              />
+            </Markdown>
+          </div>
+        </Transition>
+      </Collapse>
+      <div
+        className="streaming-skipped-item__bottom-border-spacer mt-2"
+      />
+    </div>
   </SkippedMessage>
   <Form
     className="pb-3 px-3"

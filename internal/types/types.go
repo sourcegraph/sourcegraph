@@ -394,7 +394,7 @@ type RepoGitserverStatus struct {
 	Name api.RepoName
 
 	// GitserverRepo data if it exists
-	GitserverRepo *GitserverRepo
+	*GitserverRepo
 }
 
 type CloneStatus string

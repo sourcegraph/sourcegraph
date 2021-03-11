@@ -24,8 +24,7 @@ func SubstituteAliases(searchType SearchType) func(nodes []Node) []Node {
 		"msg":      FieldMessage,
 		"revision": FieldRev,
 	}
-	var mapper func(nodes []Node) []Node
-	mapper = func(nodes []Node) []Node {
+	mapper := func(nodes []Node) []Node {
 		return MapParameter(nodes, func(field, value string, negated bool, annotation Annotation) Node {
 			if field == "content" {
 				if searchType == SearchTypeRegex {

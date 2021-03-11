@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 	"regexp"
+	"strconv"
+	"time"
 )
 
 type ExpectedOperand struct {
@@ -29,9 +31,27 @@ const (
 	SearchTypeStructural
 )
 
+func (s SearchType) String() string {
+	switch s {
+	case SearchTypeRegex:
+		return "regex"
+	case SearchTypeLiteral:
+		return "literal"
+	case SearchTypeStructural:
+		return "structural"
+	default:
+		return fmt.Sprintf("unknown{%d}", s)
+	}
+}
+
 // QueryInfo is an interface for accessing query values that drive our search logic.
 // It will be removed in favor of a cleaner query API to access values.
 type QueryInfo interface {
+	Count() *int
+	Archived() *YesNoOnly
+	Fork() *YesNoOnly
+	Timeout() *time.Duration
+	Repositories() (repos []string, negated []string)
 	RegexpPatterns(field string) (values, negatedValues []string)
 	StringValues(field string) (values, negatedValues []string)
 	StringValue(field string) (value, negatedValue string)
@@ -114,8 +134,63 @@ func (q Q) BoolValue(field string) bool {
 	return result
 }
 
+func (q Q) Count() *int {
+	var count *int
+	VisitField(q, FieldCount, func(value string, _ bool, _ Annotation) {
+		c, err := strconv.Atoi(value)
+		if err != nil {
+			panic(fmt.Sprintf("Value %q for count cannot be parsed as an int: %s", value, err))
+		}
+		count = &c
+	})
+	return count
+}
+
+func (q Q) Archived() *YesNoOnly {
+	return q.yesNoOnlyValue(FieldArchived)
+}
+
+func (q Q) Fork() *YesNoOnly {
+	return q.yesNoOnlyValue(FieldFork)
+}
+
+func (q Q) yesNoOnlyValue(field string) *YesNoOnly {
+	var res *YesNoOnly
+	VisitField(q, field, func(value string, _ bool, _ Annotation) {
+		yno := ParseYesNoOnly(value)
+		if yno == Invalid {
+			panic(fmt.Sprintf("Invalid value %q for field %q", value, field))
+		}
+		res = &yno
+	})
+	return res
+}
+
+func (q Q) Timeout() *time.Duration {
+	var timeout *time.Duration
+	VisitField(q, FieldTimeout, func(value string, _ bool, _ Annotation) {
+		t, err := time.ParseDuration(value)
+		if err != nil {
+			panic(fmt.Sprintf("Value %q for timeout cannot be parsed as an duration: %s", value, err))
+		}
+		timeout = &t
+	})
+	return timeout
+}
+
 func (q Q) IsCaseSensitive() bool {
 	return q.BoolValue("case")
+}
+
+func (q Q) Repositories() (repos []string, negatedRepos []string) {
+	VisitField(q, FieldRepo, func(value string, negated bool, _ Annotation) {
+		if negated {
+			negatedRepos = append(negatedRepos, value)
+			return
+		}
+		repos = append(repos, value)
+	})
+	return repos, negatedRepos
 }
 
 func parseRegexpOrPanic(field, value string) *regexp.Regexp {
@@ -192,7 +267,6 @@ func (q Q) valueToTypedValue(field, value string, label labels) []*Value {
 	case
 		FieldIndex,
 		FieldCount,
-		FieldMax,
 		FieldTimeout,
 		FieldCombyRule:
 		return []*Value{{String: &value}}

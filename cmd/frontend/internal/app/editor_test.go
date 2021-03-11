@@ -87,6 +87,13 @@ func TestEditorRedirect(t *testing.T) {
 				DisplayName: "PHABRICATOR #1",
 				Config:      `{"repos": [{"path": "default.com/foo/bar", "callsign": "BAR"}], "token": "abc", "url": "https://phabricator.example.com"}`,
 			},
+			// Code host with SCP-style remote URLs
+			{
+				ID:          5,
+				Kind:        extsvc.KindOther,
+				DisplayName: "OtherSCP",
+				Config:      `{"url":"ssh://git@git.codehost.com"}`,
+			},
 		}, nil
 	}
 	defer func() { database.Mocks.ExternalServices = database.MockExternalServices{} }()
@@ -143,7 +150,7 @@ func TestEditorRedirect(t *testing.T) {
 			wantRedirectURL: "/default.com/foo/bar@0ad12f/-/blob/mux.go?utm_source=Atom-v1.2.1#L124:2-124:11",
 		},
 		{
-			name: "open file in repository with generic code host (with repositoryPathPattern)",
+			name: "open file (generic code host with repositoryPathPattern)",
 			q: url.Values{
 				"editor":     []string{"Atom"},
 				"version":    []string{"v1.2.1"},
@@ -159,7 +166,7 @@ func TestEditorRedirect(t *testing.T) {
 			wantRedirectURL: "/pretty/a/b@0ad12f/-/blob/mux.go?utm_source=Atom-v1.2.1#L124:2-124:11",
 		},
 		{
-			name: "open file in repository with generic code host (no repositoryPathPattern)",
+			name: "open file (generic code host without repositoryPathPattern)",
 			q: url.Values{
 				"editor":     []string{"Atom"},
 				"version":    []string{"v1.2.1"},
@@ -173,6 +180,38 @@ func TestEditorRedirect(t *testing.T) {
 				"end_col":    []string{"10"},
 			},
 			wantRedirectURL: "/default.com/a/b@0ad12f/-/blob/mux.go?utm_source=Atom-v1.2.1#L124:2-124:11",
+		},
+		{
+			name: "open file (generic git host with slash prefix in path)",
+			q: url.Values{
+				"editor":     []string{"Atom"},
+				"version":    []string{"v1.2.1"},
+				"remote_url": []string{"git@git.codehost.com:/owner/repo"},
+				"branch":     []string{"dev"},
+				"revision":   []string{"0ad12f"},
+				"file":       []string{"mux.go"},
+				"start_row":  []string{"123"},
+				"start_col":  []string{"1"},
+				"end_row":    []string{"123"},
+				"end_col":    []string{"10"},
+			},
+			wantRedirectURL: "/git.codehost.com/owner/repo@0ad12f/-/blob/mux.go?utm_source=Atom-v1.2.1#L124:2-124:11",
+		},
+		{
+			name: "open file (generic git host without slash prefix in path)",
+			q: url.Values{
+				"editor":     []string{"Atom"},
+				"version":    []string{"v1.2.1"},
+				"remote_url": []string{"git@git.codehost.com:owner/repo"},
+				"branch":     []string{"dev"},
+				"revision":   []string{"0ad12f"},
+				"file":       []string{"mux.go"},
+				"start_row":  []string{"123"},
+				"start_col":  []string{"1"},
+				"end_row":    []string{"123"},
+				"end_col":    []string{"10"},
+			},
+			wantRedirectURL: "/git.codehost.com/owner/repo@0ad12f/-/blob/mux.go?utm_source=Atom-v1.2.1#L124:2-124:11",
 		},
 		{
 			name: "search",

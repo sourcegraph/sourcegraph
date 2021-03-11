@@ -110,16 +110,16 @@ type symbolSuggestionResolver struct {
 
 func (s symbolSuggestionResolver) Score() int { return s.score }
 func (s symbolSuggestionResolver) Length() int {
-	return len(s.symbol.symbol.Name) + len(s.symbol.symbol.Parent)
+	return len(s.symbol.Symbol.Name) + len(s.symbol.Symbol.Parent)
 }
 func (s symbolSuggestionResolver) Label() string {
-	return s.symbol.symbol.Name + " " + s.symbol.symbol.Parent
+	return s.symbol.Symbol.Name + " " + s.symbol.Symbol.Parent
 }
 func (s symbolSuggestionResolver) ToSymbol() (*symbolResolver, bool) { return &s.symbol, true }
 func (s symbolSuggestionResolver) Key() suggestionKey {
 	return suggestionKey{
-		uri:    s.symbol.uri(),
-		symbol: s.symbol.symbol.Name + s.symbol.symbol.Parent,
+		uri:    s.symbol.URI(),
+		symbol: s.symbol.Symbol.Name + s.symbol.Symbol.Parent,
 	}
 }
 
@@ -227,7 +227,7 @@ func (r *searchResolver) Suggestions(ctx context.Context, args *searchSuggestion
 		if len(r.Query.Values(query.FieldDefault)) == 1 && (len(r.Query.Fields()) == 1 || (len(r.Query.Fields()) == 2 && len(r.Query.Values(query.FieldRepoGroup)) == 1)) {
 			effectiveRepoFieldValues = append(effectiveRepoFieldValues, r.Query.Values(query.FieldDefault)[0].ToString())
 		} else if len(r.Query.Values(query.FieldRepo)) > 0 && ((len(r.Query.Values(query.FieldRepoGroup)) > 0 && len(r.Query.Fields()) == 2) || (len(r.Query.Values(query.FieldRepoGroup)) == 0 && len(r.Query.Fields()) == 1)) {
-			effectiveRepoFieldValues, _ = r.Query.RegexpPatterns(query.FieldRepo)
+			effectiveRepoFieldValues, _ = r.Query.Repositories()
 		}
 
 		// If we have a query which is not valid, just ignore it since this is for a suggestion.
@@ -287,7 +287,7 @@ func (r *searchResolver) Suggestions(ctx context.Context, args *searchSuggestion
 		if len(r.Query.Values(query.FieldRepo)) == 0 {
 			return nil, nil
 		}
-		effectiveRepoFieldValues, _ := r.Query.RegexpPatterns(query.FieldRepo)
+		effectiveRepoFieldValues, _ := r.Query.Repositories()
 
 		validValues := effectiveRepoFieldValues[:0]
 		for _, v := range effectiveRepoFieldValues {
@@ -381,19 +381,19 @@ func (r *searchResolver) Suggestions(ctx context.Context, args *searchSuggestion
 			}
 			for _, sr := range fileMatch.Symbols() {
 				score := 20
-				if sr.symbol.Parent == "" {
+				if sr.Symbol.Parent == "" {
 					score++
 				}
-				if len(sr.symbol.Name) < 12 {
+				if len(sr.Symbol.Name) < 12 {
 					score++
 				}
-				switch ctagsKindToLSPSymbolKind(sr.symbol.Kind) {
+				switch ctagsKindToLSPSymbolKind(sr.Symbol.Kind) {
 				case lsp.SKFunction, lsp.SKMethod:
 					score += 2
 				case lsp.SKClass:
 					score += 3
 				}
-				if len(sr.symbol.Name) >= 4 && strings.Contains(strings.ToLower(sr.uri().String()), strings.ToLower(sr.symbol.Name)) {
+				if len(sr.Symbol.Name) >= 4 && strings.Contains(strings.ToLower(sr.URI().String()), strings.ToLower(sr.Symbol.Name)) {
 					score++
 				}
 				results = append(results, symbolSuggestionResolver{

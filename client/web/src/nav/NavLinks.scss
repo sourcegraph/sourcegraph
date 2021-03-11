@@ -12,5 +12,19 @@
         padding-left: 0.375rem;
         padding-right: 0.375rem;
         user-select: none;
+
+        &:hover {
+            border-color: transparent;
+        }
+    }
+
+    // Hide icon-placeholders by default.
+    .nav-link--with-icon-placeholder .icon-inline {
+        display: none;
+    }
+
+    // Show icon-placeholders only for nav-links inside of the dropdown-menu to keep them aligned.
+    .nav-item--dropdown .nav-link--with-icon-placeholder .icon-inline {
+        display: inline-block;
     }
 }

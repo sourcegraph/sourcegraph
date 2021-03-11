@@ -14,11 +14,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	frontendregistry "github.com/sourcegraph/sourcegraph/cmd/frontend/registry"
+	frontendregistry "github.com/sourcegraph/sourcegraph/cmd/frontend/registry/api"
+	registry "github.com/sourcegraph/sourcegraph/cmd/frontend/registry/client"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/jsonc"
-	"github.com/sourcegraph/sourcegraph/internal/registry"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 

@@ -4,7 +4,7 @@ package router
 import (
 	"github.com/gorilla/mux"
 
-	"github.com/sourcegraph/sourcegraph/internal/routevar"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/routevar"
 )
 
 const (

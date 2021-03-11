@@ -117,7 +117,7 @@ type Options struct {
 	// and types:
 	//
 	//   - id: integer primary key
-	//   - state: an enum type containing at least `queued`, `processing`, `errored`, and `failed`
+	//   - state: text (may be updated to `queued`, `processing`, `errored`, or `failed`)
 	//   - failure_message: text
 	//   - started_at: timestamp with time zone
 	//   - finished_at: timestamp with time zone

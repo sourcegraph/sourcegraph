@@ -12,7 +12,6 @@ import { DismissibleAlert } from '../../../components/DismissibleAlert'
 import { Form } from '../../../../../branded/src/components/Form'
 import { eventLogger } from '../../../tracking/eventLogger'
 import { ErrorAlert } from '../../../components/alerts'
-import * as H from 'history'
 import { AuthenticatedUser } from '../../../auth'
 import { Scalars } from '../../../../../shared/src/graphql-operations'
 import {
@@ -39,13 +38,11 @@ interface Props {
     onDidUpdateOrganizationMembers: () => void
 
     onOrganizationUpdate: () => void
-    history: H.History
 }
 
 export const InviteForm: React.FunctionComponent<Props> = ({
     orgID,
     authenticatedUser,
-    history,
     onDidUpdateOrganizationMembers,
     onOrganizationUpdate,
 }) => {
@@ -194,7 +191,7 @@ export const InviteForm: React.FunctionComponent<Props> = ({
                 />
                 /* eslint-enable react/jsx-no-bind */
             ))}
-            {isErrorLike(loading) && <ErrorAlert className="invite-form__alert" error={loading} history={history} />}
+            {isErrorLike(loading) && <ErrorAlert className="invite-form__alert" error={loading} />}
         </div>
     )
 }

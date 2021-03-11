@@ -12,6 +12,7 @@
 | `-first` | Returns the first n repositories from the list. (use -1 for unlimited) | `1000` |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
 | `-indexed` | Include repositories that have a text search index. | `true` |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
 | `-names-without-host` | Whether or not repository names should be printed without the hostname (or other first path component). If set, -f is ignored. | `false` |
 | `-not-cloned` | Include repositories that are not yet cloned and for which cloning is not in progress. | `true` |
 | `-not-indexed` | Include repositories that do not have a text search index. | `true` |
@@ -38,6 +39,8 @@ Usage of 'src repos list':
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
   -indexed
     	Include repositories that have a text search index. (default true)
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -names-without-host
     	Whether or not repository names should be printed without the hostname (or other first path component). If set, -f is ignored.
   -not-cloned

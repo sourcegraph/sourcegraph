@@ -21,19 +21,19 @@ import (
 	"github.com/sourcegraph/ctxvfs"
 	"golang.org/x/tools/go/buildutil"
 
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/vfsutil"
 	"github.com/sourcegraph/sourcegraph/internal/gituri"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/lazyregexp"
-	"github.com/sourcegraph/sourcegraph/internal/vfsutil"
 
 	"github.com/sourcegraph/go-lsp"
 
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/gosrc"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
-	"github.com/sourcegraph/sourcegraph/internal/gosrc"
 )
 
 // serveGoSymbolURL handles Go symbol URLs (e.g.,

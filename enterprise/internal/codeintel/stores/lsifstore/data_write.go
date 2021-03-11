@@ -8,6 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/database/batch"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
@@ -17,7 +18,7 @@ import (
 // CurrentDocumentSchemaVersion is the schema version used for new lsif_data_documents rows.
 const CurrentDocumentSchemaVersion = 2
 
-func (s *Store) WriteMeta(ctx context.Context, bundleID int, meta MetaData) (err error) {
+func (s *Store) WriteMeta(ctx context.Context, bundleID int, meta semantic.MetaData) (err error) {
 	ctx, endObservation := s.operations.writeMeta.With(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 	}})
@@ -34,7 +35,7 @@ func (s *Store) WriteMeta(ctx context.Context, bundleID int, meta MetaData) (err
 	return inserter.Insert(ctx, bundleID, meta.NumResultChunks)
 }
 
-func (s *Store) WriteDocuments(ctx context.Context, bundleID int, documents chan KeyedDocumentData) (err error) {
+func (s *Store) WriteDocuments(ctx context.Context, bundleID int, documents chan semantic.KeyedDocumentData) (err error) {
 	ctx, traceLog, endObservation := s.operations.writeDocuments.WithAndLogger(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 	}})
@@ -66,7 +67,7 @@ func (s *Store) WriteDocuments(ctx context.Context, bundleID int, documents chan
 	return nil
 }
 
-func (s *Store) WriteResultChunks(ctx context.Context, bundleID int, resultChunks chan IndexedResultChunkData) (err error) {
+func (s *Store) WriteResultChunks(ctx context.Context, bundleID int, resultChunks chan semantic.IndexedResultChunkData) (err error) {
 	ctx, traceLog, endObservation := s.operations.writeResultChunks.WithAndLogger(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 	}})
@@ -98,7 +99,7 @@ func (s *Store) WriteResultChunks(ctx context.Context, bundleID int, resultChunk
 	return nil
 }
 
-func (s *Store) WriteDefinitions(ctx context.Context, bundleID int, monikerLocations chan MonikerLocations) (err error) {
+func (s *Store) WriteDefinitions(ctx context.Context, bundleID int, monikerLocations chan semantic.MonikerLocations) (err error) {
 	ctx, traceLog, endObservation := s.operations.writeDefinitions.WithAndLogger(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 	}})
@@ -112,7 +113,7 @@ func (s *Store) WriteDefinitions(ctx context.Context, bundleID int, monikerLocat
 	return nil
 }
 
-func (s *Store) WriteReferences(ctx context.Context, bundleID int, monikerLocations chan MonikerLocations) (err error) {
+func (s *Store) WriteReferences(ctx context.Context, bundleID int, monikerLocations chan semantic.MonikerLocations) (err error) {
 	ctx, traceLog, endObservation := s.operations.writeReferences.WithAndLogger(ctx, &err, observation.Args{LogFields: []log.Field{
 		log.Int("bundleID", bundleID),
 	}})
@@ -126,7 +127,7 @@ func (s *Store) WriteReferences(ctx context.Context, bundleID int, monikerLocati
 	return nil
 }
 
-func (s *Store) writeDefinitionReferences(ctx context.Context, bundleID int, tableName string, monikerLocations chan MonikerLocations) (int, error) {
+func (s *Store) writeDefinitionReferences(ctx context.Context, bundleID int, tableName string, monikerLocations chan semantic.MonikerLocations) (int, error) {
 	var count uint32
 
 	inserter := func(inserter *batch.BatchInserter) error {

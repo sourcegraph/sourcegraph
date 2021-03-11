@@ -179,7 +179,7 @@ func TestStatusMessages(t *testing.T) {
 			res: []StatusMessage{
 				{
 					ExternalServiceSyncError: &ExternalServiceSyncError{
-						Message:           "fetching from code host: 1 error occurred:\n\t* github is down\n\n",
+						Message:           "fetching from code host github.com - site: 1 error occurred:\n\t* github is down\n\n",
 						ExternalServiceId: siteLevelService.ID,
 					},
 				},

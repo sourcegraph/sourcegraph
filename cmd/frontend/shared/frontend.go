@@ -11,7 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration"
 
-	_ "github.com/sourcegraph/sourcegraph/cmd/frontend/registry"
+	_ "github.com/sourcegraph/sourcegraph/cmd/frontend/registry/api"
 )
 
 // Main is the main function that runs the frontend process.

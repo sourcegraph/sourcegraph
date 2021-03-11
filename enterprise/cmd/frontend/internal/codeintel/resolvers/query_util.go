@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	store "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 // adjustedUpload pairs an upload visible from the current target commit with the
@@ -64,7 +65,7 @@ func (r *queryResolver) adjustUpload(ctx context.Context, line, character int, u
 
 // definitionUploads returns the set of uploads that provide any of the given monikers. This method will
 // not return uploads for commits which are unknown to gitserver.
-func (r *queryResolver) definitionUploads(ctx context.Context, orderedMonikers []lsifstore.QualifiedMonikerData) ([]store.Dump, error) {
+func (r *queryResolver) definitionUploads(ctx context.Context, orderedMonikers []semantic.QualifiedMonikerData) ([]store.Dump, error) {
 	uploads, err := r.dbStore.DefinitionDumps(ctx, orderedMonikers)
 	if err != nil {
 		return nil, errors.Wrap(err, "dbstore.DefinitionDumps")
@@ -82,7 +83,7 @@ const monikerLimit = 10
 // The return slice is ordered by visible upload, then by specificity, i.e., monikers attached to enclosed
 // ranges before before monikers attached to enclosing ranges. Monikers are de-duplicated, such that the
 // second (third, ...) occurrences are removed.
-func (r *queryResolver) orderedMonikers(ctx context.Context, adjustedUploads []adjustedUpload, kind string) ([]lsifstore.QualifiedMonikerData, error) {
+func (r *queryResolver) orderedMonikers(ctx context.Context, adjustedUploads []adjustedUpload, kind string) ([]semantic.QualifiedMonikerData, error) {
 	monikerSet := newQualifiedMonikerSet()
 
 	for i := range adjustedUploads {
@@ -113,7 +114,7 @@ func (r *queryResolver) orderedMonikers(ctx context.Context, adjustedUploads []a
 					return nil, errors.Wrap(err, "lsifStore.PackageInformation")
 				}
 
-				monikerSet.add(lsifstore.QualifiedMonikerData{
+				monikerSet.add(semantic.QualifiedMonikerData{
 					MonikerData:            moniker,
 					PackageInformationData: packageInformationData,
 				})
@@ -130,13 +131,13 @@ func (r *queryResolver) orderedMonikers(ctx context.Context, adjustedUploads []a
 
 // monikerLocations returns the set of locations defined by any of the given uploads tagged with any of
 // the given monikers.
-func (r *queryResolver) monikerLocations(ctx context.Context, uploads []dbstore.Dump, orderedMonikers []lsifstore.QualifiedMonikerData, tableName string, limit, offset int) ([]lsifstore.Location, int, error) {
+func (r *queryResolver) monikerLocations(ctx context.Context, uploads []dbstore.Dump, orderedMonikers []semantic.QualifiedMonikerData, tableName string, limit, offset int) ([]lsifstore.Location, int, error) {
 	ids := make([]int, 0, len(uploads))
 	for i := range uploads {
 		ids = append(ids, uploads[i].ID)
 	}
 
-	args := make([]lsifstore.MonikerData, 0, len(orderedMonikers))
+	args := make([]semantic.MonikerData, 0, len(orderedMonikers))
 	for _, moniker := range orderedMonikers {
 		args = append(args, moniker.MonikerData)
 	}
@@ -236,7 +237,7 @@ func uploadIDsToString(vs []dbstore.Dump) string {
 	return strings.Join(ids, ", ")
 }
 
-func monikersToString(vs []lsifstore.QualifiedMonikerData) string {
+func monikersToString(vs []semantic.QualifiedMonikerData) string {
 	strs := make([]string, 0, len(vs))
 	for _, v := range vs {
 		strs = append(strs, fmt.Sprintf("%s:%s:%s", v.Scheme, v.Identifier, v.Version))

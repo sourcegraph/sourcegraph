@@ -8,12 +8,13 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 func init() {
-	gob.Register(&DocumentData{})
-	gob.Register(&ResultChunkData{})
-	gob.Register(&LocationData{})
+	gob.Register(&semantic.DocumentData{})
+	gob.Register(&semantic.ResultChunkData{})
+	gob.Register(&semantic.LocationData{})
 }
 
 type serializer struct {
@@ -29,17 +30,17 @@ func newSerializer() *serializer {
 }
 
 // MarshalDocumentData transforms document data into a string of bytes writable to disk.
-func (s *serializer) MarshalDocumentData(document DocumentData) ([]byte, error) {
+func (s *serializer) MarshalDocumentData(document semantic.DocumentData) ([]byte, error) {
 	return s.withEncoder(func(encoder *gob.Encoder) error { return encoder.Encode(&document) })
 }
 
 // MarshalResultChunkData transforms result chunk data into a string of bytes writable to disk.
-func (s *serializer) MarshalResultChunkData(resultChunks ResultChunkData) ([]byte, error) {
+func (s *serializer) MarshalResultChunkData(resultChunks semantic.ResultChunkData) ([]byte, error) {
 	return s.withEncoder(func(encoder *gob.Encoder) error { return encoder.Encode(&resultChunks) })
 }
 
 // MarshalLocations transforms a slice of locations into a string of bytes writable to disk.
-func (s *serializer) MarshalLocations(locations []LocationData) ([]byte, error) {
+func (s *serializer) MarshalLocations(locations []semantic.LocationData) ([]byte, error) {
 	return s.withEncoder(func(encoder *gob.Encoder) error { return encoder.Encode(&locations) })
 }
 
@@ -67,19 +68,19 @@ func (s *serializer) withEncoder(f func(encoder *gob.Encoder) error) ([]byte, er
 }
 
 // UnmarshalDocumentData is the inverse of MarshalDocumentData.
-func (s *serializer) UnmarshalDocumentData(data []byte) (document DocumentData, err error) {
+func (s *serializer) UnmarshalDocumentData(data []byte) (document semantic.DocumentData, err error) {
 	err = s.withDecoder(data, func(decoder *gob.Decoder) error { return decoder.Decode(&document) })
 	return document, err
 }
 
 // UnmarshalResultChunkData is the inverse of MarshalResultChunkData.
-func (s *serializer) UnmarshalResultChunkData(data []byte) (resultChunk ResultChunkData, err error) {
+func (s *serializer) UnmarshalResultChunkData(data []byte) (resultChunk semantic.ResultChunkData, err error) {
 	err = s.withDecoder(data, func(decoder *gob.Decoder) error { return decoder.Decode(&resultChunk) })
 	return resultChunk, err
 }
 
 // UnmarshalLocations is the inverse of MarshalLocations.
-func (s *serializer) UnmarshalLocations(data []byte) (locations []LocationData, err error) {
+func (s *serializer) UnmarshalLocations(data []byte) (locations []semantic.LocationData, err error) {
 	err = s.withDecoder(data, func(decoder *gob.Decoder) error { return decoder.Decode(&locations) })
 	return locations, err
 }

@@ -22,7 +22,6 @@ interface ChildTreeLayerProps extends Pick<TreeRootProps, Exclude<keyof TreeRoot
 export const ChildTreeLayer: React.FunctionComponent<ChildTreeLayerProps> = (props: ChildTreeLayerProps) => {
     const sharedProps = {
         location: props.location,
-        history: props.history,
         activePath: props.activePath,
         activeNode: props.activeNode,
         depth: props.depth + 1,

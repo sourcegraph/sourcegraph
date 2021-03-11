@@ -1,0 +1,13 @@
+@include media-breakpoint-down(sm) {
+    .create-update-batch-change-alert {
+        &__badge,
+        &__copy {
+            // Need to overwrite .m-0.
+            margin-bottom: 1rem !important;
+        }
+        &__btn {
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
+}

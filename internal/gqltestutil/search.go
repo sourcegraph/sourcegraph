@@ -3,8 +3,12 @@ package gqltestutil
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"sort"
 
 	"github.com/pkg/errors"
+	"github.com/sourcegraph/sourcegraph/internal/search/streaming/api"
+	streamhttp "github.com/sourcegraph/sourcegraph/internal/search/streaming/http"
 )
 
 type SearchRepositoryResult struct {
@@ -31,11 +35,20 @@ func (rs SearchRepositoryResults) Exists(names ...string) []string {
 	return missing
 }
 
+func (rs SearchRepositoryResults) String() string {
+	var names []string
+	for _, r := range rs {
+		names = append(names, r.Name)
+	}
+	sort.Strings(names)
+	return fmt.Sprintf("%q", names)
+}
+
 // SearchRepositories search repositories with given query.
 func (c *Client) SearchRepositories(query string) (SearchRepositoryResults, error) {
 	const gqlQuery = `
 query Search($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		results {
 			results {
 				... on Repository {
@@ -67,19 +80,21 @@ query Search($query: String!) {
 }
 
 type SearchFileResults struct {
-	MatchCount int64        `json:"matchCount"`
-	Alert      *SearchAlert `json:"alert"`
-	Results    []*struct {
-		File struct {
-			Name string `json:"name"`
-		} `json:"file"`
-		Repository struct {
-			Name string `json:"name"`
-		} `json:"repository"`
-		RevSpec struct {
-			Expr string `json:"expr"`
-		} `json:"revSpec"`
-	} `json:"results"`
+	MatchCount int64               `json:"matchCount"`
+	Alert      *SearchAlert        `json:"alert"`
+	Results    []*SearchFileResult `json:"results"`
+}
+
+type SearchFileResult struct {
+	File struct {
+		Name string `json:"name"`
+	} `json:"file"`
+	Repository struct {
+		Name string `json:"name"`
+	} `json:"repository"`
+	RevSpec struct {
+		Expr string `json:"expr"`
+	} `json:"revSpec"`
 }
 
 type ProposedQuery struct {
@@ -99,7 +114,7 @@ type SearchAlert struct {
 func (c *Client) SearchFiles(query string) (*SearchFileResults, error) {
 	const gqlQuery = `
 query Search($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		results {
 			matchCount
 			alert {
@@ -168,7 +183,7 @@ type SearchCommitResults struct {
 func (c *Client) SearchCommits(query string) (*SearchCommitResults, error) {
 	const gqlQuery = `
 query Search($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		results {
 			matchCount
 			results {
@@ -244,7 +259,7 @@ type FileResult struct {
 	} `json:"file"`
 	Repository  RepositoryResult
 	LineMatches []struct {
-		OffsetAndLengths [][]int `json:"offsetAndLengths"`
+		OffsetAndLengths [][2]int32 `json:"offsetAndLengths"`
 	} `json:"lineMatches"`
 	Symbols []interface{} `json:"symbols"`
 }
@@ -262,7 +277,7 @@ type RepositoryResult struct {
 func (c *Client) SearchAll(query string) ([]*AnyResult, error) {
 	const gqlQuery = `
 query Search($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		results {
 			results {
 				__typename
@@ -322,7 +337,7 @@ type SearchStatsResult struct {
 func (c *Client) SearchStats(query string) (*SearchStatsResult, error) {
 	const gqlQuery = `
 query SearchResultsStats($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		stats {
 			languages {
 				name
@@ -434,7 +449,7 @@ type LanguageSuggestionResult struct {
 func (c *Client) SearchSuggestions(query string) ([]SearchSuggestionsResult, error) {
 	const gqlQuery = `
 query SearchSuggestions($query: String!) {
-	search(query: $query) {
+	search(query: $query, version: V2) {
 		suggestions {
 			__typename
 			... on Repository {
@@ -487,4 +502,149 @@ query SearchSuggestions($query: String!) {
 	}
 
 	return resp.Data.Search.Suggestions, nil
+}
+
+type SearchStreamClient struct {
+	Client *Client
+}
+
+func (s *SearchStreamClient) SearchRepositories(query string) (SearchRepositoryResults, error) {
+	var results SearchRepositoryResults
+	err := s.search(query, streamhttp.Decoder{
+		OnMatches: func(matches []streamhttp.EventMatch) {
+			for _, m := range matches {
+				r, ok := m.(*streamhttp.EventRepoMatch)
+				if !ok {
+					continue
+				}
+				results = append(results, &SearchRepositoryResult{
+					Name: r.Repository,
+				})
+			}
+		},
+	})
+	return results, err
+}
+
+func (s *SearchStreamClient) SearchFiles(query string) (*SearchFileResults, error) {
+	var results SearchFileResults
+	err := s.search(query, streamhttp.Decoder{
+		OnProgress: func(p *api.Progress) {
+			results.MatchCount = int64(p.MatchCount)
+		},
+		OnMatches: func(matches []streamhttp.EventMatch) {
+			for _, m := range matches {
+				switch v := m.(type) {
+				case *streamhttp.EventRepoMatch:
+					results.Results = append(results.Results, &SearchFileResult{})
+
+				case *streamhttp.EventFileMatch:
+					var r SearchFileResult
+					r.File.Name = v.Path
+					r.Repository.Name = v.Repository
+					r.RevSpec.Expr = v.Branches[0]
+					results.Results = append(results.Results, &r)
+
+				case *streamhttp.EventSymbolMatch:
+					var r SearchFileResult
+					r.File.Name = v.Path
+					r.Repository.Name = v.Repository
+					r.RevSpec.Expr = v.Branches[0]
+					results.Results = append(results.Results, &r)
+
+				case *streamhttp.EventCommitMatch:
+					// The tests don't actually look at the value. We need to
+					// update this client to be more generic, but this will do
+					// for now.
+					results.Results = append(results.Results, &SearchFileResult{})
+				}
+			}
+		},
+		OnAlert: func(alert *streamhttp.EventAlert) {
+			results.Alert = &SearchAlert{
+				Title:       alert.Title,
+				Description: alert.Description,
+			}
+			for _, pq := range alert.ProposedQueries {
+				results.Alert.ProposedQueries = append(results.Alert.ProposedQueries, ProposedQuery{
+					Description: pq.Description,
+					Query:       pq.Query,
+				})
+			}
+		},
+	})
+	return &results, err
+}
+func (s *SearchStreamClient) SearchAll(query string) ([]*AnyResult, error) {
+	var results []interface{}
+	err := s.search(query, streamhttp.Decoder{
+		OnMatches: func(matches []streamhttp.EventMatch) {
+			for _, m := range matches {
+				switch v := m.(type) {
+				case *streamhttp.EventRepoMatch:
+					results = append(results, RepositoryResult{
+						Name: v.Repository,
+					})
+
+				case *streamhttp.EventFileMatch:
+					lms := make([]struct {
+						OffsetAndLengths [][2]int32 `json:"offsetAndLengths"`
+					}, len(v.LineMatches))
+					for i := range v.LineMatches {
+						lms[i].OffsetAndLengths = v.LineMatches[i].OffsetAndLengths
+					}
+					results = append(results, FileResult{
+						File:        struct{ Path string }{Path: v.Path},
+						Repository:  RepositoryResult{Name: v.Repository},
+						LineMatches: lms,
+					})
+
+				case *streamhttp.EventSymbolMatch:
+					var r FileResult
+					r.File.Path = v.Path
+					r.Repository.Name = v.Repository
+					r.Symbols = make([]interface{}, len(v.Symbols))
+					results = append(results, &r)
+
+				case *streamhttp.EventCommitMatch:
+					// The tests don't actually look at the value. We need to
+					// update this client to be more generic, but this will do
+					// for now.
+					results = append(results, CommitResult{URL: v.URL})
+				}
+			}
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var ar []*AnyResult
+	for _, r := range results {
+		ar = append(ar, &AnyResult{Inner: r})
+	}
+	return ar, nil
+}
+
+func (s *SearchStreamClient) OverwriteSettings(subjectID, contents string) error {
+	return s.Client.OverwriteSettings(subjectID, contents)
+}
+func (s *SearchStreamClient) AuthenticatedUserID() string {
+	return s.Client.AuthenticatedUserID()
+}
+
+func (s *SearchStreamClient) search(query string, dec streamhttp.Decoder) error {
+	req, err := streamhttp.NewRequest(s.Client.baseURL, query)
+	if err != nil {
+		return err
+	}
+	s.Client.addCookies(req)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return dec.ReadAll(resp.Body)
 }

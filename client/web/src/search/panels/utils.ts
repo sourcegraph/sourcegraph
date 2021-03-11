@@ -61,6 +61,12 @@ export const org: IOrg = {
         totalCount: 0,
         pageInfo: { __typename: 'PageInfo', endCursor: null, hasNextPage: false },
     },
+    batchChanges: {
+        __typename: 'BatchChangeConnection',
+        nodes: [],
+        totalCount: 0,
+        pageInfo: { __typename: 'PageInfo', endCursor: null, hasNextPage: false },
+    },
 }
 
 export const _fetchSavedSearches = (): Observable<ISavedSearch[]> =>

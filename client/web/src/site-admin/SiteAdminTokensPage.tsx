@@ -60,7 +60,6 @@ export const SiteAdminTokensPage: React.FunctionComponent<Props> = ({
                 nodeComponentProps={{
                     showSubject: true,
                     afterDelete: onDidUpdateAccessToken,
-                    history,
                 }}
                 updates={accessTokenUpdates}
                 hideSearch={true}

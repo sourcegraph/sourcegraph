@@ -135,7 +135,7 @@ describe('Repository', () => {
                                             person: {
                                                 avatarURL: '',
                                                 name: 'Sourcegraph Bot',
-                                                email: 'campaigns@sourcegraph.com',
+                                                email: 'batch-changes@sourcegraph.com',
                                                 displayName: 'Sourcegraph Bot',
                                                 user: null,
                                             },
@@ -145,7 +145,7 @@ describe('Repository', () => {
                                             person: {
                                                 avatarURL: '',
                                                 name: 'Sourcegraph Bot',
-                                                email: 'campaigns@sourcegraph.com',
+                                                email: 'batch-changes@sourcegraph.com',
                                                 displayName: 'Sourcegraph Bot',
                                                 user: null,
                                             },

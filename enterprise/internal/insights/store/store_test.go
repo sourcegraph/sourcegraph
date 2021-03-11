@@ -72,8 +72,8 @@ SELECT time,
 		if err != nil {
 			t.Fatal(err)
 		}
-		autogold.Want("SeriesPoints(2).len", int(305)).Equal(t, len(points))
-		autogold.Want("SeriesPoints(2)[len()-1].String()", `SeriesPoint{Time: "2020-01-01 00:00:00 +0000 UTC", Value: 1.6014089781904772, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[len(points)-1].String())
+		autogold.Want("SeriesPoints(2).len", int(12)).Equal(t, len(points))
+		autogold.Want("SeriesPoints(2)[len()-1].String()", `SeriesPoint{Time: "2019-12-19 00:00:00 +0000 UTC", Value: 38.50014526394119, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[len(points)-1].String())
 		autogold.Want("SeriesPoints(2)[0].String()", `SeriesPoint{Time: "2020-06-01 00:00:00 +0000 UTC", Value: -37.8750440811433, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[0].String())
 	})
 
@@ -86,9 +86,9 @@ SELECT time,
 		if err != nil {
 			t.Fatal(err)
 		}
-		autogold.Want("SeriesPoints(3).len", int(185)).Equal(t, len(points))
+		autogold.Want("SeriesPoints(3).len", int(8)).Equal(t, len(points))
 		autogold.Want("SeriesPoints(3)[0].String()", `SeriesPoint{Time: "2020-06-01 00:00:00 +0000 UTC", Value: -37.8750440811433, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[0].String())
-		autogold.Want("SeriesPoints(3)[len()-1].String()", `SeriesPoint{Time: "2020-03-01 00:00:00 +0000 UTC", Value: 35.85710033014749, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[len(points)-1].String())
+		autogold.Want("SeriesPoints(3)[len()-1].String()", `SeriesPoint{Time: "2020-02-17 00:00:00 +0000 UTC", Value: 36.186608083675935, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[len(points)-1].String())
 	})
 
 	t.Run("latest 3 points", func(t *testing.T) {
@@ -101,8 +101,8 @@ SELECT time,
 		}
 		autogold.Want("SeriesPoints(4).len", int(3)).Equal(t, len(points))
 		autogold.Want("SeriesPoints(4)[0].String()", `SeriesPoint{Time: "2020-06-01 00:00:00 +0000 UTC", Value: -37.8750440811433, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[0].String())
-		autogold.Want("SeriesPoints(4)[1].String()", `SeriesPoint{Time: "2020-05-31 12:00:00 +0000 UTC", Value: 17.838503552871998, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[1].String())
-		autogold.Want("SeriesPoints(4)[2].String()", `SeriesPoint{Time: "2020-05-31 00:00:00 +0000 UTC", Value: 1.7062065176514807, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[2].String())
+		autogold.Want("SeriesPoints(4)[1].String()", `SeriesPoint{Time: "2020-05-17 00:00:00 +0000 UTC", Value: 39.775432350908204, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[1].String())
+		autogold.Want("SeriesPoints(4)[2].String()", `SeriesPoint{Time: "2020-05-02 00:00:00 +0000 UTC", Value: 39.61012571588327, Metadata: {"hello": "world", "languages": ["Go", "Python", "Java"]}}`).Equal(t, points[2].String())
 	})
 
 }
@@ -240,8 +240,8 @@ func TestRecordSeriesPoints(t *testing.T) {
 	}
 	autogold.Want("len(points)", int(3)).Equal(t, len(points))
 	autogold.Want("points[0].String()", `SeriesPoint{Time: "2020-03-03 00:00:00 +0000 UTC", Value: 3.3, Metadata: }`).Equal(t, points[0].String())
-	autogold.Want("points[1].String()", `SeriesPoint{Time: "2020-03-02 00:00:00 +0000 UTC", Value: 2.2, Metadata: ["some", "data", "two"]}`).Equal(t, points[1].String())
-	autogold.Want("points[2].String()", `SeriesPoint{Time: "2020-03-01 00:00:00 +0000 UTC", Value: 1.1, Metadata: {"some": "data"}}`).Equal(t, points[2].String())
+	autogold.Want("points[1].String()", `SeriesPoint{Time: "2020-02-17 00:00:00 +0000 UTC", Value: 2.2, Metadata: ["some", "data", "two"]}`).Equal(t, points[1].String())
+	autogold.Want("points[2].String()", `SeriesPoint{Time: "2020-02-17 00:00:00 +0000 UTC", Value: 1.1, Metadata: {"some": "data"}}`).Equal(t, points[2].String())
 
 	// Confirm the data point with repository name got recorded correctly.
 	// TODO(slimsag): future: once we support querying by repo ID/names, add tests to ensure that information is inserted properly here.

@@ -68,33 +68,37 @@ async function main(): Promise<void> {
         return
     }
 
-    // Add style sheet and wait for it to load to avoid rendering unstyled elements (which causes an
-    // annoying flash/jitter when the stylesheet loads shortly thereafter).
-    const styleSheet = (() => {
-        let styleSheet = document.querySelector<HTMLLinkElement>('#ext-style-sheet')
-        // If does not exist, create
-        if (!styleSheet) {
-            styleSheet = document.createElement('link')
-            styleSheet.id = 'ext-style-sheet'
-            styleSheet.rel = 'stylesheet'
-            styleSheet.type = 'text/css'
-            styleSheet.href = browser.extension.getURL('css/style.bundle.css')
-        }
-        return styleSheet
-    })()
-    // If not loaded yet, wait for it to load
-    if (!styleSheet.sheet) {
-        await new Promise(resolve => {
-            styleSheet.addEventListener('load', resolve, { once: true })
-            // If not appended yet, append to <head>
-            if (!styleSheet.parentNode) {
-                document.head.append(styleSheet)
-            }
-        })
-    }
-
     subscriptions.add(
-        injectCodeIntelligence({ sourcegraphURL, assetsURL: getAssetsURL(DEFAULT_SOURCEGRAPH_URL) }, IS_EXTENSION)
+        await injectCodeIntelligence(
+            { sourcegraphURL, assetsURL: getAssetsURL(DEFAULT_SOURCEGRAPH_URL) },
+            IS_EXTENSION,
+            async function onCodeHostFound() {
+                // Add style sheet and wait for it to load to avoid rendering unstyled elements (which causes an
+                // annoying flash/jitter when the stylesheet loads shortly thereafter).
+                const styleSheet = (() => {
+                    let styleSheet = document.querySelector<HTMLLinkElement>('#ext-style-sheet')
+                    // If does not exist, create
+                    if (!styleSheet) {
+                        styleSheet = document.createElement('link')
+                        styleSheet.id = 'ext-style-sheet'
+                        styleSheet.rel = 'stylesheet'
+                        styleSheet.type = 'text/css'
+                        styleSheet.href = browser.extension.getURL('css/style.bundle.css')
+                    }
+                    return styleSheet
+                })()
+                // If not loaded yet, wait for it to load
+                if (!styleSheet.sheet) {
+                    await new Promise(resolve => {
+                        styleSheet.addEventListener('load', resolve, { once: true })
+                        // If not appended yet, append to <head>
+                        if (!styleSheet.parentNode) {
+                            document.head.append(styleSheet)
+                        }
+                    })
+                }
+            }
+        )
     )
 
     // Clean up susbscription if the native integration gets activated

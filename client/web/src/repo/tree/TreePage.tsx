@@ -213,13 +213,15 @@ export const TreePage: React.FunctionComponent<Props> = ({
 
     const { services } = props.extensionsController
 
-    const codeInsightsEnabled =
-        !isErrorLike(settingsCascade.final) && !!settingsCascade.final?.experimentalFeatures?.codeInsights
+    const showCodeInsights =
+        !isErrorLike(settingsCascade.final) &&
+        !!settingsCascade.final?.experimentalFeatures?.codeInsights &&
+        settingsCascade.final['insights.displayLocation.directory'] !== false
 
     // Add DirectoryViewer
     const uri = toURIWithPath({ repoName: repo.name, commitID, filePath })
     useEffect(() => {
-        if (!codeInsightsEnabled) {
+        if (!showCodeInsights) {
             return
         }
         const viewerId = services.viewer.addViewer({
@@ -228,14 +230,14 @@ export const TreePage: React.FunctionComponent<Props> = ({
             resource: uri,
         })
         return () => services.viewer.removeViewer(viewerId)
-    }, [services.viewer, services.model, uri, codeInsightsEnabled])
+    }, [services.viewer, services.model, uri, showCodeInsights])
 
     // Observe directory views
     const workspaceUri = services.workspace.roots.value[0]?.uri
     const views = useObservable(
         useMemo(
             () =>
-                codeInsightsEnabled && workspaceUri
+                showCodeInsights && workspaceUri
                     ? getCombinedViews(
                           ContributableViewContainer.Directory,
                           {
@@ -252,7 +254,7 @@ export const TreePage: React.FunctionComponent<Props> = ({
                           services.view
                       )
                     : EMPTY,
-            [codeInsightsEnabled, workspaceUri, uri, services.view]
+            [showCodeInsights, workspaceUri, uri, services.view]
         )
     )
 
@@ -322,7 +324,7 @@ export const TreePage: React.FunctionComponent<Props> = ({
                 /not a directory/i.test(treeOrError.message) ? (
                     <Redirect to={toPrettyBlobURL({ repoName: repo.name, revision, commitID, filePath })} />
                 ) : (
-                    <ErrorAlert error={treeOrError} history={props.history} />
+                    <ErrorAlert error={treeOrError} />
                 )
             ) : (
                 <>

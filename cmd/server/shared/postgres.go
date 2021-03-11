@@ -58,7 +58,7 @@ func postgresProcfile() (string, error) {
 	e.Command("mkdir", "-p", "/run/postgresql")
 	e.Command("chown", "-R", "postgres", "/run/postgresql")
 	if err := e.Error(); err != nil {
-		l("Setting up postgres failed:\n%s", output.String())
+		pgPrintf("Setting up postgres failed:\n%s", output.String())
 		return "", err
 	}
 
@@ -75,7 +75,7 @@ func postgresProcfile() (string, error) {
 		e.Command("touch", filepath.Join(markersPath, "sourcegraph"))
 
 		if err := e.Error(); err != nil {
-			l("Failed to set up postgres database marker files:\n%s", output.String())
+			pgPrintf("Failed to set up postgres database marker files:\n%s", output.String())
 			os.RemoveAll(path)
 			return "", err
 		}
@@ -85,9 +85,9 @@ func postgresProcfile() (string, error) {
 		return "", err
 	} else if !ok {
 		if verbose {
-			l("Setting up PostgreSQL at %s", path)
+			pgPrintf("Setting up PostgreSQL at %s", path)
 		}
-		l("Sourcegraph is initializing the internal database... (may take 15-20 seconds)")
+		pgPrintf("Sourcegraph is initializing the internal database... (may take 15-20 seconds)")
 
 		var output bytes.Buffer
 		e := execer{Out: &output}
@@ -103,7 +103,7 @@ func postgresProcfile() (string, error) {
 		}
 		e.Command("su-exec", "postgres", "pg_ctl", "-D", path, "-m", "fast", "-l", "/tmp/pgsql.log", "-w", "stop")
 		if err := e.Error(); err != nil {
-			l("Setting up postgres failed:\n%s", output.String())
+			pgPrintf("Setting up postgres failed:\n%s", output.String())
 			os.RemoveAll(path)
 			return "", err
 		}
@@ -114,7 +114,7 @@ func postgresProcfile() (string, error) {
 		e := execer{Out: &output}
 		e.Command("chown", "-R", "postgres", path)
 		if err := e.Error(); err != nil {
-			l("Adjusting fs owners for postgres failed:\n%s", output.String())
+			pgPrintf("Adjusting fs owners for postgres failed:\n%s", output.String())
 			return "", err
 		}
 
@@ -128,7 +128,7 @@ func postgresProcfile() (string, error) {
 			}
 		}
 		if len(missingDatabases) > 0 {
-			l("Sourcegraph is creating missing databases %s... (may take 15-20 seconds)", strings.Join(missingDatabases, ", "))
+			pgPrintf("Sourcegraph is creating missing databases %s... (may take 15-20 seconds)", strings.Join(missingDatabases, ", "))
 
 			e.Command("su-exec", "postgres", "pg_ctl", "-D", path, "-o -c listen_addresses=127.0.0.1", "-l", "/tmp/pgsql.log", "-w", "start")
 			for _, database := range missingDatabases {
@@ -148,12 +148,12 @@ func postgresProcfile() (string, error) {
 			}
 			e.Command("su-exec", "postgres", "pg_ctl", "-D", path, "-m", "fast", "-l", "/tmp/pgsql.log", "-w", "stop")
 			if err := e.Error(); err != nil {
-				l("Setting up postgres failed:\n%s", output.String())
+				pgPrintf("Setting up postgres failed:\n%s", output.String())
 				return "", err
 			}
 		}
 	}
-
+	pgPrintf("Finished initializing the internal database.")
 	return "postgres: su-exec postgres sh -c 'postgres -c listen_addresses=127.0.0.1 -D " + path + "' 2>&1 | grep -v 'database system was shut down' | grep -v 'MultiXact member wraparound' | grep -v 'database system is ready' | grep -v 'autovacuum launcher started' | grep -v 'the database system is starting up' | grep -v 'listening on IPv4 address'", nil
 }
 
@@ -173,7 +173,7 @@ func isPostgresConfigured(prefix string) bool {
 	return os.Getenv(prefix+"PGHOST") != "" || os.Getenv(prefix+"PGDATASOURCE") != ""
 }
 
-func l(format string, args ...interface{}) {
+func pgPrintf(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, "✱ "+format+"\n", args...)
 }
 

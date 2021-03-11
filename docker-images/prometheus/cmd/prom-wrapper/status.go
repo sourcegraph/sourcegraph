@@ -17,8 +17,6 @@ import (
 	srcprometheus "github.com/sourcegraph/sourcegraph/internal/src-prometheus"
 )
 
-const statusReporterPathPrefix = "/prom-wrapper/alerts-status"
-
 // AlertsStatusReporter summarizes alert activity from Alertmanager
 type AlertsStatusReporter struct {
 	log          log15.Logger

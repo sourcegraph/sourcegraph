@@ -1,7 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react'
-import { RouteComponentProps } from 'react-router'
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
-import * as H from 'history'
 
 import { CodeHostItem } from './CodeHostItem'
 import { PageTitle } from '../../../components/PageTitle'
@@ -15,10 +13,9 @@ import { asError, ErrorLike, isErrorLike } from '../../../../../shared/src/util/
 import { Scalars, ExternalServiceKind, ListExternalServiceFields } from '../../../graphql-operations'
 import { eventLogger } from '../../../tracking/eventLogger'
 
-export interface UserAddCodeHostsPageProps extends RouteComponentProps {
+export interface UserAddCodeHostsPageProps {
     userID: Scalars['ID']
     codeHostExternalServices: Record<string, AddExternalServiceOptions>
-    history: H.History
     routingPrefix: string
 }
 
@@ -31,7 +28,6 @@ const isServicesByKind = (status: Status): status is ServicesByKind =>
 export const UserAddCodeHostsPage: React.FunctionComponent<UserAddCodeHostsPageProps> = ({
     userID,
     codeHostExternalServices,
-    history,
     routingPrefix,
 }) => {
     const [statusOrError, setStatusOrError] = useState<Status>()
@@ -114,7 +110,7 @@ export const UserAddCodeHostsPage: React.FunctionComponent<UserAddCodeHostsPageP
 
             {/* display other errors */}
             {isErrorLike(statusOrError) && (
-                <ErrorAlert error={statusOrError} history={history} prefix="Code host action error" icon={false} />
+                <ErrorAlert error={statusOrError} prefix="Code host action error" icon={false} />
             )}
 
             {codeHostExternalServices && statusOrError !== 'loading' ? (

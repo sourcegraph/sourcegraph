@@ -204,11 +204,7 @@ class CheckMirrorRepositoryConnectionActionContainer extends React.PureComponent
                 details={
                     <>
                         {this.state.errorDescription && (
-                            <ErrorAlert
-                                className="action-container__alert"
-                                error={this.state.errorDescription}
-                                history={this.props.history}
-                            />
+                            <ErrorAlert className="action-container__alert" error={this.state.errorDescription} />
                         )}
                         {this.state.loading && (
                             <div className="alert alert-primary action-container__alert">
@@ -299,7 +295,7 @@ export class RepoSettingsMirrorPage extends React.PureComponent<
                 <PageTitle title="Mirror settings" />
                 <h2>Mirroring and cloning</h2>
                 {this.state.loading && <LoadingSpinner className="icon-inline" />}
-                {this.state.error && <ErrorAlert error={this.state.error} history={this.props.history} />}
+                {this.state.error && <ErrorAlert error={this.state.error} />}
                 <div className="form-group">
                     <label>
                         Remote repository URL{' '}

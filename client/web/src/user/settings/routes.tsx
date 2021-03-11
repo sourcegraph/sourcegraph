@@ -110,13 +110,7 @@ export const userSettingsAreaRoutes: readonly UserSettingsAreaRoute[] = [
     {
         path: '/code-hosts',
         render: props => (
-            <UserAddCodeHostsPageContainer
-                userID={props.user.id}
-                routingPrefix={props.user.url + '/settings'}
-                history={props.history}
-                match={props.match}
-                location={props.location}
-            />
+            <UserAddCodeHostsPageContainer userID={props.user.id} routingPrefix={props.user.url + '/settings'} />
         ),
         exact: true,
         condition: allowUserExternalServicePublic,

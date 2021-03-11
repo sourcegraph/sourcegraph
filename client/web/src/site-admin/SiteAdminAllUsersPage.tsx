@@ -179,9 +179,7 @@ class UserNode extends React.PureComponent<UserNodeProps, UserNodeState> {
                         )}
                     </div>
                 </div>
-                {this.state.errorDescription && (
-                    <ErrorAlert className="mt-2" error={this.state.errorDescription} history={this.props.history} />
-                )}
+                {this.state.errorDescription && <ErrorAlert className="mt-2" error={this.state.errorDescription} />}
                 {this.state.resetPasswordURL && (
                     <div className="alert alert-success mt-2">
                         <p>

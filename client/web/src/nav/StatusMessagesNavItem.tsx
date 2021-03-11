@@ -232,7 +232,6 @@ export class StatusMessagesNavItem extends React.PureComponent<Props, State> {
                                 className="status-messages-nav-item__entry"
                                 prefix="Failed to load status messages"
                                 error={this.state.messagesOrError}
-                                history={this.props.history}
                             />
                         ) : this.state.messagesOrError.length > 0 ? (
                             this.state.messagesOrError.map((message, index) => this.renderMessage(message, index))

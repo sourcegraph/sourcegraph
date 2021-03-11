@@ -21,7 +21,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/endpoint"
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/search"
-	"github.com/sourcegraph/sourcegraph/internal/symbols/protocol"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/trace/ot"
 )
 
@@ -75,7 +75,7 @@ func (c *Client) url(key key) (string, error) {
 }
 
 // Search performs a symbol search on the symbols service.
-func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (result *protocol.SearchResult, err error) {
+func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (result *result.Symbols, err error) {
 	span, ctx := ot.StartSpanFromContext(ctx, "symbols.Client.Search")
 	defer func() {
 		if err != nil {

@@ -22,7 +22,7 @@ import { enterpriseRepoContainerRoutes, enterpriseRepoRevisionContainerRoutes } 
 import { enterpriseRoutes } from './routes'
 import { enterpriseSiteAdminOverviewComponents } from './site-admin/overview/overviewComponents'
 import { enterpriseSiteAdminAreaRoutes } from './site-admin/routes'
-import { enterpriseSiteAdminSidebarGroups } from './site-admin/sidebaritems'
+import { siteAdminSidebarGroups } from '../site-admin/sidebaritems'
 import { enterpriseUserAreaHeaderNavItems } from './user/navitems'
 import { enterpriseUserAreaRoutes } from './user/routes'
 import { enterpriseUserSettingsAreaRoutes } from './user/settings/routes'
@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded', () => {
             extensionsAreaRoutes={enterpriseExtensionsAreaRoutes}
             extensionsAreaHeaderActionButtons={enterpriseExtensionsAreaHeaderActionButtons}
             siteAdminAreaRoutes={enterpriseSiteAdminAreaRoutes}
-            siteAdminSideBarGroups={enterpriseSiteAdminSidebarGroups}
+            siteAdminSideBarGroups={siteAdminSidebarGroups}
             siteAdminOverviewComponents={enterpriseSiteAdminOverviewComponents}
             userAreaHeaderNavItems={enterpriseUserAreaHeaderNavItems}
             userAreaRoutes={enterpriseUserAreaRoutes}
@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', () => {
             repoSettingsSidebarGroups={enterpriseRepoSettingsSidebarGroups}
             routes={enterpriseRoutes}
             keyboardShortcuts={KEYBOARD_SHORTCUTS}
-            showCampaigns={window.context.campaignsEnabled}
+            showBatchChanges={window.context.batchChangesEnabled}
         />,
         document.querySelector('#root')
     )

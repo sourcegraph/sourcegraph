@@ -74,3 +74,25 @@ This page demonstrates a few example GraphQL queries for the [Sourcegraph GraphQ
 		</td>
 	</tr>
 </table>
+
+## GraphQL console examples
+
+Admins can use the [API console](https://sourcegraph.com/api/console) to run queries. For help with the API, you can use `Ctrl + space` to trigger tooltips. 
+
+### Common queries
+
+Retrieve the number of active users this month, who they are and their last active time:
+
+```
+query {
+  users(activePeriod: THIS_MONTH) {
+    totalCount
+    nodes {
+      username,
+      usageStatistics {
+        lastActiveTime
+      }
+    }
+  }
+}
+```

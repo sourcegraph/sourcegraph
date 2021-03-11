@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/campaigns"
+	"github.com/sourcegraph/sourcegraph/internal/batches"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/gitlab"
@@ -427,7 +427,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 		t.Run("error from ParseInt", func(t *testing.T) {
 			p := newGitLabChangesetSourceTestProvider(t)
 			if err := p.source.LoadChangeset(p.ctx, &Changeset{
-				Changeset: &campaigns.Changeset{
+				Changeset: &batches.Changeset{
 					ExternalID: "foo",
 					Metadata:   &gitlab.MergeRequest{},
 				},
@@ -543,7 +543,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 
 			if err := p.source.LoadChangeset(p.ctx, p.changeset); err == nil {
 				t.Fatal("unexpectedly no error for not found changeset")
-			} else if err.Error() != (ChangesetNotFoundError{Changeset: &Changeset{Changeset: &campaigns.Changeset{ExternalID: "43"}}}).Error() {
+			} else if err.Error() != (ChangesetNotFoundError{Changeset: &Changeset{Changeset: &batches.Changeset{ExternalID: "43"}}}).Error() {
 				t.Fatalf("unexpected error: %+v", err)
 			}
 		})
@@ -561,7 +561,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 							// sourcegraph/sourcegraph
 							ProjectCommon: gitlab.ProjectCommon{ID: 16606088},
 						}},
-						Changeset: &campaigns.Changeset{ExternalID: "2"},
+						Changeset: &batches.Changeset{ExternalID: "2"},
 					},
 				},
 				{
@@ -571,7 +571,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 							// sourcegraph/sourcegraph
 							ProjectCommon: gitlab.ProjectCommon{ID: 16606088},
 						}},
-						Changeset: &campaigns.Changeset{ExternalID: "100000"},
+						Changeset: &batches.Changeset{ExternalID: "100000"},
 					},
 					err: "Changeset with external ID 100000 not found",
 				},
@@ -581,7 +581,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 						Repo: &types.Repo{Metadata: &gitlab.Project{
 							ProjectCommon: gitlab.ProjectCommon{ID: 999999999999},
 						}},
-						Changeset: &campaigns.Changeset{ExternalID: "100000"},
+						Changeset: &batches.Changeset{ExternalID: "100000"},
 					},
 					// Not a changeset not found error. This is important so we don't set
 					// a changeset as deleted, when the token scope cannot view the project
@@ -761,7 +761,7 @@ func TestGitLabSource_ChangesetSource(t *testing.T) {
 			p := newGitLabChangesetSourceTestProvider(t)
 
 			err := p.source.UpdateChangeset(p.ctx, &Changeset{
-				Changeset: &campaigns.Changeset{Metadata: struct{}{}},
+				Changeset: &batches.Changeset{Metadata: struct{}{}},
 			})
 			if err == nil {
 				t.Error("unexpected nil error")
@@ -966,7 +966,7 @@ func newGitLabChangesetSourceTestProvider(t *testing.T) *gitLabChangesetSourceTe
 	prov := gitlab.NewClientProvider(&url.URL{}, &panicDoer{})
 	p := &gitLabChangesetSourceTestProvider{
 		changeset: &Changeset{
-			Changeset: &campaigns.Changeset{},
+			Changeset: &batches.Changeset{},
 			Repo:      &types.Repo{Metadata: &gitlab.Project{}},
 			HeadRef:   "refs/heads/head",
 			BaseRef:   "refs/heads/base",

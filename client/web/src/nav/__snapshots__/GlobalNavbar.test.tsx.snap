@@ -92,7 +92,7 @@ exports[`GlobalNavbar default 1`] = `
           "subjects": null,
         }
       }
-      showCampaigns={false}
+      showBatchChanges={false}
       showOnboardingTour={false}
       showSearchContext={false}
       telemetryService={Object {}}

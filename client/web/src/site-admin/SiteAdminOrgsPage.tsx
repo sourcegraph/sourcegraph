@@ -92,7 +92,7 @@ const OrgNode: React.FunctionComponent<OrgNodeProps> = ({ node, history, onDidUp
                     </button>
                 </div>
             </div>
-            {isErrorLike(loading) && <ErrorAlert className="mt-2" error={loading.message} history={history} />}
+            {isErrorLike(loading) && <ErrorAlert className="mt-2" error={loading.message} />}
         </li>
     )
 }

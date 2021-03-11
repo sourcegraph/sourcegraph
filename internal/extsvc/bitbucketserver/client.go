@@ -1,3 +1,4 @@
+//nolint:bodyclose // Body is closed in Client.Do, but the response is still returned to provide access to the headers
 package bitbucketserver
 
 import (
@@ -49,7 +50,7 @@ var requestCounter = metrics.NewRequestMeter("bitbucket", "Total number of reque
 // repositories request for every 1000 repositories on Bitbucket every 1m by default, so for someone
 // with 20,000 Bitbucket repositories we need 20,000/1000 requests per minute (1200/hr) + overhead for
 // repository lookup requests by users, and requests for identifying which repositories a user has
-// access to (if authorization is in use) and requests for campaign synchronization if it is in use.
+// access to (if authorization is in use) and requests for changeset synchronization if it is in use.
 //
 // These are our default values, they can be changed in configuration
 const (
@@ -560,7 +561,7 @@ func (c *Client) CreatePullRequest(ctx context.Context, pr *PullRequest) error {
 	}
 
 	// Bitbucket Server doesn't support GFM taskitems. But since we might add
-	// those to a PR description for certain Automation Campaigns, we have to
+	// those to a PR description for certain batch changes, we have to
 	// "downgrade" here and for now, removing taskitems is enough.
 	description := strings.ReplaceAll(pr.Description, "- [ ] ", "- ")
 
@@ -1287,6 +1288,15 @@ func IsNotFound(err error) bool {
 	switch e := errors.Cause(err).(type) {
 	case *httpError:
 		return e.NotFound()
+	}
+	return false
+}
+
+// IsUnauthorized reports whether err is a Bitbucket Server API 401 error.
+func IsUnauthorized(err error) bool {
+	switch e := errors.Cause(err).(type) {
+	case *httpError:
+		return e.Unauthorized()
 	}
 	return false
 }

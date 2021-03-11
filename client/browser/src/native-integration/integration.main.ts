@@ -38,7 +38,9 @@ function init(): void {
     window.localStorage.setItem('SOURCEGRAPH_URL', sourcegraphURL)
     window.SOURCEGRAPH_URL = sourcegraphURL
     // TODO handle subscription
-    injectCodeIntelligence({ sourcegraphURL, assetsURL }, IS_EXTENSION)
+    injectCodeIntelligence({ sourcegraphURL, assetsURL }, IS_EXTENSION).catch(error => {
+        console.error('Error injecting Sourcegraph code intelligence:', error)
+    })
 }
 
 init()

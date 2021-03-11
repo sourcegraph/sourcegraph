@@ -199,12 +199,6 @@ func deleteActionsEmailQuery(ctx context.Context, actionIDs []int64, monitorID i
 	), nil
 }
 
-const getAllEmailActionsForTriggerQueryIDInt64FmtStr = `
-SELECT e.id, e.monitor, e.enabled, e.priority, e.header, e.created_by, e.created_at, e.changed_by, e.changed_at
-FROM cm_emails e INNER JOIN cm_queries q ON e.monitor = q.monitor
-WHERE q.id = %s
-`
-
 var EmailsColumns = []*sqlf.Query{
 	sqlf.Sprintf("cm_emails.id"),
 	sqlf.Sprintf("cm_emails.monitor"),

@@ -108,11 +108,11 @@ export const AddExternalServicesPage: React.FunctionComponent<AddExternalService
                         <li>
                             Opening pull requests and syncing their metadata as part of{' '}
                             <a
-                                href="https://docs.sourcegraph.com/user/campaigns"
+                                href="https://docs.sourcegraph.com/user/batch_changes"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                code change campaigns
+                                batch changes
                             </a>
                             , if you have enabled this feature.
                         </li>

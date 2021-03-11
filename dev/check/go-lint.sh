@@ -2,6 +2,8 @@
 
 echo "--- lint dependencies"
 
+trap "echo ^^^ +++" ERR
+
 set -ex
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 

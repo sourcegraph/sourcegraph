@@ -30,10 +30,15 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"golang.org/x/time/rate"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
+	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/env"
+	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/honey"
 	"github.com/sourcegraph/sourcegraph/internal/lazyregexp"
@@ -41,6 +46,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/repotrackutil"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/internal/trace/ot"
+	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 )
 
@@ -131,9 +137,11 @@ type Server struct {
 	GetVCSSyncer func(context.Context, api.RepoName) (VCSSyncer, error)
 
 	// Hostname is how we identify this instance of gitserver. Generally it is the
-	// actual hostname can also be overridden by the NODE_NAME or HOSTNAME
-	// environment variables.
+	// actual hostname but can also be overridden by the HOSTNAME environment variable.
 	Hostname string
+
+	// shared db handle
+	DB dbutil.DB
 
 	// skipCloneForTests is set by tests to avoid clones.
 	skipCloneForTests bool
@@ -267,9 +275,167 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-// Janitor does clean up tasks over s.ReposDir.
-func (s *Server) Janitor() {
-	s.cleanupRepos()
+// Janitor does clean up tasks over s.ReposDir and is expected to run in a
+// background goroutine.
+func (s *Server) Janitor(interval time.Duration) {
+	for {
+		addrs := conf.Get().ServiceConnections.GitServers
+		s.cleanupRepos(addrs)
+		time.Sleep(interval)
+	}
+}
+
+// SyncRepoState syncs state on disk to the database for all repos and is expected to
+// run in a background goroutine.
+func (s *Server) SyncRepoState(interval time.Duration, batchSize, perSecond int) {
+	for {
+		addrs := conf.Get().ServiceConnections.GitServers
+		if err := s.syncRepoState(addrs, batchSize, perSecond); err != nil {
+			log15.Error("Syncing repo state", "error ", err)
+		}
+		time.Sleep(interval)
+	}
+}
+
+// hostnameMatch checks whether the hostname matches the given address.
+// If we don't find an exact match, we look at the initial prefix.
+func (s *Server) hostnameMatch(addr string) bool {
+	if !strings.HasPrefix(addr, s.Hostname) {
+		return false
+	}
+	if addr == s.Hostname {
+		return true
+	}
+	// We know that s.Hostname is shorter than addr so we can safely check the next
+	// char
+	next := addr[len(s.Hostname)]
+	return next == '.' || next == ':'
+}
+
+var (
+	repoSyncStateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "src_repo_sync_state_counter",
+		Help: "Incremented each time we check the state of repo",
+	}, []string{"type"})
+	repoSyncStatePercentComplete = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "src_repo_sync_state_percent_complete",
+		Help: "Percent complete for the current sync run, from 0 to 100",
+	})
+	repoStateUpsertCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "src_repo_sync_state_upsert_counter",
+		Help: "Incremented each time we upsert repo state in the database",
+	}, []string{"success"})
+)
+
+func (s *Server) syncRepoState(addrs []string, batchSize, perSecond int) error {
+	// Sanity check our host exists in addrs before starting any work
+	var found bool
+	for _, a := range addrs {
+		if s.hostnameMatch(a) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("gitserver hostname, %q, not found in list", s.Hostname)
+	}
+
+	ctx := s.ctx
+	store := database.GitserverRepos(s.DB)
+
+	// The rate limit should be enforced across all instances
+	perSecond = perSecond / len(addrs)
+	if perSecond < 0 {
+		perSecond = 1
+	}
+	limiter := rate.NewLimiter(rate.Limit(perSecond), perSecond)
+
+	// The rate limiter doesn't allow writes that are larger than the burst size
+	// which we've set to perSecond.
+	if batchSize > perSecond {
+		batchSize = perSecond
+	}
+
+	batch := make([]*types.GitserverRepo, 0)
+
+	writeBatch := func() {
+		if len(batch) == 0 {
+			return
+		}
+		// We always clear the batch
+		defer func() {
+			batch = batch[0:0]
+		}()
+		err := limiter.WaitN(ctx, len(batch))
+		if err != nil {
+			log15.Error("Waiting for rate limiter", "error", err)
+			return
+		}
+
+		if err := store.Upsert(ctx, batch...); err != nil {
+			repoStateUpsertCounter.WithLabelValues("false").Add(float64(len(batch)))
+			log15.Error("Upserting GitserverRepos", "error", err)
+			return
+		}
+		repoStateUpsertCounter.WithLabelValues("true").Add(float64(len(batch)))
+	}
+
+	totalRepos, err := database.Repos(s.DB).Count(ctx, database.ReposListOptions{})
+	if err != nil {
+		return errors.Wrap(err, "counting repos")
+	}
+
+	var count int
+	err = store.IterateRepoGitserverStatus(ctx, func(repo types.RepoGitserverStatus) error {
+		count++
+		repoSyncStatePercentComplete.Set((float64(count) / float64(totalRepos)) * 100)
+
+		repoSyncStateCounter.WithLabelValues("check").Inc()
+		// Ensure we're only dealing with repos we are responsible for
+		if addr := gitserver.AddrForRepo(repo.Name, addrs); !s.hostnameMatch(addr) {
+			repoSyncStateCounter.WithLabelValues("other_shard").Inc()
+			return nil
+		}
+		repoSyncStateCounter.WithLabelValues("this_shard").Inc()
+
+		dir := s.dir(repo.Name)
+		cloned := repoCloned(dir)
+		_, cloning := s.locker.Status(dir)
+
+		var shouldUpdate bool
+		if repo.GitserverRepo == nil {
+			repo.GitserverRepo = &types.GitserverRepo{
+				RepoID: repo.ID,
+			}
+			shouldUpdate = true
+		}
+		if repo.ShardID != s.Hostname {
+			repo.ShardID = s.Hostname
+			shouldUpdate = true
+		}
+		cloneStatus := cloneStatus(cloned, cloning)
+		if repo.CloneStatus != cloneStatus {
+			repo.CloneStatus = cloneStatus
+			shouldUpdate = true
+		}
+
+		if !shouldUpdate {
+			return nil
+		}
+
+		batch = append(batch, repo.GitserverRepo)
+
+		if len(batch) >= batchSize {
+			writeBatch()
+		}
+
+		return nil
+	})
+
+	// Attempt final write
+	writeBatch()
+
+	return err
 }
 
 // Stop cancels the running background jobs and returns when done.
@@ -284,9 +450,9 @@ func (s *Server) Stop() {
 
 // serverContext returns a child context tied to the lifecycle of server.
 func (s *Server) serverContext() (context.Context, context.CancelFunc) {
-	// if we are already canceled don't increment our waitgroup. This is to
+	// if we are already canceled don't increment our WaitGroup. This is to
 	// prevent a loop somewhere preventing us from ever finishing the
-	// waitgroup, even though all calls fails instantly due to the canceled
+	// WaitGroup, even though all calls fails instantly due to the canceled
 	// context.
 	s.cancelMu.Lock()
 	if s.canceled {
@@ -1024,6 +1190,7 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, opts *cloneOp
 			return err
 		}
 		defer cancel1()
+
 		ctx, cancel2 := context.WithTimeout(ctx, longGitCommandTimeout)
 		defer cancel2()
 
@@ -1048,6 +1215,15 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, opts *cloneOp
 		defer os.RemoveAll(tmpPath)
 		tmpPath = filepath.Join(tmpPath, ".git")
 		tmp := GitDir(tmpPath)
+
+		// It may already be cloned
+		if !repoCloned(dir) {
+			s.setCloneStatusNonFatal(ctx, repo, types.CloneStatusCloning)
+		}
+		defer func() {
+			// Use a different context to ensure we still update the DB even if we time out
+			s.setCloneStatusNonFatal(context.Background(), repo, cloneStatus(repoCloned(dir), false))
+		}()
 
 		cmd, err := syncer.CloneCommand(ctx, remoteURL, tmpPath)
 		if err != nil {
@@ -1228,36 +1404,28 @@ func scanCRLF(data []byte, atEOF bool) (advance int, token []byte, err error) {
 var testGitRepoExists func(ctx context.Context, remoteURL *url.URL) error
 
 var (
-	execRunning = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	execRunning = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "src_gitserver_exec_running",
 		Help: "number of gitserver.Command running concurrently.",
 	}, []string{"cmd", "repo"})
-	execDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	execDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "src_gitserver_exec_duration_seconds",
 		Help:    "gitserver.Command latencies in seconds.",
 		Buckets: trace.UserLatencyBuckets,
 	}, []string{"cmd", "repo", "status"})
-	cloneQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+	cloneQueue = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "src_gitserver_clone_queue",
 		Help: "number of repos waiting to be cloned.",
 	})
-	lsRemoteQueue = prometheus.NewGauge(prometheus.GaugeOpts{
+	lsRemoteQueue = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "src_gitserver_lsremote_queue",
 		Help: "number of repos waiting to check existence on remote code host (git ls-remote).",
 	})
-	repoClonedCounter = prometheus.NewCounter(prometheus.CounterOpts{
+	repoClonedCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "src_gitserver_repo_cloned",
 		Help: "number of successful git clones run",
 	})
 )
-
-func init() {
-	prometheus.MustRegister(execRunning)
-	prometheus.MustRegister(execDuration)
-	prometheus.MustRegister(cloneQueue)
-	prometheus.MustRegister(lsRemoteQueue)
-	prometheus.MustRegister(repoClonedCounter)
-}
 
 // Send 1 in 16 events to honeycomb. This is hardcoded since we only use this
 // for Sourcegraph.com.
@@ -1434,8 +1602,6 @@ func setHEAD(ctx context.Context, dir GitDir, syncer VCSSyncer, repo api.RepoNam
 			headBranch = branch
 		}
 	}
-
-	log15.Info("Setting HEAD to", "HEAD", headBranch)
 
 	// set HEAD
 	cmd = exec.CommandContext(ctx, "git", "symbolic-ref", "HEAD", "refs/heads/"+headBranch)

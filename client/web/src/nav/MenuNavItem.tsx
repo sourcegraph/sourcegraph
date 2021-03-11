@@ -21,7 +21,7 @@ export const MenuNavItem: React.FunctionComponent<MenuNavItemProps> = props => {
     const toggleIsOpen = useCallback(() => setIsOpen(open => !open), [])
 
     return (
-        <ButtonDropdown className="menu-nav-item" direction="down" isOpen={isOpen} toggle={toggleIsOpen}>
+        <ButtonDropdown direction="down" isOpen={isOpen} toggle={toggleIsOpen}>
             <DropdownToggle className="bg-transparent" nav={true}>
                 <MenuIcon className="icon-inline" />
                 {isOpen ? <MenuUpIcon className="icon-inline" /> : <MenuDownIcon className="icon-inline" />}

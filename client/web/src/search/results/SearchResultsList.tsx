@@ -359,7 +359,6 @@ export class SearchResultsList extends React.PureComponent<SearchResultsListProp
                             className="m-2"
                             data-testid="search-results-list-error"
                             error={this.props.resultsOrError}
-                            history={this.props.history}
                         />
                     ) : (
                         (() => {

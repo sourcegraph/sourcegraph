@@ -343,7 +343,7 @@ type ObservableOwner string
 ```go
 const (
     ObservableOwnerSearch          ObservableOwner = "search"
-    ObservableOwnerCampaigns       ObservableOwner = "campaigns"
+    ObservableOwnerBatches         ObservableOwner = "batches"
     ObservableOwnerCodeIntel       ObservableOwner = "code-intel"
     ObservableOwnerDistribution    ObservableOwner = "distribution"
     ObservableOwnerSecurity        ObservableOwner = "security"

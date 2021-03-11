@@ -24,7 +24,7 @@ We recommend installing the [Sourcegraph Bitbucket Server plugin](https://github
 
 - **Native code intelligence**: users don't need to install the [Sourcegraph browser extension](#browser-extension) to get hover tooltips, go-to-definition, find-references, and code search while browsing files and viewing pull requests on Bitbucket Server. Additionally, activated [Sourcegraph extensions](../extensions/index.md) will be able to add information to Bitbucket Server code views and pull requests, such as test coverage data or trace/log information.
 - **Fast permission syncing** between Sourcegraph and Bitbucket Server
-- **Webhooks with configurable scope**, which are used by and highly recommended for usage with [campaigns](../campaigns/index.md)
+- **Webhooks with configurable scope**, which are used by and highly recommended for usage with [batch changes](../batch_changes/index.md)
 
 ![Bitbucket Server code intelligence](https://sourcegraphstatic.com/bitbucket-code-intel-pr-short.gif)
 
@@ -112,7 +112,7 @@ Bitbucket Server natively only [provides **per-repository** webhooks](https://co
 
 Sourcegraph's Bitbucket Server adds support for webhooks with a **configurable scope**. Each webhook can be configured to listen to specific events **globally**, per **project** or per **repository**.
 
-The motivation behind this added functionality is to more efficiently react to updates to Bitbucket Server pull requests when using [campaigns](../campaigns/index.md) by requiring only a single webhook to receive events for hundreds or thousands of pull requests across projects and repositories.
+The motivation behind this added functionality is to more efficiently react to updates to Bitbucket Server pull requests when using [batch changes](../batch_changes/index.md) by requiring only a single webhook to receive events for hundreds or thousands of pull requests across projects and repositories.
 
 The plugin adds a `/webhook` endpoint that accepts `GET`, `POST` and `DELETE` HTTP request to list, create and delete webhooks respectively. The full URL for this endpoint would be something like `https://your-bbs-instance.example.com/rest/sourcegraph-admin/1.0/webhook`. See the [webhooks README](https://github.com/sourcegraph/bitbucket-server-plugin/blob/master/src/main/java/com/sourcegraph/webhook/README.md) for detailed information on which payloads this endpoint accepts.
 

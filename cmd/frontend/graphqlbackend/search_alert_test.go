@@ -358,7 +358,7 @@ func TestAlertForOverRepoLimit(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			setMockResolveRepositories(test.repoRevs)
-			q, err := query.ProcessAndOr(test.query, query.ParserOptions{SearchType: query.SearchType(0), Globbing: test.globbing})
+			q, err := query.Parse(test.query, query.ParserOptions{SearchType: query.SearchType(0), Globbing: test.globbing})
 			if err != nil {
 				t.Fatal(err)
 			}

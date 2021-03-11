@@ -1,13 +1,7 @@
-import ConsoleIcon from 'mdi-react/ConsoleIcon'
-import * as React from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
-import {
-    SIDEBAR_BUTTON_CLASS,
-    SidebarGroup,
-    SidebarGroupHeader,
-    SidebarGroupItems,
-    SidebarNavItem,
-} from '../components/Sidebar'
+import { ListGroup, ListGroupItem } from 'reactstrap'
+import { SidebarCollapseItems, SidebarGroupItems, SidebarNavItem } from '../components/Sidebar'
 import { NavGroupDescriptor } from '../util/contributions'
 
 export interface SiteAdminSideBarGroup extends NavGroupDescriptor {}
@@ -24,37 +18,46 @@ export interface SiteAdminSidebarProps {
  * Sidebar for the site admin area.
  */
 export const SiteAdminSidebar: React.FunctionComponent<SiteAdminSidebarProps> = ({ className, groups }) => (
-    <div className={className}>
-        {groups.map(
-            ({ header, items, condition = () => true }, index) =>
-                condition({}) && (
-                    <SidebarGroup key={index}>
-                        {header && <SidebarGroupHeader icon={header.icon} label={header.label} />}
-                        <SidebarGroupItems>
-                            {items.map(
-                                ({ label, to, exact, condition = () => true }) =>
-                                    condition({}) && (
-                                        <SidebarNavItem to={to} exact={exact} key={label}>
-                                            {label}
-                                        </SidebarNavItem>
-                                    )
-                            )}
-                        </SidebarGroupItems>
-                    </SidebarGroup>
-                )
-        )}
-
-        <Link to="/api/console" className={SIDEBAR_BUTTON_CLASS}>
-            <ConsoleIcon className="icon-inline" /> API console
-        </Link>
-        <a href="/-/debug/" className={SIDEBAR_BUTTON_CLASS}>
-            Instrumentation
-        </a>
-        <a href="/-/debug/grafana" className={SIDEBAR_BUTTON_CLASS}>
-            Site Monitoring
-        </a>
-        <a href="/-/debug/jaeger" className={SIDEBAR_BUTTON_CLASS}>
-            Tracing
-        </a>
+    <div className={`site-admin-sidebar ${className}`}>
+        <ListGroup>
+            {groups.map(
+                ({ header, items, condition = () => true }, index) =>
+                    condition({}) &&
+                    (items.length > 1 ? (
+                        <ListGroupItem className="p-0">
+                            <SidebarCollapseItems
+                                icon={header?.icon}
+                                label={header?.label}
+                                key={index}
+                                openByDefault={true}
+                            >
+                                <SidebarGroupItems>
+                                    {items.map(
+                                        ({ label, to, exact, condition = () => true }) =>
+                                            condition({}) && (
+                                                <SidebarNavItem to={to} exact={exact} key={label}>
+                                                    {label}
+                                                </SidebarNavItem>
+                                            )
+                                    )}
+                                </SidebarGroupItems>
+                            </SidebarCollapseItems>
+                        </ListGroupItem>
+                    ) : (
+                        <ListGroupItem className="p-0">
+                            <Link
+                                key={items[0].label}
+                                to={items[0].to}
+                                className="bg-2 border-0 d-flex list-group-item-action p-2 w-100"
+                            >
+                                <span>
+                                    {header?.icon && <header.icon className="sidebar__icon icon-inline mr-1" />}{' '}
+                                    {items[0].label}
+                                </span>
+                            </Link>
+                        </ListGroupItem>
+                    ))
+            )}
+        </ListGroup>
     </div>
 )

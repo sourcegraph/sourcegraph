@@ -100,7 +100,7 @@ func TestSubstituteAliases(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run("substitute alises", func(t *testing.T) {
-			query, _ := ProcessAndOr(c.input, ParserOptions{SearchType: c.searchType})
+			query, _ := Parse(c.input, ParserOptions{SearchType: c.searchType})
 			if diff := cmp.Diff(nodesToJSON(query), c.want); diff != "" {
 				t.Fatal(diff)
 			}
@@ -374,7 +374,7 @@ func TestEllipsesForHoles(t *testing.T) {
 	input := "if ... { ... }"
 	want := `"if :[_] { :[_] }"`
 	t.Run("Ellipses for holes", func(t *testing.T) {
-		query, _ := ProcessAndOr(input, ParserOptions{SearchType: SearchTypeStructural})
+		query, _ := Parse(input, ParserOptions{SearchType: SearchTypeStructural})
 		got := toString(query)
 		if diff := cmp.Diff(want, got); diff != "" {
 			t.Fatal(diff)

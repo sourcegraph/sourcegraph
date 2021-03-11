@@ -8,6 +8,7 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	tracepkg "github.com/sourcegraph/sourcegraph/internal/trace"
@@ -15,21 +16,16 @@ import (
 )
 
 var metricLabels = []string{"method", "success"}
-var requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name:    "src_backend_client_request_duration_seconds",
 	Help:    "Total time spent on backend endpoints.",
 	Buckets: tracepkg.UserLatencyBuckets,
 }, metricLabels)
 
-var requestGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+var requestGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "src_backend_client_requests",
 	Help: "Current number of requests running for a method.",
 }, []string{"method"})
-
-func init() {
-	prometheus.MustRegister(requestDuration)
-	prometheus.MustRegister(requestGauge)
-}
 
 func trace(ctx context.Context, server, method string, arg interface{}, err *error) (context.Context, func()) {
 	requestGauge.WithLabelValues(server + "." + method).Inc()

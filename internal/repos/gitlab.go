@@ -563,7 +563,7 @@ func readSystemNotes(it func() ([]*gitlab.Note, error)) ([]*gitlab.Note, error) 
 		}
 
 		for _, note := range page {
-			// We're only interested in system notes for campaigns, since they
+			// We're only interested in system notes for batch changes, since they
 			// include the review state changes we need; let's not even bother
 			// storing the non-system ones.
 			if note.System {

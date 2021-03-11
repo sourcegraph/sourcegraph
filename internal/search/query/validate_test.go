@@ -91,10 +91,14 @@ func TestAndOrQuery_Validation(t *testing.T) {
 			input: "-context:a",
 			want:  `field "context" does not support negation`,
 		},
+		{
+			input: "type:symbol select:symbol.timelime",
+			want:  "invalid field 'timelime' on select type 'symbol'",
+		},
 	}
 	for _, c := range cases {
 		t.Run("validate and/or query", func(t *testing.T) {
-			_, err := ProcessAndOr(c.input, ParserOptions{c.searchType, false})
+			_, err := Parse(c.input, ParserOptions{c.searchType, false})
 			if err == nil {
 				t.Fatal(fmt.Sprintf("expected test for %s to fail", c.input))
 			}
@@ -131,7 +135,7 @@ func TestAndOrQuery_IsCaseSensitive(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			query, err := ProcessAndOr(c.input, ParserOptions{SearchTypeRegex, false})
+			query, err := ParseRegexp(c.input)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -161,7 +165,7 @@ func TestAndOrQuery_RegexpPatterns(t *testing.T) {
 		},
 	}
 	t.Run("for regexp field", func(t *testing.T) {
-		query, err := ProcessAndOr(c.query, ParserOptions{SearchTypeRegex, false})
+		query, err := ParseRegexp(c.query)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -328,7 +332,7 @@ func TestContainsRefGlobs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.query, func(t *testing.T) {
-			qInfo, err := ProcessAndOr(tt.query, ParserOptions{SearchType: SearchTypeLiteral, Globbing: tt.globbing})
+			qInfo, err := Parse(tt.query, ParserOptions{SearchType: SearchTypeLiteral, Globbing: tt.globbing})
 			if err != nil {
 				t.Error(err)
 			}

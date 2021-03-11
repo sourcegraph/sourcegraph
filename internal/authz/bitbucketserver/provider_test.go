@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/bitbucketserver"
@@ -197,17 +198,23 @@ func testProviderFetchUserPerms(f *fixtures, cli *bitbucketserver.Client) func(*
 
 				tc.err = strings.ReplaceAll(tc.err, "${INSTANCEURL}", cli.URL.String())
 
-				ids, _, err := p.FetchUserPerms(tc.ctx, tc.acct)
-
+				got, err := p.FetchUserPerms(tc.ctx, tc.acct)
 				if have, want := fmt.Sprint(err), tc.err; have != want {
 					t.Errorf("error:\nhave: %q\nwant: %q", have, want)
 				}
+				if got != nil {
+					sort.Slice(got.Exacts, func(i, j int) bool { return got.Exacts[i] < got.Exacts[j] })
+				}
 
-				sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-				sort.Slice(tc.ids, func(i, j int) bool { return tc.ids[i] < tc.ids[j] })
-
-				if have, want := ids, tc.ids; !reflect.DeepEqual(have, want) {
-					t.Error(cmp.Diff(have, want))
+				var want *authz.ExternalUserPermissions
+				if len(tc.ids) > 0 {
+					sort.Slice(tc.ids, func(i, j int) bool { return tc.ids[i] < tc.ids[j] })
+					want = &authz.ExternalUserPermissions{
+						Exacts: tc.ids,
+					}
+				}
+				if diff := cmp.Diff(want, got); diff != "" {
+					t.Fatalf("Mismatch (-want +got):\n%s", diff)
 				}
 			})
 		}

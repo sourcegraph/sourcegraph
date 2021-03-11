@@ -228,7 +228,7 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 		p := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, _, err := p.FetchUserPerms(context.Background(), nil)
+		_, err := p.FetchUserPerms(context.Background(), nil)
 		want := "no account provided"
 		got := fmt.Sprintf("%v", err)
 		if got != want {
@@ -240,7 +240,7 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 		p := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, _, err := p.FetchUserPerms(context.Background(),
+		_, err := p.FetchUserPerms(context.Background(),
 			&extsvc.Account{
 				AccountSpec: extsvc.AccountSpec{
 					ServiceType: extsvc.TypeGitHub,
@@ -295,7 +295,7 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 	)
 
 	accountData := json.RawMessage(`{"id": 999}`)
-	repoIDs, _, err := p.FetchUserPerms(context.Background(),
+	repoIDs, err := p.FetchUserPerms(context.Background(),
 		&extsvc.Account{
 			AccountSpec: extsvc.AccountSpec{
 				ServiceType: "gitlab",
@@ -311,7 +311,7 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 	}
 
 	expRepoIDs := []extsvc.RepoID{"1", "2", "3"}
-	if diff := cmp.Diff(expRepoIDs, repoIDs); diff != "" {
+	if diff := cmp.Diff(expRepoIDs, repoIDs.Exacts); diff != "" {
 		t.Fatal(diff)
 	}
 }

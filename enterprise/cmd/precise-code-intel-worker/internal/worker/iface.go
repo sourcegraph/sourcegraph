@@ -6,6 +6,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/gitserver"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 )
 
@@ -17,8 +18,8 @@ type DBStore interface {
 	Transact(ctx context.Context) (DBStore, error)
 	Done(err error) error
 
-	UpdatePackages(ctx context.Context, packages []lsifstore.Package) error
-	UpdatePackageReferences(ctx context.Context, packageReferences []lsifstore.PackageReference) error
+	UpdatePackages(ctx context.Context, dumpID int, packages []semantic.Package) error
+	UpdatePackageReferences(ctx context.Context, dumpID int, packageReferences []semantic.PackageReference) error
 	MarkRepositoryAsDirty(ctx context.Context, repositoryID int) error
 	DeleteOverlappingDumps(ctx context.Context, repositoryID int, commit, root, indexer string) error
 }
@@ -44,11 +45,11 @@ type LSIFStore interface {
 	Transact(ctx context.Context) (LSIFStore, error)
 	Done(err error) error
 
-	WriteMeta(ctx context.Context, bundleID int, meta lsifstore.MetaData) error
-	WriteDocuments(ctx context.Context, bundleID int, documents chan lsifstore.KeyedDocumentData) error
-	WriteResultChunks(ctx context.Context, bundleID int, resultChunks chan lsifstore.IndexedResultChunkData) error
-	WriteDefinitions(ctx context.Context, bundleID int, monikerLocations chan lsifstore.MonikerLocations) error
-	WriteReferences(ctx context.Context, bundleID int, monikerLocations chan lsifstore.MonikerLocations) error
+	WriteMeta(ctx context.Context, bundleID int, meta semantic.MetaData) error
+	WriteDocuments(ctx context.Context, bundleID int, documents chan semantic.KeyedDocumentData) error
+	WriteResultChunks(ctx context.Context, bundleID int, resultChunks chan semantic.IndexedResultChunkData) error
+	WriteDefinitions(ctx context.Context, bundleID int, monikerLocations chan semantic.MonikerLocations) error
+	WriteReferences(ctx context.Context, bundleID int, monikerLocations chan semantic.MonikerLocations) error
 }
 
 type LSIFStoreShim struct {

@@ -27,9 +27,9 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	searchbackend "github.com/sourcegraph/sourcegraph/internal/search/backend"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
 	zoektutil "github.com/sourcegraph/sourcegraph/internal/search/zoekt"
-	"github.com/sourcegraph/sourcegraph/internal/symbols/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/schema"
@@ -709,7 +709,7 @@ func BenchmarkSearchResults(b *testing.B) {
 	b.ReportAllocs()
 
 	for n := 0; n < b.N; n++ {
-		q, err := query.ProcessAndOr(`print index:only count:350`, query.ParserOptions{SearchType: query.SearchTypeLiteral})
+		q, err := query.ParseLiteral(`print index:only count:350`)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -1019,20 +1019,20 @@ func TestZoektFileMatchToSymbolResults(t *testing.T) {
 	repo := NewRepositoryResolver(db, &types.Repo{Name: "foo"})
 
 	results := zoektFileMatchToSymbolResults(repo, "master", file)
-	var symbols []protocol.Symbol
+	var symbols []result.Symbol
 	for _, res := range results {
 		// Check the fields which are not specific to the symbol
-		if got, want := res.lang, "go"; got != want {
+		if got, want := res.Lang, "go"; got != want {
 			t.Fatalf("lang: got %q want %q", got, want)
 		}
-		if got, want := res.baseURI.URL.String(), "git://foo?master"; got != want {
+		if got, want := res.BaseURI.URL.String(), "git://foo?master"; got != want {
 			t.Fatalf("baseURI: got %q want %q", got, want)
 		}
 
-		symbols = append(symbols, res.symbol)
+		symbols = append(symbols, res.Symbol)
 	}
 
-	want := []protocol.Symbol{{
+	want := []result.Symbol{{
 		Name:    "a",
 		Line:    10,
 		Pattern: "/^symbol a symbol b$/",

@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
-	"github.com/sourcegraph/sourcegraph/internal/routevar"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/routevar"
 )
 
 // TODO(slimsag): once https://github.com/badges/shields/pull/828 is merged,

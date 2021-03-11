@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
@@ -29,15 +30,11 @@ type internalClient struct {
 
 var InternalClient = &internalClient{URL: "http://" + frontendInternal}
 
-var requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+var requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name:    "src_frontend_internal_request_duration_seconds",
 	Help:    "Time (in seconds) spent on request.",
 	Buckets: prometheus.DefBuckets,
 }, []string{"category", "code"})
-
-func init() {
-	prometheus.MustRegister(requestDuration)
-}
 
 // WaitForFrontend retries a noop request to the internal API until it is able to reach
 // the endpoint, indicating that the frontend is available.

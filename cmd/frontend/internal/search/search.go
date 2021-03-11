@@ -4,7 +4,9 @@
 package search
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	streamhttp "github.com/sourcegraph/sourcegraph/internal/search/streaming/http"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 )
@@ -88,20 +91,29 @@ func (h *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Globbing: false, // TODO
 	}
 
-	const matchesChunk = 1000
-	matchesBuf := make([]streamhttp.EventMatch, 0, matchesChunk)
-	flushMatchesBuf := func() {
-		if len(matchesBuf) > 0 {
-			if err := eventWriter.Event("matches", matchesBuf); err != nil {
-				// EOF
-				return
-			}
-			matchesBuf = matchesBuf[:0]
+	// Store marshalled matches and flush periodically or when we go over
+	// 32kb.
+	matchesBuf := &jsonArrayBuf{
+		// 32kb chosen to be smaller than bufio.MaxTokenSize. Note: we can
+		// still write more than that.
+		FlushSize: 32 * 1024,
+		Write: func(data []byte) error {
+			return eventWriter.EventBytes("matches", data)
+		},
+	}
+	matchesFlush := func() {
+		if err := matchesBuf.Flush(); err != nil {
+			// EOF
+			return
 		}
 
 		if progress.Dirty {
 			sendProgress()
 		}
+	}
+	matchesAppend := func(m streamhttp.EventMatch) {
+		// Only possible error is EOF, ignore
+		_ = matchesBuf.Append(m)
 	}
 
 	flushTicker := time.NewTicker(100 * time.Millisecond)
@@ -119,7 +131,7 @@ func (h *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case event, ok = <-events:
 		case <-flushTicker.C:
 			ok = true
-			flushMatchesBuf()
+			matchesFlush()
 		case <-pingTicker.C:
 			ok = true
 			sendProgress()
@@ -156,34 +168,31 @@ func (h *streamHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							Kind:          sym.Kind(),
 						})
 					}
-					matchesBuf = append(matchesBuf, fromSymbolMatch(fm, symbols))
+					matchesAppend(fromSymbolMatch(fm, symbols))
 				} else {
-					matchesBuf = append(matchesBuf, fromFileMatch(&fm.FileMatch))
+					matchesAppend(fromFileMatch(&fm.FileMatch))
 				}
 			}
 			if repo, ok := result.ToRepository(); ok {
 				display = repo.Limit(display)
 
-				matchesBuf = append(matchesBuf, fromRepository(repo))
+				matchesAppend(fromRepository(repo))
 			}
 			if commit, ok := result.ToCommitSearchResult(); ok {
 				display = commit.Limit(display)
 
-				matchesBuf = append(matchesBuf, fromCommit(commit))
-			}
-			if len(matchesBuf) == cap(matchesBuf) {
-				flushMatchesBuf()
+				matchesAppend(fromCommit(commit))
 			}
 		}
 
 		// Instantly send results if we have not sent any yet.
-		if first && len(matchesBuf) > 0 {
+		if first && matchesBuf.Len() > 0 {
 			first = false
-			flushMatchesBuf()
+			matchesFlush()
 		}
 	}
 
-	flushMatchesBuf()
+	matchesFlush()
 
 	// Send dynamic filters once.
 	if filters := filters.Compute(); len(filters) > 0 {
@@ -301,7 +310,7 @@ func parseURLQuery(q url.Values) (*args, error) {
 	a := args{
 		Query:          get("q", ""),
 		Version:        get("v", "V2"),
-		PatternType:    get("t", "literal"),
+		PatternType:    get("t", ""),
 		VersionContext: get("vc", ""),
 	}
 
@@ -332,7 +341,7 @@ func fromStrPtr(s *string) string {
 	return *s
 }
 
-func fromFileMatch(fm *graphqlbackend.FileMatch) *streamhttp.EventFileMatch {
+func fromFileMatch(fm *result.FileMatch) *streamhttp.EventFileMatch {
 	lineMatches := make([]streamhttp.EventLineMatch, 0, len(fm.LineMatches))
 	for _, lm := range fm.LineMatches {
 		lineMatches = append(lineMatches, streamhttp.EventLineMatch{
@@ -422,4 +431,55 @@ func eventStreamOTHook(log func(...otlog.Field)) func(streamhttp.WriterStat) {
 		}
 		log(fields...)
 	}
+}
+
+// jsonArrayBuf builds up a JSON array by marshalling per item. Once the array
+// has reached FlushSize it will be written out via Write and the buffer will
+// be reset.
+type jsonArrayBuf struct {
+	FlushSize int
+	Write     func([]byte) error
+
+	buf bytes.Buffer
+}
+
+// Append marshals v and adds it to the json array buffer. If the size of the
+// buffer exceed FlushSize the buffer is written out.
+func (j *jsonArrayBuf) Append(v interface{}) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	if j.buf.Len() == 0 {
+		j.buf.WriteByte('[')
+	} else {
+		j.buf.WriteByte(',')
+	}
+
+	// err is always nil for a bytes.Buffer
+	_, _ = j.buf.Write(b)
+
+	if j.buf.Len() >= j.FlushSize {
+		return j.Flush()
+	}
+	return nil
+}
+
+// Flush writes and resets the buffer if there is data to write.
+func (j *jsonArrayBuf) Flush() error {
+	if j.buf.Len() == 0 {
+		return nil
+	}
+
+	// Terminate array
+	j.buf.WriteByte(']')
+
+	buf := j.buf.Bytes()
+	j.buf.Reset()
+	return j.Write(buf)
+}
+
+func (j *jsonArrayBuf) Len() int {
+	return j.buf.Len()
 }

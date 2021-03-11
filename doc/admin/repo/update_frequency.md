@@ -21,4 +21,4 @@ You may also choose to disable automatic Git updates entirely and instead [confi
 
 Sourcegraph uses a configurable internal rate limiter for API requests made from Sourcegraph to [GitHub](../external_service/github.md#internal-rate-limits), [GitLab](../external_service/gitlab.md#internal-rate-limits), [Bitucket Server](../external_service/bitbucket_server.md#internal-rate-limits) and [Bitbucket Cloud](../external_service/bitbucket_cloud.md#internal-rate-limits).
 
-**NOTE** Internal rate limiting is currently only enforced for [campaign](../../campaigns/index.md) changeset syncing
+**NOTE** Internal rate limiting is currently only enforced for syncing changesets in [batch changes](../../batch_changes/index.md)

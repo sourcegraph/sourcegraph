@@ -6,7 +6,7 @@ import PuzzleOutlineIcon from 'mdi-react/PuzzleOutlineIcon'
 import webStyles from '../SourcegraphWebApp.scss'
 import { PageHeader } from './PageHeader'
 import { Link } from '../../../shared/src/components/Link'
-import { StatusBadge } from './StatusBadge'
+import { FeedbackBadge } from './FeedbackBadge'
 
 const { add } = storiesOf('web/PageHeader', module).addDecorator(story => (
     <>
@@ -42,7 +42,7 @@ add(
     'Complex header',
     () => (
         <PageHeader
-            annotation={<StatusBadge status="beta" feedback={{ mailto: 'support@sourcegraph.com' }} />}
+            annotation={<FeedbackBadge status="beta" feedback={{ mailto: 'support@sourcegraph.com' }} />}
             path={[
                 { to: '/level-0', icon: PuzzleOutlineIcon },
                 { to: '/level-1', text: 'Level 1' },

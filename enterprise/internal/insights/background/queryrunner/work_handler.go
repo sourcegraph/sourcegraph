@@ -95,10 +95,14 @@ func (r *workHandler) Handle(ctx context.Context, workerStore dbworkerstore.Stor
 	// is OK to expose to every user on Sourcegraph (e.g. total result counts are fine, exposing
 	// that a repository exists may or may not be fine, exposing individual results is definitely
 	// not, etc.)
+	recordTime := time.Now()
+	if job.RecordTime != nil {
+		recordTime = *job.RecordTime
+	}
 	return r.insightsStore.RecordSeriesPoint(ctx, store.RecordSeriesPointArgs{
 		SeriesID: job.SeriesID,
 		Point: store.SeriesPoint{
-			Time:  time.Now(),
+			Time:  recordTime,
 			Value: float64(matchCount),
 		},
 		// TODO(slimsag): future: determine match count per repository, and store RepoID/RepoName (and maybe Metadata?)

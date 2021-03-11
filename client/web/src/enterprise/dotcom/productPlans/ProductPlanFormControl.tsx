@@ -9,7 +9,6 @@ import { queryGraphQL } from '../../../backend/graphql'
 import { ProductPlanPrice } from './ProductPlanPrice'
 import { ErrorAlert } from '../../../components/alerts'
 import { useObservable } from '../../../../../shared/src/util/useObservable'
-import * as H from 'history'
 
 interface Props {
     /** The selected plan's billing ID. */
@@ -20,7 +19,6 @@ interface Props {
 
     disabled?: boolean
     className?: string
-    history: H.History
 
     /** For mocking in tests only. */
     _queryProductPlans?: typeof queryProductPlans
@@ -36,7 +34,6 @@ export const ProductPlanFormControl: React.FunctionComponent<Props> = ({
     onChange,
     disabled,
     className = '',
-    history,
     _queryProductPlans = queryProductPlans,
 }) => {
     const noPlanSelected = value === null // don't recompute observable below on every value change
@@ -76,7 +73,7 @@ export const ProductPlanFormControl: React.FunctionComponent<Props> = ({
             {plans === LOADING ? (
                 <LoadingSpinner className="icon-inline" />
             ) : isErrorLike(plans) ? (
-                <ErrorAlert error={plans.message} history={history} />
+                <ErrorAlert error={plans.message} />
             ) : (
                 <>
                     <div className="list-group">

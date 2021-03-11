@@ -121,7 +121,7 @@ func getInitialSiteAdminEmail(ctx context.Context) (_ string, err error) {
 func getAndMarshalCampaignsUsageJSON(ctx context.Context) (_ json.RawMessage, err error) {
 	defer recordOperation("getAndMarshalCampaignsUsageJSON")(&err)
 
-	campaignsUsage, err := usagestats.GetCampaignsUsageStatistics(ctx)
+	campaignsUsage, err := usagestats.GetBatchChangesUsageStatistics(ctx)
 	if err != nil {
 		return nil, err
 	}

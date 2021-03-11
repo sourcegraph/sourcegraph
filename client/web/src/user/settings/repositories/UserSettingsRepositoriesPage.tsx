@@ -197,7 +197,7 @@ export const UserSettingsRepositoriesPage: React.FunctionComponent<Props> = ({
                     repositories may not appear up-to-date in the list of repositories.
                 </div>
             )}
-            {isErrorLike(pendingOrError) && <ErrorAlert error={pendingOrError} icon={true} history={history} />}
+            {isErrorLike(pendingOrError) && <ErrorAlert error={pendingOrError} icon={true} />}
             <PageTitle title="Repositories" />
             <div className="d-flex justify-content-between align-items-center">
                 <h2 className="mb-2">Repositories</h2>

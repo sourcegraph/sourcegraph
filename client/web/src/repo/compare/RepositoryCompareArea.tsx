@@ -166,11 +166,7 @@ export class RepositoryCompareArea extends React.Component<RepositoryCompareArea
     public render(): JSX.Element | null {
         if (this.state.error) {
             return (
-                <HeroPage
-                    icon={AlertCircleIcon}
-                    title="Error"
-                    subtitle={<ErrorMessage error={this.state.error} history={this.props.history} />}
-                />
+                <HeroPage icon={AlertCircleIcon} title="Error" subtitle={<ErrorMessage error={this.state.error} />} />
             )
         }
 

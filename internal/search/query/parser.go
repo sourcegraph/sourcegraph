@@ -1059,8 +1059,8 @@ type ParserOptions struct {
 	Globbing bool
 }
 
-// ProcessAndOr query parses and validates an and/or query for a given search type.
-func ProcessAndOr(in string, options ParserOptions) (Q, error) {
+// Parse parses and validates an and/or query for a given search type.
+func Parse(in string, options ParserOptions) (Q, error) {
 	var query []Node
 	var err error
 
@@ -1096,9 +1096,9 @@ func ProcessAndOr(in string, options ParserOptions) (Q, error) {
 }
 
 func ParseLiteral(in string) (Q, error) {
-	return ProcessAndOr(in, ParserOptions{SearchType: SearchTypeLiteral})
+	return Parse(in, ParserOptions{SearchType: SearchTypeLiteral})
 }
 
 func ParseRegexp(in string) (Q, error) {
-	return ProcessAndOr(in, ParserOptions{SearchType: SearchTypeRegex})
+	return Parse(in, ParserOptions{SearchType: SearchTypeRegex})
 }

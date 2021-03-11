@@ -7,6 +7,7 @@
 |------|-------------|---------------|
 | `-dump-requests` | Log GraphQL requests and responses to stdout | `false` |
 | `-get-curl` | Print the curl command for executing this query and exit (WARNING: includes printing your access token!) | `false` |
+| `-insecure-skip-verify` | Skip validation of TLS certificates against trusted chains | `false` |
 | `-query` | GraphQL query to execute, e.g. 'query { currentUser { username } }' (stdin otherwise) |  |
 | `-trace` | Log the trace ID for requests. See https://docs.sourcegraph.com/admin/observability/tracing | `false` |
 | `-vars` | GraphQL query variables to include as JSON string, e.g. '{"var": "val", "var2": "val2"}' |  |
@@ -20,6 +21,8 @@ Usage of 'src api':
     	Log GraphQL requests and responses to stdout
   -get-curl
     	Print the curl command for executing this query and exit (WARNING: includes printing your access token!)
+  -insecure-skip-verify
+    	Skip validation of TLS certificates against trusted chains
   -query string
     	GraphQL query to execute, e.g. 'query { currentUser { username } }' (stdin otherwise)
   -trace

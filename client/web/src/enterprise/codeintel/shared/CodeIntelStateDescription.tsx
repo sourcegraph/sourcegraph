@@ -1,4 +1,3 @@
-import * as H from 'history'
 import { upperFirst } from 'lodash'
 import React, { FunctionComponent } from 'react'
 import { ErrorMessage } from '../../../components/alerts'
@@ -11,7 +10,6 @@ export interface CodeIntelStateDescriptionProps {
     placeInQueue?: number | null
     failure?: string | null
     className?: string
-    history: H.History
 }
 
 export const CodeIntelStateDescription: FunctionComponent<CodeIntelStateDescriptionProps> = ({
@@ -21,7 +19,6 @@ export const CodeIntelStateDescription: FunctionComponent<CodeIntelStateDescript
     placeInQueue,
     failure,
     className,
-    history,
 }) =>
     state === LSIFUploadState.UPLOADING ? (
         <span className={className}>Still uploading...</span>
@@ -36,7 +33,7 @@ export const CodeIntelStateDescription: FunctionComponent<CodeIntelStateDescript
         <span className={className}>{upperFirst(typeName)} processed successfully.</span>
     ) : state === LSIFUploadState.ERRORED || state === LSIFIndexState.ERRORED ? (
         <span className={className}>
-            {upperFirst(typeName)} failed to complete: <ErrorMessage error={failure} history={history} />
+            {upperFirst(typeName)} failed to complete: <ErrorMessage error={failure} />
         </span>
     ) : (
         <></>

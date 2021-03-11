@@ -1,0 +1,16 @@
+name: notify-batchers-team
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  create_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-ecosystem/action-create-comment@v1
+        if: (contains(github.event.issue.body, 'batch') || contains(github.event.issue.body, 'campaign')) && !contains(github.event.issue.labels.*.name, 'team/batchers')
+        with:
+          github_token: ${{ secrets.github_token }}
+          body: |
+            Hey, @sourcegraph/batchers (@eseliger @mrnugget @LawnGnome @malomarrec @chrispine) - we have been mentioned. Let's take a look.

@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/sourcegraph/sourcegraph/internal/campaigns"
+	"github.com/sourcegraph/sourcegraph/internal/batches"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
@@ -20,12 +20,12 @@ type Changeset struct {
 	HeadRef string
 	BaseRef string
 
-	*campaigns.Changeset
+	*batches.Changeset
 	*types.Repo
 }
 
 // IsOutdated returns true when the attributes of the nested
-// campaigns.Changeset do not match the attributes (title, body, ...) set on
+// batches.Changeset do not match the attributes (title, body, ...) set on
 // the Changeset.
 func (c *Changeset) IsOutdated() (bool, error) {
 	currentTitle, err := c.Changeset.Title()

@@ -240,7 +240,7 @@ export const SiteAdminOverviewPage: React.FunctionComponent<Props> = ({
                         {info.users > 1 &&
                             stats !== undefined &&
                             (isErrorLike(stats) ? (
-                                <ErrorAlert className="mb-3" error={stats} history={history} />
+                                <ErrorAlert className="mb-3" error={stats} />
                             ) : (
                                 <Collapsible
                                     title={

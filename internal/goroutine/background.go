@@ -19,6 +19,11 @@ type StartableRoutine interface {
 
 // BackgroundRoutine represents a component of a binary that consists of a long
 // running process with a graceful shutdown mechanism.
+//
+// See
+// https://docs.sourcegraph.com/dev/background-information/backgroundroutine
+// for more information and a step-by-step guide on how to implement a
+// BackgroundRoutine.
 type BackgroundRoutine interface {
 	StartableRoutine
 

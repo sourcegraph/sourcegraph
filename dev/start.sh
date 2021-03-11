@@ -167,7 +167,7 @@ export PATH="$PWD/.bin:$PWD/node_modules/.bin:$PATH"
 tmp_install_procfile=$(mktemp -t procfile_install_XXXXXXX)
 
 cat >"${tmp_install_procfile}" <<EOF
-yarn: cd $(pwd) && yarn --silent --no-progress
+yarn: cd $(pwd) && yarn --no-progress
 go-install: cd $(pwd) && ./dev/go-install.sh
 ctags-image: cd $(pwd) && ./cmd/symbols/build-ctags.sh
 EOF

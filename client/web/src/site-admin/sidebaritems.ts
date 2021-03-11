@@ -1,13 +1,19 @@
-import ServerIcon from 'mdi-react/ServerIcon'
+import EarthIcon from 'mdi-react/EarthIcon'
 import UsersIcon from 'mdi-react/UsersIcon'
 import { SiteAdminSideBarGroup, SiteAdminSideBarGroups } from './SiteAdminSidebar'
 import SourceRepositoryIcon from 'mdi-react/SourceRepositoryIcon'
-import SettingsIcon from 'mdi-react/SettingsIcon'
+import CogsIcon from 'mdi-react/CogsIcon'
+import MonitorStarIcon from 'mdi-react/MonitorStarIcon'
+import ConsoleIcon from 'mdi-react/ConsoleIcon'
+import PuzzleOutlineIcon from 'mdi-react/PuzzleOutlineIcon'
+import BrainIcon from 'mdi-react/BrainIcon'
+import BriefcaseIcon from 'mdi-react/BriefcaseIcon'
+import { SHOW_BUSINESS_FEATURES } from '../enterprise/dotcom/productSubscriptions/features'
 
 export const overviewGroup: SiteAdminSideBarGroup = {
     header: {
-        label: 'Site admin',
-        icon: ServerIcon,
+        label: 'Statistics',
+        icon: EarthIcon,
     },
     items: [
         {
@@ -29,7 +35,7 @@ export const overviewGroup: SiteAdminSideBarGroup = {
 const configurationGroup: SiteAdminSideBarGroup = {
     header: {
         label: 'Configuration',
-        icon: SettingsIcon,
+        icon: CogsIcon,
     },
     items: [
         {
@@ -39,6 +45,10 @@ const configurationGroup: SiteAdminSideBarGroup = {
         {
             label: 'Global settings',
             to: '/site-admin/global-settings',
+        },
+        {
+            label: 'License',
+            to: '/site-admin/license',
         },
     ],
 }
@@ -50,7 +60,7 @@ export const repositoriesGroup: SiteAdminSideBarGroup = {
     },
     items: [
         {
-            label: 'Manage repositories',
+            label: 'Manage code hosts',
             to: '/site-admin/external-services',
         },
         {
@@ -81,7 +91,11 @@ export const usersGroup: SiteAdminSideBarGroup = {
     ],
 }
 
-export const otherGroup: SiteAdminSideBarGroup = {
+export const maintenanceGroup: SiteAdminSideBarGroup = {
+    header: {
+        label: 'Maintenance',
+        icon: MonitorStarIcon,
+    },
     items: [
         {
             label: 'Updates',
@@ -95,6 +109,81 @@ export const otherGroup: SiteAdminSideBarGroup = {
             label: 'Report a bug',
             to: '/site-admin/report-bug',
         },
+        {
+            label: 'Instrumentation',
+            to: '/-/debug/',
+        },
+        {
+            label: 'Monitoring',
+            to: '/-/debug/grafana',
+        },
+        {
+            label: 'Tracing',
+            to: '/-/jaeger',
+        },
+    ],
+}
+
+export const extensionsGroup: SiteAdminSideBarGroup = {
+    header: {
+        label: 'Extensions',
+        icon: PuzzleOutlineIcon,
+    },
+    items: [
+        {
+            label: 'Extensions',
+            to: '/site-admin/registry/extensions',
+        },
+    ],
+}
+
+export const apiConsoleGroup: SiteAdminSideBarGroup = {
+    header: {
+        label: 'API Console',
+        icon: ConsoleIcon,
+    },
+    items: [
+        {
+            label: 'API Console',
+            to: '/api/console',
+        },
+    ],
+}
+
+export const businessGroup: SiteAdminSideBarGroup = {
+    header: { label: 'Business', icon: BriefcaseIcon },
+    items: [
+        {
+            label: 'Customers',
+            to: '/site-admin/dotcom/customers',
+            condition: () => SHOW_BUSINESS_FEATURES,
+        },
+        {
+            label: 'Subscriptions',
+            to: '/site-admin/dotcom/product/subscriptions',
+            condition: () => SHOW_BUSINESS_FEATURES,
+        },
+        {
+            label: 'License key lookup',
+            to: '/site-admin/dotcom/product/licenses',
+            condition: () => SHOW_BUSINESS_FEATURES,
+        },
+    ],
+    condition: () => SHOW_BUSINESS_FEATURES,
+}
+
+export const codeIntelGroup: SiteAdminSideBarGroup = {
+    header: { label: 'Code intelligence', icon: BrainIcon },
+    items: [
+        {
+            to: '/site-admin/code-intelligence/uploads',
+            label: 'Uploads',
+        },
+        {
+            to: '/site-admin/code-intelligence/indexes',
+            label: 'Auto indexing',
+            condition: () => Boolean(window.context?.codeIntelAutoIndexingEnabled),
+        },
     ],
 }
 
@@ -102,6 +191,10 @@ export const siteAdminSidebarGroups: SiteAdminSideBarGroups = [
     overviewGroup,
     configurationGroup,
     repositoriesGroup,
+    codeIntelGroup,
     usersGroup,
-    otherGroup,
+    maintenanceGroup,
+    extensionsGroup,
+    businessGroup,
+    apiConsoleGroup,
 ]

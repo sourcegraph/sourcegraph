@@ -79,19 +79,19 @@ func (p *OAuthProvider) FetchAccount(ctx context.Context, user *types.User, curr
 // callers to decide whether to discard.
 //
 // API docs: https://docs.gitlab.com/ee/api/projects.html#list-all-projects
-func (p *OAuthProvider) FetchUserPerms(ctx context.Context, account *extsvc.Account) ([]extsvc.RepoID, extsvc.RepoIDType, error) {
+func (p *OAuthProvider) FetchUserPerms(ctx context.Context, account *extsvc.Account) (*authz.ExternalUserPermissions, error) {
 	if account == nil {
-		return nil, extsvc.RepoIDExact, errors.New("no account provided")
+		return nil, errors.New("no account provided")
 	} else if !extsvc.IsHostOfAccount(p.codeHost, account) {
-		return nil, extsvc.RepoIDExact, fmt.Errorf("not a code host of the account: want %q but have %q",
+		return nil, fmt.Errorf("not a code host of the account: want %q but have %q",
 			account.AccountSpec.ServiceID, p.codeHost.ServiceID)
 	}
 
 	_, tok, err := gitlab.GetExternalAccountData(&account.AccountData)
 	if err != nil {
-		return nil, extsvc.RepoIDExact, errors.Wrap(err, "get external account data")
+		return nil, errors.Wrap(err, "get external account data")
 	} else if tok == nil {
-		return nil, extsvc.RepoIDExact, errors.New("no token found in the external account data")
+		return nil, errors.New("no token found in the external account data")
 	}
 
 	client := p.clientProvider.GetOAuthClient(tok.AccessToken)

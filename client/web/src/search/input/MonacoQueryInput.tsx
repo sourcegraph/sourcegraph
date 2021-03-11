@@ -337,6 +337,7 @@ export const MonacoQueryInput: React.FunctionComponent<MonacoQueryInputProps> = 
             horizontal: 'hidden',
         },
         glyphMargin: false,
+        hover: { delay: 150 },
         lineDecorationsWidth: 0,
         lineNumbersMinChars: 0,
         overviewRulerBorder: false,

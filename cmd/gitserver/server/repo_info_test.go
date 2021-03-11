@@ -46,7 +46,7 @@ func TestServer_handleRepoInfo(t *testing.T) {
 	t.Run("not cloned", func(t *testing.T) {
 		origRepoCloned := repoCloned
 		repoCloned = func(dir GitDir) bool { return false }
-		defer func() { repoCloned = origRepoCloned }()
+		t.Cleanup(func() { repoCloned = origRepoCloned })
 
 		want := protocol.RepoInfoResponse{
 			Results: map[api.RepoName]*protocol.RepoInfo{
@@ -61,7 +61,7 @@ func TestServer_handleRepoInfo(t *testing.T) {
 	t.Run("cloning", func(t *testing.T) {
 		origRepoCloned := repoCloned
 		repoCloned = func(dir GitDir) bool { return false }
-		defer func() { repoCloned = origRepoCloned }()
+		t.Cleanup(func() { repoCloned = origRepoCloned })
 
 		want := protocol.RepoInfoResponse{
 			Results: map[api.RepoName]*protocol.RepoInfo{
@@ -79,17 +79,17 @@ func TestServer_handleRepoInfo(t *testing.T) {
 	t.Run("cloned", func(t *testing.T) {
 		origRepoCloned := repoCloned
 		repoCloned = func(dir GitDir) bool { return true }
-		defer func() { repoCloned = origRepoCloned }()
+		t.Cleanup(func() { repoCloned = origRepoCloned })
 
 		lastFetched := time.Date(1988, 1, 2, 3, 4, 5, 6, time.UTC)
 		origRepoLastFetched := repoLastFetched
 		repoLastFetched = func(dir GitDir) (time.Time, error) { return lastFetched, nil }
-		defer func() { repoLastFetched = origRepoLastFetched }()
+		t.Cleanup(func() { repoLastFetched = origRepoLastFetched })
 
 		lastChanged := time.Date(1987, 1, 2, 3, 4, 5, 6, time.UTC)
 		origRepoLastChanged := repoLastChanged
 		repoLastChanged = func(dir GitDir) (time.Time, error) { return lastChanged, nil }
-		defer func() { repoLastChanged = origRepoLastChanged }()
+		t.Cleanup(func() { repoLastChanged = origRepoLastChanged })
 
 		want := protocol.RepoInfoResponse{
 			Results: map[api.RepoName]*protocol.RepoInfo{
@@ -109,7 +109,7 @@ func TestServer_handleRepoInfo(t *testing.T) {
 	t.Run("multiple", func(t *testing.T) {
 		origRepoCloned := repoCloned
 		repoCloned = func(dir GitDir) bool { return false }
-		defer func() { repoCloned = origRepoCloned }()
+		t.Cleanup(func() { repoCloned = origRepoCloned })
 
 		want := protocol.RepoInfoResponse{
 			Results: map[api.RepoName]*protocol.RepoInfo{

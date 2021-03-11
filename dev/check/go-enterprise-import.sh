@@ -4,6 +4,8 @@
 
 echo "--- go enterprise import"
 
+trap "echo ^^^ +++" ERR
+
 set -euxf -o pipefail
 
 prefix=github.com/sourcegraph/sourcegraph/enterprise
@@ -15,5 +17,6 @@ if go list ./../../... |
   xargs go list -f "$template" |
   grep "$prefix"; then
   echo "Error: OSS is not allowed to import enterprise"
+  echo "^^^ +++"
   exit 1
 fi

@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/campaigns"
+	"github.com/sourcegraph/sourcegraph/internal/batches"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/github"
@@ -60,7 +60,7 @@ func TestGithubSource_CreateChangeset(t *testing.T) {
 				HeadRef:   "refs/heads/test-pr-6",
 				BaseRef:   "refs/heads/master",
 				Repo:      repo,
-				Changeset: &campaigns.Changeset{},
+				Changeset: &batches.Changeset{},
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestGithubSource_CreateChangeset(t *testing.T) {
 				HeadRef:   "refs/heads/always-open-pr",
 				BaseRef:   "refs/heads/master",
 				Repo:      repo,
-				Changeset: &campaigns.Changeset{},
+				Changeset: &batches.Changeset{},
 			},
 			// If PR already exists we'll just return it, no error
 			err:    "",
@@ -146,7 +146,7 @@ func TestGithubSource_CloseChangeset(t *testing.T) {
 		{
 			name: "success",
 			cs: &Changeset{
-				Changeset: &campaigns.Changeset{
+				Changeset: &batches.Changeset{
 					Metadata: &github.PullRequest{
 						ID: "MDExOlB1bGxSZXF1ZXN0MzQ5NTIzMzE0",
 					},
@@ -213,7 +213,7 @@ func TestGithubSource_ReopenChangeset(t *testing.T) {
 		{
 			name: "success",
 			cs: &Changeset{
-				Changeset: &campaigns.Changeset{
+				Changeset: &batches.Changeset{
 					Metadata: &github.PullRequest{
 						// https://github.com/sourcegraph/automation-testing/pull/353
 						ID: "MDExOlB1bGxSZXF1ZXN0NDg4MDI2OTk5",
@@ -284,7 +284,7 @@ func TestGithubSource_UpdateChangeset(t *testing.T) {
 				Title:   "This is a new title",
 				Body:    "This is a new body",
 				BaseRef: "refs/heads/master",
-				Changeset: &campaigns.Changeset{
+				Changeset: &batches.Changeset{
 					Metadata: &github.PullRequest{
 						ID: "MDExOlB1bGxSZXF1ZXN0NTA0NDU4Njg1",
 					},
@@ -352,14 +352,14 @@ func TestGithubSource_LoadChangeset(t *testing.T) {
 			name: "found",
 			cs: &Changeset{
 				Repo:      &types.Repo{Metadata: &github.Repository{NameWithOwner: "sourcegraph/sourcegraph"}},
-				Changeset: &campaigns.Changeset{ExternalID: "5550"},
+				Changeset: &batches.Changeset{ExternalID: "5550"},
 			},
 		},
 		{
 			name: "not-found",
 			cs: &Changeset{
 				Repo:      &types.Repo{Metadata: &github.Repository{NameWithOwner: "sourcegraph/sourcegraph"}},
-				Changeset: &campaigns.Changeset{ExternalID: "100000"},
+				Changeset: &batches.Changeset{ExternalID: "100000"},
 			},
 			err: "Changeset with external ID 100000 not found",
 		},

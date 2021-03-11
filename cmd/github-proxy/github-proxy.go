@@ -149,7 +149,6 @@ func instrumentHandler(r prometheus.Registerer, h http.Handler) http.Handler {
 			Name: "src_githubproxy_in_flight_requests",
 			Help: "A gauge of requests currently being served by github-proxy.",
 		})
-
 		counter = prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "src_githubproxy_requests_total",
@@ -157,7 +156,6 @@ func instrumentHandler(r prometheus.Registerer, h http.Handler) http.Handler {
 			},
 			[]string{"code", "method"},
 		)
-
 		duration = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "src_githubproxy_request_duration_seconds",
@@ -166,7 +164,6 @@ func instrumentHandler(r prometheus.Registerer, h http.Handler) http.Handler {
 			},
 			[]string{"method"},
 		)
-
 		responseSize = prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "src_githubproxy_response_size_bytes",

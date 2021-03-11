@@ -37,6 +37,10 @@
         border-bottom: 1px solid var(--border-color);
     }
 
+    &__row-label--empty {
+        color: var(--color-text-3);
+    }
+
     &__filters {
         margin-left: 0.5rem;
         display: flex;

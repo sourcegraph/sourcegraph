@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/comby"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/search"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
 	zoektutil "github.com/sourcegraph/sourcegraph/internal/search/zoekt"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -160,10 +161,10 @@ func zoektSearchHEADOnlyFiles(ctx context.Context, db dbutil.DB, args *search.Te
 		}
 		matches[i] = &FileMatchResolver{
 			db: db,
-			FileMatch: FileMatch{
+			FileMatch: result.FileMatch{
 				Path:     file.FileName,
 				LimitHit: fileLimitHit,
-				uri:      fileMatchURI(repoRev.Repo.Name, "", file.FileName),
+				URI:      fileMatchURI(repoRev.Repo.Name, "", file.FileName),
 				Repo:     repoRev.Repo,
 				CommitID: api.CommitID(file.Version),
 			},

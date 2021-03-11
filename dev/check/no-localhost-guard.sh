@@ -38,6 +38,6 @@ If your usage of "localhost" is valid, then either
 2) add an exclusion clause in the "git grep" command in  no-localhost-guard.sh
 
 EOF
-
+  echo "^^^ +++"
   exit 1
 fi

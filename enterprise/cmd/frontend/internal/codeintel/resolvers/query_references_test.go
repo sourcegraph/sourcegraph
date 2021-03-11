@@ -6,9 +6,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/bloomfilter"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/bloomfilter"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -107,20 +108,20 @@ func TestReferencesRemote(t *testing.T) {
 	mockGitserverClient.CommitExistsFunc.PushReturn(false, nil) // #250
 	mockGitserverClient.CommitExistsFunc.SetDefaultReturn(true, nil)
 
-	monikers := []lsifstore.MonikerData{
+	monikers := []semantic.MonikerData{
 		{Kind: "import", Scheme: "tsc", Identifier: "padLeft", PackageInformationID: "51"},
 		{Kind: "export", Scheme: "tsc", Identifier: "pad_left", PackageInformationID: "52"},
 		{Kind: "import", Scheme: "tsc", Identifier: "pad-left", PackageInformationID: "53"},
 		{Kind: "import", Scheme: "tsc", Identifier: "left_pad"},
 	}
-	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]lsifstore.MonikerData{{monikers[0]}}, nil)
-	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]lsifstore.MonikerData{{monikers[1]}}, nil)
-	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]lsifstore.MonikerData{{monikers[2]}}, nil)
-	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]lsifstore.MonikerData{{monikers[3]}}, nil)
+	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]semantic.MonikerData{{monikers[0]}}, nil)
+	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]semantic.MonikerData{{monikers[1]}}, nil)
+	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]semantic.MonikerData{{monikers[2]}}, nil)
+	mockLSIFStore.MonikersByPositionFunc.PushReturn([][]semantic.MonikerData{{monikers[3]}}, nil)
 
-	packageInformation1 := lsifstore.PackageInformationData{Name: "leftpad", Version: "0.1.0"}
-	packageInformation2 := lsifstore.PackageInformationData{Name: "leftpad", Version: "0.2.0"}
-	packageInformation3 := lsifstore.PackageInformationData{Name: "leftpad", Version: "0.3.0"}
+	packageInformation1 := semantic.PackageInformationData{Name: "leftpad", Version: "0.1.0"}
+	packageInformation2 := semantic.PackageInformationData{Name: "leftpad", Version: "0.2.0"}
+	packageInformation3 := semantic.PackageInformationData{Name: "leftpad", Version: "0.3.0"}
 	mockLSIFStore.PackageInformationFunc.PushReturn(packageInformation1, true, nil)
 	mockLSIFStore.PackageInformationFunc.PushReturn(packageInformation2, true, nil)
 	mockLSIFStore.PackageInformationFunc.PushReturn(packageInformation3, true, nil)
@@ -188,7 +189,7 @@ func TestReferencesRemote(t *testing.T) {
 	if history := mockDBStore.DefinitionDumpsFunc.History(); len(history) != 1 {
 		t.Fatalf("unexpected call count for dbstore.DefinitionDump. want=%d have=%d", 1, len(history))
 	} else {
-		expectedMonikers := []lsifstore.QualifiedMonikerData{
+		expectedMonikers := []semantic.QualifiedMonikerData{
 			{MonikerData: monikers[0], PackageInformationData: packageInformation1},
 			{MonikerData: monikers[1], PackageInformationData: packageInformation2},
 			{MonikerData: monikers[2], PackageInformationData: packageInformation3},
@@ -205,7 +206,7 @@ func TestReferencesRemote(t *testing.T) {
 			t.Errorf("unexpected ids (-want +got):\n%s", diff)
 		}
 
-		expectedMonikers := []lsifstore.MonikerData{
+		expectedMonikers := []semantic.MonikerData{
 			monikers[0],
 			monikers[1],
 			monikers[2],

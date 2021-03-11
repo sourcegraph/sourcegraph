@@ -20,7 +20,6 @@ interface Props
         ThemeProps {
     subject: Pick<SettingsSubject, 'id' | 'viewerCanAdminister'>
     location: H.Location
-    history: H.History
 
     data: ExtensionListData | undefined
     selectedCategories: ExtensionCategory[]
@@ -35,7 +34,6 @@ const LOADING = 'loading' as const
  * Displays a list of extensions.
  */
 export const ExtensionsList: React.FunctionComponent<Props> = ({
-    history,
     subject,
     settingsCascade,
     platformContext,
@@ -44,6 +42,7 @@ export const ExtensionsList: React.FunctionComponent<Props> = ({
     enablementFilter,
     query,
     showMoreExtensions,
+    authenticatedUser,
     ...props
 }) => {
     /** Categories, but with 'Programming Languages' at the end */
@@ -60,7 +59,7 @@ export const ExtensionsList: React.FunctionComponent<Props> = ({
     }
 
     if (isErrorLike(data)) {
-        return <ErrorAlert error={data} history={history} />
+        return <ErrorAlert error={data} />
     }
 
     const { error, extensions, extensionIDsByCategory } = data
@@ -68,7 +67,7 @@ export const ExtensionsList: React.FunctionComponent<Props> = ({
     if (Object.keys(extensions).length === 0) {
         return (
             <>
-                {error && <ErrorAlert className="mb-2" error={error} history={history} />}
+                {error && <ErrorAlert className="mb-2" error={error} />}
                 {query ? (
                     <div className="text-muted">
                         No extensions match <strong>{query}</strong>.
@@ -114,6 +113,7 @@ export const ExtensionsList: React.FunctionComponent<Props> = ({
                             platformContext={platformContext}
                             enabled={isExtensionEnabled(settingsCascade.final, extensionId)}
                             isLightTheme={props.isLightTheme}
+                            settingsURL={authenticatedUser?.settingsURL}
                         />
                     ))}
                 </div>
@@ -122,7 +122,7 @@ export const ExtensionsList: React.FunctionComponent<Props> = ({
 
     return (
         <>
-            {error && <ErrorAlert className="mb-2" error={error} history={history} />}
+            {error && <ErrorAlert className="mb-2" error={error} />}
             {categorySections.length > 0 ? (
                 categorySections
             ) : (

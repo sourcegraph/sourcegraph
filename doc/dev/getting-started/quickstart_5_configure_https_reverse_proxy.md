@@ -36,6 +36,14 @@ its keys to your system's certificate store. You can get this out the way after 
 ./dev/caddy.sh trust
 ```
 
+Note: If you are using Firefox and have a master password set, the following prompt will come up first:
+
+```
+Enter Password or Pin for "NSS Certificate DB":
+```
+
+Enter your Firefox master password here and proceed. See [this issue on GitHub](https://github.com/FiloSottile/mkcert/issues/50) for more information.
+
 You might need to restart your web browsers in order for them to recognize the certificates.
 
 [< Previous](quickstart_4_clone_repository.md) | [Next >](quickstart_6_start_server.md)

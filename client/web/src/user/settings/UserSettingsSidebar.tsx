@@ -25,6 +25,7 @@ import {
 import { OnboardingTourProps } from '../../search'
 import { AuthenticatedUser } from '../../auth'
 import { UserAreaUserFields } from '../../graphql-operations'
+import { Badge, BadgeStatus } from '../../components/Badge'
 
 export interface UserSettingsSidebarItemConditionContext {
     user: UserAreaUserFields
@@ -32,7 +33,9 @@ export interface UserSettingsSidebarItemConditionContext {
     isSourcegraphDotCom: boolean
 }
 
-type UserSettingsSidebarItem = NavItemDescriptor<UserSettingsSidebarItemConditionContext>
+type UserSettingsSidebarItem = NavItemDescriptor<UserSettingsSidebarItemConditionContext> & {
+    status?: BadgeStatus
+}
 
 export interface UserSettingsSidebarItems {
     account: readonly UserSettingsSidebarItem[]
@@ -78,10 +81,10 @@ export const UserSettingsSidebar: React.FunctionComponent<UserSettingsSidebarPro
                 <SidebarGroupHeader label="User account" icon={AccountCircleIcon} />
                 <SidebarGroupItems>
                     {props.items.account.map(
-                        ({ label, to, exact, condition = () => true }) =>
+                        ({ label, to, exact, status, condition = () => true }) =>
                             condition(context) && (
-                                <SidebarNavItem key={label} to={props.match.path + to} exact={exact}>
-                                    {label}
+                                <SidebarNavItem key={label} to={props.match.path + to} exact={exact} className="d-flex">
+                                    {label} {status && <Badge className="ml-1" status={status} />}
                                 </SidebarNavItem>
                             )
                     )}

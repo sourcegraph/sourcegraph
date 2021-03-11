@@ -1,4 +1,3 @@
-import * as H from 'history'
 import * as React from 'react'
 import { RouteComponentProps } from 'react-router'
 import { Omit } from 'utility-types'
@@ -18,8 +17,6 @@ export interface SavedQueryFields {
 }
 
 interface Props extends RouteComponentProps<{}>, NamespaceProps {
-    location: H.Location
-    history: H.History
     authenticatedUser: AuthenticatedUser | null
     defaultValues?: Partial<SavedQueryFields>
     title?: string
@@ -171,7 +168,7 @@ export class SavedSearchForm extends React.Component<Props, State> {
                         {this.props.submitLabel}
                     </button>
                     {this.props.error && !this.props.loading && (
-                        <ErrorAlert className="mb-3" error={this.props.error} history={this.props.history} />
+                        <ErrorAlert className="mb-3" error={this.props.error} />
                     )}
                 </Form>
             </div>

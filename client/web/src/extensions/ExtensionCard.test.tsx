@@ -34,6 +34,7 @@ describe('ExtensionCard', () => {
                             platformContext={NOOP_PLATFORM_CONTEXT}
                             enabled={false}
                             isLightTheme={false}
+                            settingsURL="/settings/foobar"
                         />
                     </MemoryRouter>
                 )

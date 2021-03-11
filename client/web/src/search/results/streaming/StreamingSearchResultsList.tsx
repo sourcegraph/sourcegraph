@@ -1,7 +1,5 @@
-import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import * as H from 'history'
 import FileIcon from 'mdi-react/FileIcon'
-import SearchIcon from 'mdi-react/SearchIcon'
 import SourceRepositoryIcon from 'mdi-react/SourceRepositoryIcon'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Observable } from 'rxjs'
@@ -13,10 +11,10 @@ import * as GQL from '../../../../../shared/src/graphql/schema'
 import { SettingsCascadeProps } from '../../../../../shared/src/settings/settings'
 import { TelemetryProps } from '../../../../../shared/src/telemetry/telemetryService'
 import { ThemeProps } from '../../../../../shared/src/theme'
-import { ErrorAlert } from '../../../components/alerts'
 import { SearchResult } from '../../../components/SearchResult'
 import { eventLogger } from '../../../tracking/eventLogger'
 import { AggregateStreamingSearchResults } from '../../stream'
+import { StreamingSearchResultFooter } from './StreamingSearchResultsFooter'
 
 const initialItemsToShow = 15
 const incrementalItemsToShow = 10
@@ -107,42 +105,7 @@ export const StreamingSearchResultsList: React.FunctionComponent<StreamingSearch
                 renderItem={renderResult}
             />
 
-            {itemsToShow >= (results?.results.length || 0) && (
-                <>
-                    {(!results || results?.state === 'loading') && (
-                        <div className="text-center my-4" data-testid="loading-container">
-                            <LoadingSpinner className="icon-inline" />
-                        </div>
-                    )}
-
-                    {results?.state === 'error' && (
-                        <ErrorAlert
-                            className="m-3"
-                            data-testid="search-results-list-error"
-                            error={results.error}
-                            history={history}
-                        />
-                    )}
-
-                    {results?.state === 'complete' && !results.alert && results?.results.length === 0 && (
-                        <div className="alert alert-info d-flex m-3">
-                            <h3 className="m-0">
-                                <SearchIcon className="icon-inline" /> No results
-                            </h3>
-                        </div>
-                    )}
-
-                    {results?.state === 'complete' &&
-                        results.progress.skipped.some(skipped => skipped.reason.includes('-limit')) && (
-                            <div className="alert alert-info d-flex m-3">
-                                <h3 className="m-0 font-weight-normal">
-                                    <strong>Result limit hit.</strong> Modify your search with <code>count:</code> to
-                                    return additional items.
-                                </h3>
-                            </div>
-                        )}
-                </>
-            )}
+            {itemsToShow >= (results?.results.length || 0) && <StreamingSearchResultFooter results={results} />}
         </>
     )
 }

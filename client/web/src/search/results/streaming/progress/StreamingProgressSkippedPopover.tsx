@@ -40,40 +40,54 @@ const SkippedMessage: React.FunctionComponent<{ skipped: Skipped; history: H.His
 
     const toggleIsOpen = useCallback(() => setIsOpen(oldValue => !oldValue), [])
 
+    // Reactstrap is preventing default behavior on all non-DropdownItem elements inside a Dropdown,
+    // so we need to stop propagation to allow normal behavior (e.g. enter and space to activate buttons)
+    // See Reactstrap bug: https://github.com/reactstrap/reactstrap/issues/2099
+    const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>): void => {
+        if (event.key === ' ' || event.key === 'Enter') {
+            event.stopPropagation()
+        }
+    }, [])
+
     return (
-        <Button
-            className={classNames('streaming-skipped-item pt-3 pb-0 w-100', {
+        <div
+            className={classNames('streaming-skipped-item pt-2 w-100', {
                 'streaming-skipped-item--warn': skipped.severity !== 'info',
             })}
-            onClick={toggleIsOpen}
-            disabled={!skipped.message}
         >
-            <h4 className="d-flex align-items-center mb-0 w-100">
-                {skipped.severity === 'info' ? (
-                    <InformationOutlineIcon className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0" />
-                ) : (
-                    <AlertCircleIcon className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0" />
-                )}
-                <span className="flex-grow-1 text-left">{skipped.title}</span>
-
-                {skipped.message &&
-                    (isOpen ? (
-                        <ChevronDownIcon className="icon-inline flex-shrink-0" />
+            <Button
+                className="streaming-skipped-item__button py-2 w-100 bg-transparent border-0"
+                onClick={toggleIsOpen}
+                onKeyDown={onKeyDown}
+                disabled={!skipped.message}
+            >
+                <h4 className="d-flex align-items-center mb-0 w-100">
+                    {skipped.severity === 'info' ? (
+                        <InformationOutlineIcon className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0" />
                     ) : (
-                        <ChevronLeftIcon className="icon-inline flex-shrink-0" />
-                    ))}
-            </h4>
+                        <AlertCircleIcon className="icon-inline mr-2 streaming-skipped-item__icon flex-shrink-0" />
+                    )}
+                    <span className="flex-grow-1 text-left">{skipped.title}</span>
+
+                    {skipped.message &&
+                        (isOpen ? (
+                            <ChevronDownIcon className="icon-inline flex-shrink-0" />
+                        ) : (
+                            <ChevronLeftIcon className="icon-inline flex-shrink-0" />
+                        ))}
+                </h4>
+            </Button>
             {skipped.message && (
                 <Collapse isOpen={isOpen}>
                     <Markdown
-                        className="streaming-skipped-item__message mt-2 text-left"
+                        className="streaming-skipped-item__message text-left py-1"
                         dangerousInnerHTML={renderMarkdown(skipped.message)}
                         history={history}
                     />
                 </Collapse>
             )}
-            <div className="streaming-skipped-item__bottom-border-spacer mt-3" />
-        </Button>
+            <div className="streaming-skipped-item__bottom-border-spacer mt-2" />
+        </div>
     )
 }
 

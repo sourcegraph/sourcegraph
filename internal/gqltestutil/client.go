@@ -292,8 +292,12 @@ func (c *Client) Get(url string) (*http.Response, error) {
 		return nil, err
 	}
 
-	req.AddCookie(c.csrfCookie)
-	req.AddCookie(c.sessionCookie)
+	c.addCookies(req)
 
 	return http.DefaultClient.Do(req)
+}
+
+func (c *Client) addCookies(req *http.Request) {
+	req.AddCookie(c.csrfCookie)
+	req.AddCookie(c.sessionCookie)
 }

@@ -101,7 +101,7 @@ COPY --from=p4cli /usr/local/bin/p4 /usr/local/bin/p4
 
 # This is a trick to include libraries required by p4,
 # please refer to https://blog.tilander.org/docker-perforce/
-ADD https://github.com/jtilander/p4d/raw/master/lib/lib-x64.tgz /
+ADD https://github.com/jtilander/p4d/raw/4600d741720f85d77852dcca7c182e96ad613358/lib/lib-x64.tgz /
 RUN tar zxf /lib-x64.tgz --directory /
 
 # hadolint ignore=DL3022

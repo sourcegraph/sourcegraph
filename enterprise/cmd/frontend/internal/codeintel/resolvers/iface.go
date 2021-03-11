@@ -9,6 +9,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	store "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 )
 
 type GitserverClient interface {
@@ -25,8 +26,8 @@ type DBStore interface {
 	GetDumpsByIDs(ctx context.Context, ids []int) ([]dbstore.Dump, error)
 	FindClosestDumps(ctx context.Context, repositoryID int, commit, path string, rootMustEnclosePath bool, indexer string) ([]dbstore.Dump, error)
 	FindClosestDumpsFromGraphFragment(ctx context.Context, repositoryID int, commit, path string, rootMustEnclosePath bool, indexer string, graph *gitserver.CommitGraph) ([]dbstore.Dump, error)
-	DefinitionDumps(ctx context.Context, monikers []lsifstore.QualifiedMonikerData) (_ []dbstore.Dump, err error)
-	ReferenceIDsAndFilters(ctx context.Context, repositoryID int, commit string, monikers []lsifstore.QualifiedMonikerData, limit, offset int) (_ dbstore.PackageReferenceScanner, _ int, err error)
+	DefinitionDumps(ctx context.Context, monikers []semantic.QualifiedMonikerData) (_ []dbstore.Dump, err error)
+	ReferenceIDsAndFilters(ctx context.Context, repositoryID int, commit string, monikers []semantic.QualifiedMonikerData, limit, offset int) (_ dbstore.PackageReferenceScanner, _ int, err error)
 	HasRepository(ctx context.Context, repositoryID int) (bool, error)
 	HasCommit(ctx context.Context, repositoryID int, commit string) (bool, error)
 	MarkRepositoryAsDirty(ctx context.Context, repositoryID int) error
@@ -45,9 +46,9 @@ type LSIFStore interface {
 	References(ctx context.Context, bundleID int, path string, line, character, limit, offset int) ([]lsifstore.Location, int, error)
 	Hover(ctx context.Context, bundleID int, path string, line, character int) (string, lsifstore.Range, bool, error)
 	Diagnostics(ctx context.Context, bundleID int, prefix string, limit, offset int) ([]lsifstore.Diagnostic, int, error)
-	MonikersByPosition(ctx context.Context, bundleID int, path string, line, character int) ([][]lsifstore.MonikerData, error)
-	BulkMonikerResults(ctx context.Context, tableName string, ids []int, args []lsifstore.MonikerData, limit, offset int) (_ []lsifstore.Location, _ int, err error)
-	PackageInformation(ctx context.Context, bundleID int, path string, packageInformationID string) (lsifstore.PackageInformationData, bool, error)
+	MonikersByPosition(ctx context.Context, bundleID int, path string, line, character int) ([][]semantic.MonikerData, error)
+	BulkMonikerResults(ctx context.Context, tableName string, ids []int, args []semantic.MonikerData, limit, offset int) (_ []lsifstore.Location, _ int, err error)
+	PackageInformation(ctx context.Context, bundleID int, path string, packageInformationID string) (semantic.PackageInformationData, bool, error)
 }
 
 type IndexEnqueuer interface {

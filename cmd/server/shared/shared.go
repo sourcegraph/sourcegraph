@@ -170,10 +170,12 @@ func Main() {
 		procfile = append(procfile, redisCacheLine)
 	}
 
-	if line, err := maybePostgresProcFile(); err != nil {
+	postgresLine, err := maybePostgresProcFile()
+	if err != nil {
 		log.Fatal(err)
-	} else if line != "" {
-		procfile = append(procfile, line)
+	}
+	if postgresLine != "" {
+		procfile = append(procfile, postgresLine)
 	}
 
 	procfile = append(procfile, maybeZoektProcFile()...)
@@ -186,6 +188,12 @@ func Main() {
 		// example use case is connecting to postgres even though frontend is
 		// dying due to a bad migration.
 		procDiedAction = goreman.Ignore
+	}
+
+	// If in restore mode, only run PostgreSQL
+	if restore, _ := strconv.ParseBool(os.Getenv("PGRESTORE")); restore {
+		procfile = []string{}
+		procfile = append(procfile, postgresLine)
 	}
 
 	err = goreman.Start([]byte(strings.Join(procfile, "\n")), goreman.Options{

@@ -14,7 +14,6 @@ import { NamespaceProps } from '../namespaces'
 import { deleteSavedSearch, fetchSavedSearches } from '../search/backend'
 import { PatternTypeProps } from '../search'
 import { ErrorAlert } from '../components/alerts'
-import * as H from 'history'
 import { eventLogger } from '../tracking/eventLogger'
 
 interface NodeProps extends RouteComponentProps, Omit<PatternTypeProps, 'setPatternType'> {
@@ -107,9 +106,7 @@ interface State {
     savedSearchesOrError?: GQL.ISavedSearch[] | ErrorLike
 }
 
-interface Props extends RouteComponentProps<{}>, NamespaceProps, Omit<PatternTypeProps, 'setPatternType'> {
-    history: H.History
-}
+interface Props extends RouteComponentProps<{}>, NamespaceProps, Omit<PatternTypeProps, 'setPatternType'> {}
 
 export class SavedSearchListPage extends React.Component<Props, State> {
     public subscriptions = new Subscription()
@@ -155,7 +152,7 @@ export class SavedSearchListPage extends React.Component<Props, State> {
                     </div>
                 </div>
                 {this.state.savedSearchesOrError && isErrorLike(this.state.savedSearchesOrError) && (
-                    <ErrorAlert className="mb-3" error={this.state.savedSearchesOrError} history={this.props.history} />
+                    <ErrorAlert className="mb-3" error={this.state.savedSearchesOrError} />
                 )}
                 <div className="list-group list-group-flush">
                     {this.state.savedSearchesOrError &&

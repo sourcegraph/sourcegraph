@@ -68,11 +68,7 @@ const tokenToLeafNode = (token: Token): ParseResult => {
         return createPattern(token.value, token.kind, false, false)
     }
     if (token.type === 'filter') {
-        const filterValue = token.value
-            ? token.value.type === 'literal'
-                ? token.value.value
-                : token.value.quotedValue
-            : ''
+        const filterValue = token.value ? token.value.value : ''
         return createParameter(token.field.value, filterValue, token.negated)
     }
     return { type: 'error', expected: 'a convertable token to tree node' }

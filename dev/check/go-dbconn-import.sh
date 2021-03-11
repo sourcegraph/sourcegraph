@@ -5,6 +5,8 @@
 
 echo "--- go dbconn import"
 
+trap "echo ^^^ +++" ERR
+
 set -euf -o pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"/../..
 
@@ -30,5 +32,6 @@ if go list ./cmd/... ./enterprise/cmd/... |
   xargs go list -f "$template" |
   grep "github.com/sourcegraph/sourcegraph/internal/database/dbconn"; then
   echo "Error: the above service(s) are not allowed to import pkg/database/dbconn"
+  echo "^^^ +++"
   exit 1
 fi

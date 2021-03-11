@@ -19,7 +19,6 @@ import { OrgInvitationPage } from './OrgInvitationPage'
 import { PatternTypeProps } from '../../search'
 import { ThemeProps } from '../../../../shared/src/theme'
 import { ErrorMessage } from '../../components/alerts'
-import * as H from 'history'
 import { TelemetryProps } from '../../../../shared/src/telemetry/telemetryService'
 import { AuthenticatedUser } from '../../auth'
 import { BreadcrumbsProps, BreadcrumbSetters } from '../../components/Breadcrumbs'
@@ -93,7 +92,6 @@ interface Props
      * The currently authenticated user.
      */
     authenticatedUser: AuthenticatedUser | null
-    history: H.History
     isSourcegraphDotCom: boolean
 }
 
@@ -211,7 +209,7 @@ export class OrgArea extends React.Component<Props> {
                 <HeroPage
                     icon={AlertCircleIcon}
                     title="Error"
-                    subtitle={<ErrorMessage error={this.state.orgOrError} history={this.props.history} />}
+                    subtitle={<ErrorMessage error={this.state.orgOrError} />}
                 />
             )
         }
@@ -235,13 +233,7 @@ export class OrgArea extends React.Component<Props> {
 
         if (this.props.location.pathname === `${this.props.match.url}/invitation`) {
             // The OrgInvitationPage is displayed without the OrgHeader because it is modal-like.
-            return (
-                <OrgInvitationPage
-                    {...context}
-                    onDidRespondToInvitation={this.onDidRespondToInvitation}
-                    history={this.props.history}
-                />
-            )
+            return <OrgInvitationPage {...context} onDidRespondToInvitation={this.onDidRespondToInvitation} />
         }
 
         return (

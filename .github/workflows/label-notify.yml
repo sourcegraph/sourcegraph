@@ -11,8 +11,8 @@ jobs:
         - uses: jenschelkopf/issue-label-notification-action@f7d2363e5efa18b8aeea671ca8093e183ae8f218 # 1.3
           with:
              recipients: |
-                  team/extensibility=@joelkw @jeanduplessis @felixfbecker
-                  team/frontend-platform=@jeanduplessis @alicjasuska @felixfbecker @umpox @valerybugakov @5h1ru
+                  team/extensibility=@joelkw @felixfbecker
+                  team/frontend-platform=@alicjasuska @felixfbecker @umpox @valerybugakov @5h1ru @pdubroy
                   team/cloud=@tsenart
                   team/search=@lguychard
                   team/code-intelligence=@macraig

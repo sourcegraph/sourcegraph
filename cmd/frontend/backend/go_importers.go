@@ -86,6 +86,8 @@ func CountGoImporters(ctx context.Context, repo api.RepoName) (count int, err er
 		if err != nil {
 			return 0, err
 		}
+		defer response.Body.Close()
+
 		var result struct {
 			Results []struct {
 				Path string

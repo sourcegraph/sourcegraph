@@ -2,6 +2,8 @@
 
 echo "--- go generate"
 
+trap "echo ^^^ +++" ERR
+
 set -eo pipefail
 
 main() {

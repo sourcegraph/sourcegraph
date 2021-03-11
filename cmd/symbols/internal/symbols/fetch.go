@@ -9,6 +9,7 @@ import (
 
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/trace/ot"
@@ -134,22 +135,16 @@ func (s *Service) fetchRepositoryArchive(ctx context.Context, repo api.RepoName,
 }
 
 var (
-	fetching = prometheus.NewGauge(prometheus.GaugeOpts{
+	fetching = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "symbols_store_fetching",
 		Help: "The number of fetches currently running.",
 	})
-	fetchQueueSize = prometheus.NewGauge(prometheus.GaugeOpts{
+	fetchQueueSize = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "symbols_store_fetch_queue_size",
 		Help: "The number of fetch jobs enqueued.",
 	})
-	fetchFailed = prometheus.NewCounter(prometheus.CounterOpts{
+	fetchFailed = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "symbols_store_fetch_failed",
 		Help: "The total number of archive fetches that failed.",
 	})
 )
-
-func init() {
-	prometheus.MustRegister(fetching)
-	prometheus.MustRegister(fetchQueueSize)
-	prometheus.MustRegister(fetchFailed)
-}

@@ -9,7 +9,6 @@ import { requestGraphQL } from '../../../backend/graphql'
 import { Timestamp } from '../../../components/time/Timestamp'
 import { userURL } from '../../../user'
 import { ErrorAlert } from '../../../components/alerts'
-import * as H from 'history'
 import { DeleteExternalAccountResult, DeleteExternalAccountVariables, Scalars } from '../../../graphql-operations'
 
 export const externalAccountFragment = gql`
@@ -49,7 +48,6 @@ export interface ExternalAccountNodeProps {
     showUser: boolean
 
     onDidUpdate: () => void
-    history: H.History
 }
 
 interface ExternalAccountNodeState {
@@ -150,11 +148,7 @@ export class ExternalAccountNode extends React.PureComponent<ExternalAccountNode
                             Delete
                         </button>
                         {isErrorLike(this.state.deletionOrError) && (
-                            <ErrorAlert
-                                className="mt-2"
-                                error={this.state.deletionOrError}
-                                history={this.props.history}
-                            />
+                            <ErrorAlert className="mt-2" error={this.state.deletionOrError} />
                         )}
                     </div>
                 </div>

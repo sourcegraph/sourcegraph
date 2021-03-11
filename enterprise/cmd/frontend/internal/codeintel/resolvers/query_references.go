@@ -10,10 +10,11 @@ import (
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/bloomfilter"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	store "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/dbstore"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/stores/lsifstore"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/bloomfilter"
+	"github.com/sourcegraph/sourcegraph/enterprise/lib/codeintel/semantic"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -173,7 +174,7 @@ func (r *queryResolver) adjustedUploadsFromCursor(ctx context.Context, line, cha
 // orderedMonikersFromCursor returns the set of monikers attached to the ranges specified by the given
 // upload list. The returned slice will be cached on the given cursor. If this data is already stashed
 // in the given cursor, we don't need to hit the database.
-func (r *queryResolver) orderedMonikersFromCursor(ctx context.Context, adjustedUploads []adjustedUpload, cursor *referencesCursor) ([]lsifstore.QualifiedMonikerData, error) {
+func (r *queryResolver) orderedMonikersFromCursor(ctx context.Context, adjustedUploads []adjustedUpload, cursor *referencesCursor) ([]semantic.QualifiedMonikerData, error) {
 	if cursor.OrderedMonikers != nil {
 		return cursor.OrderedMonikers, nil
 	}
@@ -195,7 +196,7 @@ func (r *queryResolver) orderedMonikersFromCursor(ctx context.Context, adjustedU
 //
 // The upload records returned from the database, if any, are also returned from this method to help reduce
 // the number of database queries necessary.
-func (r *queryResolver) definitionUploadIDsFromCursor(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []lsifstore.QualifiedMonikerData, cursor *referencesCursor) ([]int, []dbstore.Dump, error) {
+func (r *queryResolver) definitionUploadIDsFromCursor(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []semantic.QualifiedMonikerData, cursor *referencesCursor) ([]int, []dbstore.Dump, error) {
 	if cursor.DefinitionUploadIDsCached {
 		return cursor.DefinitionUploadIDs, nil, nil
 	}
@@ -236,7 +237,7 @@ func (r *queryResolver) definitionUploadIDsFromCursor(ctx context.Context, adjus
 // pageReferences returns a slice of the result set denoted by the given cursor. The given cursor will be
 // adjusted to reflect the offsets required to resolve the next page of results. If there are no more pages
 // left in the result set, a false-valued flag is returned.
-func (r *queryResolver) pageReferences(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []lsifstore.QualifiedMonikerData, definitionUploadIDs []int, uploadsByID map[int]dbstore.Dump, cursor *referencesCursor, limit int) ([]lsifstore.Location, bool, error) {
+func (r *queryResolver) pageReferences(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []semantic.QualifiedMonikerData, definitionUploadIDs []int, uploadsByID map[int]dbstore.Dump, cursor *referencesCursor, limit int) ([]lsifstore.Location, bool, error) {
 	var locations []lsifstore.Location
 
 	// Phase 1: Gather all "local" locations via LSIF graph traversal. We'll continue to request additional
@@ -331,7 +332,7 @@ const maximumIndexesPerMonikerSearch = 50
 // performing a moniker search over a group of indexes. The given cursor will be adjusted to reflect the
 // offsets required to resolve the next page of results. If there are no more pages left in the result set,
 // a false-valued flag is returned.
-func (r *queryResolver) pageRemoteReferences(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []lsifstore.QualifiedMonikerData, definitionUploadIDs []int, uploadsByID map[int]dbstore.Dump, cursor *referencesCursor, limit int) ([]lsifstore.Location, bool, error) {
+func (r *queryResolver) pageRemoteReferences(ctx context.Context, adjustedUploads []adjustedUpload, orderedMonikers []semantic.QualifiedMonikerData, definitionUploadIDs []int, uploadsByID map[int]dbstore.Dump, cursor *referencesCursor, limit int) ([]lsifstore.Location, bool, error) {
 	for len(cursor.BatchIDs) == 0 {
 		if cursor.RemoteBatchOffset < 0 {
 			// No more batches
@@ -433,7 +434,7 @@ func rangeContainsPosition(r lsifstore.Range, pos lsifstore.Position) bool {
 // will it return uploads which are listed in the given ignored identifier slice. This method also
 // returns the number of records scanned (but possibly filtered out from the return slice) from the
 // database (the offset for the subsequent request) and the total number of records in the database.
-func (r *queryResolver) uploadIDsWithReferences(ctx context.Context, orderedMonikers []lsifstore.QualifiedMonikerData, ignoreIDs []int, limit, offset int) (ids []int, recordsScanned int, totalCount int, err error) {
+func (r *queryResolver) uploadIDsWithReferences(ctx context.Context, orderedMonikers []semantic.QualifiedMonikerData, ignoreIDs []int, limit, offset int) (ids []int, recordsScanned int, totalCount int, err error) {
 	scanner, totalCount, err := r.dbStore.ReferenceIDsAndFilters(ctx, r.repositoryID, r.commit, orderedMonikers, limit, offset)
 	if err != nil {
 		return nil, 0, 0, errors.Wrap(err, "dbstore.ReferenceIDsAndFilters")
@@ -496,7 +497,7 @@ func (r *queryResolver) uploadIDsWithReferences(ctx context.Context, orderedMoni
 }
 
 // testFilter returns true if the given  encoded bloom filter includes any of the given monikers.
-func testFilter(filter []byte, orderedMonikers []lsifstore.QualifiedMonikerData) (bool, error) {
+func testFilter(filter []byte, orderedMonikers []semantic.QualifiedMonikerData) (bool, error) {
 	includesIdentifier, err := bloomfilter.Decode(filter)
 	if err != nil {
 		return false, errors.Wrap(err, "bloomfilter.Decode")

@@ -12,11 +12,6 @@ import { eventLogger } from '../tracking/eventLogger'
 import { createUser } from './backend'
 import { ErrorAlert } from '../components/alerts'
 import { asError } from '../../../shared/src/util/errors'
-import * as H from 'history'
-
-interface Props extends RouteComponentProps<{}> {
-    history: H.History
-}
 
 interface State {
     errorDescription?: string
@@ -35,7 +30,7 @@ interface State {
 /**
  * A page with a form to create a user account.
  */
-export class SiteAdminCreateUserPage extends React.Component<Props, State> {
+export class SiteAdminCreateUserPage extends React.Component<RouteComponentProps<{}>, State> {
     public state: State = {
         loading: false,
         username: '',
@@ -156,11 +151,7 @@ export class SiteAdminCreateUserPage extends React.Component<Props, State> {
                             </small>
                         </div>
                         {this.state.errorDescription && (
-                            <ErrorAlert
-                                className="my-2"
-                                error={this.state.errorDescription}
-                                history={this.props.history}
-                            />
+                            <ErrorAlert className="my-2" error={this.state.errorDescription} />
                         )}
                         <button className="btn btn-primary" disabled={this.state.loading} type="submit">
                             {window.context.resetPasswordEnabled

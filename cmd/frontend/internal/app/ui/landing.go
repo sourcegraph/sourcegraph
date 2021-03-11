@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go/ext"
@@ -55,22 +56,17 @@ func serveDefLanding(w http.ResponseWriter, r *http.Request) (err error) {
 	return nil
 }
 
-var legacyDefLandingCounter = prometheus.NewCounter(prometheus.CounterOpts{
+var legacyDefLandingCounter = promauto.NewCounter(prometheus.CounterOpts{
 	Namespace: "src",
 	Name:      "legacy_def_landing_webapp",
 	Help:      "Number of times a legacy def landing page has been served.",
 })
 
-var legacyRepoLandingCounter = prometheus.NewCounter(prometheus.CounterOpts{
+var legacyRepoLandingCounter = promauto.NewCounter(prometheus.CounterOpts{
 	Namespace: "src",
 	Name:      "legacy_repo_landing_webapp",
 	Help:      "Number of times a legacy repo landing page has been served.",
 })
-
-func init() {
-	prometheus.MustRegister(legacyDefLandingCounter)
-	prometheus.MustRegister(legacyRepoLandingCounter)
-}
 
 // serveDefRedirectToDefLanding redirects from /REPO/refs/... and
 // /REPO/def/... URLs to the def landing page. Those URLs used to

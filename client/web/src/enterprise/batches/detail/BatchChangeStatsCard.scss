@@ -1,0 +1,46 @@
+.batch-change-stats-card {
+    &__changesets-pill {
+        // Should be the same height as plain mdi icons.
+        /* stylelint-disable declaration-property-unit-whitelist */
+        height: 24px;
+    }
+    &__completeness {
+        @include media-breakpoint-down(xs) {
+            // Emulate h4 size on xs devices.
+            font-size: 0.875rem;
+            line-height: (20/14);
+        }
+    }
+    &__state-badge {
+        @include media-breakpoint-down(sm) {
+            // Emulate h4 on sm and xs devices.
+            font-size: 0.875rem;
+            line-height: (20/14);
+            font-weight: 600;
+        }
+    }
+    &__diff-stat {
+        @include media-breakpoint-down(sm) {
+            margin-top: 1rem;
+            flex-basis: 100%;
+        }
+    }
+    &__stat {
+        min-width: 0;
+        @include media-breakpoint-down(sm) {
+            flex-basis: 33%;
+            padding-top: 1rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        @include media-breakpoint-down(xs) {
+            flex-basis: 49.9%;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
+    &__divider {
+        border: 1px solid var(--border-color-2);
+        height: 2rem;
+    }
+}

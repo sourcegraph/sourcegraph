@@ -1,6 +1,5 @@
 import { LoadingSpinner } from '@sourcegraph/react-loading-spinner'
 import React, { useCallback, useEffect, useState } from 'react'
-import { RouteComponentProps } from 'react-router'
 import { ORG_DISPLAY_NAME_MAX_LENGTH } from '../..'
 import { Form } from '../../../../../branded/src/components/Form'
 import { PageTitle } from '../../../components/PageTitle'
@@ -12,14 +11,12 @@ import { asError, isErrorLike } from '../../../../../shared/src/util/errors'
 import { Timestamp } from '../../../components/time/Timestamp'
 import { PageHeader } from '../../../components/PageHeader'
 
-interface Props
-    extends Pick<OrgAreaPageProps, 'org' | 'onOrganizationUpdate'>,
-        Pick<RouteComponentProps<{}>, 'history'> {}
+interface Props extends Pick<OrgAreaPageProps, 'org' | 'onOrganizationUpdate'> {}
 
 /**
  * The organization profile settings page.
  */
-export const OrgSettingsProfilePage: React.FunctionComponent<Props> = ({ history, org, onOrganizationUpdate }) => {
+export const OrgSettingsProfilePage: React.FunctionComponent<Props> = ({ org, onOrganizationUpdate }) => {
     useEffect(() => {
         eventLogger.logViewEvent('OrgSettingsProfile')
     }, [org.id])
@@ -111,7 +108,7 @@ export const OrgSettingsProfilePage: React.FunctionComponent<Props> = ({ history
                 >
                     <small>Updated!</small>
                 </div>
-                {isErrorLike(isLoading) && <ErrorAlert error={isLoading} history={history} />}
+                {isErrorLike(isLoading) && <ErrorAlert error={isLoading} />}
             </Form>
         </div>
     )

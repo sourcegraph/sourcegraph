@@ -26,7 +26,7 @@ func TestServer_handleGet(t *testing.T) {
 		}
 		return json.Unmarshal(buf, result)
 	}
-	defer func() { api.MockExternalServiceConfigs = nil }()
+	t.Cleanup(func() { api.MockExternalServiceConfigs = nil })
 
 	s := &Server{ReposDir: "/testroot"}
 	h := s.Handler()
@@ -69,7 +69,7 @@ func TestServer_handleGet_invalid(t *testing.T) {
 		}
 		return json.Unmarshal(buf, result)
 	}
-	defer func() { api.MockExternalServiceConfigs = nil }()
+	t.Cleanup(func() { api.MockExternalServiceConfigs = nil })
 
 	s := &Server{ReposDir: "/testroot"}
 	h := s.Handler()

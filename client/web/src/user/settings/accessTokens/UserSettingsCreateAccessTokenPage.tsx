@@ -204,9 +204,7 @@ export const UserSettingsCreateAccessTokenPage: React.FunctionComponent<Props> =
                 </Link>
             </Form>
 
-            {isErrorLike(creationOrError) && (
-                <ErrorAlert className="invite-form__alert" error={creationOrError} history={history} />
-            )}
+            {isErrorLike(creationOrError) && <ErrorAlert className="invite-form__alert" error={creationOrError} />}
         </div>
     )
 }

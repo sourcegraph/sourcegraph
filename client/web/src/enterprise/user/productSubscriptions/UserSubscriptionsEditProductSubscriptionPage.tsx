@@ -99,7 +99,7 @@ export const UserSubscriptionsEditProductSubscriptionPage: React.FunctionCompone
             {productSubscription === LOADING ? (
                 <LoadingSpinner className="icon-inline" />
             ) : isErrorLike(productSubscription) ? (
-                <ErrorAlert className="my-2" error={productSubscription} history={history} />
+                <ErrorAlert className="my-2" error={productSubscription} />
             ) : (
                 <>
                     <Link to={productSubscription.url} className="btn btn-link btn-sm mb-3">

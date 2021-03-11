@@ -140,6 +140,33 @@ describe('Search', () => {
         })
     })
 
+    describe('Filter completion', () => {
+        test('Completing a negated filter should insert the filter with - prefix', async () => {
+            testContext.overrideGraphQL({
+                ...commonSearchGraphQLResults,
+                SearchSuggestions: () => ({
+                    search: {
+                        suggestions: [],
+                    },
+                }),
+            })
+            await driver.page.goto(driver.sourcegraphBaseUrl + '/search')
+            await driver.page.waitForSelector('#monaco-query-input')
+            await driver.replaceText({
+                selector: '#monaco-query-input',
+                newText: '-repo',
+                enterTextMethod: 'type',
+            })
+            await driver.page.waitForSelector('.monaco-query-input-container .suggest-widget.visible')
+            await driver.findElementWithText('-repo', {
+                action: 'click',
+                wait: { timeout: 5000 },
+                selector: '.monaco-query-input-container .suggest-widget.visible span',
+            })
+            expect(await getSearchFieldValue(driver)).toStrictEqual('-repo:')
+        })
+    })
+
     describe('Suggestions', () => {
         test('Typing in the search field shows relevant suggestions', async () => {
             testContext.overrideGraphQL({
@@ -226,8 +253,8 @@ describe('Search', () => {
             await driver.page.waitForSelector('#monaco-query-input')
             expect(await getSearchFieldValue(driver)).toStrictEqual('foo')
             // Field value is cleared when navigating to a non search-related page
-            await driver.page.waitForSelector('[data-testid="campaigns"]')
-            await driver.page.click('[data-testid="campaigns"]')
+            await driver.page.waitForSelector('[data-testid="batch-changes"]')
+            await driver.page.click('[data-testid="batch-changes"]')
             expect(await getSearchFieldValue(driver)).toStrictEqual('')
             // Field value is restored when the back button is pressed
             await driver.page.goBack()
@@ -465,6 +492,7 @@ describe('Search', () => {
             await driver.page.waitForSelector('.search-result-match__code-excerpt .selection-highlight', {
                 visible: true,
             })
+            await driver.page.waitForSelector('#monaco-query-input', { visible: true })
 
             await percySnapshot(driver.page, 'Streaming diff search syntax highlighting')
         })

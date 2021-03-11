@@ -179,7 +179,6 @@ export class MonacoEditor extends React.PureComponent<Props, State> {
         }
         this.props.editorWillMount(monaco)
         const editor = monaco.editor.create(element, {
-            hover: { delay: 0 },
             value: this.props.value,
             language: this.props.language,
             theme: this.props.isLightTheme ? SOURCEGRAPH_LIGHT : SOURCEGRAPH_DARK,

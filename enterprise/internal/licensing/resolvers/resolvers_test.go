@@ -7,7 +7,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
-	"github.com/sourcegraph/sourcegraph/enterprise/internal/campaigns/resolvers/apitest"
+	"github.com/sourcegraph/sourcegraph/enterprise/internal/batches/resolvers/apitest"
 	"github.com/sourcegraph/sourcegraph/enterprise/internal/licensing"
 )
 
@@ -39,14 +39,14 @@ func TestEnterpriseLicenseHasFeature(t *testing.T) {
 		wantErr bool
 	}{
 		"real feature, enabled": {
-			feature: string(licensing.FeatureCampaigns),
-			mock:    buildMock(licensing.FeatureCampaigns),
+			feature: string(licensing.FeatureBatchChanges),
+			mock:    buildMock(licensing.FeatureBatchChanges),
 			want:    true,
 			wantErr: false,
 		},
 		"real feature, disabled": {
 			feature: string(licensing.FeatureMonitoring),
-			mock:    buildMock(licensing.FeatureCampaigns),
+			mock:    buildMock(licensing.FeatureBatchChanges),
 			want:    false,
 			wantErr: false,
 		},
