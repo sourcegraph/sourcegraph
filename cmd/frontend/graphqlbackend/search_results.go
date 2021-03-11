@@ -862,20 +862,35 @@ func invalidateRepoCache(q []query.Node) bool {
 }
 
 func (r *searchResolver) Results(ctx context.Context) (srr *SearchResultsResolver, err error) {
+	return r.queryResults(ctx, r.Query)
+}
+
+func (r *searchResolver) queryResults(ctx context.Context, q query.Q) (srr *SearchResultsResolver, err error) {
 	tr, ctx := trace.New(ctx, "Results", "")
 	defer func() {
 		tr.SetError(err)
 		tr.Finish()
 	}()
 
+	if invalidateRepoCache(q) {
+		r.invalidateRepoCache = true
+	}
+	r.setQuery(q)
+
 	wantCount := defaultMaxSearchResults
 	if count := r.Query.Count(); count != nil {
 		wantCount = *count
 	}
 
-	if invalidateRepoCache(r.Query) {
-		r.invalidateRepoCache = true
+	expanded, err := query.MapPredicates(r.Query, func(p query.Predicate) ([]query.Node, error) {
+		return r.runPredicate(ctx, p)
+	})
+	if err != nil && errors.Is(err, query.ErrPredicateNoResults) {
+		return &SearchResultsResolver{start: time.Now()}, nil
+	} else if err != nil {
+		return nil, err
 	}
+	r.setQuery(expanded)
 
 	for _, disjunct := range query.Dnf(r.Query) {
 		disjunct = query.ConcatRevFilters(disjunct)
@@ -905,6 +920,35 @@ func (r *searchResolver) Results(ctx context.Context) (srr *SearchResultsResolve
 		srr = &SearchResultsResolver{db: r.db}
 	}
 	return srr, err
+}
+
+func (r *searchResolver) runPredicate(ctx context.Context, p query.Predicate) ([]query.Node, error) {
+	srr, err := r.queryResults(ctx, p.Query())
+	if err != nil {
+		return nil, err
+	}
+
+	switch p.Field() {
+	case query.FieldFile:
+		return searchResultsToFileNodes(srr.SearchResults)
+	}
+	return nil, fmt.Errorf("unsupported predicate result type %q", p.Field())
+}
+
+func searchResultsToFileNodes(srs []SearchResultResolver) ([]query.Node, error) {
+	nodes := make([]query.Node, 0, len(srs))
+	for _, rs := range srs {
+		fileResult, ok := rs.(*FileMatchResolver)
+		if !ok {
+			return nil, fmt.Errorf("expected type %T, but got %T", &FileMatchResolver{}, rs)
+		}
+
+		nodes = append(nodes, query.Parameter{
+			Field: "file",
+			Value: fileResult.Path,
+		})
+	}
+	return nodes, nil
 }
 
 // resultsWithTimeoutSuggestion calls doResults, and in case of deadline

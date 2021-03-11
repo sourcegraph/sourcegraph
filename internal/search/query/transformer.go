@@ -742,3 +742,70 @@ func AddRegexpField(q Q, field, pattern string) string {
 	}
 	return StringHuman(q)
 }
+
+func MapPredicates(q Q, f func(Predicate) ([]Node, error)) (newQ Q, topErr error) {
+	newQ = MapParameter(q, func(field, value string, neg bool, ann Annotation) Node {
+		orig := Parameter{
+			Field:      field,
+			Value:      value,
+			Negated:    neg,
+			Annotation: ann,
+		}
+
+		if topErr != nil {
+			return orig
+		}
+
+		name, params, err := ParseAsPredicate(value)
+		if err != nil {
+			// This doesn't look like a predidcate, so skip it
+			return orig
+		}
+
+		predicate, err := DefaultPredicateRegistry.Get(field, name, params)
+		if err != nil {
+			topErr = err
+			return orig
+		}
+
+		// Add the repository nodes on the query to the predicate so that we don't
+		// do an unnecessary global search
+		var repoNodes []Node
+		VisitField(q, FieldRepo, func(value string, negated bool, ann Annotation) {
+			repoNodes = append(repoNodes, Parameter{
+				Field:      FieldRepo,
+				Value:      value,
+				Negated:    negated,
+				Annotation: ann,
+			})
+		})
+		predicateWithRepos := PredicateWithRepos{
+			RepoNodes: repoNodes,
+			Predicate: predicate,
+		}
+
+		expanded, err := f(predicateWithRepos)
+		topErr = err
+		if neg {
+			// TODO apply demorgan's laws and negate expanded.
+			// This isn't super straightforward because node types are not pointers,
+			// so we can't just mutate them in place
+			topErr = errors.New("predicates do not currently support negation")
+			return nil
+		}
+
+		if len(expanded) == 0 {
+			topErr = ErrPredicateNoResults
+			return nil
+		}
+
+		return Operator{
+			Kind:     Or,
+			Operands: expanded,
+		}
+	})
+
+	return newQ, topErr
+}
+
+var ErrPredicateNoResults = errors.New("no results returned for predicate")
