@@ -1,5 +1,6 @@
 import { HoveredToken, LOADER_DELAY, MaybeLoadingResult, emitLoading } from '@sourcegraph/codeintellify'
 import { Location } from '@sourcegraph/extension-api-types'
+import { Remote } from 'comlink'
 import * as H from 'history'
 import { isEqual, uniqWith } from 'lodash'
 import { combineLatest, merge, Observable, of, Subscription, Unsubscribable, concat, from } from 'rxjs'
@@ -15,10 +16,13 @@ import {
     takeUntil,
     scan,
     mapTo,
+    tap,
 } from 'rxjs/operators'
 import { ActionItemAction } from '../actions/ActionItem'
 import { wrapRemoteObservable } from '../api/client/api/common'
 import { Context } from '../api/client/context/context'
+import { FlatExtensionHostAPI } from '../api/contract'
+import { WorkspaceRootWithMetadata } from '../api/extension/flatExtensionApi'
 import { ContributableMenu, TextDocumentPositionParameters } from '../api/protocol'
 import { syncRemoteSubscription } from '../api/util'
 import { isPrivateRepoPublicSourcegraphComErrorLike } from '../backend/errors'
@@ -47,25 +51,38 @@ export function getHoverActions(
 ): Observable<ActionItemAction[]> {
     return getHoverActionsContext(
         {
-            extensionsController,
             platformContext,
             getDefinition: parameters =>
                 from(extensionsController.extHostAPI).pipe(
                     switchMap(extensionHostAPI => wrapRemoteObservable(extensionHostAPI.getDefinition(parameters)))
                 ),
+            hasReferenceProvidersForDocument: parameters =>
+                from(extensionsController.extHostAPI).pipe(
+                    switchMap(extensionHostAPI =>
+                        wrapRemoteObservable(extensionHostAPI.hasReferenceProvidersForDocument(parameters))
+                    )
+                ),
+            getWorkspaceRoots: () =>
+                from(extensionsController.extHostAPI).pipe(
+                    switchMap(extensionHostAPI => extensionHostAPI.getWorkspaceRoots())
+                ),
         },
         hoverContext
-    ).pipe(
-        switchMap(context =>
-            from(extensionsController.extHostAPI).pipe(
-                switchMap(extensionHostAPI =>
-                    wrapRemoteObservable(extensionHostAPI.getContributions(undefined, context))
-                ),
-                map(contributions => getContributedActionItems(contributions, ContributableMenu.Hover))
-            )
-        )
-    )
+    ).pipe(switchMap(context => getHoverActionItems(context, extensionsController.extHostAPI)))
 }
+
+/**
+ * Gets active hover action items for the given context
+ */
+export const getHoverActionItems = (
+    context: Context<TextDocumentPositionParameters>,
+    extensionHostAPI: Promise<Remote<FlatExtensionHostAPI>>
+): Observable<ActionItemAction[]> =>
+    from(extensionHostAPI).pipe(
+        switchMap(extensionHostAPI => wrapRemoteObservable(extensionHostAPI.getContributions(undefined, context))),
+        first(),
+        map(contributions => getContributedActionItems(contributions, ContributableMenu.Hover))
+    )
 
 /**
  * The scoped context properties for the hover.
@@ -88,12 +105,14 @@ export interface HoverActionsContext extends Context<TextDocumentPositionParamet
  */
 export function getHoverActionsContext(
     {
-        extensionsController,
         getDefinition,
+        hasReferenceProvidersForDocument,
+        getWorkspaceRoots,
         platformContext: { urlToFile, requestGraphQL },
     }: {
         getDefinition: (parameters: TextDocumentPositionParameters) => Observable<MaybeLoadingResult<Location[]>>
-        extensionsController: Pick<Controller, 'extHostAPI'>
+        hasReferenceProvidersForDocument: (parameters: TextDocumentPositionParameters) => Observable<boolean>
+        getWorkspaceRoots: () => Observable<WorkspaceRootWithMetadata[]>
         platformContext: Pick<PlatformContext, 'urlToFile' | 'requestGraphQL'>
     },
     hoverContext: HoveredToken & HoverContext
@@ -104,7 +123,7 @@ export function getHoverActionsContext(
         part: hoverContext.part,
     }
     const definitionURLOrError = getDefinition(parameters).pipe(
-        getDefinitionURL({ urlToFile, requestGraphQL }, extensionsController, parameters),
+        getDefinitionURL({ urlToFile, requestGraphQL }, { getWorkspaceRoots }, parameters),
         catchError((error): [MaybeLoadingResult<ErrorLike>] => [{ isLoading: false, result: asError(error) }]),
         share()
     )
@@ -116,10 +135,7 @@ export function getHoverActionsContext(
         // hasReferenceProvider:
         // Only show "Find references" if a reference provider is registered. Unlike definitions, references are
         // not preloaded and here just involve statically constructing a URL, so no need to indicate loading.
-
-        from(extensionsController.extHostAPI).pipe(
-            switchMap(extensionHostAPI => extensionHostAPI.hasReferenceProvidersForDocument(parameters))
-        ),
+        hasReferenceProvidersForDocument(parameters),
 
         // showFindReferences:
         // If there is no definition, delay showing "Find references" because it is likely that the token is
@@ -188,15 +204,10 @@ export interface UIDefinitionURL {
  */
 export const getDefinitionURL = (
     { urlToFile, requestGraphQL }: Pick<PlatformContext, 'urlToFile' | 'requestGraphQL'>,
-    extensionsController: Pick<Controller, 'extHostAPI'>,
+    { getWorkspaceRoots }: { getWorkspaceRoots: () => Observable<WorkspaceRootWithMetadata[]> },
     parameters: TextDocumentPositionParameters & URLToFileContext
 ) => (locations: Observable<MaybeLoadingResult<Location[]>>): Observable<MaybeLoadingResult<UIDefinitionURL | null>> =>
-    combineLatest([
-        locations,
-        from(extensionsController.extHostAPI).pipe(
-            switchMap(extensionHostAPI => from(extensionHostAPI.getWorkspaceRoots()))
-        ),
-    ]).pipe(
+    combineLatest([locations, getWorkspaceRoots()]).pipe(
         switchMap(
             ([{ isLoading, result: definitions }, workspaceRoots]): Observable<
                 Partial<MaybeLoadingResult<UIDefinitionURL | null>>
@@ -298,10 +309,10 @@ export function registerHoverContributions({
     history: H.History
     /** Implementation of `window.location.assign()` used to navigate to external URLs. */
     locationAssign: typeof location.assign
-}): Unsubscribable {
+}): { contributionsPromise: Promise<void> } & Unsubscribable {
     const subscriptions = new Subscription()
 
-    extensionsController.extHostAPI
+    const contributionsPromise = extensionsController.extHostAPI
         .then(extensionHostAPI => {
             // Registers the "Go to definition" action shown in the hover tooltip. When clicked, the action finds the
             // definition of the token using the registered definition providers and navigates the user there.
@@ -322,7 +333,7 @@ export function registerHoverContributions({
             // usually block new tabs opened by JavaScript not directly triggered by a user mouse/keyboard interaction.
             //
             // TODO(sqs): Pin hover after an action has been clicked and before it has completed.
-            const contribs = {
+            const definitionContributions = {
                 actions: [
                     {
                         id: 'goToDefinition',
@@ -360,7 +371,8 @@ export function registerHoverContributions({
                 },
             }
 
-            subscriptions.add(syncRemoteSubscription(extensionHostAPI.registerContributions(contribs)))
+            const definitionContributionsPromise = extensionHostAPI.registerContributions(definitionContributions)
+            subscriptions.add(syncRemoteSubscription(definitionContributionsPromise))
 
             subscriptions.add(
                 extensionsController.registerCommand({
@@ -372,7 +384,16 @@ export function registerHoverContributions({
 
                         const { result } = await wrapRemoteObservable(extensionHostAPI.getDefinition(parameters))
                             .pipe(
-                                getDefinitionURL({ urlToFile, requestGraphQL }, extensionsController, parameters),
+                                getDefinitionURL(
+                                    { urlToFile, requestGraphQL },
+                                    {
+                                        getWorkspaceRoots: () =>
+                                            from(extensionsController.extHostAPI).pipe(
+                                                switchMap(extensionHostAPI => extensionHostAPI.getWorkspaceRoots())
+                                            ),
+                                    },
+                                    parameters
+                                ),
                                 first(({ isLoading, result }) => !isLoading || result !== null)
                             )
                             .toPromise()
@@ -408,39 +429,41 @@ export function registerHoverContributions({
             // Register the "Find references" action shown in the hover tooltip. This is simpler than "Go to definition"
             // because it just needs a URL that can be statically constructed from the current URL (it does not need to
             // query any providers).
-            subscriptions.add(
-                syncRemoteSubscription(
-                    extensionHostAPI.registerContributions({
-                        actions: [
-                            {
-                                id: 'findReferences',
-                                // title: parseTemplate('Find references'),
-                                title: 'Find references',
-                                command: 'open',
-                                // eslint-disable-next-line no-template-curly-in-string
-                                commandArguments: ['${findReferences.url}'],
-                            },
-                        ],
-                        menus: {
-                            hover: [
-                                // To reduce UI jitter, even though "Find references" can be shown immediately (because
-                                // the URL can be statically constructed), don't show it until either (1) "Go to
-                                // definition" is showing or (2) the LOADER_DELAY has elapsed. The part (2) of this
-                                // logic is implemented in the observable pipe that sets findReferences.url above.
-                                {
-                                    action: 'findReferences',
-                                    when:
-                                        'findReferences.url && (goToDefinition.showLoading || goToDefinition.url || goToDefinition.error)',
-                                },
-                            ],
+            const referencesContributionPromise = extensionHostAPI.registerContributions({
+                actions: [
+                    {
+                        id: 'findReferences',
+                        // title: parseTemplate('Find references'),
+                        title: 'Find references',
+                        command: 'open',
+                        // eslint-disable-next-line no-template-curly-in-string
+                        commandArguments: ['${findReferences.url}'],
+                    },
+                ],
+                menus: {
+                    hover: [
+                        // To reduce UI jitter, even though "Find references" can be shown immediately (because
+                        // the URL can be statically constructed), don't show it until either (1) "Go to
+                        // definition" is showing or (2) the LOADER_DELAY has elapsed. The part (2) of this
+                        // logic is implemented in the observable pipe that sets findReferences.url above.
+                        {
+                            action: 'findReferences',
+                            when:
+                                'findReferences.url && (goToDefinition.showLoading || goToDefinition.url || goToDefinition.error)',
                         },
-                    })
-                )
-            )
+                    ],
+                },
+            })
+            subscriptions.add(syncRemoteSubscription(referencesContributionPromise))
+
+            return Promise.all([definitionContributionsPromise, referencesContributionPromise])
         })
+        // Don't expose remote subscriptions, only sync subscriptions bag
+        .then(() => undefined)
         .catch(() => {
             console.error('Failed to register "Go to Definition" and "Find references" actions with extension host')
         })
 
-    return subscriptions
+    // Return promise to provide a way for callers to know when contributions have been successfully registered
+    return { contributionsPromise, unsubscribe: subscriptions.unsubscribe.bind(subscriptions) }
 }

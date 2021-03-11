@@ -65,15 +65,12 @@ export function trackViews<V extends View>(
                         }
                         const view = viewStates.get(node)
                         if (view) {
-                            console.log('removing view')
-
                             view.subscriptions.unsubscribe()
                             viewStates.delete(node)
                             continue
                         }
                         for (const [viewElement, view] of viewStates.entries()) {
                             if (node.contains(viewElement)) {
-                                console.log('removing view')
                                 view.subscriptions.unsubscribe()
                                 viewStates.delete(viewElement)
                             }
