@@ -862,10 +862,10 @@ func invalidateRepoCache(q []query.Node) bool {
 }
 
 func (r *searchResolver) Results(ctx context.Context) (srr *SearchResultsResolver, err error) {
-	return r.queryResults(ctx, r.Query)
+	return r.resultsRecursive(ctx, r.Query)
 }
 
-func (r *searchResolver) queryResults(ctx context.Context, q query.Q) (srr *SearchResultsResolver, err error) {
+func (r *searchResolver) resultsRecursive(ctx context.Context, q query.Q) (srr *SearchResultsResolver, err error) {
 	tr, ctx := trace.New(ctx, "Results", "")
 	defer func() {
 		tr.SetError(err)
@@ -883,10 +883,10 @@ func (r *searchResolver) queryResults(ctx context.Context, q query.Q) (srr *Sear
 	}
 
 	expanded, err := query.MapPredicates(r.Query, func(p query.Predicate) ([]query.Node, error) {
-		return r.runPredicate(ctx, p)
+		return r.runPredicate(ctx, p, r.Query)
 	})
 	if err != nil && errors.Is(err, query.ErrPredicateNoResults) {
-		return &SearchResultsResolver{start: time.Now()}, nil
+		return &SearchResultsResolver{}, nil
 	} else if err != nil {
 		return nil, err
 	}
@@ -922,32 +922,38 @@ func (r *searchResolver) queryResults(ctx context.Context, q query.Q) (srr *Sear
 	return srr, err
 }
 
-func (r *searchResolver) runPredicate(ctx context.Context, p query.Predicate) ([]query.Node, error) {
-	srr, err := r.queryResults(ctx, p.Query())
+func (r *searchResolver) runPredicate(ctx context.Context, p query.Predicate, parent query.Q) ([]query.Node, error) {
+	// Always invalidate for predicates because the initially resolved repositories
+	// are not necessarily the repositories that we want to use for the expansion.
+	r.invalidateRepoCache = true
+	srr, err := r.resultsRecursive(ctx, p.Query(parent))
 	if err != nil {
 		return nil, err
 	}
 
 	switch p.Field() {
-	case query.FieldFile:
-		return searchResultsToFileNodes(srr.SearchResults)
+	case query.FieldRepo:
+		return searchResultsToRepoNodes(srr.SearchResults)
 	}
 	return nil, fmt.Errorf("unsupported predicate result type %q", p.Field())
 }
 
-func searchResultsToFileNodes(srs []SearchResultResolver) ([]query.Node, error) {
+// searchResultsToRepoNodes converts a set of search results into repository nodes
+// such that they can be used to replace a repository predicate
+func searchResultsToRepoNodes(srs []SearchResultResolver) ([]query.Node, error) {
 	nodes := make([]query.Node, 0, len(srs))
 	for _, rs := range srs {
-		fileResult, ok := rs.(*FileMatchResolver)
+		repoResolver, ok := rs.(*RepositoryResolver)
 		if !ok {
-			return nil, fmt.Errorf("expected type %T, but got %T", &FileMatchResolver{}, rs)
+			return nil, fmt.Errorf("expected type %T, but got %T", &RepositoryResolver{}, rs)
 		}
 
 		nodes = append(nodes, query.Parameter{
-			Field: "file",
-			Value: fileResult.Path,
+			Field: query.FieldRepo,
+			Value: "^" + regexp.QuoteMeta(repoResolver.Name()) + "$",
 		})
 	}
+
 	return nodes, nil
 }
 

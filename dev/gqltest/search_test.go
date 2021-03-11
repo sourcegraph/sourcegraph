@@ -910,6 +910,107 @@ func testSearchClient(t *testing.T, client searchClient) {
 		}
 	})
 
+	t.Run("Predicate Queries", func(t *testing.T) {
+		type counts struct {
+			Repo    int
+			Commit  int
+			Content int
+			Symbol  int
+			File    int
+		}
+
+		countResults := func(results []*gqltestutil.AnyResult) counts {
+			var count counts
+			for _, res := range results {
+				switch v := res.Inner.(type) {
+				case gqltestutil.CommitResult:
+					count.Commit += 1
+				case gqltestutil.RepositoryResult:
+					count.Repo += 1
+				case gqltestutil.FileResult:
+					count.Symbol += len(v.Symbols)
+					for _, lm := range v.LineMatches {
+						count.Content += len(lm.OffsetAndLengths)
+					}
+					if len(v.Symbols) == 0 && len(v.LineMatches) == 0 {
+						count.File += 1
+					}
+				}
+			}
+			return count
+		}
+
+		tests := []struct {
+			name   string
+			query  string
+			counts counts
+		}{
+			{
+				`repo contains file`,
+				`repo:contains(file:zoekt_search.go)`,
+				counts{Repo: 1},
+			},
+			{
+				`no repo contains file`,
+				`repo:contains(file:noexist.go)`,
+				counts{},
+			},
+			{
+				`no predicate match, return no results`,
+				`repo:contains(file:noexist.go) test`,
+				counts{},
+			},
+			{
+				`repo contains content`,
+				`repo:contains(content:searchZoekt)`,
+				counts{Repo: 2},
+			},
+			{
+				`repo contains content default`,
+				`repo:contains(searchZoekt)`,
+				counts{Repo: 2},
+			},
+			{
+				`repo contains then search`,
+				`repo:contains(file:go.mod) #whatever`,
+				counts{Content: 5},
+			},
+			{
+				`repo contains with extra repo filter`,
+				`repo:gorilla repo:contains(file:mux.go)`,
+				counts{Repo: 1},
+			},
+			{
+				`repo contains type commit`,
+				`repo:contains(file:go.mod) type:commit Woho`,
+				counts{Commit: 1},
+			},
+			{
+				`repo contains many results`,
+				`repo:contains(file:go.mod)`,
+				counts{Repo: 26},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				if test.name == "or statement merges file" || test.name == "select symbol" {
+					t.Skip("streaming not supported yet")
+				}
+
+				results, err := client.SearchAll(test.query)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				count := countResults(results)
+				if diff := cmp.Diff(test.counts, count); diff != "" {
+					t.Fatalf("mismatch (-want +got):\n%s", diff)
+				}
+			})
+		}
+	})
+
 	t.Run("Select Queries", func(t *testing.T) {
 		type counts struct {
 			Repo    int

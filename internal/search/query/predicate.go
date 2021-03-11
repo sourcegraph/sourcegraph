@@ -1,8 +1,10 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 type Predicate interface {
@@ -14,30 +16,27 @@ type Predicate interface {
 	// For example, with `file:contains()`, Name returns "contains".
 	Name() string
 
-	// String returns the query representation of the predicate
-	String() string
-
-	// UnmarshalText unmarshals the contents of the predicate arguments
+	// UnmarshalParams unmarshals the contents of the predicate arguments
 	// into the predicate object.
-	UnmarshalText([]byte) error
+	UnmarshalParams(string) error
 
 	// Query returns a Q that, when evaluated, returns a list of results
 	// that can replace the predicate
-	Query() Q
+	Query(parent Q) Q
 }
 
 var DefaultPredicateRegistry = predicateRegistry{
-	FieldFile: {
+	FieldRepo: {
 		"contains": func() Predicate {
-			return &FileContainsPredicate{}
+			return &RepoContainsPredicate{}
 		},
 	},
 }
 
-type predicateFactory func() Predicate
+type predicateRegistry map[string]map[string]func() Predicate
 
-type predicateRegistry map[string]map[string]predicateFactory
-
+// Get returns a predicate for the given field with the given name. If no such predicate
+// exists, or the params provided are invalid, it returns an error.
 func (pr predicateRegistry) Get(field, name, params string) (Predicate, error) {
 	fieldPredicates, ok := pr[field]
 	if !ok {
@@ -50,7 +49,7 @@ func (pr predicateRegistry) Get(field, name, params string) (Predicate, error) {
 	}
 
 	predicate := newPredicateFunc()
-	if err := predicate.UnmarshalText([]byte(params)); err != nil {
+	if err := predicate.UnmarshalParams(params); err != nil {
 		return nil, fmt.Errorf("failed to parse params: %s", err)
 	}
 	return predicate, nil
@@ -62,6 +61,8 @@ var (
 	paramsIndex     = predicateRegexp.SubexpIndex("params")
 )
 
+// ParseAsPredicate attempts to parse a value as a predicate. It does not validate
+// that the parsed predicate is a defined predicate.
 func ParseAsPredicate(value string) (name, params string, err error) {
 	match := predicateRegexp.FindStringSubmatch(value)
 	if match == nil {
@@ -73,53 +74,97 @@ func ParseAsPredicate(value string) (name, params string, err error) {
 	return name, params, nil
 }
 
-// FileContainsPredicate represents the `file:contains(regexp)` predicate,
-// which filters to files that contain a string literal
-type FileContainsPredicate struct {
-	Pattern string
+// RepoContainsPredicate represents the `repo:contains()` predicate,
+// which filters to repos that contain either a file or content
+type RepoContainsPredicate struct {
+	File    string
+	Content string
 }
 
-func (f *FileContainsPredicate) UnmarshalText(text []byte) error {
-	f.Pattern = string(text)
+func (f *RepoContainsPredicate) UnmarshalParams(params string) error {
+	nodes, err := ParseAndOr(params, SearchTypeRegex)
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodes {
+		switch v := node.(type) {
+		case Parameter:
+			switch strings.ToLower(v.Field) {
+			case "file":
+				if f.File != "" {
+					return errors.New("cannot specify file multiple times")
+				}
+				f.File = v.Value
+			case "content":
+				if f.Content != "" {
+					return errors.New("cannot specify content multiple times")
+				}
+				f.Content = v.Value
+			default:
+				return fmt.Errorf("unsupported option %q", v.Field)
+			}
+		case Pattern:
+			if f.Content != "" {
+				return errors.New("cannot specify content multiple times")
+			}
+			f.Content = v.Value
+		default:
+			return fmt.Errorf("unsupported node type %T", node)
+		}
+	}
+
+	if f.File == "" && f.Content == "" {
+		return errors.New("one of file or content must be set")
+	}
+
 	return nil
 }
 
-// TODO (@camdencheek): should we have Field and PredicateName types, or is string alright?
-func (f *FileContainsPredicate) Field() string { return FieldFile }
-func (f *FileContainsPredicate) Name() string  { return "contains" }
-func (f *FileContainsPredicate) String() string {
-	return fmt.Sprintf("%s:%s(%s)", f.Field(), f.Name(), f.Pattern)
-}
-func (f *FileContainsPredicate) Query() Q {
-	return []Node{
-		Pattern{
-			Value: f.Pattern,
-			Annotation: Annotation{
-				Labels: Regexp,
-			},
-		},
-		Parameter{
-			Field: "patterntype",
-			Value: "regexp",
-		},
-		Parameter{
-			Field: "select",
-			Value: "file",
-		},
-		// TODO this runs into the same issues that AND queries do, in that we can't be sure
-		// that we're getting enough to get results.
-		Parameter{
-			Field: "count",
-			Value: "10000",
-		},
+func (f *RepoContainsPredicate) Field() string { return FieldRepo }
+func (f *RepoContainsPredicate) Name() string  { return "contains" }
+func (f *RepoContainsPredicate) Query(parent Q) Q {
+	nodes := make([]Node, 0, 3)
+	nodes = append(nodes, Parameter{
+		Field: FieldSelect,
+		Value: "repo",
+	}, Parameter{
+		Field: FieldCount,
+		Value: "99999",
+	})
+
+	if f.File != "" {
+		nodes = append(nodes, Parameter{
+			Field: FieldFile,
+			Value: f.File,
+		})
 	}
+
+	if f.Content != "" {
+		nodes = append(nodes, Pattern{
+			Value: f.Content,
+		})
+	}
+
+	nodes = append(nodes, nonPredicateRepos(parent)...)
+	return nodes
 }
 
-type PredicateWithRepos struct {
-	Predicate
-	RepoNodes []Node
-}
+// nonPredicateRepos returns the repo nodes in a query that aren't predicates
+func nonPredicateRepos(q Q) []Node {
+	var res []Node
+	VisitField(q, FieldRepo, func(value string, negated bool, ann Annotation) {
+		if _, _, err := ParseAsPredicate(value); err == nil {
+			// Skip predicates
+			return
+		}
 
-func (p PredicateWithRepos) Query() Q {
-	return append(p.RepoNodes, p.Predicate.Query()...)
+		res = append(res, Parameter{
+			Field:      FieldRepo,
+			Value:      value,
+			Negated:    negated,
+			Annotation: ann,
+		})
+	})
+	return res
 }

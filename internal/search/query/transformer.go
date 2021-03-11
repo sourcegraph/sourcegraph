@@ -743,7 +743,9 @@ func AddRegexpField(q Q, field, pattern string) string {
 	return StringHuman(q)
 }
 
-func MapPredicates(q Q, f func(Predicate) ([]Node, error)) (newQ Q, topErr error) {
+// MapPredicates replaces all the predicates in a query with their expanded form. The predicates
+// are expanded using the doExpand function.
+func MapPredicates(q Q, doExpand func(Predicate) ([]Node, error)) (newQ Q, topErr error) {
 	newQ = MapParameter(q, func(field, value string, neg bool, ann Annotation) Node {
 		orig := Parameter{
 			Field:      field,
@@ -758,7 +760,7 @@ func MapPredicates(q Q, f func(Predicate) ([]Node, error)) (newQ Q, topErr error
 
 		name, params, err := ParseAsPredicate(value)
 		if err != nil {
-			// This doesn't look like a predidcate, so skip it
+			// This doesn't look like a predicate, so skip it
 			return orig
 		}
 
@@ -768,35 +770,28 @@ func MapPredicates(q Q, f func(Predicate) ([]Node, error)) (newQ Q, topErr error
 			return orig
 		}
 
-		// Add the repository nodes on the query to the predicate so that we don't
-		// do an unnecessary global search
-		var repoNodes []Node
-		VisitField(q, FieldRepo, func(value string, negated bool, ann Annotation) {
-			repoNodes = append(repoNodes, Parameter{
-				Field:      FieldRepo,
-				Value:      value,
-				Negated:    negated,
-				Annotation: ann,
-			})
-		})
-		predicateWithRepos := PredicateWithRepos{
-			RepoNodes: repoNodes,
-			Predicate: predicate,
+		expanded, err := doExpand(predicate)
+		if err != nil {
+			topErr = err
+			return nil
 		}
 
-		expanded, err := f(predicateWithRepos)
-		topErr = err
 		if neg {
-			// TODO apply demorgan's laws and negate expanded.
-			// This isn't super straightforward because node types are not pointers,
-			// so we can't just mutate them in place
 			topErr = errors.New("predicates do not currently support negation")
 			return nil
 		}
 
+		// If no results are returned, we need to return a sentinel error rather
+		// than an empty expansion because an empty expansion means "everything"
+		// rather than "nothing".
 		if len(expanded) == 0 {
 			topErr = ErrPredicateNoResults
 			return nil
+		}
+
+		// No need to return an or for only one result
+		if len(expanded) == 1 {
+			return expanded[0]
 		}
 
 		return Operator{
