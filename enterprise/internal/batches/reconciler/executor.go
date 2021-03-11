@@ -298,7 +298,6 @@ func (e *executor) publishChangeset(ctx context.Context, asDraft bool) (err erro
 	}
 	// Set the changeset to published.
 	e.ch.PublicationState = batches.ChangesetPublicationStatePublished
-
 	return nil
 }
 
