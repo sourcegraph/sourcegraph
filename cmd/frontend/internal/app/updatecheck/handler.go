@@ -177,23 +177,25 @@ type pingRequest struct {
 	HasExtURL            bool            `json:"hasExtURL"`
 	UniqueUsers          int32           `json:"u"`
 	Activity             json.RawMessage `json:"act"`
-	CampaignsUsage       json.RawMessage `json:"automationUsage"`
-	GrowthStatistics     json.RawMessage `json:"growthStatistics"`
-	SavedSearches        json.RawMessage `json:"savedSearches"`
-	HomepagePanels       json.RawMessage `json:"homepagePanels"`
-	SearchOnboarding     json.RawMessage `json:"searchOnboarding"`
-	Repositories         json.RawMessage `json:"repositories"`
-	RetentionStatistics  json.RawMessage `json:"retentionStatistics"`
-	CodeIntelUsage       json.RawMessage `json:"codeIntelUsage"`
-	NewCodeIntelUsage    json.RawMessage `json:"newCodeIntelUsage"`
-	SearchUsage          json.RawMessage `json:"searchUsage"`
-	ExtensionsUsage      json.RawMessage `json:"extensionsUsage"`
-	CodeInsightsUsage    json.RawMessage `json:"codeInsightsUsage"`
-	InitialAdminEmail    string          `json:"initAdmin"`
-	TotalUsers           int32           `json:"totalUsers"`
-	HasRepos             bool            `json:"repos"`
-	EverSearched         bool            `json:"searched"`
-	EverFindRefs         bool            `json:"refs"`
+	BatchChangesUsage    json.RawMessage `json:"batchChangesUsage"`
+	// AutomationUsage (campaigns) is deprecated, but here so we can receive pings from older instances
+	AutomationUsage     json.RawMessage `json:"automationUsage"`
+	GrowthStatistics    json.RawMessage `json:"growthStatistics"`
+	SavedSearches       json.RawMessage `json:"savedSearches"`
+	HomepagePanels      json.RawMessage `json:"homepagePanels"`
+	SearchOnboarding    json.RawMessage `json:"searchOnboarding"`
+	Repositories        json.RawMessage `json:"repositories"`
+	RetentionStatistics json.RawMessage `json:"retentionStatistics"`
+	CodeIntelUsage      json.RawMessage `json:"codeIntelUsage"`
+	NewCodeIntelUsage   json.RawMessage `json:"newCodeIntelUsage"`
+	SearchUsage         json.RawMessage `json:"searchUsage"`
+	ExtensionsUsage     json.RawMessage `json:"extensionsUsage"`
+	CodeInsightsUsage   json.RawMessage `json:"codeInsightsUsage"`
+	InitialAdminEmail   string          `json:"initAdmin"`
+	TotalUsers          int32           `json:"totalUsers"`
+	HasRepos            bool            `json:"repos"`
+	EverSearched        bool            `json:"searched"`
+	EverFindRefs        bool            `json:"refs"`
 }
 
 type dependencyVersions struct {
@@ -279,7 +281,7 @@ type pingPayload struct {
 	HasUpdate            string          `json:"has_update"`
 	UniqueUsersToday     string          `json:"unique_users_today"`
 	SiteActivity         json.RawMessage `json:"site_activity"`
-	CampaignsUsage       json.RawMessage `json:"automation_usage"`
+	BatchChangesUsage    json.RawMessage `json:"batch_changes_usage"`
 	CodeIntelUsage       json.RawMessage `json:"code_intel_usage"`
 	NewCodeIntelUsage    json.RawMessage `json:"new_code_intel_usage"`
 	SearchUsage          json.RawMessage `json:"search_usage"`
@@ -362,8 +364,8 @@ func marshalPing(pr *pingRequest, hasUpdate bool, clientAddr string, now time.Ti
 		LicenseKey:           pr.LicenseKey,
 		HasUpdate:            strconv.FormatBool(hasUpdate),
 		UniqueUsersToday:     strconv.FormatInt(int64(pr.UniqueUsers), 10),
-		SiteActivity:         pr.Activity,       // no change in schema
-		CampaignsUsage:       pr.CampaignsUsage, // no change in schema
+		SiteActivity:         pr.Activity,          // no change in schema
+		BatchChangesUsage:    pr.BatchChangesUsage, // no change in schema
 		NewCodeIntelUsage:    codeIntelUsage,
 		SearchUsage:          searchUsage,
 		GrowthStatistics:     pr.GrowthStatistics,
