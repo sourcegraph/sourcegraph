@@ -64,7 +64,7 @@ export const BatchChangePreviewPage: React.FunctionComponent<BatchChangePreviewP
     )
 
     useEffect(() => {
-        telemetryService.logViewEvent('CampaignApplyPage')
+        telemetryService.logViewEvent('BatchChangeApplyPage')
     }, [telemetryService])
 
     if (spec === undefined) {

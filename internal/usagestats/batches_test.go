@@ -84,7 +84,7 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 			(5, 'BatchChangeCreated', '{"batch_change_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
 			(6, 'ViewBatchChangeDetailsPageAfterCreate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
 			(7, 'ViewBatchChangeDetailsPageAfterUpdate', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
-			(8, 'ViewBatchChangeDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
+			(8, 'ViewBatchChangeDetailsPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 23, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
 			(9, 'BatchChangeCreatedOrUpdated', '{"batch_change_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
 			(10, 'BatchChangeClosed', '{"batch_change_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
 			(11, 'BatchChangeDeleted', '{"batch_change_id": 1}', '', 23, '', 'backend', 'version', date_trunc('month', CURRENT_DATE) - INTERVAL '2 days'),
@@ -98,9 +98,9 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 			(20, 'BatchChangeClosed', '{"batch_change_id": 2}', '', 24, '', 'backend', 'version', now()),
 			(21, 'BatchChangeDeleted', '{"batch_change_id": 2}', '', 24, '', 'backend', 'version', now()),
 		-- User 25, only views the batch change, today
-			(27, 'ViewBatchChangeDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
+			(27, 'ViewBatchChangeDetailsPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/gitignore-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
 			(28, 'ViewBatchChangesListPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now()),
-			(29, 'ViewBatchChangeDetailsPagePage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/foobar-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now())
+			(29, 'ViewBatchChangeDetailsPage', '{}', 'https://sourcegraph.test:3443/users/mrnugget/batch-changes/foobar-files', 25, '5d302f47-9e91-4b3d-9e96-469b5601a765', 'WEB', 'version', now())
 	`)
 	if err != nil {
 		t.Fatal(err)
@@ -154,26 +154,26 @@ func TestGetBatchChangesUsageStatistics(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := &types.BatchChangesUsageStatistics{
-		ViewBatchChangeApplyPageCount:              2,
-		ViewBatchChangeDetailsPageAfterCreateCount: 2,
-		ViewBatchChangeDetailsPageAfterUpdateCount: 2,
-		BatchChangesCount:                          3,
-		BatchChangesClosedCount:                    1,
-		ActionChangesetsUnpublishedCount:           2,
-		ActionChangesetsCount:                      8,
-		ActionChangesetsDiffStatAddedSum:           19,
-		ActionChangesetsDiffStatChangedSum:         21,
-		ActionChangesetsDiffStatDeletedSum:         23,
-		ActionChangesetsMergedCount:                2,
-		ActionChangesetsMergedDiffStatAddedSum:     9,
-		ActionChangesetsMergedDiffStatChangedSum:   7,
-		ActionChangesetsMergedDiffStatDeletedSum:   5,
-		ManualChangesetsCount:                      2,
-		ManualChangesetsMergedCount:                1,
-		BatchSpecsCreatedCount:                     4,
-		ChangesetSpecsCreatedCount:                 4,
-		CurrentMonthContributorsCount:              1,
-		CurrentMonthUsersCount:                     2,
+		ViewBatchChangeApplyPageCount:               2,
+		ViewBatchChangeDetailsPageAfterCreateCount:  2,
+		ViewBatchChangeDetailsPageAfterUpdateCount:  2,
+		BatchChangesCount:                           3,
+		BatchChangesClosedCount:                     1,
+		PublishedChangesetsUnpublishedCount:         2,
+		PublishedChangesetsCount:                    8,
+		PublishedChangesetsDiffStatAddedSum:         19,
+		PublishedChangesetsDiffStatChangedSum:       21,
+		PublishedChangesetsDiffStatDeletedSum:       23,
+		PublishedChangesetsMergedCount:              2,
+		PublishedChangesetsMergedDiffStatAddedSum:   9,
+		PublishedChangesetsMergedDiffStatChangedSum: 7,
+		PublishedChangesetsMergedDiffStatDeletedSum: 5,
+		ImportedChangesetsCount:                     2,
+		ImportedChangesetsMergedCount:               1,
+		BatchSpecsCreatedCount:                      4,
+		ChangesetSpecsCreatedCount:                  4,
+		CurrentMonthContributorsCount:               1,
+		CurrentMonthUsersCount:                      2,
 		BatchChangesCohorts: []*types.BatchChangesCohort{
 			{
 				Week:                     batchChangeCreationDate1.Truncate(24 * 7 * time.Hour).Format("2006-01-02"),

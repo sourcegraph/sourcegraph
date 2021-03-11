@@ -77,7 +77,7 @@ export const BatchChangeDetailsPage: React.FunctionComponent<BatchChangeDetailsP
     deleteBatchChange,
 }) => {
     useEffect(() => {
-        telemetryService.logViewEvent('CampaignDetailsPagePage')
+        telemetryService.logViewEvent('BatchChangeDetailsPage')
     }, [telemetryService])
 
     const batchChange: BatchChangeFields | null | undefined = useObservable(

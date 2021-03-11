@@ -1115,53 +1115,53 @@ type BatchChangesUsageStatistics struct {
 	// specs were not used and cleaned up.
 	ChangesetSpecsCreatedCount int32
 
-	// ActionChangesetsUnpublishedCount is the number of changesets in the
+	// PublishedChangesetsUnpublishedCount is the number of changesets in the
 	// database that have not been published but belong to a batch change.
 	// This number *could* go down, since it's not
-	// based on event logs, but so far (Nov 2020) we never cleaned up
+	// based on event logs, but so far (Mar 2021) we never cleaned up
 	// changesets in the database.
-	ActionChangesetsUnpublishedCount int32
+	PublishedChangesetsUnpublishedCount int32
 
-	// ActionChangesetsCount is the number of changesets published on code hosts
+	// PublishedChangesetsCount is the number of changesets published on code hosts
 	// by batch changes. This number *could* go down, since it's not based on
-	// event logs, but so far (Nov 2020) we never cleaned up changesets in the
+	// event logs, but so far (Mar 2021) we never cleaned up changesets in the
 	// database.
-	ActionChangesetsCount int32
-	// ActionChangesetsDiffStatAddedSum is the total sum of lines added by
+	PublishedChangesetsCount int32
+	// PublishedChangesetsDiffStatAddedSum is the total sum of lines added by
 	// changesets published on the code host by batch changes.
-	ActionChangesetsDiffStatAddedSum int32
-	// ActionChangesetsDiffStatChangedSum is the total sum of lines changed by
+	PublishedChangesetsDiffStatAddedSum int32
+	// PublishedChangesetsDiffStatChangedSum is the total sum of lines changed by
 	// changesets published on the code host by batch changes.
-	ActionChangesetsDiffStatChangedSum int32
-	// ActionChangesetsDiffStatDeletedSum is the total sum of lines deleted by
+	PublishedChangesetsDiffStatChangedSum int32
+	// PublishedChangesetsDiffStatDeletedSum is the total sum of lines deleted by
 	// changesets published on the code host by batch changes.
-	ActionChangesetsDiffStatDeletedSum int32
+	PublishedChangesetsDiffStatDeletedSum int32
 
-	// ActionChangesetsMergedCount is the number of changesets published on
+	// PublishedChangesetsMergedCount is the number of changesets published on
 	// code hosts by batch changes that have also been *merged*.
 	// This number *could* go down, since it's not based on event logs, but
-	// so far (Nov 2020) we never cleaned up changesets in the database.
-	ActionChangesetsMergedCount int32
-	// ActionChangesetsMergedDiffStatAddedSum is the total sum of lines added by
+	// so far (Mar 2021) we never cleaned up changesets in the database.
+	PublishedChangesetsMergedCount int32
+	// PublishedChangesetsMergedDiffStatAddedSum is the total sum of lines added by
 	// changesets published on the code host by batch changes and merged.
-	ActionChangesetsMergedDiffStatAddedSum int32
-	// ActionChangesetsMergedDiffStatChangedSum is the total sum of lines changed by
+	PublishedChangesetsMergedDiffStatAddedSum int32
+	// PublishedChangesetsMergedDiffStatChangedSum is the total sum of lines changed by
 	// changesets published on the code host by batch changes and merged.
-	ActionChangesetsMergedDiffStatChangedSum int32
-	// ActionChangesetsMergedDiffStatDeletedSum is the total sum of lines deleted by
+	PublishedChangesetsMergedDiffStatChangedSum int32
+	// PublishedChangesetsMergedDiffStatDeletedSum is the total sum of lines deleted by
 	// changesets published on the code host by batch changes and merged.
-	ActionChangesetsMergedDiffStatDeletedSum int32
+	PublishedChangesetsMergedDiffStatDeletedSum int32
 
-	// ManualChangesetsCount is the total number of changesets that have been
+	// ImportedChangesetsCount is the total number of changesets that have been
 	// imported by a batch change to be tracked.
 	// This number *could* go down, since it's not based on event logs, but
-	// so far (Nov 2020) we never cleaned up changesets in the database.
-	ManualChangesetsCount int32
+	// so far (Mar 2021) we never cleaned up changesets in the database.
+	ImportedChangesetsCount int32
 	// ManualChangesetsCount is the total number of *merged* changesets that
 	// have been imported by a batch change to be tracked.
 	// This number *could* go down, since it's not based on event logs, but
-	// so far (Nov 2020) we never cleaned up changesets in the database.
-	ManualChangesetsMergedCount int32
+	// so far (Mar 2021) we never cleaned up changesets in the database.
+	ImportedChangesetsMergedCount int32
 
 	// CurrentMonthContributorsCount is the count of unique users that have logged a
 	// "contributing" batch changes event, such as "BatchChangeCreated".

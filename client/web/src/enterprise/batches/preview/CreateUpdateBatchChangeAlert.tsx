@@ -35,7 +35,7 @@ export const CreateUpdateBatchChangeAlert: React.FunctionComponent<CreateUpdateB
                 ? await applyBatchChange({ batchSpec: specID, batchChange: batchChangeID })
                 : await createBatchChange({ batchSpec: specID })
             history.push(batchChange.url)
-            telemetryService.logViewEvent(`CampaignDetailsPageAfter${batchChangeID ? 'Create' : 'Update'}`)
+            telemetryService.logViewEvent(`BatchChangeDetailsPageAfter${batchChangeID ? 'Create' : 'Update'}`)
         } catch (error) {
             setIsLoading(error)
         }

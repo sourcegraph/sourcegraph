@@ -43,17 +43,17 @@ SELECT
 FROM changesets;
 `
 	if err := dbconn.Global.QueryRowContext(ctx, changesetCountsQuery).Scan(
-		&stats.ActionChangesetsUnpublishedCount,
-		&stats.ActionChangesetsCount,
-		&stats.ActionChangesetsDiffStatAddedSum,
-		&stats.ActionChangesetsDiffStatChangedSum,
-		&stats.ActionChangesetsDiffStatDeletedSum,
-		&stats.ActionChangesetsMergedCount,
-		&stats.ActionChangesetsMergedDiffStatAddedSum,
-		&stats.ActionChangesetsMergedDiffStatChangedSum,
-		&stats.ActionChangesetsMergedDiffStatDeletedSum,
-		&stats.ManualChangesetsCount,
-		&stats.ManualChangesetsMergedCount,
+		&stats.PublishedChangesetsUnpublishedCount,
+		&stats.PublishedChangesetsCount,
+		&stats.PublishedChangesetsDiffStatAddedSum,
+		&stats.PublishedChangesetsDiffStatChangedSum,
+		&stats.PublishedChangesetsDiffStatDeletedSum,
+		&stats.PublishedChangesetsMergedCount,
+		&stats.PublishedChangesetsMergedDiffStatAddedSum,
+		&stats.PublishedChangesetsMergedDiffStatChangedSum,
+		&stats.PublishedChangesetsMergedDiffStatDeletedSum,
+		&stats.ImportedChangesetsCount,
+		&stats.ImportedChangesetsMergedCount,
 	); err != nil {
 		return nil, err
 	}

@@ -78,7 +78,7 @@ export const BatchChangeListPage: React.FunctionComponent<BatchChangeListPagePro
     openTab,
     ...props
 }) => {
-    useEffect(() => props.telemetryService.logViewEvent('CampaignsListPage'), [props.telemetryService])
+    useEffect(() => props.telemetryService.logViewEvent('BatchChangesListPage'), [props.telemetryService])
 
     /*
      * Tracks whether this is the first fetch since this page has been rendered the first time.
