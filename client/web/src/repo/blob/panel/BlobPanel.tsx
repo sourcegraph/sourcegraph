@@ -172,7 +172,7 @@ export function useBlobPanelViews({
                     ),
                 },
             ],
-            [createLocationProvider]
+            [] // Activation props are not stable
         )
     )
 
