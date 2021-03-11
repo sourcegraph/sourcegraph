@@ -162,13 +162,13 @@ export const SiteAdminPingsPage: React.FunctionComponent<Props> = props => {
                         <li>
                             Aggregate counts of unique monthly users, by:
                             <ul>
-                                <li>Whether they are contributed to campaigns</li>
-                                <li>Whether they only viewed campaigns</li>
+                                <li>Whether they are contributed to batch changes</li>
+                                <li>Whether they only viewed batch changes</li>
                             </ul>
                         </li>
                         <li>
-                            Weekly campaign (open, closed) and changesets counts (imported, published, unpublished,
-                            open, draft, merged, closed) for campaign cohorts created in the last 12 months
+                            Weekly batch change (open, closed) and changesets counts (imported, published, unpublished,
+                            open, draft, merged, closed) for batch change cohorts created in the last 12 months
                         </li>
                     </ul>
                 </li>

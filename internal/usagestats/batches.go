@@ -11,8 +11,8 @@ import (
 )
 
 // GetBatchChangesUsageStatistics returns the current site's batch changes usage.
-func GetBatchChangesUsageStatistics(ctx context.Context) (*types.CampaignsUsageStatistics, error) {
-	stats := types.CampaignsUsageStatistics{}
+func GetBatchChangesUsageStatistics(ctx context.Context) (*types.BatchChangesUsageStatistics, error) {
+	stats := types.BatchChangesUsageStatistics{}
 
 	const batchChangesCountsQuery = `
 SELECT
@@ -21,8 +21,8 @@ SELECT
 FROM batch_changes;
 `
 	if err := dbconn.Global.QueryRowContext(ctx, batchChangesCountsQuery).Scan(
-		&stats.CampaignsCount,
-		&stats.CampaignsClosedCount,
+		&stats.BatchChangesCount,
+		&stats.BatchChangesClosedCount,
 	); err != nil {
 		return nil, err
 	}
@@ -70,11 +70,11 @@ WHERE name IN ('BatchSpecCreated', 'ViewBatchChangeApplyPage', 'ViewBatchChangeD
 `
 
 	if err := dbconn.Global.QueryRowContext(ctx, eventLogsCountsQuery).Scan(
-		&stats.CampaignSpecsCreatedCount,
+		&stats.BatchSpecsCreatedCount,
 		&stats.ChangesetSpecsCreatedCount,
-		&stats.ViewCampaignApplyPageCount,
-		&stats.ViewCampaignDetailsPageAfterCreateCount,
-		&stats.ViewCampaignDetailsPageAfterUpdateCount,
+		&stats.ViewBatchChangeApplyPageCount,
+		&stats.ViewBatchChangeDetailsPageAfterCreateCount,
+		&stats.ViewBatchChangeDetailsPageAfterUpdateCount,
 	); err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ LEFT JOIN changeset_counts ON batch_change_counts.creation_week = changeset_coun
 GROUP BY batch_change_counts.creation_week;
 `
 
-	stats.CampaignsCohorts = []*types.CampaignsCohort{}
+	stats.BatchChangesCohorts = []*types.BatchChangesCohort{}
 	rows, err := dbconn.Global.QueryContext(ctx, batchChangesCohortQuery)
 	if err != nil {
 		return nil, err
@@ -174,12 +174,12 @@ GROUP BY batch_change_counts.creation_week;
 	defer rows.Close()
 
 	for rows.Next() {
-		var cohort types.CampaignsCohort
+		var cohort types.BatchChangesCohort
 
 		if err := rows.Scan(
 			&cohort.Week,
-			&cohort.CampaignsClosed,
-			&cohort.CampaignsOpen,
+			&cohort.BatchChangesClosed,
+			&cohort.BatchChangesOpen,
 			&cohort.ChangesetsImported,
 			&cohort.ChangesetsUnpublished,
 			&cohort.ChangesetsPublished,
@@ -191,7 +191,7 @@ GROUP BY batch_change_counts.creation_week;
 			return nil, err
 		}
 
-		stats.CampaignsCohorts = append(stats.CampaignsCohorts, &cohort)
+		stats.BatchChangesCohorts = append(stats.BatchChangesCohorts, &cohort)
 	}
 
 	return &stats, nil
