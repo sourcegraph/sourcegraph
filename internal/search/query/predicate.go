@@ -16,9 +16,9 @@ type Predicate interface {
 	// For example, with `file:contains()`, Name returns "contains".
 	Name() string
 
-	// UnmarshalParams unmarshals the contents of the predicate arguments
+	// ParseParams parses the contents of the predicate arguments
 	// into the predicate object.
-	UnmarshalParams(string) error
+	ParseParams(string) error
 
 	// Query returns a Q that, when evaluated, returns a list of results
 	// that can replace the predicate
@@ -49,7 +49,7 @@ func (pr predicateRegistry) Get(field, name, params string) (Predicate, error) {
 	}
 
 	predicate := newPredicateFunc()
-	if err := predicate.UnmarshalParams(params); err != nil {
+	if err := predicate.ParseParams(params); err != nil {
 		return nil, fmt.Errorf("failed to parse params: %s", err)
 	}
 	return predicate, nil
@@ -81,7 +81,7 @@ type RepoContainsPredicate struct {
 	Content string
 }
 
-func (f *RepoContainsPredicate) UnmarshalParams(params string) error {
+func (f *RepoContainsPredicate) ParseParams(params string) error {
 	nodes, err := ParseAndOr(params, SearchTypeRegex)
 	if err != nil {
 		return err
