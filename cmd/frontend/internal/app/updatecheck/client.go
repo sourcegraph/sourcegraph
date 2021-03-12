@@ -118,14 +118,14 @@ func getInitialSiteAdminEmail(ctx context.Context) (_ string, err error) {
 	return database.GlobalUserEmails.GetInitialSiteAdminEmail(ctx)
 }
 
-func getAndMarshalCampaignsUsageJSON(ctx context.Context) (_ json.RawMessage, err error) {
-	defer recordOperation("getAndMarshalCampaignsUsageJSON")(&err)
+func getAndMarshalBatchChangesUsageJSON(ctx context.Context) (_ json.RawMessage, err error) {
+	defer recordOperation("getAndMarshalBatchChangesUsageJSON")(&err)
 
-	campaignsUsage, err := usagestats.GetBatchChangesUsageStatistics(ctx)
+	batchChangesUsage, err := usagestats.GetBatchChangesUsageStatistics(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(campaignsUsage)
+	return json.Marshal(batchChangesUsage)
 }
 
 func getAndMarshalGrowthStatisticsJSON(ctx context.Context) (_ json.RawMessage, err error) {
@@ -309,7 +309,7 @@ func updateBody(ctx context.Context, db dbutil.DB) (io.Reader, error) {
 		CodeIntelUsage:      []byte("{}"),
 		NewCodeIntelUsage:   []byte("{}"),
 		SearchUsage:         []byte("{}"),
-		CampaignsUsage:      []byte("{}"),
+		BatchChangesUsage:   []byte("{}"),
 		GrowthStatistics:    []byte("{}"),
 		SavedSearches:       []byte("{}"),
 		HomepagePanels:      []byte("{}"),
@@ -360,9 +360,9 @@ func updateBody(ctx context.Context, db dbutil.DB) (io.Reader, error) {
 		if err != nil {
 			logFunc("telemetry: updatecheck.hasFindRefsOccurred failed", "error", err)
 		}
-		r.CampaignsUsage, err = getAndMarshalCampaignsUsageJSON(ctx)
+		r.BatchChangesUsage, err = getAndMarshalBatchChangesUsageJSON(ctx)
 		if err != nil {
-			logFunc("telemetry: updatecheck.getAndMarshalCampaignsUsageJSON failed", "error", err)
+			logFunc("telemetry: updatecheck.getAndMarshalBatchChangesUsageJSON failed", "error", err)
 		}
 		r.GrowthStatistics, err = getAndMarshalGrowthStatisticsJSON(ctx)
 		if err != nil {
