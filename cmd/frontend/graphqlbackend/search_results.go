@@ -877,20 +877,21 @@ func (r *searchResolver) resultsRecursive(ctx context.Context, q query.Q) (srr *
 	}
 	r.setQuery(q)
 
-	wantCount := defaultMaxSearchResults
-	if count := r.Query.Count(); count != nil {
-		wantCount = *count
-	}
-
-	expanded, err := query.MapPredicates(r.Query, func(p query.Predicate) ([]query.Node, error) {
-		return r.runPredicate(ctx, p, r.Query)
+	expanded, err := substitutePredicates(r.Query, func(p query.Predicate) (*SearchResultsResolver, error) {
+		r.invalidateRepoCache = true
+		return r.resultsRecursive(ctx, p.Query(r.Query))
 	})
-	if err != nil && errors.Is(err, query.ErrPredicateNoResults) {
+	if err != nil && errors.Is(err, ErrPredicateNoResults) {
 		return &SearchResultsResolver{}, nil
 	} else if err != nil {
 		return nil, err
 	}
 	r.setQuery(expanded)
+
+	wantCount := defaultMaxSearchResults
+	if count := r.Query.Count(); count != nil {
+		wantCount = *count
+	}
 
 	for _, disjunct := range query.Dnf(r.Query) {
 		disjunct = query.ConcatRevFilters(disjunct)
@@ -920,22 +921,6 @@ func (r *searchResolver) resultsRecursive(ctx context.Context, q query.Q) (srr *
 		srr = &SearchResultsResolver{db: r.db}
 	}
 	return srr, err
-}
-
-func (r *searchResolver) runPredicate(ctx context.Context, p query.Predicate, parent query.Q) ([]query.Node, error) {
-	// Always invalidate for predicates because the initially resolved repositories
-	// are not necessarily the repositories that we want to use for the expansion.
-	r.invalidateRepoCache = true
-	srr, err := r.resultsRecursive(ctx, p.Query(parent))
-	if err != nil {
-		return nil, err
-	}
-
-	switch p.Field() {
-	case query.FieldRepo:
-		return searchResultsToRepoNodes(srr.SearchResults)
-	}
-	return nil, fmt.Errorf("unsupported predicate result type %q", p.Field())
 }
 
 // searchResultsToRepoNodes converts a set of search results into repository nodes
@@ -981,6 +966,81 @@ func (r *searchResolver) resultsWithTimeoutSuggestion(ctx context.Context) (*Sea
 	}
 	return rr, err
 }
+
+// substitutePredicates replaces all the predicates in a query with their expanded form. The predicates
+// are expanded using the doExpand function.
+func substitutePredicates(q query.Q, evaluate func(query.Predicate) (*SearchResultsResolver, error)) (newQ query.Q, topErr error) {
+	newQ = query.MapParameter(q, func(field, value string, neg bool, ann query.Annotation) query.Node {
+		orig := query.Parameter{
+			Field:      field,
+			Value:      value,
+			Negated:    neg,
+			Annotation: ann,
+		}
+
+		if topErr != nil {
+			return orig
+		}
+
+		if neg {
+			topErr = errors.New("predicates do not currently support negation")
+			return nil
+		}
+
+		name, params, err := query.ParseAsPredicate(value)
+		if err != nil {
+			// This doesn't look like a predicate, so skip it
+			return orig
+		}
+
+		predicate, err := query.DefaultPredicateRegistry.Get(field, name, params)
+		if err != nil {
+			topErr = err
+			return orig
+		}
+
+		srr, err := evaluate(predicate)
+		if err != nil {
+			topErr = err
+			return nil
+		}
+
+		var nodes []query.Node
+		switch predicate.Field() {
+		case query.FieldRepo:
+			nodes, err = searchResultsToRepoNodes(srr.SearchResults)
+			if err != nil {
+				topErr = err
+				return nil
+			}
+		default:
+			topErr = fmt.Errorf("unsupported predicate result type %q", predicate.Field())
+			return nil
+		}
+
+		// If no results are returned, we need to return a sentinel error rather
+		// than an empty expansion because an empty expansion means "everything"
+		// rather than "nothing".
+		if len(nodes) == 0 {
+			topErr = ErrPredicateNoResults
+			return nil
+		}
+
+		// No need to return an operator for only one result
+		if len(nodes) == 1 {
+			return nodes[0]
+		}
+
+		return query.Operator{
+			Kind:     query.Or,
+			Operands: nodes,
+		}
+	})
+
+	return newQ, topErr
+}
+
+var ErrPredicateNoResults = errors.New("no results returned for predicate")
 
 // longer returns a suggested longer time to wait if the given duration wasn't long enough.
 func longer(N int, dt time.Duration) time.Duration {
