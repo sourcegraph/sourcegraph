@@ -221,7 +221,7 @@ exports[`<HierarchicalLocationsView /> displays multiple locations grouped by fi
       </div>
       <div
         aria-hidden={true}
-        className="resizable--right d-flex border-left"
+        className="resizable--right border-right resizable d-flex"
         onMouseDown={[Function]}
       />
     </div>

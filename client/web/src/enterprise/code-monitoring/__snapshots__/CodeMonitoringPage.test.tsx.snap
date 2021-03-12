@@ -4355,7 +4355,7 @@ exports[`CodeMonitoringListPage Code monitoring page with more than 10 results 1
                   </small>
                 </p>
                 <button
-                  className="btn btn-secondary btn-sm filtered-connection__show-more position-sticky"
+                  className="btn btn-secondary btn-sm filtered-connection__show-more"
                   onClick={[Function]}
                   type="button"
                 >
