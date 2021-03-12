@@ -68,3 +68,5 @@ export interface TextModel extends Pick<TextDocument, 'uri' | 'languageId' | 'te
  * guaranteed to never be updated.
  */
 export interface PartialModel extends Pick<TextModel, 'languageId'> {}
+
+export type ViewerUpdate = ViewerId & { action: 'removal' | 'addition'; type: 'DirectoryViewer' | 'CodeEditor' }

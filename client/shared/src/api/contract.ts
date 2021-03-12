@@ -20,7 +20,7 @@ import { ContributionScope } from './client/context/context'
 import { ErrorLike } from '../util/errors'
 import { ConfiguredExtension } from '../extensions/extension'
 import { DeepReplace } from '../util/types'
-import { ViewerData, ViewerId } from './viewerTypes'
+import { ViewerData, ViewerId, ViewerUpdate } from './viewerTypes'
 
 // TODO: Move types to extension-api-types
 
@@ -187,6 +187,11 @@ export interface FlatExtensionHostAPI {
      * viewer methods to operate on this viewer).
      */
     addViewerIfNotExists(viewer: ViewerData): ViewerId
+
+    /**
+     * Emits whenever a viewer is added or removed.
+     */
+    viewerUpdates: () => ProxySubscribable<ViewerUpdate>
 
     /**
      * Sets the selections for a CodeEditor.

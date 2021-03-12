@@ -52,7 +52,7 @@ import { InitData } from './extensionHost'
 import { ExtensionDocument } from './api/textDocument'
 import { ReferenceCounter } from '../../util/ReferenceCounter'
 import { ExtensionCodeEditor } from './api/codeEditor'
-import { ExtensionViewer, ViewerWithPartialModel, ViewerId } from '../viewerTypes'
+import { ExtensionViewer, ViewerWithPartialModel, ViewerId, ViewerUpdate } from '../viewerTypes'
 import { ExtensionDirectoryViewer } from './api/directoryViewer'
 import { ExtensionWorkspaceRoot } from './api/workspaceRoot'
 import { asError, createAggregateError, ErrorLike, isErrorLike } from '../../util/errors'
@@ -121,6 +121,7 @@ export interface ExtensionHostState {
     /** Mutable map of viewer ID to viewer. */
     viewComponents: Map<string, ExtensionViewer>
     activeViewComponentChanges: BehaviorSubject<ExtensionViewer | undefined>
+    viewerUpdates: Subject<ViewerUpdate>
 
     plainNotifications: ReplaySubject<PlainNotification>
     progressNotifications: ReplaySubject<ProgressNotification & ProxyMarked>
@@ -224,6 +225,7 @@ export const initNewExtensionAPI = (
         modelReferences: new ReferenceCounter<string>(),
 
         activeViewComponentChanges: new BehaviorSubject<ExtensionViewer | undefined>(undefined),
+        viewerUpdates: new Subject<ViewerUpdate>(),
 
         // Use ReplaySubject so we don't lose notifications in case the client application subscribes
         // to notification streams after extensions have already sent notifications.
@@ -469,6 +471,7 @@ export const initNewExtensionAPI = (
             if (viewerData.isActive) {
                 state.activeViewComponentChanges.next(viewComponent)
             }
+            state.viewerUpdates.next({ viewerId, action: 'addition', type: viewerData.type })
             return { viewerId }
         },
 
@@ -479,10 +482,13 @@ export const initNewExtensionAPI = (
             if (state.activeViewComponentChanges.value?.viewerId === viewerId) {
                 state.activeViewComponentChanges.next(undefined)
             }
+            state.viewerUpdates.next({ viewerId, action: 'removal', type: viewer.type })
             if (viewer.type === 'CodeEditor' && state.modelReferences.decrement(viewer.resource)) {
                 removeTextDocument(viewer.resource)
             }
         },
+
+        viewerUpdates: () => proxySubscribable(state.viewerUpdates.asObservable()),
 
         setEditorSelections: ({ viewerId }, selections) => {
             const viewer = getViewer(viewerId)
@@ -750,7 +756,6 @@ export const initNewExtensionAPI = (
     }
 
     const app: typeof sourcegraph['app'] = {
-        // deprecated, add simple window getter
         get activeWindow() {
             return window
         },
@@ -769,7 +774,6 @@ export const initNewExtensionAPI = (
                 priority: 0,
             })
 
-            // TODO(tj): try proxy?
             const panelView: sourcegraph.PanelView = {
                 get title() {
                     return panelViewData.value.title

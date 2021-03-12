@@ -92,6 +92,7 @@ export function trackViews<V extends View>(
                                                 view && {
                                                     ...view,
                                                     subscriptions: new Subscription(),
+                                                    viewerId: { id: 'idk' },
                                                 }
                                             )
                                         }

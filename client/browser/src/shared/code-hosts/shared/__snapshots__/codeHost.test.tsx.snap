@@ -2,7 +2,7 @@
 
 exports[`codeHost handleCodeHost() Decorations decorates a diff code view 1`] = `
 <div
-  class="test test-6 sg-mounted"
+  class="test test-2 sg-mounted"
   id="code"
 >
   <div
@@ -25,7 +25,7 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 1`] = 
   <div
     line="2"
     part="base"
-    style="background-color: red;"
+    style="background-color: blue;"
   >
     <span
       class="code-element"
@@ -34,7 +34,7 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 1`] = 
         class="sourcegraph-extension-element line-decoration-attachment"
         data-part="base"
       >
-        test decoration base line 2
+        test decoration head line 2
       </span>
     </span>
   </div>
@@ -71,18 +71,10 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 1`] = 
   <div
     line="5"
     part="base"
-    style="background-color: red;"
   >
     <span
       class="code-element"
-    >
-      <span
-        class="sourcegraph-extension-element line-decoration-attachment"
-        data-part="base"
-      >
-        test decoration base line 5
-      </span>
-    </span>
+    />
   </div>
   
 
@@ -91,7 +83,7 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 1`] = 
 
 exports[`codeHost handleCodeHost() Decorations decorates a diff code view 2`] = `
 <div
-  class="test test-6 sg-mounted"
+  class="test test-2 sg-mounted"
   id="code"
 >
   <div
@@ -114,11 +106,18 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 2`] = 
   <div
     line="2"
     part="base"
-    style=""
+    style="background-color: blue;"
   >
     <span
       class="code-element"
-    />
+    >
+      <span
+        class="sourcegraph-extension-element line-decoration-attachment"
+        data-part="base"
+      >
+        test decoration head line 2
+      </span>
+    </span>
   </div>
   
 
@@ -153,18 +152,10 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 2`] = 
   <div
     line="5"
     part="base"
-    style="background-color: red;"
   >
     <span
       class="code-element"
-    >
-      <span
-        class="sourcegraph-extension-element line-decoration-attachment"
-        data-part="base"
-      >
-        test decoration base line 5
-      </span>
-    </span>
+    />
   </div>
   
 
@@ -173,7 +164,7 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 2`] = 
 
 exports[`codeHost handleCodeHost() Decorations decorates a diff code view 3`] = `
 <div
-  class="test test-6 sg-mounted"
+  class="test test-2 sg-mounted"
   id="code"
 >
   <div
@@ -196,11 +187,18 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 3`] = 
   <div
     line="2"
     part="base"
-    style=""
+    style="background-color: blue;"
   >
     <span
       class="code-element"
-    />
+    >
+      <span
+        class="sourcegraph-extension-element line-decoration-attachment"
+        data-part="base"
+      >
+        test decoration head line 2 changed
+      </span>
+    </span>
   </div>
   
 
@@ -235,18 +233,10 @@ exports[`codeHost handleCodeHost() Decorations decorates a diff code view 3`] = 
   <div
     line="5"
     part="base"
-    style="background-color: red;"
   >
     <span
       class="code-element"
-    >
-      <span
-        class="sourcegraph-extension-element line-decoration-attachment"
-        data-part="base"
-      >
-        test decoration base line 5
-      </span>
-    </span>
+    />
   </div>
   
 

@@ -46,8 +46,3 @@ export interface CodeEditor extends ViewerId, CodeEditorData {}
  * Describes a directory viewer that has been added to the {@link ViewerService}.
  */
 export interface DirectoryViewer extends ViewerId, DirectoryViewerData {}
-
-export type ViewerUpdate =
-    | ({ type: 'added'; viewerData: ViewerData } & ViewerId)
-    | ({ type: 'updated'; viewerData: Pick<CodeEditorData, 'selections'> } & ViewerId)
-    | ({ type: 'deleted' } & ViewerId)

@@ -2,11 +2,7 @@
 
 exports[`LineDecorator renders multiple attachments 1`] = `
 <Memo()
-  codeViewReference={
-    Object {
-      "current": <div />,
-    }
-  }
+  codeViewElements="[Subject]"
   decorations={
     Array [
       Object {
@@ -121,11 +117,7 @@ exports[`LineDecorator renders multiple attachments 1`] = `
 
 exports[`LineDecorator renders one attachment 1`] = `
 <Memo()
-  codeViewReference={
-    Object {
-      "current": <div />,
-    }
-  }
+  codeViewElements="[Subject]"
   decorations={
     Array [
       Object {

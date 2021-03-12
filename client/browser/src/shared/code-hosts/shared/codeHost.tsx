@@ -786,8 +786,6 @@ export function handleCodeHost({
                 mergeMap(diffOrBlobInfo =>
                     resolveRepoNamesForDiffOrFileInfo(diffOrBlobInfo, platformContext.requestGraphQL)
                 ),
-                tap(() => console.log('resolved repo name')),
-                delay(1000),
                 mergeMap(diffOrBlobInfo =>
                     fetchFileContentForDiffOrFileInfo(diffOrBlobInfo, platformContext.requestGraphQL).pipe(
                         map(diffOrBlobInfo => ({
@@ -796,7 +794,6 @@ export function handleCodeHost({
                         }))
                     )
                 ),
-                tap(() => console.log('resolved file content')),
                 catchError(error => {
                     // Ignore PrivateRepoPublicSourcegraph errors (don't initialize those code views)
                     if (isPrivateRepoPublicSourcegraphComErrorLike(error)) {
@@ -914,6 +911,7 @@ export function handleCodeHost({
                     getToolbarMount,
                     toolbarButtonProps,
                 } = codeViewEvent
+
                 const initializeModelAndViewerForFileInfo = async (
                     fileInfo: FileInfoWithContent & FileInfoWithRepoName
                 ): Promise<CodeEditorWithPartialModel> => {
@@ -963,27 +961,44 @@ export function handleCodeHost({
 
                 const initializeModelAndViewerForDiffOrFileInfo = async (
                     diffOrFileInfo: DiffOrBlobInfo<FileInfoWithContent>
-                ): Promise<CodeEditorWithPartialModel> => {
+                ): Promise<
+                    | { blob: CodeEditorWithPartialModel }
+                    | { head: CodeEditorWithPartialModel; base: CodeEditorWithPartialModel }
+                    | { head: CodeEditorWithPartialModel }
+                    | { base: CodeEditorWithPartialModel }
+                > => {
                     if ('blob' in diffOrFileInfo) {
-                        return initializeModelAndViewerForFileInfo(diffOrFileInfo.blob)
+                        return { blob: await initializeModelAndViewerForFileInfo(diffOrFileInfo.blob) }
                     }
                     if (diffOrFileInfo.head && diffOrFileInfo.base) {
                         // For diffs, both editors are created (for head and base)
-                        // but only one of them is returned and later passed into
+                        // but only one of them is passed into
                         // the `scope` of the CodeViewToolbar component.
-                        const [editor] = await Promise.all([
+                        // Both are used to listen for text decorations.
+                        const [head, base] = await Promise.all([
                             initializeModelAndViewerForFileInfo(diffOrFileInfo.head),
                             initializeModelAndViewerForFileInfo(diffOrFileInfo.base),
                         ])
-                        return editor
+                        return { head, base }
                     }
                     if (diffOrFileInfo.base) {
-                        return initializeModelAndViewerForFileInfo(diffOrFileInfo.base)
+                        return { base: await initializeModelAndViewerForFileInfo(diffOrFileInfo.base) }
                     }
-                    return initializeModelAndViewerForFileInfo(diffOrFileInfo.head)
+                    return { head: await initializeModelAndViewerForFileInfo(diffOrFileInfo.head) }
                 }
 
                 const codeEditorWithPartialModel = await initializeModelAndViewerForDiffOrFileInfo(diffOrBlobInfo)
+
+                let scopeEditor: CodeEditorWithPartialModel
+                if ('blob' in codeEditorWithPartialModel) {
+                    scopeEditor = codeEditorWithPartialModel.blob
+                } else {
+                    if ('head' in codeEditorWithPartialModel) {
+                        scopeEditor = codeEditorWithPartialModel.head
+                    } else {
+                        scopeEditor = codeEditorWithPartialModel.base
+                    }
+                }
 
                 if (wasRemoved) {
                     return
@@ -1009,6 +1024,7 @@ export function handleCodeHost({
                     let previousIsLightTheme = true
                     const update = (decorations?: TextDocumentDecoration[] | null, isLightTheme?: boolean): void => {
                         try {
+                            console.log('applying decs', { decorations })
                             decorationsByLine = applyDecorations(
                                 domFunctions,
                                 element,
@@ -1023,6 +1039,13 @@ export function handleCodeHost({
                             console.error('Could not apply decorations to code view', codeViewEvent.element, error)
                         }
                     }
+
+                    const viewerId = diffPart ? scopeEditor.viewerId : null
+
+                    if (diffPart && diffPart in codeEditorWithPartialModel) {
+                        codeEditorWithPartialModel[diffPart]
+                    }
+
                     codeViewEvent.subscriptions.add(
                         combineLatest([
                             from(extensionsController.extHostAPI).pipe(
@@ -1047,14 +1070,24 @@ export function handleCodeHost({
 
                 // Apply decorations coming from extensions
                 if (!minimalUI) {
-                    if ('blob' in diffOrBlobInfo) {
-                        applyDecorationsForFileInfo(diffOrBlobInfo.blob)
+                    if ('blob' in diffOrBlobInfo && 'blobEditor' in codeEditorWithPartialModel) {
+                        applyDecorationsForFileInfo(diffOrBlobInfo.blob, codeEditorWithPartialModel.blobEditor)
                     } else {
-                        if (diffOrBlobInfo.head) {
-                            applyDecorationsForFileInfo(diffOrBlobInfo.head, 'head')
+                        if (diffOrBlobInfo.head && 'headEditor' in codeEditorWithPartialModel) {
+                            console.log('applying decs for head')
+                            applyDecorationsForFileInfo(
+                                diffOrBlobInfo.head,
+                                codeEditorWithPartialModel.headEditor,
+                                'head'
+                            )
                         }
-                        if (diffOrBlobInfo.base) {
-                            applyDecorationsForFileInfo(diffOrBlobInfo.base, 'base')
+                        if (diffOrBlobInfo.base && 'baseEditor' in codeEditorWithPartialModel) {
+                            console.log('applying decs for base')
+                            applyDecorationsForFileInfo(
+                                diffOrBlobInfo.base,
+                                codeEditorWithPartialModel.baseEditor,
+                                'base'
+                            )
                         }
                     }
                 }
@@ -1105,7 +1138,6 @@ export function handleCodeHost({
                 // Render toolbar
                 if (getToolbarMount && !minimalUI) {
                     const mount = getToolbarMount(element)
-                    console.log({ mount })
                     render(
                         <CodeViewToolbar
                             {...codeHost.codeViewToolbarClassProps}
