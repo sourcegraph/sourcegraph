@@ -7,7 +7,6 @@ import { MainThreadAPI } from '../contract'
 import { SettingsCascade } from '../../settings/settings'
 import { Observer } from 'rxjs'
 import { ProxyMarked, proxyMarker, Remote } from 'comlink'
-import { ExtensionDocuments } from './api/documents'
 import { MaybeLoadingResult } from '@sourcegraph/codeintellify'
 
 describe('getHover from ExtensionHost API, it aims to have more e2e feel', () => {
@@ -34,17 +33,17 @@ describe('getHover from ExtensionHost API, it aims to have more e2e feel', () =>
 
     it('restarts hover call if a provider was added or removed', () => {
         const typescriptFileUri = 'file:///f.ts'
-        const documents = new ExtensionDocuments(() => Promise.resolve())
-        documents.$acceptDocumentData([
-            {
-                type: 'added',
-                languageId: 'ts',
-                text: 'body',
-                uri: typescriptFileUri,
-            },
-        ])
 
-        const { exposedToMain, languages } = initNewExtensionAPI(noopMain, emptySettings, documents)
+        const { exposedToMain, languages } = initNewExtensionAPI(noopMain, {
+            initialSettings: emptySettings,
+            clientApplication: 'sourcegraph',
+        })
+
+        exposedToMain.addTextDocumentIfNotExists({
+            languageId: 'ts',
+            text: 'body',
+            uri: typescriptFileUri,
+        })
 
         let counter = 0
         languages.registerHoverProvider([{ pattern: '*.ts' }], {

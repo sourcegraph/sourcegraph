@@ -8,7 +8,7 @@ import { catchError, distinctUntilChanged, endWith, map, startWith, switchMap, t
 import { FetchFileParameters } from '../../../../../shared/src/components/CodeExcerpt'
 import { RepoLink } from '../../../../../shared/src/components/RepoLink'
 import { Resizable } from '../../../../../shared/src/components/Resizable'
-import { Controller } from '../../../../../shared/src/extensions/controller'
+import { ExtensionsControllerProps } from '../../../../../shared/src/extensions/controller'
 import { SettingsCascadeProps } from '../../../../../shared/src/settings/settings'
 import { asError, ErrorLike, isErrorLike } from '../../../../../shared/src/util/errors'
 import { parseRepoURI } from '../../../../../shared/src/util/url'
@@ -21,7 +21,10 @@ import { VersionContextProps } from '../../../../../shared/src/search/util'
 /** The maximum number of results we'll receive from a provider before we truncate and display a banner. */
 const MAXIMUM_LOCATION_RESULTS = 500
 
-export interface HierarchicalLocationsViewProps extends SettingsCascadeProps, VersionContextProps {
+export interface HierarchicalLocationsViewProps
+    extends SettingsCascadeProps,
+        VersionContextProps,
+        ExtensionsControllerProps<'extHostAPI'> {
     location: H.Location
     /**
      * The observable that emits the locations.
@@ -46,8 +49,6 @@ export interface HierarchicalLocationsViewProps extends SettingsCascadeProps, Ve
     isLightTheme: boolean
 
     fetchHighlightedFileLineRanges: (parameters: FetchFileParameters, force?: boolean) => Observable<string[][]>
-
-    extensionsController: Controller
 }
 
 interface State {

@@ -1,6 +1,6 @@
 import { Remote, ProxyMarked, proxy, proxyMarker, UnproxyOrClone } from 'comlink'
 import { from, isObservable, Observable, Observer, of } from 'rxjs'
-import { finalize, map, tap } from 'rxjs/operators'
+import { map } from 'rxjs/operators'
 import { ProviderResult, Subscribable, Unsubscribable } from 'sourcegraph'
 import { isAsyncIterable, isPromiseLike, isSubscribable, observableFromAsyncIterable } from '../../util'
 import { identity } from 'lodash'

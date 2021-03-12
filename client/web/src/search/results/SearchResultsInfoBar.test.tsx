@@ -7,9 +7,10 @@ import { SearchResultsInfoBar, SearchResultsInfoBarProps } from './SearchResults
 import { AuthenticatedUser } from '../../auth'
 import { NOOP_TELEMETRY_SERVICE } from '../../../../shared/src/telemetry/telemetryService'
 import { SearchPatternType } from '../../graphql-operations'
+import { extensionsController } from '../../../../shared/src/util/searchTestHelpers'
 
 const COMMON_PROPS: Omit<SearchResultsInfoBarProps, 'enableCodeMonitoring'> = {
-    extensionsController: { executeCommand: () => Promise.resolve(), services: {} as any },
+    extensionsController,
     platformContext: { forceUpdateTooltip: noop, settings: NEVER },
     history: createMemoryHistory(),
     location: createLocation('/search'),

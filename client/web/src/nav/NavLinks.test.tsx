@@ -11,11 +11,16 @@ import { KeyboardShortcutsProps } from '../keyboardShortcuts/keyboardShortcuts'
 import { NEVER } from 'rxjs'
 import { MemoryRouter } from 'react-router'
 import { AuthenticatedUser } from '../auth'
+import { pretendRemote } from '../../../shared/src/api/util'
+import { FlatExtensionHostAPI } from '../../../shared/src/api/contract'
 
 describe('NavLinks', () => {
     const NOOP_EXTENSIONS_CONTROLLER: ExtensionsControllerProps<
-        'executeCommand' | 'services'
-    >['extensionsController'] = { executeCommand: () => Promise.resolve(), services: {} as any }
+        'executeCommand' | 'extHostAPI'
+    >['extensionsController'] = {
+        executeCommand: () => Promise.resolve(),
+        extHostAPI: Promise.resolve(pretendRemote<FlatExtensionHostAPI>({})),
+    }
     const NOOP_PLATFORM_CONTEXT = { forceUpdateTooltip: () => undefined, settings: NEVER, sourcegraphURL: '' }
     const KEYBOARD_SHORTCUTS: KeyboardShortcutsProps['keyboardShortcuts'] = []
     const SETTINGS_CASCADE: SettingsCascadeProps['settingsCascade'] = { final: null, subjects: null }

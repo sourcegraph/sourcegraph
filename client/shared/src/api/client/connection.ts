@@ -7,7 +7,7 @@ import { ExtensionHostAPIFactory } from '../extension/api/api'
 import { InitData } from '../extension/extensionHost'
 import { ClientAPI } from './api/api'
 import { registerComlinkTransferHandlers } from '../util'
-import { ExposedToClient, initMainThreadAPI, MainThreadAPIDependencies } from './mainthread-api'
+import { ExposedToClient, initMainThreadAPI } from './mainthread-api'
 import { isSettingsValid } from '../../settings/settings'
 import { FlatExtensionHostAPI, MainThreadAPI } from '../contract'
 

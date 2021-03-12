@@ -1,19 +1,12 @@
-import { initMainThreadAPI, MainThreadAPIDependencies } from './mainthread-api'
+import { initMainThreadAPI } from './mainthread-api'
 import { PlatformContext } from '../../platform/context'
-import { EMPTY, of, Subject } from 'rxjs'
+import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs'
 import { pretendRemote } from '../util'
 import { SettingsEdit } from './services/settings'
 import { SettingsCascade } from '../../settings/settings'
 import { FlatExtensionHostAPI } from '../contract'
-import { createWorkspaceService } from './services/workspaceService'
-import { CommandRegistry } from './services/command'
 import sinon from 'sinon'
 import { SuccessGraphQLResult } from '../../graphql/graphql'
-
-const defaultDependencies = (): MainThreadAPIDependencies => ({
-    workspace: createWorkspaceService(),
-    commands: new CommandRegistry(),
-})
 
 describe('MainThreadAPI', () => {
     // TODO(tj): commands, notifications
@@ -22,13 +15,18 @@ describe('MainThreadAPI', () => {
         test('PlatformContext#requestGraphQL is called with the correct arguments', async () => {
             const requestGraphQL = sinon.spy(_options => EMPTY)
 
-            const platformContext: Pick<PlatformContext, 'updateSettings' | 'settings' | 'requestGraphQL'> = {
+            const platformContext: Pick<
+                PlatformContext,
+                'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
+            > = {
                 settings: EMPTY,
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL,
+                getScriptURLForExtension: () => undefined,
+                sideloadedExtensionURL: new BehaviorSubject<string | null>(null),
             }
 
-            const { api } = initMainThreadAPI(pretendRemote({}), platformContext, defaultDependencies())
+            const { api } = initMainThreadAPI(pretendRemote({}), platformContext)
 
             const gqlRequestOptions = {
                 request: 'search',
@@ -50,13 +48,18 @@ describe('MainThreadAPI', () => {
             }
             const requestGraphQL = sinon.spy(_options => of(graphQLResult))
 
-            const platformContext: Pick<PlatformContext, 'updateSettings' | 'settings' | 'requestGraphQL'> = {
+            const platformContext: Pick<
+                PlatformContext,
+                'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
+            > = {
                 settings: EMPTY,
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL,
+                getScriptURLForExtension: () => undefined,
+                sideloadedExtensionURL: new BehaviorSubject<string | null>(null),
             }
 
-            const { api } = initMainThreadAPI(pretendRemote({}), platformContext, defaultDependencies())
+            const { api } = initMainThreadAPI(pretendRemote({}), platformContext)
 
             const result = await api.requestGraphQL('search', {})
 
@@ -71,7 +74,10 @@ describe('MainThreadAPI', () => {
                 calledWith = args
                 return Promise.resolve()
             }
-            const platformContext: Pick<PlatformContext, 'updateSettings' | 'settings' | 'requestGraphQL'> = {
+            const platformContext: Pick<
+                PlatformContext,
+                'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
+            > = {
                 settings: of({
                     subjects: [
                         {
@@ -90,9 +96,11 @@ describe('MainThreadAPI', () => {
                 }),
                 updateSettings,
                 requestGraphQL: () => EMPTY,
+                getScriptURLForExtension: () => undefined,
+                sideloadedExtensionURL: new BehaviorSubject<string | null>(null),
             }
 
-            const { api } = initMainThreadAPI(pretendRemote({}), platformContext, defaultDependencies())
+            const { api } = initMainThreadAPI(pretendRemote({}), platformContext)
 
             const edit: SettingsEdit = { path: ['a'], value: 'newVal' }
             await api.applySettingsEdit(edit)
@@ -116,10 +124,15 @@ describe('MainThreadAPI', () => {
                 },
             ]
 
-            const platformContext: Pick<PlatformContext, 'updateSettings' | 'settings' | 'requestGraphQL'> = {
-                settings: of(...values),
+            const platformContext: Pick<
+                PlatformContext,
+                'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
+            > = {
+                settings: EMPTY,
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL: () => EMPTY,
+                getScriptURLForExtension: () => undefined,
+                sideloadedExtensionURL: new BehaviorSubject<string | null>(null),
             }
 
             const passedToExtensionHost: SettingsCascade<object>[] = []
@@ -129,8 +142,7 @@ describe('MainThreadAPI', () => {
                         passedToExtensionHost.push(data)
                     },
                 }),
-                platformContext,
-                defaultDependencies()
+                platformContext
             )
 
             expect(passedToExtensionHost).toEqual<SettingsCascade<{ a: string }>[]>([values[0], values[2]])
@@ -138,12 +150,16 @@ describe('MainThreadAPI', () => {
 
         test('changes of settings are not passed to ext host after unsub', () => {
             const values = new Subject<SettingsCascade<{ a: string }>>()
-            const platformContext: Pick<PlatformContext, 'updateSettings' | 'settings' | 'requestGraphQL'> = {
-                settings: values.asObservable(),
+            const platformContext: Pick<
+                PlatformContext,
+                'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
+            > = {
+                settings: EMPTY,
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL: () => EMPTY,
+                getScriptURLForExtension: () => undefined,
+                sideloadedExtensionURL: new BehaviorSubject<string | null>(null),
             }
-
             const passedToExtensionHost: SettingsCascade<object>[] = []
             const { subscription } = initMainThreadAPI(
                 pretendRemote<FlatExtensionHostAPI>({
@@ -151,8 +167,7 @@ describe('MainThreadAPI', () => {
                         passedToExtensionHost.push(data)
                     },
                 }),
-                platformContext,
-                defaultDependencies()
+                platformContext
             )
 
             const one = {

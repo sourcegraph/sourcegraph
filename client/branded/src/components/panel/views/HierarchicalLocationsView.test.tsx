@@ -8,33 +8,31 @@ import * as H from 'history'
 import { noop } from 'lodash'
 import React from 'react'
 import renderer from 'react-test-renderer'
-import { concat, NEVER, of } from 'rxjs'
+import { concat, EMPTY, NEVER, of } from 'rxjs'
 import * as sinon from 'sinon'
-import { createContextService } from '../../../../../shared/src/api/client/context/contextService'
-import { parseTemplate } from '../../../../../shared/src/api/client/context/expr/evaluator'
-import {
-    ContributionsEntry,
-    ContributionUnsubscribable,
-} from '../../../../../shared/src/api/client/services/contribution'
 import { Controller } from '../../../../../shared/src/extensions/controller'
 import { SettingsCascadeOrError } from '../../../../../shared/src/settings/settings'
 import { HierarchicalLocationsView, HierarchicalLocationsViewProps } from './HierarchicalLocationsView'
 import { MaybeLoadingResult } from '@sourcegraph/codeintellify'
+import { pretendProxySubscribable, pretendRemote } from '../../../../../shared/src/api/util'
+import { FlatExtensionHostAPI } from '../../../../../shared/src/api/contract'
+import { Contributions, Raw } from '../../../../../shared/src/api/protocol'
 
 jest.mock('mdi-react/SourceRepositoryIcon', () => 'SourceRepositoryIcon')
 
 describe('<HierarchicalLocationsView />', () => {
     const getProps = () => {
-        const services = {
-            context: createContextService({ clientApplication: 'other' }),
-            contribution: {
-                registerContributions: sinon.spy(
-                    (entry: ContributionsEntry): ContributionUnsubscribable => ({ entry, unsubscribe: noop })
-                ),
-            },
-        }
-        const extensionsController: Pick<Controller, 'services'> = {
-            services: services as any,
+        const registerContributions = sinon.spy<FlatExtensionHostAPI['registerContributions']>(() =>
+            pretendProxySubscribable(EMPTY).subscribe(noop as any)
+        )
+
+        const extensionsController: Pick<Controller, 'extHostAPI'> = {
+            extHostAPI: Promise.resolve(
+                pretendRemote<FlatExtensionHostAPI>({
+                    updateContext: () => Promise.resolve(),
+                    registerContributions,
+                })
+            ),
         }
         const settingsCascade: SettingsCascadeOrError = {
             subjects: null,
@@ -57,7 +55,7 @@ describe('<HierarchicalLocationsView />', () => {
             fetchHighlightedFileLineRanges: sinon.spy(),
             versionContext: undefined,
         }
-        return { services, props }
+        return { props, registerContributions }
     }
 
     test('shows a spinner before any locations emissions', () => {
@@ -80,29 +78,39 @@ describe('<HierarchicalLocationsView />', () => {
     })
 
     test("registers a 'Group by file' contribution", () => {
-        const { props, services } = getProps()
+        const { props, registerContributions } = getProps()
         renderer.create(<HierarchicalLocationsView {...props} />)
-        expect(services.contribution.registerContributions.called).toBe(true)
-        const expected: ContributionsEntry = {
-            contributions: {
-                actions: [
+        expect(registerContributions.called).toBe(true)
+        const expected: Raw<Contributions> = {
+            actions: [
+                {
+                    id: 'panel.locations.groupByFile',
+                    title: 'Group by file',
+                    category: 'Locations (panel)',
+                    command: 'updateConfiguration',
+                    commandArguments: [
+                        ['panel.locations.groupByFile'],
+                        // eslint-disable-next-line no-template-curly-in-string
+                        '${!config.panel.locations.groupByFile}',
+                        null,
+                        'json',
+                    ],
+                    // eslint-disable-next-line no-template-curly-in-string
+                    actionItem: {
+                        label: '${config.panel.locations.groupByFile && "Ungroup" || "Group"} by file',
+                    },
+                },
+            ],
+            menus: {
+                'panel/toolbar': [
                     {
-                        id: 'panel.locations.groupByFile',
-                        title: parseTemplate('Group by file'),
-                        category: parseTemplate('Locations (panel)'),
-                        command: 'updateConfiguration',
+                        action: 'panel.locations.groupByFile',
+                        when: 'panel.locations.hasResults && panel.activeView.hasLocations',
                     },
                 ],
-                menus: {
-                    'panel/toolbar': [
-                        {
-                            action: 'panel.locations.groupByFile',
-                        },
-                    ],
-                },
             },
         }
-        expect(services.contribution.registerContributions.getCall(0).args[0]).toMatchObject(expected)
+        expect(registerContributions.getCall(0).args[0]).toMatchObject(expected)
     })
 
     const SAMPLE_LOCATION: Location = {

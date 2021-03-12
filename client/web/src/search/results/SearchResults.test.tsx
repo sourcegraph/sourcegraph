@@ -40,7 +40,7 @@ describe('SearchResults', () => {
         setCaseSensitivity: sinon.spy(),
         versionContext: undefined,
         selectedSearchContextSpec: 'global',
-        setVersionContext: () => undefined,
+        setVersionContext: () => Promise.resolve(undefined),
         availableVersionContexts: undefined,
         previousVersionContext: 'sg-last-version-context',
         enableCodeMonitoring: false,

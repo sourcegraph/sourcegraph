@@ -3,7 +3,6 @@ import { Observer } from 'rxjs'
 import { SettingsCascade } from '../../settings/settings'
 import { MainThreadAPI } from '../contract'
 import { pretendRemote } from '../util'
-import { ExtensionDocuments } from './api/documents'
 import { FileDecorationsByPath, initNewExtensionAPI } from './flatExtensionApi'
 
 describe('extensionHostAPI.getFileDecorations()', () => {
@@ -25,16 +24,13 @@ describe('extensionHostAPI.getFileDecorations()', () => {
         })
 
     it('restarts hover call if a provider was added or removed', () => {
-        const documents = new ExtensionDocuments(() => Promise.resolve())
-
-        const { exposedToMain, registerFileDecorationProvider } = initNewExtensionAPI(
-            noopMain,
-            emptySettings,
-            documents
-        )
+        const { exposedToMain, app } = initNewExtensionAPI(noopMain, {
+            initialSettings: emptySettings,
+            clientApplication: 'sourcegraph',
+        })
 
         let counter = 0
-        registerFileDecorationProvider({
+        app.registerFileDecorationProvider({
             provideFileDecorations: ({ files }) => [{ uri: files[0]?.uri, after: { contentText: `a${++counter}` } }],
         })
 
@@ -70,7 +66,7 @@ describe('extensionHostAPI.getFileDecorations()', () => {
         ])
         results = []
 
-        const subscription = registerFileDecorationProvider({
+        const subscription = app.registerFileDecorationProvider({
             provideFileDecorations: ({ files }) => [{ uri: files[0]?.uri, after: { contentText: 'b' } }],
         })
 

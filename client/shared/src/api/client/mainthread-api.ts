@@ -43,15 +43,6 @@ function messageFromExtension(message: string): string {
 }
 
 /**
- * For state that needs to live in the main thread. Resides in the controller
- * for access by client applications.
- */
-export interface MainThreadAPIDependencies {
-    registerCommand: (entryToRegister: CommandEntry) => sourcegraph.Unsubscribable
-    executeCommand: (parameters: ExecuteCommandParameters) => Promise<any>
-}
-
-/**
  * For state that needs to live in the main thread.
  * Returned to Controller for access by client applications.
  */
