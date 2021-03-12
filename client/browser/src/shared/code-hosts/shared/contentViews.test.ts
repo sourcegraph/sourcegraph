@@ -3,10 +3,9 @@ import { uniqueId } from 'lodash'
 import { concat, Observable, of, Subject, Subscription } from 'rxjs'
 import { first } from 'rxjs/operators'
 import { FlatExtensionHostAPI } from '../../../../../shared/src/api/contract'
-import { proxySubscribable } from '../../../../../shared/src/api/extension/api/common'
 import { LinkPreviewMerged } from '../../../../../shared/src/api/extension/flatExtensionApi'
 import { createBarrier } from '../../../../../shared/src/api/integration-test/testHelpers'
-import { pretendRemote } from '../../../../../shared/src/api/util'
+import { pretendProxySubscribable, pretendRemote } from '../../../../../shared/src/api/util'
 import { MutationRecordLike } from '../../util/dom'
 import { handleContentViews } from './contentViews'
 
@@ -50,10 +49,10 @@ describe('contentViews', () => {
                                         wait.next()
 
                                         if (url.includes('bar')) {
-                                            return proxySubscribable(of(null))
+                                            return pretendProxySubscribable(of(null))
                                         }
 
-                                        return proxySubscribable(
+                                        return pretendProxySubscribable(
                                             concat(
                                                 of<LinkPreviewMerged>({
                                                     content: [
@@ -129,7 +128,9 @@ describe('contentViews', () => {
                                 pretendRemote<FlatExtensionHostAPI>({
                                     getLinkPreviews: url => {
                                         done()
-                                        return proxySubscribable(url.includes('bar') ? of(null) : fooLinkPreviewValues)
+                                        return pretendProxySubscribable(
+                                            url.includes('bar') ? of(null) : fooLinkPreviewValues
+                                        )
                                     },
                                 })
                             ),
