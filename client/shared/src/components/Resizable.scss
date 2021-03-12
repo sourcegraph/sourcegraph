@@ -1,19 +1,20 @@
 .resizable {
+    isolation: isolate;
     $handle-size: 0.35rem;
-
+    z-index: 1;
     &--left {
-        border-left: 3px solid var(--color-bg-2);
+        width: $handle-size;
         margin-right: calc(-1 * #{$handle-size});
         cursor: col-resize;
     }
     &--right {
-        border-right: 3px solid var(--color-bg-2);
+        width: $handle-size;
         margin-left: calc(-1 * #{$handle-size});
         cursor: col-resize;
     }
     &--top {
-        border-top: 3px solid var(--color-bg-2);
-        margin-top: calc(-1 * #{$handle-size});
+        height: $handle-size;
+        margin-bottom: calc(-1 * #{$handle-size});
         cursor: row-resize;
     }
 }

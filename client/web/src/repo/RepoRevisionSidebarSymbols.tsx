@@ -82,7 +82,7 @@ export class RepoRevisionSidebarSymbols extends React.PureComponent<Props> {
     public render(): JSX.Element | null {
         return (
             <FilteredSymbolsConnection
-                className="repo-revision-sidebar-symbols"
+                className="repo-revision-sidebar-symbols h-100"
                 compact={true}
                 noun="symbol"
                 pluralNoun="symbols"

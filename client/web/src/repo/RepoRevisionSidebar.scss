@@ -1,33 +1,4 @@
 @import './RepoRevisionSidebarSymbols';
-@import '@reach/tabs/styles';
-
-[data-reach-tab-list] {
-    background: var(----theme-bg-selection);
-    border-bottom: 3px solid var(--border-color);
-}
-
-[data-reach-tabs] {
-    background: var(--color-bg-2);
-}
-
-[data-reach-tab] {
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -(3/16) + rem;
-    padding: (5/16) + rem;
-    color: var(--color-text-3);
-    &:hover {
-        color: var(--body-color);
-        border-bottom: 3px solid var(--link-color);
-    }
-}
-
-[data-reach-tab][data-selected] {
-    color: var(--body-color);
-    border-bottom: 3px solid var(--primary);
-}
 
 .repo-revision-container {
     &__tabpanels {

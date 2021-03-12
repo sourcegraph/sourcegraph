@@ -235,9 +235,8 @@ export class HierarchicalLocationsView extends React.PureComponent<HierarchicalL
                                 group && (
                                     <Resizable
                                         key={index}
-                                        // className="hierarchical-locations-view__resizable"
                                         position="right"
-                                        // storageKey={`hierarchical-locations-view-resizable:${group.name}`}
+                                        storageKey={`hierarchical-locations-view-resizable:${group.name}`}
                                         defaultSize={230}
                                     >
                                         <div className="list-group list-group-flush hierarchical-locations-view__list test-hierarchical-locations-view-list">

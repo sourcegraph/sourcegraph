@@ -9,6 +9,10 @@ interface Props {
      */
     children: JSX.Element
     /**
+     * The kru for preserve the size on local storage
+     */
+    storageKey: string
+    /**
      * The default size for the element.
      */
     defaultSize: number
@@ -19,9 +23,10 @@ interface Props {
     position: 'right' | 'left' | 'top'
 }
 
-export const Resizable: React.FunctionComponent<Props> = ({ children, defaultSize, position }) => {
+export const Resizable: React.FunctionComponent<Props> = ({ children, defaultSize, position, storageKey }) => {
+    const NAME = `Resizable:${storageKey}`
     const [isResizable, setIsResizable] = React.useState(false)
-    const [size, setSize] = useLocalStorage('sidebar-width', defaultSize)
+    const [size, setSize] = useLocalStorage(NAME, defaultSize)
     const reference = useRef<HTMLDivElement>(null)
     const onMouseUp = useCallback(() => setIsResizable(false), [])
     const onMouseDown = useCallback(() => setIsResizable(true), [])
@@ -69,11 +74,12 @@ export const Resizable: React.FunctionComponent<Props> = ({ children, defaultSiz
                 onMouseDown={onMouseDown}
                 className={classnames(
                     {
-                        'resizable--top': position === 'top',
-                        'resizable--left': position === 'left',
-                        'resizable--right': position === 'right',
+                        'resizable--top border-top': position === 'top',
+                        'resizable--left border-left': position === 'left',
+                        'resizable--right border-right': position === 'right',
                     },
-                    'd-flex border-left'
+                    'resizable',
+                    'd-flex'
                 )}
                 aria-hidden={true}
             />

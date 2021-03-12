@@ -1,5 +1,6 @@
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@reach/tabs'
 import * as H from 'history'
+import CloseIcon from 'mdi-react/CloseIcon'
 import React, { useCallback } from 'react'
 import { Button } from 'reactstrap'
 import { FormatListBulletedIcon } from '../../../shared/src/components/icons'
@@ -25,8 +26,7 @@ interface Props extends AbsoluteRepoFile, ExtensionsControllerProps, ThemeProps 
  * The sidebar for a specific repo revision that shows the list of files and directories.
  */
 export const RepoRevisionSidebar: React.FunctionComponent<Props> = props => {
-    // TODO: make (Alt+S/Opt+S) keyboard logic on panel
-    const STORAGE_KEY = 'repo-revision-sidebar'
+    const SIZE_STORAGE_KEY = 'repo-revision-sidebar'
     const TABS_KEY = 'repo-revision-sidebar-last-tab'
     const SIDEBAR_KEY = 'repo-revision-sidebar-toggle'
 
@@ -50,20 +50,20 @@ export const RepoRevisionSidebar: React.FunctionComponent<Props> = props => {
     }
 
     return (
-        // eslint-disable-next-line react/forbid-dom-props
-        <Resizable defaultSize={256} position="right">
+        <Resizable defaultSize={256} position="right" storageKey={SIZE_STORAGE_KEY}>
             <Tabs className="w-100" defaultIndex={tabIndex} onChange={handleTabsChange}>
-                <div className="d-flex">
+                <div className="tablist-wrapper d-flex w-100 align-items-center">
                     <TabList>
                         <Tab>Files</Tab>
                         <Tab>Symbols</Tab>
                     </TabList>
                     <Button
                         onClick={handleSidebarToggle}
-                        close={true}
-                        className="bg-transparent border-0 close ml-auto"
-                        title="Close sidebar (Alt+S/Opt+S)"
-                    />
+                        className="bg-transparent border-0 ml-auto p-1 position-relative focus-behaviour"
+                        title="Close sidebar"
+                    >
+                        <CloseIcon className="icon-inline" />
+                    </Button>
                 </div>
                 <div aria-hidden={true} className="d-flex overflow-auto repo-revision-container__tabpanels explorer">
                     <TabPanels className="w-100">
@@ -78,12 +78,12 @@ export const RepoRevisionSidebar: React.FunctionComponent<Props> = props => {
                                 scrollRootSelector=".explorer"
                                 activePath={props.filePath}
                                 activePathIsDir={props.isDir}
-                                sizeKey={`Resizable:${STORAGE_KEY}`}
+                                sizeKey={`Resizable:${SIZE_STORAGE_KEY}`}
                                 extensionsController={props.extensionsController}
                                 isLightTheme={props.isLightTheme}
                             />
                         </TabPanel>
-                        <TabPanel>
+                        <TabPanel className="h-100">
                             <RepoRevisionSidebarSymbols
                                 key="symbols"
                                 repoID={props.repoID}

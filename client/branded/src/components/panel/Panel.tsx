@@ -1,5 +1,6 @@
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@reach/tabs'
 import * as H from 'history'
+import CloseIcon from 'mdi-react/CloseIcon'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useHistory, useLocation } from 'react-router'
 import { Button } from 'reactstrap'
@@ -121,7 +122,7 @@ const Panel: React.FunctionComponent<Props> = props => {
             index={tabIndex}
             onChange={handleActiveTab}
         >
-            <div className="bg-white d-flex justify-content-between">
+            <div className="tablist-wrapper bg-white d-flex justify-content-between">
                 <TabList>
                     {panels.map(({ label, id }) => (
                         <Tab key={id}>{label}</Tab>
@@ -132,7 +133,7 @@ const Panel: React.FunctionComponent<Props> = props => {
                         {...props}
                         // TODO remove references to Bootstrap from shared, get class name from prop
                         // This is okay for now because the Panel is currently only used in the webapp
-                        listClass="d-flex justify-content-end list-unstyled m-0"
+                        listClass="d-flex justify-content-end list-unstyled m-0 align-items-center"
                         listItemClass="pr-4"
                         // actionItemClass="d-flex flex-nowrap"
                         actionItemIconClass="icon-inline"
@@ -150,10 +151,11 @@ const Panel: React.FunctionComponent<Props> = props => {
                     />
                     <Button
                         onClick={handlePanelClose}
-                        close={true}
-                        className="bg-transparent border-0 close ml-auto"
+                        className="bg-transparent border-0 ml-auto p-1 position-relative"
                         title="Close panel"
-                    />
+                    >
+                        <CloseIcon className="icon-inline" />
+                    </Button>
                 </div>
             </div>
             <TabPanels className="bg-white d-flex flex-1 flex-column h-100 overflow-hidden">
@@ -170,7 +172,7 @@ const Panel: React.FunctionComponent<Props> = props => {
 /** A wrapper around Panel that makes it resizable. */
 export const ResizablePanel: React.FunctionComponent<Props> = props => (
     <div className="w-100 bg-white">
-        <Resizable position="top" defaultSize={350}>
+        <Resizable position="top" defaultSize={350} storageKey="panel-size">
             <Panel {...props} />
         </Resizable>
     </div>

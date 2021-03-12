@@ -199,13 +199,15 @@ export const RevisionsPopover: React.FunctionComponent<Props> = props => {
 
     return (
         <Tabs defaultIndex={tabIndex} className="revisions-popover" onChange={handleTabsChange}>
-            <TabList className="d-flex">
-                {TABS.map(({ label, id }) => (
-                    <Tab className="d-flex flex-1 justify-content-around" key={id}>
-                        {label}
-                    </Tab>
-                ))}
-            </TabList>
+            <div className="tablist-wrapper w-100 align-items-center">
+                <TabList>
+                    {TABS.map(({ label, id }) => (
+                        <Tab className="d-flex flex-1 justify-content-around" key={id}>
+                            {label}
+                        </Tab>
+                    ))}
+                </TabList>
+            </div>
             <TabPanels className="bg-white">
                 {TABS.map(tab => (
                     <TabPanel className="" key={tab.id}>
