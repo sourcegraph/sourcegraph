@@ -994,10 +994,6 @@ func testSearchClient(t *testing.T, client searchClient) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				if test.name == "or statement merges file" || test.name == "select symbol" {
-					t.Skip("streaming not supported yet")
-				}
-
 				results, err := client.SearchAll(test.query)
 				if err != nil {
 					t.Fatal(err)
