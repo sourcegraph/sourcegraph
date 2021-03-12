@@ -22,8 +22,8 @@ export function registerPanelToolbarContributions(
                             null,
                             'json',
                         ],
-                        // eslint-disable-next-line no-template-curly-in-string
                         actionItem: {
+                            // eslint-disable-next-line no-template-curly-in-string
                             label: '${config.panel.locations.groupByFile && "Ungroup" || "Group"} by file',
                         },
                     },

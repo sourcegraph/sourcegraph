@@ -17,6 +17,8 @@ import { MaybeLoadingResult } from '@sourcegraph/codeintellify'
 import { pretendProxySubscribable, pretendRemote } from '../../../../../shared/src/api/util'
 import { FlatExtensionHostAPI } from '../../../../../shared/src/api/contract'
 import { Contributions, Raw } from '../../../../../shared/src/api/protocol'
+import { promisify } from 'util'
+import { nextTick } from 'process'
 
 jest.mock('mdi-react/SourceRepositoryIcon', () => 'SourceRepositoryIcon')
 
@@ -77,9 +79,10 @@ describe('<HierarchicalLocationsView />', () => {
         ).toMatchSnapshot()
     })
 
-    test("registers a 'Group by file' contribution", () => {
+    test("registers a 'Group by file' contribution", async () => {
         const { props, registerContributions } = getProps()
         renderer.create(<HierarchicalLocationsView {...props} />)
+        await promisify(nextTick)()
         expect(registerContributions.called).toBe(true)
         const expected: Raw<Contributions> = {
             actions: [

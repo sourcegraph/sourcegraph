@@ -1,4 +1,5 @@
-import { NEVER, of, Subscription } from 'rxjs'
+import { noop } from 'lodash'
+import { EMPTY, NEVER, of, Subscription } from 'rxjs'
 import sinon from 'sinon'
 import { FlatExtensionHostAPI } from '../api/contract'
 import { pretendProxySubscribable, pretendRemote } from '../api/util'
@@ -265,6 +266,7 @@ export const extensionsController: Pick<Controller, 'executeCommand' | 'register
     extHostAPI: Promise.resolve(
         pretendRemote<FlatExtensionHostAPI>({
             getContributions: () => pretendProxySubscribable(NEVER),
+            registerContributions: () => pretendProxySubscribable(EMPTY).subscribe(noop as any),
         })
     ),
 }
