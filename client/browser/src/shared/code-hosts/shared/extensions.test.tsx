@@ -1,10 +1,12 @@
+import { integrationTestContext } from '../../../../../shared/src/api/integration-test/testHelpers'
+import { createPlatformContext } from '../../platform/context'
 import { DEFAULT_SOURCEGRAPH_URL, getAssetsURL } from '../../util/context'
-import { initializeExtensions } from './extensions'
 
-describe('Extensions controller', () => {
-    it('Blocks GraphQL requests from extensions if they risk leaking private information to the public sourcegraph.com instance', () => {
+describe('Extension host', () => {
+    it('Blocks GraphQL requests from extensions if they risk leaking private information to the public sourcegraph.com instance', async () => {
         window.SOURCEGRAPH_URL = DEFAULT_SOURCEGRAPH_URL
-        const { extensionsController } = initializeExtensions(
+
+        const { requestGraphQL } = createPlatformContext(
             {
                 urlToFile: () => '',
                 getContext: () => ({ rawRepoName: 'foo', privateRepository: true }),
@@ -15,20 +17,20 @@ describe('Extensions controller', () => {
             },
             false
         )
+
+        const { extensionAPI } = await integrationTestContext({ requestGraphQL })
+
         return expect(
-            extensionsController.executeCommand({
-                command: 'queryGraphQL',
-                arguments: [
-                    `
+            extensionAPI.graphQL.execute(
+                `
                         query ResolveRepo($repoName: String!) {
                             repository(name: $repoName) {
                                 url
                             }
                         }
                     `,
-                    { repoName: 'foo' },
-                ],
-            })
+                { repoName: 'foo' }
+            )
         ).rejects.toMatchObject({
             message:
                 'A ResolveRepo GraphQL request to the public Sourcegraph.com was blocked because the current repository is private.',
