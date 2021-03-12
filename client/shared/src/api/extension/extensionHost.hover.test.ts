@@ -2,16 +2,19 @@ import { MarkupKind } from '@sourcegraph/extension-api-classes'
 import { Hover } from 'sourcegraph'
 import { HoverMerged } from '../client/types/hover'
 import { initNewExtensionAPI } from './flatExtensionApi'
-import { pretendRemote } from '../util'
+import { pretendProxySubscribable, pretendRemote } from '../util'
 import { MainThreadAPI } from '../contract'
 import { SettingsCascade } from '../../settings/settings'
-import { Observer } from 'rxjs'
+import { Observer, of } from 'rxjs'
 import { ProxyMarked, proxyMarker, Remote } from 'comlink'
 import { MaybeLoadingResult } from '@sourcegraph/codeintellify'
 
 describe('getHover from ExtensionHost API, it aims to have more e2e feel', () => {
     // integration(ish) tests for scenarios not covered by providers tests
-    const noopMain = pretendRemote<MainThreadAPI>({})
+    const noopMain = pretendRemote<MainThreadAPI>({
+        getEnabledExtensions: () => pretendProxySubscribable(of([])),
+        getScriptURLForExtension: () => undefined,
+    })
     const emptySettings: SettingsCascade<object> = {
         subjects: [],
         final: {},

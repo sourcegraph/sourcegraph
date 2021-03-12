@@ -128,7 +128,7 @@ describe('MainThreadAPI', () => {
                 PlatformContext,
                 'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
             > = {
-                settings: EMPTY,
+                settings: of(...values),
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL: () => EMPTY,
                 getScriptURLForExtension: () => undefined,
@@ -154,7 +154,7 @@ describe('MainThreadAPI', () => {
                 PlatformContext,
                 'updateSettings' | 'settings' | 'requestGraphQL' | 'getScriptURLForExtension' | 'sideloadedExtensionURL'
             > = {
-                settings: EMPTY,
+                settings: values.asObservable(),
                 updateSettings: () => Promise.resolve(),
                 requestGraphQL: () => EMPTY,
                 getScriptURLForExtension: () => undefined,

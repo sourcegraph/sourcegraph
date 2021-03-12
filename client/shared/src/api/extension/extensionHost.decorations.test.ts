@@ -1,13 +1,16 @@
 import { ProxyMarked, proxyMarker, Remote } from 'comlink'
-import { Observer } from 'rxjs'
+import { Observer, of } from 'rxjs'
 import { SettingsCascade } from '../../settings/settings'
 import { MainThreadAPI } from '../contract'
-import { pretendRemote } from '../util'
+import { pretendProxySubscribable, pretendRemote } from '../util'
 import { FileDecorationsByPath, initNewExtensionAPI } from './flatExtensionApi'
 
 describe('extensionHostAPI.getFileDecorations()', () => {
     // integration(ish) tests for scenarios not covered by providers tests
-    const noopMain = pretendRemote<MainThreadAPI>({})
+    const noopMain = pretendRemote<MainThreadAPI>({
+        getEnabledExtensions: () => pretendProxySubscribable(of([])),
+        getScriptURLForExtension: () => undefined,
+    })
     const emptySettings: SettingsCascade<object> = {
         subjects: [],
         final: {},
