@@ -961,50 +961,68 @@ export function handleCodeHost({
 
                 const initializeModelAndViewerForDiffOrFileInfo = async (
                     diffOrFileInfo: DiffOrBlobInfo<FileInfoWithContent>
-                ): Promise<
-                    | { blob: CodeEditorWithPartialModel }
-                    | { head: CodeEditorWithPartialModel; base: CodeEditorWithPartialModel }
-                    | { head: CodeEditorWithPartialModel }
-                    | { base: CodeEditorWithPartialModel }
-                > => {
+                ): Promise<DiffOrBlobInfo<FileInfoWithContent & { editor: CodeEditorWithPartialModel }>> => {
                     if ('blob' in diffOrFileInfo) {
-                        return { blob: await initializeModelAndViewerForFileInfo(diffOrFileInfo.blob) }
+                        return {
+                            blob: {
+                                ...diffOrFileInfo.blob,
+                                editor: await initializeModelAndViewerForFileInfo(diffOrFileInfo.blob),
+                            },
+                        }
                     }
                     if (diffOrFileInfo.head && diffOrFileInfo.base) {
                         // For diffs, both editors are created (for head and base)
                         // but only one of them is passed into
                         // the `scope` of the CodeViewToolbar component.
                         // Both are used to listen for text decorations.
-                        const [head, base] = await Promise.all([
+                        const [headEditor, baseEditor] = await Promise.all([
                             initializeModelAndViewerForFileInfo(diffOrFileInfo.head),
                             initializeModelAndViewerForFileInfo(diffOrFileInfo.base),
                         ])
-                        return { head, base }
+                        return {
+                            head: {
+                                ...diffOrFileInfo.head,
+                                editor: headEditor,
+                            },
+                            base: {
+                                ...diffOrFileInfo.base,
+                                editor: baseEditor,
+                            },
+                        }
                     }
                     if (diffOrFileInfo.base) {
-                        return { base: await initializeModelAndViewerForFileInfo(diffOrFileInfo.base) }
+                        return {
+                            base: {
+                                ...diffOrFileInfo.base,
+                                editor: await initializeModelAndViewerForFileInfo(diffOrFileInfo.base),
+                            },
+                        }
                     }
-                    return { head: await initializeModelAndViewerForFileInfo(diffOrFileInfo.head) }
+                    return {
+                        head: {
+                            ...diffOrFileInfo.head,
+                            editor: await initializeModelAndViewerForFileInfo(diffOrFileInfo.head),
+                        },
+                    }
                 }
 
-                const codeEditorWithPartialModel = await initializeModelAndViewerForDiffOrFileInfo(diffOrBlobInfo)
+                const diffOrFileInfoWithEditor = await initializeModelAndViewerForDiffOrFileInfo(diffOrBlobInfo)
 
                 let scopeEditor: CodeEditorWithPartialModel
-                if ('blob' in codeEditorWithPartialModel) {
-                    scopeEditor = codeEditorWithPartialModel.blob
+                if ('blob' in diffOrFileInfoWithEditor) {
+                    scopeEditor = diffOrFileInfoWithEditor.blob.editor
+                } else if (diffOrFileInfoWithEditor.head && diffOrFileInfoWithEditor.base) {
+                    // When both editors have been created, default is head
+                    scopeEditor = diffOrFileInfoWithEditor.head.editor
+                } else if (diffOrFileInfoWithEditor.base) {
+                    scopeEditor = diffOrFileInfoWithEditor.base.editor
                 } else {
-                    if ('head' in codeEditorWithPartialModel) {
-                        scopeEditor = codeEditorWithPartialModel.head
-                    } else {
-                        scopeEditor = codeEditorWithPartialModel.base
-                    }
+                    scopeEditor = diffOrFileInfoWithEditor.head.editor
                 }
 
                 if (wasRemoved) {
                     return
                 }
-
-                // everything after this point is synchronous
 
                 const domFunctions = {
                     ...codeViewEvent.dom,
@@ -1019,12 +1037,11 @@ export function handleCodeHost({
                             : codeViewEvent.dom.getCodeElementFromTarget(target),
                 }
 
-                const applyDecorationsForFileInfo = (fileInfo: FileInfoWithContent, diffPart?: DiffPart): void => {
+                const applyDecorationsForFileInfo = (editor: CodeEditorWithPartialModel, diffPart?: DiffPart): void => {
                     let decorationsByLine: DecorationMapByLine = new Map()
                     let previousIsLightTheme = true
                     const update = (decorations?: TextDocumentDecoration[] | null, isLightTheme?: boolean): void => {
                         try {
-                            console.log('applying decs', { decorations })
                             decorationsByLine = applyDecorations(
                                 domFunctions,
                                 element,
@@ -1040,19 +1057,13 @@ export function handleCodeHost({
                         }
                     }
 
-                    const viewerId = diffPart ? scopeEditor.viewerId : null
-
-                    if (diffPart && diffPart in codeEditorWithPartialModel) {
-                        codeEditorWithPartialModel[diffPart]
-                    }
-
                     codeViewEvent.subscriptions.add(
                         combineLatest([
                             from(extensionsController.extHostAPI).pipe(
                                 switchMap(extensionHostAPI =>
                                     wrapRemoteObservable(
                                         extensionHostAPI.getTextDecorations({
-                                            viewerId: codeEditorWithPartialModel.viewerId,
+                                            viewerId: editor.viewerId,
                                         })
                                     )
                                 )
@@ -1070,24 +1081,14 @@ export function handleCodeHost({
 
                 // Apply decorations coming from extensions
                 if (!minimalUI) {
-                    if ('blob' in diffOrBlobInfo && 'blobEditor' in codeEditorWithPartialModel) {
-                        applyDecorationsForFileInfo(diffOrBlobInfo.blob, codeEditorWithPartialModel.blobEditor)
+                    if ('blob' in diffOrFileInfoWithEditor) {
+                        applyDecorationsForFileInfo(diffOrFileInfoWithEditor.blob.editor)
                     } else {
-                        if (diffOrBlobInfo.head && 'headEditor' in codeEditorWithPartialModel) {
-                            console.log('applying decs for head')
-                            applyDecorationsForFileInfo(
-                                diffOrBlobInfo.head,
-                                codeEditorWithPartialModel.headEditor,
-                                'head'
-                            )
+                        if (diffOrFileInfoWithEditor.head) {
+                            applyDecorationsForFileInfo(diffOrFileInfoWithEditor.head.editor, 'head')
                         }
-                        if (diffOrBlobInfo.base && 'baseEditor' in codeEditorWithPartialModel) {
-                            console.log('applying decs for base')
-                            applyDecorationsForFileInfo(
-                                diffOrBlobInfo.base,
-                                codeEditorWithPartialModel.baseEditor,
-                                'base'
-                            )
+                        if (diffOrFileInfoWithEditor.base) {
+                            applyDecorationsForFileInfo(diffOrFileInfoWithEditor.base.editor, 'base')
                         }
                     }
                 }
@@ -1149,7 +1150,7 @@ export function handleCodeHost({
                             extensionsController={extensionsController}
                             buttonProps={toolbarButtonProps}
                             location={H.createLocation(window.location)}
-                            scope={codeEditorWithPartialModel}
+                            scope={scopeEditor}
                             // The bound function is constant
                             // eslint-disable-next-line react/jsx-no-bind
                             onSignInClose={nextSignInClose}

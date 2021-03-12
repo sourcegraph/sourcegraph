@@ -397,7 +397,7 @@ describe('codeHost', () => {
                 expect(line.querySelector('.line-decoration-attachment')!).toHaveTextContent('test decoration 2')
             })
 
-            it.only('decorates a diff code view', async () => {
+            it('decorates a diff code view', async () => {
                 const { extensionAPI, extensionHostAPI } = await integrationTestContext(undefined, {
                     roots: [],
                     viewers: [],
