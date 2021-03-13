@@ -703,7 +703,7 @@ func getRewirerMappingTextSearch(terms []search.TextSearchTerm) (detachTextSearc
 		for i, term := range terms {
 			detachSearches[i] = textSearchTermToClause(
 				term,
-				sqlf.Sprintf("COALESCE(changesets.metadata->>'Title', changesets.metadata->>'title')"),
+				sqlf.Sprintf("changesets.title"),
 				sqlf.Sprintf("repo.name"),
 			)
 

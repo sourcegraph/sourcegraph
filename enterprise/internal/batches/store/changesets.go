@@ -94,6 +94,10 @@ var changesetInsertColumns = []*sqlf.Query{
 	sqlf.Sprintf("num_failures"),
 	sqlf.Sprintf("closing"),
 	sqlf.Sprintf("syncer_error"),
+	// We additionally store the result of changeset.Title() in a column, so
+	// the business logic for determining it is in one place and the field is
+	// indexable for searching.
+	sqlf.Sprintf("title"),
 }
 
 func (s *Store) changesetWriteQuery(q string, includeID bool, c *batches.Changeset) (*sqlf.Query, error) {
@@ -116,6 +120,9 @@ func (s *Store) changesetWriteQuery(q string, includeID bool, c *batches.Changes
 	if err != nil {
 		return nil, err
 	}
+
+	// Not being able to find a title is fine, we just have a NULL in the database then.
+	title, _ := c.Title()
 
 	vars := []interface{}{
 		sqlf.Join(changesetInsertColumns, ", "),
@@ -149,6 +156,7 @@ func (s *Store) changesetWriteQuery(q string, includeID bool, c *batches.Changes
 		c.NumFailures,
 		c.Closing,
 		c.SyncErrorMessage,
+		nullStringColumn(title),
 	}
 
 	if includeID {
@@ -189,7 +197,7 @@ func (s *Store) CreateChangeset(ctx context.Context, c *batches.Changeset) error
 var createChangesetQueryFmtstr = `
 -- source: enterprise/internal/batches/store.go:CreateChangeset
 INSERT INTO changesets (%s)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 RETURNING %s
 `
 
@@ -278,10 +286,7 @@ func countChangesetsQuery(opts *CountChangesetsOpts, authzConds *sqlf.Query) *sq
 				term,
 				// The COALESCE() is required to handle the actual title on the
 				// changeset, if it has been published or if it's tracked.
-				// Unfortunately, the metadata field isn't standard, so we have
-				// to get both variations that exist between the code hosts we
-				// support.
-				sqlf.Sprintf("COALESCE(changesets.metadata->>'Title', changesets.metadata->>'title', changeset_specs.spec->>'title')"),
+				sqlf.Sprintf("COALESCE(changesets.title, changesets.title, changeset_specs.title)"),
 				sqlf.Sprintf("repo.name"),
 			))
 		}
@@ -554,10 +559,7 @@ func listChangesetsQuery(opts *ListChangesetsOpts, authzConds *sqlf.Query) *sqlf
 				term,
 				// The COALESCE() is required to handle the actual title on the
 				// changeset, if it has been published or if it's tracked.
-				// Unfortunately, the metadata field isn't standard, so we have
-				// to get both variations that exist between the code hosts we
-				// support.
-				sqlf.Sprintf("COALESCE(changesets.metadata->>'Title', changesets.metadata->>'title', changeset_specs.spec->>'title')"),
+				sqlf.Sprintf("COALESCE(changesets.title, changeset_specs.title)"),
 				sqlf.Sprintf("repo.name"),
 			))
 		}
@@ -588,7 +590,7 @@ func (s *Store) UpdateChangeset(ctx context.Context, cs *batches.Changeset) erro
 var updateChangesetQueryFmtstr = `
 -- source: enterprise/internal/batches/store_changesets.go:UpdateChangeset
 UPDATE changesets
-SET (%s) = (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+SET (%s) = (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 WHERE id = %s
 RETURNING
   %s
