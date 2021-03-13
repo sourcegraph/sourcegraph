@@ -10,10 +10,6 @@
         padding: 0;
     }
 
-    &__form {
-        top: 0;
-    }
-
     &--noncompact &__form {
         margin-bottom: 0.5rem;
     }
@@ -66,6 +62,5 @@
 
     &__show-more {
         flex: 0 0 auto;
-        bottom: 0;
     }
 }

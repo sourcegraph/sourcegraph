@@ -15,6 +15,31 @@ export interface SingleChildGitTree extends TreeEntryInfo {
     children: SingleChildGitTree[]
 }
 
+/** Scroll the Tree when the list is being navigated with the keyboard */
+export function scrollIntoView(element: Element, scrollRoot: Element): void {
+    if (!scrollRoot.getBoundingClientRect) {
+        return element.scrollIntoView()
+    }
+
+    const rootRectangle = scrollRoot.getBoundingClientRect()
+    const elementRectangle = element.getBoundingClientRect()
+
+    const elementAbove = elementRectangle.top <= rootRectangle.top + 30
+    const elementBelow = elementRectangle.bottom >= rootRectangle.bottom
+
+    if (elementAbove) {
+        element.scrollIntoView(true)
+    } else if (elementBelow) {
+        element.scrollIntoView(false)
+    }
+
+    /**
+     * ScrollIntoView with options as params is not compatible with the Safari browser.
+     * Force the scroll to keep left: 0 to avoid horizontal scrolling when the text is too long.
+     */
+    scrollRoot.scrollLeft = 0
+}
+
 export const getDomElement = (path: string): Element | null =>
     document.querySelector(`[data-tree-path='${path.replace(/'/g, "\\'")}']`)
 

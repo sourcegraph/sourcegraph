@@ -9,7 +9,7 @@ import { ThemeProps } from '../../../shared/src/theme'
 import { AbsoluteRepo } from '../../../shared/src/util/url'
 import { dirname } from '../util/path'
 import { TreeRoot } from './TreeRoot'
-import { getDomElement } from './util'
+import { getDomElement, scrollIntoView } from './util'
 
 interface Props extends AbsoluteRepo, ExtensionsControllerProps, ThemeProps {
     history: H.History
@@ -294,7 +294,7 @@ export class Tree extends React.PureComponent<Props, State> {
 
     public render(): JSX.Element | null {
         return (
-            <div tabIndex={0} onKeyDown={this.onKeyDown} ref={this.setTreeElement}>
+            <div className="tree" tabIndex={0} onKeyDown={this.onKeyDown} ref={this.setTreeElement}>
                 <TreeRoot
                     ref={reference => {
                         if (reference) {
@@ -338,9 +338,12 @@ export class Tree extends React.PureComponent<Props, State> {
 
     private selectNode = (node: TreeNode): void => {
         if (node) {
+            const root = (this.props.scrollRootSelector
+                ? document.querySelector(this.props.scrollRootSelector)
+                : document.querySelector('.tree-container')) as HTMLElement
             const element = getDomElement(node.path)
             if (element) {
-                element.scrollIntoView({ block: 'start', inline: 'start' })
+                scrollIntoView(element, root)
             }
             this.setState({ selectedNode: node })
         }
