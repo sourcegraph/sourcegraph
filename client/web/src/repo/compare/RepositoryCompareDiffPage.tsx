@@ -37,6 +37,7 @@ export function queryRepositoryComparisonFileDiffs(args: {
                     ... on Repository {
                         comparison(base: $base, head: $head) {
                             fileDiffs(first: $first, after: $after) {
+                                rawDiff
                                 nodes {
                                     ...FileDiffFields
                                 }

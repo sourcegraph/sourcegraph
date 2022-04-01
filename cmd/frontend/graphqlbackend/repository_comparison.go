@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/inconshreveable/log15"
+	"github.com/robert-nix/ansihtml"
 
 	"github.com/sourcegraph/go-diff/diff"
 
@@ -374,12 +375,23 @@ func (r *fileDiffConnectionResolver) DiffStat(ctx context.Context) (*DiffStat, e
 }
 
 func (r *fileDiffConnectionResolver) RawDiff(ctx context.Context) (string, error) {
-	fileDiffs, _, _, err := r.compute(ctx, &FileDiffsConnectionArgs{After: r.after, First: r.first})
+	var base string
+	if r.base != nil {
+		// TODO compute implies that base may be unset, but we still have a
+		// string we could use.
+		base = string(r.base.OID())
+	}
+
+	b, err := git.DiffT(ctx, r.db, git.DiffOptions{
+		Repo:      r.head.gitRepo,
+		Base:      base,
+		Head:      string(r.head.OID()),
+		RangeType: "..", // TODO hardcoded, should inspect inputs
+	})
 	if err != nil {
 		return "", err
 	}
-	b, err := diff.PrintMultiFileDiff(fileDiffs)
-	return string(b), err
+	return string(ansihtml.ConvertToHTML(b)), nil
 }
 
 type FileDiffResolver struct {

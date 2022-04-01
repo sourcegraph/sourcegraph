@@ -94,6 +94,10 @@ export const FileDiffNode: React.FunctionComponent<FileDiffNodeProps> = ({
 
     const anchor = `diff-${node.internalID}`
 
+    if (diffMode === 'difft') {
+        return <></>
+    }
+
     return (
         <>
             {/* The empty <a> tag is to allow users to anchor links to the top of this file diff node */}

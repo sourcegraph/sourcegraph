@@ -125,13 +125,14 @@ interface Props
     onDidUpdateExternalLinks: (externalLinks: ExternalLinkFields[] | undefined) => void
 }
 
-export type DiffMode = 'split' | 'unified'
+export type DiffMode = 'split' | 'unified' | 'difft'
 
 interface State extends HoverState<HoverContext, HoverMerged, ActionItemAction> {
     /** The commit, undefined while loading, or an error. */
     commitOrError?: GitCommitFields | ErrorLike
     /** The visualization mode for file diff */
     diffMode: DiffMode
+    rawDiff?: string
 }
 
 const DIFF_MODE_VISUALIZER = 'diff-mode-visualizer'
@@ -284,6 +285,16 @@ export class RepositoryCommitPage extends React.Component<Props, State> {
                                 />
                             </div>
                         </div>
+                        {this.state.diffMode === 'difft' ? (
+                            <div
+                                // eslint-disable-next-line react/forbid-dom-props
+                                style={{
+                                    whiteSpace: 'pre-wrap',
+                                    fontFamily: 'monospace',
+                                }}
+                                dangerouslySetInnerHTML={{ __html: this.state.rawDiff || '' }}
+                            />
+                        ) : null}
                         <FileDiffConnection
                             listClassName="list-group list-group-flush"
                             noun="changed file"
@@ -319,6 +330,7 @@ export class RepositoryCommitPage extends React.Component<Props, State> {
                             location={this.props.location}
                             cursorPaging={true}
                         />
+                        )
                     </>
                 )}
                 {this.state.hoverOverlayProps && (
@@ -341,7 +353,11 @@ export class RepositoryCommitPage extends React.Component<Props, State> {
             repo: this.props.repo.id,
             base: commitParentOrEmpty(this.state.commitOrError as GitCommitFields),
             head: (this.state.commitOrError as GitCommitFields).oid,
-        })
+        }).pipe(
+            tap(value => {
+                this.setState({ rawDiff: value.rawDiff })
+            })
+        )
 }
 
 function commitParentOrEmpty(commit: GitCommitFields): string {

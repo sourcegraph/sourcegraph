@@ -35,6 +35,14 @@ export const DiffModeSelector: React.FunctionComponent<DiffModeSelectorProps> = 
             >
                 Split
             </Button>
+            <Button
+                onClick={() => onHandleDiffMode('difft')}
+                size={small ? 'sm' : undefined}
+                variant="secondary"
+                outline={diffMode !== 'difft'}
+            >
+                Difft
+            </Button>
         </ButtonGroup>
     </div>
 )

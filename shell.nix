@@ -75,6 +75,8 @@ pkgs.mkShell {
     nodejs-16_x
     (yarn.override { nodejs = nodejs-16_x; })
     nodePackages.typescript
+
+    difftastic
   ];
 
   # Startup postgres

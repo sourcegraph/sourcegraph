@@ -70,6 +70,38 @@ func Diff(ctx context.Context, db database.DB, opts DiffOptions) (*DiffFileItera
 	}, nil
 }
 
+// DiffT returns raw difftastic output as HTML.
+func DiffT(ctx context.Context, db database.DB, opts DiffOptions) ([]byte, error) {
+	// Rare case: the base is the empty tree, in which case we must use ..
+	// instead of ... as the latter only works for commits.
+	if opts.Base == DevNullSHA {
+		opts.RangeType = ".."
+	} else if opts.RangeType != ".." {
+		opts.RangeType = "..."
+	}
+
+	rangeSpec := opts.Base + opts.RangeType + opts.Head
+	if strings.HasPrefix(rangeSpec, "-") || strings.HasPrefix(rangeSpec, ".") {
+		// We don't want to allow user input to add `git diff` command line
+		// flags or refer to a file.
+		return nil, errors.Errorf("invalid diff range argument: %q", rangeSpec)
+	}
+
+	cmd := gitserver.NewClient(db).Command("git",
+		"-c", "diff.external=difft --color=always",
+		"diff",
+		"--find-renames",
+		"--full-index",
+		"--inter-hunk-context=3",
+		"--no-prefix",
+		rangeSpec,
+		"--",
+	)
+	cmd.Repo = opts.Repo
+
+	return cmd.Output(ctx)
+}
+
 // DiffPath returns a position-ordered slice of changes (additions or deletions)
 // of the given path between the given source and target commits.
 func DiffPath(ctx context.Context, db database.DB, repo api.RepoName, sourceCommit, targetCommit, path string, checker authz.SubRepoPermissionChecker) ([]*diff.Hunk, error) {

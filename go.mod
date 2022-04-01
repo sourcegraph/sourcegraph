@@ -118,6 +118,7 @@ require (
 	github.com/pseudomuto/protoc-gen-doc v1.5.0
 	github.com/qustavo/sqlhooks/v2 v2.1.0
 	github.com/rjeczalik/notify v0.9.2
+	github.com/robert-nix/ansihtml v1.0.0
 	github.com/russellhaering/gosaml2 v0.6.0
 	github.com/russellhaering/goxmldsig v1.1.1
 	github.com/schollz/progressbar/v3 v3.8.5
