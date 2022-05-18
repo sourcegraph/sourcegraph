@@ -33,6 +33,7 @@ const (
 	FieldTimeout   = "timeout"
 	FieldCombyRule = "rule"
 	FieldSelect    = "select"
+	FieldSymbolAt  = "symbolat"
 )
 
 var allFields = map[string]struct{}{
@@ -71,6 +72,7 @@ var allFields = map[string]struct{}{
 	FieldRev:                empty,
 	"revision":              empty,
 	FieldSelect:             empty,
+	FieldSymbolAt:           empty,
 }
 
 var aliases = map[string]string{

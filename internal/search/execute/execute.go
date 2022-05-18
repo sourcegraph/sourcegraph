@@ -2,6 +2,7 @@ package execute
 
 import (
 	"context"
+	"log"
 
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/job"
@@ -36,6 +37,8 @@ func Execute(
 	if err != nil {
 		return nil, err
 	}
+
+	log.Println("\n" + jobutil.PrettySexp(planJob))
 
 	return planJob.Run(ctx, clients, stream)
 }

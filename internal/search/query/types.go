@@ -3,6 +3,7 @@ package query
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/regexp"
@@ -317,6 +318,20 @@ func (p Parameters) Dependencies() (dependencies []string) {
 		}
 	})
 	return dependencies
+}
+
+func (p Parameters) SymbolAt() (line, character int, ok bool) {
+	VisitField(toNodes(p), FieldSymbolAt, func(value string, _ bool, _ Annotation) {
+		vals := strings.SplitN(value, "-", 2)
+		if len(vals) != 2 {
+			return
+		}
+		var err1, err2 error
+		line, err1 = strconv.Atoi(vals[0])
+		character, err2 = strconv.Atoi(vals[1])
+		ok = err1 == nil && err2 == nil
+	})
+	return line, character, ok
 }
 
 func (p Parameters) MaxResults(defaultLimit int) int {

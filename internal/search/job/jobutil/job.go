@@ -1,6 +1,7 @@
 package jobutil
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -69,6 +70,13 @@ func NewBasicJob(inputs *run.SearchInputs, b query.Basic) (job.Job, error) {
 			features:       &features,
 			fileMatchLimit: fileMatchLimit,
 			selector:       selector,
+		}
+
+		if line, character, ok := b.SymbolAt(); ok {
+			addJob(&symbol.ReferenceSearcherJob{})
+			var rts result.Types
+			resultTypes = rts
+			log.Println("yay", line, character)
 		}
 
 		if resultTypes.Has(result.TypeFile | result.TypePath) {
