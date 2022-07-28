@@ -82,7 +82,6 @@ func NewHandler(db database.DB, githubAppCloudSetupHandler http.Handler) http.Ha
 	r.Get(router.Editor).Handler(trace.Route(errorutil.Handler(serveEditor(db))))
 
 	r.Get(router.DebugHeaders).Handler(trace.Route(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Header.Del("Cookie")
 		_ = r.Header.Write(w)
 	})))
 	addDebugHandlers(r.Get(router.Debug).Subrouter(), db)
