@@ -218,7 +218,7 @@ export class EventLogger implements TelemetryService, SharedEventLogger {
         const redactedURL = redactSensitiveInfoFromAppURL(firstSourceURL)
 
         // Use cookies instead of localStorage so that the ID can be shared with subdomains (about.sourcegraph.com).
-        // Always set to renew expiry and migrate from localStorage
+        // Always set to renew expiry
         cookies.set(FIRST_SOURCE_URL_KEY, redactedURL, this.cookieSettings)
 
         this.firstSourceURL = firstSourceURL
@@ -233,7 +233,7 @@ export class EventLogger implements TelemetryService, SharedEventLogger {
         const redactedURL = redactSensitiveInfoFromAppURL(lastSourceURL)
 
         // Use cookies instead of localStorage so that the ID can be shared with subdomains (about.sourcegraph.com).
-        // Always set to renew expiry and migrate from localStorage
+        // Always set to renew expiry
         cookies.set(LAST_SOURCE_URL_KEY, redactedURL, this.cookieSettings)
 
         this.lastSourceURL = lastSourceURL
@@ -304,8 +304,11 @@ export class EventLogger implements TelemetryService, SharedEventLogger {
         let deviceSessionID = cookies.get(DEVICE_SESSION_ID_KEY)
         if (!deviceSessionID || deviceSessionID === '') {
             deviceSessionID = uuid.v4()
-            cookies.set(DEVICE_SESSION_ID_KEY, deviceSessionID, this.deviceSessionCookieSettings)
         }
+
+        // Use cookies instead of localStorage so that the ID can be shared with subdomains (about.sourcegraph.com).
+        // Always set to renew expiry
+        cookies.set(DEVICE_SESSION_ID_KEY, deviceSessionID, this.deviceSessionCookieSettings)
         return deviceSessionID
     }
 
@@ -375,8 +378,9 @@ export class EventLogger implements TelemetryService, SharedEventLogger {
         if (!deviceID) {
             // If device ID does not exist, use the anonymous user ID value so these are consolidated.
             deviceID = anonymousUserID
-            cookies.set(DEVICE_ID_KEY, deviceID, this.cookieSettings)
         }
+        // Always set to renew expiry
+        cookies.set(DEVICE_ID_KEY, deviceID, this.cookieSettings)
 
         let originalReferrer = cookies.get(ORIGINAL_REFERRER_KEY)
         if (!originalReferrer) {
