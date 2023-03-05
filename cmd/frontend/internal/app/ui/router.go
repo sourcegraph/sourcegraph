@@ -69,8 +69,6 @@ const (
 	aboutRedirectHost            = "about.sourcegraph.com"
 	routeSurvey                  = "survey"
 	routeSurveyScore             = "survey-score"
-	routeRegistry                = "registry"
-	routeExtensions              = "extensions"
 	routeHelp                    = "help"
 	routeCommunitySearchContexts = "community-search-contexts"
 	routeCncf                    = "community-search-contexts.cncf"
@@ -92,6 +90,7 @@ const (
 	routeLegacyOldRouteDefLanding      = "page.def.landing.old"
 	routeLegacyRepoLanding             = "page.repo.landing"
 	routeLegacyDefRedirectToDefLanding = "page.def.redirect"
+	routeLegacyExtensions              = "extensions"
 )
 
 // aboutRedirects contains map entries, each of which indicates that
@@ -167,8 +166,6 @@ func newRouter() *mux.Router {
 	r.PathPrefix("/user").Methods("GET").Name(routeUserRedirect)
 	r.Path("/survey").Methods("GET").Name(routeSurvey)
 	r.Path("/survey/{score}").Methods("GET").Name(routeSurveyScore)
-	r.PathPrefix("/registry").Methods("GET").Name(routeRegistry)
-	r.PathPrefix("/extensions").Methods("GET").Name(routeExtensions)
 	r.PathPrefix("/help").Methods("GET").Name(routeHelp)
 	r.PathPrefix("/snippets").Methods("GET").Name(routeSnippets)
 	r.PathPrefix("/subscriptions").Methods("GET").Name(routeSubscriptions)
@@ -192,6 +189,9 @@ func newRouter() *mux.Router {
 	// Legacy redirects
 	r.Path("/login").Methods("GET").Name(routeLegacyLogin)
 	r.Path("/careers").Methods("GET").Name(routeLegacyCareers)
+	if envvar.SourcegraphDotComMode() {
+		r.PathPrefix("/extensions").Methods("GET").Name(routeLegacyExtensions)
+	}
 
 	// repo
 	repoRevPath := "/" + routevar.Repo + routevar.RepoRevSuffix
@@ -275,12 +275,6 @@ func initRouter(db database.DB, enterpriseJobs jobutil.EnterpriseJobs, router *m
 	router.Get(routeRepoStats).Handler(brandedNoIndex("Stats"))
 	router.Get(routeSurvey).Handler(brandedNoIndex("Survey"))
 	router.Get(routeSurveyScore).Handler(brandedNoIndex("Survey"))
-	router.Get(routeRegistry).Handler(brandedNoIndex("Registry"))
-	if envvar.SourcegraphDotComMode() {
-		router.Get(routeExtensions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/", http.StatusMovedPermanently)
-		})
-	}
 	router.Get(routeHelp).HandlerFunc(serveHelp)
 	router.Get(routeSnippets).Handler(brandedNoIndex("Snippets"))
 	router.Get(routeSubscriptions).Handler(brandedNoIndex("Subscriptions"))
@@ -309,6 +303,7 @@ func initRouter(db database.DB, enterpriseJobs jobutil.EnterpriseJobs, router *m
 		router.Get(routeLegacyDefRedirectToDefLanding).Handler(http.HandlerFunc(serveDefRedirectToDefLanding))
 		router.Get(routeLegacyDefLanding).Handler(handler(db, serveDefLanding))
 		router.Get(routeLegacyRepoLanding).Handler(handler(db, serveRepoLanding(db)))
+		router.Get(routeLegacyExtensions).Handler(http.NotFoundHandler())
 	}
 
 	// search

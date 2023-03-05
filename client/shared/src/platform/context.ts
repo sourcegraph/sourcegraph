@@ -7,13 +7,12 @@ import { hasProperty } from '@sourcegraph/common'
 import { GraphQLClient, GraphQLResult } from '@sourcegraph/http-client'
 
 import { SettingsEdit } from '../api/client/services/settings'
-import { ExecutableExtension } from '../api/extension/activation'
-import type { InputBoxOptions } from '../codeintel/legacy-extensions/api'
 import { Scalars } from '../graphql-operations'
 import { Settings, SettingsCascadeOrError } from '../settings/settings'
 import { TelemetryService } from '../telemetry/telemetryService'
 import { FileSpec, UIPositionSpec, RawRepoSpec, RepoSpec, RevisionSpec, ViewStateSpec } from '../util/url'
 
+// TODO(sqs): all this endpoint stuff is not really desirable here anymore
 export interface EndpointPair {
     /** The endpoint to proxy the API of the other thread from */
     proxy: Endpoint
@@ -127,16 +126,6 @@ export interface PlatformContext {
     }) => Observable<GraphQLResult<R>>
 
     /**
-     * Spawns a new JavaScript execution context (such as a Web Worker or browser extension
-     * background worker) with the extension host and opens a communication channel to it. It is
-     * called exactly once, to start the extension host.
-     *
-     * @returns A promise of the message transports for communicating
-     * with the execution context (using, e.g., postMessage/onmessage) when it is ready.
-     */
-    createExtensionHost: () => Promise<ClosableEndpointPair>
-
-    /**
      * Constructs the URL (possibly relative or absolute) to the file with the specified options.
      *
      * @param target The specific repository, revision, file, position, and view state to generate the URL for.
@@ -168,43 +157,10 @@ export interface PlatformContext {
     sourcegraphURL: string
 
     /**
-     * The client application that is running this extension, either 'sourcegraph' for Sourcegraph
-     * or 'other' for all other applications (such as GitHub, GitLab, etc.).
-     *
-     * This is available to extensions in `sourcegraph.internal.clientApplication`.
-     *
-     * @todo Consider removing this when https://github.com/sourcegraph/sourcegraph/issues/566 is
-     * fixed.
-     */
-    clientApplication: 'sourcegraph' | 'other'
-
-    /**
      * A telemetry service implementation to log events.
      * Optional because it's currently only used in the web app platform.
      */
     telemetryService?: TelemetryService
-
-    /**
-     * If this is a function that returns a Subscribable of executable extensions,
-     * the extension host will not activate any other settings (e.g. extensions from user settings)
-     */
-    getStaticExtensions?: () => Observable<ExecutableExtension[] | undefined>
-
-    /**
-     * Display a modal message from an extension to the user.
-     *
-     * @param message The message to display
-     * @returns a Promise that resolves when the user dismisses the message
-     */
-    showMessage?(message: string): Promise<void>
-
-    /**
-     * Displays an input box for an extension that asks the user for input.
-     *
-     * @param options Configures the behavior of the input box.
-     * @returns The string provided by the user, or `undefined` if the input box was canceled.
-     */
-    showInputBox?(options: InputBoxOptions | undefined): Promise<string | undefined>
 }
 
 /**

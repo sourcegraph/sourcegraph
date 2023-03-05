@@ -395,11 +395,6 @@ export const SiteAdminPingsPage: React.FunctionComponent<React.PropsWithChildren
                             <ul>Count of unique users who interacted with the open in editor feature</ul>
                             <ul>Count interactions with the search exports feature</ul>
                             <ul>Count of unique users who interacted with the search exports feature</ul>
-                            <ul>Count interactions with the go imports search query transformation feature</ul>
-                            <ul>
-                                Count of unique users who interacted with the go imports search query transformation
-                                feature
-                            </ul>
                         </li>
                     </ul>
                 </li>

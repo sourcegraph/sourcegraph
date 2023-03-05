@@ -10,7 +10,6 @@ import {
 } from '@sourcegraph/common'
 import { Position } from '@sourcegraph/extension-api-types'
 
-import { WorkspaceRootWithMetadata } from '../api/extension/extensionHostApi'
 import { AuthenticatedUser } from '../auth'
 import { SearchPatternType } from '../graphql-operations'
 import { discreteValueAliases } from '../search/query/filters'
@@ -485,28 +484,6 @@ export const toRootURI = ({ repoName, commitID }: RepoSpec & ResolvedRevisionSpe
 
 export function toURIWithPath({ repoName, filePath, commitID }: RepoSpec & ResolvedRevisionSpec & FileSpec): string {
     return `git://${encodeURIPathComponent(repoName)}?${commitID}#${encodeURIPathComponent(filePath)}`
-}
-
-/**
- * Translate a URI to use the input revision (e.g., branch names) instead of the Git commit SHA if the URI is
- * inside of a workspace root. This helper is used to translate URLs (from actions such as go-to-definition) to
- * avoid navigating the user from (e.g.) a URL with a nice Git branch name to a URL with a full Git commit SHA.
- *
- * For example, suppose there is a workspace root `git://r?a9cb9d` with input revision `mybranch`. If {@link uri}
- * is `git://r?a9cb9d#f`, it would be translated to `git://r?mybranch#f`.
- */
-export function withWorkspaceRootInputRevision(
-    workspaceRoots: readonly WorkspaceRootWithMetadata[],
-    uri: ParsedRepoURI
-): ParsedRepoURI {
-    const inWorkspaceRoot = workspaceRoots.find(root => {
-        const rootURI = parseRepoURI(root.uri)
-        return rootURI.repoName === uri.repoName && rootURI.revision === uri.revision
-    })
-    if (inWorkspaceRoot?.inputRevision !== undefined) {
-        return { ...uri, commitID: undefined, revision: inWorkspaceRoot.inputRevision }
-    }
-    return uri // unchanged
 }
 
 /**

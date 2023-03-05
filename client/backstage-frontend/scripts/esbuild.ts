@@ -5,7 +5,7 @@ import { nodeExternalsPlugin } from 'esbuild-node-externals'
 import * as esbuild from 'esbuild'
 import { rm } from 'shelljs'
 
-import { stylePlugin, workerPlugin, buildTimerPlugin, WORKSPACES_PATH } from '@sourcegraph/build-config'
+import { stylePlugin, buildTimerPlugin, WORKSPACES_PATH } from '@sourcegraph/build-config'
 
 const PACKAGE_ROOT_PATH = path.resolve(WORKSPACES_PATH, 'backstage-frontend')
 const DIST_PATH = path.resolve(PACKAGE_ROOT_PATH, 'dist')
@@ -22,7 +22,7 @@ async function build(): Promise<void> {
         logLevel: 'error',
         jsx: 'automatic',
         external: ['@backstage/*', '@material-ui/*', 'react-use', 'react', 'react-dom'],
-        plugins: [stylePlugin, workerPlugin, buildTimerPlugin, nodeExternalsPlugin()],
+        plugins: [stylePlugin, buildTimerPlugin, nodeExternalsPlugin()],
         // mainFields: ['browser', 'module', 'main'],
         // platform: 'browser',
         define: {

@@ -6,7 +6,6 @@ import { bitbucketServerCodeHost, getToolbarMount, parseHash } from './codeHost'
 
 describe('bitbucketServerCodeHost', () => {
     testCodeHostMountGetters(bitbucketServerCodeHost, {
-        getCommandPaletteMount: `${__dirname}/__fixtures__/browse.html`,
         getViewContextOnSourcegraphMount: `${__dirname}/__fixtures__/browse.html`,
     })
     describe('getToolbarMount()', () => {

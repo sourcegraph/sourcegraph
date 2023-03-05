@@ -4,7 +4,6 @@ import { subDays } from 'date-fns'
 import { EMPTY, NEVER, Observable, of } from 'rxjs'
 
 import { subtypeOf } from '@sourcegraph/common'
-import { ActionItemComponentProps } from '@sourcegraph/shared/src/actions/ActionItem'
 import { SearchContextFields } from '@sourcegraph/shared/src/graphql-operations'
 import {
     mockFetchSearchContexts,
@@ -32,10 +31,6 @@ const config: Meta = {
 }
 
 export default config
-
-const EXTENSIONS_CONTROLLER: ActionItemComponentProps['extensionsController'] = {
-    executeCommand: () => new Promise(resolve => setTimeout(resolve, 750)),
-}
 
 const PLATFORM_CONTEXT: CommunitySearchContextPageProps['platformContext'] = {
     settings: NEVER,
@@ -113,7 +108,6 @@ const commonProps = () =>
         patternType: SearchPatternType.standard,
         setPatternType: action('setPatternType'),
         caseSensitive: false,
-        extensionsController: { ...EXTENSIONS_CONTROLLER },
         platformContext: PLATFORM_CONTEXT,
         setCaseSensitivity: action('setCaseSensitivity'),
         activation: undefined,

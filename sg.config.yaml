@@ -1379,14 +1379,11 @@ commandsets:
   app:
     requiresDevPrivate: true
     checks:
-      - docker
       - git
     commands:
       - sourcegraph
       - docsite
       - web
-      # TODO: App's dependency on syntax-highlighter will be removed.
-      - syntax-highlighter
       - caddy
 
 tests:

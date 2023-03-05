@@ -1,8 +1,6 @@
-import { action } from '@storybook/addon-actions'
 import { DecoratorFn, Meta, Story } from '@storybook/react'
 
 import { registerHighlightContributions } from '@sourcegraph/common'
-import { MarkupKind } from '@sourcegraph/extension-api-classes'
 import {
     commonProps,
     FIXTURE_ACTIONS,
@@ -18,8 +16,6 @@ import {
     FIXTURE_CONTENT_LONG_TEXT_ONLY,
     FIXTURE_CONTENT_MARKDOWN,
     FIXTURE_PARTIAL_BADGE,
-    FIXTURE_SMALL_TEXT_MARKDOWN_ALERT,
-    FIXTURE_WARNING_MARKDOWN_ALERT,
 } from './WebHoverOverlay.fixtures'
 
 import styles from './WebHoverOverlay.story.module.scss'
@@ -148,117 +144,33 @@ export const MultipleMarkupContents: Story = () => (
 
 MultipleMarkupContents.storyName = 'Multiple MarkupContents'
 
-export const WithSmallTextAlert: Story = () => (
+export const WithLongMarkdownTextIcon: Story = () => (
     <WebHoverOverlay
         {...commonProps()}
         hoverOrError={{
             contents: [FIXTURE_CONTENT],
-            alerts: [FIXTURE_SMALL_TEXT_MARKDOWN_ALERT],
-        }}
-        actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
-    />
-)
-
-WithSmallTextAlert.storyName = 'With small-text alert'
-
-export const WithOneLineAlert: Story = () => (
-    <WebHoverOverlay
-        {...commonProps()}
-        hoverOrError={{
-            contents: [FIXTURE_CONTENT],
-            alerts: [
-                {
-                    summary: {
-                        kind: MarkupKind.PlainText,
-                        value: 'This is a test alert.',
-                    },
-                },
-            ],
-        }}
-        actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
-    />
-)
-
-WithOneLineAlert.storyName = 'With one-line alert'
-
-export const WithAlertWithWarningIcon: Story = () => (
-    <WebHoverOverlay
-        {...commonProps()}
-        hoverOrError={{
-            contents: [FIXTURE_CONTENT],
-            alerts: [
-                {
-                    summary: {
-                        kind: MarkupKind.PlainText,
-                        value: 'This is a warning alert.',
-                    },
-                    iconKind: 'warning',
-                },
-            ],
-        }}
-        actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
-    />
-)
-
-WithAlertWithWarningIcon.storyName = 'With alert with warning icon'
-
-export const WithDismissibleAlertWithIcon: Story = () => (
-    <WebHoverOverlay
-        {...commonProps()}
-        hoverOrError={{
-            contents: [FIXTURE_CONTENT],
-            alerts: [
-                {
-                    summary: {
-                        kind: MarkupKind.Markdown,
-                        value: 'Search based result.<br /> [Learn more about precise code navigation](https://sourcegraph.com/github.com/sourcegraph/code-intel-extensions/-/blob/shared/indicators.ts#L67)',
-                    },
-                    type: 'test-alert-type',
-                    iconKind: 'info',
-                },
-            ],
-        }}
-        actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
-    />
-)
-
-WithDismissibleAlertWithIcon.storyName = 'With dismissible alert with icon'
-
-export const WithLongMarkdownTextAndDismissibleAlertWithIcon: Story = () => (
-    <WebHoverOverlay
-        {...commonProps()}
-        hoverOrError={{
-            contents: [FIXTURE_CONTENT],
-            alerts: [FIXTURE_WARNING_MARKDOWN_ALERT],
             aggregatedBadges: [FIXTURE_PARTIAL_BADGE, FIXTURE_SEMANTIC_BADGE],
         }}
         actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
     />
 )
 
-WithLongMarkdownTextAndDismissibleAlertWithIcon.storyName = 'With long markdown text and dismissible alert with icon.'
+WithLongMarkdownTextIcon.storyName = 'With long markdown text and icon.'
 
-export const MultipleMarkupContentsWithBadgesAndAlerts: Story = () => (
+export const MultipleMarkupContentsWithBadges: Story = () => (
     <div className={styles.container}>
         <WebHoverOverlay
             {...commonProps()}
             hoverOrError={{
                 contents: [FIXTURE_CONTENT, FIXTURE_CONTENT, FIXTURE_CONTENT],
                 aggregatedBadges: [FIXTURE_SEMANTIC_BADGE],
-                alerts: [FIXTURE_SMALL_TEXT_MARKDOWN_ALERT, FIXTURE_WARNING_MARKDOWN_ALERT],
             }}
             actionsOrError={FIXTURE_ACTIONS}
-            onAlertDismissed={action('onAlertDismissed')}
         />
     </div>
 )
 
-MultipleMarkupContentsWithBadgesAndAlerts.storyName = 'Multiple MarkupContents with badges and alerts'
+MultipleMarkupContentsWithBadges.storyName = 'Multiple MarkupContents with badges'
 
 export const WithCloseButton: Story = () => (
     <WebHoverOverlay
@@ -266,10 +178,8 @@ export const WithCloseButton: Story = () => (
         hoverOrError={{
             contents: [FIXTURE_CONTENT, FIXTURE_CONTENT, FIXTURE_CONTENT],
             aggregatedBadges: [FIXTURE_SEMANTIC_BADGE],
-            alerts: [FIXTURE_SMALL_TEXT_MARKDOWN_ALERT, FIXTURE_WARNING_MARKDOWN_ALERT],
         }}
         actionsOrError={FIXTURE_ACTIONS}
-        onAlertDismissed={action('onAlertDismissed')}
         pinOptions={{ showCloseButton: true }}
     />
 )

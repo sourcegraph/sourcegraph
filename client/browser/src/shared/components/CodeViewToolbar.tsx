@@ -3,12 +3,8 @@ import * as React from 'react'
 import classNames from 'classnames'
 import * as H from 'history'
 
-import { ContributableMenu } from '@sourcegraph/client-api'
 import { ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { isHTTPAuthError } from '@sourcegraph/http-client'
-import { ActionNavItemsClassProps, ActionsNavItems } from '@sourcegraph/shared/src/actions/ActionsNavItems'
-import { ContributionScope } from '@sourcegraph/shared/src/api/extension/api/context/context'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
@@ -26,21 +22,32 @@ export interface ButtonProps {
     actionItemClass?: string
 }
 
-export interface CodeViewToolbarClassProps extends ActionNavItemsClassProps {
+export interface CodeViewToolbarClassProps {
     /**
      * Class name for the `<ul>` element wrapping all toolbar items
      */
     className?: string
 
     /**
-     * The scope of this toolbar (e.g., the view component that it is associated with).
+     * CSS class name for one action item (`<button>` or `<a>`)
      */
-    scope?: ContributionScope
+    actionItemClass?: string
+
+    /**
+     * Additional CSS class name when the action item is a toogle in its enabled state.
+     */
+    actionItemPressedClass?: string
+
+    actionItemIconClass?: string
+
+    /**
+     * CSS class name for each `<li>` element wrapping the action item.
+     */
+    listItemClass?: string
 }
 
 export interface CodeViewToolbarProps
     extends PlatformContextProps<'settings' | 'requestGraphQL'>,
-        ExtensionsControllerProps,
         TelemetryProps,
         CodeViewToolbarClassProps {
     sourcegraphURL: string
@@ -56,23 +63,10 @@ export interface CodeViewToolbarProps
     buttonProps?: ButtonProps
     onSignInClose: () => void
     location: H.Location
-    hideActions?: boolean
 }
 
 export const CodeViewToolbar: React.FunctionComponent<React.PropsWithChildren<CodeViewToolbarProps>> = props => (
     <ul className={classNames(styles.codeViewToolbar, props.className)} data-testid="code-view-toolbar">
-        {!props.hideActions && props.extensionsController !== null && (
-            <ActionsNavItems
-                {...props}
-                listItemClass={classNames(styles.item, props.buttonProps?.listItemClass ?? props.listItemClass)}
-                actionItemClass={classNames(props.buttonProps?.actionItemClass ?? props.actionItemClass)}
-                menu={ContributableMenu.EditorTitle}
-                extensionsController={props.extensionsController}
-                platformContext={props.platformContext}
-                location={props.location}
-                scope={props.scope}
-            />
-        )}{' '}
         {isErrorLike(props.fileInfoOrError) ? (
             isHTTPAuthError(props.fileInfoOrError) ? (
                 <SignInButton

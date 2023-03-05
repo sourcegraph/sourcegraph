@@ -68,38 +68,6 @@ exports[`KeyboardShortcutsHelp is triggered correctly 1`] = `
                 <li
                   class="list-group-item d-flex align-items-center justify-content-between"
                 >
-                  Show command palette
-                  <span>
-                    <span>
-                      <kbd>
-                        Ctrl
-                      </kbd>
-                      +
-                      <kbd>
-                        p
-                      </kbd>
-                    </span>
-                    <span>
-                       or 
-                      <kbd>
-                        F1
-                      </kbd>
-                    </span>
-                    <span>
-                       or 
-                      <kbd>
-                        Alt
-                      </kbd>
-                      +
-                      <kbd>
-                        x
-                      </kbd>
-                    </span>
-                  </span>
-                </li>
-                <li
-                  class="list-group-item d-flex align-items-center justify-content-between"
-                >
                   Switch color theme
                   <span>
                     <span>

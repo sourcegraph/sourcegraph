@@ -19,6 +19,7 @@ import { LazyFuzzyFinder } from './components/fuzzyFinder/LazyFuzzyFinder'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp/KeyboardShortcutsHelp'
 import { useScrollToLocationHash } from './components/useScrollToLocationHash'
 import { useUserHistory } from './components/useUserHistory'
+import { useGlobalContributions } from './contributions'
 import { useFeatureFlag } from './featureFlags/useFeatureFlag'
 import { GlobalAlerts } from './global/GlobalAlerts'
 import { useHandleSubmitFeedback } from './hooks'
@@ -130,6 +131,8 @@ export const Layout: React.FC<LegacyLayoutProps> = props => {
     // const afterTosAccepted = useCallback(() => {
     //     setTosAccepted(true)
     // }, [])
+
+    useGlobalContributions()
 
     // Remove trailing slash (which is never valid in any of our URLs).
     if (location.pathname !== '/' && location.pathname.endsWith('/')) {

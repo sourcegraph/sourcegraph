@@ -302,7 +302,7 @@ async function fetchRepositoryData(repoName: string): Promise<Omit<BlameHunkData
 }
 
 /**
- * Get display info shared between status bar items and text document decorations.
+ * Get display info.
  */
 const addDisplayInfoForHunk = (hunk: Omit<BlameHunk, 'displayInfo'>, sourcegraphURL: string): BlameHunk => {
     const now = Date.now()

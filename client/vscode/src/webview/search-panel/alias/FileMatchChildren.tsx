@@ -6,18 +6,13 @@ import { Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 
 import { LastSyncedIcon, FileMatchChildrenStyles as styles, CodeExcerpt } from '@sourcegraph/branded'
-import { HoverMerged } from '@sourcegraph/client-api'
-import { Hoverifier } from '@sourcegraph/codeintellify'
 import {
     appendLineRangeQueryParameter,
     appendSubtreeQueryParameter,
     toPositionOrRangeQueryParameter,
 } from '@sourcegraph/common'
-import { ActionItemAction } from '@sourcegraph/shared/src/actions/ActionItem'
 import { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { MatchGroup } from '@sourcegraph/shared/src/components/ranking/PerFileResultRanking'
-import { Controller as ExtensionsController } from '@sourcegraph/shared/src/extensions/controller'
-import { HoverContext } from '@sourcegraph/shared/src/hover/HoverOverlay.types'
 import { ContentMatch, SymbolMatch, PathMatch, getFileMatchUrl } from '@sourcegraph/shared/src/search/stream'
 import { isSettingsValid, SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 import { SymbolKind } from '@sourcegraph/shared/src/symbols/SymbolKind'
@@ -34,8 +29,6 @@ interface FileMatchProps extends SettingsCascadeProps, TelemetryProps {
     /* Clicking on a match opens the link in a new tab */
     openInNewTab?: boolean
     fetchHighlightedFileLineRanges: (parameters: FetchFileParameters, force?: boolean) => Observable<string[][]>
-    extensionsController?: Pick<ExtensionsController, 'extHostAPI'>
-    hoverifier?: Hoverifier<HoverContext, HoverMerged, ActionItemAction>
 }
 
 /**
@@ -267,7 +260,7 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
             {/* Line matches */}
             {grouped && (
                 <div>
-                    {grouped.map((group, index) => (
+                    {grouped.map(group => (
                         <div
                             key={`linematch:${getFileMatchUrl(result)}${group.position.line}:${
                                 group.position.character

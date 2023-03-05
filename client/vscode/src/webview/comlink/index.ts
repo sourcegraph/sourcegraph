@@ -9,11 +9,10 @@ import { hasProperty } from '@sourcegraph/common'
 // "communication layer" with either our own VS Code webview RPC solution
 // or by applying this adapter to a fork of Comlink.
 
-// MOTIVATION:
-// Comlink is a great library that makes it easy to work with Web Workers: https://github.com/GoogleChromeLabs/comlink.
-// We use it to implement a bi-directional communication channel between our web application/browser extension and
-// our Sourcegraph extension host. Given the need to sync state between {search panel <- extension "Core" -> search webview},
-// Comlink was a natural fit. However, we needed to implement some hacky adapters to get it to work for our needs:
+// MOTIVATION: Comlink is a great library that makes it easy to work with Web Workers:
+// https://github.com/GoogleChromeLabs/comlink. Given the need to sync state between {search panel
+// <- extension "Core" -> search webview}, Comlink was a natural fit. However, we needed to
+// implement some hacky adapters to get it to work for our needs:
 
 // web <-> web: Default Comlink use case. Depends on ability to transfer `MessageChannel`s, which
 // is built into browsers.
@@ -25,7 +24,6 @@ import { hasProperty } from '@sourcegraph/common'
 // Consequently, there are three endpoint generators (all return endpoints for both directions):
 // - extension <-> webview (extension context)
 // - web <-> extension (webview context)
-// - web <-> web (webview context, used for Sourcegraph extension host Web Worker)
 
 export function generateUUID(): string {
     return new Array(4)
@@ -34,7 +32,7 @@ export function generateUUID(): string {
         .join('-')
 }
 
-export type RelationshipType = 'webToWeb' | 'webToNode'
+export type RelationshipType = 'webToNode'
 
 export interface NestedConnectionData {
     nestedConnectionId: string

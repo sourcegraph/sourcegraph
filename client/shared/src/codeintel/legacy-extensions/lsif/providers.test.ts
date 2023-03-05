@@ -1,10 +1,8 @@
-/* eslint-disable etc/no-deprecated */
 import * as assert from 'assert'
 
 import * as sinon from 'sinon'
 
 import * as scip from '../../scip'
-import * as sourcegraph from '../api'
 import { QueryGraphQLFn } from '../util/graphql'
 
 import { GenericLSIFResponse } from './api'
@@ -41,9 +39,9 @@ describe('graphql providers', () => {
                 Promise.resolve({
                     range: range1,
                     definitions: () => [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                        { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                        { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                        { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
                     ],
                     hover: {
                         markdown: { text: 'foo' },
@@ -60,9 +58,9 @@ describe('graphql providers', () => {
                 ).definitionAndHover(document, position),
                 {
                     definition: [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                        { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                        { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                        { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
                     ],
                     hover: {
                         contents: {
@@ -97,9 +95,9 @@ describe('graphql providers', () => {
                 await createProviders(queryGraphQLFn, makeStencilFn(stencil1)).definitionAndHover(document, position),
                 {
                     definition: [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                        { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                        { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                        { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
                     ],
                     hover: {
                         contents: {
@@ -143,9 +141,9 @@ describe('graphql providers', () => {
                 Promise.resolve({
                     range: range1,
                     references: () => [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#d.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#e.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#f.ts'), range3),
+                        { uri: 'git://repo1?deadbeef1#d.ts', range: range1 },
+                        { uri: 'git://repo2?deadbeef2#e.ts', range: range2 },
+                        { uri: 'git://repo3?deadbeef3#f.ts', range: range3 },
                     ],
                 })
             )
@@ -162,14 +160,14 @@ describe('graphql providers', () => {
 
             assert.deepStrictEqual(values, [
                 [
-                    new sourcegraph.Location(new URL('git://repo1?deadbeef1#d.ts'), range1),
-                    new sourcegraph.Location(new URL('git://repo2?deadbeef2#e.ts'), range2),
-                    new sourcegraph.Location(new URL('git://repo3?deadbeef3#f.ts'), range3),
+                    { uri: 'git://repo1?deadbeef1#d.ts', range: range1 },
+                    { uri: 'git://repo2?deadbeef2#e.ts', range: range2 },
+                    { uri: 'git://repo3?deadbeef3#f.ts', range: range3 },
                 ],
                 [
-                    { ...new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1) },
-                    { ...new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2) },
-                    { ...new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3) },
+                    { ...{ uri: 'git://repo1?deadbeef1#a.ts', range: range1 } },
+                    { ...{ uri: 'git://repo2?deadbeef2#b.ts', range: range2 } },
+                    { ...{ uri: 'git://repo3?deadbeef3#c.ts', range: range3 } },
                 ],
             ])
         })
@@ -196,9 +194,9 @@ describe('graphql providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                        { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                        { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                        { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
                     ],
                 ]
             )
@@ -251,9 +249,9 @@ describe('graphql providers', () => {
                 })
             )
 
-            const location1 = new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1)
-            const location2 = new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2)
-            const location3 = new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3)
+            const location1 = { uri: 'git://repo1?deadbeef1#a.ts', range: range1 }
+            const location2 = { uri: 'git://repo2?deadbeef2#b.ts', range: range2 }
+            const location3 = { uri: 'git://repo3?deadbeef3#c.ts', range: range3 }
 
             assert.deepEqual(
                 await gatherValues(
@@ -279,7 +277,7 @@ describe('graphql providers', () => {
                 })
             )
 
-            const location = new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1)
+            const location = { uri: 'git://repo1?deadbeef1#a.ts', range: range1 }
 
             const values = [[location]]
             for (let index = 1; index < MAX_REFERENCE_PAGE_REQUESTS; index++) {
@@ -311,12 +309,12 @@ describe('graphql providers', () => {
                 Promise.resolve({
                     range: range1,
                     references: () => [
-                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo?rev#bar.ts'), range2),
-                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range3),
-                        new sourcegraph.Location(new URL('git://repo?rev#baz.ts'), range4),
-                        new sourcegraph.Location(new URL('git://repo?rev#foo.ts'), range5),
-                        new sourcegraph.Location(new URL('git://repo?rev#baz.ts'), range6),
+                        { uri: 'git://repo?rev#foo.ts', range: range1 },
+                        { uri: 'git://repo?rev#bar.ts', range: range2 },
+                        { uri: 'git://repo?rev#foo.ts', range: range3 },
+                        { uri: 'git://repo?rev#baz.ts', range: range4 },
+                        { uri: 'git://repo?rev#foo.ts', range: range5 },
+                        { uri: 'git://repo?rev#baz.ts', range: range6 },
                     ],
                 })
             )

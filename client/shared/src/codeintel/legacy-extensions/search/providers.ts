@@ -244,7 +244,7 @@ export function createProviders(
             return null
         }
 
-        const text = await getFileContent(def.uri.href)
+        const text = await getFileContent(def.uri)
         if (!text) {
             return null
         }
@@ -539,7 +539,8 @@ function isExternalPrivateSymbol(
 function sortByProximity(locations: sourcegraph.Location[], currentURI: URL): sourcegraph.Location[] {
     return sortBy(
         locations,
-        ({ uri }) => -jaccardIndex(new Set(uri.hash.slice(1).split('/')), new Set(currentURI.hash.slice(1).split('/')))
+        ({ uri }) =>
+            -jaccardIndex(new Set(new URL(uri).hash.slice(1).split('/')), new Set(currentURI.hash.slice(1).split('/')))
     )
 }
 

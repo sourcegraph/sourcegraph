@@ -1,24 +1,17 @@
 import { ApolloQueryResult, ObservableQuery } from '@apollo/client'
 import { map, publishReplay, refCount, shareReplay } from 'rxjs/operators'
 
-import { createAggregateError, asError, appendSubtreeQueryParameter, logger } from '@sourcegraph/common'
+import { createAggregateError, asError, logger } from '@sourcegraph/common'
 import { fromObservableQueryPromise, getDocumentNode } from '@sourcegraph/http-client'
 import { viewerSettingsQuery } from '@sourcegraph/shared/src/backend/settings'
 import { ViewerSettingsResult, ViewerSettingsVariables } from '@sourcegraph/shared/src/graphql-operations'
 import { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import { mutateSettings, updateSettings } from '@sourcegraph/shared/src/settings/edit'
 import { gqlToCascade, SettingsSubject } from '@sourcegraph/shared/src/settings/settings'
-import {
-    toPrettyBlobURL,
-    RepoFile,
-    UIPositionSpec,
-    ViewStateSpec,
-    RenderModeSpec,
-    UIRangeSpec,
-} from '@sourcegraph/shared/src/util/url'
 
 import { getWebGraphQLClient, requestGraphQL } from '../backend/graphql'
 import { eventLogger } from '../tracking/eventLogger'
+import { toPrettyBlobURL } from '@sourcegraph/shared/src/util/url'
 
 /**
  * Creates the {@link PlatformContext} for the web app.
@@ -71,26 +64,12 @@ export function createPlatformContext(): PlatformContext {
         },
         getGraphQLClient: getWebGraphQLClient,
         requestGraphQL: ({ request, variables }) => requestGraphQL(request, variables),
-        createExtensionHost: () => {
-            throw new Error('extensions are no longer supported in the web app')
-        },
-        urlToFile: toPrettyWebBlobURL,
+        urlToFile: toPrettyBlobURL,
         sourcegraphURL: window.context.externalURL,
-        clientApplication: 'sourcegraph',
         telemetryService: eventLogger,
     }
 
     return context
-}
-
-function toPrettyWebBlobURL(
-    context: RepoFile &
-        Partial<UIPositionSpec> &
-        Partial<ViewStateSpec> &
-        Partial<UIRangeSpec> &
-        Partial<RenderModeSpec>
-): string {
-    return appendSubtreeQueryParameter(toPrettyBlobURL(context))
 }
 
 function mapViewerSettingsResult({ data, errors }: ApolloQueryResult<ViewerSettingsResult>): {

@@ -13,7 +13,6 @@ import { SettingsCascadeProps, SettingsSubject } from '@sourcegraph/shared/src/s
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { LoadingSpinner, PageHeader, ErrorMessage } from '@sourcegraph/wildcard'
 
-import settingsSchemaJSON from '../../../../schema/settings.schema.json'
 import { AuthenticatedUser } from '../auth'
 import { queryGraphQL } from '../backend/graphql'
 import { HeroPage } from '../components/HeroPage'
@@ -90,7 +89,7 @@ export class SettingsArea extends React.Component<Props, State> {
                 .pipe(
                     switchMap(([{ id }]) =>
                         fetchSettingsCascade(id).pipe(
-                            map(cascade => ({ subjects: cascade.subjects, settingsJSONSchema: settingsSchemaJSON })),
+                            map(cascade => ({ subjects: cascade.subjects })),
                             catchError(error => [asError(error)]),
                             map(dataOrError => ({ dataOrError }))
                         )

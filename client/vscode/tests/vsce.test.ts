@@ -36,9 +36,7 @@ describe('VS Code extension', () => {
     // fixing before we add more test cases to the suite.
 
     it('works', async () => {
-        const userSettings: Settings = {
-            extensions: {},
-        }
+        const userSettings: Settings = {}
 
         testContext.overrideGraphQL({
             ...highlightFileResult,

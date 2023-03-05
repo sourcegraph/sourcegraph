@@ -1,10 +1,5 @@
 import { MarkupKind } from '@sourcegraph/extension-api-classes'
-import type {
-    MarkupContent,
-    Badged,
-    AggregableBadge,
-    HoverAlert,
-} from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
+import type { MarkupContent, Badged, AggregableBadge } from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
 import { FIXTURE_SEMANTIC_BADGE } from '@sourcegraph/shared/src/hover/HoverOverlay.fixtures'
 
 export const FIXTURE_CONTENT_LONG_CODE: Badged<MarkupContent> = {
@@ -26,21 +21,4 @@ export const FIXTURE_CONTENT_LONG_TEXT_ONLY: Badged<MarkupContent> = {
 export const FIXTURE_PARTIAL_BADGE: AggregableBadge = {
     ...FIXTURE_SEMANTIC_BADGE,
     text: 'partial semantic',
-}
-
-export const FIXTURE_SMALL_TEXT_MARKDOWN_ALERT: HoverAlert = {
-    summary: {
-        kind: MarkupKind.Markdown,
-        value: '<small>This is an info alert wrapped into a \\<small\\> element. Enim esse quis commodo ex. Pariatur tempor laborum officiairure est do est laborum nostrud cillum. Cupidatat id consectetur et eiusmod Loremproident cupidatat ullamco dolor nostrud. Cupidatat sit do dolor aliqua labore adlaboris cillum deserunt dolor. Sunt labore veniam Lorem reprehenderit quis occaecatsint do mollit aliquip. Consectetur mollit mollit magna eiusmod duis ex. Sint nisilabore labore nulla laboris.</small>',
-    },
-    type: 'test-alert-type',
-}
-
-export const FIXTURE_WARNING_MARKDOWN_ALERT: HoverAlert = {
-    summary: {
-        kind: MarkupKind.Markdown,
-        value: "This is a warning alert. [It uses Markdown.](https://sourcegraph.com) `To render things easily`. *Cool!*\n\nIt's a second paragraph.",
-    },
-    type: 'test-alert-type',
-    iconKind: 'warning',
 }

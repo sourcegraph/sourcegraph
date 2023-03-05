@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "references": [
-    { "path": "client/template-parser" },
     { "path": "client/build-config" },
     { "path": "client/common" },
     { "path": "client/shared" },
@@ -15,7 +14,6 @@
     { "path": "client/web/src/integration" },
     { "path": "client/browser" },
     { "path": "client/browser/src/integration" },
-    { "path": "client/extension-api" },
     { "path": "client/extension-api-types" },
     { "path": "client/storybook" },
     { "path": "client/testing" },

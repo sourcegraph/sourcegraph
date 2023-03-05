@@ -49,7 +49,7 @@ export const HoverOverlayContents: React.FunctionComponent<
         return null
     }
 
-    if (hoverOrError === null || (hoverOrError.contents.length === 0 && hoverOrError.alerts?.length)) {
+    if (hoverOrError === null || hoverOrError.contents.length === 0) {
         return (
             // Show some content to give the close button space and communicate to the user we couldn't find a hover.
             <small className={classNames(hoverOverlayStyle.hoverEmpty)}>No hover information available.</small>

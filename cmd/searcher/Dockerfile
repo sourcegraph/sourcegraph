@@ -21,8 +21,8 @@ LABEL org.opencontainers.image.created=${DATE}
 LABEL org.opencontainers.image.version=${VERSION}
 LABEL com.sourcegraph.github.url=https://github.com/sourcegraph/sourcegraph/commit/${COMMIT_SHA}
 
-ENV CACHE_DIR=/mnt/cache/searcher
-RUN mkdir -p ${CACHE_DIR} && chown -R sourcegraph:sourcegraph ${CACHE_DIR}
+ENV SEARCHER_CACHE_DIR=/mnt/cache/searcher
+RUN mkdir -p ${SEARCHER_CACHE_DIR} && chown -R sourcegraph:sourcegraph ${SEARCHER_CACHE_DIR}
 USER sourcegraph
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/searcher"]
 COPY searcher /usr/local/bin/

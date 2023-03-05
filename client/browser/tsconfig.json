@@ -11,7 +11,7 @@
     "rootDir": ".",
     "outDir": "out",
   },
-  "include": ["**/*", ".*", "src/**/*.json", "src/types/**/*.d.ts", "./code-intel-extensions.json"],
+  "include": ["**/*", ".*", "src/**/*.json", "src/types/**/*.d.ts"],
   "exclude": [
     "out",
     "node_modules",
@@ -36,9 +36,6 @@
     },
     {
       "path": "../common",
-    },
-    {
-      "path": "../extension-api",
     },
     {
       "path": "../extension-api-types",

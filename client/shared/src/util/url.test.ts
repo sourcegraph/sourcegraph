@@ -8,7 +8,6 @@ import {
     parseHash,
     parseRepoURI,
     toPrettyBlobURL,
-    withWorkspaceRootInputRevision,
     toAbsoluteBlobURL,
     RepoFile,
     toRepoURL,
@@ -324,36 +323,6 @@ describe('util/url', () => {
             )
         })
     })
-})
-
-describe('withWorkspaceRootInputRevision', () => {
-    test('uses input revision for URI inside root with input revision', () =>
-        expect(
-            withWorkspaceRootInputRevision([{ uri: 'git://r?c', inputRevision: 'v' }], parseRepoURI('git://r?c#f'))
-        ).toEqual(parseRepoURI('git://r?v#f')))
-
-    test('does not change URI outside root (different repoName)', () =>
-        expect(
-            withWorkspaceRootInputRevision([{ uri: 'git://r?c', inputRevision: 'v' }], parseRepoURI('git://r2?c#f'))
-        ).toEqual(parseRepoURI('git://r2?c#f')))
-
-    test('does not change URI outside root (different revision)', () =>
-        expect(
-            withWorkspaceRootInputRevision([{ uri: 'git://r?c', inputRevision: 'v' }], parseRepoURI('git://r?c2#f'))
-        ).toEqual(parseRepoURI('git://r?c2#f')))
-
-    test('uses empty string input revision (treats differently from undefined)', () =>
-        expect(
-            withWorkspaceRootInputRevision([{ uri: 'git://r?c', inputRevision: '' }], parseRepoURI('git://r?c#f'))
-        ).toEqual({ ...parseRepoURI('git://r?c#f'), revision: '' }))
-
-    test('does not change URI if root has undefined input revision', () =>
-        expect(
-            withWorkspaceRootInputRevision(
-                [{ uri: 'git://r?c', inputRevision: undefined }],
-                parseRepoURI('git://r?c#f')
-            )
-        ).toEqual(parseRepoURI('git://r?c#f')))
 })
 
 describe('buildSearchURLQuery', () => {

@@ -11,20 +11,26 @@ import {
 import { MaybeLoadingResult } from '@sourcegraph/codeintellify'
 // eslint-disable-next-line no-restricted-imports
 import { isDefined } from '@sourcegraph/common/src/types'
-import * as clientType from '@sourcegraph/extension-api-types'
+import { Location } from '@sourcegraph/extension-api-types'
 
 import { match } from '../api/client/types/textDocument'
-import { FlatExtensionHostAPI } from '../api/contract'
-import { proxySubscribable } from '../api/extension/api/common'
-import { toPosition } from '../api/extension/api/types'
-import { PanelViewData } from '../api/extension/extensionHostApi'
 import { getModeFromPath } from '../languages'
 import type { PlatformContext } from '../platform/context'
 import { isSettingsValid, Settings, SettingsCascade } from '../settings/settings'
 import { parseRepoURI } from '../util/url'
 
-import type { DocumentSelector, TextDocument, DocumentHighlight } from './legacy-extensions/api'
-import * as sourcegraph from './legacy-extensions/api'
+import {
+    CodeIntelContext,
+    DocumentHighlight,
+    ReferenceContext,
+    DocumentSelector,
+    updateCodeIntelContext,
+    ProviderResult,
+    Definition,
+    TextDocument,
+    Position,
+    SettingsGetter,
+} from './legacy-extensions/api'
 import { LanguageSpec } from './legacy-extensions/language-specs/language-spec'
 import { languageSpecs } from './legacy-extensions/language-specs/languages'
 import { RedactingLogger } from './legacy-extensions/logging'
@@ -32,18 +38,15 @@ import { createProviders, emptySourcegraphProviders, SourcegraphProviders } from
 
 interface CodeIntelAPI {
     hasReferenceProvidersForDocument(textParameters: TextDocumentPositionParameters): Observable<boolean>
-    getDefinition(textParameters: TextDocumentPositionParameters): Observable<clientType.Location[]>
-    getReferences(
-        textParameters: TextDocumentPositionParameters,
-        context: sourcegraph.ReferenceContext
-    ): Observable<clientType.Location[]>
-    getImplementations(parameters: TextDocumentPositionParameters): Observable<clientType.Location[]>
-    getHover(textParameters: TextDocumentPositionParameters): Observable<HoverMerged | null | undefined>
+    getDefinition(textParameters: TextDocumentPositionParameters): Observable<Location[]>
+    getReferences(textParameters: TextDocumentPositionParameters, context: ReferenceContext): Observable<Location[]>
+    getImplementations(parameters: TextDocumentPositionParameters): Observable<Location[]>
+    getHover(textParameters: TextDocumentPositionParameters): Observable<HoverMerged | null>
     getDocumentHighlights(textParameters: TextDocumentPositionParameters): Observable<DocumentHighlight[]>
 }
 
-function createCodeIntelAPI(context: sourcegraph.CodeIntelContext): CodeIntelAPI {
-    sourcegraph.updateCodeIntelContext(context)
+function createCodeIntelAPI(context: CodeIntelContext): CodeIntelAPI {
+    updateCodeIntelContext(context)
     return new DefaultCodeIntelAPI()
 }
 
@@ -73,9 +76,7 @@ export async function getOrCreateCodeIntelAPI(context: PlatformContext): Promise
 }
 
 class DefaultCodeIntelAPI implements CodeIntelAPI {
-    private locationResult(
-        locations: sourcegraph.ProviderResult<sourcegraph.Definition>
-    ): Observable<clientType.Location[]> {
+    private locationResult(locations: ProviderResult<Definition>): Observable<Location[]> {
         return locations.pipe(
             defaultIfEmpty(),
             map(result =>
@@ -93,18 +94,18 @@ class DefaultCodeIntelAPI implements CodeIntelAPI {
     }
     public getReferences(
         textParameters: TextDocumentPositionParameters,
-        context: sourcegraph.ReferenceContext
-    ): Observable<clientType.Location[]> {
+        context: ReferenceContext
+    ): Observable<Location[]> {
         const request = requestFor(textParameters)
         return this.locationResult(
             request.providers.references.provideReferences(request.document, request.position, context)
         )
     }
-    public getDefinition(textParameters: TextDocumentPositionParameters): Observable<clientType.Location[]> {
+    public getDefinition(textParameters: TextDocumentPositionParameters): Observable<Location[]> {
         const request = requestFor(textParameters)
         return this.locationResult(request.providers.definition.provideDefinition(request.document, request.position))
     }
-    public getImplementations(textParameters: TextDocumentPositionParameters): Observable<clientType.Location[]> {
+    public getImplementations(textParameters: TextDocumentPositionParameters): Observable<Location[]> {
         const request = requestFor(textParameters)
         return this.locationResult(
             request.providers.implementations.provideLocations(request.document, request.position)
@@ -118,6 +119,7 @@ class DefaultCodeIntelAPI implements CodeIntelAPI {
                 // We intentionally don't use `defaultIfEmpty()` here because
                 // that makes the popover load with an empty docstring.
                 .pipe(map(result => fromHoverMerged([result])))
+            // TODO(sqs): when the provider yields nothing, the observable appears to be empty, so undefined is returned, this means there is an error thrown in the devtools console when you hover over something like `switch` or some other syntactical element that lacks a hover
         )
     }
     public getDocumentHighlights(textParameters: TextDocumentPositionParameters): Observable<DocumentHighlight[]> {
@@ -131,20 +133,20 @@ class DefaultCodeIntelAPI implements CodeIntelAPI {
 
 interface LanguageRequest {
     providers: SourcegraphProviders
-    document: sourcegraph.TextDocument
-    position: sourcegraph.Position
+    document: TextDocument
+    position: Position
 }
 
 function requestFor(textParameters: TextDocumentPositionParameters): LanguageRequest {
     const document = toTextDocument(textParameters.textDocument)
     return {
         document,
-        position: toPosition(textParameters.position),
+        position: textParameters.position,
         providers: findLanguageMatchingDocument(document)?.providers || emptySourcegraphProviders,
     }
 }
 
-function toTextDocument(textDocument: TextDocumentIdentifier): sourcegraph.TextDocument {
+function toTextDocument(textDocument: TextDocumentIdentifier): TextDocument {
     return {
         uri: textDocument.uri,
         languageId: getModeFromPath(parseRepoURI(textDocument.uri).filePath || ''),
@@ -192,7 +194,7 @@ function selectorForSpec(languageSpec: LanguageSpec): DocumentSelector {
     ]
 }
 
-function newSettingsGetter(settingsCascade: SettingsCascade<Settings>): sourcegraph.SettingsGetter {
+function newSettingsGetter(settingsCascade: SettingsCascade<Settings>): SettingsGetter {
     return <T>(setting: string): T | undefined =>
         settingsCascade.final && (settingsCascade.final[setting] as T | undefined)
 }
@@ -230,25 +232,7 @@ export function injectNewCodeintel(
         | 'getDefinition'
         | 'getLocations'
         | 'hasReferenceProvidersForDocument'
-        | 'getPanelViews'
     > = {
-        getPanelViews() {
-            const panels: PanelViewData[] = []
-            for (const spec of languageSpecs) {
-                if (spec.textDocumentImplemenationSupport) {
-                    const id = `implementations_${spec.languageID}`
-                    panels.push({
-                        id,
-                        content: '',
-                        component: { locationProvider: id },
-                        selector: selectorForSpec(spec),
-                        priority: 160,
-                        title: 'Implementations',
-                    })
-                }
-            }
-            return proxySubscribable(of(panels))
-        },
         hasReferenceProvidersForDocument(textParameters) {
             return proxySubscribable(codeintel.hasReferenceProvidersForDocument(textParameters))
         },

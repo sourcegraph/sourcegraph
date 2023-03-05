@@ -8,7 +8,7 @@ import { NEVER, of } from 'rxjs'
 import { catchError, switchMap } from 'rxjs/operators'
 
 import { StreamingSearchResultsListProps } from '@sourcegraph/branded'
-import { asError, ErrorLike, isErrorLike, logger, repeatUntil } from '@sourcegraph/common'
+import { asError, ErrorLike, isErrorLike, repeatUntil } from '@sourcegraph/common'
 import {
     isCloneInProgressErrorLike,
     isRepoSeeOtherErrorLike,
@@ -16,7 +16,6 @@ import {
 } from '@sourcegraph/shared/src/backend/errors'
 import { RepoQuestionIcon } from '@sourcegraph/shared/src/components/icons'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { Settings } from '@sourcegraph/shared/src/schema/settings.schema'
 import { SearchContextProps } from '@sourcegraph/shared/src/search'
@@ -24,7 +23,6 @@ import { escapeSpaces } from '@sourcegraph/shared/src/search/query/filters'
 import { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
-import { makeRepoURI } from '@sourcegraph/shared/src/util/url'
 import { Button, Icon, Link, useObservable } from '@sourcegraph/wildcard'
 
 import { AuthenticatedUser } from '../auth'
@@ -67,7 +65,6 @@ const RepoSettingsArea = lazyComponent(() => import('./settings/RepoSettingsArea
 export interface RepoContainerContext
     extends RepoHeaderContributionsLifecycleProps,
         SettingsCascadeProps,
-        ExtensionsControllerProps,
         PlatformContextProps,
         HoverThresholdProps,
         TelemetryProps,
@@ -106,7 +103,6 @@ interface RepoContainerProps
     extends SettingsCascadeProps<Settings>,
         PlatformContextProps,
         TelemetryProps,
-        ExtensionsControllerProps,
         Pick<SearchContextProps, 'selectedSearchContextSpec' | 'searchContextsEnabled'>,
         BreadcrumbSetters,
         BreadcrumbsProps,
@@ -138,7 +134,7 @@ export interface HoverThresholdProps {
  * Renders a horizontal bar and content for a repository page.
  */
 export const RepoContainer: FC<RepoContainerProps> = props => {
-    const { extensionsController, globbing, repoContainerRoutes, authenticatedUser, selectedSearchContextSpec } = props
+    const { globbing, repoContainerRoutes, authenticatedUser, selectedSearchContextSpec } = props
 
     const location = useLocation()
 
@@ -223,41 +219,6 @@ export const RepoContainer: FC<RepoContainerProps> = props => {
             }
         }, [resolvedRevisionOrError, repoOrError, repoName])
     )
-
-    // Update the workspace roots service to reflect the current repo / resolved revision
-    useEffect(() => {
-        const workspaceRootUri =
-            resolvedRevisionOrError &&
-            !isErrorLike(resolvedRevisionOrError) &&
-            makeRepoURI({
-                repoName,
-                revision: resolvedRevisionOrError.commitID,
-            })
-
-        if (workspaceRootUri && extensionsController !== null) {
-            extensionsController.extHostAPI
-                .then(extensionHostAPI =>
-                    extensionHostAPI.addWorkspaceRoot({
-                        uri: workspaceRootUri,
-                        inputRevision: revision || '',
-                    })
-                )
-                .catch(error => {
-                    logger.error('Error adding workspace root', error)
-                })
-        }
-
-        // Clear the Sourcegraph extensions model's roots when navigating away.
-        return () => {
-            if (workspaceRootUri && extensionsController !== null) {
-                extensionsController.extHostAPI
-                    .then(extensionHostAPI => extensionHostAPI.removeWorkspaceRoot(workspaceRootUri))
-                    .catch(error => {
-                        logger.error('Error removing workspace root', error)
-                    })
-            }
-        }
-    }, [extensionsController, repoName, resolvedRevisionOrError, revision])
 
     // Update the navbar query to reflect the current repo / revision
     const [enableExperimentalQueryInput] = useExperimentalQueryInput()

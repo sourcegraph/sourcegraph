@@ -13,13 +13,7 @@
   },
   "references": [
     {
-      "path": "../extension-api",
-    },
-    {
       "path": "../extension-api-types",
-    },
-    {
-      "path": "../template-parser",
     },
   ],
   "include": ["./src/**/*", "./*.ts"],

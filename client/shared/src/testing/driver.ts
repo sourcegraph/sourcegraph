@@ -555,20 +555,6 @@ export class Driver {
         })
     }
 
-    public async assertNonemptyExternalRefs(): Promise<void> {
-        // verify active group is references
-        await this.page.waitForXPath(
-            "//*[contains(@class, 'panel')]//*[contains(@tabindex, '0')]//*[contains(text(), 'References')]"
-        )
-        // verify there are some references
-        await this.page.waitForSelector(
-            '[data-testid="panel-tabs-content"] [data-testid="hierarchical-locations-view-button"]',
-            {
-                visible: true,
-            }
-        )
-    }
-
     private async makeRequest<T = void>({ url, init }: { url: string; init: RequestInit & Serializable }): Promise<T> {
         const handle = await this.page.evaluateHandle(
             (url, init) => fetch(url, init).then(response => response.json()),

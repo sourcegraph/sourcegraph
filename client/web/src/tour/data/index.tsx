@@ -148,7 +148,7 @@ export const visitorsTasks: TourTaskType[] = [
                         locate a token definition.
                     </>
                 ),
-                completeAfterEvents: ['goToDefinition', 'goToDefinition.preloaded'],
+                completeAfterEvents: ['goToDefinition'],
                 action: {
                     type: 'link',
                     value: {

@@ -6,6 +6,7 @@ import * as H from 'history'
 import { Observable } from 'rxjs'
 
 import { isErrorLike, pluralize } from '@sourcegraph/common'
+import { AggregableBadge } from '@sourcegraph/extension-api-types'
 import { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import type { AggregableBadge } from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
 import { LineRanking } from '@sourcegraph/shared/src/components/ranking/LineRanking'

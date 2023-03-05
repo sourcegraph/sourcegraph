@@ -1,17 +1,15 @@
 import sinon from 'sinon'
 
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
-
 import * as scip from '../../scip'
 import * as sourcegraph from '../api'
 
 import { GenericLSIFResponse } from './api'
 
-export const document: sourcegraph.TextDocument = createStubTextDocument({
+export const document: sourcegraph.TextDocument = {
     uri: 'git://repo?rev#foo.ts',
     languageId: 'typescript',
     text: undefined,
-})
+}
 
 export const makeResource = (
     name: string,

@@ -15,15 +15,13 @@
   "devDependencies": {
     "@sourcegraph/testing": "workspace:*",
     "@sourcegraph/build-config": "workspace:*",
-    "@sourcegraph/extension-api-types": "workspace:*",
-    "sourcegraph": "workspace:*"
+    "@sourcegraph/extension-api-types": "workspace:*"
   },
   "dependencies": {
     "@sourcegraph/wildcard": "workspace:*",
     "@sourcegraph/http-client": "workspace:*",
     "@sourcegraph/common": "workspace:*",
     "@sourcegraph/client-api": "workspace:*",
-    "@sourcegraph/template-parser": "workspace:*",
     "@sourcegraph/codeintellify": "workspace:*"
   },
   "sideEffects": true

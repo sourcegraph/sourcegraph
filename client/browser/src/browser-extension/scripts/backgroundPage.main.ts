@@ -1,12 +1,9 @@
 // We want to polyfill first.
 import '../../shared/polyfills'
 
-import { Endpoint } from 'comlink'
 import { combineLatest, merge, Observable, of, Subject, Subscription, timer } from 'rxjs'
 import {
-    bufferCount,
     filter,
-    groupBy,
     map,
     mergeMap,
     switchMap,
@@ -20,14 +17,11 @@ import addDomainPermissionToggle from 'webext-domain-permission-toggle'
 
 import { isDefined, fetchCache } from '@sourcegraph/common'
 import { GraphQLResult, requestGraphQLCommon } from '@sourcegraph/http-client'
-import { createExtensionHostWorker } from '@sourcegraph/shared/src/api/extension/worker'
-import { EndpointPair } from '@sourcegraph/shared/src/platform/context'
 import { createURLWithUTM } from '@sourcegraph/shared/src/tracking/utm'
 
 import { getHeaders } from '../../shared/backend/headers'
 import { fetchSite } from '../../shared/backend/server'
 import { initializeOmniboxInterface } from '../../shared/cli'
-import { browserPortToMessagePort, findMessagePorts } from '../../shared/platform/ports'
 import { createBlobURLForBundle } from '../../shared/platform/worker'
 import { initSentry } from '../../shared/sentry'
 import { EventLogger } from '../../shared/tracking/eventLogger'
@@ -290,129 +284,7 @@ async function main(): Promise<void> {
     // Add "Enable Sourcegraph on this domain" context menu item
     addDomainPermissionToggle()
 
-    const ENDPOINT_KIND_REGEX = /^(proxy|expose)-/
-
-    const portKind = (port: browser.runtime.Port): string | undefined => {
-        const match = port.name.match(ENDPOINT_KIND_REGEX)
-        return match?.[1]
-    }
-
-    /**
-     * A stream of EndpointPair created from Port objects emitted by browser.runtime.onConnect.
-     *
-     * On initialization, the content script creates a pair of browser.runtime.Port objects
-     * using browser.runtime.connect(). The two ports are named 'proxy-{uuid}' and 'expose-{uuid}',
-     * and wrapped using {@link endpointFromPort} to behave like comlink endpoints on the content script side.
-     *
-     * This listens to events on browser.runtime.onConnect, pairs emitted ports using their naming pattern,
-     * and emits pairs. Each pair of ports represents a connection with an instance of the content script.
-     */
-    const browserPortPairs: Observable<Record<keyof EndpointPair, browser.runtime.PortWithSender>> = fromBrowserEvent(
-        browser.runtime.onConnect
-    ).pipe(
-        map(([port]) => port),
-        groupBy(
-            port => (port.name || 'other').replace(ENDPOINT_KIND_REGEX, ''),
-            port => port,
-            group => group.pipe(bufferCount(2))
-        ),
-        filter(group => group.key !== 'other'),
-        mergeMap(group =>
-            group.pipe(
-                bufferCount(2),
-                map(ports => {
-                    const proxyPort = ports.find(port => portKind(port) === 'proxy')
-                    if (!proxyPort) {
-                        throw new Error('No proxy port')
-                    }
-                    const exposePort = ports.find(port => portKind(port) === 'expose')
-                    if (!exposePort) {
-                        throw new Error('No expose port')
-                    }
-                    return {
-                        proxy: proxyPort,
-                        expose: exposePort,
-                    }
-                })
-            )
-        )
-    )
-
-    // Extension Host Connection
-    // When an Port pair is emitted, create an extension host worker.
-    // Messages from the ports are forwarded to the endpoints returned by {@link createExtensionHostWorker}, and vice-versa.
-    // The lifetime of the extension host worker is tied to that of the content script instance:
-    // when a port disconnects, the worker is terminated. This means there should always be exactly one
-    // extension host worker per active instance of the content script.
-    subscriptions.add(
-        browserPortPairs.subscribe({
-            next: browserPortPair => {
-                subscriptions.add(handleBrowserPortPair(browserPortPair))
-            },
-            error: error => {
-                console.error('Error handling extension host client connection', error)
-            },
-        })
-    )
-
     console.log('Sourcegraph background page initialized')
-}
-
-const workerBundleURL = browser.runtime.getURL('js/extensionHostWorker.bundle.js')
-
-/**
- * Handle an incoming browser port pair coming from a content script.
- */
-function handleBrowserPortPair(
-    browserPortPair: Record<keyof EndpointPair, browser.runtime.PortWithSender>
-): Subscription {
-    /** Subscriptions for this browser port pair */
-    const subscriptions = new Subscription()
-
-    console.log('Extension host client connected')
-    const { worker, clientEndpoints } = createExtensionHostWorker(workerBundleURL)
-    subscriptions.add(() => worker.terminate())
-
-    /** Forwards all messages between two endpoints (in one direction) */
-    const forwardEndpoint = (from: Endpoint, to: Endpoint): void => {
-        const messageListener = (event: Event): void => {
-            const { data } = event as MessageEvent
-            to.postMessage(data, [...findMessagePorts(data)])
-        }
-        from.addEventListener('message', messageListener)
-        subscriptions.add(() => from.removeEventListener('message', messageListener))
-
-        // False positive https://github.com/eslint/eslint/issues/12822
-        from.start?.()
-    }
-
-    const linkPortAndEndpoint = (role: keyof EndpointPair): void => {
-        const browserPort = browserPortPair[role]
-        const endpoint = clientEndpoints[role]
-        const tabId = browserPort.sender.tab?.id
-        if (!tabId) {
-            throw new Error('Expected Port to come from tab')
-        }
-        const link = browserPortToMessagePort(browserPort, `comlink-${role}-`, name =>
-            browser.tabs.connect(tabId, { name })
-        )
-        subscriptions.add(link.subscription)
-
-        forwardEndpoint(link.messagePort, endpoint)
-        forwardEndpoint(endpoint, link.messagePort)
-
-        // Clean up when the port disconnects
-        const disconnectListener = subscriptions.unsubscribe.bind(subscriptions)
-        browserPort.onDisconnect.addListener(disconnectListener)
-        subscriptions.add(() => browserPort.onDisconnect.removeListener(disconnectListener))
-    }
-
-    // Connect proxy client endpoint
-    linkPortAndEndpoint('proxy')
-    // Connect expose client endpoint
-    linkPortAndEndpoint('expose')
-
-    return subscriptions
 }
 
 // Browsers log this unhandled Promise automatically (and with a better stack trace through console.error)

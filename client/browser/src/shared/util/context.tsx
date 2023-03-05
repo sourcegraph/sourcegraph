@@ -18,7 +18,7 @@ export function observeSourcegraphURL(isExtension: boolean): Observable<string> 
 
 /**
  * Returns the base URL where assets will be fetched from
- * (CSS, extension host worker, bundle...).
+ * (CSS, bundle...).
  *
  * The returned URL is guaranteed to have a trailing slash.
  *

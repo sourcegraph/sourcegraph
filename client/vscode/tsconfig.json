@@ -44,6 +44,6 @@
       "path": "../wildcard",
     },
   ],
-  "include": ["./package.json", "**/*", ".*", "**/*.d.ts", "./code-intel-extensions.json"],
+  "include": ["./package.json", "**/*", ".*", "**/*.d.ts"],
   "exclude": ["node_modules", "../../node_modules", ".vscode-test", "out", "dist"],
 }

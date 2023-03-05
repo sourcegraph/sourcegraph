@@ -25,7 +25,6 @@ import { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { LanguageSpec } from '@sourcegraph/shared/src/codeintel/legacy-extensions/language-specs/language-spec'
 import { findLanguageSpec } from '@sourcegraph/shared/src/codeintel/legacy-extensions/language-specs/languages'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { HighlightResponseFormat } from '@sourcegraph/shared/src/graphql-operations'
 import { getModeFromPath } from '@sourcegraph/shared/src/languages'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
@@ -88,7 +87,6 @@ export interface ReferencesPanelProps
         Pick<CodeIntelligenceProps, 'useCodeIntel'>,
         TelemetryProps,
         HoverThresholdProps,
-        ExtensionsControllerProps,
         HighlightedFileLineRangesProps {
     /** Whether to show the first loaded reference in mini code view */
     jumpToFirst?: boolean

@@ -19,7 +19,6 @@ import { adaptSourcegraphThemeToEditorTheme } from '../../theming/sourcegraphThe
 import { AuthSidebarCta, AuthSidebarView } from '../auth/AuthSidebarView'
 import { HistoryHomeSidebar } from '../history/HistorySidebarView'
 
-import { createSearchSidebarAPI } from './api'
 import { ContextInvalidatedSidebarView } from './ContextInvalidatedSidebarView'
 import { SearchSidebarView } from './SearchSidebarView'
 

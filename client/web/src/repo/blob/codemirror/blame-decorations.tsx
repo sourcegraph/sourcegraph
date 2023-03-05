@@ -1,7 +1,6 @@
 /**
- * This file contains CodeMirror extensions for rendering git blame specific
- * text document decorations to CodeMirror decorations. Text document
- * decorations are provided via the {@link showGitBlameDecorations} facet.
+ * This file contains CodeMirror extensions for rendering `git blame`-specific CodeMirror
+ * decorations via the {@link showGitBlameDecorations} facet.
  */
 import { Extension, Facet, RangeSet } from '@codemirror/state'
 import {

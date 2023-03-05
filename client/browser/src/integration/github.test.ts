@@ -150,7 +150,7 @@ describe('GitHub', () => {
     // it('shows hover tooltips when hovering a token and respects "Enable single click to go to definition" setting', async () => {
     //     mockUrls(['https://github.com/*path/find-definition'])
 
-    //     const { mockExtension, Extensions, extensionSettings } = setupExtensionMocking()
+    //     const { mockExtension } = setupExtensionMocking()
 
     //     const userSettings: Settings = {
     //         extensions: extensionSettings,
@@ -315,11 +315,9 @@ describe('GitHub', () => {
             beforeEach(() => {
                 mockUrls(['https://github.com/*path/find-definition'])
 
-                const { mockExtension, extensionSettings } = setupExtensionMocking()
+                const { mockExtension } = setupExtensionMocking()
 
-                const userSettings: Settings = {
-                    extensions: extensionSettings,
-                }
+                const userSettings: Settings = {}
                 testContext.overrideGraphQL({
                     ViewerConfiguration: () => ({
                         viewerConfiguration: {
@@ -637,11 +635,9 @@ describe('GitHub', () => {
                     'https://github.com/commits/badges',
                 ])
 
-                const { mockExtension, extensionSettings } = setupExtensionMocking()
+                const { mockExtension } = setupExtensionMocking()
 
-                const userSettings: Settings = {
-                    extensions: extensionSettings,
-                }
+                const userSettings: Settings = {}
                 testContext.overrideGraphQL({
                     ViewerConfiguration: () => ({
                         viewerConfiguration: {

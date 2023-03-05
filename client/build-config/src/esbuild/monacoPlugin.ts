@@ -62,9 +62,8 @@ export const monacoPlugin = ({
 })
 
 // TODO(sqs): These Monaco Web Workers could be built as part of the main build if we switch to
-// using MonacoEnvironment#getWorker (from #getWorkerUrl), which would then let us use the worker
-// plugin (and in Webpack the worker-loader) to load these instead of needing to hardcode them as
-// build entrypoints.
+// using MonacoEnvironment#getWorker (from #getWorkerUrl), which would then let us use a worker
+// plugin to load these instead of needing to hardcode them as build entrypoints.
 export const buildMonaco = async (outdir: string): Promise<esbuild.BuildContext> =>
     esbuild.context({
         entryPoints: {

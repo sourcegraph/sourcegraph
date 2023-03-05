@@ -18,7 +18,6 @@ import {
     useCurrentSpan,
 } from '@sourcegraph/observability-client'
 import { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { HighlightResponseFormat } from '@sourcegraph/shared/src/graphql-operations'
 import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { SearchContextProps } from '@sourcegraph/shared/src/search'
@@ -88,7 +87,6 @@ interface BlobPageProps
         SettingsCascadeProps,
         PlatformContextProps,
         TelemetryProps,
-        ExtensionsControllerProps,
         HoverThresholdProps,
         BreadcrumbSetters,
         SearchStreamingProps,
@@ -564,7 +562,6 @@ export const BlobPage: React.FunctionComponent<BlobPageProps> = ({ className, ..
                         blobInfo={{ ...blobInfoOrError, commitID }}
                         wrapCode={wrapCode}
                         platformContext={props.platformContext}
-                        extensionsController={props.extensionsController}
                         settingsCascade={props.settingsCascade}
                         onHoverShown={props.onHoverShown}
                         telemetryService={props.telemetryService}

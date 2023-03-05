@@ -269,11 +269,7 @@ describe('Code graph regression test suite', () => {
 //     await (await driver.findElementWithText('Go to definition')).click()
 //
 //     if (Array.isArray(expectedDefinition)) {
-//         await driver.page.waitForSelector('[data-test-id="hierarchical-locations-view"]')
-//         const defLinks = await collectLinks(driver)
-//         for (const definition of expectedDefinition) {
-//             expect(defLinks).toContainEqual(definition)
-//         }
+//         throw new Error('test not implemented')
 //     } else if (expectedDefinition) {
 //         await driver.page.waitForFunction(
 //             (defURL: string) => document.location.href.endsWith(defURL),
@@ -293,54 +289,7 @@ describe('Code graph regression test suite', () => {
 //  * sequence.
 //  */
 // async function collectLinks(driver: Driver): Promise<Set<string>> {
-//     await driver.page.waitForSelector('.test-loading-spinner', { hidden: true })
-//
-//     const panelTabTitles = await getPanelTabTitles(driver)
-//     if (panelTabTitles.length === 0) {
-//         return new Set(await collectVisibleLinks(driver))
-//     }
-//
-//     const links = new Set<string>()
-//     for (const title of panelTabTitles) {
-//         const tabElement = await driver.page.$$(
-//             `[data-testid="hierarchical-locations-view-list"] span[title="${title}"]`
-//         )
-//         if (tabElement.length > 0) {
-//             await tabElement[0].click()
-//         }
-//
-//         for (const link of await collectVisibleLinks(driver)) {
-//             links.add(link)
-//         }
-//     }
-//
-//     return links
-// }
-
-// /**
-//  * Return the list of repository titles on the left-hand side of the definition or
-//  * reference result panel.
-//  */
-// async function getPanelTabTitles(driver: Driver): Promise<string[]> {
-//     return (
-//         await Promise.all(
-//             (
-//                 await driver.page.$$('[data-testid="hierarchical-locations-view-list"]:first-child span[title]')
-//             ).map(elementHandle => elementHandle.evaluate(element => element.getAttribute('title') || ''))
-//         )
-//     ).map(normalizeWhitespace)
-// }
-
-// /**
-//  * Return a list of locations (and their precision) that are current visible in a
-//  * file list panel. This may be definitions or references.
-//  */
-// function collectVisibleLinks(driver: Driver): Promise<string[]> {
-//     return driver.page.evaluate(() =>
-//         [...document.querySelectorAll<HTMLElement>('.test-file-match-children-item-wrapper')].map(
-//             a => a.querySelector('.test-file-match-children-item')?.getAttribute('data-href') || ''
-//         )
-//     )
+//     throw new Error('not implemented')
 // }
 
 // /**

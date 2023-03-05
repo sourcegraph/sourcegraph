@@ -872,7 +872,6 @@ Yarn,isarray,0.0.1,MIT,https://github.com/juliangruber/isarray,Approved
 Yarn,isexe,2.0.0,ISC,https://github.com/isaacs/isexe#readme,Approved
 Yarn,isobject,3.0.1,MIT,https://github.com/jonschlinkert/isobject,Approved
 Yarn,isobject,4.0.0,MIT,https://github.com/jonschlinkert/isobject,Approved
-Yarn,iterare,1.2.1,ISC,"",Approved
 Yarn,jest-worker,27.5.1,MIT,"",Approved
 Yarn,js-base64,3.7.2,New BSD,"",Approved
 Yarn,js-cookie,2.2.1,MIT,"",Approved
@@ -1138,7 +1137,6 @@ Yarn,stable,0.1.8,MIT,"",Approved
 Yarn,statuses,1.5.0,MIT,"",Approved
 Yarn,store2,2.12.0,(MIT OR GPL-3.0),http://www.esha.com/,Approved
 Yarn,stream-http,3.2.0,MIT,https://github.com/jhiesey/stream-http#readme,Approved
-Yarn,string-score,1.0.1,MIT,https://github.com/KenPowers/string-score,Approved
 Yarn,string-width,4.2.3,MIT,sindresorhus.com,Approved
 Yarn,string_decoder,1.1.1,MIT,https://github.com/nodejs/string_decoder,Approved
 Yarn,strip-ansi,3.0.1,MIT,sindresorhus.com,Approved
@@ -1153,8 +1151,6 @@ Yarn,supports-color,8.1.1,MIT,https://sindresorhus.com,Approved
 Yarn,supports-preserve-symlinks-flag,1.0.0,MIT,https://github.com/inspect-js/node-supports-preserve-symlinks-flag#readme,Approved
 Yarn,symbol-observable,4.0.0,MIT,"",Approved
 Yarn,synchronous-promise,2.0.15,New BSD,https://github.com/fluffynuts,Approved
-Yarn,tabbable,4.0.0,MIT,https://github.com/davidtheclark/tabbable#readme,Approved
-Yarn,tabbable,5.2.1,MIT,https://github.com/focus-trap/tabbable#readme,Approved
 Yarn,tagged-template-noop,2.1.1,MIT,https://github.com/lleaff/tagged-template-noop#readme,Approved
 Yarn,tapable,1.1.3,MIT,https://github.com/webpack/tapable,Approved
 Yarn,tapable,2.2.0,MIT,https://github.com/webpack/tapable,Approved

@@ -11,8 +11,6 @@ import { GraphQLClient, HTTPStatusError } from '@sourcegraph/http-client'
 import { SharedSpanName, TraceSpanProvider } from '@sourcegraph/observability-client'
 import { FetchFileParameters, fetchHighlightedFileLineRanges } from '@sourcegraph/shared/src/backend/file'
 import { setCodeIntelSearchContext } from '@sourcegraph/shared/src/codeintel/searchContext'
-import { Controller as ExtensionsController } from '@sourcegraph/shared/src/extensions/controller'
-import { createNoopController } from '@sourcegraph/shared/src/extensions/createNoopLoadedController'
 import { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import { ShortcutProvider } from '@sourcegraph/shared/src/react-shortcuts'
 import {
@@ -96,14 +94,9 @@ setLinkComponent(RouterLink)
 export class LegacySourcegraphWebApp extends React.Component<StaticAppConfig, LegacySourcegraphWebAppState> {
     private readonly subscriptions = new Subscription()
     private readonly platformContext: PlatformContext = createPlatformContext()
-    private readonly extensionsController: ExtensionsController | null = createNoopController(this.platformContext)
 
     constructor(props: StaticAppConfig) {
         super(props)
-
-        if (this.extensionsController !== null) {
-            this.subscriptions.add(this.extensionsController)
-        }
 
         this.state = {
             authenticatedUser: authenticatedUserValue,
@@ -177,9 +170,7 @@ export class LegacySourcegraphWebApp extends React.Component<StaticAppConfig, Le
             this.setSelectedSearchContextSpecToDefault()
         }
 
-        this.setWorkspaceSearchContext(this.state.selectedSearchContextSpec).catch(error => {
-            logger.error('Error sending search context to extensions!', error)
-        })
+        this.setWorkspaceSearchContext(this.state.selectedSearchContextSpec)
     }
 
     public componentWillUnmount(): void {
@@ -210,7 +201,6 @@ export class LegacySourcegraphWebApp extends React.Component<StaticAppConfig, Le
             authenticatedUser,
             viewerSubject: this.state.viewerSubject,
             settingsCascade: this.state.settingsCascade,
-            extensionsController: this.extensionsController,
         }
 
         const router = createBrowserRouter(
@@ -318,7 +308,7 @@ export class LegacySourcegraphWebApp extends React.Component<StaticAppConfig, Le
         )
     }
 
-    private async setWorkspaceSearchContext(spec: string | undefined): Promise<void> {
+    private setWorkspaceSearchContext(spec: string | undefined): void {
         // NOTE(2022-09-08) Inform the inlined code from
         // sourcegraph/code-intel-extensions about the change of search context.
         // The old extension code previously accessed this information from the
@@ -327,11 +317,6 @@ export class LegacySourcegraphWebApp extends React.Component<StaticAppConfig, Le
         // extensions on a tight deadline. It would be nice to properly pass
         // around this via React state in the future.
         setCodeIntelSearchContext(spec)
-        if (this.extensionsController === null) {
-            return
-        }
-        const extensionHostAPI = await this.extensionsController.extHostAPI
-        await extensionHostAPI.setSearchContext(spec)
     }
 
     private fetchHighlightedFileLineRanges = (

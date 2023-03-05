@@ -1426,9 +1426,6 @@ type MigratedExtensionsUsageStatistics struct {
 	SearchExportFailed               *int32
 	SearchExportFailedUniqueUsers    *int32
 
-	GoImportsSearchQueryTransformed            *int32
-	GoImportsSearchQueryTransformedUniqueUsers *int32
-
 	OpenInEditor []*MigratedExtensionsOpenInEditorUsageStatistics
 }
 

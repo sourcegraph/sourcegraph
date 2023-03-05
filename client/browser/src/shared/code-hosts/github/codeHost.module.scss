@@ -18,21 +18,6 @@
     }
 }
 
-.command-palette-popover {
-    --dropdown-bg: var(--body-bg);
-    --dropdown-border-color: var(--border-color);
-    --popover-border-radius: 6px;
-}
-
-.command-palette-action-item {
-    /* Reset GitHub's 44px min-height */
-    min-height: initial;
-
-    /* Reset default user agent button styles */
-    border: none;
-    background-color: transparent;
-}
-
 .action-item {
     /* Match GitHub's button height even if button only contains icon
      * (no text that would push the height) */

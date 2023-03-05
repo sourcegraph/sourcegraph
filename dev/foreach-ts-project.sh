@@ -18,7 +18,6 @@ DIRS=(
   client/client-api
   client/codeintellify
   client/common
-  client/extension-api
   client/extension-api-types
   client/http-client
   client/jetbrains
@@ -26,7 +25,6 @@ DIRS=(
   client/observability-server
   client/shared
   client/storybook
-  client/template-parser
   client/testing
   client/vscode
   client/web

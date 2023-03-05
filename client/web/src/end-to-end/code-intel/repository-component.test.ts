@@ -620,22 +620,6 @@ describe('Repository component', () => {
                     // verify all the matches highlight a `MultiFileDiffReader` token
                     await driver.assertAllHighlightedTokens('MultiFileDiffReader')
                 })
-
-                // TODO unskip this once basic-code-intel looks for external
-                // references even when local references are found.
-                test.skip('opens widget and fetches external references', async () => {
-                    await driver.page.goto(
-                        sourcegraphBaseUrl +
-                            '/github.com/sourcegraph/go-diff@3f415a150aec0685cb81b73cc201e762e075006d/-/blob/diff/parse.go?L32:16#tab=references'
-                    )
-
-                    // verify some external refs are fetched (we cannot assert how many, but we can check that the matched results
-                    // look like they're for the appropriate token)
-                    await driver.assertNonemptyExternalRefs()
-
-                    // verify all the matches highlight a `Reader` token
-                    await driver.assertAllHighlightedTokens('Reader')
-                })
             })
         })
     })

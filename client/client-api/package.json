@@ -11,10 +11,6 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@sourcegraph/extension-api-types": "workspace:*",
-    "sourcegraph": "workspace:*"
-  },
-  "dependencies": {
-    "@sourcegraph/template-parser": "workspace:*"
+    "@sourcegraph/extension-api-types": "workspace:*"
   }
 }

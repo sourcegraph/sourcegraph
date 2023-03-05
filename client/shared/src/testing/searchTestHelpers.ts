@@ -1,11 +1,7 @@
-import { noop } from 'lodash'
-import { EMPTY, NEVER, of, Subscription } from 'rxjs'
+import { EMPTY, of } from 'rxjs'
 import sinon from 'sinon'
 
-import { FlatExtensionHostAPI } from '../api/contract'
-import { pretendProxySubscribable, pretendRemote } from '../api/util'
 import { FetchFileParameters } from '../backend/file'
-import { Controller } from '../extensions/controller'
 import { PlatformContext } from '../platform/context'
 import { AggregateStreamingSearchResults, ContentMatch, RepositoryMatch } from '../search/stream'
 import { SettingsCascade } from '../settings/settings'
@@ -619,20 +615,6 @@ export const NOOP_SETTINGS_CASCADE = {
     subjects: null,
     final: null,
 } as any as SettingsCascade
-
-export const extensionsController: Controller = {
-    executeCommand: () => Promise.resolve(),
-    registerCommand: () => new Subscription(),
-    extHostAPI: Promise.resolve(
-        pretendRemote<FlatExtensionHostAPI>({
-            getContributions: () => pretendProxySubscribable(NEVER),
-            registerContributions: () => pretendProxySubscribable(EMPTY).subscribe(noop as any),
-            haveInitialExtensionsLoaded: () => pretendProxySubscribable(of(true)),
-        })
-    ),
-    commandErrors: EMPTY,
-    unsubscribe: noop,
-}
 
 export const NOOP_PLATFORM_CONTEXT: Pick<
     PlatformContext,

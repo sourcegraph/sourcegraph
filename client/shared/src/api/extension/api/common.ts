@@ -1,10 +1,5 @@
 import { Remote, ProxyMarked, proxy, proxyMarker, UnproxyOrClone } from 'comlink'
-import { identity } from 'lodash'
-import { from, isObservable, Observable, Observer, of, Subscribable, Unsubscribable } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { ProviderResult } from 'sourcegraph'
-
-import { isAsyncIterable, isPromiseLike, isSubscribable, observableFromAsyncIterable } from '../../util'
+import { Observer, Subscribable, Unsubscribable } from 'rxjs'
 
 /**
  * A Subscribable that can be exposed by comlink to the other thread.
@@ -44,18 +39,3 @@ export const proxySubscribable = <T>(subscribable: Subscribable<T>): ProxySubscr
         )
     },
 })
-
-export function providerResultToObservable<T, R = T>(
-    result: ProviderResult<T>,
-    mapFunc: (value: T | undefined | null) => R = identity
-): Observable<R> {
-    let observable: Observable<R>
-    if (result && (isPromiseLike(result) || isObservable<T>(result) || isSubscribable(result))) {
-        observable = from(result).pipe(map(mapFunc))
-    } else if (isAsyncIterable(result)) {
-        observable = observableFromAsyncIterable(result).pipe(map(mapFunc))
-    } else {
-        observable = of(mapFunc(result))
-    }
-    return observable
-}

@@ -1,4 +1,3 @@
-import { action } from '@storybook/addon-actions'
 import { createMemoryHistory } from 'history'
 import { of } from 'rxjs'
 
@@ -13,7 +12,6 @@ import { NOOP_TELEMETRY_SERVICE } from '../telemetry/telemetryService'
 import { HoverOverlayProps } from './HoverOverlay'
 
 const history = createMemoryHistory()
-const NOOP_EXTENSIONS_CONTROLLER = { executeCommand: () => Promise.resolve() }
 const NOOP_PLATFORM_CONTEXT: Pick<PlatformContext, 'settings'> = {
     settings: of({ final: {}, subjects: [] }),
 }
@@ -21,10 +19,8 @@ const NOOP_PLATFORM_CONTEXT: Pick<PlatformContext, 'settings'> = {
 export const commonProps = (): HoverOverlayProps & SettingsCascadeProps => ({
     location: history.location,
     telemetryService: NOOP_TELEMETRY_SERVICE,
-    extensionsController: NOOP_EXTENSIONS_CONTROLLER,
     platformContext: NOOP_PLATFORM_CONTEXT,
     overlayPosition: { top: 16, left: 16 },
-    onAlertDismissed: action('onAlertDismissed'),
     settingsCascade: EMPTY_SETTINGS_CASCADE,
 })
 
@@ -44,7 +40,7 @@ export const FIXTURE_SEMANTIC_BADGE: AggregableBadge = {
 export const FIXTURE_ACTIONS: ActionItemAction[] = [
     {
         action: {
-            id: 'goToDefinition.preloaded',
+            id: 'goToDefinition',
             title: 'Go to definition',
             command: 'open',
             commandArguments: ['/github.com/sourcegraph/codeintellify/-/blob/src/hoverifier.ts?subtree=true#L57:1'],

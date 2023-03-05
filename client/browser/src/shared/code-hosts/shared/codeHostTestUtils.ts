@@ -9,7 +9,7 @@ import { DiffPart } from '@sourcegraph/codeintellify'
 import { CodeHost, MountGetter } from './codeHost'
 import { CodeView, DOMFunctions } from './codeViews'
 
-const mountGetterKeys = ['getCommandPaletteMount', 'getViewContextOnSourcegraphMount'] as const
+const mountGetterKeys = ['getViewContextOnSourcegraphMount'] as const
 type MountGetterKey = typeof mountGetterKeys[number]
 
 /**

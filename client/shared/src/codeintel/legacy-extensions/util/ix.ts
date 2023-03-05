@@ -60,10 +60,9 @@ export const observableFromAsyncIterator = <T>(factory: () => AsyncIterator<T>):
     })
 
 /**
- * Modify an async iterable to return an ever-growing list of yielded values. This
- * output matches what is expected from the Sourcegraph extension host for providers,
- * and outputting a changing list will overwrite the previously yielded results. The
- * output generator does not output null values.
+ * Modify an async iterable to return an ever-growing list of yielded values. Outputting a changing
+ * list will overwrite the previously yielded results. The output generator does not output null
+ * values.
  *
  * @param source The source iterable.
  */

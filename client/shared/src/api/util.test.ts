@@ -5,6 +5,8 @@ import { Subject } from 'rxjs'
 
 import { isAsyncIterable, isPromiseLike, isSubscribable, observableFromAsyncIterable, tryCatchPromise } from './util'
 
+// TODO(sqs): see what else can be removed from this file after bext and vscode/jetbrains extensions are ported over
+
 describe('tryCatchPromise', () => {
     test('returns a resolved promise with the synchronous result', async () =>
         expect(await tryCatchPromise(() => 1)).toBe(1))

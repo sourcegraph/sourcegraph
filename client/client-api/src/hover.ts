@@ -1,12 +1,9 @@
-import { Badged, Hover, MarkupContent, HoverAlert, AggregableBadge } from 'sourcegraph'
-
 import { MarkupKind, Range } from '@sourcegraph/extension-api-classes'
-import { Hover as PlainHover, Range as PlainRange } from '@sourcegraph/extension-api-types'
+import { Badged, Hover, MarkupContent, AggregableBadge, Range as PlainRange } from '@sourcegraph/extension-api-types'
 
 /** A hover that is merged from multiple Hover results and normalized. */
 export interface HoverMerged {
     contents: Badged<MarkupContent>[]
-    alerts?: HoverAlert[]
     range?: PlainRange
 
     /** Sorted and de-duplicated set of badges in all source hover values. */
@@ -14,11 +11,8 @@ export interface HoverMerged {
 }
 
 /** Create a merged hover from the given individual hovers. */
-export function fromHoverMerged(
-    values: (Badged<Hover | (PlainHover & { alerts?: HoverAlert[] })> | null | undefined)[]
-): HoverMerged | null {
+export function fromHoverMerged(values: (Badged<Hover> | null | undefined)[]): HoverMerged | null {
     const contents: HoverMerged['contents'] = []
-    const alerts: HoverMerged['alerts'] = []
     const aggregatedBadges = new Map<string, AggregableBadge>()
     let range: PlainRange | undefined
     for (const result of values) {
@@ -28,9 +22,6 @@ export function fromHoverMerged(
                     value: result.contents.value,
                     kind: result.contents.kind || MarkupKind.PlainText,
                 })
-            }
-            if ('alerts' in result && result.alerts) {
-                alerts.push(...result.alerts)
             }
 
             for (const badge of result.aggregableBadges || []) {
@@ -54,7 +45,6 @@ export function fromHoverMerged(
 
     return {
         contents,
-        alerts,
         ...(range ? { range } : {}),
         aggregatedBadges: [...aggregatedBadges.values()].sort((a, b) => a.text.localeCompare(b.text)),
     }

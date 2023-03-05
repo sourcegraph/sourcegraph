@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "allowJs": true,
-    "outDir": "out",
-    "rootDir": "src",
-  },
-  "files": ["src/sourcegraph.d.ts", "src/index.js"],
-}

@@ -111,5 +111,5 @@ function lineMatchesToResults(
  * @param result The search result.
  */
 export function resultToLocation({ repo, rev, file, range }: Result): sourcegraph.Location {
-    return { uri: new URL(`git://${repo}?${rev || 'HEAD'}#${file}`), range }
+    return { uri: `git://${repo}?${rev || 'HEAD'}#${file}`, range }
 }

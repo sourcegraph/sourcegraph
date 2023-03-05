@@ -23,8 +23,6 @@ const optionsEntry = path.resolve(browserSourcePath, 'config/options.entry.js')
 const pageEntry = path.resolve(browserSourcePath, 'config/page.entry.js')
 const extensionEntry = path.resolve(browserSourcePath, 'config/extension.entry.js')
 
-const extensionHostWorker = /main\.worker\.ts$/
-
 export const config = subtypeOf<webpack.Configuration>()({
     target: 'browserslist',
     entry: {
@@ -81,7 +79,6 @@ export const config = subtypeOf<webpack.Configuration>()({
         rules: [
             {
                 test: /\.[jt]sx?$/,
-                exclude: extensionHostWorker,
                 use: [getBabelLoader()],
             },
             {
@@ -98,16 +95,6 @@ export const config = subtypeOf<webpack.Configuration>()({
             {
                 test: /\.svg$/i,
                 type: 'asset/inline',
-            },
-            {
-                test: extensionHostWorker,
-                use: [
-                    {
-                        loader: 'worker-loader',
-                        options: { filename: 'extensionHostWorker.bundle.js' },
-                    },
-                    getBabelLoader(),
-                ],
             },
         ],
     },

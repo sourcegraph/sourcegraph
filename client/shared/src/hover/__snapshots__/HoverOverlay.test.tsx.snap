@@ -294,45 +294,6 @@ exports[`HoverOverlay actions, hover and alert present 1`] = `
       </span>
     </div>
     <div
-      class="hoverOverlayAlerts"
-    >
-      <div
-        aria-live="polite"
-        class="alert"
-        role="alert"
-      >
-        <span
-          class="hoverOverlayContent hoverOverlayContent"
-          data-testid="hover-overlay-content"
-        >
-          <span>
-            <p>
-              Testing 
-              <code>
-                markdown
-              </code>
-               rendering.
-            </p>
-            
-
-          </span>
-        </span>
-        <div
-          class="alertDismiss"
-        >
-          <a
-            class=""
-            href=""
-            role="button"
-          >
-            <small>
-              Dismiss
-            </small>
-          </a>
-        </div>
-      </div>
-    </div>
-    <div
       class="actionsContainer"
     >
       <div

@@ -1,19 +1,15 @@
 import { combineLatest, ReplaySubject } from 'rxjs'
 import { map } from 'rxjs/operators'
 
-import { asError } from '@sourcegraph/common'
 import { isHTTPAuthError } from '@sourcegraph/http-client'
 import { PlatformContext } from '@sourcegraph/shared/src/platform/context'
-import { mutateSettings, updateSettings } from '@sourcegraph/shared/src/settings/edit'
 import { EMPTY_SETTINGS_CASCADE, gqlToCascade, SettingsSubject } from '@sourcegraph/shared/src/settings/settings'
 import { toPrettyBlobURL } from '@sourcegraph/shared/src/util/url'
 
 import { createGraphQLHelpers } from '../backend/requestGraphQl'
 import { CodeHost } from '../code-hosts/shared/codeHost'
 
-import { createExtensionHost } from './extensionHost'
-import { getInlineExtensions } from './inlineExtensionsService'
-import { editClientSettings, fetchViewerSettings, mergeCascades, storageSettingsCascade } from './settings'
+import { fetchViewerSettings, mergeCascades, storageSettingsCascade } from './settings'
 
 export interface SourcegraphIntegrationURLs {
     /**
@@ -22,8 +18,7 @@ export interface SourcegraphIntegrationURLs {
     sourcegraphURL: string
 
     /**
-     * The base URL where assets will be fetched from (CSS, extension host
-     * worker bundle, ...)
+     * The base URL where assets will be fetched from (CSS, bundle, ...)
      *
      * This is the sourcegraph URL in most cases, but may be different for
      * native code hosts that self-host the integration bundle.
@@ -46,7 +41,7 @@ export interface BrowserPlatformContext extends PlatformContext {
  */
 export function createPlatformContext(
     { urlToFile }: Pick<CodeHost, 'urlToFile'>,
-    { sourcegraphURL, assetsURL }: SourcegraphIntegrationURLs,
+    { sourcegraphURL }: SourcegraphIntegrationURLs,
     isExtension: boolean
 ): BrowserPlatformContext {
     const updatedViewerSettings = new ReplaySubject<{
@@ -90,32 +85,11 @@ export function createPlatformContext(
                 }
             }
         },
-        updateSettings: async (subject, edit) => {
-            if (subject === 'Client') {
-                // Support storing settings on the client (in the browser extension) so that unauthenticated
-                // Sourcegraph viewers can update settings.
-                await updateSettings(context, subject, edit, () => editClientSettings(edit))
-                return
-            }
-
-            try {
-                await updateSettings(context, subject, edit, mutateSettings)
-            } catch (error) {
-                if (asError(error).message.includes('version mismatch')) {
-                    // The user probably edited the settings in another tab, so
-                    // try once more.
-                    await context.refreshSettings()
-                    await updateSettings(context, subject, edit, mutateSettings)
-                } else {
-                    throw error
-                }
-            }
-            // TODO: We shouldn't need to make another HTTP request to get the latest state
-            await context.refreshSettings()
+        updateSettings: () => {
+            throw new Error('not implemented')
         },
         requestGraphQL,
         getGraphQLClient: getBrowserGraphQLClient,
-        createExtensionHost: () => createExtensionHost({ assetsURL }),
         urlToFile: ({ rawRepoName, ...target }, context) => {
             // We don't always resolve the rawRepoName, e.g. if there are multiple definitions.
             // Construct URL to file on code host, if possible.
@@ -126,8 +100,6 @@ export function createPlatformContext(
             return `${sourcegraphURL}${toPrettyBlobURL(target)}`
         },
         sourcegraphURL,
-        clientApplication: 'other',
-        getStaticExtensions: () => getInlineExtensions(),
     }
     return context
 }

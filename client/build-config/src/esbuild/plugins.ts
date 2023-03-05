@@ -4,7 +4,6 @@ import signale from 'signale'
 export * from './monacoPlugin'
 export * from './packageResolutionPlugin'
 export * from './stylePlugin'
-export * from './workerPlugin'
 
 export const buildTimerPlugin: esbuild.Plugin = {
     name: 'buildTimer',

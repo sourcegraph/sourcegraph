@@ -1,5 +1,3 @@
-import { DocumentSelector } from 'sourcegraph'
-
 import { Position } from '@sourcegraph/extension-api-types'
 /**
  * The URI scheme for the resources that hold the body of comments (such as comments on a GitHub
@@ -36,14 +34,4 @@ export interface TextDocumentPositionParameters {
      * The position inside the text document.
      */
     position: Position
-}
-
-/**
- * General text document registration options.
- */
-export interface TextDocumentRegistrationOptions {
-    /**
-     * A document selector to identify the scope of the registration.
-     */
-    documentSelector: DocumentSelector
 }

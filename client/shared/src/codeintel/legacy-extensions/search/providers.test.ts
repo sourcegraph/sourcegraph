@@ -1,9 +1,6 @@
-/* eslint-disable etc/no-deprecated */
 import * as assert from 'assert'
 
 import * as sinon from 'sinon'
-
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
 
 import * as scip from '../../scip'
 import * as sourcegraph from '../api'
@@ -24,17 +21,17 @@ const spec: LanguageSpec = {
     filterDefinitions: <T extends Result>(results: T[]) => results.filter(result => result.file !== '/f.ts'),
 }
 
-const textDocument1 = createStubTextDocument({
+const textDocument1 = {
     uri: 'git://sourcegraph.test/repo?rev#foo.ts',
     languageId: 'typescript',
     text: undefined,
-})
+}
 
-const textDocument2 = createStubTextDocument({
+const textDocument2 = {
     uri: 'git://sourcegraph.test/repo%20with%20spaces?rev#/foo.ts',
     languageId: 'typescript',
     text: undefined,
-})
+}
 
 const position = new scip.Position(3, 1)
 const range1 = scip.Range.fromNumbers(2, 3, 4, 5)
@@ -161,7 +158,7 @@ describe('search providers', () => {
             getFileContentStub.resolves('\n\n\nfoobar\n')
 
             assert.deepEqual(await gatherValues(createProviders(spec, {}, api).definition(textDocument1, position)), [
-                [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
+                [{ uri: 'git://repo1?rev1#/b.ts', range: range1 }],
             ])
 
             assert.strictEqual(searchStub.callCount, 1)
@@ -185,7 +182,7 @@ describe('search providers', () => {
 
             assert.deepEqual(
                 await gatherValues(createProviders(spec, {}, api).definition({ ...textDocument2 }, position)),
-                [[new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)]]
+                [[{ uri: 'git://repo1?rev1#/b.ts', range: range1 }]]
             )
 
             assert.strictEqual(searchStub.callCount, 1)
@@ -210,7 +207,7 @@ describe('search providers', () => {
             getFileContentStub.resolves('\n\n\nfoobar\n')
 
             assert.deepEqual(await gatherValues(createProviders(spec, {}, api).definition(textDocument1, position)), [
-                [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
+                [{ uri: 'git://repo1?rev1#/b.ts', range: range1 }],
             ])
 
             assert.strictEqual(searchStub.callCount, 2)
@@ -242,8 +239,8 @@ describe('search providers', () => {
 
             assert.deepEqual(await gatherValues(createProviders(spec, {}, api).definition(textDocument1, position)), [
                 [
-                    new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                    new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                    { uri: 'git://repo1?rev1#/b.ts', range: range1 },
+                    { uri: 'git://repo2?rev2#/d.ts', range: range2 },
                 ],
             ])
 
@@ -263,7 +260,7 @@ describe('search providers', () => {
 
             const values = gatherValues(createProviders(spec, {}, api).definition(textDocument1, position))
 
-            assert.deepEqual(await values, [[new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1)]])
+            assert.deepEqual(await values, [[{ uri: 'git://repo1?rev1#b.ts', range: range1 }]])
 
             assert.strictEqual(searchStub.callCount, 2)
             assertQuery(searchStub.firstCall.args[0], [
@@ -301,7 +298,7 @@ describe('search providers', () => {
             getFileContentStub.resolves('\n\n\nfoobar\n')
 
             assert.deepEqual(await gatherValues(createProviders(spec, {}, api).definition(textDocument1, position)), [
-                [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
+                [{ uri: 'git://repo1?rev1#/b.ts', range: range1 }],
             ])
 
             assert.strictEqual(searchStub.callCount, 3)
@@ -343,7 +340,7 @@ describe('search providers', () => {
             getFileContentStub.resolves('\n\n\nfoobar\n')
 
             assert.deepEqual(await gatherValues(createProviders(spec, {}, api).definition(textDocument1, position)), [
-                [new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1)],
+                [{ uri: 'git://repo1?rev1#/b.ts', range: range1 }],
             ])
 
             assert.strictEqual(searchStub.callCount, 2)
@@ -386,8 +383,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
+                        { uri: 'git://repo1?rev1#b.ts', range: range1 },
+                        { uri: 'git://repo2?rev2#d.ts', range: range2 },
                     ],
                 ]
             )
@@ -429,8 +426,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#/b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#/d.ts'), range2),
+                        { uri: 'git://repo1?rev1#/b.ts', range: range1 },
+                        { uri: 'git://repo2?rev2#/d.ts', range: range2 },
                     ],
                 ]
             )
@@ -477,8 +474,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
+                        { uri: 'git://repo1?rev1#b.ts', range: range1 },
+                        { uri: 'git://repo2?rev2#d.ts', range: range2 },
                     ],
                 ]
             )
@@ -543,8 +540,8 @@ describe('search providers', () => {
                 ),
                 [
                     [
-                        new sourcegraph.Location(new URL('git://repo1?rev1#b.ts'), range1),
-                        new sourcegraph.Location(new URL('git://repo2?rev2#d.ts'), range2),
+                        { uri: 'git://repo1?rev1#b.ts', range: range1 },
+                        { uri: 'git://repo2?rev2#d.ts', range: range2 },
                     ],
                 ]
             )

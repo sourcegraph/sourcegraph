@@ -25,16 +25,10 @@
       "path": "../common",
     },
     {
-      "path": "../extension-api",
-    },
-    {
       "path": "../extension-api-types",
     },
     {
       "path": "../http-client",
-    },
-    {
-      "path": "../template-parser",
     },
     {
       "path": "../testing",

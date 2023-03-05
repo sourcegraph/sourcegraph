@@ -3,8 +3,6 @@ import * as assert from 'assert'
 import { Observable } from 'rxjs'
 import * as sinon from 'sinon'
 
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
-
 import * as scip from '../scip'
 
 import * as sourcegraph from './api'
@@ -18,23 +16,23 @@ import {
 } from './providers'
 import { API } from './util/api'
 
-const textDocument = createStubTextDocument({
+const textDocument: sourcegraph.TextDocument = {
     uri: 'https://sourcegraph.test/repo@rev/-/raw/foo.ts',
     languageId: 'typescript',
     text: undefined,
-})
+}
 
 const position = new scip.Position(10, 5)
 const range1 = scip.Range.fromNumbers(1, 2, 3, 4)
 const range2 = scip.Range.fromNumbers(5, 6, 7, 8)
 
-const location1 = new sourcegraph.Location(new URL('http://test/1'), range1)
-const location2 = new sourcegraph.Location(new URL('http://test/2'), range1)
-const location3 = new sourcegraph.Location(new URL('http://test/3'), range1)
-const location4 = new sourcegraph.Location(new URL('http://test/4'), range1)
-const location5 = new sourcegraph.Location(new URL('http://test/2'), range2) // overlapping URI
-const location6 = new sourcegraph.Location(new URL('http://test/3'), range2) // overlapping URI
-const location7 = new sourcegraph.Location(new URL('http://test/4'), range2) // overlapping URI
+const location1: sourcegraph.Location = { uri: 'http://test/1', range: range1 }
+const location2: sourcegraph.Location = { uri: 'http://test/2', range: range1 }
+const location3: sourcegraph.Location = { uri: 'http://test/3', range: range1 }
+const location4: sourcegraph.Location = { uri: 'http://test/4', range: range1 }
+const location5: sourcegraph.Location = { uri: 'http://test/2', range: range2 } // overlapping URI
+const location6: sourcegraph.Location = { uri: 'http://test/3', range: range2 } // overlapping URI
+const location7: sourcegraph.Location = { uri: 'http://test/4', range: range2 } // overlapping URI
 
 const hover1: sourcegraph.Hover = { contents: { value: 'test1' } }
 const hover2: sourcegraph.Hover = { contents: { value: 'test2' } }

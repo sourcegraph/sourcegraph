@@ -13,7 +13,6 @@ describe('HoverMerged', () => {
         test('1 MarkupContent', () =>
             expect(fromHoverMerged([{ contents: { kind: MarkupKind.Markdown, value: 'x' } }])).toEqual({
                 contents: [{ kind: MarkupKind.Markdown, value: 'x' }],
-                alerts: [],
                 aggregatedBadges: [],
             }))
         test('2 MarkupContents', () =>
@@ -28,39 +27,6 @@ describe('HoverMerged', () => {
                     { kind: MarkupKind.Markdown, value: 'y' },
                 ],
                 range: FIXTURE_RANGE,
-                alerts: [],
-                aggregatedBadges: [],
-            }))
-        test('1 Alert', () =>
-            expect(
-                fromHoverMerged([
-                    {
-                        contents: { kind: MarkupKind.Markdown, value: 'x' },
-                        alerts: [{ summary: { kind: MarkupKind.PlainText, value: 'x' } }],
-                    },
-                ])
-            ).toEqual({
-                contents: [{ kind: MarkupKind.Markdown, value: 'x' }],
-                alerts: [{ summary: { kind: MarkupKind.PlainText, value: 'x' } }],
-                aggregatedBadges: [],
-            }))
-        test('2 Alerts', () =>
-            expect(
-                fromHoverMerged([
-                    {
-                        contents: { kind: MarkupKind.Markdown, value: 'x' },
-                        alerts: [
-                            { summary: { kind: MarkupKind.PlainText, value: 'x' } },
-                            { summary: { kind: MarkupKind.PlainText, value: 'y' } },
-                        ],
-                    },
-                ])
-            ).toEqual({
-                contents: [{ kind: MarkupKind.Markdown, value: 'x' }],
-                alerts: [
-                    { summary: { kind: MarkupKind.PlainText, value: 'x' } },
-                    { summary: { kind: MarkupKind.PlainText, value: 'y' } },
-                ],
                 aggregatedBadges: [],
             }))
 
@@ -69,12 +35,10 @@ describe('HoverMerged', () => {
                 fromHoverMerged([
                     {
                         contents: { kind: MarkupKind.Markdown, value: 'x' },
-                        alerts: [],
                         aggregableBadges: [{ text: 't01' }, { text: 't03' }],
                     },
                     {
                         contents: { kind: MarkupKind.Markdown, value: 'y' },
-                        alerts: [],
                         aggregableBadges: [{ text: 't02' }],
                     },
                 ])
@@ -83,7 +47,6 @@ describe('HoverMerged', () => {
                     { kind: MarkupKind.Markdown, value: 'x' },
                     { kind: MarkupKind.Markdown, value: 'y' },
                 ],
-                alerts: [],
                 aggregatedBadges: [{ text: 't01' }, { text: 't02' }, { text: 't03' }],
             }))
     })

@@ -23,17 +23,11 @@ export interface FeatureFlags {
      * Send telemetry
      */
     sendTelemetry: boolean
-
-    /**
-     * Token single click takes user to variable definition.
-     */
-    clickToGoToDefinition: boolean
 }
 
 export const featureFlagDefaults: FeatureFlags = {
     allowErrorReporting: false,
     sendTelemetry: true,
-    clickToGoToDefinition: false,
 }
 
 interface SourcegraphURL {
@@ -61,7 +55,6 @@ export interface SyncStorageItems extends SourcegraphURL {
      * Overrides settings from Sourcegraph.
      */
     clientSettings: string
-    dismissedHoverAlerts: Record<string, boolean | undefined>
 }
 
 export interface LocalStorageItems {}

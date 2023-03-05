@@ -275,8 +275,7 @@ export function createDefinitionProvider(
 }
 
 /** Gets an opaque value that is the same for all locations within a file but different from other files. */
-const file = (location_: sourcegraph.Location): string =>
-    `${location_.uri.host} ${location_.uri.pathname} ${location_.uri.hash}`
+const file = (location: sourcegraph.Location): string => location.uri
 
 /**
  * A cache of precise results from the previous references provider request. This is used to quick-start
@@ -476,7 +475,7 @@ function logLocationResults<T extends sourcegraph.Badged<sourcegraph.Location>, 
     emitter?.emitOnce(action)
 
     // Emit xrepo event if we contain a result from another repository
-    if (asArray(results).some(location => parseGitURI(location.uri).repo !== repo)) {
+    if (asArray(results).some(location => parseGitURI(new URL(location.uri)).repo !== repo)) {
         emitter?.emitOnce(action + '.xrepo')
     }
 

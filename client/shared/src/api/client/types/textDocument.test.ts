@@ -1,4 +1,5 @@
 import { Position } from '@sourcegraph/extension-api-types'
+import { DocumentSelector, TextDocument } from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
 
 import { DocumentSelector, TextDocument } from '../../../codeintel/legacy-extensions/api'
 

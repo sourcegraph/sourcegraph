@@ -10,7 +10,6 @@ import {
     MONACO_LANGUAGES_AND_FEATURES,
     packageResolutionPlugin,
     stylePlugin,
-    workerPlugin,
     RXJS_RESOLUTIONS,
     buildTimerPlugin,
 } from '@sourcegraph/build-config'
@@ -97,7 +96,6 @@ export async function build(): Promise<void> {
             splitting: true,
             plugins: [
                 stylePlugin,
-                workerPlugin,
                 packageResolutionPlugin({
                     path: require.resolve('path-browserify'),
                     ...RXJS_RESOLUTIONS,

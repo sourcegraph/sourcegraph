@@ -2,14 +2,13 @@ import { FC, Suspense, useEffect, useLayoutEffect, useMemo } from 'react'
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
-import { createController as createExtensionsController } from '@sourcegraph/shared/src/extensions/createSyncLoadedController'
 import { useTheme, Theme, ThemeSetting } from '@sourcegraph/shared/src/theme'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 import { Alert, LoadingSpinner, setLinkComponent, WildcardTheme, WildcardThemeContext } from '@sourcegraph/wildcard'
 
 import '../../SourcegraphWebApp.scss'
 
-import { GlobalContributions } from '../../contributions'
+import { useGlobalContributions } from '../../contributions'
 import { createPlatformContext } from '../../platform/context'
 
 import { OpenNewTabAnchorLink } from './OpenNewTabAnchorLink'
@@ -52,7 +51,8 @@ export const EmbeddedWebApp: FC = () => {
     }, [setThemeSetting])
 
     const platformContext = useMemo(() => createPlatformContext(), [])
-    const extensionsController = useMemo(() => createExtensionsController(platformContext), [platformContext])
+
+    useGlobalContributions()
 
     // 🚨 SECURITY: The `EmbeddedWebApp` is intended to be embedded into 3rd party sites where we do not have total control.
     // That is why it is essential to be mindful when adding new routes that may be vulnerable to clickjacking or similar exploits.
@@ -95,10 +95,6 @@ export const EmbeddedWebApp: FC = () => {
                             />
                         </Routes>
                     </Suspense>
-                    <GlobalContributions
-                        extensionsController={extensionsController}
-                        platformContext={platformContext}
-                    />
                 </div>
             </WildcardThemeContext.Provider>
         </BrowserRouter>

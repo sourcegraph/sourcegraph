@@ -194,7 +194,6 @@ export const bitbucketCloudCodeHost: CodeHost = {
         iconClassName: styles.icon,
         contentClassName: styles.content,
     },
-    notificationClassNames: { 1: '', 2: '', 3: '', 4: '', 5: '' },
     codeViewsRequireTokenization: true,
     observeLineSelection: fromEvent(window, 'hashchange').pipe(
         startWith(undefined), // capture intital value

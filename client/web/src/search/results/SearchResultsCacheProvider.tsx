@@ -5,14 +5,11 @@ import { useNavigationType, useLocation } from 'react-router-dom'
 import { merge, of } from 'rxjs'
 import { last, share, throttleTime } from 'rxjs/operators'
 
-import { transformSearchQuery } from '@sourcegraph/shared/src/api/client/search'
 import { AggregateStreamingSearchResults, StreamSearchOptions } from '@sourcegraph/shared/src/search/stream'
-import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryService } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useObservable } from '@sourcegraph/wildcard'
 
 import { SearchStreamingProps } from '..'
-import { eventLogger } from '../../tracking/eventLogger'
 
 interface CachedResults {
     results: AggregateStreamingSearchResults | undefined
@@ -40,23 +37,10 @@ export function useCachedSearchResults(
     telemetryService: TelemetryService
 ): AggregateStreamingSearchResults | undefined {
     const [cachedResults, setCachedResults] = useContext(SearchResultsCacheContext)
-    const enableGoImportsSearchQueryTransform = useExperimentalFeatures(
-        features => features.enableGoImportsSearchQueryTransform
-    )
 
     const location = useLocation()
     const navigationType = useNavigationType()
     const [queryTimestamp, setQueryTimestamp] = useState<number | undefined>()
-
-    const transformedQuery = useMemo(
-        () =>
-            transformSearchQuery({
-                query,
-                enableGoImportsSearchQueryTransform,
-                eventLogger,
-            }),
-        [query, enableGoImportsSearchQueryTransform]
-    )
 
     const results = useObservable(
         useMemo(() => {
@@ -65,7 +49,7 @@ export function useCachedSearchResults(
                 return of(cachedResults?.results)
             }
 
-            const stream = streamSearch(transformedQuery, options).pipe(share())
+            const stream = streamSearch(of(query), options).pipe(share())
 
             // If the throttleTime option `trailing` is set, we will return the
             // final value, but it also removes the guarantee that the output events
@@ -75,15 +59,7 @@ export function useCachedSearchResults(
             // merge throttleTime with only leading values and the final value.
             // See: https://github.com/ReactiveX/rxjs/issues/5732
             return merge(stream.pipe(throttleTime(500)), stream.pipe(last()))
-        }, [
-            query,
-            cachedResults?.query,
-            cachedResults?.options,
-            cachedResults?.results,
-            options,
-            streamSearch,
-            transformedQuery,
-        ])
+        }, [query, cachedResults?.query, cachedResults?.options, cachedResults?.results, options, streamSearch])
     )
 
     // Reset cached results if a new search is made with the same query

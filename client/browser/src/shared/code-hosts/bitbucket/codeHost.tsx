@@ -5,13 +5,11 @@ import { Omit } from 'utility-types'
 
 import { AdjustmentDirection, PositionAdjuster } from '@sourcegraph/codeintellify'
 import { LineOrPositionOrRange } from '@sourcegraph/common'
-import { NotificationType } from '@sourcegraph/shared/src/api/extension/extensionHostApi'
 import { FileSpec, RepoSpec, ResolvedRevisionSpec, RevisionSpec } from '@sourcegraph/shared/src/util/url'
 
 import { querySelectorOrSelf } from '../../util/dom'
-import { CodeHost, MountGetter } from '../shared/codeHost'
+import { CodeHost } from '../shared/codeHost'
 import { CodeView, DOMFunctions } from '../shared/codeViews'
-import { createNotificationClassNameGetter } from '../shared/getNotificationClassName'
 import { ViewResolver } from '../shared/views'
 
 import { getContext } from './context'
@@ -183,22 +181,6 @@ const newDiffCodeView: Omit<CodeView, 'element'> = {
     dom: newDiffDOMFunctions,
 }
 
-const getCommandPaletteMount: MountGetter = (container: HTMLElement): HTMLElement | null => {
-    const headerElement = querySelectorOrSelf(container, '.aui-header-primary .aui-nav')
-    if (!headerElement) {
-        return null
-    }
-    const classNames = ['command-palette-button', styles.commandPaletteButton]
-    const create = (): HTMLElement => {
-        const mount = document.createElement('li')
-        mount.className = classNames.join(' ')
-        headerElement.append(mount)
-        return mount
-    }
-    const preexisting = headerElement.querySelector<HTMLElement>(classNames.map(className => `.${className}`).join(''))
-    return preexisting || create()
-}
-
 function getViewContextOnSourcegraphMount(container: HTMLElement): HTMLElement | null {
     const branchSelectorButtons = querySelectorOrSelf(container, '.branch-selector-toolbar .aui-buttons')
     if (!branchSelectorButtons) {
@@ -220,14 +202,6 @@ export const checkIsBitbucket = (): boolean =>
     !!document.querySelector('.aui-header-logo.aui-header-logo-bitbucket')
 
 const iconClassName = 'aui-icon'
-
-const notificationClassNames = {
-    [NotificationType.Log]: 'aui-message aui-message-info',
-    [NotificationType.Success]: 'aui-message aui-message-success',
-    [NotificationType.Info]: 'aui-message aui-message-info',
-    [NotificationType.Warning]: 'aui-message aui-message-warning',
-    [NotificationType.Error]: 'aui-message aui-message-error',
-}
 
 export const parseHash = (hash: string): LineOrPositionOrRange => {
     if (hash.startsWith('#')) {
@@ -254,29 +228,6 @@ export const bitbucketServerCodeHost: CodeHost = {
     name: 'Bitbucket Server',
     check: checkIsBitbucket,
     codeViewResolvers: [codeViewResolver, diffCodeViewResolver],
-    getCommandPaletteMount,
-    notificationClassNames,
-    commandPaletteClassProps: {
-        buttonClassName: classNames(
-            styles.commandListPopoverButton,
-            'aui-alignment-target aui-alignment-abutted aui-alignment-abutted-left aui-alignment-element-attached-top aui-alignment-element-attached-left aui-alignment-target-attached-bottom aui-alignment-target-attached-left'
-        ),
-        buttonElement: 'a',
-        buttonOpenClassName: 'aui-dropdown2-active active aui-alignment-enabled',
-        showCaret: false,
-        popoverClassName: classNames(
-            styles.commandPalettePopover,
-            'aui-dropdown2 aui-style-default aui-layer aui-dropdown2-in-header aui-alignment-element aui-alignment-side-bottom aui-alignment-snap-left aui-alignment-enabled aui-alignment-abutted aui-alignment-abutted-left aui-alignment-element-attached-top aui-alignment-element-attached-left aui-alignment-target-attached-bottom aui-alignment-target-attached-left'
-        ),
-        formClassName: 'aui',
-        inputClassName: 'text',
-        resultsContainerClassName: 'results',
-        listClassName: 'results-list',
-        listItemClassName: 'result',
-        selectedListItemClassName: 'focused',
-        noResultsClassName: styles.noResults,
-        iconClassName,
-    },
     codeViewToolbarClassProps: {
         className: classNames(styles.codeViewToolbar, 'aui-buttons'),
         actionItemClass: 'aui-button',
@@ -287,7 +238,6 @@ export const bitbucketServerCodeHost: CodeHost = {
     hoverOverlayClassProps: {
         className: 'aui-dialog',
         actionItemClassName: classNames('aui-button', styles.hoverActionItem),
-        getAlertClassName: createNotificationClassNameGetter(notificationClassNames),
         iconClassName,
     },
     getViewContextOnSourcegraphMount,

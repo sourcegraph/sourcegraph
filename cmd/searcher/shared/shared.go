@@ -38,7 +38,9 @@ import (
 )
 
 var (
-	cacheDir    = env.Get("CACHE_DIR", "/tmp", "directory to store cached archives.")
+	cacheDirName = env.ChooseFallbackVariableName("SEARCHER_CACHE_DIR", "CACHE_DIR")
+
+	cacheDir    = env.Get(cacheDirName, "/tmp", "directory to store cached archives.")
 	cacheSizeMB = env.Get("SEARCHER_CACHE_SIZE_MB", "100000", "maximum size of the on disk cache in megabytes")
 
 	// Same environment variable name (and default value) used by symbols.

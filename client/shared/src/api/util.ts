@@ -1,35 +1,11 @@
-import { ProxyMarked, transferHandlers, releaseProxy, TransferHandler, Remote, proxyMarker } from 'comlink'
-import { Unsubscribable, Subscribable, Observable, Observer, PartialObserver, Subscription } from 'rxjs'
+import { ProxyMarked, releaseProxy, Remote, proxyMarker } from 'comlink'
+import { Observable, Observer, PartialObserver, Subscribable, Subscription, Unsubscribable } from 'rxjs'
 
 import { hasProperty, AbortError } from '@sourcegraph/common'
 
 import { ProxySubscribable } from './extension/api/common'
 
-/**
- * Tests whether a value is a WHATWG URL object.
- */
-export const isURL = (value: unknown): value is URL =>
-    typeof value === 'object' &&
-    value !== null &&
-    hasProperty('href')(value) &&
-    hasProperty('toString')(value) &&
-    typeof value.toString === 'function' &&
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    value.href === value.toString()
-
-/**
- * Registers global comlink transfer handlers.
- * This needs to be called before using comlink.
- * Idempotent.
- */
-export function registerComlinkTransferHandlers(): void {
-    const urlTransferHandler: TransferHandler<URL, string> = {
-        canHandle: isURL,
-        serialize: url => [url.href, []],
-        deserialize: urlString => new URL(urlString),
-    }
-    transferHandlers.set('URL', urlTransferHandler)
-}
+// TODO(sqs): see what else can be removed from this file after bext and vscode/jetbrains extensions are ported over
 
 /**
  * Creates a synchronous Subscription that will unsubscribe the given proxied Subscription asynchronously.

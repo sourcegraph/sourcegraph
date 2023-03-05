@@ -49,16 +49,16 @@ func TestMergeSettings(t *testing.T) {
 	}, {
 		name: "merge bool",
 		left: &schema.Settings{
-			AlertsShowPatchUpdates:    false,
-			CodeHostUseNativeTooltips: true,
+			AlertsShowPatchUpdates:              false,
+			BasicCodeIntelGlobalSearchesEnabled: true,
 		},
 		right: &schema.Settings{
-			AlertsShowPatchUpdates:    true,
-			CodeHostUseNativeTooltips: false, // This is the zero value, so will not override a previous non-zero value
+			AlertsShowPatchUpdates:              true,
+			BasicCodeIntelGlobalSearchesEnabled: false, // This is the zero value, so will not override a previous non-zero value
 		},
 		expected: &schema.Settings{
-			AlertsShowPatchUpdates:    true,
-			CodeHostUseNativeTooltips: true,
+			AlertsShowPatchUpdates:              true,
+			BasicCodeIntelGlobalSearchesEnabled: true,
 		},
 	}, {
 		name: "merge int",

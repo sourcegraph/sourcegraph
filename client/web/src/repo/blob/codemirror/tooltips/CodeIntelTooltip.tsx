@@ -28,10 +28,7 @@ interface AsyncDefinitionResult extends DefinitionResult {
 }
 
 // CodeMirror tooltip wrapper around the "code intel" popover.  Implemented as a
-// class so that we can detect it with instanceof checks. This class
-// reimplements logic from `getHoverActions` in
-// 'client/shared/src/hover/actions.ts' because that function is difficult to
-// reason about and has surprising behavior.
+// class so that we can detect it with instanceof checks.
 export class CodeIntelTooltip implements Tooltip {
     public readonly above = true
     public readonly pos: number
@@ -87,6 +84,7 @@ export class CodeIntelTooltip implements Tooltip {
             viewState: 'references',
         })
         const noDefinitionFound = definition.locations.length === 0
+        // TODO(sqs): XXXXXXXXXXXXXXXXXXXX
         const actions: ActionItemAction[] = [
             {
                 active: true,

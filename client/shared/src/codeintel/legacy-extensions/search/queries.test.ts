@@ -1,7 +1,5 @@
 import * as assert from 'assert'
 
-import { createStubTextDocument } from '@sourcegraph/extension-api-stubs'
-
 import * as sourcegraph from '../api'
 
 import { definitionQuery, referencesQuery } from './queries'
@@ -14,11 +12,11 @@ describe('search requests', () => {
         }
         const tests: DefinitionTest[] = [
             {
-                doc: createStubTextDocument({
+                doc: {
                     uri: 'git://github.com/foo/bar?rev#file.cpp',
                     languageId: 'cpp',
                     text: 'token',
-                }),
+                },
                 expectedSearchQueryTerms: [
                     '^token$',
                     'type:symbol',
@@ -49,11 +47,11 @@ describe('search requests', () => {
         }
         const tests: ReferencesTest[] = [
             {
-                doc: createStubTextDocument({
+                doc: {
                     uri: 'git://github.com/foo/bar?rev#file.cpp',
                     languageId: 'cpp',
                     text: 'token',
-                }),
+                },
                 expectedSearchQueryTerms: [
                     '\\btoken\\b',
                     'type:file',

@@ -177,14 +177,6 @@
             "pointer": true
           }
         },
-        "enableGoImportsSearchQueryTransform": {
-          "description": "Lets you easily search for all files using a Go package. Adds a new operator `go.imports`: for all import statements of the package passed to the operator.",
-          "type": "boolean",
-          "default": false,
-          "!go": {
-            "pointer": true
-          }
-        },
         "codeInsightsCompute": {
           "description": "Enables Compute powered Code Insights",
           "type": "boolean",
@@ -440,11 +432,6 @@
       "minimum": 0,
       "default": 0
     },
-    "codeIntelligence.clickToGoToDefinition": {
-      "description": "Enable click to go to definition.",
-      "type": "boolean",
-      "default": true
-    },
     "search.contextLines": {
       "description": "The default number of lines to show as context below and above search results. Default is 1.",
       "type": "integer",
@@ -561,11 +548,6 @@
       "type": "string",
       "enum": ["browser-extension", "native-integration"],
       "default": "browser-extension"
-    },
-    "codeHost.useNativeTooltips": {
-      "description": "Whether to use the code host's native hover tooltips when they exist (GitHub's jump-to-definition tooltips, for example).",
-      "type": "boolean",
-      "default": false
     },
     "search.hideSuggestions": {
       "description": "Disable search suggestions below the search bar when constructing queries. Defaults to false.",

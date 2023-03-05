@@ -26,7 +26,7 @@ export function nodeToLocation(
     const { repo: currentRepo, commit: currentCommit } = parseGitURI(new URL(textDocument.uri))
 
     return {
-        uri: new URL(`git://${repository?.name || currentRepo}?${commit?.oid || currentCommit}#${path}`),
+        uri: `git://${repository?.name || currentRepo}?${commit?.oid || currentCommit}#${path}`,
         range,
     }
 }

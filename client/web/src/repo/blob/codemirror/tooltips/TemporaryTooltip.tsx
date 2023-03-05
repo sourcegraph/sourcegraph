@@ -1,6 +1,6 @@
 import { EditorView, Tooltip, TooltipView } from '@codemirror/view'
 
-import * as sourcegraph from '@sourcegraph/extension-api-types'
+import { Position } from '@sourcegraph/shared/src/codeintel/legacy-extensions/api'
 
 import { getCodeIntelTooltipState, setFocusedOccurrenceTooltip } from '../token-selection/code-intel-tooltips'
 
@@ -27,7 +27,7 @@ class TemporaryTooltip implements Tooltip {
 export function showTemporaryTooltip(
     view: EditorView,
     message: string,
-    position: sourcegraph.Position,
+    position: Position,
     clearTimeout: number,
     options?: {
         arrow?: boolean

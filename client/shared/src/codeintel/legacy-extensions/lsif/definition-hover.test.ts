@@ -1,9 +1,7 @@
-/* eslint-disable etc/no-deprecated */
 import * as assert from 'assert'
 
 import * as sinon from 'sinon'
 
-import * as sourcegraph from '../api'
 import { QueryGraphQLFn } from '../util/graphql'
 
 import { GenericLSIFResponse } from './api'
@@ -30,9 +28,9 @@ describe('definitionAndHoverForPosition', () => {
 
         assert.deepEqual(await definitionAndHoverForPosition(document, position, queryGraphQLFn), {
             definition: [
-                new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
             ],
             hover: {
                 contents: {
@@ -81,9 +79,9 @@ describe('definitionAndHoverForPosition', () => {
 
         assert.deepEqual(await definitionAndHoverForPosition(document, position, queryGraphQLFn), {
             definition: [
-                new sourcegraph.Location(new URL('git://repo1?deadbeef1#a.ts'), range1),
-                new sourcegraph.Location(new URL('git://repo2?deadbeef2#b.ts'), range2),
-                new sourcegraph.Location(new URL('git://repo3?deadbeef3#c.ts'), range3),
+                { uri: 'git://repo1?deadbeef1#a.ts', range: range1 },
+                { uri: 'git://repo2?deadbeef2#b.ts', range: range2 },
+                { uri: 'git://repo3?deadbeef3#c.ts', range: range3 },
             ],
             hover: null,
         })

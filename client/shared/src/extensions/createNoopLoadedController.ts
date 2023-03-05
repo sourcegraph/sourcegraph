@@ -1,6 +1,4 @@
 import { Remote } from 'comlink'
-import { from } from 'rxjs'
-import { switchMap } from 'rxjs/operators'
 
 import { ExposedToClient, initMainThreadAPI } from '../api/client/mainthread-api'
 import { FlatExtensionHostAPI } from '../api/contract'
@@ -52,9 +50,7 @@ export function createNoopController(platformContext: PlatformContext): Controll
         })
     })
     return {
-        executeCommand: (parameters, suppressNotificationOnError) =>
-            api.then(({ exposedToClient }) => exposedToClient.executeCommand(parameters, suppressNotificationOnError)),
-        commandErrors: from(api).pipe(switchMap(({ exposedToClient }) => exposedToClient.commandErrors)),
+        executeCommand: parameters => api.then(({ exposedToClient }) => exposedToClient.executeCommand(parameters)),
         registerCommand: entryToRegister =>
             syncPromiseSubscription(
                 api.then(({ exposedToClient }) => exposedToClient.registerCommand(entryToRegister))

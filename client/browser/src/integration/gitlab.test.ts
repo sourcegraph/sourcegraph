@@ -141,13 +141,10 @@ describe('GitLab', () => {
         })
     })
 
-    // TODO(sqs): skipped because these have not been reimplemented after the extension API deprecation
-    it.skip('shows hover tooltips when hovering a token', async () => {
-        const { mockExtension, extensionSettings } = setupExtensionMocking()
+    it('shows hover tooltips when hovering a token', async () => {
+        const { mockExtension } = setupExtensionMocking()
 
-        const userSettings: Settings = {
-            extensions: extensionSettings,
-        }
+        const userSettings: Settings = {}
         testContext.overrideGraphQL({
             ViewerConfiguration: () => ({
                 viewerConfiguration: {

@@ -8,7 +8,7 @@ import * as sourcegraph from '../api'
 export type QueryGraphQLFn<T> = (query: string, vars?: { [name: string]: unknown }) => Promise<T>
 
 /**
- * Perform a GraphQL query via the extension host.
+ * Perform a GraphQL query.
  *
  * @param query The GraphQL query string.
  * @param vars The query variables.

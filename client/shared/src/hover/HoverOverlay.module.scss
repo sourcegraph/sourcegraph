@@ -63,32 +63,6 @@
     margin-right: 0;
 }
 
-.alert {
-    // Use flex container to move dismiss button to the right and center it vertically.
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0;
-}
-
-.alert .hover-overlay__content {
-    display: inline;
-}
-
-// Descendant selector is needed here to style rendered markdown.
-.alert p:last-child {
-    margin-bottom: 0;
-}
-
-.alert-icon {
-    margin-right: 0.25rem;
-}
-
-.alert-dismiss {
-    margin-left: 0.75rem;
-    line-height: 1;
-}
-
 .actions {
     display: flex;
     align-items: center;
@@ -145,6 +119,8 @@
     margin-top: var(--hover-overlay-content-margin-top);
     margin-bottom: 0.75rem;
 }
+
+// TODO(sqs): some of these might not be used anymore?
 
 .hover-empty {
     display: block;

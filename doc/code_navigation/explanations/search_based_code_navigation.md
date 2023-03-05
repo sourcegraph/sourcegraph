@@ -39,7 +39,7 @@ The symbols container recognizes these environment variables:
 - `CTAGS_PATTERN_LENGTH_LIMIT`: defaults to `250`, the maximum length of the patterns output by ctags
 - `LOG_CTAGS_ERRORS`: defaults to `false`, log ctags errors
 - `SANITY_CHECK`: defaults to `false`, check that go-sqlite3 works then exit 0 if it's ok or 1 if not
-- `CACHE_DIR`: defaults to `/tmp/symbols-cache`, directory in which to store cached symbols
+- `SYMBOLS_CACHE_DIR`: defaults to `/tmp/symbols-cache`, directory in which to store cached symbols
 - `SYMBOLS_CACHE_SIZE_MB`: defaults to `100000`, maximum size of the disk cache (in megabytes)
 - `CTAGS_PROCESSES`: defaults to `strconv.Itoa(runtime.GOMAXPROCS(0))`, number of concurrent parser processes to run
 - `REQUEST_BUFFER_SIZE`: defaults to `8192`, maximum size of buffered parser request channel

@@ -317,7 +317,6 @@ const HIGHLIGHTED_FILE_MOCK = {
 }
 
 export const defaultProps: ReferencesPanelProps = {
-    extensionsController: null,
     telemetryService: NOOP_TELEMETRY_SERVICE,
     settingsCascade: {
         subjects: null,
