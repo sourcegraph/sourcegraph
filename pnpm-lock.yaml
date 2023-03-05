@@ -958,10 +958,7 @@ importers:
   client/client-api:
     specifiers:
       '@sourcegraph/extension-api-types': workspace:*
-      '@sourcegraph/template-parser': workspace:*
       sourcegraph: workspace:*
-    dependencies:
-      '@sourcegraph/template-parser': link:../template-parser
     devDependencies:
       '@sourcegraph/extension-api-types': link:../extension-api-types
       sourcegraph: link:../extension-api
@@ -1049,7 +1046,6 @@ importers:
       '@sourcegraph/common': workspace:*
       '@sourcegraph/extension-api-types': workspace:*
       '@sourcegraph/http-client': workspace:*
-      '@sourcegraph/template-parser': workspace:*
       '@sourcegraph/testing': workspace:*
       '@sourcegraph/wildcard': workspace:*
       sourcegraph: workspace:*
@@ -1058,7 +1054,6 @@ importers:
       '@sourcegraph/codeintellify': link:../codeintellify
       '@sourcegraph/common': link:../common
       '@sourcegraph/http-client': link:../http-client
-      '@sourcegraph/template-parser': link:../template-parser
       '@sourcegraph/wildcard': link:../wildcard
     devDependencies:
       '@sourcegraph/build-config': link:../build-config
@@ -1080,9 +1075,6 @@ importers:
       '@sourcegraph/wildcard': link:../wildcard
     devDependencies:
       '@sourcegraph/build-config': link:../build-config
-
-  client/template-parser:
-    specifiers: {}
 
   client/testing:
     specifiers: {}
@@ -13038,7 +13030,7 @@ packages:
       '@babel/core': 7.20.5
       find-cache-dir: 3.3.2
       schema-utils: 4.0.0
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_4wpfvhs5obqvjbkpkxtqpnn5oe
     dev: true
 
   /babel-plugin-add-react-displayname/0.0.5:
@@ -15294,7 +15286,7 @@ packages:
       postcss-modules-values: 4.0.0_postcss@8.4.21
       postcss-value-parser: 4.2.0
       semver: 7.3.8
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_esbuild@0.17.8
 
   /css-minimizer-webpack-plugin/4.2.2_6hyl5w2uqyeivowpusuiulbmoy:
     resolution: {integrity: sha512-s3Of/4jKfw1Hj9CxEO1E5oXhQAxlayuHO2y/ML+C6I9sQ7FdzfEV6QgMLN3vI+qFsjJGIAFLKtQK7t8BOXAIyA==}
@@ -20112,7 +20104,7 @@ packages:
       lodash: 4.17.21
       pretty-error: 4.0.0
       tapable: 2.2.1
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_yrajokeiryagdtuqucziuwdxti
     dev: true
 
   /htmlparser2/6.1.0:
@@ -26919,7 +26911,7 @@ packages:
       klona: 2.0.5
       postcss: 8.4.21
       semver: 7.3.8
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_esbuild@0.17.8
 
   /postcss-media-query-parser/0.2.3:
     resolution: {integrity: sha512-3sOlxmbKcSHMjlUXQZKQ06jOswE7oVkXPxmZdoB1r5l0q6gTFTQSHxNxOrCccElbW7dxNytifNEo8qidX2Vsig==}
@@ -29793,7 +29785,7 @@ packages:
       klona: 2.0.5
       neo-async: 2.6.2
       sass: 1.32.4
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_esbuild@0.17.8
 
   /sass/1.32.4:
     resolution: {integrity: sha512-N0BT0PI/t3+gD8jKa83zJJUb7ssfQnRRfqN+GIErokW6U4guBpfYl8qYB+OFLEho+QvnV5ZH1R9qhUC/Z2Ch9w==}
@@ -31697,7 +31689,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
       terser: 5.16.1
-      webpack: 5.75.0_cf7cgeqdkm72g3fdehkr7aaod4
+      webpack: 5.75.0_esbuild@0.17.8
 
   /terser-webpack-plugin/5.3.6_oa2ac2s5skpozptxi7rtd3zsrm:
     resolution: {integrity: sha512-kfLFk+PoLUQIbLmB1+PZDMRSZS99Mp+/MHqDNmMA6tOItzRt+Npe3E+fsMs5mfcM0wCtrrdU387UnV+vnSffXQ==}
@@ -31723,6 +31715,32 @@ packages:
       serialize-javascript: 6.0.0
       terser: 5.16.1
       webpack: 5.75.0_yrajokeiryagdtuqucziuwdxti
+    dev: true
+
+  /terser-webpack-plugin/5.3.6_tqhwwsvj4cnhuarwr7flkmuvna:
+    resolution: {integrity: sha512-kfLFk+PoLUQIbLmB1+PZDMRSZS99Mp+/MHqDNmMA6tOItzRt+Npe3E+fsMs5mfcM0wCtrrdU387UnV+vnSffXQ==}
+    engines: {node: '>= 10.13.0'}
+    peerDependencies:
+      '@swc/core': '*'
+      esbuild: '*'
+      uglify-js: '*'
+      webpack: ^5.1.0
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      esbuild:
+        optional: true
+      uglify-js:
+        optional: true
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.17
+      '@swc/core': 1.3.28
+      esbuild: 0.17.8
+      jest-worker: 27.5.1
+      schema-utils: 3.1.1
+      serialize-javascript: 6.0.0
+      terser: 5.16.1
+      webpack: 5.75.0_4wpfvhs5obqvjbkpkxtqpnn5oe
     dev: true
 
   /terser/4.8.1:
@@ -33753,6 +33771,46 @@ packages:
     resolution: {integrity: sha512-5NUqC2JquIL2pBAAo/VfBP6KuGkHIZQXW/lNKupLPfhViwh8wNsu0BObtl09yuKZszeEUfbXz8xhrHvSG16Nqw==}
     dev: true
 
+  /webpack/5.75.0_4wpfvhs5obqvjbkpkxtqpnn5oe:
+    resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+    dependencies:
+      '@types/eslint-scope': 3.7.3
+      '@types/estree': 0.0.51
+      '@webassemblyjs/ast': 1.11.1
+      '@webassemblyjs/wasm-edit': 1.11.1
+      '@webassemblyjs/wasm-parser': 1.11.1
+      acorn: 8.8.1
+      acorn-import-assertions: 1.8.0_acorn@8.8.1
+      browserslist: 4.21.4
+      chrome-trace-event: 1.0.2
+      enhanced-resolve: 5.10.0
+      es-module-lexer: 0.9.3
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.10
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.2.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.1.1
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.6_tqhwwsvj4cnhuarwr7flkmuvna
+      watchpack: 2.4.0
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    dev: true
+
   /webpack/5.75.0_cf7cgeqdkm72g3fdehkr7aaod4:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
     engines: {node: '>=10.13.0'}
@@ -33831,7 +33889,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: false
 
   /webpack/5.75.0_yrajokeiryagdtuqucziuwdxti:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}

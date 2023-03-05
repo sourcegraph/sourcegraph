@@ -1,5 +1,4 @@
 import * as comlink from 'comlink'
-import { isMatch } from 'lodash'
 import { ReplaySubject, Subscription, Unsubscribable } from 'rxjs'
 import * as sourcegraph from 'sourcegraph'
 
@@ -13,7 +12,7 @@ import { ExtensionHostAPI, ExtensionHostAPIFactory } from './api/api'
 import { setActiveLoggers } from './api/logging'
 import { createExtensionAPIFactory } from './extensionApi'
 import { createExtensionHostAPI } from './extensionHostApi'
-import { createExtensionHostState, ExtensionHostState } from './extensionHostState'
+import { createExtensionHostState } from './extensionHostState'
 
 /**
  * Required information when initializing an extension host.
@@ -156,24 +155,4 @@ function createExtensionAndExtensionHostAPIs(
     const extensionAPI = createExtensionAPI('DEFAULT')
 
     return { extensionHostAPI, extensionAPI, subscription }
-}
-
-// Context (TODO(tj): move to extension/api/context)
-// Same implementation is exposed to main and extensions
-export function updateContext(update: { [k: string]: unknown }, state: ExtensionHostState): void {
-    if (isMatch(state.context.value, update)) {
-        return
-    }
-    const result: any = {}
-    for (const [key, oldValue] of Object.entries(state.context.value)) {
-        if (update[key] !== null) {
-            result[key] = oldValue
-        }
-    }
-    for (const [key, value] of Object.entries(update)) {
-        if (value !== null) {
-            result[key] = value
-        }
-    }
-    state.context.next(result)
 }

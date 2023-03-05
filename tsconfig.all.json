@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "references": [
-    { "path": "client/template-parser" },
     { "path": "client/build-config" },
     { "path": "client/common" },
     { "path": "client/shared" },

@@ -17,7 +17,6 @@ import { match } from '../api/client/types/textDocument'
 import { FlatExtensionHostAPI } from '../api/contract'
 import { proxySubscribable } from '../api/extension/api/common'
 import { toPosition } from '../api/extension/api/types'
-import { PanelViewData } from '../api/extension/extensionHostApi'
 import { getModeFromPath } from '../languages'
 import type { PlatformContext } from '../platform/context'
 import { isSettingsValid, Settings, SettingsCascade } from '../settings/settings'
@@ -230,25 +229,7 @@ export function injectNewCodeintel(
         | 'getDefinition'
         | 'getLocations'
         | 'hasReferenceProvidersForDocument'
-        | 'getPanelViews'
     > = {
-        getPanelViews() {
-            const panels: PanelViewData[] = []
-            for (const spec of languageSpecs) {
-                if (spec.textDocumentImplemenationSupport) {
-                    const id = `implementations_${spec.languageID}`
-                    panels.push({
-                        id,
-                        content: '',
-                        component: { locationProvider: id },
-                        selector: selectorForSpec(spec),
-                        priority: 160,
-                        title: 'Implementations',
-                    })
-                }
-            }
-            return proxySubscribable(of(panels))
-        },
         hasReferenceProvidersForDocument(textParameters) {
             return proxySubscribable(codeintel.hasReferenceProvidersForDocument(textParameters))
         },

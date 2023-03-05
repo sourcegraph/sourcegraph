@@ -66,7 +66,7 @@ COPY --from=symbols-build /symbols /usr/local/bin/symbols
 # symbols is cgo, ensure we have the requisite dynamic libraries
 RUN env SANITY_CHECK=true /usr/local/bin/symbols
 
-ENV CACHE_DIR=/mnt/cache/symbols
-RUN mkdir -p ${CACHE_DIR}
+ENV SYMBOLS_CACHE_DIR=/mnt/cache/symbols
+RUN mkdir -p ${SYMBOLS_CACHE_DIR}
 EXPOSE 3184
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/symbols"]

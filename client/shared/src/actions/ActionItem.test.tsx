@@ -22,7 +22,7 @@ describe('ActionItem', () => {
         const component = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
@@ -36,7 +36,7 @@ describe('ActionItem', () => {
         const component = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 variant="actionItem"
                 location={history.location}
@@ -51,7 +51,7 @@ describe('ActionItem', () => {
         const component = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
@@ -95,7 +95,7 @@ describe('ActionItem', () => {
         const component = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 variant="actionItem"
                 title={<span>t2</span>}
@@ -113,7 +113,7 @@ describe('ActionItem', () => {
         const { container, asFragment } = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 variant="actionItem"
                 disabledDuringExecution={true}
@@ -140,7 +140,7 @@ describe('ActionItem', () => {
         const { asFragment } = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 variant="actionItem"
                 showLoadingSpinnerDuringExecution={true}
@@ -170,7 +170,7 @@ describe('ActionItem', () => {
         const { asFragment } = render(
             <ActionItem
                 active={true}
-                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u', category: 'g' }}
+                action={{ id: 'c', command: 'c', title: 't', description: 'd', iconURL: 'u' }}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 variant="actionItem"
                 disabledDuringExecution={true}

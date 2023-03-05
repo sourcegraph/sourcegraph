@@ -12,7 +12,6 @@ ts_config(
         "//:tsconfig",
         "//client/extension-api:tsconfig",
         "//client/extension-api-types:tsconfig",
-        "//client/template-parser:tsconfig",
     ],
 )
 
@@ -29,7 +28,6 @@ ts_project(
     # TODO(bazel): "#keep"s required for type-only imports
     deps = [
         ":node_modules/@sourcegraph/extension-api-types",  #keep
-        ":node_modules/@sourcegraph/template-parser",  #keep
         "//:node_modules/@sourcegraph/extension-api-classes",
         "//:node_modules/utility-types",  #keep
     ],

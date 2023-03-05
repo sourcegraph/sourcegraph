@@ -1,7 +1,7 @@
 import { proxy, Remote } from 'comlink'
 import { noop, sortBy } from 'lodash'
 import { BehaviorSubject, EMPTY, ReplaySubject, Unsubscribable } from 'rxjs'
-import { debounceTime, mapTo } from 'rxjs/operators'
+import { mapTo } from 'rxjs/operators'
 import * as sourcegraph from 'sourcegraph'
 
 import { asError, logger } from '@sourcegraph/common'
@@ -12,8 +12,8 @@ import { syncRemoteSubscription } from '../util'
 
 import { proxySubscribable } from './api/common'
 import { DocumentHighlightKind } from './api/documentHighlights'
-import { InitData, updateContext } from './extensionHost'
-import { NotificationType, PanelViewData } from './extensionHostApi'
+import { InitData } from './extensionHost'
+import { NotificationType } from './extensionHostApi'
 import { ExtensionHostState } from './extensionHostState'
 import { addWithRollback } from './util'
 
@@ -168,72 +168,6 @@ export function createExtensionAPIFactory(
         get windows() {
             return [window]
         },
-        createPanelView: id => {
-            const panelViewData = new BehaviorSubject<PanelViewData>({
-                id,
-                title: '',
-                content: '',
-                component: null,
-                priority: 0,
-                selector: null,
-            })
-
-            const panelView: sourcegraph.PanelView = {
-                get title() {
-                    return panelViewData.value.title
-                },
-                set title(title: string) {
-                    panelViewData.next({ ...panelViewData.value, title })
-                },
-                get content() {
-                    return panelViewData.value.content
-                },
-                set content(content: string) {
-                    panelViewData.next({ ...panelViewData.value, content })
-                },
-                get component() {
-                    return panelViewData.value.component
-                },
-                set component(component: { locationProvider: string } | null) {
-                    panelViewData.next({ ...panelViewData.value, component })
-                },
-                get priority() {
-                    return panelViewData.value.priority
-                },
-                set priority(priority: number) {
-                    panelViewData.next({ ...panelViewData.value, priority })
-                },
-                get selector() {
-                    return panelViewData.value.selector
-                },
-                set selector(selector: sourcegraph.DocumentSelector | null) {
-                    panelViewData.next({ ...panelViewData.value, selector })
-                },
-                unsubscribe: () => {
-                    subscription.unsubscribe()
-                },
-            }
-
-            // Batch updates from same tick
-            const subscription = addWithRollback(state.panelViews, panelViewData.pipe(debounceTime(0)))
-
-            return panelView
-        },
-        registerViewProvider: (id, provider) => {
-            switch (provider.where) {
-                case 'insightsPage':
-                    return addWithRollback(state.insightsPageViewProviders, { id, viewProvider: provider })
-
-                case 'directory':
-                    return addWithRollback(state.directoryViewProviders, { id, viewProvider: provider })
-
-                case 'global/page':
-                    return addWithRollback(state.globalPageViewProviders, { id, viewProvider: provider })
-
-                case 'homepage':
-                    return addWithRollback(state.homepageViewProviders, { id, viewProvider: provider })
-            }
-        },
         // `log` is implemented on extension activation
         log: noop,
     }
@@ -338,7 +272,6 @@ export function createExtensionAPIFactory(
 
             internal: {
                 sync: () => sync(),
-                updateContext: (updates: sourcegraph.ContextValues) => updateContext(updates, state),
                 sourcegraphURL: new URL(initData.sourcegraphURL),
                 clientApplication: initData.clientApplication,
             },

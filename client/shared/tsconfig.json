@@ -34,9 +34,6 @@
       "path": "../http-client",
     },
     {
-      "path": "../template-parser",
-    },
-    {
       "path": "../testing",
     },
     {

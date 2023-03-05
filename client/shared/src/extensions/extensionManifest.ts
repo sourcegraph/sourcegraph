@@ -6,5 +6,5 @@ import { ExtensionManifest as ExtensionManifestSchema } from '../schema/extensio
  */
 export type ExtensionManifest = Pick<
     ExtensionManifestSchema,
-    'url' | 'icon' | 'iconDark' | 'activationEvents' | 'contributes' | 'publisher'
+    'url' | 'icon' | 'iconDark' | 'activationEvents' | 'publisher'
 >

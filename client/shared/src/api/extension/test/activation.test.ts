@@ -3,8 +3,6 @@ import { filter, first } from 'rxjs/operators'
 import sinon from 'sinon'
 import sourcegraph from 'sourcegraph'
 
-import { Contributions } from '@sourcegraph/client-api'
-
 import { SettingsCascade } from '../../../settings/settings'
 import { MainThreadAPI } from '../../contract'
 import { pretendRemote } from '../../util'
@@ -23,23 +21,20 @@ describe('Extension activation', () => {
             const FIXTURE_EXTENSION: ExecutableExtension = {
                 scriptURL: 'https://fixture.extension',
                 id: 'sourcegraph/fixture-extension',
-                manifest: { url: 'a', contributes: {}, activationEvents: ['*'] },
+                manifest: { url: 'a', activationEvents: ['*'] },
             }
 
             const haveInitialExtensionsLoaded = new BehaviorSubject<boolean>(false)
 
-            const mockState: Pick<
-                ExtensionHostState,
-                'activeExtensions' | 'contributions' | 'haveInitialExtensionsLoaded' | 'settings'
-            > = {
-                activeExtensions: new BehaviorSubject([FIXTURE_EXTENSION]),
-                contributions: new BehaviorSubject<readonly Contributions[]>([]),
-                haveInitialExtensionsLoaded,
-                settings: new BehaviorSubject<Readonly<SettingsCascade>>({
-                    subjects: [],
-                    final: {},
-                }),
-            }
+            const mockState: Pick<ExtensionHostState, 'activeExtensions' | 'haveInitialExtensionsLoaded' | 'settings'> =
+                {
+                    activeExtensions: new BehaviorSubject([FIXTURE_EXTENSION]),
+                    haveInitialExtensionsLoaded,
+                    settings: new BehaviorSubject<Readonly<SettingsCascade>>({
+                        subjects: [],
+                        final: {},
+                    }),
+                }
 
             // Noop for activation and deactivation
             const noopPromise = () => Promise.resolve()

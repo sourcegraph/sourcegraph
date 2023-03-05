@@ -1,70 +1,32 @@
-import { proxy } from 'comlink'
 import { castArray, isEqual } from 'lodash'
-import { combineLatest, concat, from, Observable, of, Subscribable, throwError } from 'rxjs'
-import {
-    catchError,
-    debounceTime,
-    defaultIfEmpty,
-    distinctUntilChanged,
-    map,
-    mergeMap,
-    switchMap,
-} from 'rxjs/operators'
+import { concat, from, Observable, of } from 'rxjs'
+import { catchError, defaultIfEmpty, distinctUntilChanged, map, mergeMap, switchMap } from 'rxjs/operators'
 import { ProviderResult } from 'sourcegraph'
 
-import {
-    fromHoverMerged,
-    TextDocumentIdentifier,
-    ContributableViewContainer,
-    TextDocumentPositionParameters,
-} from '@sourcegraph/client-api'
+import { fromHoverMerged, TextDocumentIdentifier, TextDocumentPositionParameters } from '@sourcegraph/client-api'
 import { LOADING, MaybeLoadingResult } from '@sourcegraph/codeintellify'
-import {
-    allOf,
-    asError,
-    combineLatestOrDefault,
-    ErrorLike,
-    isDefined,
-    isExactly,
-    isNot,
-    logger,
-    property,
-} from '@sourcegraph/common'
+import { combineLatestOrDefault, isDefined, isExactly, isNot, logger } from '@sourcegraph/common'
 import * as clientType from '@sourcegraph/extension-api-types'
-import { Context } from '@sourcegraph/template-parser'
 
 import type {
     ReferenceContext,
     DocumentSelector,
     NotificationType as LegacyNotificationType,
     Progress,
-    DirectoryViewContext,
-    View,
-    PanelView,
 } from '../../codeintel/legacy-extensions/api'
 import { getModeFromPath } from '../../languages'
 import { parseRepoURI } from '../../util/url'
 import { match } from '../client/types/textDocument'
 import { FlatExtensionHostAPI } from '../contract'
-import { ExtensionViewer, ViewerId, ViewerWithPartialModel } from '../viewerTypes'
+import { ExtensionViewer, ViewerId } from '../viewerTypes'
 
 import { ExtensionCodeEditor } from './api/codeEditor'
 import { providerResultToObservable, ProxySubscribable, proxySubscribable } from './api/common'
-import { computeContext, ContributionScope } from './api/context/context'
-import {
-    evaluateContributions,
-    filterContributions,
-    mergeContributions,
-    parseContributionExpressions,
-} from './api/contribution'
 import { ExtensionDirectoryViewer } from './api/directoryViewer'
-import { getInsightsViews } from './api/getInsightsViews'
 import { ExtensionDocument } from './api/textDocument'
 import { fromLocation, toPosition } from './api/types'
 import { ExtensionWorkspaceRoot } from './api/workspaceRoot'
-import { updateContext } from './extensionHost'
 import { ExtensionHostState } from './extensionHostState'
-import { addWithRollback } from './util'
 
 export function createExtensionHostAPI(state: ExtensionHostState): FlatExtensionHostAPI {
     const getTextDocument = (uri: string): ExtensionDocument => {
@@ -340,134 +302,9 @@ export function createExtensionHostAPI(state: ExtensionHostState): FlatExtension
                 )
             ),
 
-        // Context data + Contributions
-        updateContext: update => updateContext(update, state),
-        registerContributions: rawContributions => {
-            const parsedContributions = parseContributionExpressions(rawContributions)
-
-            return proxy(addWithRollback(state.contributions, parsedContributions))
-        },
-        getContributions: ({ scope, extraContext, returnInactiveMenuItems }: ContributionOptions = {}) =>
-            // TODO(tj): memoize access from mainthread (maybe by scope and extraContext (shallow))
-            proxySubscribable(
-                combineLatest([
-                    state.contributions,
-                    state.activeViewComponentChanges.pipe(
-                        map((activeEditor): ViewerWithPartialModel | undefined => {
-                            if (!activeEditor) {
-                                return undefined
-                            }
-
-                            switch (activeEditor.type) {
-                                case 'CodeEditor': {
-                                    const { languageId } = getTextDocument(activeEditor.resource)
-                                    return Object.assign(activeEditor, { model: { languageId } })
-                                }
-                                case 'DirectoryViewer':
-                                    return activeEditor
-                            }
-                        })
-                    ),
-                    state.settings,
-                    state.context as Subscribable<Context<unknown>>,
-                ]).pipe(
-                    map(([multiContributions, activeEditor, settings, context]) => {
-                        // Merge in extra context.
-                        if (extraContext) {
-                            context = { ...context, ...extraContext }
-                        }
-
-                        // TODO(sqs): Observe context so that we update immediately upon changes.
-                        const computedContext = computeContext(activeEditor, settings, context, scope)
-                        return multiContributions.map(contributions => {
-                            try {
-                                const evaluatedContributions = evaluateContributions(computedContext, contributions)
-                                return returnInactiveMenuItems
-                                    ? evaluatedContributions
-                                    : filterContributions(evaluatedContributions)
-                            } catch (error) {
-                                // An error during evaluation causes all of the contributions in the same entry to be
-                                // discarded.
-                                logger.error('Discarding contributions: evaluating expressions or templates failed.', {
-                                    contributions,
-                                    error,
-                                })
-                                return {}
-                            }
-                        })
-                    }),
-                    map(mergeContributions),
-                    distinctUntilChanged(isEqual)
-                )
-            ),
-
         // Notifications
         getPlainNotifications: () => proxySubscribable(state.plainNotifications.asObservable()),
         getProgressNotifications: () => proxySubscribable(state.progressNotifications.asObservable()),
-
-        // Views
-        getPanelViews: () =>
-            // Don't need `combineLatestOrDefault` here since each panel view
-            // is a BehaviorSubject, and therefore guaranteed to emit
-            proxySubscribable(
-                state.panelViews.pipe(
-                    switchMap(panelViews => combineLatest([...panelViews])),
-                    debounceTime(0)
-                )
-            ),
-
-        // Insight page
-        getInsightViewById: (id, context) =>
-            proxySubscribable(
-                state.insightsPageViewProviders.pipe(
-                    switchMap(providers => {
-                        const provider = providers.find(provider => {
-                            // Get everything until last dot according to extension id naming convention
-                            // <type>.<name>.<view type = directory|insightPage|homePage>
-                            const providerId = provider.id.split('.').slice(0, -1).join('.')
-
-                            return providerId === id
-                        })
-
-                        if (!provider) {
-                            return throwError(new Error(`Couldn't find view with id ${id}`))
-                        }
-
-                        return providerResultToObservable(provider.viewProvider.provideView(context))
-                    }),
-                    catchError((error: unknown) => {
-                        logger.error('View provider errored:', error)
-                        // Pass only primitive copied values because Error object is not
-                        // cloneable in Firefox and Safari
-                        const { message, name, stack } = asError(error)
-                        return of({ message, name, stack } as ErrorLike)
-                    }),
-                    map(view => ({ id, view }))
-                )
-            ),
-
-        getInsightsViews: (context, insightIds) =>
-            getInsightsViews(context, state.insightsPageViewProviders, insightIds),
-
-        getHomepageViews: context => proxySubscribable(callViewProviders(context, state.homepageViewProviders)),
-        getDirectoryViews: context =>
-            proxySubscribable(
-                callViewProviders(
-                    {
-                        viewer: {
-                            ...context.viewer,
-                            directory: {
-                                ...context.viewer.directory,
-                                uri: new URL(context.viewer.directory.uri),
-                            },
-                        },
-                        workspace: { uri: new URL(context.workspace.uri) },
-                    },
-                    state.directoryViewProviders
-                )
-            ),
-
-        getGlobalPageViews: context => proxySubscribable(callViewProviders(context, state.globalPageViewProviders)),
 
         getActiveExtensions: () => proxySubscribable(state.activeExtensions),
     }
@@ -604,56 +441,6 @@ function assertViewerType<T extends ExtensionViewer['type']>(
     }
 }
 
-// Views
-
-/**
- * A map from type of container names to the internal type of the context parameter provided by the container.
- */
-export interface ViewContexts {
-    [ContributableViewContainer.Panel]: never
-    [ContributableViewContainer.Homepage]: {}
-    [ContributableViewContainer.InsightsPage]: {}
-    [ContributableViewContainer.GlobalPage]: Record<string, string>
-    [ContributableViewContainer.Directory]: DirectoryViewContext
-}
-
-export interface RegisteredViewProvider<W extends ContributableViewContainer> {
-    id: string
-    viewProvider: {
-        provideView: (context: ViewContexts[W]) => ProviderResult<View>
-    }
-}
-
-function callViewProviders<W extends ContributableViewContainer>(
-    context: ViewContexts[W],
-    providers: Observable<readonly RegisteredViewProvider<W>[]>
-): Observable<ViewProviderResult[]> {
-    return providers.pipe(
-        debounceTime(0),
-        switchMap(providers =>
-            combineLatest([
-                of(null),
-                ...providers.map(({ viewProvider, id }) =>
-                    concat(
-                        [undefined],
-                        providerResultToObservable(viewProvider.provideView(context)).pipe(
-                            defaultIfEmpty<View | null | undefined>(null),
-                            catchError((error: unknown): [ErrorLike] => {
-                                logger.error('View provider errored:', error)
-                                // Pass only primitive copied values because Error object is not
-                                // cloneable in Firefox and Safari
-                                const { message, name, stack } = asError(error)
-                                return [{ message, name, stack } as ErrorLike]
-                            })
-                        )
-                    ).pipe(map(view => ({ id, view })))
-                ),
-            ])
-        ),
-        map(views => views.filter(allOf(isDefined, property('view', isNot(isExactly(null))))))
-    )
-}
-
 /**
  * A workspace root with additional metadata that is not exposed to extensions.
  */
@@ -671,11 +458,6 @@ export interface WorkspaceRootWithMetadata extends clientType.WorkspaceRoot {
      * distinct from undefined. If undefined, the Git commit SHA from {@link WorkspaceRoot#uri} should be used.
      */
     inputRevision?: string
-}
-
-/** @internal */
-export interface PanelViewData extends Omit<PanelView, 'unsubscribe'> {
-    id: string
 }
 
 /**
@@ -712,14 +494,6 @@ export interface ProgressNotification {
     progress: ProxySubscribable<Progress>
 }
 
-export interface ViewProviderResult {
-    /** The ID of the view provider. */
-    id: string
-
-    /** The result returned by the provider. */
-    view: View | undefined | ErrorLike
-}
-
 /**
  * The type of a notification.
  * This is needed because if sourcegraph.NotificationType enum values are referenced,
@@ -731,12 +505,4 @@ export const NotificationType: typeof LegacyNotificationType = {
     Info: 3,
     Log: 4,
     Success: 5,
-}
-
-// Contributions
-
-export interface ContributionOptions<T = unknown> {
-    scope?: ContributionScope | undefined
-    extraContext?: Context<T>
-    returnInactiveMenuItems?: boolean
 }

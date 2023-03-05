@@ -52,7 +52,7 @@ var DefaultEnv = map[string]string{
 
 	// Limit our cache size to 100GB, same as prod. We should probably update
 	// searcher/symbols to ensure this value isn't larger than the volume for
-	// CACHE_DIR.
+	// SYMBOLS_CACHE_DIR and SEARCHER_CACHE_DIR.
 	"SEARCHER_CACHE_SIZE_MB": "50000",
 	"SYMBOLS_CACHE_SIZE_MB":  "50000",
 
@@ -105,7 +105,9 @@ func Main() {
 	// Next persistence
 	{
 		SetDefaultEnv("SRC_REPOS_DIR", filepath.Join(DataDir, "repos"))
-		SetDefaultEnv("CACHE_DIR", filepath.Join(DataDir, "cache"))
+		cacheDir := filepath.Join(DataDir, "cache")
+		SetDefaultEnv("SYMBOLS_CACHE_DIR", cacheDir)
+		SetDefaultEnv("SEARCHER_CACHE_DIR", cacheDir)
 	}
 
 	// Special case some convenience environment variables

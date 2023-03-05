@@ -2,7 +2,7 @@ import { Remote } from 'comlink'
 import { concat, from, of, Subscription, Unsubscribable } from 'rxjs'
 import { first } from 'rxjs/operators'
 
-import { ActionContributionClientCommandUpdateConfiguration, Evaluated, KeyPath } from '@sourcegraph/client-api'
+import { ActionContributionClientCommandUpdateConfiguration, KeyPath } from '@sourcegraph/client-api'
 import { formatSearchParameters } from '@sourcegraph/common'
 import { Position } from '@sourcegraph/extension-api-types'
 
@@ -81,8 +81,7 @@ export function registerBuiltinClientCommands(
         registerCommand({
             command: 'updateConfiguration',
             run: (...anyArguments: any[]): Promise<void> => {
-                const args =
-                    anyArguments as Evaluated<ActionContributionClientCommandUpdateConfiguration>['commandArguments']
+                const args = anyArguments as ActionContributionClientCommandUpdateConfiguration['commandArguments']
                 return updateSettings(context, convertUpdateConfigurationCommandArguments(args))
             },
         })
@@ -152,7 +151,7 @@ export function urlForOpenPanel(viewID: string, urlHash: string): string {
  * to {@link SettingsUpdate}.
  */
 export function convertUpdateConfigurationCommandArguments(
-    args: Evaluated<ActionContributionClientCommandUpdateConfiguration>['commandArguments']
+    args: ActionContributionClientCommandUpdateConfiguration['commandArguments']
 ): SettingsEdit {
     if (!Array.isArray(args) || !(args.length >= 2 && args.length <= 4)) {
         throw new Error(

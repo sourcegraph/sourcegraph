@@ -32,7 +32,6 @@ ts_config(
         "//client/extension-api:tsconfig",
         "//client/extension-api-types:tsconfig",
         "//client/http-client:tsconfig",
-        "//client/template-parser:tsconfig",
         "//client/testing:tsconfig",
         "//client/wildcard:tsconfig",
     ],
@@ -345,7 +344,6 @@ ts_project(
         ":node_modules/@sourcegraph/common",
         ":node_modules/@sourcegraph/extension-api-types",  #keep
         ":node_modules/@sourcegraph/http-client",
-        ":node_modules/@sourcegraph/template-parser",
         ":node_modules/@sourcegraph/wildcard",
         "//:node_modules/@apollo/client",
         "//:node_modules/@codemirror/language",
@@ -488,7 +486,6 @@ ts_project(
         ":node_modules/@sourcegraph/codeintellify",
         ":node_modules/@sourcegraph/common",
         ":node_modules/@sourcegraph/http-client",
-        ":node_modules/@sourcegraph/template-parser",
         ":node_modules/@sourcegraph/testing",
         ":node_modules/@sourcegraph/wildcard",
         ":shared_lib",

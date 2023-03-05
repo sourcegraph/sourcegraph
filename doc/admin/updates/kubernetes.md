@@ -38,7 +38,7 @@
 - Searcher and Symbols now use StatefulSets and PVCs to avoid large `ephermeralStorage` requests [#242](https://github.com/sourcegraph/deploy-sourcegraph-helm/pull/242)
 - This release updates `searcher` and `symbols` services to be headless.
   - Before upgrading, delete your `searcher` and `symbols` services (ex: `kubectl delete svc/searcher svc/symbols`) [#250](https://github.com/sourcegraph/deploy-sourcegraph-helm/pull/250)
-- An env var `CACHE_DIR` was renamed to `SYMBOLS_CACHE_DIR` in `sourcegraph/sourcegraph`, this change was missed in the helm charts, and causes a permissions issue resolving some symbols searches. For more details see the PR to fix the env var: [#258](https://github.com/sourcegraph/deploy-sourcegraph-helm/pull/258)
+- An env var `CACHE_DIR` was renamed to `SYMBOLS_CACHE_DIR` in `sourcegraph/sourcegraph`. This change was missed in the Helm charts, which caused a permissions issue during some symbols searches. For more details, see the PR to fix the env var: [#258](https://github.com/sourcegraph/deploy-sourcegraph-helm/pull/258).
   - A revision to the 4.5.1 chart (`4.5.1-rev.1`) was released to address the above issue. Use this revision for upgrades to 4.5.1. (ex: `helm upgrade --install --version 4.5.1-rev.1`) [#259](https://github.com/sourcegraph/deploy-sourcegraph-helm/pull/259)
 
 ## v4.4.1 ➔ v4.4.2
