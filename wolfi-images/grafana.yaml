@@ -1,0 +1,57 @@
+contents:
+  keyring:
+    - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    - https://storage.googleapis.com/package-repository/packages/melange.rsa.pub
+    - https://storage.googleapis.com/package-repository/chainguard/chainguard-enterprise.rsa.pub
+  repositories:
+    - https://packages.wolfi.dev/os
+    - '@sourcegraph https://storage.googleapis.com/package-repository/packages/main/'
+    - '@chainguard https://storage.googleapis.com/package-repository/chainguard/'
+  packages:
+    ## Base set of packages included in sourcegraph/alpine base image
+    - wolfi-baselayout
+    - ca-certificates-bundle
+    - tzdata
+    # - tini
+    # - mailcap
+    # Dev tools - may not be required in production
+    - busybox
+    # - wget
+    - apk-tools
+    # - 'bind-tools>=9.16.33-r0' # TODO: Not available in Wolfi repo
+
+    # From diffing with chainguard image
+    - glibc-locale-en
+
+    # Dependencies of sourcegraph-grafana
+    - krb5
+    - libssl3
+    - libtirpc
+    - ncurses
+    - ncurses-terminfo
+    - openssl
+
+
+    ## grafana packages
+    - grafana@chainguard
+    - grafana-dashboards@chainguard
+    # - grafana-homepage@sourcegraph # Dont' want this - use the Dockerfile for now
+
+accounts:
+  groups:
+    - groupname: grafana
+      gid: 65532
+  users:
+    - username: grafana
+      uid: 65532
+      gid: 65532
+
+# NOTE: This is ignored (see build output)
+# To force amd64, first run `docker pull --platform linux/arm64 cgr.dev/chainguard/apko`
+archs:
+ - amd64
+
+annotations:
+  org.opencontainers.image.url: https://sourcegraph.com/
+  org.opencontainers.image.source: https://github.com/sourcegraph/sourcegraph/
+  org.opencontainers.image.documentation: https://docs.sourcegraph.com/
