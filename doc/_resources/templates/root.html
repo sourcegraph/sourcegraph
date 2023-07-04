@@ -50,12 +50,30 @@
                 }
             </script>
 
-            <link rel="stylesheet" href="https://esm.sh/@markprompt/css@0.4.0?css" />
+            <link rel="stylesheet" href="https://esm.sh/@markprompt/css@0.5.1?css" />
 
+            <script>
+            </script>
             <script type="module">
-                import { markprompt } from 'https://esm.sh/@markprompt/web@0.7.0';
+                import { markprompt, openMarkprompt } from 'https://esm.sh/@markprompt/web@0.9.6';
 
-                const markpromptEl = document.querySelector('#markprompt');
+
+                function showMarkprompt() {
+                    openMarkprompt()
+                }
+                window.showMarkprompt = showMarkprompt;
+
+                const showInstantSearch = localStorage.getItem('markprompt-instant-search') !== null
+
+                const oldSearchForm = document.getElementById("search-form");
+                const oldMarkpromptButton = document.getElementById("markprompt-button");
+                const newMarkprompt = document.getElementById("markprompt");
+
+                oldSearchForm.style.display = showInstantSearch ? 'none' : 'block';
+                oldMarkpromptButton.style.display = showInstantSearch ? 'none' : 'block';
+                newMarkprompt.style.display = showInstantSearch ? 'block' : 'none';
+
+                const markpromptEl = newMarkprompt
 
                 const pathToHref = (path) => {
                     return path
@@ -99,45 +117,47 @@ Question: "\{\{PROMPT\}\}"
 Answer (including related code snippets if available):`
 
                 markprompt('dzvb1USv2SLXKiQMnH56ua3dW54mSChj',
-                markpromptEl, {
-                    prompt: {
-                        model: "gpt-4",
-                        promptTemplate,
-                        placeholder: "Search or ask a question…",
-                        cta: "Ask Docs AI"
-                    },
-                    search: {
-                        enabled: true,
-                        getResultHref: (path, sectionHeading) => {
-                            return getHref(path, sectionHeading);
-                        }
-                    },
-                    trigger: {
-                        label: 'Search or ask Docs AI',
-                        placeholder: 'Search or ask Docs AI',
-                        floating: false
-                    },
-                    showBranding: false,
-                    references: {
-                        transformReferenceId: (referenceId) => {
-                            const parts = referenceId.split("/")
-                            let text = parts.slice(-1)[0].replace(/\.[^.]+$/, '')
-                            if (text === "index") {
-                                if (parts.length === 1) {
-                                    text = "Home"
-                                } else {
-                                    text = parts.slice(-2)[0]
-                                }
-                            }
-                            text = text.replace(/[_-]+/gi, " ")
-                            text = text.charAt(0).toUpperCase() + text.slice(1);
-
-                            const href = pathToHref(referenceId);
-
-                            return { text, href }
+                    markpromptEl, {
+                        prompt: {
+                            model: "gpt-4",
+                            promptTemplate,
+                            placeholder: "Search or ask a question…",
+                            cta: "Ask Docs AI"
                         },
-                    },
-                });
+                        search: {
+                            enabled: showInstantSearch,
+                            getResultHref: (path, sectionHeading) => {
+                                return getHref(path, sectionHeading);
+                            }
+                        },
+                        trigger: {
+                            label: 'Search or ask Docs AI',
+                            placeholder: showInstantSearch ? 'Search or ask Docs AI' : "Ask AI",
+                            floating: false,
+                            customElement: !showInstantSearch,
+                        },
+                        showBranding: false,
+                        references: {
+                            transformReferenceId: (referenceId) => {
+                                const parts = referenceId.split("/")
+                                let text = parts.slice(-1)[0].replace(/\.[^.]+$/, '')
+                                if (text === "index") {
+                                    if (parts.length === 1) {
+                                        text = "Home"
+                                    } else {
+                                        text = parts.slice(-2)[0]
+                                    }
+                                }
+                                text = text.replace(/[_-]+/gi, " ")
+                                text = text.charAt(0).toUpperCase() + text.slice(1);
+
+                                const href = pathToHref(referenceId);
+
+                                return { text, href }
+                            },
+                        },
+                    }
+                );
             </script>
 
             <!-- Google Tag Manager (noscript) -->
@@ -153,6 +173,15 @@ Answer (including related code snippets if available):`
                         <img src="{{asset "logo-theme-dark.svg"}}" class="theme-dark" alt="Sourcegraph docs"/>
                     </a></h1>
                     <div class="markprompt-search-container">
+                        <form id="search-form" method="get" action="/search">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M21.172 24l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7z"/></svg>
+                            <input type="text" id="search" name="q" value="{{block "query" .}}{{end}}" placeholder="" spellcheck="false" aria-label="Query" />
+                            <input type="hidden" name="v" value="{{block "version" .}}{{end}}">
+                            <button id="search-button" type="submit" aria-label="Search" class="sr-only">Search</button>
+                        </form>
+                        <button id="markprompt-button" aria-label="Open prompt" onclick="showMarkprompt()">
+                            <svg id="markprompt-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        </button>
                         <div id="markprompt" />
                     </div>
                 </header>
