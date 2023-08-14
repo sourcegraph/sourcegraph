@@ -17,6 +17,7 @@ go_library(
         "//internal/codeintel/uploads",
         "//internal/database",
         "//internal/gitserver",
+        "//internal/gosyntect",
         "//internal/observation",
     ],
 )

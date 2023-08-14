@@ -11,13 +11,12 @@ import (
 	"github.com/keegancsmith/sqlf"
 	"github.com/lib/pq"
 	"github.com/sourcegraph/log"
+	"github.com/sourcegraph/scip/bindings/go/scip"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/sourcegraph/scip/bindings/go/scip"
-
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/shared/ranges"
-	"github.com/sourcegraph/sourcegraph/internal/codeintel/shared/trie"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/shared/symbols"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/database/batch"
@@ -105,54 +104,62 @@ func (s *store) NewSCIPWriter(ctx context.Context, uploadID int) (SCIPWriter, er
 		return nil, errors.New("WriteSCIPSymbols must be called in a transaction")
 	}
 
-	if err := s.db.Exec(ctx, sqlf.Sprintf(newSCIPWriterTemporarySymbolNamesTableQuery)); err != nil {
-		return nil, err
-	}
 	if err := s.db.Exec(ctx, sqlf.Sprintf(newSCIPWriterTemporarySymbolsTableQuery)); err != nil {
 		return nil, err
 	}
-
-	symbolNameInserter := batch.NewInserter(
-		ctx,
-		s.db.Handle(),
-		"t_codeintel_scip_symbol_names",
-		batch.MaxNumPostgresParameters,
-		"id",
-		"name_segment",
-		"prefix_id",
-	)
+	if err := s.db.Exec(ctx, sqlf.Sprintf(newSCIPWriterTemporarySymbolLookupTableQuery)); err != nil {
+		return nil, err
+	}
+	if err := s.db.Exec(ctx, sqlf.Sprintf(newSCIPWriterTemporarySymbolLookupLeavesTableQuery)); err != nil {
+		return nil, err
+	}
 
 	symbolInserter := batch.NewInserter(
 		ctx,
 		s.db.Handle(),
 		"t_codeintel_scip_symbols",
 		batch.MaxNumPostgresParameters,
-		"document_lookup_id",
 		"symbol_id",
+		"document_lookup_id",
 		"definition_ranges",
 		"reference_ranges",
 		"implementation_ranges",
 		"type_definition_ranges",
 	)
 
+	symbolLookupInserter := batch.NewInserter(
+		ctx,
+		s.db.Handle(),
+		"t_codeintel_scip_symbols_lookup",
+		batch.MaxNumPostgresParameters,
+		"segment_type",
+		"segment_quality",
+		"name",
+		"id",
+		"parent_id",
+	)
+
+	symbolLookupLeavesInserter := batch.NewInserter(
+		ctx,
+		s.db.Handle(),
+		"t_codeintel_scip_symbols_lookup_leaves",
+		batch.MaxNumPostgresParameters,
+		"symbol_id",
+		"descriptor_suffix_id",
+		"fuzzy_descriptor_suffix_id",
+	)
+
 	scipWriter := &scipWriter{
-		uploadID:           uploadID,
-		db:                 s.db,
-		symbolNameInserter: symbolNameInserter,
-		symbolInserter:     symbolInserter,
-		count:              0,
+		uploadID:                   uploadID,
+		db:                         s.db,
+		symbolInserter:             symbolInserter,
+		symbolLookupInserter:       symbolLookupInserter,
+		symbolLookupLeavesInserter: symbolLookupLeavesInserter,
+		count:                      0,
 	}
 
 	return scipWriter, nil
 }
-
-const newSCIPWriterTemporarySymbolNamesTableQuery = `
-CREATE TEMPORARY TABLE t_codeintel_scip_symbol_names (
-	id integer NOT NULL,
-	name_segment text NOT NULL,
-	prefix_id integer
-) ON COMMIT DROP
-`
 
 const newSCIPWriterTemporarySymbolsTableQuery = `
 CREATE TEMPORARY TABLE t_codeintel_scip_symbols (
@@ -165,15 +172,35 @@ CREATE TEMPORARY TABLE t_codeintel_scip_symbols (
 ) ON COMMIT DROP
 `
 
+const newSCIPWriterTemporarySymbolLookupTableQuery = `
+CREATE TEMPORARY TABLE t_codeintel_scip_symbols_lookup(
+	id integer NOT NULL,
+	name text NOT NULL,
+	segment_type SymbolNameSegmentType NOT NULL,
+	segment_quality SymbolNameSegmentQuality,
+	parent_id integer
+) ON COMMIT DROP
+`
+
+const newSCIPWriterTemporarySymbolLookupLeavesTableQuery = `
+CREATE TEMPORARY TABLE t_codeintel_scip_symbols_lookup_leaves(
+	symbol_id integer NOT NULL,
+	descriptor_suffix_id integer NOT NULL,
+	fuzzy_descriptor_suffix_id integer NOT NULL
+) ON COMMIT DROP
+`
+
 type scipWriter struct {
-	uploadID           int
-	nextID             int
-	db                 *basestore.Store
-	symbolNameInserter *batch.Inserter
-	symbolInserter     *batch.Inserter
-	count              uint32
-	batchPayloadSum    int
-	batch              []bufferedDocument
+	uploadID                   int
+	nextSymbolLookupID         int
+	nextSymbolID               int
+	db                         *basestore.Store
+	symbolInserter             *batch.Inserter
+	symbolLookupInserter       *batch.Inserter
+	symbolLookupLeavesInserter *batch.Inserter
+	count                      uint32
+	batchPayloadSum            int
+	batch                      []bufferedDocument
 }
 
 type bufferedDocument struct {
@@ -319,31 +346,19 @@ func (s *scipWriter) flush(ctx context.Context) error {
 	}
 	sort.Strings(symbolNames)
 
-	var symbolNameTrie trie.Trie
-	symbolNameTrie, s.nextID = trie.NewTrie(symbolNames, s.nextID)
+	// Convert symbol names into a tree structure we'll insert into the database
+	// All identifiers here are created ahead of the insertion so we do not need
+	// to do multiple round-trips to get new insertion identifiers for pending
+	// data - everything is known up-front.
 
-	symbolNameByIDs := map[int]string{}
-	idsBySymbolName := map[string]int{}
+	id := func() int { id := s.nextSymbolLookupID; s.nextSymbolLookupID++; return id }
+	cache, traverser := constructSymbolLookupTable(symbolNames, id)
 
-	if err := symbolNameTrie.Traverse(func(id int, parentID *int, prefix string) error {
-		name := prefix
-		if parentID != nil {
-			parentPrefix, ok := symbolNameByIDs[*parentID]
-			if !ok {
-				return errors.Newf("malformed trie - expected prefix with id=%d to exist", *parentID)
-			}
-
-			name = parentPrefix + prefix
-		}
-		symbolNameByIDs[id] = name
-		idsBySymbolName[name] = id
-
-		if err := s.symbolNameInserter.Insert(ctx, id, prefix, parentID); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	// Bulk insert the content of the tree / descriptor-no-suffix map
+	visit := func(segmentType string, segmentQuality *string, name string, id int, parentID *int) error {
+		return s.symbolLookupInserter.Insert(ctx, segmentType, segmentQuality, name, id, parentID)
+	}
+	if err := traverser(visit); err != nil {
 		return err
 	}
 
@@ -366,15 +381,22 @@ func (s *scipWriter) flush(ctx context.Context) error {
 				return err
 			}
 
-			symbolID, ok := idsBySymbolName[index.SymbolName]
-			if !ok {
-				return errors.Newf("malformed trie - expected %q to be a member", index.SymbolName)
+			s.nextSymbolID++
+			ids := cache[index.SymbolName]
+
+			if err := s.symbolLookupLeavesInserter.Insert(
+				ctx,
+				s.nextSymbolID,
+				ids.descriptorSuffixID,
+				ids.fuzzyDescriptorSuffixID,
+			); err != nil {
+				return err
 			}
 
 			if err := s.symbolInserter.Insert(
 				ctx,
+				s.nextSymbolID,
 				documentLookupIDs[i],
-				symbolID,
 				definitionRanges,
 				referenceRanges,
 				implementationRanges,
@@ -405,7 +427,10 @@ func (s *scipWriter) Flush(ctx context.Context) (uint32, error) {
 	}
 
 	// Flush all data into temp tables
-	if err := s.symbolNameInserter.Flush(ctx); err != nil {
+	if err := s.symbolLookupInserter.Flush(ctx); err != nil {
+		return 0, err
+	}
+	if err := s.symbolLookupLeavesInserter.Flush(ctx); err != nil {
 		return 0, err
 	}
 	if err := s.symbolInserter.Flush(ctx); err != nil {
@@ -413,29 +438,51 @@ func (s *scipWriter) Flush(ctx context.Context) (uint32, error) {
 	}
 
 	// Move all data from temp tables into target tables
-	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolNamesQuery, s.uploadID)); err != nil {
+	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolLookupQuery, s.uploadID)); err != nil {
 		return 0, err
 	}
-	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolsQuery, s.uploadID, 1)); err != nil {
+	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolLookupLeavesQuery, s.uploadID)); err != nil {
+		return 0, err
+	}
+	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolsQuery, s.uploadID, 2)); err != nil {
 		return 0, err
 	}
 
 	return s.count, nil
 }
 
-const scipWriterFlushSymbolNamesQuery = `
-INSERT INTO codeintel_scip_symbol_names (
+const scipWriterFlushSymbolLookupQuery = `
+INSERT INTO codeintel_scip_symbols_lookup (
 	upload_id,
 	id,
-	name_segment,
-	prefix_id
+	name,
+	segment_type,
+	segment_quality,
+	parent_id
 )
 SELECT
 	%s,
 	source.id,
-	source.name_segment,
-	source.prefix_id
-FROM t_codeintel_scip_symbol_names source
+	source.name,
+	source.segment_type,
+	source.segment_quality,
+	source.parent_id
+FROM t_codeintel_scip_symbols_lookup source
+`
+
+const scipWriterFlushSymbolLookupLeavesQuery = `
+INSERT INTO codeintel_scip_symbols_lookup_leaves (
+	upload_id,
+	symbol_id,
+	descriptor_suffix_id,
+	fuzzy_descriptor_suffix_id
+)
+SELECT
+	%s,
+	source.symbol_id,
+	source.descriptor_suffix_id,
+	source.fuzzy_descriptor_suffix_id
+FROM t_codeintel_scip_symbols_lookup_leaves source
 `
 
 const scipWriterFlushSymbolsQuery = `
@@ -472,3 +519,114 @@ var scanIDsByHash = basestore.NewMapScanner(func(s dbutil.Scanner) (hash string,
 	err := s.Scan(&hash, &id)
 	return hash, id, err
 })
+
+// NOTE(scip-migration): This code also exists in the SCIP symbol names out-of-band migration.
+// Changes (esp bug fixes) here that are backwards compatible should also be made in that copy
+// as long as the migration has not been deprecated. Any backwards-incompatible changes should
+// deprecate that migration and start a new version.
+//
+// See the migrator in .../codeintel/scip/symbols_migrator.go for more detail.
+
+type explodedIDs struct {
+	descriptorSuffixID      int
+	fuzzyDescriptorSuffixID int
+}
+
+type visitFunc func(segmentType string, segmentQuality *string, name string, id int, parentID *int) error
+
+func constructSymbolLookupTable(symbolNames []string, id func() int) (map[string]explodedIDs, func(visit visitFunc) error) {
+	cache := map[string]explodedIDs{}     // Tracks symbol name -> identifiers in the scheme tree
+	schemeTree := map[string]SchemeNode{} // Tracks scheme -> manager -> name -> version -> descriptor namespace -> descriptor suffix
+	qualityMap := map[int]string{}        // Tracks descriptor node ids -> quality (PRECISE, FUZZY, BOTH)
+
+	// Create helpers to create new tree nodes with (upload-)unique identifiers
+	createSchemeNode := func() SchemeNode { return SchemeNode(newNodeWithID[PackageManagerNode](id())) }
+	createPackageManagerNode := func() PackageManagerNode { return PackageManagerNode(newNodeWithID[PackageNameNode](id())) }
+	createPackageNameNode := func() PackageNameNode { return PackageNameNode(newNodeWithID[PackageVersionNode](id())) }
+	createPackageVersionNode := func() PackageVersionNode { return PackageVersionNode(newNodeWithID[NamespaceNode](id())) }
+	createNamespaceNode := func() NamespaceNode { return NamespaceNode(newNodeWithID[DescriptorNode](id())) }
+	createDescriptorWithQuality := func(quality string) func() DescriptorNode {
+		return func() DescriptorNode {
+			id := id()
+			qualityMap[id] = quality
+			return DescriptorNode(newNodeWithID[descriptor](id))
+		}
+	}
+	createPreciseDescriptor := createDescriptorWithQuality("PRECISE")
+	createFuzzyDescriptor := createDescriptorWithQuality("FUZZY")
+	createUnionDescriptor := createDescriptorWithQuality("BOTH")
+
+	for _, symbolName := range symbolNames {
+		symbol, err := symbols.NewExplodedSymbol(symbolName)
+		if err != nil {
+			return nil, nil
+		}
+
+		// Assign the parts of the exploded symbol into the scheme tree. If a prefix of the exploded symbol
+		// is already in the tree then existing nodes will be re-used. Laying out the exploded in a tree
+		// structure will allow us to trace parentage (required for fast lookups) when we insert these into
+		// the database.
+
+		schemeNode := getOrCreate(schemeTree, symbol.Scheme, createSchemeNode)                                       // depth 0
+		packageManagerNode := getOrCreate(schemeNode.children, symbol.PackageManager, createPackageManagerNode)      // depth 1
+		packageNameNode := getOrCreate(packageManagerNode.children, symbol.PackageName, createPackageNameNode)       // depth 2
+		packageVersionNode := getOrCreate(packageNameNode.children, symbol.PackageVersion, createPackageVersionNode) // depth 3
+		namespace := getOrCreate(packageVersionNode.children, symbol.DescriptorNamespace, createNamespaceNode)       // depth 4
+		descriptorSuffixID, fuzzyDescriptorSuffixID := getOrCreateLeafIDs(                                           // depth 5
+			namespace,
+			symbol.DescriptorSuffix, symbol.FuzzyDescriptorSuffix,
+			createPreciseDescriptor, createFuzzyDescriptor, createUnionDescriptor,
+		)
+
+		cache[symbolName] = explodedIDs{
+			descriptorSuffixID:      descriptorSuffixID,
+			fuzzyDescriptorSuffixID: fuzzyDescriptorSuffixID,
+		}
+	}
+
+	segmentTypeByDepth := []string{
+		"SCHEME",               // depth 0
+		"PACKAGE_MANAGER",      // depth 1
+		"PACKAGE_NAME",         // depth 2
+		"PACKAGE_VERSION",      // depth 3
+		"DESCRIPTOR_NAMESPACE", // depth 4
+		"DESCRIPTOR_SUFFIX",    // depth 5
+		/*                   */ // depth PANIC
+	}
+	segmentQualityForID := func(id int) *string {
+		if quality, ok := qualityMap[id]; ok {
+			return &quality
+		}
+
+		return nil
+	}
+
+	traverser := func(visit visitFunc) error {
+		if err := traverse(schemeTree, func(name string, id, depth int, parentID *int) error {
+			return visit(segmentTypeByDepth[depth], segmentQualityForID(id), name, id, parentID)
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return cache, traverser
+}
+
+func getOrCreateLeafIDs(
+	namespace treeNode[treeNode[descriptor]],
+	descriptorSuffix, fuzzyDescriptorSuffix string,
+	createPreciseDescriptor, createFuzzyDescriptor, createUnionDescriptor func() treeNode[descriptor],
+) (int, int) {
+	if descriptorSuffix == fuzzyDescriptorSuffix {
+		// Common case: no difference - create a single leaf node
+		descriptor := getOrCreate(namespace.children, descriptorSuffix, createUnionDescriptor)
+		return descriptor.id, descriptor.id
+	}
+
+	// General case: unique fuzzy descriptor - create two leaf nodes
+	descriptor := getOrCreate(namespace.children, descriptorSuffix, createPreciseDescriptor)
+	fuzzyDescriptor := getOrCreate(namespace.children, fuzzyDescriptorSuffix, createFuzzyDescriptor)
+	return descriptor.id, fuzzyDescriptor.id
+}

@@ -47,7 +47,10 @@ go_test(
     ],
     data = glob(["testdata/**"]),
     embed = [":lsif"],
-    tags = ["requires-network"],
+    tags = [
+        # Test requires localhost for database
+        "requires-network",
+    ],
     deps = [
         "//internal/codeintel/shared",
         "//internal/database",

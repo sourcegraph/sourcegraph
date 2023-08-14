@@ -207,6 +207,47 @@ A mapping from SCIP [Symbol names](https://sourcegraph.com/search?q=context:%40s
 
 **upload_id**: The identifier of the upload that provided this SCIP index.
 
+# Table "public.codeintel_scip_symbols_lookup"
+```
+     Column      |           Type           | Collation | Nullable | Default 
+-----------------+--------------------------+-----------+----------+---------
+ upload_id       | integer                  |           | not null | 
+ segment_type    | symbolnamesegmenttype    |           | not null | 
+ segment_quality | symbolnamesegmentquality |           |          | 
+ name            | text                     |           | not null | 
+ id              | integer                  |           | not null | 
+ parent_id       | integer                  |           |          | 
+Indexes:
+    "codeintel_scip_symbols_lookup_id" UNIQUE, btree (upload_id, id)
+    "codeintel_scip_symbols_lookup_reversed_descriptor_suffix_name" btree (upload_id, reverse(name) text_pattern_ops) WHERE segment_type = 'DESCRIPTOR_SUFFIX'::symbolnamesegmenttype
+
+```
+
+# Table "public.codeintel_scip_symbols_lookup_leaves"
+```
+           Column           |  Type   | Collation | Nullable | Default 
+----------------------------+---------+-----------+----------+---------
+ upload_id                  | integer |           | not null | 
+ symbol_id                  | integer |           | not null | 
+ descriptor_suffix_id       | integer |           | not null | 
+ fuzzy_descriptor_suffix_id | integer |           |          | 
+Indexes:
+    "codeintel_scip_symbols_lookup_leaves_descriptor_suffix_id" btree (upload_id, descriptor_suffix_id)
+    "codeintel_scip_symbols_lookup_leaves_fuzzy_descriptor_suffix_id" btree (upload_id, fuzzy_descriptor_suffix_id) WHERE fuzzy_descriptor_suffix_id IS NOT NULL
+
+```
+
+# Table "public.codeintel_scip_symbols_migration_progress"
+```
+  Column   |  Type   | Collation | Nullable | Default 
+-----------+---------+-----------+----------+---------
+ upload_id | integer |           | not null | 
+ symbol_id | integer |           | not null | 
+Indexes:
+    "codeintel_scip_symbols_migration_progress_pkey" PRIMARY KEY, btree (upload_id)
+
+```
+
 # Table "public.codeintel_scip_symbols_schema_versions"
 ```
        Column       |  Type   | Collation | Nullable | Default 
@@ -293,3 +334,18 @@ Indexes:
     "rockskip_symbols_repo_id_path_name" btree (repo_id, path, name)
 
 ```
+
+# Type symbolnamesegmentquality
+
+- FUZZY
+- PRECISE
+- BOTH
+
+# Type symbolnamesegmenttype
+
+- SCHEME
+- PACKAGE_MANAGER
+- PACKAGE_NAME
+- PACKAGE_VERSION
+- DESCRIPTOR_NAMESPACE
+- DESCRIPTOR_SUFFIX

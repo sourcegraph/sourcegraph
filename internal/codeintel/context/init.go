@@ -1,20 +1,27 @@
 package context
 
 import (
-	"github.com/sourcegraph/sourcegraph/internal/codeintel/context/internal/store"
+	codeintelshared "github.com/sourcegraph/sourcegraph/internal/codeintel/shared"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/gosyntect"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
 func NewService(
 	observationCtx *observation.Context,
-	db database.DB,
+	codeIntelDB codeintelshared.CodeIntelDB,
+	repostore database.RepoStore,
+	codenavSvc CodeNavService,
+	syntectClient *gosyntect.Client,
+	gitserverClient gitserver.Client,
 ) *Service {
-	store := store.New(scopedContext("store", observationCtx), db)
-
 	return newService(
 		observationCtx,
-		store,
+		repostore,
+		codenavSvc,
+		syntectClient,
+		gitserverClient,
 	)
 }
 

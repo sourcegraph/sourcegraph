@@ -1,11 +1,7 @@
 package codenav
 
 import (
-	"context"
 	"fmt"
-	"time"
-
-	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/metrics"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -58,30 +54,4 @@ func newOperations(observationCtx *observation.Context) *operations {
 		snapshotForDocument:    op("SnapshotForDocument"),
 		visibleUploadsForPath:  op("VisibleUploadsForPath"),
 	}
-}
-
-var serviceObserverThreshold = time.Second
-
-func observeResolver(ctx context.Context, err *error, operation *observation.Operation, threshold time.Duration, observationArgs observation.Args) (context.Context, observation.TraceLogger, func()) {
-	start := time.Now()
-	ctx, trace, endObservation := operation.With(ctx, err, observationArgs)
-
-	return ctx, trace, func() {
-		duration := time.Since(start)
-		endObservation(1, observation.Args{})
-
-		if duration >= threshold {
-			// use trace logger which includes all relevant fields
-			lowSlowRequest(trace, duration, err)
-		}
-	}
-}
-
-func lowSlowRequest(logger log.Logger, duration time.Duration, err *error) {
-	fields := []log.Field{log.Duration("duration", duration)}
-	if err != nil && *err != nil {
-		fields = append(fields, log.Error(*err))
-	}
-
-	logger.Warn("Slow codeintel request", fields...)
 }

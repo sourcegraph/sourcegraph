@@ -1843,6 +1843,7 @@ ts_project(
         "//:node_modules/use-resize-observer",
         "//:node_modules/utility-types",
         "//:node_modules/uuid",
+        "//:node_modules/vscode-uri",
         "//:node_modules/yaml-ast-parser",
         "//:node_modules/zustand",
         "//client/web/src/rbac:constants",

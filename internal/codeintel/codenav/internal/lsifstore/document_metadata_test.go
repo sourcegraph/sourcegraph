@@ -20,9 +20,9 @@ func TestDatabaseExists(t *testing.T) {
 		expected bool
 	}{
 		// SCIP
-		{testSCIPUploadID, "template/src/lsif/api.ts", true},
-		{testSCIPUploadID, "template/src/lsif/util.ts", true},
-		{testSCIPUploadID, "missing.ts", false},
+		{testSCIPUploadID1, "template/src/lsif/api.ts", true},
+		{testSCIPUploadID1, "template/src/lsif/util.ts", true},
+		{testSCIPUploadID1, "missing.ts", false},
 	}
 
 	for _, testCase := range testCases {
@@ -43,7 +43,7 @@ func TestStencil(t *testing.T) {
 	}{
 		{
 			name:     "scip",
-			uploadID: testSCIPUploadID,
+			uploadID: testSCIPUploadID1,
 			path:     "template/src/telemetry.ts",
 			expectedRanges: []string{
 				"0:0-0:0",
@@ -139,7 +139,7 @@ func TestGetRanges(t *testing.T) {
 	// `export function nonEmpty<T>(value: T | T[] | null | undefined): value is T | T[] {`
 	//                  ^^^^^^^^ ^  ^^^^^  ^   ^                        ^^^^^    ^   ^
 
-	ranges, err := store.GetRanges(context.Background(), testSCIPUploadID, path, 13, 16)
+	ranges, err := store.GetRanges(context.Background(), testSCIPUploadID1, path, 13, 16)
 	if err != nil {
 		t.Fatalf("unexpected error querying ranges: %s", err)
 	}
@@ -156,22 +156,22 @@ func TestGetRanges(t *testing.T) {
 	)
 
 	var (
-		nonEmptyDefinitionLocations = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 16, 15, 24)}}
-		tDefinitionLocations        = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 25, 15, 26)}}
-		valueDefinitionLocations    = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 28, 15, 33)}}
+		nonEmptyDefinitionLocations = []shared.Location{{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 16, 15, 24)}}
+		tDefinitionLocations        = []shared.Location{{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 25, 15, 26)}}
+		valueDefinitionLocations    = []shared.Location{{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 28, 15, 33)}}
 
 		nonEmptyReferenceLocations = []shared.Location{}
 		tReferenceLocations        = []shared.Location{
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 35, 15, 36)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 39, 15, 40)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 73, 15, 74)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 77, 15, 78)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 35, 15, 36)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 39, 15, 40)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 73, 15, 74)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 77, 15, 78)},
 		}
 		valueReferenceLocations = []shared.Location{
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 64, 15, 69)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 13, 16, 18)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 38, 16, 43)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 48, 16, 53)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(15, 64, 15, 69)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(16, 13, 16, 18)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(16, 38, 16, 43)},
+			{DumpID: testSCIPUploadID1, Path: path, Range: newRange(16, 48, 16, 53)},
 		}
 
 		nonEmptyImplementationLocations = []shared.Location(nil)

@@ -25,7 +25,7 @@ func newLocationConnectionResolver(locations []shared.UploadLocation, cursor *st
 func resolveLocations(ctx context.Context, locationResolver *gitresolvers.CachedLocationResolver, locations []shared.UploadLocation) ([]resolverstubs.LocationResolver, error) {
 	resolvedLocations := make([]resolverstubs.LocationResolver, 0, len(locations))
 	for i := range locations {
-		resolver, err := resolveLocation(ctx, locationResolver, locations[i])
+		resolver, err := ResolveLocation(ctx, locationResolver, locations[i])
 		if err != nil {
 			return nil, err
 		}
@@ -39,9 +39,9 @@ func resolveLocations(ctx context.Context, locationResolver *gitresolvers.Cached
 	return resolvedLocations, nil
 }
 
-// resolveLocation creates a LocationResolver for the given adjusted location. This function may return a
+// ResolveLocation creates a LocationResolver for the given adjusted location. This function may return a
 // nil resolver if the location's commit is not known by gitserver.
-func resolveLocation(ctx context.Context, locationResolver *gitresolvers.CachedLocationResolver, location shared.UploadLocation) (resolverstubs.LocationResolver, error) {
+func ResolveLocation(ctx context.Context, locationResolver *gitresolvers.CachedLocationResolver, location shared.UploadLocation) (resolverstubs.LocationResolver, error) {
 	treeResolver, err := locationResolver.Path(ctx, api.RepoID(location.Dump.RepositoryID), location.TargetCommit, location.Path, false)
 	if err != nil || treeResolver == nil {
 		return nil, err

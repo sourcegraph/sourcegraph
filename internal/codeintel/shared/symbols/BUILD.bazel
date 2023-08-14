@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "symbols",
+    srcs = ["symbols.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/shared/symbols",
+    visibility = [
+        "//enterprise:__subpackages__",
+        "//internal/codeintel/codenav:__pkg__",
+        "//internal/codeintel/codenav/internal/lsifstore:__pkg__",
+        "//internal/codeintel/context:__pkg__",
+        "//internal/codeintel/uploads/internal/lsifstore:__pkg__",
+        "//internal/oobmigration/migrations/codeintel/scip:__pkg__",
+    ],
+    deps = ["@com_github_sourcegraph_scip//bindings/go/scip"],
+)

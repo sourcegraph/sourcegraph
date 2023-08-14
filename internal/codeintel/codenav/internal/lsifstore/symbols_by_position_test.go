@@ -20,7 +20,7 @@ func TestDatabaseMonikersByPosition(t *testing.T) {
 	}{
 		{
 			name:     "scip",
-			uploadID: testSCIPUploadID,
+			uploadID: testSCIPUploadID1,
 			// `    const enabled = sourcegraph.configuration.get().get('codeIntel.lsif') ?? true`
 			//                                  ^^^^^^^^^^^^^
 			path: "template/src/lsif/providers.ts",
@@ -63,7 +63,7 @@ func TestGetPackageInformation(t *testing.T) {
 	}{
 		{
 			name:                 "scip",
-			uploadID:             testSCIPUploadID,
+			uploadID:             testSCIPUploadID1,
 			path:                 "protocol/protocol.go",
 			packageInformationID: "scip:dGVzdC1tYW5hZ2Vy:dGVzdC1uYW1l:dGVzdC12ZXJzaW9u",
 			expectedData: precise.PackageInformationData{

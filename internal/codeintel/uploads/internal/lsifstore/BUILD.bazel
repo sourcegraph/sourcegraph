@@ -6,6 +6,7 @@ go_library(
     srcs = [
         "cleanup.go",
         "insert.go",
+        "insert_util.go",
         "observability.go",
         "scan_documents.go",
         "store.go",
@@ -15,7 +16,7 @@ go_library(
     deps = [
         "//internal/codeintel/shared",
         "//internal/codeintel/shared/ranges",
-        "//internal/codeintel/shared/trie",
+        "//internal/codeintel/shared/symbols",
         "//internal/codeintel/uploads/shared",
         "//internal/database/basestore",
         "//internal/database/batch",

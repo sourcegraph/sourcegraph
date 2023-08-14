@@ -75,7 +75,7 @@ func (r *diagnosticResolver) Message() (*string, error) {
 }
 
 func (r *diagnosticResolver) Location(ctx context.Context) (resolverstubs.LocationResolver, error) {
-	return resolveLocation(
+	return ResolveLocation(
 		ctx,
 		r.locationResolver,
 		shared.UploadLocation{

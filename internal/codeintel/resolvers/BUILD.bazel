@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "autoindexing.go",
         "codenav.go",
+        "context.go",
         "git.go",
         "policies.go",
         "ranking.go",

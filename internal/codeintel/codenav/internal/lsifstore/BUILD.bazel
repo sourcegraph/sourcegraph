@@ -20,6 +20,7 @@ go_library(
         "//internal/codeintel/codenav/shared",
         "//internal/codeintel/shared",
         "//internal/codeintel/shared/ranges",
+        "//internal/codeintel/shared/symbols",
         "//internal/codeintel/uploads/shared",
         "//internal/database/basestore",
         "//internal/database/dbutil",
@@ -41,6 +42,7 @@ go_test(
     srcs = [
         "document_metadata_test.go",
         "locations_by_position_test.go",
+        "lsifstore_documents_test.go",
         "metadata_by_position_test.go",
         "symbols_by_position_test.go",
     ],
@@ -53,6 +55,7 @@ go_test(
     deps = [
         "//internal/codeintel/codenav/shared",
         "//internal/codeintel/shared",
+        "//internal/codeintel/shared/symbols",
         "//internal/database/dbtest",
         "//internal/observation",
         "//lib/codeintel/precise",

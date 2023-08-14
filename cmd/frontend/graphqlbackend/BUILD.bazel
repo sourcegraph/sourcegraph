@@ -16,6 +16,7 @@ js_library(
     ]),
     visibility = [
         "//client/backstage-backend/node_modules/@sourcegraph/shared/dev:__pkg__",
+        "//client/backstage-common/node_modules/@sourcegraph/shared/dev:__pkg__",
         "//client/shared/dev:__pkg__",
     ],
 )
@@ -218,6 +219,7 @@ go_library(
         "rbac.graphql",
         "schema.graphql",
         "search_contexts.graphql",
+        "codeintel.context.graphql",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend",
     visibility = ["//:__subpackages__"],

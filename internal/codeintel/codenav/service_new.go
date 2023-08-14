@@ -127,7 +127,7 @@ func (s *Service) gatherLocations(
 	includeReferencingIndexes bool,
 	extractor LocationExtractor,
 ) (allLocations []shared.UploadLocation, _ Cursor, err error) {
-	ctx, trace, endObservation := observeResolver(ctx, &err, operation, serviceObserverThreshold, observation.Args{Attrs: []attribute.KeyValue{
+	ctx, trace, endObservation := operation.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("repositoryID", args.RepositoryID),
 		attribute.String("commit", args.Commit),
 		attribute.String("path", args.Path),
@@ -136,7 +136,7 @@ func (s *Service) gatherLocations(
 		attribute.Int("line", args.Line),
 		attribute.Int("character", args.Character),
 	}})
-	defer endObservation()
+	defer endObservation(1, observation.Args{})
 
 	if cursor.Phase == "" {
 		cursor.Phase = "local"
@@ -221,13 +221,13 @@ func (s *Service) gatherLocationsBySymbolNames(
 	includeReferencingIndexes bool,
 	symbolNames []string,
 ) (allLocations []shared.UploadLocation, _ Cursor, err error) {
-	ctx, trace, endObservation := observeResolver(ctx, &err, operation, serviceObserverThreshold, observation.Args{Attrs: []attribute.KeyValue{
+	ctx, trace, endObservation := operation.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("repositoryID", args.RepositoryID),
 		attribute.String("commit", args.Commit),
 		attribute.Int("numUploads", len(requestState.GetCacheUploads())),
 		attribute.String("uploads", uploadIDsToString(requestState.GetCacheUploads())),
 	}})
-	defer endObservation()
+	defer endObservation(1, observation.Args{})
 
 	if cursor.Phase == "" {
 		cursor.Phase = "remote"

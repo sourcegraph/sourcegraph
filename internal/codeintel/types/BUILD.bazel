@@ -2,7 +2,11 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "types",
-    srcs = ["ranking.go"],
+    srcs = [
+        "context.go",
+        "ranking.go",
+    ],
     importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/types",
     visibility = ["//:__subpackages__"],
+    deps = ["//internal/codeintel/codenav/shared"],
 )

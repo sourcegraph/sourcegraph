@@ -171,8 +171,9 @@ func (s *store) scanSingleMinimalQualifiedMonikerLocationsObject(rows *sql.Rows)
 	var uri string
 	var scipPayload []byte
 	var record qualifiedMonikerLocations
+	var symbolName string
 
-	if err := rows.Scan(&record.DumpID, &scipPayload, &uri); err != nil {
+	if err := rows.Scan(&record.DumpID, &scipPayload, &uri, &symbolName); err != nil {
 		return qualifiedMonikerLocations{}, err
 	}
 
@@ -184,6 +185,7 @@ func (s *store) scanSingleMinimalQualifiedMonikerLocationsObject(rows *sql.Rows)
 	locations := make([]precise.LocationData, 0, len(ranges))
 	for _, r := range ranges {
 		locations = append(locations, precise.LocationData{
+			SymbolName:     symbolName,
 			URI:            uri,
 			StartLine:      int(r.Start.Line),
 			StartCharacter: int(r.Start.Character),

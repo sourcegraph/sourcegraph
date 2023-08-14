@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/gosyntect"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
@@ -36,7 +37,9 @@ type ServiceDependencies struct {
 
 func NewServices(deps ServiceDependencies) (Services, error) {
 	db, codeIntelDB := deps.DB, deps.CodeIntelDB
+	repoDB := deps.DB.Repos()
 	gitserverClient := gitserver.NewClient(db)
+	syntectClient := gosyntect.GetSyntectClient()
 
 	uploadsSvc := uploads.NewService(deps.ObservationCtx, db, codeIntelDB, gitserverClient)
 	dependenciesSvc := dependencies.NewService(deps.ObservationCtx, db)
@@ -45,7 +48,7 @@ func NewServices(deps ServiceDependencies) (Services, error) {
 	codenavSvc := codenav.NewService(deps.ObservationCtx, db, codeIntelDB, uploadsSvc, gitserverClient)
 	rankingSvc := ranking.NewService(deps.ObservationCtx, db, codeIntelDB)
 	sentinelService := sentinel.NewService(deps.ObservationCtx, db)
-	contextService := context.NewService(deps.ObservationCtx, db)
+	contextService := context.NewService(deps.ObservationCtx, codeIntelDB, repoDB, codenavSvc, syntectClient, gitserverClient)
 
 	return Services{
 		AutoIndexingService: autoIndexingSvc,

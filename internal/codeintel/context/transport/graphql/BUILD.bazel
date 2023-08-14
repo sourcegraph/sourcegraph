@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "graphql",
+    srcs = [
+        "root_resolver.go",
+        "types.go",
+        "validation.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/context/transport/graphql",
+    visibility = ["//enterprise:__subpackages__"],
+    deps = [
+        "//internal/codeintel/codenav/transport/graphql",
+        "//internal/codeintel/resolvers",
+        "//internal/codeintel/shared/resolvers/gitresolvers",
+        "//internal/codeintel/types",
+        "//internal/observation",
+        "//lib/errors",
+    ],
+)

@@ -14,6 +14,7 @@ type RootResolver interface {
 	PoliciesServiceResolver
 	SentinelServiceResolver
 	UploadsServiceResolver
+	ContextServiceResolver
 	RankingServiceResolver
 }
 
@@ -23,6 +24,7 @@ type Resolver struct {
 	policiesRootResolver     PoliciesServiceResolver
 	uploadsRootResolver      UploadsServiceResolver
 	sentinelRootResolver     SentinelServiceResolver
+	contextRootResolver      ContextServiceResolver
 	rankingServiceResolver   RankingServiceResolver
 }
 
@@ -32,6 +34,7 @@ func NewCodeIntelResolver(
 	policiesRootResolver PoliciesServiceResolver,
 	uploadsRootResolver UploadsServiceResolver,
 	sentinelRootResolver SentinelServiceResolver,
+	contextRootResolver ContextServiceResolver,
 	rankingServiceResolver RankingServiceResolver,
 ) *Resolver {
 	return &Resolver{
@@ -40,6 +43,7 @@ func NewCodeIntelResolver(
 		policiesRootResolver:     policiesRootResolver,
 		uploadsRootResolver:      uploadsRootResolver,
 		sentinelRootResolver:     sentinelRootResolver,
+		contextRootResolver:      contextRootResolver,
 		rankingServiceResolver:   rankingServiceResolver,
 	}
 }
@@ -207,6 +211,10 @@ func (r *Resolver) UpdateCodeIntelligenceInferenceScript(ctx context.Context, ar
 
 func (r *Resolver) PreviewGitObjectFilter(ctx context.Context, id graphql.ID, args *PreviewGitObjectFilterArgs) (_ GitObjectFilterPreviewResolver, err error) {
 	return r.policiesRootResolver.PreviewGitObjectFilter(ctx, id, args)
+}
+
+func (r *Resolver) GetPreciseContext(ctx context.Context, input *GetPreciseContextInput) (PreciseContextOutputResolver, error) {
+	return r.contextRootResolver.GetPreciseContext(ctx, input)
 }
 
 func (r *Resolver) RankingSummary(ctx context.Context) (_ GlobalRankingSummaryResolver, err error) {

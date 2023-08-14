@@ -3,6 +3,8 @@ package precise
 import (
 	"context"
 	"sort"
+
+	"github.com/sourcegraph/scip/bindings/go/scip"
 )
 
 // FindRanges filters the given ranges and returns those that contain the position constructed
@@ -272,4 +274,36 @@ func GroupedBundleDataChansToMaps(chans *GroupedBundleDataChans) *GroupedBundleD
 		Packages:          chans.Packages,
 		PackageReferences: chans.PackageReferences,
 	}
+}
+
+// CompareRange compares the given range to the given line and character. It returns 0 if the
+// range contains the line and character, 1 if the range starts after the line and character,
+// and -1 if the range ends before the line and character.
+func CompareRange(r scip.Range, line, character int) int {
+	if line < int(r.Start.Line) {
+		return 1
+	}
+
+	if line > int(r.End.Line) {
+		return -1
+	}
+
+	if line == int(r.Start.Line) && character < int(r.Start.Character) {
+		return 1
+	}
+
+	if line == int(r.End.Line) && character >= int(r.End.Character) {
+		return -1
+	}
+
+	return 0
+}
+
+func IsOccurrenceWithinRange(rng *scip.Range, occurrence *scip.Occurrence) bool {
+	if rng == nil || occurrence == nil {
+		return false
+	}
+	occRange := scip.NewRange(occurrence.Range)
+
+	return CompareRange(*rng, int(occRange.Start.Line), int(occRange.Start.Character)) == 0
 }

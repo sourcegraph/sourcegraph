@@ -1,0 +1,116 @@
+extend type Query {
+    """
+    EXPERIMENTAL: Returns the most relevant SCIP symbol information based on a list and the current state of the editor.
+    """
+    getPreciseContext(input: PreciseContextInput!): PreciseContextOutput!
+}
+
+"""
+The input required to fetch the most relevant SCIP symbols.
+"""
+input PreciseContextInput {
+    """
+    The repository name.
+    """
+    repositoryName: String!
+    """
+    The closest ancestor commit ON REMOTE
+    """
+    closestRemoteCommitSHA: String!
+    """
+    The name of the active file.
+    """
+    activeFile: String!
+    """
+    The content of the active file.
+    """
+    activeFileContent: String!
+    """
+    The selected content of the active file.
+    """
+    activeFileSelectionRange: ActiveFileSelectionRange
+}
+
+"""
+The input required to denote a selection within an active file.
+"""
+input ActiveFileSelectionRange {
+    """
+    The selection start line
+    """
+    startLine: Int!
+    """
+    The selection start character
+    """
+    startCharacter: Int!
+    """
+    The selection end line
+    """
+    endLine: Int!
+    """
+    The selection end line
+    """
+    endCharacter: Int!
+}
+
+"""
+PreciseContextOutput provides code intelligence context.
+"""
+type PreciseContextOutput {
+    """
+    The precise context data.
+    """
+    context: [PreciseContext!]!
+
+    """
+    TODO
+    """
+    traceLogs: String!
+}
+
+"""
+PreciseContext provides code intelligence information for a snippet of code.
+"""
+type PreciseContext {
+    """
+    The symbol name.
+    """
+    symbol: PreciseSymbolReference
+
+    """
+    The snippet of code defining the symbol.
+    """
+    definitionSnippet: String!
+
+    """
+    The repository name.
+    """
+    repositoryName: String!
+
+    """
+    The filepath of code snippet.
+    """
+    filepath: String!
+
+    """
+    The canonical URL to this snippet's location (using an immutable revision specifier).
+    """
+    canonicalLocationURL: String!
+}
+
+type PreciseSymbolReference {
+    """
+    The SCIP symbol name matched from the context input.
+    """
+    scipName: String!
+
+    """
+    TODO
+    """
+    scipDescriptorSuffix: String!
+
+    """
+    The fuzzy name pulled from a syntactic analysis of the context input.
+    """
+    fuzzyName: String
+}

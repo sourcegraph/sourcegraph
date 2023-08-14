@@ -10,6 +10,21 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement and index searching based on trigrams';
 
+CREATE TYPE symbolnamesegmentquality AS ENUM (
+    'FUZZY',
+    'PRECISE',
+    'BOTH'
+);
+
+CREATE TYPE symbolnamesegmenttype AS ENUM (
+    'SCHEME',
+    'PACKAGE_MANAGER',
+    'PACKAGE_NAME',
+    'PACKAGE_VERSION',
+    'DESCRIPTOR_NAMESPACE',
+    'DESCRIPTOR_SUFFIX'
+);
+
 CREATE FUNCTION get_file_extension(path text) RETURNS text
     LANGUAGE plpgsql IMMUTABLE
     AS $_$ BEGIN
@@ -257,6 +272,27 @@ COMMENT ON COLUMN codeintel_scip_symbols.type_definition_ranges IS 'An encoded s
 
 COMMENT ON COLUMN codeintel_scip_symbols.symbol_id IS 'The identifier of the segment that terminates the name of this symbol. See the table [`codeintel_scip_symbol_names`](#table-publiccodeintel_scip_symbol_names) on how to reconstruct the full symbol name.';
 
+CREATE TABLE codeintel_scip_symbols_lookup (
+    upload_id integer NOT NULL,
+    segment_type symbolnamesegmenttype NOT NULL,
+    segment_quality symbolnamesegmentquality,
+    name text NOT NULL,
+    id integer NOT NULL,
+    parent_id integer
+);
+
+CREATE TABLE codeintel_scip_symbols_lookup_leaves (
+    upload_id integer NOT NULL,
+    symbol_id integer NOT NULL,
+    descriptor_suffix_id integer NOT NULL,
+    fuzzy_descriptor_suffix_id integer
+);
+
+CREATE TABLE codeintel_scip_symbols_migration_progress (
+    upload_id integer NOT NULL,
+    symbol_id integer NOT NULL
+);
+
 CREATE TABLE codeintel_scip_symbols_schema_versions (
     upload_id integer NOT NULL,
     min_schema_version integer,
@@ -365,6 +401,9 @@ ALTER TABLE ONLY codeintel_scip_metadata
 ALTER TABLE ONLY codeintel_scip_symbol_names
     ADD CONSTRAINT codeintel_scip_symbol_names_pkey PRIMARY KEY (upload_id, id);
 
+ALTER TABLE ONLY codeintel_scip_symbols_migration_progress
+    ADD CONSTRAINT codeintel_scip_symbols_migration_progress_pkey PRIMARY KEY (upload_id);
+
 ALTER TABLE ONLY codeintel_scip_symbols
     ADD CONSTRAINT codeintel_scip_symbols_pkey PRIMARY KEY (upload_id, symbol_id, document_lookup_id);
 
@@ -397,6 +436,14 @@ CREATE INDEX codeintel_scip_metadata_upload_id ON codeintel_scip_metadata USING 
 CREATE INDEX codeintel_scip_symbol_names_upload_id_roots ON codeintel_scip_symbol_names USING btree (upload_id) WHERE (prefix_id IS NULL);
 
 CREATE INDEX codeintel_scip_symbols_document_lookup_id ON codeintel_scip_symbols USING btree (document_lookup_id);
+
+CREATE UNIQUE INDEX codeintel_scip_symbols_lookup_id ON codeintel_scip_symbols_lookup USING btree (upload_id, id);
+
+CREATE INDEX codeintel_scip_symbols_lookup_leaves_descriptor_suffix_id ON codeintel_scip_symbols_lookup_leaves USING btree (upload_id, descriptor_suffix_id);
+
+CREATE INDEX codeintel_scip_symbols_lookup_leaves_fuzzy_descriptor_suffix_id ON codeintel_scip_symbols_lookup_leaves USING btree (upload_id, fuzzy_descriptor_suffix_id) WHERE (fuzzy_descriptor_suffix_id IS NOT NULL);
+
+CREATE INDEX codeintel_scip_symbols_lookup_reversed_descriptor_suffix_name ON codeintel_scip_symbols_lookup USING btree (upload_id, reverse(name) text_pattern_ops) WHERE (segment_type = 'DESCRIPTOR_SUFFIX'::symbolnamesegmenttype);
 
 CREATE INDEX codeisdntel_scip_symbol_names_upload_id_children ON codeintel_scip_symbol_names USING btree (upload_id, prefix_id) WHERE (prefix_id IS NOT NULL);
 

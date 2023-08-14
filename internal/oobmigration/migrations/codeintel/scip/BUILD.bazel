@@ -1,0 +1,47 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "scip",
+    srcs = [
+        "migrator.go",
+        "symbols_migrator.go",
+        "symbols_temp_tables.go",
+        "symbols_util.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codeintel/scip",
+    visibility = [
+        "//enterprise:__subpackages__",
+        "//internal/oobmigration/migrations/register:__pkg__",
+    ],
+    deps = [
+        "//internal/codeintel/shared/symbols",
+        "//internal/database/basestore",
+        "//internal/database/batch",
+        "//internal/database/dbutil",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_lib_pq//:pq",
+        "@com_github_sourcegraph_conc//pool",
+    ],
+)
+
+go_test(
+    name = "scip_test",
+    timeout = "moderate",
+    srcs = ["symbols_migrator_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":scip"],
+    tags = [
+        # Test requires localhost for database
+        "requires-network",
+    ],
+    deps = [
+        "//internal/codeintel/shared",
+        "//internal/database/basestore",
+        "//internal/database/dbtest",
+        "//internal/database/dbutil",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_sourcegraph_log//logtest",
+    ],
+)

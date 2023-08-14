@@ -54,14 +54,21 @@ func (s *store) GetBulkMonikerLocations(ctx context.Context, tableName string, u
 		return nil, 0, nil
 	}
 
+	explodedSymbols := []string{}
 	symbolNames := make([]string, 0, len(monikers))
 	for _, arg := range monikers {
+		if explodedSymbol, err := explodeSymbol(arg.Identifier); err == nil {
+			explodedSymbols = append(explodedSymbols, explodedSymbol)
+		}
+
 		symbolNames = append(symbolNames, arg.Identifier)
 	}
 
 	query := sqlf.Sprintf(
 		bulkMonikerResultsQuery,
 		pq.Array(symbolNames),
+		pq.Array(uploadIDs),
+		pq.Array(explodedSymbols),
 		pq.Array(uploadIDs),
 		sqlf.Sprintf(fmt.Sprintf("%s_ranges", strings.TrimSuffix(tableName, "s"))),
 	)
@@ -109,7 +116,7 @@ outer:
 	return locations, totalCount, nil
 }
 
-const bulkMonikerResultsQuery = `
+var bulkMonikerResultsQuery = `
 WITH RECURSIVE
 ` + symbolIDsCTEs + `
 SELECT
@@ -161,9 +168,16 @@ func (s *store) getLocations(
 		}
 
 		if occurrence.Symbol != "" && !scip.IsLocalSymbol(occurrence.Symbol) {
+			explodedSymbol, err := explodeSymbol(occurrence.Symbol)
+			if err != nil {
+				continue
+			}
+
 			monikerLocations, err := s.scanQualifiedMonikerLocations(s.db.Query(ctx, sqlf.Sprintf(
 				locationsSymbolSearchQuery,
 				pq.Array([]string{occurrence.Symbol}),
+				pq.Array([]int{bundleID}),
+				pq.Array([]string{explodedSymbol}),
 				pq.Array([]int{bundleID}),
 				sqlf.Sprintf(scipFieldName),
 				bundleID,
@@ -217,7 +231,7 @@ WHERE
 LIMIT 1
 `
 
-const locationsSymbolSearchQuery = `
+var locationsSymbolSearchQuery = `
 WITH RECURSIVE
 ` + symbolIDsCTEs + `
 SELECT
@@ -521,8 +535,13 @@ func (s *store) GetMinimalBulkMonikerLocations(ctx context.Context, tableName st
 	}
 
 	symbolNames := make([]string, 0, len(monikers))
+	explodedSymbolNames := make([]string, 0, len(monikers))
 	for _, arg := range monikers {
 		symbolNames = append(symbolNames, arg.Identifier)
+
+		if explodedSymbol, err := explodeSymbol(arg.Identifier); err == nil {
+			explodedSymbolNames = append(explodedSymbolNames, explodedSymbol)
+		}
 	}
 
 	var skipConds []*sqlf.Query
@@ -539,6 +558,8 @@ func (s *store) GetMinimalBulkMonikerLocations(ctx context.Context, tableName st
 	query := sqlf.Sprintf(
 		minimalBulkMonikerResultsQuery,
 		pq.Array(symbolNames),
+		pq.Array(uploadIDs),
+		pq.Array(explodedSymbolNames),
 		pq.Array(uploadIDs),
 		sqlf.Sprintf(fieldName),
 		sqlf.Sprintf(fieldName),
@@ -573,9 +594,10 @@ outer:
 			}
 
 			locations = append(locations, shared.Location{
-				DumpID: monikerLocations.DumpID,
-				Path:   row.URI,
-				Range:  newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
+				SymbolName: row.SymbolName,
+				DumpID:     monikerLocations.DumpID,
+				Path:       row.URI,
+				Range:      newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
 			})
 
 			if len(locations) >= limit {
@@ -588,13 +610,15 @@ outer:
 	return locations, totalCount, nil
 }
 
-const minimalBulkMonikerResultsQuery = `
+// msn.name, "dude return the symbol name and thread it through"
+var minimalBulkMonikerResultsQuery = `
 WITH RECURSIVE
 ` + symbolIDsCTEs + `
 SELECT
 	ss.upload_id,
 	%s,
-	document_path
+	document_path,
+	msn.symbol_name
 FROM codeintel_scip_symbols ss
 JOIN codeintel_scip_document_lookup dl ON dl.id = ss.document_lookup_id
 JOIN matching_symbol_names msn ON msn.upload_id = ss.upload_id AND msn.id = ss.symbol_id

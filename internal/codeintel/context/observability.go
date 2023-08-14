@@ -8,7 +8,7 @@ import (
 )
 
 type operations struct {
-	x *observation.Operation
+	getPreciseContext *observation.Operation
 }
 
 var m = new(metrics.SingletonREDMetrics)
@@ -32,6 +32,6 @@ func newOperations(observationCtx *observation.Context) *operations {
 	}
 
 	return &operations{
-		x: op("X"),
+		getPreciseContext: op("GetPreciseContext"),
 	}
 }

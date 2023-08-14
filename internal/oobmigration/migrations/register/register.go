@@ -20,6 +20,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/batches"
 	lsifMigrations "github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codeintel/lsif"
+	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codeintel/scip"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/iam"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/insights"
 	insightsBackfiller "github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/insights/backfillv2"
@@ -167,6 +168,7 @@ func registerEnterpriseMigrators(runner *oobmigration.Runner, noDelay bool, deps
 		lsifMigrations.NewReferencesLocationsCountMigrator(deps.codeIntelStore, 1000, 0),
 		lsifMigrations.NewDocumentColumnSplitMigrator(deps.codeIntelStore, 100, 0),
 		lsifMigrations.NewSCIPMigrator(deps.store, deps.codeIntelStore),
+		scip.NewSCIPSymbolsMigrator(deps.codeIntelStore),
 	}
 	if deps.insightsStore != nil {
 		migrators = append(migrators,

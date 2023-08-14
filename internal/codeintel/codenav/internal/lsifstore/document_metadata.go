@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
+	"github.com/sourcegraph/sourcegraph/lib/codeintel/precise"
 )
 
 // GetPathExists determines if the path exists in the database.
@@ -78,6 +79,30 @@ WHERE
 	sid.document_path = %s
 LIMIT 1
 `
+
+func (s *store) GetSymbolNamesByRange(ctx context.Context, bundleID int, path string, r *scip.Range) (_ []string, err error) {
+	ctx, trace, endObservation := s.operations.getStencil.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
+		attribute.Int("bundleID", bundleID),
+		attribute.String("path", path),
+	}})
+	defer endObservation(1, observation.Args{})
+
+	d, exists, err := s.scanFirstDocumentData(s.db.Query(ctx, sqlf.Sprintf(stencilQuery, bundleID, path)))
+	if err != nil || !exists {
+		return nil, err
+	}
+
+	trace.AddEvent("GetSymbolNamesByRange", attribute.Int("numOccurrences", len(d.SCIPData.Occurrences)))
+
+	symbolNameSet := precise.NewSet[string]()
+	for _, occ := range d.SCIPData.Occurrences {
+		if r == nil || precise.IsOccurrenceWithinRange(r, occ) {
+			symbolNameSet.Add(occ.Symbol)
+		}
+	}
+
+	return symbolNameSet.ToSlice(), nil
+}
 
 // GetRanges returns definition, reference, implementation, and hover data for each range within the given span of lines.
 func (s *store) GetRanges(ctx context.Context, bundleID int, path string, startLine, endLine int) (_ []shared.CodeIntelligenceRange, err error) {

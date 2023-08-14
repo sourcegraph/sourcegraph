@@ -1133,6 +1133,7 @@ commandsets:
       - jaeger
       - grafana
       - prometheus
+      - embeddings
 
   codeintel-kubernetes:
     requiresDevPrivate: true

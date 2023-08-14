@@ -119,6 +119,7 @@ type DocumentPathRangeID struct {
 // Loocation represents a range within a particular document relative to its
 // containing bundle.
 type LocationData struct {
+	SymbolName     string
 	URI            string
 	StartLine      int
 	StartCharacter int
@@ -268,4 +269,33 @@ type GroupedBundleDataMaps struct {
 	References        map[string]map[string]map[string][]LocationData
 	Packages          []Package
 	PackageReferences []PackageReference
+}
+
+type Set[T comparable] struct {
+	elems map[T]struct{}
+}
+
+func NewSet[T comparable]() *Set[T] {
+	return &Set[T]{elems: make(map[T]struct{})}
+}
+
+func (s *Set[T]) Add(elem T) {
+	s.elems[elem] = struct{}{}
+}
+
+func (s *Set[T]) Remove(elem T) {
+	delete(s.elems, elem)
+}
+
+func (s *Set[T]) Contains(elem T) bool {
+	_, ok := s.elems[elem]
+	return ok
+}
+
+func (s *Set[T]) ToSlice() []T {
+	elems := make([]T, 0, len(s.elems))
+	for elem := range s.elems {
+		elems = append(elems, elem)
+	}
+	return elems
 }

@@ -2,6 +2,7 @@ package lsifstore
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/keegancsmith/sqlf"
@@ -54,6 +55,7 @@ func (s *store) GetHover(ctx context.Context, bundleID int, path string, line, c
 
 	symbolNames := make([]string, 0, len(occurrences))
 	rangeBySymbol := make(map[string]shared.Range, len(occurrences))
+	explodedSymbols := make([]string, 0, len(occurrences))
 
 	for _, occurrence := range occurrences {
 		if occurrence.Symbol == "" || scip.IsLocalSymbol(occurrence.Symbol) {
@@ -63,6 +65,10 @@ func (s *store) GetHover(ctx context.Context, bundleID int, path string, line, c
 		if _, ok := rangeBySymbol[occurrence.Symbol]; !ok {
 			symbolNames = append(symbolNames, occurrence.Symbol)
 			rangeBySymbol[occurrence.Symbol] = translateRange(scip.NewRange(occurrence.Range))
+
+			if explodedSymbol, err := explodeSymbol(occurrence.Symbol); err == nil {
+				explodedSymbols = append(explodedSymbols, explodedSymbol)
+			}
 		}
 	}
 
@@ -70,12 +76,16 @@ func (s *store) GetHover(ctx context.Context, bundleID int, path string, line, c
 	// by path, which is arbitrary but deterministic in the case that multiple files mark a defining
 	// occurrence of a symbol.
 
-	documents, err := s.scanDocumentData(s.db.Query(ctx, sqlf.Sprintf(
+	query := sqlf.Sprintf(
 		hoverSymbolsQuery,
 		pq.Array(symbolNames),
 		pq.Array([]int{bundleID}),
+		pq.Array(explodedSymbols),
+		pq.Array([]int{bundleID}),
 		bundleID,
-	)))
+	)
+
+	documents, err := s.scanDocumentData(s.db.Query(ctx, query))
 	if err != nil {
 		return "", shared.Range{}, false, err
 	}
@@ -115,7 +125,11 @@ WHERE
 LIMIT 1
 `
 
-const symbolIDsCTEs = `
+// set to true to disable trie-based symbol search
+// can be changed in tests
+var disableTrieCTE = false
+
+var symbolIDsCTEs = `
 -- Search for the set of trie paths that match one of the given search terms. We
 -- do a recursive walk starting at the roots of the trie for a given set of uploads,
 -- and only traverse down trie paths that continue to match our search text.
@@ -159,18 +173,56 @@ matching_prefixes(upload_id, id, prefix, search) AS (
 			mp.search LIKE ssn.name_segment || '%%'
 	)
 ),
-
+symbols_parts AS (
+	SELECT
+		convert_from(decode(split_part(t.payload, '$', 1), 'base64'), 'utf-8') AS scheme,
+		convert_from(decode(split_part(t.payload, '$', 2), 'base64'), 'utf-8') AS package_manager,
+		convert_from(decode(split_part(t.payload, '$', 3), 'base64'), 'utf-8') AS package_name,
+		convert_from(decode(split_part(t.payload, '$', 4), 'base64'), 'utf-8') AS package_version,
+		convert_from(decode(split_part(t.payload, '$', 5), 'base64'), 'utf-8') AS descriptor_namespace,
+		convert_from(decode(split_part(t.payload, '$', 6), 'base64'), 'utf-8') AS descriptor_suffix
+	FROM unnest(%s::text[]) AS t(payload)
+),
 -- Consume from the worktable results defined above. This will throw out any rows
 -- that still have a non-empty search field, as this indicates a proper prefix and
 -- therefore a non-match. The remaining rows will all be exact matches.
 matching_symbol_names AS (
-	SELECT mp.upload_id, mp.id, mp.prefix AS symbol_name
-	FROM matching_prefixes mp
-	WHERE mp.search = ''
+	(
+		SELECT mp.upload_id, mp.id, mp.prefix AS symbol_name
+		FROM matching_prefixes mp
+		WHERE mp.search = '' AND ` + fmt.Sprintf("%v", !disableTrieCTE) + `
+	) UNION (
+		SELECT
+			ll.upload_id,
+			ll.symbol_id,
+			-- ROUGHLY reconstruct symbol names from parts
+			-- We don't want to do this as it ignores SCIP's escaping rules, but we only use this
+			-- value in a fairly inconsequential (diagnostic-only) path at the moment. We should
+			-- remove usage of this field altogether (or reconstruct it on the consumer side).
+			l1.name || ' ' || l2.name || ' ' || l3.name || ' ' || l4.name || ' ' || l5.name || l6.name AS symbol_name
+		FROM symbols_parts p
+
+		-- Initially match descriptor scoped to an upload
+		JOIN codeintel_scip_symbols_lookup l6 ON
+			-- Index conditions for "codeintel_scip_symbols_lookup_reversed_descriptor_suffix_name"
+			l6.upload_id = ANY(%s) AND l6.segment_type = 'DESCRIPTOR_SUFFIX' AND reverse(l6.name) = reverse(p.descriptor_suffix) AND
+			-- Post-index filter condition to ensure we haven't matched stripped descriptors
+			l6.segment_quality != 'FUZZY'
+
+		-- Follow parent path l6->l5->l4->l3->l2->l1, filter out anything that doesn't match exploded symbol parts
+		JOIN codeintel_scip_symbols_lookup l5 ON l5.upload_id = l6.upload_id AND l5.id = l6.parent_id AND l5.name = p.descriptor_namespace
+		JOIN codeintel_scip_symbols_lookup l4 ON l4.upload_id = l6.upload_id AND l4.id = l5.parent_id AND l4.name = p.package_version
+		JOIN codeintel_scip_symbols_lookup l3 ON l3.upload_id = l6.upload_id AND l3.id = l4.parent_id AND l3.name = p.package_name
+		JOIN codeintel_scip_symbols_lookup l2 ON l2.upload_id = l6.upload_id AND l2.id = l3.parent_id AND l2.name = p.package_manager
+		JOIN codeintel_scip_symbols_lookup l1 ON l1.upload_id = l6.upload_id AND l1.id = l2.parent_id AND l1.name = p.scheme
+
+		-- Find symbol identifier matching descriptor
+		JOIN codeintel_scip_symbols_lookup_leaves ll ON ll.upload_id = l5.upload_id AND ll.descriptor_suffix_id = l6.id
+	)
 )
 `
 
-const hoverSymbolsQuery = `
+var hoverSymbolsQuery = `
 WITH RECURSIVE
 ` + symbolIDsCTEs + `
 SELECT
