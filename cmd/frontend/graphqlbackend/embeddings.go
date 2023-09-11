@@ -15,6 +15,8 @@ type EmbeddingsResolver interface {
 	IsContextRequiredForChatQuery(ctx context.Context, args IsContextRequiredForChatQueryInputArgs) (bool, error)
 	RepoEmbeddingJobs(ctx context.Context, args ListRepoEmbeddingJobsArgs) (*graphqlutil.ConnectionResolver[RepoEmbeddingJobResolver], error)
 
+	RepoEmbeddingSize(ctx context.Context, args RepoEmbeddingsSizeArgs) (*RepoEmbeddingsSizeResponse, error)
+
 	ScheduleRepositoriesForEmbedding(ctx context.Context, args ScheduleRepositoriesForEmbeddingArgs) (*EmptyResponse, error)
 	CancelRepoEmbeddingJob(ctx context.Context, args CancelRepoEmbeddingJobArgs) (*EmptyResponse, error)
 }
@@ -22,6 +24,26 @@ type EmbeddingsResolver interface {
 type ScheduleRepositoriesForEmbeddingArgs struct {
 	RepoNames []string
 	Force     *bool
+}
+
+type RepoEmbeddingsSizeArgs struct {
+	RepoNames []string
+}
+type RepoEmbeddingsSize struct {
+	Repo  string
+	Bytes int32
+}
+
+func (r *RepoEmbeddingsSize) Name() string {
+	return r.Repo
+}
+
+func (r *RepoEmbeddingsSize) SizeBytes() int32 {
+	return r.Bytes
+}
+
+type RepoEmbeddingsSizeResponse struct {
+	RepoSizeBytes []*RepoEmbeddingsSize
 }
 
 type IsContextRequiredForChatQueryInputArgs struct {
@@ -89,4 +111,8 @@ type RepoEmbeddingJobStatsResolver interface {
 	FilesEmbedded() int32
 	FilesScheduled() int32
 	FilesSkipped() int32
+}
+
+func (r *RepoEmbeddingsSizeResponse) Sizes() []*RepoEmbeddingsSize {
+	return r.RepoSizeBytes
 }

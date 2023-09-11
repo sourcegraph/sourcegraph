@@ -9,11 +9,14 @@ import (
 	"github.com/sourcegraph/conc/pool"
 	"github.com/sourcegraph/log"
 
+	codeintelContext "github.com/sourcegraph/sourcegraph/internal/codeintel/context"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
+	"github.com/sourcegraph/sourcegraph/cmd/searcher/diff"
+	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
@@ -21,6 +24,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/embeddings"
+	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed"
+
 	repobg "github.com/sourcegraph/sourcegraph/internal/embeddings/background/repo"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 )
@@ -130,6 +135,26 @@ func (r *Resolver) RepoEmbeddingJobs(ctx context.Context, args graphqlbackend.Li
 		return nil, err
 	}
 	return NewRepoEmbeddingJobsResolver(r.db, r.gitserverClient, r.repoEmbeddingJobsStore, args)
+}
+
+func (r *Resolver) RepoEmbeddingSize(ctx context.Context, args graphqlbackend.RepoEmbeddingsSizeArgs) (*graphqlbackend.RepoEmbeddingsSizeResponse, error) {
+	if !conf.EmbeddingsEnabled() {
+		return nil, errors.New("embeddings are not configured or disabled")
+	}
+	// 🚨 SECURITY: Only site admins may list repo embedding jobs.
+	if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
+		return nil, err
+	}
+	res := []*graphqlbackend.RepoEmbeddingsSize{}
+	for _, repo := range args.RepoNames {
+		size, err := getEmbeddingSizeForRepo(ctx, repo, r.db, r.logger, r.gitserverClient)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, &graphqlbackend.RepoEmbeddingsSize{Repo: repo, Bytes: int32(size)})
+	}
+
+	return &graphqlbackend.RepoEmbeddingsSizeResponse{RepoSizeBytes: res}, nil
 }
 
 func (r *Resolver) ScheduleRepositoriesForEmbedding(ctx context.Context, args graphqlbackend.ScheduleRepositoriesForEmbeddingArgs) (_ *graphqlbackend.EmptyResponse, err error) {
@@ -289,4 +314,110 @@ func (r *embeddingsSearchResultResolver) EndLine(ctx context.Context) int32 {
 
 func (r *embeddingsSearchResultResolver) Content(ctx context.Context) string {
 	return r.content
+}
+
+const (
+	embedEntireFileTokensThreshold          = 384
+	embeddingChunkTokensThreshold           = 256
+	embeddingChunkEarlySplitTokensThreshold = embeddingChunkTokensThreshold - 32
+)
+
+func getEmbeddingSizeForRepo(ctx context.Context, repoName string, db database.DB, logger log.Logger, gitserverClient gitserver.Client) (int, error) {
+	repo, err := db.Repos().GetByName(ctx, api.RepoName(repoName))
+	if err != nil {
+		return -1, err
+	}
+	_, latestRevision, err := gitserverClient.GetDefaultBranch(ctx, repo.Name, false)
+
+	fetcher := &revisionFetcher{
+		repo:      repo.Name,
+		revision:  latestRevision,
+		gitserver: gitserverClient,
+	}
+
+	opts := embed.EmbedRepoOpts{
+		RepoName:        repo.Name,
+		Revision:        latestRevision,
+		ExcludePatterns: nil,
+		SplitOptions: codeintelContext.SplitOptions{
+			NoSplitTokensThreshold:         embedEntireFileTokensThreshold,
+			ChunkTokensThreshold:           embeddingChunkTokensThreshold,
+			ChunkEarlySplitTokensThreshold: embeddingChunkEarlySplitTokensThreshold,
+		},
+		MaxCodeEmbeddings: 3_072_000,
+		MaxTextEmbeddings: 512_000,
+	}
+
+	_, _, stats, err := embed.CalculateRepoEmbeddingStats(ctx, fetcher, opts)
+	if err != nil {
+		return -1, err
+	}
+	return stats.CodeIndexStats.BytesEmbedded + stats.TextIndexStats.BytesEmbedded, nil
+}
+
+type revisionFetcher struct {
+	repo      api.RepoName
+	revision  api.CommitID
+	gitserver gitserver.Client
+}
+
+func (r *revisionFetcher) Read(ctx context.Context, fileName string) ([]byte, error) {
+	return r.gitserver.ReadFile(ctx, nil, r.repo, r.revision, fileName)
+}
+
+func (r *revisionFetcher) List(ctx context.Context) ([]embed.FileEntry, error) {
+	fileInfos, err := r.gitserver.ReadDir(ctx, nil, r.repo, r.revision, "", true)
+	if err != nil {
+		return nil, err
+	}
+
+	entries := make([]embed.FileEntry, 0, len(fileInfos))
+	for _, fileInfo := range fileInfos {
+		if !fileInfo.IsDir() {
+			entries = append(entries, embed.FileEntry{
+				Name: fileInfo.Name(),
+				Size: fileInfo.Size(),
+			})
+		}
+	}
+	return entries, nil
+}
+
+func (r *revisionFetcher) Diff(ctx context.Context, oldCommit api.CommitID) (
+	toIndex []embed.FileEntry,
+	toRemove []string,
+	err error,
+) {
+	ctx = actor.WithInternalActor(ctx)
+	b, err := r.gitserver.DiffSymbols(ctx, r.repo, oldCommit, r.revision)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	toRemove, changedNew, err := diff.ParseGitDiffNameStatus(b)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// toRemove only contains file names, but we also need the file sizes. We could
+	// ask gitserver for the file size of each file, however my intuition tells me
+	// it is cheaper to call r.List(ctx) once. As a downside we have to loop over
+	// allFiles.
+	allFiles, err := r.List(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	changedNewSet := make(map[string]struct{})
+	for _, file := range changedNew {
+		changedNewSet[file] = struct{}{}
+	}
+
+	for _, file := range allFiles {
+		if _, ok := changedNewSet[file.Name]; ok {
+			toIndex = append(toIndex, file)
+		}
+	}
+
+	return
 }

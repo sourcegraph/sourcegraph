@@ -186,6 +186,53 @@ func EmbedRepo(
 	return index, toRemove, &stats, nil
 }
 
+// CalculateRepoEmbeddingStats is a copy of EmbedRepo that doesn't send embeddings upstream for processing and doesn't return an index - it only processes the input to calculate stats.
+func CalculateRepoEmbeddingStats(
+	ctx context.Context,
+	readLister FileReadLister,
+	opts EmbedRepoOpts,
+) (*bgrepo.EmbedRepoStats, error) {
+	var toIndex []FileEntry
+	var err error
+
+	toIndex, err = readLister.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var codeFileNames, textFileNames []FileEntry
+	for _, file := range toIndex {
+		if IsValidTextFile(file.Name) {
+			textFileNames = append(textFileNames, file)
+		} else {
+			codeFileNames = append(codeFileNames, file)
+		}
+	}
+
+	stats := bgrepo.EmbedRepoStats{
+		CodeIndexStats: bgrepo.NewEmbedFilesStats(len(codeFileNames)),
+		TextIndexStats: bgrepo.NewEmbedFilesStats(len(textFileNames)),
+		IsIncremental:  false,
+	}
+
+	client := NoOpClient{}
+	csvc := contextService{}
+
+	_, codeIndexStats, err := embedFiles(ctx, codeFileNames, client, &csvc, opts.ExcludePatterns, opts.SplitOptions, readLister, opts.MaxCodeEmbeddings, types.RepoPathRanks{}, func(efs bgrepo.EmbedFilesStats) {})
+	if err != nil {
+		return nil, err
+	}
+	stats.CodeIndexStats = codeIndexStats
+
+	_, textIndexStats, err := embedFiles(ctx, textFileNames, client, &csvc, opts.ExcludePatterns, opts.SplitOptions, readLister, opts.MaxTextEmbeddings, types.RepoPathRanks{}, func(efs bgrepo.EmbedFilesStats) {})
+	if err != nil {
+		return nil, err
+	}
+	stats.TextIndexStats = textIndexStats
+
+	return &stats, nil
+}
+
 type EmbedRepoOpts struct {
 	RepoName          api.RepoName
 	Revision          api.CommitID
@@ -436,4 +483,32 @@ type FileReader interface {
 
 type FileDiffer interface {
 	Diff(context.Context, api.CommitID) ([]FileEntry, []string, error)
+}
+
+type NoOpClient struct{}
+
+var _ client.EmbeddingsClient = NoOpClient{}
+
+func (NoOpClient) GetEmbeddings(ctx context.Context, texts []string) ([]float32, error) {
+	res := make([]float32, len(texts))
+	return res, nil
+}
+
+func (NoOpClient) GetEmbeddingsWithRetries(ctx context.Context, texts []string, maxRetries int) ([]float32, error) {
+	res := make([]float32, len(texts))
+	return res, nil
+}
+
+func (NoOpClient) GetDimensions() (int, error) {
+	return 1, nil
+}
+
+func (NoOpClient) GetModelIdentifier() string {
+	return "noop"
+}
+
+type contextService struct{}
+
+func (c *contextService) SplitIntoEmbeddableChunks(ctx context.Context, text string, fileName string, splitOptions codeintelContext.SplitOptions) ([]codeintelContext.EmbeddableChunk, error) {
+	return codeintelContext.SplitIntoEmbeddableChunks(text, fileName, splitOptions), nil
 }

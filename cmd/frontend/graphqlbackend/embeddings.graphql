@@ -87,6 +87,8 @@ extend type Query {
         """
         state: String
     ): RepoEmbeddingJobsConnection!
+
+    repoEmbeddingSize(repoNames: [String!]!): RepoEmbeddingsSizeResponse
 }
 
 extend type Mutation {
@@ -296,4 +298,23 @@ extend type Repository {
         """
         state: String
     ): RepoEmbeddingJobsConnection!
+}
+
+type RepoEmbeddingsSize {
+    name: String!
+    sizeBytes: Int!
+}
+
+"""
+Args for the repoEmbeddingSize GraphQL resolver.
+"""
+input RepoEmbeddingsSizeArgs {
+    """
+    The names of repositories to get embedding sizes for. If empty, sizes for all repositories will be returned.
+    """
+    repoNames: [String!]
+}
+
+type RepoEmbeddingsSizeResponse {
+    sizes: [RepoEmbeddingsSize]!
 }
