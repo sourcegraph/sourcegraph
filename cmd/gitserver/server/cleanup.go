@@ -26,10 +26,10 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
+	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	du "github.com/sourcegraph/sourcegraph/internal/diskusage"
 	"github.com/sourcegraph/sourcegraph/internal/env"
-	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/fileutil"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
@@ -38,6 +38,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
+	"github.com/sourcegraph/sourcegraph/lib/pointers"
+	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 type JanitorConfig struct {
@@ -52,6 +54,9 @@ func NewJanitor(ctx context.Context, cfg JanitorConfig, db database.DB, rcf *wre
 	return goroutine.NewPeriodicGoroutine(
 		actor.WithInternalActor(ctx),
 		goroutine.HandlerFunc(func(ctx context.Context) error {
+			// Make sure the janitor can see every repo.
+			ctx = actor.WithInternalActor(ctx)
+
 			gitserverAddrs := gitserver.NewGitserverAddresses(conf.Get())
 			// TODO: Should this return an error?
 			cleanupRepos(ctx, logger, db, rcf, cfg.ShardID, cfg.ReposDir, cloneRepo, gitserverAddrs)
@@ -162,8 +167,8 @@ var sgmRetries, _ = strconv.Atoi(env.Get("SRC_SGM_RETRIES", "3", "the maximum nu
 // The limit of repos cloned on the wrong shard to delete in one janitor run - value <=0 disables delete.
 var wrongShardReposDeleteLimit, _ = strconv.Atoi(env.Get("SRC_WRONG_SHARD_DELETE_LIMIT", "10", "the maximum number of repos not assigned to this shard we delete in one run"))
 
-// Controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB. Defaults to false.
-var removeNonExistingRepos, _ = strconv.ParseBool(env.Get("SRC_REMOVE_NON_EXISTING_REPOS", "false", "controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB"))
+// Controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB. Defaults to true.
+var removeNonExistingRepos, _ = strconv.ParseBool(env.Get("SRC_REMOVE_NON_EXISTING_REPOS", "true", "controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB"))
 
 var (
 	reposRemoved = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -323,24 +328,7 @@ func cleanupRepos(
 			return false, nil
 		}
 
-		_, err := db.GitserverRepos().GetByName(ctx, repoNameFromDir(reposDir, dir))
-		// Repo still exists, nothing to do.
-		if err == nil {
-			return false, nil
-		}
-
-		// Failed to talk to DB, skip this repo.
-		if !errcode.IsNotFound(err) {
-			logger.Warn("failed to look up repo", log.Error(err), log.String("repo", string(dir)))
-			return false, nil
-		}
-
-		// The repo does not exist in the DB (or is soft-deleted), continue deleting it.
-		err = removeRepoDirectory(ctx, logger, db, shardID, reposDir, dir, false)
-		if err == nil {
-			nonExistingReposRemoved.Inc()
-		}
-		return true, err
+		return maybeRemoveNonExistingRepo(ctx, logger, db, reposDir, shardID, dir)
 	}
 
 	ensureGitAttributes := func(dir common.GitDir) (done bool, err error) {
@@ -1424,4 +1412,88 @@ func removeFileOlderThan(logger log.Logger, path string, maxAge time.Duration) (
 
 func mockRemoveNonExistingReposConfig(value bool) {
 	removeNonExistingRepos = value
+}
+
+func maybeRemoveNonExistingRepo(ctx context.Context, logger log.Logger, db database.DB, reposDir string, shardID string, dir common.GitDir) (done bool, _ error) {
+	repoName := repoNameFromDir(reposDir, dir)
+	logger = logger.Scoped("repo-purge", "Repo purge janitor task").With(log.String("repo", string(repoName)))
+
+	repoTTL, disabled := repoPurgeConfig(conf.DefaultClient())
+	if disabled {
+		logger.Debug("purge worker disabled via site config")
+		return false, nil
+	}
+
+	// Get the repo, even if it's blocked or deleted.
+	// TODO:
+	// If the repo is deleted, the name is usually turned into a different name
+	// in the DB following the scheme DELETED-<timestamp>-<name>, so those repos
+	// will also appear as deleted to this code, thus the TTL check doesn't work.
+	//
+	// When a new repo is recreated with the same name, we will find that repo,
+	// and not delete anything. That is expected, since the repo contents could
+	// be the contents of the new repo with the same name.
+	rs, err := db.Repos().List(ctx, database.ReposListOptions{IncludeDeleted: true, IncludeBlocked: true, Names: []string{string(repoName)}})
+	if err != nil {
+		logger.Warn("failed to look up repo", log.Error(err), log.String("repo", string(dir)))
+		return false, nil
+	}
+
+	// Repo hasn't been deleted for long enough, TTL has not passed. Don't delete
+	// yet.
+	if !shouldDeleteRepo(rs, repoTTL, time.Now()) {
+		return false, nil
+	}
+
+	// The repo does not exist in the DB (or is soft-deleted), continue deleting it.
+	// Also attempt to mark it as not-cloned in the DB.
+	// TODO: Set to true.
+	err = removeRepoDirectory(ctx, logger, db, shardID, reposDir, dir, false)
+	if err == nil {
+		nonExistingReposRemoved.Inc()
+		logger.Info("deleted repo")
+	} else {
+		logger.Error("failed to delete repo", log.Error(err))
+	}
+	return true, err
+}
+
+func repoPurgeConfig(c conftypes.SiteConfigQuerier) (ttl time.Duration, disabled bool) {
+	purgeConfig := c.SiteConfig().RepoPurgeWorker
+	if purgeConfig == nil {
+		// TODO: The interval has no meaning here anymore - we should remove
+		// it later and replace by `enabled: boolean` or similar.
+		purgeConfig = &schema.RepoPurgeWorker{}
+	}
+
+	// Defaults - align with documentation
+	if purgeConfig.IntervalMinutes == nil {
+		purgeConfig.IntervalMinutes = pointers.Ptr(15)
+	}
+	if purgeConfig.DeletedTTLMinutes == nil {
+		purgeConfig.DeletedTTLMinutes = pointers.Ptr(60)
+	}
+
+	if *purgeConfig.IntervalMinutes <= 0 {
+		return 0, true
+	}
+
+	return time.Duration(*purgeConfig.DeletedTTLMinutes) * time.Minute, false
+}
+
+func shouldDeleteRepo(rs []*types.Repo, repoTTL time.Duration, now time.Time) (shouldDelete bool) {
+	if len(rs) < 1 {
+		// The repo was not found in the DB, likely a hard-delete. Delete from disk.
+		return true
+	}
+
+	// The repo is found, delete if older than TTL or blocked.
+	repo := rs[0]
+	if repo.IsBlocked() != nil {
+		return true
+	} else if repo.IsDeleted() && repo.DeletedAt.Before(now.Add(-repoTTL)) {
+		return true
+	}
+
+	return false
 }

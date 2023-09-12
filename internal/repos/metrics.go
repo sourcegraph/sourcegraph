@@ -52,16 +52,6 @@ var (
 		Help: "Total number of synced repositories",
 	}, []string{tagState})
 
-	purgeSuccess = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "src_repoupdater_purge_success",
-		Help: "Incremented each time we remove a repository clone.",
-	})
-
-	purgeFailed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "src_repoupdater_purge_failed",
-		Help: "Incremented each time we try and fail to remove a repository clone.",
-	})
-
 	schedError = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "src_repoupdater_sched_error",
 		Help: "Incremented each time we encounter an error updating a repository.",

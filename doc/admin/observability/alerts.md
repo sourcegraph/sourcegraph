@@ -4297,37 +4297,6 @@ Generated query for warning alert: `min((max(rate(src_repoupdater_source_repos_t
 
 <br />
 
-## repo-updater: purge_failed
-
-<p class="subtitle">repositories purge failed</p>
-
-**Descriptions**
-
-- <span class="badge badge-warning">warning</span> repo-updater: 0+ repositories purge failed for 5m0s
-
-**Next steps**
-
-- Check repo-updater`s connectivity with gitserver and gitserver logs
-- Learn more about the related dashboard panel in the [dashboards reference](./dashboards.md#repo-updater-purge-failed).
-- **Silence this alert:** If you are aware of this alert and want to silence notifications for it, add the following to your site configuration and set a reminder to re-evaluate the alert:
-
-```json
-"observability.silenceAlerts": [
-  "warning_repo-updater_purge_failed"
-]
-```
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Generated query for warning alert: `max((max(rate(src_repoupdater_purge_failed[1m]))) > 0)`
-
-</details>
-
-<br />
-
 ## repo-updater: sched_auto_fetch
 
 <p class="subtitle">repositories scheduled due to hitting a deadline</p>

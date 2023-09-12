@@ -149,17 +149,6 @@ func RepoUpdater() *monitoring.Dashboard {
 					},
 					{
 						{
-							Name:        "purge_failed",
-							Description: "repositories purge failed",
-							Query:       `max(rate(src_repoupdater_purge_failed[1m]))`,
-							Warning:     monitoring.Alert().Greater(0).For(5 * time.Minute),
-							Panel:       monitoring.Panel().Unit(monitoring.Number),
-							Owner:       monitoring.ObservableOwnerSource,
-							NextSteps:   "Check repo-updater's connectivity with gitserver and gitserver logs",
-						},
-					},
-					{
-						{
 							Name:        "sched_auto_fetch",
 							Description: "repositories scheduled due to hitting a deadline",
 							Query:       `max(rate(src_repoupdater_sched_auto_fetch[1m]))`,

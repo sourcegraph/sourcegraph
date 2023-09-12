@@ -15,6 +15,7 @@ import (
 	"testing/quick"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
 
@@ -32,6 +33,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
+	"github.com/sourcegraph/sourcegraph/lib/pointers"
+	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 const (
@@ -39,10 +42,12 @@ const (
 	testRepoC = "testrepo-C"
 )
 
-func newMockedGitserverDB() database.DB {
+func newMockedGitserverDB() *dbmocks.MockDB {
 	db := dbmocks.NewMockDB()
 	gs := dbmocks.NewMockGitserverRepoStore()
 	db.GitserverReposFunc.SetDefaultReturn(gs)
+	repos := dbmocks.NewMockRepoStore()
+	db.ReposFunc.SetDefaultReturn(repos)
 	return db
 }
 
@@ -119,6 +124,9 @@ UPDATE gitserver_repos SET repo_size_bytes = 5 where repo_id = 3;
 }
 
 func TestCleanupInactive(t *testing.T) {
+	mockRemoveNonExistingReposConfig(false)
+	defer mockRemoveNonExistingReposConfig(true)
+
 	root := t.TempDir()
 
 	repoA := path.Join(root, testRepoA, ".git")
@@ -154,6 +162,9 @@ func TestCleanupInactive(t *testing.T) {
 }
 
 func TestCleanupWrongShard(t *testing.T) {
+	mockRemoveNonExistingReposConfig(false)
+	defer mockRemoveNonExistingReposConfig(true)
+
 	t.Run("wrongShardName", func(t *testing.T) {
 		root := t.TempDir()
 		// should be allocated to shard gitserver-1
@@ -273,6 +284,9 @@ func TestCleanupWrongShard(t *testing.T) {
 // They are stable today, but may become flaky in the future if/when the
 // relevant internal magic numbers and transformations change.
 func TestGitGCAuto(t *testing.T) {
+	mockRemoveNonExistingReposConfig(false)
+	defer mockRemoveNonExistingReposConfig(true)
+
 	// Create a test repository with detectable garbage that GC can prune.
 	wd := t.TempDir()
 	repo := filepath.Join(wd, "garbage-repo")
@@ -336,6 +350,9 @@ func TestGitGCAuto(t *testing.T) {
 }
 
 func TestCleanupExpired(t *testing.T) {
+	mockRemoveNonExistingReposConfig(false)
+	defer mockRemoveNonExistingReposConfig(true)
+
 	root := t.TempDir()
 
 	repoNew := path.Join(root, "repo-new", ".git")
@@ -517,22 +534,24 @@ func TestCleanup_RemoveNonExistentRepos(t *testing.T) {
 		return repoExists, repoNotExists
 	}
 
-	mockGitServerRepos := dbmocks.NewMockGitserverRepoStore()
-	mockGitServerRepos.GetByNameFunc.SetDefaultHook(func(_ context.Context, name api.RepoName) (*types.GitserverRepo, error) {
-		if strings.Contains(string(name), "repo-exists") {
-			return &types.GitserverRepo{}, nil
-		} else {
-			return nil, &database.ErrGitserverRepoNotFound{}
-		}
-	})
 	mockRepos := dbmocks.NewMockRepoStore()
 	mockRepos.ListMinimalReposFunc.SetDefaultReturn([]types.MinimalRepo{}, nil)
+	mockRepos.ListFunc.SetDefaultHook(func(ctx context.Context, opts database.ReposListOptions) ([]*types.Repo, error) {
+		if opts.IncludeBlocked && opts.IncludeDeleted && len(opts.Names) > 0 {
+			if strings.Contains(string(opts.Names[0]), "repo-exists") {
+				return []*types.Repo{{Name: "repo-exists"}}, nil // non-deleted non-blocked repo
+			} else {
+				return []*types.Repo{}, nil // repo not found
+			}
+		}
+		return nil, errors.New("invalid opts given")
+	})
 
 	mockDB := dbmocks.NewMockDB()
-	mockDB.GitserverReposFunc.SetDefaultReturn(mockGitServerRepos)
+	mockDB.GitserverReposFunc.SetDefaultReturn(dbmocks.NewMockGitserverRepoStore())
 	mockDB.ReposFunc.SetDefaultReturn(mockRepos)
 
-	t.Run("Nothing happens if env var is not set", func(t *testing.T) {
+	t.Run("Should delete the repo dir that is not defined in DB", func(t *testing.T) {
 		root := t.TempDir()
 		repoExists, repoNotExists := initRepos(root)
 
@@ -549,18 +568,26 @@ func TestCleanup_RemoveNonExistentRepos(t *testing.T) {
 			gitserver.GitserverAddresses{Addresses: []string{"test-gitserver"}},
 		)
 
-		// nothing should happen if test env not declared to true
-		if _, err := os.Stat(repoExists); err != nil {
-			t.Fatalf("repo dir does not exist anymore %s", repoExists)
+		if _, err := os.Stat(repoNotExists); err == nil {
+			t.Fatal("repo not existing in DB was not removed")
 		}
-		if _, err := os.Stat(repoNotExists); err != nil {
-			t.Fatalf("repo dir does not exist anymore %s", repoNotExists)
+		if _, err := os.Stat(repoExists); err != nil {
+			t.Fatal("repo existing in DB does not exist on disk anymore")
 		}
 	})
 
-	t.Run("Should delete the repo dir that is not defined in DB", func(t *testing.T) {
-		mockRemoveNonExistingReposConfig(true)
-		defer mockRemoveNonExistingReposConfig(false)
+	t.Run("Should not delete the repo dir if the TTL is not expired", func(t *testing.T) {
+		mockRepos.ListFunc.SetDefaultHook(func(ctx context.Context, opts database.ReposListOptions) ([]*types.Repo, error) {
+			if opts.IncludeBlocked && opts.IncludeDeleted && len(opts.Names) > 0 {
+				if strings.Contains(string(opts.Names[0]), "repo-exists") {
+					return []*types.Repo{{Name: "repo-exists", DeletedAt: time.Now()}}, nil // deleted, non-expired repo
+				} else {
+					return []*types.Repo{}, nil // repo not found
+				}
+			}
+			return nil, errors.New("invalid opts given")
+		})
+
 		root := t.TempDir()
 		repoExists, repoNotExists := initRepos(root)
 
@@ -590,6 +617,9 @@ func TestCleanup_RemoveNonExistentRepos(t *testing.T) {
 // does not check whether each job in cleanupRepos finishes successfully, nor
 // does it check if other files or directories have been created.
 func TestCleanupOldLocks(t *testing.T) {
+	mockRemoveNonExistingReposConfig(false)
+	defer mockRemoveNonExistingReposConfig(true)
+
 	type file struct {
 		name        string
 		age         time.Duration
@@ -1671,5 +1701,119 @@ func TestSGMaintenanceRemovesLock(t *testing.T) {
 	_, err = os.Stat(dir.Path(gcLockFile))
 	if !errors.Is(err, fs.ErrNotExist) {
 		t.Fatal("sg maintenance should have removed the lockfile it created")
+	}
+}
+
+func TestRepoPurgeConfig(t *testing.T) {
+	tts := []struct {
+		name     string
+		site     schema.SiteConfiguration
+		ttl      time.Duration
+		disabled bool
+	}{
+		{
+			name:     "no config set",
+			site:     schema.SiteConfiguration{}, // empty
+			ttl:      time.Hour,
+			disabled: false,
+		},
+		{
+			name:     "interval set to 0",
+			site:     schema.SiteConfiguration{RepoPurgeWorker: &schema.RepoPurgeWorker{IntervalMinutes: pointers.Ptr(0)}},
+			ttl:      0,
+			disabled: true,
+		},
+		{
+			name:     "interval set to negative value",
+			site:     schema.SiteConfiguration{RepoPurgeWorker: &schema.RepoPurgeWorker{IntervalMinutes: pointers.Ptr(-1)}},
+			ttl:      0,
+			disabled: true,
+		},
+		{
+			name:     "interval set to positive value",
+			site:     schema.SiteConfiguration{RepoPurgeWorker: &schema.RepoPurgeWorker{IntervalMinutes: pointers.Ptr(10)}},
+			ttl:      time.Hour,
+			disabled: false,
+		},
+		{
+			name:     "TTL set, interval unset",
+			site:     schema.SiteConfiguration{RepoPurgeWorker: &schema.RepoPurgeWorker{DeletedTTLMinutes: pointers.Ptr(10)}},
+			ttl:      10 * time.Minute,
+			disabled: false,
+		},
+	}
+
+	for _, tt := range tts {
+		t.Run(tt.name, func(t *testing.T) {
+			haveTTL, haveDisabled := repoPurgeConfig(siteQuerier{site: tt.site})
+			assert.Equal(t, tt.ttl, haveTTL, "invalid TTL")
+			assert.Equal(t, tt.disabled, haveDisabled, "invalid disabled state")
+		})
+	}
+}
+
+type siteQuerier struct{ site schema.SiteConfiguration }
+
+func (q siteQuerier) SiteConfig() schema.SiteConfiguration { return q.site }
+
+func TestShouldDeleteRepo(t *testing.T) {
+	now := time.Now()
+
+	tts := []struct {
+		name    string
+		rs      []*types.Repo
+		repoTTL time.Duration
+		want    bool
+	}{
+		{
+			name: "no repo found in DB",
+			rs:   []*types.Repo{}, // empty
+			want: true,
+		},
+		{
+			name: "repo found, not deleted",
+			rs: []*types.Repo{
+				{Name: "test"},
+			},
+			want: false,
+		},
+		{
+			name: "repo found, blocked",
+			rs: []*types.Repo{
+				{Name: "test", Blocked: &types.RepoBlock{At: now.Unix()}},
+			},
+			want: true,
+		},
+		{
+			name: "repo found, deleted just now",
+			rs: []*types.Repo{
+				{Name: "test", DeletedAt: now},
+			},
+			repoTTL: time.Hour,
+			want:    false,
+		},
+		{
+			name: "repo found, deleted before TTL",
+			rs: []*types.Repo{
+				{Name: "test", DeletedAt: now.Add(-2 * time.Hour)},
+			},
+			repoTTL: time.Hour,
+			want:    true,
+		},
+		{
+			name: "repo found, deleted just now and blocked",
+			rs: []*types.Repo{
+				{Name: "test", DeletedAt: now, Blocked: &types.RepoBlock{At: now.Unix()}},
+			},
+			repoTTL: time.Hour,
+			want:    true,
+		},
+	}
+
+	for _, tt := range tts {
+		t.Run(tt.name, func(t *testing.T) {
+			have := shouldDeleteRepo(tt.rs, tt.repoTTL, now)
+			require.Equal(t, tt.want, have, "invalid determination made for repo should be deleted")
+		})
 	}
 }

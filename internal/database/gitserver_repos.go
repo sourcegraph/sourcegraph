@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/database/batch"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
-	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -58,9 +56,6 @@ type GitserverRepoStore interface {
 	// ListReposWithLastError iterates over repos w/ non-empty last_error field and calls the repoFn for these repos.
 	// note that this currently filters out any repos which do not have an associated external service where cloud_default = true.
 	ListReposWithLastError(ctx context.Context) ([]api.RepoName, error)
-	// IteratePurgeableRepos iterates over all purgeable repos. These are repos that
-	// are cloned on disk but have been deleted or blocked.
-	IteratePurgeableRepos(ctx context.Context, options IteratePurgableReposOptions, repoFn func(repo api.RepoName) error) error
 	// TotalErroredCloudDefaultRepos returns the total number of repos which have a non-empty last_error field. Note that this is only
 	// counting repos with an associated cloud_default external service.
 	TotalErroredCloudDefaultRepos(ctx context.Context) (int, error)
@@ -182,61 +177,6 @@ func scanLastErroredRepoRow(scanner dbutil.Scanner) (name api.RepoName, err erro
 }
 
 var scanLastErroredRepos = basestore.NewSliceScanner(scanLastErroredRepoRow)
-
-type IteratePurgableReposOptions struct {
-	// DeletedBefore will filter the deleted repos to only those that were deleted
-	// before the given time. The zero value will not apply filtering.
-	DeletedBefore time.Time
-	// Limit optionally limits the repos iterated over. The zero value means no
-	// limits are applied. Repos are ordered by their deleted at date, oldest first.
-	Limit int
-	// Limiter is an optional rate limiter that limits the rate at which we iterate
-	// through the repos.
-	Limiter *ratelimit.InstrumentedLimiter
-}
-
-func (s *gitserverRepoStore) IteratePurgeableRepos(ctx context.Context, options IteratePurgableReposOptions, repoFn func(repo api.RepoName) error) (err error) {
-	deletedAtClause := sqlf.Sprintf("deleted_at IS NOT NULL")
-	if !options.DeletedBefore.IsZero() {
-		deletedAtClause = sqlf.Sprintf("(deleted_at IS NOT NULL AND deleted_at < %s)", options.DeletedBefore)
-	}
-	query := purgableReposQuery
-	if options.Limit > 0 {
-		query = query + fmt.Sprintf(" LIMIT %d", options.Limit)
-	}
-	rows, err := s.Query(ctx, sqlf.Sprintf(query, deletedAtClause, types.CloneStatusCloned))
-	if err != nil {
-		return errors.Wrap(err, "fetching repos with nonempty last_error")
-	}
-	defer func() {
-		err = basestore.CloseRows(rows, err)
-	}()
-
-	for rows.Next() {
-		var name api.RepoName
-		if err := rows.Scan(&name); err != nil {
-			return errors.Wrap(err, "scanning row")
-		}
-		err := repoFn(name)
-		if err != nil {
-			// Abort
-			return errors.Wrap(err, "calling repoFn")
-		}
-	}
-
-	return nil
-}
-
-const purgableReposQuery = `
-SELECT
-	repo.name
-FROM repo
-JOIN gitserver_repos gr ON repo.id = gr.repo_id
-WHERE
-	(%s OR repo.blocked IS NOT NULL)
-	AND gr.clone_status = %s
-ORDER BY deleted_at ASC
-`
 
 type IterateRepoGitserverStatusOptions struct {
 	// If set, will only iterate over repos that have not been assigned to a shard

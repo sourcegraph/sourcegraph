@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -348,6 +349,14 @@ func getRemoteURLFunc(
 ) (string, error) {
 	r, err := db.Repos().GetByName(ctx, repo)
 	if err != nil {
+		rs, err2 := db.Repos().List(actor.WithInternalActor(context.Background()), database.ReposListOptions{IncludeDeleted: true})
+		if err2 != nil {
+			logger.Error("failed to list all repos", log.Error(err2))
+		} else {
+			logger.Error("failed to get repos, here's the table", log.Error(err))
+			out, _ := json.Marshal(rs)
+			fmt.Printf("repos: %#+v\n", string(out))
+		}
 		return "", err
 	}
 

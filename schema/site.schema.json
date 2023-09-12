@@ -986,14 +986,20 @@
       "properties": {
         "intervalMinutes": {
           "type": "integer",
-          "description": "Interval in minutes at which to run purge jobs. Set to 0 to disable.",
+          "description": "Interval in minutes at which to run purge jobs. Set to 0 to disable. NOTE: This interval is no longer used, but you can still set it to 0 to disable the purge worker.",
           "default": "15",
+          "!go": {
+            "pointer": true
+          },
           "minimum": 0
         },
         "deletedTTLMinutes": {
           "type": "integer",
           "description": "Repository TTL in minutes after deletion before it becomes eligible to be purged. A migration or admin could accidentally remove all or a significant number of repositories - recloning all of them is slow, so a TTL acts as a grace period so that admins can recover from accidental deletions",
           "default": "60",
+          "!go": {
+            "pointer": true
+          },
           "minimum": 0
         }
       }

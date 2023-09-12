@@ -136,7 +136,6 @@ go_library(
         "//internal/own/codeowners/v1:codeowners",
         "//internal/own/types",
         "//internal/randstring",
-        "//internal/ratelimit",
         "//internal/rbac/types",
         "//internal/search/result",
         "//internal/security",

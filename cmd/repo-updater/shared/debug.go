@@ -36,13 +36,5 @@ func createDebugServerEndpoints(ready chan struct{}, debugserverEndpoints *LazyD
 				debugserverEndpoints.gitserverReposStatusEndpoint(w, r)
 			}),
 		},
-		{
-			Name: "Manual Repo Purge",
-			Path: "/manual-purge",
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				<-ready
-				debugserverEndpoints.manualPurgeEndpoint(w, r)
-			}),
-		},
 	}
 }

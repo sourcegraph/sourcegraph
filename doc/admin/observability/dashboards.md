@@ -13421,32 +13421,13 @@ Query: `max(rate(src_repoupdater_source_repos_total[1m]))`
 
 <br />
 
-#### repo-updater: purge_failed
-
-<p class="subtitle">Repositories purge failed</p>
-
-Refer to the [alerts reference](./alerts.md#repo-updater-purge-failed) for 1 alert related to this panel.
-
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100030` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query: `max(rate(src_repoupdater_purge_failed[1m]))`
-
-</details>
-
-<br />
-
 #### repo-updater: sched_auto_fetch
 
 <p class="subtitle">Repositories scheduled due to hitting a deadline</p>
 
 Refer to the [alerts reference](./alerts.md#repo-updater-sched-auto-fetch) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100040` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100030` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13468,7 +13449,7 @@ This does not indicate anything if there are no user added code hosts.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100041` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100031` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13487,7 +13468,7 @@ Query: `max(rate(src_repoupdater_sched_manual_fetch[1m]))`
 
 Refer to the [alerts reference](./alerts.md#repo-updater-sched-known-repos) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100050` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100040` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13506,7 +13487,7 @@ Query: `max(src_repoupdater_sched_known_repos)`
 
 Refer to the [alerts reference](./alerts.md#repo-updater-sched-update-queue-length) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100051` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100041` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13525,7 +13506,7 @@ Query: `max(deriv(src_repoupdater_sched_update_queue_length[5m]))`
 
 Refer to the [alerts reference](./alerts.md#repo-updater-sched-loops) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100052` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100042` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13544,7 +13525,7 @@ Query: `max(rate(src_repoupdater_sched_loops[1m]))`
 
 Refer to the [alerts reference](./alerts.md#repo-updater-src-repoupdater-stale-repos) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100060` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100050` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -13563,7 +13544,7 @@ Query: `max(src_repoupdater_stale_repos)`
 
 Refer to the [alerts reference](./alerts.md#repo-updater-sched-error) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100061` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/repo-updater/repo-updater?viewPanel=100051` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 

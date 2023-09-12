@@ -37,6 +37,8 @@ After a repository is deleted from Sourcegraph in the database, its data still r
 
 **NOTE:** This is not available on Docker Compose deployments.
 
+# TODO UPDATE DOCS
+
 1. Browse to Site Admin -> Instrumentation -> Repo Updater -> Manual Repo Purge
 2. You'll be at a url similar to `https://sourcegraph-instance/-/debug/proxies/repo-updater/manual-purge`
 3. You need to specify a limit parameter which specifies the upper limit to the number of repos that will be removed, for example: `https://sourcegraph-instance/-/debug/proxies/repo-updater/manual-purge?limit=1000`

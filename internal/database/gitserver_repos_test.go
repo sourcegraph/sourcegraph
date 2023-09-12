@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/keegancsmith/sqlf"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/log/logtest"
@@ -106,98 +105,6 @@ func TestIterateRepoGitserverStatus(t *testing.T) {
 	t.Run("include deleted, but still only without shard", func(t *testing.T) {
 		assert(t, 2, 2, IterateRepoGitserverStatusOptions{OnlyWithoutShard: true, IncludeDeleted: true})
 	})
-}
-
-func TestIteratePurgeableRepos(t *testing.T) {
-	ctx := context.Background()
-	logger := logtest.Scoped(t)
-	db := NewDB(logger, dbtest.NewDB(logger, t))
-	store := basestore.NewWithHandle(db.Handle())
-
-	normalRepo := &types.Repo{Name: "normal"}
-	blockedRepo := &types.Repo{Name: "blocked"}
-	deletedRepo := &types.Repo{Name: "deleted"}
-	notCloned := &types.Repo{Name: "notCloned"}
-
-	createTestRepos(ctx, t, db, types.Repos{
-		normalRepo,
-		blockedRepo,
-		deletedRepo,
-		notCloned,
-	})
-	for _, repo := range []*types.Repo{normalRepo, blockedRepo, deletedRepo} {
-		updateTestGitserverRepos(ctx, t, db, false, types.CloneStatusCloned, repo.ID)
-	}
-	// Delete & load soft-deleted name of repo
-	if err := db.Repos().Delete(ctx, deletedRepo.ID); err != nil {
-		t.Fatal(err)
-	}
-	deletedRepoNameStr, _, err := basestore.ScanFirstString(store.Query(ctx, sqlf.Sprintf("SELECT name FROM repo WHERE id = %s", deletedRepo.ID)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	deletedRepoName := api.RepoName(deletedRepoNameStr)
-
-	// Blocking a repo is currently done manually
-	if _, err := db.ExecContext(ctx, `UPDATE repo set blocked = '{}' WHERE id = $1`, blockedRepo.ID); err != nil {
-		t.Fatal(err)
-	}
-
-	for _, tt := range []struct {
-		name      string
-		options   IteratePurgableReposOptions
-		wantRepos []api.RepoName
-	}{
-		{
-			name: "zero deletedBefore",
-			options: IteratePurgableReposOptions{
-				DeletedBefore: time.Time{},
-				Limit:         0,
-			},
-			wantRepos: []api.RepoName{deletedRepoName, blockedRepo.Name},
-		},
-		{
-			name: "deletedBefore now",
-			options: IteratePurgableReposOptions{
-				DeletedBefore: time.Now(),
-				Limit:         0,
-			},
-
-			wantRepos: []api.RepoName{deletedRepoName, blockedRepo.Name},
-		},
-		{
-			name: "deletedBefore 5 minutes ago",
-			options: IteratePurgableReposOptions{
-				DeletedBefore: time.Now().Add(-5 * time.Minute),
-				Limit:         0,
-			},
-			wantRepos: []api.RepoName{blockedRepo.Name},
-		},
-		{
-			name: "test limit",
-			options: IteratePurgableReposOptions{
-				DeletedBefore: time.Time{},
-				Limit:         1,
-			},
-			wantRepos: []api.RepoName{deletedRepoName},
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			var have []api.RepoName
-			if err := db.GitserverRepos().IteratePurgeableRepos(ctx, tt.options, func(repo api.RepoName) error {
-				have = append(have, repo)
-				return nil
-			}); err != nil {
-				t.Fatal(err)
-			}
-
-			sort.Slice(have, func(i, j int) bool { return have[i] < have[j] })
-
-			if diff := cmp.Diff(have, tt.wantRepos); diff != "" {
-				t.Fatalf("wrong iterated: %s", diff)
-			}
-		})
-	}
 }
 
 func TestListReposWithLastError(t *testing.T) {
