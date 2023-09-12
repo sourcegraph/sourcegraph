@@ -3,13 +3,13 @@
 package:
   name: p4-fusion
   version: 1.12
-  epoch: 4
-  description: "A fast Perforce to Git conversion tool"
+  epoch: 5
+  description: 'A fast Perforce to Git conversion tool'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright (c) 2022 Salesforce, Inc.'
       license: 'BSD 3-Clause License'
   dependencies:

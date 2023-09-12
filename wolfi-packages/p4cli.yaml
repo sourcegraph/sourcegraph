@@ -1,13 +1,13 @@
 package:
   name: p4cli
   version: 22.2
-  epoch: 2
-  description: "Command line interface for Perforce"
+  epoch: 3
+  description: 'Command line interface for Perforce'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright (c) 1995-2021, Perforce Software, Inc.'
       license: 'BSD-2-Clause'
   dependencies:

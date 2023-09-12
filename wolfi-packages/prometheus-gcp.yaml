@@ -3,13 +3,13 @@
 package:
   name: prometheus-gcp
   version: 2.35.0-gmp.6
-  epoch: 1
-  description: "Prometheus for Google Cloud Platform metrics"
+  epoch: 2
+  description: 'Prometheus for Google Cloud Platform metrics'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       license: 'Apache License 2.0'
   dependencies:
     runtime:

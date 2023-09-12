@@ -1,13 +1,13 @@
 package:
   name: redis_exporter
   version: 1.35.0
-  epoch: 1
-  description: "Prometheus Exporter for Redis Metrics"
+  epoch: 2
+  description: 'Prometheus Exporter for Redis Metrics'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright (c) 2016 Oliver'
       license: 'MIT License'
   dependencies:
@@ -32,6 +32,6 @@ pipeline:
   - uses: go/build
     with:
       packages: main.go
-      ldflags: "-s -w -extldflags \"-static\""
+      ldflags: '-s -w -extldflags "-static"'
       prefix: /usr/local
       output: redis_exporter

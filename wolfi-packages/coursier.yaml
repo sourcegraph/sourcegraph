@@ -4,13 +4,13 @@
 package:
   name: coursier
   version: 2.0.13 # IMPORTANT: Coursier uses a non-standard release model, so updating this version alone will not update the package
-  epoch: 1
-  description: "Java dependency resolver"
+  epoch: 2
+  description: 'Java dependency resolver'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       license: 'Apache License 2.0'
   dependencies:
     runtime:

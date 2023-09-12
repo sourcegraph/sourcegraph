@@ -1,13 +1,13 @@
 package:
   name: s3proxy
   version: 2.0.0
-  epoch: 2
-  description: "Access other storage backends via the S3 API"
+  epoch: 3
+  description: 'Access other storage backends via the S3 API'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: ''
       license: 'Apache License 2.0'
   dependencies:

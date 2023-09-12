@@ -1,13 +1,13 @@
 package:
   name: comby
   version: 1.8.1
-  epoch: 2
-  description: "A code rewrite tool for structural search and replace that supports ~every language."
+  epoch: 3
+  description: 'A code rewrite tool for structural search and replace that supports ~every language.'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright 2019 Rijnard van Tonder'
       license: 'Apache License 2.0'
   dependencies:

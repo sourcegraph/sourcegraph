@@ -1,13 +1,13 @@
 package:
   name: qdrant
   version: 1.4.1
-  epoch: 1
-  description: "Qdrant vector database"
+  epoch: 2
+  description: 'Qdrant vector database'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       license: 'Apache 2.0'
   dependencies:
     runtime:

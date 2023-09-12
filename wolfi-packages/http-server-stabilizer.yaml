@@ -3,13 +3,13 @@
 package:
   name: http-server-stabilizer
   version: 1.1.0
-  epoch: 1
-  description: "HTTP server stabilizer for unruly servers"
+  epoch: 2
+  description: 'HTTP server stabilizer for unruly servers'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright 2018 Sourcegraph, Inc.'
       license: 'Apache License 2.0'
   dependencies:

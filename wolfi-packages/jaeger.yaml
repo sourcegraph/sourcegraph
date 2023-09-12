@@ -4,13 +4,13 @@
 package:
   name: jaeger
   version: 1.45.0 # Keep in sync with version in sg.config.yaml
-  epoch: 4
-  description: "Distributed Tracing Platform"
+  epoch: 5
+  description: 'Distributed Tracing Platform'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright The Jaeger Authors'
       license: 'Apache License 2.0'
   dependencies:

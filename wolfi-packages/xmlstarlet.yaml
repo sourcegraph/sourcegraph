@@ -1,13 +1,13 @@
 package:
   name: xmlstarlet
   version: 1.6.1
-  epoch: 1
-  description: ""
+  epoch: 2
+  description: ''
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright (c) 2002 Mikhail Grushinskiy'
       license: 'MIT License'
   dependencies:

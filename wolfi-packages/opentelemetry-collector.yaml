@@ -1,13 +1,13 @@
 package:
   name: opentelemetry-collector
   version: 0.81.0 # Keep in sync with version in go.mod
-  epoch: 1
-  description: "Vendor-agnostic implementation on how to receive, process and export telemetry data"
+  epoch: 2
+  description: 'Vendor-agnostic implementation on how to receive, process and export telemetry data'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright 2014 The open-telemetry Authors'
       license: 'Apache License 2.0'
   dependencies:

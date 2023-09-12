@@ -1,13 +1,13 @@
 package:
   name: docker-client
   version: 24.0.0
-  epoch: 1
-  description: "Docker client binary - excludes container runtime"
+  epoch: 2
+  description: 'Docker client binary - excludes container runtime'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright 2013-2018 Docker, Inc.'
       license: 'Apache License, Version 2.0'
   dependencies:
@@ -33,4 +33,3 @@ pipeline:
   - runs: |
       mkdir -p ${{targets.destdir}}/usr/bin/
       cp docker/docker ${{targets.destdir}}/usr/bin/
-

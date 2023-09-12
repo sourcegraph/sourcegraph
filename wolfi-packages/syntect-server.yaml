@@ -3,13 +3,13 @@
 package:
   name: syntect-server
   version: 4.3
-  epoch: 0
-  description: "HTTP server stabilizer for unruly servers"
+  epoch: 1
+  description: 'HTTP server stabilizer for unruly servers'
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - '*'
       attestation: 'Copyright (c) 2017 Sourcegraph'
       license: 'MIT License'
   dependencies:
