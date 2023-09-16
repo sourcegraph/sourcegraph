@@ -16,6 +16,7 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/extsvc/perforce"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/server/common"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/server/urlredactor"
@@ -23,31 +24,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
-
-type PerforceDepotType string
-
-const (
-	Local   PerforceDepotType = "local"
-	Remote  PerforceDepotType = "remote"
-	Stream  PerforceDepotType = "stream"
-	Spec    PerforceDepotType = "spec"
-	Unload  PerforceDepotType = "unload"
-	Archive PerforceDepotType = "archive"
-	Tangent PerforceDepotType = "tangent"
-	Graph   PerforceDepotType = "graph"
-)
-
-// PerforceDepot is a definiton of a depot that matches the format
-// returned from `p4 -Mj -ztag depots`
-type PerforceDepot struct {
-	Desc string `json:"desc,omitempty"`
-	Map  string `json:"map,omitempty"`
-	Name string `json:"name,omitempty"`
-	// Time is seconds since the Epoch, but p4 quotes it in the output, so it's a string
-	Time string `json:"time,omitempty"`
-	// Type is local, remote, stream, spec, unload, archive, tangent, graph
-	Type PerforceDepotType `json:"type,omitempty"`
-}
 
 // PerforceDepotSyncer is a syncer for Perforce depots.
 type PerforceDepotSyncer struct {
@@ -100,6 +76,16 @@ func (s *PerforceDepotSyncer) IsCloneable(ctx context.Context, _ api.RepoName, r
 			return errors.Newf("the user %s does not have access to the depot %s on the server %s", username, depot, host)
 		} else {
 			return errors.Newf("the user %s does not have access to any depots on the server %s", username, host)
+		}
+	}
+
+	depotParts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(depotParts) > 1 {
+		path := fmt.Sprintf("//%s/...", strings.Join(depotParts, "/"))
+		if ok, err := doesP4PathspecExist(ctx, host, username, password, path, 1); err != nil {
+			return errors.Wrapf(err, "failed to check if pathspec exists")
+		} else if !ok {
+			return errors.Newf("the user does not have access to the path %q or it doesn't exist", path)
 		}
 	}
 
@@ -305,7 +291,7 @@ func p4test(ctx context.Context, host, username, password string) error {
 // p4depots returns all of the depots to which the user has access on the host
 // and whose names match the given nameFilter, which can contain asterisks (*) for wildcards
 // if nameFilter is blank, return all depots
-func p4depots(ctx context.Context, host, username, password, nameFilter string) ([]PerforceDepot, error) {
+func p4depots(ctx context.Context, host, username, password, nameFilter string) ([]perforce.PerforceDepot, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -331,12 +317,12 @@ func p4depots(ctx context.Context, host, username, password, nameFilter string) 
 		}
 		return nil, err
 	}
-	depots := make([]PerforceDepot, 0)
+	depots := make([]perforce.PerforceDepot, 0)
 	if len(out) > 0 {
 		// the output of `p4 -Mj -ztag depots` is a series of JSON-formatted depot definitions, one per line
 		buf := bufio.NewScanner(bytes.NewBuffer(out))
 		for buf.Scan() {
-			depot := PerforceDepot{}
+			depot := perforce.PerforceDepot{}
 			err := json.Unmarshal(buf.Bytes(), &depot)
 			if err != nil {
 				return nil, errors.Wrap(err, "malformed output from p4 depots")
@@ -351,6 +337,31 @@ func p4depots(ctx context.Context, host, username, password, nameFilter string) 
 
 	// no error, but also no depots. Maybe the user doesn't have access to any depots?
 	return depots, nil
+}
+
+func doesP4PathspecExist(ctx context.Context, host, username, password, pathspec string, max int) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "p4", "-Mj", "-ztag", "files", "-m", strconv.Itoa(max), pathspec)
+	cmd.Env = append(os.Environ(),
+		"P4PORT="+host,
+		"P4USER="+username,
+		"P4PASSWD="+password,
+	)
+
+	out, err := runCommandCombinedOutput(ctx, wrexec.Wrap(ctx, log.NoOp(), cmd))
+	if err != nil {
+		if ctxerr := ctx.Err(); ctxerr != nil {
+			err = ctxerr
+		}
+		if len(out) > 0 {
+			err = errors.Wrapf(err, `failed to run command "p4 files" (output follows)\n\n%s`, specifyCommandInErrorMessage(string(out), cmd))
+		}
+		return false, err
+	}
+
+	return !bytes.Contains(out, []byte("- no such file(s).")), nil
 }
 
 func specifyCommandInErrorMessage(errorMsg string, command *exec.Cmd) string {
@@ -374,13 +385,29 @@ func p4testWithTrust(ctx context.Context, host, username, password string) error
 	if strings.Contains(err.Error(), "To allow connection use the 'p4 trust' command.") {
 		err := p4trust(ctx, host)
 		if err != nil {
-			return errors.Wrap(err, "trust")
+			// Treat unsuccessful trust as invalid credentials for now, so that heavier
+			// operations are aborted.
+			return p4CredentialsInvalidError{errors.Wrap(err, "establishing trust with perforce server")}
 		}
+
+		// Retest the connection, now that we have established trust.
+		err = p4test(ctx, host, username, password)
+		if err != nil {
+			return p4CredentialsInvalidError{err}
+		}
+
 		return nil
 	}
 
-	// Something unexpected happened, bubble up the error
-	return err
+	// Something unexpected happened, bubble up the error, the credentials are most
+	// likely invalid.
+	return p4CredentialsInvalidError{err}
+}
+
+type p4CredentialsInvalidError struct{ error }
+
+func (e p4CredentialsInvalidError) Unauthorized() bool {
+	return true
 }
 
 // FusionConfig allows configuration of the p4-fusion client
