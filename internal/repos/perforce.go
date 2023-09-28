@@ -46,6 +46,20 @@ func newPerforceSource(svc *types.ExternalService, c *schema.PerforceConnection)
 	}, nil
 }
 
+func listDepots(config *schema.PerforceConnection) []perforce.Depot {
+	depots := make([]perforce.Depot, len(config.Depots)+len(config.Streams))
+	depotCount := 0
+	for _, depot := range config.Depots {
+		depots[depotCount] = perforce.Depot{Depot: depot, Type: perforce.Local}
+		depotCount++
+	}
+	for _, depot := range config.Streams {
+		depots[depotCount] = perforce.Depot{Depot: depot, Type: perforce.Stream}
+		depotCount++
+	}
+	return depots
+}
+
 // CheckConnection tests the code host connection to make sure it works.
 // For Perforce, it uses the host (p4.port), username (p4.user) and password (p4.passwd)
 // from the code host configuration.
@@ -65,17 +79,17 @@ func (s PerforceSource) CheckConnection(ctx context.Context) error {
 // ListRepos returns all Perforce depots accessible to all connections
 // configured in Sourcegraph via the external services configuration.
 func (s PerforceSource) ListRepos(ctx context.Context, results chan SourceResult) {
-	for _, depot := range s.config.Depots {
+	// we don't care if the depo is a classic or streams depot while listing them
+	for _, depot := range listDepots(s.config) {
 		// Tiny optimization: exit early if context has been canceled.
 		if err := ctx.Err(); err != nil {
 			results <- SourceResult{Source: s, Err: err}
 			return
 		}
-
 		u := url.URL{
 			Scheme: "perforce",
 			Host:   s.config.P4Port,
-			Path:   depot,
+			Path:   depot.Depot,
 			User:   url.UserPassword(s.config.P4User, s.config.P4Passwd),
 		}
 		p4Url, err := vcs.ParseURL(u.String())
@@ -97,11 +111,14 @@ func (s PerforceSource) ListRepos(ctx context.Context, results chan SourceResult
 // composePerforceCloneURL composes a clone URL for a Perforce depot based on
 // given information. e.g.
 // perforce://ssl:111.222.333.444:1666//Sourcegraph/
-func composePerforceCloneURL(host, depot, username, password string) string {
+func composePerforceCloneURL(host string, depot perforce.Depot, username, password string) string {
 	cloneURL := url.URL{
 		Scheme: "perforce",
 		Host:   host,
-		Path:   depot,
+		Path:   depot.Depot,
+	}
+	if depot.Type == perforce.Stream {
+		cloneURL.RawQuery = "stream"
 	}
 	if username != "" && password != "" {
 		cloneURL.User = url.UserPassword(username, password)
@@ -109,11 +126,11 @@ func composePerforceCloneURL(host, depot, username, password string) string {
 	return cloneURL.String()
 }
 
-func (s PerforceSource) makeRepo(depot string) *types.Repo {
-	if !strings.HasSuffix(depot, "/") {
-		depot += "/"
+func (s PerforceSource) makeRepo(depot perforce.Depot) *types.Repo {
+	if !strings.HasSuffix(depot.Depot, "/") {
+		depot.Depot += "/"
 	}
-	name := strings.Trim(depot, "/")
+	name := strings.Trim(depot.Depot, "/")
 	urn := s.svc.URN()
 
 	cloneURL := composePerforceCloneURL(s.config.P4Port, depot, "", "")
@@ -128,7 +145,7 @@ func (s PerforceSource) makeRepo(depot string) *types.Repo {
 			name,
 		)),
 		ExternalRepo: api.ExternalRepoSpec{
-			ID:          depot,
+			ID:          depot.Depot,
 			ServiceType: extsvc.TypePerforce,
 			ServiceID:   s.config.P4Port,
 		},
@@ -140,7 +157,8 @@ func (s PerforceSource) makeRepo(depot string) *types.Repo {
 			},
 		},
 		Metadata: &perforce.Depot{
-			Depot: depot,
+			Depot: depot.Depot,
+			Type:  depot.Type,
 		},
 	}
 }

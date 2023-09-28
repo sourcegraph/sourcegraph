@@ -13,7 +13,7 @@ import (
 func TestDecomposePerforceRemoteURL(t *testing.T) {
 	t.Run("not a perforce scheme", func(t *testing.T) {
 		remoteURL, _ := vcs.ParseURL("https://www.google.com")
-		_, _, _, _, err := decomposePerforceRemoteURL(remoteURL)
+		_, _, _, _, _, err := decomposePerforceRemoteURL(remoteURL)
 		assert.Error(t, err)
 	})
 
@@ -67,7 +67,7 @@ func TestDecomposePerforceRemoteURL(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.cloneURL, func(t *testing.T) {
 			remoteURL, _ := vcs.ParseURL(test.cloneURL)
-			username, password, host, depot, err := decomposePerforceRemoteURL(remoteURL)
+			username, password, host, depot, _, err := decomposePerforceRemoteURL(remoteURL)
 			if err != nil {
 				t.Fatal(err)
 			}

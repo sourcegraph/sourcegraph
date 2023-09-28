@@ -279,14 +279,34 @@ func TestPerforceCloneURL(t *testing.T) {
 		P4Passwd: "pa$$word",
 	}
 
-	repo := &perforce.Depot{
-		Depot: "//Sourcegraph/",
+	tests := []struct {
+		Depot perforce.Depot
+		Want  string
+	}{
+		{
+			Depot: perforce.Depot{
+				Depot: "//Sourcegraph/",
+				Type:  perforce.Local,
+			},
+			Want: "perforce://admin:pa$$word@ssl:111.222.333.444:1666//Sourcegraph/",
+		},
+		{
+			Depot: perforce.Depot{
+				Depot: "//Sourcegraph/",
+				Type:  perforce.Stream,
+			},
+			Want: "perforce://admin:pa$$word@ssl:111.222.333.444:1666//Sourcegraph/?stream",
+		},
 	}
 
-	got := perforceCloneURL(repo, &cfg)
-	want := "perforce://admin:pa$$word@ssl:111.222.333.444:1666//Sourcegraph/"
-	if got != want {
-		t.Fatalf("wrong cloneURL, got: %q, want: %q", got, want)
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Depot %q (%q)", test.Depot.Depot, test.Depot.Type), func(t *testing.T) {
+			got := perforceCloneURL(&test.Depot, &cfg)
+
+			if got != test.Want {
+				t.Fatalf("wrong cloneURL for a %q depot, got: %q, want: %q", test.Depot.Type, got, test.Want)
+			}
+		})
 	}
 }
 

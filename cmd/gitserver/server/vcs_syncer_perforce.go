@@ -16,6 +16,7 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/extsvc/perforce"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/server/common"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/server/urlredactor"
@@ -23,31 +24,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
-
-type PerforceDepotType string
-
-const (
-	Local   PerforceDepotType = "local"
-	Remote  PerforceDepotType = "remote"
-	Stream  PerforceDepotType = "stream"
-	Spec    PerforceDepotType = "spec"
-	Unload  PerforceDepotType = "unload"
-	Archive PerforceDepotType = "archive"
-	Tangent PerforceDepotType = "tangent"
-	Graph   PerforceDepotType = "graph"
-)
-
-// PerforceDepot is a definiton of a depot that matches the format
-// returned from `p4 -Mj -ztag depots`
-type PerforceDepot struct {
-	Desc string `json:"desc,omitempty"`
-	Map  string `json:"map,omitempty"`
-	Name string `json:"name,omitempty"`
-	// Time is seconds since the Epoch, but p4 quotes it in the output, so it's a string
-	Time string `json:"time,omitempty"`
-	// Type is local, remote, stream, spec, unload, archive, tangent, graph
-	Type PerforceDepotType `json:"type,omitempty"`
-}
 
 // PerforceDepotSyncer is a syncer for Perforce depots.
 type PerforceDepotSyncer struct {
@@ -76,7 +52,7 @@ func (s *PerforceDepotSyncer) CanConnect(ctx context.Context, host, username, pa
 
 // IsCloneable checks to see if the Perforce remote URL is cloneable.
 func (s *PerforceDepotSyncer) IsCloneable(ctx context.Context, _ api.RepoName, remoteURL *vcs.URL) error {
-	username, password, host, path, err := decomposePerforceRemoteURL(remoteURL)
+	username, password, host, path, _, err := decomposePerforceRemoteURL(remoteURL)
 	if err != nil {
 		return errors.Wrap(err, "decompose")
 	}
@@ -113,7 +89,7 @@ func (s *PerforceDepotSyncer) IsCloneable(ctx context.Context, _ api.RepoName, r
 
 // CloneCommand returns the command to be executed for cloning a Perforce depot as a Git repository.
 func (s *PerforceDepotSyncer) CloneCommand(ctx context.Context, remoteURL *vcs.URL, tmpPath string) (*exec.Cmd, error) {
-	username, password, p4port, depot, err := decomposePerforceRemoteURL(remoteURL)
+	username, password, p4port, depot, isStreamDepot, err := decomposePerforceRemoteURL(remoteURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "decompose")
 	}
@@ -125,7 +101,7 @@ func (s *PerforceDepotSyncer) CloneCommand(ctx context.Context, remoteURL *vcs.U
 
 	var cmd *exec.Cmd
 	if s.FusionConfig.Enabled {
-		cmd = s.buildP4FusionCmd(ctx, depot, username, tmpPath, p4port)
+		cmd = s.buildP4FusionCmd(ctx, p4port, depot, username, password, tmpPath, isStreamDepot)
 	} else {
 		// Example: git p4 clone --bare --max-changes 1000 //Sourcegraph/@all /tmp/clone-584194180/.git
 		args := append([]string{"p4", "clone", "--bare"}, s.p4CommandOptions()...)
@@ -137,16 +113,16 @@ func (s *PerforceDepotSyncer) CloneCommand(ctx context.Context, remoteURL *vcs.U
 	return cmd, nil
 }
 
-func (s *PerforceDepotSyncer) buildP4FusionCmd(ctx context.Context, depot, username, src, port string) *exec.Cmd {
+func (s *PerforceDepotSyncer) buildP4FusionCmd(ctx context.Context, host, depot, username, password, src string, isStreamDepot bool) *exec.Cmd {
 	// Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100
-	return exec.CommandContext(ctx, "p4-fusion",
+	cmd := exec.CommandContext(ctx, "p4-fusion",
 		"--path", depot+"...",
 		"--client", s.FusionConfig.Client,
 		"--user", username,
 		"--src", src,
 		"--networkThreads", strconv.Itoa(s.FusionConfig.NetworkThreads),
 		"--printBatch", strconv.Itoa(s.FusionConfig.PrintBatch),
-		"--port", port,
+		"--port", host,
 		"--lookAhead", strconv.Itoa(s.FusionConfig.LookAhead),
 		"--retries", strconv.Itoa(s.FusionConfig.Retries),
 		"--refresh", strconv.Itoa(s.FusionConfig.Refresh),
@@ -155,11 +131,23 @@ func (s *PerforceDepotSyncer) buildP4FusionCmd(ctx context.Context, depot, usern
 		"--fsyncEnable", strconv.FormatBool(s.FusionConfig.FsyncEnable),
 		"--noColor", "true",
 	)
+	if isStreamDepot {
+		// for stream depots, seek out and add streams to the command
+		streams, err := p4streams(ctx, host, username, password, depot)
+		if err == nil && len(streams) > 0 {
+			for _, stream := range streams {
+				if stream.Type != perforce.Virtual {
+					cmd.Args = append(cmd.Args, "--branch", stream.Name)
+				}
+			}
+		}
+	}
+	return cmd
 }
 
 // Fetch tries to fetch updates of a Perforce depot as a Git repository.
 func (s *PerforceDepotSyncer) Fetch(ctx context.Context, remoteURL *vcs.URL, _ api.RepoName, dir common.GitDir, _ string) ([]byte, error) {
-	username, password, host, depot, err := decomposePerforceRemoteURL(remoteURL)
+	username, password, host, depot, isStreamDepot, err := decomposePerforceRemoteURL(remoteURL)
 	if err != nil {
 		return nil, errors.Wrap(err, "decompose")
 	}
@@ -173,7 +161,7 @@ func (s *PerforceDepotSyncer) Fetch(ctx context.Context, remoteURL *vcs.URL, _ a
 	if s.FusionConfig.Enabled {
 		// Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100
 		root, _ := filepath.Split(string(dir))
-		cmd = wrexec.Wrap(ctx, nil, s.buildP4FusionCmd(ctx, depot, username, root+".git", host))
+		cmd = wrexec.Wrap(ctx, nil, s.buildP4FusionCmd(ctx, host, depot, username, password, root+".git", isStreamDepot))
 	} else {
 		// Example: git p4 sync --max-changes 1000
 		args := append([]string{"p4", "sync"}, s.p4CommandOptions()...)
@@ -246,12 +234,12 @@ func (s *PerforceDepotSyncer) p4CommandEnv(port, username, password string) []st
 
 // decomposePerforceRemoteURL decomposes information back from a clone URL for a
 // Perforce depot.
-func decomposePerforceRemoteURL(remoteURL *vcs.URL) (username, password, host, depot string, err error) {
+func decomposePerforceRemoteURL(remoteURL *vcs.URL) (username, password, host, depot string, isStreamDepot bool, err error) {
 	if remoteURL.Scheme != "perforce" {
-		return "", "", "", "", errors.New(`scheme is not "perforce"`)
+		return "", "", "", "", false, errors.New(`scheme is not "perforce"`)
 	}
 	password, _ = remoteURL.User.Password()
-	return remoteURL.User.Username(), password, remoteURL.Host, remoteURL.Path, nil
+	return remoteURL.User.Username(), password, remoteURL.Host, remoteURL.Path, remoteURL.Query().Has("stream"), nil
 }
 
 // p4trust blindly accepts fingerprint of the Perforce server.
@@ -309,7 +297,7 @@ func p4test(ctx context.Context, host, username, password string) error {
 // p4depots returns all of the depots to which the user has access on the host
 // and whose names match the given nameFilter, which can contain asterisks (*) for wildcards
 // if nameFilter is blank, return all depots
-func p4depots(ctx context.Context, host, username, password, nameFilter string) ([]PerforceDepot, error) {
+func p4depots(ctx context.Context, host, username, password, nameFilter string) ([]perforce.DepotSpec, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -335,12 +323,12 @@ func p4depots(ctx context.Context, host, username, password, nameFilter string) 
 		}
 		return nil, err
 	}
-	depots := make([]PerforceDepot, 0)
+	depots := make([]perforce.DepotSpec, 0)
 	if len(out) > 0 {
 		// the output of `p4 -Mj -ztag depots` is a series of JSON-formatted depot definitions, one per line
 		buf := bufio.NewScanner(bytes.NewBuffer(out))
 		for buf.Scan() {
-			depot := PerforceDepot{}
+			depot := perforce.DepotSpec{}
 			err := json.Unmarshal(buf.Bytes(), &depot)
 			if err != nil {
 				return nil, errors.Wrap(err, "malformed output from p4 depots")
@@ -355,6 +343,50 @@ func p4depots(ctx context.Context, host, username, password, nameFilter string) 
 
 	// no error, but also no depots. Maybe the user doesn't have access to any depots?
 	return depots, nil
+}
+
+// p4streams returns all of the streams in a given depot
+func p4streams(ctx context.Context, host, username, password, depot string) ([]perforce.StreamSpec, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "p4", "-Mj", "-ztag", "streams", depot+"...")
+	cmd.Env = append(os.Environ(),
+		"P4PORT="+host,
+		"P4USER="+username,
+		"P4PASSWD="+password,
+	)
+
+	out, err := runCommandCombinedOutput(ctx, wrexec.Wrap(ctx, log.NoOp(), cmd))
+	if err != nil {
+		if ctxerr := ctx.Err(); ctxerr != nil {
+			err = ctxerr
+		}
+		if len(out) > 0 {
+			err = errors.Wrapf(err, `failed to run command "p4 streams" (output follows)\n\n%s`, specifyCommandInErrorMessage(string(out), cmd))
+		}
+		return nil, err
+	}
+	streams := make([]perforce.StreamSpec, 0)
+	if len(out) > 0 {
+		// the output of `p4 -Mj -ztag streams` is a series of JSON-formatted stream definitions, one per line
+		buf := bufio.NewScanner(bytes.NewBuffer(out))
+		for buf.Scan() {
+			stream := perforce.StreamSpec{}
+			err := json.Unmarshal(buf.Bytes(), &stream)
+			if err != nil {
+				return nil, errors.Wrap(err, "malformed output from p4 streams")
+			}
+			streams = append(streams, stream)
+		}
+		if err := buf.Err(); err != nil {
+			return nil, errors.Wrap(err, "malformed output from p4 streams")
+		}
+		return streams, nil
+	}
+
+	// no error, but also no streams. Maybe the depot isn't a streams depot?
+	return streams, nil
 }
 
 func specifyCommandInErrorMessage(errorMsg string, command *exec.Cmd) string {

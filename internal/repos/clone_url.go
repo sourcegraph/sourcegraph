@@ -274,6 +274,12 @@ func perforceCloneURL(depot *perforce.Depot, cfg *schema.PerforceConnection) str
 		Host:   cfg.P4Port,
 		Path:   depot.Depot,
 	}
+	// if the specified depot is a stream depot, append `?stream=true` to the URL
+	// so that the syncer and batcher and others will know it's a stream depot.
+	// This approach requires that there be no overlap of depot names between Depots and Streams.
+	if depot.Type == perforce.Stream {
+		cloneURL.RawQuery = "stream"
+	}
 	return cloneURL.String()
 }
 

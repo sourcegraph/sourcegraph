@@ -11,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
+	"github.com/sourcegraph/sourcegraph/internal/extsvc/perforce"
 	"github.com/sourcegraph/sourcegraph/internal/testutil"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/types/typestest"
@@ -137,9 +138,15 @@ func TestPerforceSource_ListRepos(t *testing.T) {
 }
 
 func TestPerforceSource_makeRepo(t *testing.T) {
-	depots := []string{
-		"//Sourcegraph",
-		"//Engineering/Cloud",
+	depots := []perforce.Depot{
+		{
+			Depot: "//Sourcegraph",
+			Type:  perforce.Local,
+		},
+		{
+			Depot: "//Engineering/Cloud",
+			Type:  perforce.Stream,
+		},
 	}
 
 	svc := types.ExternalService{

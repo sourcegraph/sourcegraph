@@ -1886,6 +1886,8 @@ type PerforceConnection struct {
 	//
 	// It is important that the Sourcegraph repository name generated with this pattern be unique to this Perforce Server. If different Perforce Servers generate repository names that collide, Sourcegraph's behavior is undefined.
 	RepositoryPathPattern string `json:"repositoryPathPattern,omitempty"`
+	// Streams description: List of stream depots to index. All streams in the depot will be indexed. The depots must be different from the depots specified in `depots`.
+	Streams []string `json:"streams,omitempty"`
 }
 
 // PerforceRateLimit description: Rate limit applied when making background API requests to Perforce.

@@ -2406,7 +2406,7 @@ func (s *Server) doRepoUpdate(ctx context.Context, repo api.RepoName, revspec st
 				// We don't want to spam our logs when the rate limiter has been set to block all
 				// updates
 				if !errors.Is(err, ratelimit.ErrBlockAll) {
-					s.Logger.Error("performing background repo update", log.Error(err))
+					s.Logger.Error("performing background repo update", log.Error(err), log.String("repo", string(repo)), log.String("revspec", revspec))
 				}
 
 				// The repo update might have failed due to the repo being corrupt
@@ -2461,12 +2461,12 @@ func (s *Server) doBackgroundRepoUpdate(repo api.RepoName, revspec string) error
 
 	remoteURL, err := s.getRemoteURL(ctx, repo)
 	if err != nil {
-		return errors.Wrap(err, "failed to determine Git remote URL")
+		return errors.Wrapf(err, "failed to determine remote URL")
 	}
 
 	syncer, err := s.GetVCSSyncer(ctx, repo)
 	if err != nil {
-		return errors.Wrap(err, "get VCS syncer")
+		return errors.Wrapf(err, "failed to get VCS syncer")
 	}
 
 	// drop temporary pack files after a fetch. this function won't

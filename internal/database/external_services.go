@@ -12,10 +12,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/keegancsmith/sqlf"
 	"github.com/lib/pq"
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/tidwall/gjson"
 	"github.com/xeipuuv/gojsonschema"
 	"golang.org/x/time/rate"
+
+	"github.com/sourcegraph/sourcegraph/internal/api"
 
 	"github.com/sourcegraph/log"
 
@@ -525,8 +526,8 @@ func validatePerforceConnection(perforceValidators []PerforceValidatorFunc, _ in
 		err = errors.Append(err, validate(c))
 	}
 
-	if c.Depots == nil {
-		err = errors.Append(err, errors.New("depots must be set"))
+	if c.Depots == nil && c.Streams == nil {
+		err = errors.Append(err, errors.New("depots or streams must be set"))
 	}
 
 	if strings.Contains(c.P4Passwd, ":") {

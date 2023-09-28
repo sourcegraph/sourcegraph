@@ -22,7 +22,8 @@
     }
    },
    "Metadata": {
-    "depot": "//Sourcegraph/"
+    "depot": "//Sourcegraph/",
+    "type": "local"
    }
   },
   {
@@ -44,11 +45,12 @@
    "Sources": {
     "extsvc:perforce:1": {
      "ID": "extsvc:perforce:1",
-     "CloneURL": "perforce://ssl:111.222.333.444:1666//Engineering/Cloud/"
+     "CloneURL": "perforce://ssl:111.222.333.444:1666//Engineering/Cloud/?stream"
     }
    },
    "Metadata": {
-    "depot": "//Engineering/Cloud/"
+    "depot": "//Engineering/Cloud/",
+    "type": "stream"
    }
   }
  ]

@@ -59,6 +59,7 @@ go_library(
         "//internal/extsvc/gomodproxy",
         "//internal/extsvc/jvmpackages/coursier",
         "//internal/extsvc/npm",
+        "//internal/extsvc/perforce",
         "//internal/extsvc/pypi",
         "//internal/extsvc/rubygems",
         "//internal/featureflag",

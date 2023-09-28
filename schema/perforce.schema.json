@@ -35,6 +35,15 @@
       },
       "examples": [["//Sourcegraph/", "//Engineering/Cloud/"]]
     },
+    "streams": {
+      "description": "List of stream depots to index. All streams in the depot will be indexed. The depots must be different from the depots specified in `depots`.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\/[\\S]+\\/$"
+      },
+      "examples": [["//Sourcegraph/", "//Engineering/"]]
+    },
     "maxChanges": {
       "description": "Only import at most n changes when possible (git p4 clone --max-changes).",
       "type": "number",

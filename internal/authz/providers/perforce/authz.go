@@ -27,7 +27,7 @@ import (
 func NewAuthzProviders(conns []*types.PerforceConnection) *atypes.ProviderInitResult {
 	initResults := &atypes.ProviderInitResult{}
 	for _, c := range conns {
-		p, err := newAuthzProvider(c.URN, c.Authorization, c.P4Port, c.P4User, c.P4Passwd, c.Depots)
+		p, err := newAuthzProvider(c.URN, c.Authorization, c.P4Port, c.P4User, c.P4Passwd, c.Depots, c.Streams)
 		if err != nil {
 			initResults.InvalidConnections = append(initResults.InvalidConnections, extsvc.TypePerforce)
 			initResults.Problems = append(initResults.Problems, err.Error())
@@ -44,6 +44,7 @@ func newAuthzProvider(
 	a *schema.PerforceAuthorization,
 	host, user, password string,
 	depots []string,
+	streams []string,
 ) (authz.Provider, error) {
 	// Call this function from ValidateAuthz if this function starts returning an error.
 	if a == nil {
@@ -57,13 +58,21 @@ func newAuthzProvider(
 
 	var depotIDs []extsvc.RepoID
 	if a.SubRepoPermissions {
-		depotIDs = make([]extsvc.RepoID, len(depots))
+		depotIDs = make([]extsvc.RepoID, len(depots)+len(streams))
 		for i, depot := range depots {
 			// Force depots as directories
 			if strings.HasSuffix(depot, "/") {
 				depotIDs[i] = extsvc.RepoID(depot)
 			} else {
 				depotIDs[i] = extsvc.RepoID(depot + "/")
+			}
+		}
+		for i, stream := range streams {
+			// Force depots as directories
+			if strings.HasSuffix(stream, "/") {
+				depotIDs[i] = extsvc.RepoID(stream)
+			} else {
+				depotIDs[i] = extsvc.RepoID(stream + "/")
 			}
 		}
 	}

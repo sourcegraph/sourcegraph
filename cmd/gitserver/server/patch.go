@@ -406,7 +406,7 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 	repo := string(req.Repo)
 	baseCommit := string(req.BaseCommit)
 
-	p4user, p4passwd, p4host, p4depot, _ := decomposePerforceRemoteURL(remoteURL)
+	p4user, p4passwd, p4host, p4depot, _, _ := decomposePerforceRemoteURL(remoteURL)
 
 	if p4depot == "" {
 		// the remoteURL was constructed without a path to indicate the depot
@@ -416,7 +416,7 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 			return "", errors.Wrap(err, "failed getting a remote url")
 		}
 		// and decompose again
-		_, _, _, p4depot, _ = decomposePerforceRemoteURL(remoteURL)
+		_, _, _, p4depot, _, _ = decomposePerforceRemoteURL(remoteURL)
 	}
 
 	logger := s.Logger.Scoped("shelveChangelist", "").
