@@ -29,7 +29,10 @@ go_binary(
 
 genrule(
     name = "schema_descriptions",
-    srcs = ["generate.sh"],
+    srcs = [
+        "generate.sh",
+        "wip_git_versions.txt",
+    ],
     outs = [
         "schema-descriptions/v3.20.0-internal_database_schema.json",
         "schema-descriptions/v3.20.1-internal_database_schema.json",
@@ -280,6 +283,9 @@ genrule(
         "schema-descriptions/v5.1.1-internal_database_schema.codeinsights.json",
         "schema-descriptions/v5.1.1-internal_database_schema.codeintel.json",
         "schema-descriptions/v5.1.1-internal_database_schema.json",
+        "schema-descriptions/v5.1.101-internal_database_schema.codeinsights.json",
+        "schema-descriptions/v5.1.101-internal_database_schema.codeintel.json",
+        "schema-descriptions/v5.1.101-internal_database_schema.json",
         "schema-descriptions/v5.1.2-internal_database_schema.codeinsights.json",
         "schema-descriptions/v5.1.2-internal_database_schema.codeintel.json",
         "schema-descriptions/v5.1.2-internal_database_schema.json",
@@ -305,7 +311,7 @@ genrule(
         "schema-descriptions/v5.1.9-internal_database_schema.codeintel.json",
         "schema-descriptions/v5.1.9-internal_database_schema.json",
     ],
-    cmd = "$(location generate.sh) $(@D)",
+    cmd = "$(location generate.sh) $(@D) $(location wip_git_versions.txt)",
     tags = ["requires-network"],
     visibility = ["//visibility:public"],
 )
@@ -318,10 +324,12 @@ sh_test(
     ],
     args = [
         "$(location generate.sh)",
+        "$(location wip_git_versions.txt)",
         "$(locations :schema_descriptions)",
     ],
     data = [
         "generate.sh",
+        "wip_git_versions.txt",
         ":schema_descriptions",
     ],
     tags = ["requires-network"],

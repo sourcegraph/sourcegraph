@@ -135,6 +135,11 @@ func versionFromTag(runType runtype.RunType, tag string, commit string, buildNum
 		return strings.TrimPrefix(tag, "v")
 	}
 
+	// TODO RFC 795
+	if runType.Is(runtype.WIPRelease) {
+		return strings.TrimPrefix(branch, "wip_v")
+	}
+
 	// "main" branch is used for continuous deployment and has a special-case format
 	version := images.BranchImageTag(now, commit, buildNumber, sanitizeBranchForDockerTag(branch), tryGetLatestTag())
 

@@ -250,6 +250,24 @@ Base pipeline (more steps might be included based on branch changes):
 - Tests for VS Code extension
 - Extension release
 
+### Release branch (TODO RFC 795)
+
+The run type for branches matching `^wip_v[0-9]+\.[0-9]+\.[0-9]+$` (regexp match).
+
+Base pipeline (more steps might be included based on branch changes):
+
+- **Pipeline setup**: Trigger async
+- **Image builds**: Build Docker images, Build executor image, Build executor binary
+- Perform bazel prechecks
+- Tests
+- Async BackCompat Tests
+- **Linters and static analysis**: Run sg lint
+- **Client checks**: Upload Storybook to Chromatic, Enterprise build, Build (client/jetbrains), Tests for VS Code extension, Stylelint (all)
+- **Security Scanning**: Sonarcloud Scan
+- **Publish candidate images**: Push candidate Images
+- **End-to-end tests**: Executors E2E
+- **Publish images**: dind, executor-vm, alpine-3.14, codeinsights-db, codeintel-db, postgres-12-alpine, Push final images
+
 ### Main branch
 
 The run type for branches matching `main` (exact match).

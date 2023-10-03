@@ -6,6 +6,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 set -eu
 
 OUTPUT="$1"
+WIP_GIT_VERSIONS_TEXT="$2"
 
 echo "Compiling schema descriptions ..."
 mkdir -p "${OUTPUT}/schema-descriptions"
@@ -80,4 +81,26 @@ git_versions=(
 
 for version in "${git_versions[@]}"; do
   download_github "${version}"
+done
+
+function wip_download_github() {
+  local version
+  version="$1"
+
+  local github_url
+  github_url="https://raw.githubusercontent.com/sourcegraph/sourcegraph/wip_${version}/internal/database"
+
+  curl -fsSL "$github_url/schema.json" >"${OUTPUT}/schema-descriptions/${version}-internal_database_schema.json"
+  curl -fsSL "$github_url/schema.codeintel.json" >"${OUTPUT}/schema-descriptions/${version}-internal_database_schema.codeintel.json"
+  curl -fsSL "$github_url/schema.codeinsights.json" >"${OUTPUT}/schema-descriptions/${version}-internal_database_schema.codeinsights.json"
+}
+
+wip_git_versions=()
+
+while IFS= read -r line; do
+  wip_git_versions+=("$line")
+done < "$WIP_GIT_VERSIONS_TEXT"
+
+for version in "${wip_git_versions[@]}"; do
+  wip_download_github "${version}"
 done

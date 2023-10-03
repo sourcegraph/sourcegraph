@@ -30,6 +30,7 @@ const (
 	ReleaseBranch     // release branch build
 	BextReleaseBranch // browser extension release build
 	VsceReleaseBranch // vs code extension release build
+	WIPRelease        // TODO RFC 795
 
 	// Main branches
 
@@ -85,6 +86,11 @@ func (t RunType) Is(oneOfTypes ...RunType) bool {
 // Matcher returns the requirements for a build to be considered of this RunType.
 func (t RunType) Matcher() *RunTypeMatcher {
 	switch t {
+	case WIPRelease: // TODO RFC 795
+		return &RunTypeMatcher{
+			Branch:       `^wip_v[0-9]+\.[0-9]+\.[0-9]+$`,
+			BranchRegexp: true,
+		}
 	case ReleaseNightly:
 		return &RunTypeMatcher{
 			EnvIncludes: map[string]string{
@@ -186,6 +192,8 @@ func (t RunType) String() string {
 		return "Pull request"
 	case ManuallyTriggered:
 		return "Manually Triggered External Build"
+	case WIPRelease:
+		return "Release branch (TODO RFC 795)"
 	case ReleaseNightly:
 		return "Release branch nightly healthcheck build"
 	case BextNightly:

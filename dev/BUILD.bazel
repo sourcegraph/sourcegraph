@@ -6,7 +6,10 @@ webpack_binary(
     node_modules = "//:node_modules",
 )
 
-exports_files(srcs = ["eslint-report-test.sh"])
+exports_files(srcs = [
+    "eslint-report-test.sh",
+    "release_patch.sh.tpl",
+])
 
 write_source_files(
     name = "write_all_generated",

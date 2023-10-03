@@ -68,6 +68,13 @@ if [[ "$BUILDKITE_BRANCH" =~ ^main(-dry-run/)?.* ]] || [[ "$BUILDKITE_BRANCH" =~
   push_prod=true
 fi
 
+# TODO RFC 795
+if [[ "$BUILDKITE_BRANCH" =~ ^wip_v[0-9]+\.[0-9]+\.[0-9] ]]; then
+  dev_tags+=("wip_releases")
+  prod_tags+=("wip_releases")
+  push_prod=false
+fi
+
 # All release branch builds must be published to prod tags to support
 # format introduced by https://github.com/sourcegraph/sourcegraph/pull/48050
 # by release branch deployments.
