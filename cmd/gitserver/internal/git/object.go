@@ -1,14 +1,12 @@
 package git
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
-	"os/exec"
 	"strings"
 
-	"github.com/sourcegraph/log"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
@@ -78,31 +76,69 @@ type getObjectTypeFunc func(ctx context.Context, rcf *wrexec.RecordingCommandFac
 
 // getObjectType returns the object type given an objectID.
 func getObjectType(ctx context.Context, rcf *wrexec.RecordingCommandFactory, repo api.RepoName, dir common.GitDir, objectID string) (gitdomain.ObjectType, error) {
-	cmd := exec.Command("git", "cat-file", "-t", "--", objectID)
-	dir.Set(cmd)
-	wrappedCmd := rcf.WrapWithRepoName(context.Background(), log.NoOp(), repo, cmd)
-	out, err := wrappedCmd.CombinedOutput()
+	r, err := git.PlainOpen(dir.Path())
 	if err != nil {
-		return "", errors.WithMessage(err, fmt.Sprintf("git command %v failed (output: %q)", wrappedCmd.Args, out))
+		return "", err
 	}
 
-	objectType := gitdomain.ObjectType(bytes.TrimSpace(out))
-	return objectType, nil
+	o, err := r.Object(plumbing.AnyObject, plumbing.NewHash(objectID))
+	if err != nil {
+		return "", err
+	}
+
+	switch o.Type() {
+	case plumbing.InvalidObject:
+		return "", errors.Newf("invalid object type")
+	case plumbing.CommitObject:
+		return gitdomain.ObjectTypeCommit, nil
+	case plumbing.TreeObject:
+		return gitdomain.ObjectTypeTree, nil
+	case plumbing.BlobObject:
+		return gitdomain.ObjectTypeBlob, nil
+	case plumbing.TagObject:
+		return gitdomain.ObjectTypeTag, nil
+	default:
+		return "", errors.Newf("unknown object type %s", o.Type())
+	}
+
+	// cmd := exec.Command("git", "cat-file", "-t", "--", objectID)
+	// dir.Set(cmd)
+	// wrappedCmd := rcf.WrapWithRepoName(context.Background(), log.NoOp(), repo, cmd)
+	// out, err := wrappedCmd.CombinedOutput()
+	// if err != nil {
+	// 	return "", errors.WithMessage(err, fmt.Sprintf("git command %v failed (output: %q)", wrappedCmd.Args, out))
+	// }
+
+	// objectType := gitdomain.ObjectType(bytes.TrimSpace(out))
+	// return objectType, nil
 }
 
 type revParseFunc func(ctx context.Context, rcf *wrexec.RecordingCommandFactory, repo api.RepoName, dir common.GitDir, rev string) (string, error)
 
 // revParse will run rev-parse on the given rev.
+// rev should have been checked by the caller to be safe to pass to git rev-parse.
 func revParse(ctx context.Context, rcf *wrexec.RecordingCommandFactory, repo api.RepoName, dir common.GitDir, rev string) (string, error) {
-	cmd := exec.Command("git", "rev-parse", rev)
-	dir.Set(cmd)
-	wrappedCmd := rcf.WrapWithRepoName(context.Background(), log.NoOp(), repo, cmd)
-	out, err := wrappedCmd.CombinedOutput()
+	r, err := git.PlainOpen(dir.Path())
 	if err != nil {
-		return "", errors.WithMessage(err, fmt.Sprintf("git command %v failed (output: %q)", wrappedCmd.Args, out))
+		return "", err
 	}
 
-	return string(out), nil
+	h, err := r.ResolveRevision(plumbing.Revision(rev))
+	if err != nil {
+		return "", err
+	}
+
+	return h.String(), nil
+
+	// cmd := exec.Command("git", "rev-parse", rev)
+	// dir.Set(cmd)
+	// wrappedCmd := rcf.WrapWithRepoName(context.Background(), log.NoOp(), repo, cmd)
+	// out, err := wrappedCmd.CombinedOutput()
+	// if err != nil {
+	// 	return "", errors.WithMessage(err, fmt.Sprintf("git command %v failed (output: %q)", wrappedCmd.Args, out))
+	// }
+
+	// return string(out), nil
 }
 
 func decodeOID(sha string) (gitdomain.OID, error) {

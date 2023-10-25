@@ -12,9 +12,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
@@ -81,6 +85,78 @@ func QuickSymbolicRefHead(dir common.GitDir) (string, error) {
 	}
 	headRef := bytes.TrimPrefix(head, []byte(headFileRefPrefix))
 	return string(headRef), nil
+}
+
+var (
+	lockMu       sync.RWMutex
+	repoCache, _ = lru.New[common.GitDir, *git.Repository](10)
+)
+
+// TODO: Investigate if this can cause issues.
+// ➜  sourcegraph git:(main) go test -v ./cmd/gitserver/internal/git -bench=. -run=^$
+// goos: darwin
+// goarch: arm64
+// pkg: github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git
+// BenchmarkQuickRevParseHeadQuickSymbolicRefHead_packed_refs
+// BenchmarkQuickRevParseHeadQuickSymbolicRefHead_packed_refs-10              21956             55244 ns/op
+// BenchmarkGoGitRevParseHeadGoGitSymbolicRefHead_packed_refs
+// BenchmarkGoGitRevParseHeadGoGitSymbolicRefHead_packed_refs-10               7170            164255 ns/op
+// PASS
+//
+// AFTER:
+// ➜  sourcegraph git:(main) go test -v ./cmd/gitserver/internal/git -bench=. -run=^$
+// goos: darwin
+// goarch: arm64
+// pkg: github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git
+// BenchmarkQuickRevParseHeadQuickSymbolicRefHead_packed_refs
+// BenchmarkQuickRevParseHeadQuickSymbolicRefHead_packed_refs-10              22110             52899 ns/op
+// BenchmarkGoGitRevParseHeadGoGitSymbolicRefHead_packed_refs
+// BenchmarkGoGitRevParseHeadGoGitSymbolicRefHead_packed_refs-10              12409             96484 ns/op
+// PASS
+func getRepo(dir common.GitDir) (*git.Repository, error) {
+	lockMu.Lock()
+	r, ok := repoCache.Get(dir)
+	if ok {
+		lockMu.Unlock()
+		return r, nil
+	}
+	r, err := git.PlainOpen(dir.Path())
+	if err != nil {
+		lockMu.Unlock()
+		return nil, err
+	}
+	repoCache.Add(dir, r)
+	lockMu.Unlock()
+	return r, nil
+}
+
+// TODO: This is slower than our own implementation.
+func GoGitRevParseHead(dir common.GitDir) (string, error) {
+	r, err := getRepo(dir)
+	if err != nil {
+		return "", err
+	}
+
+	ref, err := r.Reference(plumbing.HEAD, true)
+	if err != nil {
+		return "", err
+	}
+
+	return ref.Hash().String(), nil
+}
+
+func GoGitSymbolicRefHead(dir common.GitDir) (string, error) {
+	r, err := getRepo(dir)
+	if err != nil {
+		return "", err
+	}
+
+	ref, err := r.Reference(plumbing.HEAD, true)
+	if err != nil {
+		return "", err
+	}
+
+	return ref.Name().String(), nil
 }
 
 // QuickRevParseHead best-effort mimics the execution of `git rev-parse HEAD`, but doesn't exec a child process.
@@ -192,25 +268,50 @@ var badRefs = syncx.OnceValue(func() []string {
 // LatestCommitTimestamp returns the timestamp of the most recent commit if any.
 // If there are no commits or the latest commit is in the future, or there is any
 // error, time.Now is returned.
-func LatestCommitTimestamp(logger log.Logger, dir common.GitDir) time.Time {
+func GoGitLatestCommitTimestamp(logger log.Logger, dir common.GitDir) (time.Time, string) {
+	r, err := git.PlainOpen(dir.Path())
+	if err != nil {
+		return time.Now(), ""
+	}
+
+	it, err := r.Log(&git.LogOptions{All: true, Order: git.LogOrderCommitterTime})
+	if err != nil {
+		logger.Error("failed to get iterator", log.Error(err))
+		return time.Now(), ""
+	}
+	defer it.Close()
+
+	c, err := it.Next()
+	if err != nil {
+		logger.Error("failed to get next iteration item", log.Error(err))
+		return time.Now(), ""
+	}
+
+	return c.Committer.When, c.Hash.String()
+}
+
+// LatestCommitTimestamp returns the timestamp of the most recent commit if any.
+// If there are no commits or the latest commit is in the future, or there is any
+// error, time.Now is returned.
+func LatestCommitTimestamp(logger log.Logger, dir common.GitDir) (time.Time, string) {
 	logger = logger.Scoped("LatestCommitTimestamp").
 		With(log.String("repo", string(dir)))
 
 	now := time.Now() // return current time if we don't find a more accurate time
 	cmd := exec.Command("git", "rev-list", "--all", "--timestamp", "-n", "1")
 	dir.Set(cmd)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	// If we don't have a more specific stamp, we'll return the current time,
 	// and possibly an error.
 	if err != nil {
-		logger.Warn("failed to execute, defaulting to time.Now", log.Error(err))
-		return now
+		logger.Warn("failed to execute, defaulting to time.Now", log.Error(err), log.String("output", string(output)))
+		return now, ""
 	}
 
 	words := bytes.Split(output, []byte(" "))
 	// An empty rev-list output, without an error, is okay.
 	if len(words) < 2 {
-		return now
+		return now, ""
 	}
 
 	// We should have a timestamp and a commit hash; format is
@@ -218,13 +319,13 @@ func LatestCommitTimestamp(logger log.Logger, dir common.GitDir) time.Time {
 	epoch, err := strconv.ParseInt(string(words[0]), 10, 64)
 	if err != nil {
 		logger.Warn("ignoring corrupted timestamp, defaulting to time.Now", log.String("timestamp", string(words[0])))
-		return now
+		return now, ""
 	}
 	stamp := time.Unix(epoch, 0)
 	if stamp.After(now) {
-		return now
+		return now, string(words[1])
 	}
-	return stamp
+	return stamp, string(words[1])
 }
 
 // ComputeRefHash returns a hash of the refs for dir. The hash should only

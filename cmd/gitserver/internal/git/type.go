@@ -1,20 +1,28 @@
 package git
 
 import (
+	"os"
+
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
-	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 )
 
+const typeFile = "sg.type"
+
 // SetRepositoryType sets the type of the repository.
-func SetRepositoryType(rcf *wrexec.RecordingCommandFactory, reposDir string, dir common.GitDir, typ string) error {
-	return ConfigSet(rcf, reposDir, dir, "sourcegraph.type", typ)
+func SetRepositoryType(dir common.GitDir, typ string) error {
+	return os.WriteFile(dir.Path(typeFile), []byte(typ), os.ModePerm)
 }
 
 // GetRepositoryType returns the type of the repository.
-func GetRepositoryType(rcf *wrexec.RecordingCommandFactory, reposDir string, dir common.GitDir) (string, error) {
-	val, err := ConfigGet(rcf, reposDir, dir, "sourcegraph.type")
+// If not set, will return an empty string.
+func GetRepositoryType(dir common.GitDir) (string, error) {
+	c, err := os.ReadFile(dir.Path(typeFile))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
 		return "", err
 	}
-	return val, nil
+
+	return string(c), nil
 }

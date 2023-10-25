@@ -1,10 +1,16 @@
 package git
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -121,4 +127,103 @@ func TestGetObject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetObjectType(t *testing.T) {
+	ctx := context.Background()
+	rcf := wrexec.NewNoOpRecordingCommandFactory()
+	reposDir := t.TempDir()
+
+	// Make a new repo on disk.
+	p := filepath.Join(reposDir, "repo", ".git")
+	require.NoError(t, os.MkdirAll(p, os.ModePerm))
+	dir := common.GitDir(p)
+
+	runCommand(t, p, "git", "init")
+	require.NoError(t, os.WriteFile(filepath.Join(p, "fileName1"), []byte("testfile"), os.ModePerm))
+	runCommand(t, p, "git", "add", "fileName1")
+	runCommand(t, p, "git", "commit", "-m", "commit1", "--author='a <a@a.com>'", "--date", "2006-01-02T15:04:05Z")
+	tag := "v1.0.0"
+	runCommand(t, p, "git", "tag", tag)
+
+	out := runCommand(t, p, "git", "rev-parse", "HEAD")
+	commitSha := string(bytes.TrimSpace(out))
+
+	// Commit.
+	{
+		oid, err := revParse(ctx, rcf, "testrepo", dir, commitSha)
+		require.NoError(t, err)
+		gitStart := time.Now()
+		out := runCommand(t, p, "git", "cat-file", "-t", "--", oid)
+		t.Log("git took", time.Since(gitStart))
+		want := gitdomain.ObjectType(bytes.TrimSpace(out))
+
+		goGitStart := time.Now()
+		have, err := getObjectType(ctx, rcf, "testrepo", dir, oid)
+		t.Log("go git took", time.Since(goGitStart))
+		require.NoError(t, err)
+		require.Equal(t, want, have)
+	}
+
+	// Blob.
+	{
+
+	}
+
+	// Tree.
+	{
+
+	}
+
+	// Tag.
+	{
+		oid, err := revParse(ctx, rcf, "testrepo", dir, commitSha)
+		require.NoError(t, err)
+		gitStart := time.Now()
+		out := runCommand(t, p, "git", "cat-file", "-t", "--", oid)
+		t.Log("git took", time.Since(gitStart))
+		want := gitdomain.ObjectType(bytes.TrimSpace(out))
+
+		goGitStart := time.Now()
+		have, err := getObjectType(ctx, rcf, "testrepo", dir, oid)
+		t.Log("go git took", time.Since(goGitStart))
+		require.NoError(t, err)
+		require.Equal(t, want, have)
+	}
+}
+
+func TestRevParse(t *testing.T) {
+	ctx := context.Background()
+	rcf := wrexec.NewNoOpRecordingCommandFactory()
+	reposDir := t.TempDir()
+
+	// Make a new repo on disk.
+	p := filepath.Join(reposDir, "repo", ".git")
+	require.NoError(t, os.MkdirAll(p, os.ModePerm))
+	dir := common.GitDir(p)
+
+	runCommand(t, p, "git", "init")
+	require.NoError(t, os.WriteFile(filepath.Join(p, "fileName1"), []byte("testfile"), os.ModePerm))
+	runCommand(t, p, "git", "add", "fileName1")
+	runCommand(t, p, "git", "commit", "-m", "commit1", "--author='a <a@a.com>'", "--date", "2006-01-02T15:04:05Z")
+	gitStart := time.Now()
+	out := runCommand(t, p, "git", "rev-parse", "HEAD")
+	t.Log("git took", time.Since(gitStart))
+	want := string(bytes.TrimSpace(out))
+
+	goGitStart := time.Now()
+	have, err := revParse(ctx, rcf, "testrepo", dir, "HEAD")
+	t.Log("go git took", time.Since(goGitStart))
+	require.NoError(t, err)
+	require.Equal(t, want, have)
+}
+
+func runCommand(t *testing.T, repoDir string, executable string, args ...string) []byte {
+	cmd := exec.Command(executable, args...)
+	cmd.Dir = repoDir
+	// set some commiter env vars.
+	cmd.Env = append(os.Environ(), "GIT_COMMITTER_NAME=a", "GIT_COMMITTER_EMAIL=a@a.com", "GIT_COMMITTER_DATE=2006-01-02T15:04:05Z")
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err)
+	return out
 }

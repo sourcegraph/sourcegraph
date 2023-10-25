@@ -93,7 +93,7 @@ func NewClient() Client {
 	return &clientImplementor{
 		logger:      logger,
 		httpClient:  defaultDoer,
-		HTTPLimiter: defaultLimiter,
+		httpLimiter: defaultLimiter,
 		// Use the binary name for userAgent. This should effectively identify
 		// which service is making the request (excluding requests proxied via the
 		// frontend internal API)
@@ -111,7 +111,7 @@ func NewTestClient(t testing.TB) TestClient {
 	return &clientImplementor{
 		logger:      logger,
 		httpClient:  http.DefaultClient,
-		HTTPLimiter: limiter.New(500),
+		httpLimiter: limiter.New(500),
 		// Use the binary name for userAgent. This should effectively identify
 		// which service is making the request (excluding requests proxied via the
 		// frontend internal API)
@@ -218,7 +218,7 @@ func NewMockClientWithExecReader(checker authz.SubRepoPermissionChecker, execRea
 // clientImplementor is a gitserver client.
 type clientImplementor struct {
 	// Limits concurrency of outstanding HTTP posts
-	HTTPLimiter limiter.Limiter
+	httpLimiter limiter.Limiter
 
 	// userAgent is a string identifying who the client is. It will be logged in
 	// the telemetry in gitserver.
@@ -1353,7 +1353,7 @@ func (e *RepoNotCloneableErr) Error() string {
 }
 
 func (c *clientImplementor) RepoCloneProgress(ctx context.Context, repos ...api.RepoName) (*protocol.RepoCloneProgressResponse, error) {
-	numPossibleShards := len(c.Addrs())
+	numPossibleShards := len(c.clientSource.Addresses())
 
 	if conf.IsGRPCEnabled(ctx) {
 		shards := make(map[proto.GitserverServiceClient]*proto.RepoCloneProgressRequest, (len(repos)/numPossibleShards)*2) // 2x because it may not be a perfect division
@@ -2029,8 +2029,8 @@ func (c *clientImplementor) do(ctx context.Context, repoForTracing api.RepoName,
 	// Set header so that the server knows the request is from us.
 	req.Header.Set("X-Requested-With", "Sourcegraph")
 
-	c.HTTPLimiter.Acquire()
-	defer c.HTTPLimiter.Release()
+	c.httpLimiter.Acquire()
+	defer c.httpLimiter.Release()
 
 	trLogger.AddEvent("Acquired HTTP limiter")
 
