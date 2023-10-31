@@ -1584,3 +1584,99 @@ Flags:
 
 * `--buildNumber, -b="<value>"`: The buildkite build number to check for CVEs
 * `--uri, -u="<value>"`: A reference url that contains approved CVEs. Often a link to a handbook page eg: https://handbook.sourcegraph.com/departments/security/tooling/trivy/4-2-0/.
+
+### sg release run
+
+Run steps defined in release manifest. Those are meant to be run in CI.
+
+
+#### sg release run test
+
+Run test steps as defined in the release manifest.
+
+
+Flags:
+
+* `--config-from-commit`: Infer run configuration from last commit instead of flags.
+* `--feedback`: provide feedback about this command by opening up a GitHub discussion
+* `--inputs="<value>"`: Set inputs to use for a given release, ex: --input=server=v5.2.404040,foobar=ffefe
+* `--pretend`: Preview all the commands that would be performed
+* `--type="<value>"`: Select release type: major, minor, patch (default: patch)
+* `--version="<value>"`: Force version (default: v6.6.666)
+* `--workdir="<value>"`: Set the working directory to load release scripts from (default: .)
+
+#### sg release run internal
+
+todo.
+
+
+##### sg release run internal finalize
+
+Run internal release finalize steps.
+
+
+Flags:
+
+* `--config-from-commit`: Infer run configuration from last commit instead of flags.
+* `--feedback`: provide feedback about this command by opening up a GitHub discussion
+* `--inputs="<value>"`: Set inputs to use for a given release, ex: --input=server=v5.2.404040,foobar=ffefe
+* `--pretend`: Preview all the commands that would be performed
+* `--type="<value>"`: Select release type: major, minor, patch (default: patch)
+* `--version="<value>"`: Force version (default: v6.6.666)
+* `--workdir="<value>"`: Set the working directory to load release scripts from (default: .)
+
+#### sg release run promote-to-public
+
+TODO.
+
+
+##### sg release run promote-to-public finalize
+
+Run internal release finalize steps.
+
+
+Flags:
+
+* `--config-from-commit`: Infer run configuration from last commit instead of flags.
+* `--feedback`: provide feedback about this command by opening up a GitHub discussion
+* `--inputs="<value>"`: Set inputs to use for a given release, ex: --input=server=v5.2.404040,foobar=ffefe
+* `--pretend`: Preview all the commands that would be performed
+* `--type="<value>"`: Select release type: major, minor, patch (default: patch)
+* `--version="<value>"`: Force version (default: v6.6.666)
+* `--workdir="<value>"`: Set the working directory to load release scripts from (default: .)
+
+### sg release create
+
+Create a release for a given product.
+
+```sh
+$ sg release create --workdir [path] --type patch
+```
+
+Flags:
+
+* `--config-from-commit`: Infer run configuration from last commit instead of flags.
+* `--feedback`: provide feedback about this command by opening up a GitHub discussion
+* `--inputs="<value>"`: Set inputs to use for a given release, ex: --input=server=v5.2.404040,foobar=ffefe
+* `--pretend`: Preview all the commands that would be performed
+* `--type="<value>"`: Select release type: major, minor, patch (default: patch)
+* `--version="<value>"`: Force version (default: v6.6.666)
+* `--workdir="<value>"`: Set the working directory to load release scripts from (default: .)
+
+### sg release promote-to-public
+
+Promete an existing release to the public.
+
+```sh
+$ sg release promote-to-public --workdir [path] --type patch
+```
+
+Flags:
+
+* `--config-from-commit`: Infer run configuration from last commit instead of flags.
+* `--feedback`: provide feedback about this command by opening up a GitHub discussion
+* `--inputs="<value>"`: Set inputs to use for a given release, ex: --input=server=v5.2.404040,foobar=ffefe
+* `--pretend`: Preview all the commands that would be performed
+* `--type="<value>"`: Select release type: major, minor, patch (default: patch)
+* `--version="<value>"`: Force version (default: v6.6.666)
+* `--workdir="<value>"`: Set the working directory to load release scripts from (default: .)

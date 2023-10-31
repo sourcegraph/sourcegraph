@@ -269,9 +269,10 @@ func GeneratePipeline(c Config) (*bk.Pipeline, error) {
 		imageBuildOps := operations.NewNamedSet("Image builds")
 		imageBuildOps.Append(bazelBuildCandidateDockerImages(legacyDockerImages, c.Version, c.candidateImageTag(), c.RunType))
 
-		if c.RunType.Is(runtype.MainDryRun, runtype.MainBranch, runtype.ReleaseBranch, runtype.TaggedRelease) {
+		if c.RunType.Is(runtype.MainDryRun, runtype.MainBranch, runtype.ReleaseBranch, runtype.TaggedRelease, runtype.WIPRelease) {
 			imageBuildOps.Append(buildExecutorVM(c, skipHashCompare))
 			imageBuildOps.Append(buildExecutorBinary(c))
+			// TODO RFC 795 Add WIPRuntype
 			if c.RunType.Is(runtype.ReleaseBranch, runtype.TaggedRelease) || c.Diff.Has(changed.ExecutorDockerRegistryMirror) {
 				imageBuildOps.Append(buildExecutorDockerMirror(c))
 			}
@@ -332,6 +333,12 @@ func GeneratePipeline(c Config) (*bk.Pipeline, error) {
 		// Final Bazel images
 		publishOps.Append(bazelPushImagesFinal(c.Version))
 		ops.Merge(publishOps)
+
+		// If we're doing a release patch build, we want to wait a final time, then finalize the release.
+		if c.RunType.Is(runtype.WIPRelease) {
+			ops.Append(wait)
+			ops.Append(finalizeReleasePatch(c))
+		}
 	}
 
 	// Construct pipeline

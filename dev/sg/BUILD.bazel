@@ -11,6 +11,7 @@ go_library(
         "main.go",
         "os.go",
         "release.go",
+        "release_create.go",
         "sg_analytics.go",
         "sg_app.go",
         "sg_audit.go",

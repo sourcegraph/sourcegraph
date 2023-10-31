@@ -9,6 +9,7 @@ go_library(
         "config.go",
         "operations.go",
         "pipeline.go",
+        "release_operations.go",
         "web-integration-workloads.go",
         "wolfi_operations.go",
     ],

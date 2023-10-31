@@ -1,3 +1,18 @@
+load(":release.bzl", "release_patch")
+
+# exports_files(srcs = [
+#     "finalize_release_patch.sh",
+#     "release_patch.sh.tpl",
+# ])
+release_patch(
+    name = "create_patch",
+)
+
+sh_binary(
+    name = "finalize_patch",
+    srcs = [":finalize_release_patch.sh"],
+)
+
 sh_binary(
     name = "generate_schemas_archive",
     srcs = ["generate_schemas_archive.sh"],

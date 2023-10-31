@@ -1,0 +1,51 @@
+meta:
+  productName: sourcegraph
+  repository: "github.com/sourcegraph/sourcegraph"
+  owners:
+    - "@sourcegraph/search"
+  artifacts:
+
+requirements:
+  - name: "Bazel"
+    cmd: bazel version
+    fixInstructions: Run `sg setup` and try again.
+  - name: "Github CLI"
+    cmd: gh version
+    fixInstructions: brew install gh
+
+internal:
+  create:
+    steps:
+      patch:
+        # we don't use this for patch releases
+        # - name: "migration"
+        #   cmd: |
+        #     comby -in-place \
+        #       'const maxVersionString = ":[1]"' \
+        #       'const maxVersionString = "{{version}}"' \
+        #       internal/database/migration/shared/data/cmd/generator/consts.go
+
+        - name: "db.schemas"
+          cmd: |
+            bazel run //tools/release:generate_schemas_archive -- {{version}} inject-current-schemas $PWD
+        - name: "git"
+          cmd: |
+            branch="wip_{{version}}"
+            git checkout -b $branch
+            git add tools/release/schema_deps.bzl
+
+            # Careful with the quoting for the config, using double quotes will lead
+            # to the shell dropping out all quotes from the json, leading to failed
+            # parsing.
+            git commit -m "release_patch: {{version}}" -m '{{config}}'
+            git push origin $branch
+        - name: "github"
+          cmd: |
+            gh pr create -f -t "PRETEND RELEASE WIP: release_patch: build ${NEW_VERSION}"
+
+  finalize:
+    steps:
+      - name: "db.schemas"
+        cmd: |
+          echo "TODO"
+          # run //tools/release:upload_current_schemas -- {{version}}
