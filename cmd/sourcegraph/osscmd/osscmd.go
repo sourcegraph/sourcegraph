@@ -3,18 +3,11 @@
 package osscmd
 
 import (
-	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/service"
 	"github.com/sourcegraph/sourcegraph/internal/service/svcmain"
 )
 
-var config = svcmain.Config{
-	AfterConfigure: func() {
-		// Set dummy authz provider to unblock channel for checking permissions in GraphQL APIs.
-		// See https://github.com/sourcegraph/sourcegraph/issues/3847 for details.
-		authz.SetProviders(true, []authz.Provider{})
-	},
-}
+var config = svcmain.Config{}
 
 // MainOSS is called from the `main` function of the `cmd/sourcegraph` command.
 func MainOSS(services []service.Service, args []string) {

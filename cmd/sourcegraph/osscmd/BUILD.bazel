@@ -6,7 +6,6 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/cmd/sourcegraph/osscmd",
     visibility = ["//visibility:public"],
     deps = [
-        "//internal/authz",
         "//internal/service",
         "//internal/service/svcmain",
     ],
