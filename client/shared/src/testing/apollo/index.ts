@@ -8,3 +8,4 @@ export const waitForNextApolloResponse = (): Promise<void> =>
     act(() => new Promise(resolve => setTimeout(resolve, 100)))
 
 export * from './mockedTestProvider'
+export * from './mockedMswProvider'

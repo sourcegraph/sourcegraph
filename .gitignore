@@ -97,6 +97,7 @@ dist/
 sourcegraph-webapp-*.tgz
 *.tsbuildinfo
 graphql-operations.ts
+graphql-types.ts
 *.module.scss.d.ts
 *.module.css.d.ts
 dll-bundle

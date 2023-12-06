@@ -31,7 +31,7 @@
     "test": "vitest",
     "_test-integration": "TS_NODE_PROJECT=client/web/src/integration/tsconfig.json mocha --parallel=${CI:-\"false\"} --retries=1 --jobs=2",
     "test-integration": "NODE_ENV=production pnpm _test-integration \"./client/web/src/integration/**/*.test.ts\"",
-    "test-integration:debug": "BROWSER=chrome KEEP_BROWSER=true DEVTOOLS=true DISABLE_APP_ASSETS_MOCKING=true WINDOW_WIDTH=1920 WINDOW_HEIGHT=1080 pnpm _test-integration --retries=0 --jobs=1",
+    "test-integration:debug": "BROWSER=chrome KEEP_BROWSER=true DEVTOOLS=true WINDOW_WIDTH=1920 WINDOW_HEIGHT=1080 pnpm _test-integration --retries=0 --jobs=1",
     "test-browser-integration": "pnpm --filter @sourcegraph/browser run test-integration",
     "test-e2e": "TS_NODE_PROJECT=client/web/src/end-to-end/tsconfig.json mocha ./client/web/src/end-to-end/**/*.test.ts",
     "test-regression": "pnpm --filter @sourcegraph/web run test:regression",
@@ -66,12 +66,15 @@
   "devDependencies": {
     "@atlassian/aui": "^7.10.3",
     "@axe-core/puppeteer": "^4.4.2",
+    "@faker-js/faker": "^8.0.2",
     "@gql2ts/types": "^1.9.0",
     "@graphql-codegen/cli": "^2.16.1",
     "@graphql-codegen/plugin-helpers": "^5.0.1",
     "@graphql-codegen/typescript": "2.8.5",
     "@graphql-codegen/typescript-apollo-client-helpers": "^2.2.6",
     "@graphql-codegen/typescript-operations": "2.5.10",
+    "@graphql-tools/mock": "^9.0.0",
+    "@graphql-tools/schema": "^10.0.0",
     "@ianvs/prettier-plugin-sort-imports": "^3.7.1",
     "@octokit/rest": "^16.36.0",
     "@percy/cli": "^1.24.0",
@@ -224,6 +227,8 @@
     "mocha": "^8.3.2",
     "mock-require": "^3.0.3",
     "mockdate": "^3.0.2",
+    "msw": "^2.0.7",
+    "msw-storybook-addon": "2.0.0--canary.122.b3ed3b1.0",
     "mz": "^2.7.0",
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.20",
@@ -440,6 +445,9 @@
           "ws": "*"
         }
       }
+    },
+    "patchedDependencies": {
+      "@graphql-tools/mock@9.0.0": "patches/@graphql-tools__mock@9.0.0.patch"
     }
   },
   "resolutions": {

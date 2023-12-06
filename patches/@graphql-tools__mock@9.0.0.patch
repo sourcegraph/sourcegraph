@@ -1,0 +1,175 @@
+diff --git a/cjs/MockStore.js b/cjs/MockStore.js
+index 88fd61745b131318e3f9b50b516e3b18a21fcc4d..12bf6cafc4e2f5d30eb93bc851ff09716815c6a4 100644
+--- a/cjs/MockStore.js
++++ b/cjs/MockStore.js
+@@ -16,11 +16,12 @@ exports.defaultMocks = {
+ };
+ const defaultKeyFieldNames = ['id', '_id'];
+ class MockStore {
+-    constructor({ schema, mocks, typePolicies, }) {
++    constructor({ schema, mocks, typePolicies, random, }) {
+         this.store = {};
+         this.schema = schema;
+         this.mocks = { ...exports.defaultMocks, ...mocks };
+         this.typePolicies = typePolicies || {};
++        this.random = random || Math.random;
+     }
+     has(typeName, key) {
+         return !!this.store[typeName] && !!this.store[typeName][key];
+@@ -349,7 +350,7 @@ class MockStore {
+             if (typeof mockFn === 'function')
+                 return mockFn();
+             const values = nullableType.getValues().map(v => v.value);
+-            return (0, utils_js_1.takeRandom)(values);
++            return (0, utils_js_1.takeRandom)(values, this.random);
+         }
+         else if ((0, graphql_1.isObjectType)(nullableType)) {
+             // this will create a new random ref
+@@ -363,7 +364,7 @@ class MockStore {
+             let typeName;
+             let values = {};
+             if (!mock) {
+-                typeName = (0, utils_js_1.takeRandom)(this.schema.getPossibleTypes(nullableType).map(t => t.name));
++                typeName = (0, utils_js_1.takeRandom)(this.schema.getPossibleTypes(nullableType).map(t => t.name), this.random);
+             }
+             else if (typeof mock === 'function') {
+                 const mockRes = mock();
+diff --git a/cjs/utils.js b/cjs/utils.js
+index f623d759f0d4809b63e61bab3c9c9c1a9b901d04..532152b7eebb2d518520aa6a1b668d998c9370f9 100644
+--- a/cjs/utils.js
++++ b/cjs/utils.js
+@@ -17,7 +17,7 @@ const randomListLength = () => {
+     return 2;
+ };
+ exports.randomListLength = randomListLength;
+-const takeRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
++const takeRandom = (arr, random) => arr[Math.floor(random() * arr.length)];
+ exports.takeRandom = takeRandom;
+ function makeRef(typeName, key) {
+     return { $ref: { key, typeName } };
+diff --git a/esm/MockStore.js b/esm/MockStore.js
+index 6a6f61ff0866d06455d533771a02fbfacff35797..136f25867c08010f1422d64ecda76b53d1947d93 100644
+--- a/esm/MockStore.js
++++ b/esm/MockStore.js
+@@ -12,11 +12,12 @@ export const defaultMocks = {
+ };
+ const defaultKeyFieldNames = ['id', '_id'];
+ export class MockStore {
+-    constructor({ schema, mocks, typePolicies, }) {
++    constructor({ schema, mocks, typePolicies, random }) {
+         this.store = {};
+         this.schema = schema;
+         this.mocks = { ...defaultMocks, ...mocks };
+         this.typePolicies = typePolicies || {};
++        this.random = random || Math.random;
+     }
+     has(typeName, key) {
+         return !!this.store[typeName] && !!this.store[typeName][key];
+@@ -345,7 +346,7 @@ export class MockStore {
+             if (typeof mockFn === 'function')
+                 return mockFn();
+             const values = nullableType.getValues().map(v => v.value);
+-            return takeRandom(values);
++            return takeRandom(values, this.random);
+         }
+         else if (isObjectType(nullableType)) {
+             // this will create a new random ref
+@@ -359,7 +360,7 @@ export class MockStore {
+             let typeName;
+             let values = {};
+             if (!mock) {
+-                typeName = takeRandom(this.schema.getPossibleTypes(nullableType).map(t => t.name));
++                typeName = takeRandom(this.schema.getPossibleTypes(nullableType).map(t => t.name), this.random);
+             }
+             else if (typeof mock === 'function') {
+                 const mockRes = mock();
+diff --git a/esm/utils.js b/esm/utils.js
+index 774d3f01ccd46fc782d4e481d8063944829846c3..c77f774042de4342b43cf26dc2b4bd1e5dd2a780 100644
+--- a/esm/utils.js
++++ b/esm/utils.js
+@@ -12,7 +12,7 @@ export const randomListLength = () => {
+     // return 1 + Math.round(Math.random() * 10)
+     return 2;
+ };
+-export const takeRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
++export const takeRandom = (arr, random) => arr[Math.floor(random() * arr.length)];
+ export function makeRef(typeName, key) {
+     return { $ref: { key, typeName } };
+ }
+diff --git a/typings/MockStore.d.cts b/typings/MockStore.d.cts
+index 899b857aa9ecea684aa645eeb5f1eb3969cdd9b0..dde5d7fdbf32da21f1c85db571cd0e9baf673d5d 100644
+--- a/typings/MockStore.d.cts
++++ b/typings/MockStore.d.cts
+@@ -1,5 +1,5 @@
+ import { GraphQLSchema } from 'graphql';
+-import { IMockStore, GetArgs, SetArgs, Ref, TypePolicy, IMocks, KeyTypeConstraints } from './types.cjs';
++import { IMockStore, GetArgs, SetArgs, Ref, TypePolicy, IMocks, KeyTypeConstraints, RandomSource } from './types.cjs';
+ export declare const defaultMocks: {
+     Int: () => number;
+     Float: () => number;
+@@ -90,5 +90,6 @@ export declare function createMockStore(options: {
+     typePolicies?: {
+         [typeName: string]: TypePolicy;
+     };
++    random?: RandomSource;
+ }): IMockStore;
+ export {};
+diff --git a/typings/MockStore.d.ts b/typings/MockStore.d.ts
+index 8ca360b5f79bacb5c9f33906279baeeaceefc243..6291d9a483e8a9628c92ce7ecad23a6d5feda3e5 100644
+--- a/typings/MockStore.d.ts
++++ b/typings/MockStore.d.ts
+@@ -1,5 +1,5 @@
+ import { GraphQLSchema } from 'graphql';
+-import { IMockStore, GetArgs, SetArgs, Ref, TypePolicy, IMocks, KeyTypeConstraints } from './types.js';
++import { IMockStore, GetArgs, SetArgs, Ref, TypePolicy, IMocks, KeyTypeConstraints, RandomSource } from './types.js';
+ export declare const defaultMocks: {
+     Int: () => number;
+     Float: () => number;
+@@ -90,5 +90,6 @@ export declare function createMockStore(options: {
+     typePolicies?: {
+         [typeName: string]: TypePolicy;
+     };
++    random?: RandomSource;
+ }): IMockStore;
+ export {};
+diff --git a/typings/types.d.ts b/typings/types.d.ts
+index 673e6510b6faf0c01ecef6119e62e8955fe63b82..39c615315a174094f391a48c4c24716aa9a346d5 100644
+--- a/typings/types.d.ts
++++ b/typings/types.d.ts
+@@ -1,5 +1,6 @@
+ import { ExecutionResult, IResolvers } from '@graphql-tools/utils';
+ import { GraphQLSchema } from 'graphql';
++export type RandomSource = () => number;
+ export type IMockFn = () => unknown;
+ export type IScalarMock = unknown | IMockFn;
+ export type ITypeMock = () => {
+diff --git a/typings/utils.d.cts b/typings/utils.d.cts
+index 9fb553011b1fef92e8f1e189832218933604a0b4..f55466771616da6fe48cda79568faaad5d42a082 100644
+--- a/typings/utils.d.cts
++++ b/typings/utils.d.cts
+@@ -1,8 +1,9 @@
+ import { GraphQLObjectType, GraphQLSchema } from 'graphql';
+ import { Ref, KeyTypeConstraints } from './types.cjs';
++import { RandomSource } from './types';
+ export declare function uuidv4(): string;
+ export declare const randomListLength: () => number;
+-export declare const takeRandom: <T>(arr: T[]) => T;
++export declare const takeRandom: <T>(arr: T[], random: RandomSource) => T;
+ export declare function makeRef<KeyT extends KeyTypeConstraints = string>(typeName: string, key: KeyT): Ref<KeyT>;
+ export declare function isObject(thing: any): boolean;
+ export declare function copyOwnPropsIfNotPresent(target: Record<string, any>, source: Record<string, any>): void;
+diff --git a/typings/utils.d.ts b/typings/utils.d.ts
+index 544fc89bb65b9629a6daf2d11cb790ba03358a7b..d526d5429c8e8c0b27c07942fd576a27c43625d3 100644
+--- a/typings/utils.d.ts
++++ b/typings/utils.d.ts
+@@ -1,8 +1,8 @@
+ import { GraphQLObjectType, GraphQLSchema } from 'graphql';
+-import { Ref, KeyTypeConstraints } from './types.js';
++import { Ref, KeyTypeConstraints, RandomSource } from './types.js';
+ export declare function uuidv4(): string;
+ export declare const randomListLength: () => number;
+-export declare const takeRandom: <T>(arr: T[]) => T;
++export declare const takeRandom: <T>(arr: T[], random: RandomSource) => T;
+ export declare function makeRef<KeyT extends KeyTypeConstraints = string>(typeName: string, key: KeyT): Ref<KeyT>;
+ export declare function isObject(thing: any): boolean;
+ export declare function copyOwnPropsIfNotPresent(target: Record<string, any>, source: Record<string, any>): void;

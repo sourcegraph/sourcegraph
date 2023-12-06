@@ -113,7 +113,7 @@ generate_graphql_operations(
         "//client/browser/src/integration:graphql_operations_files",
     ],
     out = "src/graphql-operations.ts",
-    interface_name = "BrowserGraphQlOperations",
+    config = "browser-operations",
     visibility = ["//client/shared:__pkg__"],
 )
 

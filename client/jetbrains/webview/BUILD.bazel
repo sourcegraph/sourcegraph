@@ -61,7 +61,7 @@ generate_graphql_operations(
         ":graphql_operations_files",
     ],
     out = "src/graphql-operations.ts",
-    interface_name = "JetBrainsGraphQlOperations",
+    config = "jetbrains-operations",
     visibility = ["//client/shared:__pkg__"],
 )
 

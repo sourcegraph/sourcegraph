@@ -14,6 +14,13 @@ const TS_EXT = BAZEL ? 'js' : 'ts'
 export const defaultProjectConfig: UserWorkspaceConfig = {
     logLevel: 'warn',
     clearScreen: false,
+    ssr: {
+        // Without having vitest/vite process @graphql-tools/* packages, those packages will import
+        // the CommonJS version of graphql, whereas we are importing the ES module version.
+        // This results in duplicate graphql symbols and errors like "Cannot use GraphQLSchema
+        // "[object Object]" from another module or realm."
+        noExternal: [/@graphql-tools\/.*/],
+    },
     test: {
         testTimeout: 10000,
         hookTimeout: 1000,

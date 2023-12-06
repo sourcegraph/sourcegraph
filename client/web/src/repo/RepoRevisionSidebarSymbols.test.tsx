@@ -1,15 +1,10 @@
-import type { MockedResponse } from '@apollo/client/testing'
 import { cleanup, fireEvent } from '@testing-library/react'
 import delay from 'delay'
-import { escapeRegExp } from 'lodash'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { getDocumentNode } from '@sourcegraph/http-client'
-import { SymbolKind } from '@sourcegraph/shared/src/graphql-operations'
-import { MockedTestProvider, waitForNextApolloResponse } from '@sourcegraph/shared/src/testing/apollo'
+import { AutomockGraphQLProvider, waitForNextApolloResponse } from '@sourcegraph/shared/src/testing/apollo'
+import { setupMockServer } from '@sourcegraph/shared/src/testing/graphql/vitest'
 import { type RenderWithBrandedContextResult, renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
-
-import type { SymbolsResult } from '../graphql-operations'
 
 import {
     RepoRevisionSidebarSymbols,
@@ -29,77 +24,33 @@ const sidebarProps: RepoRevisionSidebarSymbolsProps = {
     onHandleSymbolClick: () => {},
 }
 
-const symbolsMock: MockedResponse<SymbolsResult> = {
-    request: {
-        query: getDocumentNode(SYMBOLS_QUERY),
-        variables: {
-            query: '',
-            first: 100,
-            repo: sidebarProps.repoID,
-            revision: sidebarProps.revision,
-            includePatterns: ['^' + escapeRegExp(sidebarProps.activePath)],
-        },
-    },
-    result: {
-        data: {
-            node: {
-                __typename: 'Repository',
-                commit: {
-                    symbols: {
-                        __typename: 'SymbolConnection',
-                        nodes: [
-                            {
-                                __typename: 'Symbol',
-                                kind: SymbolKind.CONSTANT,
-                                language: 'TypeScript',
-                                name: 'firstSymbol',
-                                url: `${location.pathname}?L13:14`,
-                                containerName: null,
-                                location: {
-                                    resource: {
-                                        path: 'src/index.js',
-                                    },
-                                    range: null,
-                                },
-                            },
-                        ],
-                        pageInfo: {
-                            hasNextPage: false,
-                        },
-                    },
+const mockServer = setupMockServer()
+const symbolsMock = mockServer.mockGraphql({
+    query: SYMBOLS_QUERY,
+    mocks: {
+        SymbolConnection: () => ({
+            nodes: [
+                {
+                    name: 'firstSymbol',
+                    url: `${location.pathname}?L13:14`,
                 },
-            },
-        },
+            ],
+        }),
     },
-}
+})
 
 describe('RepoRevisionSidebarSymbols', () => {
     let renderResult: RenderWithBrandedContextResult
     afterEach(cleanup)
 
     beforeEach(async () => {
+        mockServer.use(symbolsMock)
         renderResult = renderWithBrandedContext(
-            <MockedTestProvider mocks={[symbolsMock]} addTypename={true}>
+            <AutomockGraphQLProvider>
                 <RepoRevisionSidebarSymbols {...sidebarProps} />
-            </MockedTestProvider>,
+            </AutomockGraphQLProvider>,
             { route }
         )
-        // NOTE: (@numbers88s)
-        // See https://github.com/mui-org/material-ui/issues/15726#issuecomment-876323860
-        // Bootstrap's implementation of Tooltip uses PopperJS. The issue is with the underlying
-        // implementation of PopperJS calling the document.createRange function when there is no DOM API for it to call.
-        // The solution is to upgrade to Jest v26.0.0 (breaking changes no backward compatibility), mock PopperJS
-        // or to mock the underlying function that it utilizes. I chose the latter.
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        ;(global as any).document.createRange = () => ({
-            setStart: () => {},
-            setEnd: () => {},
-            commonAncestorContainer: {
-                nodeName: 'BODY',
-                ownerDocument: document,
-            },
-        })
-
         await waitForNextApolloResponse()
     })
 

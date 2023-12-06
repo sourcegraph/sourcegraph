@@ -65,6 +65,7 @@ ts_project(
         "//:node_modules/@types/react",
         "//:node_modules/classnames",
         "//:node_modules/focus-visible",
+        "//:node_modules/msw-storybook-addon",
         "//:node_modules/open-color",
         "//:node_modules/react",
         "//:node_modules/vite-plugin-turbosnap",

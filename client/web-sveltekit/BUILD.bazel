@@ -26,7 +26,7 @@ generate_graphql_operations(
         ":graphql_operations_files",
     ],
     out = "src/lib/graphql-operations.ts",
-    interface_name = "SvelteKitGraphQlOperations",
+    config = "sveltekit-operations",
     visibility = ["//visibility:private"],
 )
 

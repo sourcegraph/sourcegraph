@@ -24,6 +24,6 @@
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority"
   },
-  "include": [],
+  "include": [".eslintrc.js", "vitest.shared.ts"],
   "exclude": ["out", "node_modules"]
 }

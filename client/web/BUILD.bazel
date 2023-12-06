@@ -136,7 +136,7 @@ generate_graphql_operations(
         "//client/web/src/regression:graphql_operations_files",
     ],
     out = "src/graphql-operations.ts",
-    interface_name = "WebGraphQlOperations",
+    config = "web-operations",
     visibility = ["//client/shared:__pkg__"],
 )
 

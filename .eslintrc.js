@@ -8,6 +8,7 @@ const config = {
   root: true,
   ignorePatterns: [
     '**/graphql-operations.ts',
+    '**/graphql-types.ts',
     '**/node_modules/**',
     'out/',
     'dist/',
@@ -30,6 +31,7 @@ const config = {
     'typedoc.js',
     'client/web/dev/**/*',
     'graphql-schema-linter.config.js',
+    'mockServiceWorker.js',
   ],
   extends: ['@sourcegraph/eslint-config', 'plugin:storybook/recommended'],
   env: {

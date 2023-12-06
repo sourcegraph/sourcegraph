@@ -16,9 +16,10 @@ ts_binary(
 )
 
 js_library(
-    name = "extract_graphql_operation_codegen_plugin",
+    name = "graphql_codegen_plugins",
     srcs = [
         "extractGraphQlOperationCodegenPlugin.js",
+        "extractGraphQlTypesCodegenPlugin.js",
     ],
     deps = [
         "//:node_modules/graphql",
@@ -39,7 +40,7 @@ js_binary(
 ts_binary(
     name = "generate_graphql_operations",
     data = [
-        ":extract_graphql_operation_codegen_plugin",
+        ":graphql_codegen_plugins",
         "//:node_modules/@graphql-codegen/cli",
         "//:node_modules/@graphql-codegen/typescript",
         "//:node_modules/@graphql-codegen/typescript-apollo-client-helpers",

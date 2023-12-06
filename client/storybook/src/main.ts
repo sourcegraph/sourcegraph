@@ -107,7 +107,20 @@ const config: StorybookConfig & StorybookConfigVite & ReactViteStorybookConfig =
                     __dirname,
                     'dummyEventSourcePolyfill'
                 ),
+                // msw-storybook-addon conditionally imports msw/native or msw/browser depending on the environment (msw/native is used for React Native).
+                // But vite eagerly imports all dependencies, so it tries to load the browser version of msw/native
+                // which doesn't exist and causes a build error. This alias is a workaround to avoid this error
+                // (the msw/native import is never used in the browser).
+                'msw/native': 'msw/browser',
             },
+        }
+
+        config.ssr = {
+            // Without having vitest/vite process @graphql-tools/* packages, those packages will
+            // import the CommonJS version of graphql, whereas we are importing the ES module version.
+            // This results in duplicate graphql symbols and errors like "Cannot use GraphQLSchema
+            // "[object Object]" from another module or realm."
+            noExternal: [/^@graphql-tools\/.*/],
         }
 
         return config
