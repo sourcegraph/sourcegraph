@@ -208,9 +208,9 @@ export const CodyManagementPage: React.FunctionComponent<CodyManagementPageProps
                             <Text className="text-muted mb-0">Cody integrates with your workflow.</Text>
                         </div>
                         <div>
-                            <ButtonLink to="/cody/pricing" variant="secondary" outline={true} size="sm">
+                            <ButtonLink to="/community" variant="secondary" outline={true} size="sm">
                                 <Icon svgPath={mdiHelpCircleOutline} className="mr-1" aria-hidden={true} />
-                                Missing an editor?
+                                Have feedback? Join our community Discord to let us know!
                             </ButtonLink>
                         </div>
                     </div>
