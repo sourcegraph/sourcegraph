@@ -13,6 +13,7 @@ go_library(
         "//internal/redispool",
         "//lib/errors",
         "@com_github_gomodule_redigo//redis",
+        "@com_github_google_uuid//:uuid",
         "@com_github_inconshreveable_log15//:log15",
     ],
 )

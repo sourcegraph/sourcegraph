@@ -15,7 +15,7 @@ func TestLoggerAndReaderHappyPaths(t *testing.T) {
 	rcache.SetupForTest(t)
 
 	// Create logger
-	c := rcache.NewWithTTL(keyPrefix, 1)
+	c := rcache.NewWithTTL(keyPrefix, 1) // Suffix key with uuid to prevent clashing.
 	recorder := New(log.NoOp(), "test", c)
 
 	// Create routines
