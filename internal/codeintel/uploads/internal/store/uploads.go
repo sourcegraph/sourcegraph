@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/keegancsmith/sqlf"
 	"github.com/lib/pq"
 	"go.opentelemetry.io/otel/attribute"
@@ -683,7 +683,7 @@ ORDER BY u.sequence
 `
 
 func scanUploadAuditLog(s dbutil.Scanner) (log shared.UploadLog, _ error) {
-	hstores := pgtype.HstoreArray{}
+	hstores := []pgtype.Hstore{}
 	err := s.Scan(
 		&log.LogTimestamp,
 		&log.RecordDeletedAt,
@@ -696,16 +696,13 @@ func scanUploadAuditLog(s dbutil.Scanner) (log shared.UploadLog, _ error) {
 		&log.IndexerVersion,
 		&log.UploadSize,
 		&log.AssociatedIndexID,
-		&hstores,
+		// TODO: Doesn't work.
+		pq.Array(&hstores),
 		&log.Reason,
 		&log.Operation,
 	)
 
-	for _, hstore := range hstores.Elements {
-		m := make(map[string]*string)
-		if err := hstore.AssignTo(&m); err != nil {
-			return log, err
-		}
+	for _, m := range hstores {
 		log.TransitionColumns = append(log.TransitionColumns, m)
 	}
 

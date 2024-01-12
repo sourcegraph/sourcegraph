@@ -7,6 +7,6 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//lib/errors",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
     ],
 )

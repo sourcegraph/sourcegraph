@@ -41,7 +41,7 @@ go_test(
         "//internal/database/migration/store",
         "//internal/observation",
         "//lib/errors",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_sourcegraph_log//logtest",
     ],

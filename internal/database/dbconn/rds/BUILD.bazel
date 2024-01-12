@@ -10,7 +10,7 @@ go_library(
         "//lib/errors",
         "@com_github_aws_aws_sdk_go//aws/session",
         "@com_github_aws_aws_sdk_go//service/rds/rdsutils",
-        "@com_github_jackc_pgx_v4//:pgx",
+        "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_sourcegraph_log//:log",
     ],
 )

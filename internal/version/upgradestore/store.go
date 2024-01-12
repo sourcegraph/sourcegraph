@@ -7,8 +7,8 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/derision-test/glock"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/keegancsmith/sqlf"
 
 	"github.com/sourcegraph/sourcegraph/internal/database"

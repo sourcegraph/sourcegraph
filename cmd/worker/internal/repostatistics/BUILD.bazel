@@ -16,7 +16,7 @@ go_library(
         "//internal/goroutine",
         "//internal/observation",
         "//lib/errors",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_sourcegraph_log//:log",
     ],
 )

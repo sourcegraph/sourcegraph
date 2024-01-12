@@ -1,7 +1,7 @@
 package errors
 
 import (
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // HasPostgresCode checks whether any of the errors in the chain

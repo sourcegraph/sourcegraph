@@ -11,7 +11,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/google/go-github/v55/github"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
 

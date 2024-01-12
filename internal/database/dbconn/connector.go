@@ -3,8 +3,8 @@ package dbconn
 import (
 	"sync"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 var manager = &dbconnManager{

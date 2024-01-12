@@ -20,7 +20,7 @@ go_library(
         "//internal/metrics",
         "//internal/observation",
         "//lib/errors",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",
         "@io_opentelemetry_go_otel//attribute",

@@ -31,7 +31,7 @@ go_library(
         "//internal/oobmigration/migrations",
         "//lib/errors",
         "//schema",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",
         "@com_github_sourcegraph_log//:log",

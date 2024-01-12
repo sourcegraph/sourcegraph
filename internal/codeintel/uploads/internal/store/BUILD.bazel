@@ -36,7 +36,7 @@ go_library(
         "//internal/workerutil/dbworker/store",
         "//lib/codeintel/precise",
         "//lib/errors",
-        "@com_github_jackc_pgtype//:pgtype",
+        "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",
         "@com_github_sourcegraph_log//:log",

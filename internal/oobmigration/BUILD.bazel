@@ -34,7 +34,7 @@ go_library(
         "//lib/errors",
         "//lib/output",
         "@com_github_derision_test_glock//:glock",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",
         "@com_github_masterminds_semver//:semver",

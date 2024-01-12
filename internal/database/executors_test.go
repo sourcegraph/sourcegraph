@@ -9,7 +9,7 @@ import (
 
 	"github.com/cockroachdb/errors/errbase"
 	"github.com/google/go-cmp/cmp"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/keegancsmith/sqlf"
 
 	"github.com/sourcegraph/log/logtest"

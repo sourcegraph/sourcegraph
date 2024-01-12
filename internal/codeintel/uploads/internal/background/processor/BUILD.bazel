@@ -34,7 +34,7 @@ go_library(
         "//lib/codeintel/precise",
         "//lib/errors",
         "//lib/pointers",
-        "@com_github_jackc_pgconn//:pgconn",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_sourcegraph_log//:log",

@@ -16,7 +16,7 @@ import (
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/grafana/regexp"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/sourcegraph/run"
 

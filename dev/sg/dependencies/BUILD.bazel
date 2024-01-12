@@ -24,7 +24,7 @@ go_library(
         "//lib/output",
         "@com_github_gomodule_redigo//redis",
         "@com_github_grafana_regexp//:regexp",
-        "@com_github_jackc_pgx_v4//:pgx",
+        "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_sourcegraph_run//:run",
         "@dev_bobheadxi_go_streamline//pipeline",
     ],
