@@ -92,7 +92,7 @@ func (r *schemaResolver) RandomizeUserPassword(ctx context.Context, args *struct
 	// This method modifies the DB, which is somewhat counterintuitive for a "value" type from an
 	// implementation POV. Its behavior is justified because it is convenient and intuitive from the
 	// POV of the API consumer.
-	resetURL, err := backend.MakePasswordResetURL(ctx, r.db, userID)
+	resetURL, err := backend.MakePasswordResetURL(ctx, r.db, userID, "")
 	if err != nil {
 		return nil, err
 	}
