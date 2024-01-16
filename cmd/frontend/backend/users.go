@@ -26,6 +26,8 @@ func MakePasswordResetURL(ctx context.Context, db database.DB, userID int32, ema
 	query := url.Values{}
 	query.Set("userID", strconv.Itoa(int(userID)))
 	query.Set("code", resetCode)
+
+	// This field will be used by the frontend for displaying the email on the password entry page
 	query.Set("email", email)
 
 	return &url.URL{Path: "/password-reset", RawQuery: query.Encode()}, nil
