@@ -192,8 +192,8 @@ func (r codyUserGatewayAccessResolver) EmbeddingsRateLimit(ctx context.Context) 
 }
 
 func getEmbeddingsRateLimit(ctx context.Context, db database.DB, userID int32) (licensing.CodyGatewayRateLimit, error) {
-	// Hard-coded defaults: 200M tokens for life
-	limit := int64(20 * tokensPerDollar)
+	// Hard-coded defaults: 280M tokens for life
+	limit := int64(280 * tokensPerDollar)
 	intervalSeconds := int32(math.MaxInt32)
 
 	// Apply self-serve limits if available

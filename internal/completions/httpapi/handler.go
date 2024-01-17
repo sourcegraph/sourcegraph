@@ -148,26 +148,24 @@ func newCompletionsHandler(
 			return
 		}
 
-		if !isCodyProEnabled || !isDotcom || !isProviderCodyGateway {
-			// Check rate limit.
-			err = rl.TryAcquire(ctx)
-			if err != nil {
-				if unwrap, ok := err.(RateLimitExceededError); ok {
-					actor := sgactor.FromContext(ctx)
-					user, err := actor.User(ctx, userStore)
-					if err != nil {
-						l.Error("Error while fetching user", log.Error(err))
-						http.Error(w, "Internal server error", http.StatusInternalServerError)
-						return
-					}
-					isProUser := user.CodyProEnabledAt != nil
-					respondRateLimited(w, unwrap, isDotcom, isCodyProEnabled, isProUser)
+		// Check rate limit.
+		err = rl.TryAcquire(ctx)
+		if err != nil {
+			if unwrap, ok := err.(RateLimitExceededError); ok {
+				actor := sgactor.FromContext(ctx)
+				user, err := actor.User(ctx, userStore)
+				if err != nil {
+					l.Error("Error while fetching user", log.Error(err))
+					http.Error(w, "Internal server error", http.StatusInternalServerError)
 					return
 				}
-				l.Warn("Rate limit error", log.Error(err))
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				isProUser := user.CodyProEnabledAt != nil
+				respondRateLimited(w, unwrap, isDotcom, isCodyProEnabled, isProUser)
 				return
 			}
+			l.Warn("Rate limit error", log.Error(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
 		}
 
 		responseHandler(ctx, requestParams.CompletionRequestParameters, completionClient, w, userStore)
