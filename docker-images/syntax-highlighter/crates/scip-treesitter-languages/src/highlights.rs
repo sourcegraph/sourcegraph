@@ -146,6 +146,7 @@ lazy_static::lazy_static! {
             C,
             Cpp,
             C_Sharp,
+            Dart,
             Go,
             Java,
             Javascript,

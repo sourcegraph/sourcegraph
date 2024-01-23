@@ -5,6 +5,7 @@ var treesitterSupportedFiletypes = map[string]struct{}{
 	"c++":        {},
 	"c_sharp":    {},
 	"cpp":        {},
+	"dart":       {},
 	"go":         {},
 	"java":       {},
 	"javascript": {},
