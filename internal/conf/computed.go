@@ -1218,3 +1218,12 @@ func fireworksDefaultMaxPromptTokens(model string) int {
 
 	return 4_000
 }
+
+func GitserverDiskUsageWarningThreshold() int {
+	v := Get().GitserverDiskUsageWarningThreshold
+	if v == nil || *v <= 0 || *v > 100 {
+		// This is the default threshold if not configured or misconfigured.
+		return 90
+	}
+	return *v
+}

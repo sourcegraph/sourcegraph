@@ -1,0 +1,77 @@
+@import 'wildcard/src/global-styles/breakpoints';
+
+.grid {
+    display: grid;
+    grid-template-columns: [state] 100px [info] minmax(auto, 1fr) [runtime] min-content [end];
+    row-gap: 1rem;
+    column-gap: 1.5rem;
+    align-items: center;
+    @media (--sm-breakpoint-down) {
+        // Reduce gap on sm and xs screens.
+        column-gap: 1rem;
+    }
+    @media (--xs-breakpoint-down) {
+        // Reduce gap on xs screens.
+        row-gap: 0.5rem;
+    }
+}
+
+.place-in-queue {
+    flex-shrink: 0;
+}
+
+.full-content {
+    min-width: 100%;
+    width: fit-content;
+    // Make it full width in the current row.
+    grid-column: 1 / -1;
+}
+
+.node {
+    display: contents;
+
+    // Old state badge
+    &__badge {
+        justify-self: center;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        @media (--xs-breakpoint-down) {
+            width: fit-content;
+            // Make it full width in the current row.
+            grid-column: 1 / -1;
+        }
+    }
+    // New SSBC state pill
+    &__pill {
+        justify-self: center;
+        @media (--xs-breakpoint-down) {
+            justify-self: flex-start;
+        }
+    }
+    &__title {
+        @media (--sm-breakpoint-down) {
+            // Emulate h4 on sm and xs devices.
+            font-size: 0.875rem;
+            line-height: (20/14);
+            font-weight: 600;
+        }
+    }
+    &__content {
+        @media (--xs-breakpoint-down) {
+            width: fit-content;
+            // Make it full width in the current row.
+            grid-column: 1 / -1;
+        }
+        min-width: 0;
+    }
+    &__separator {
+        // Make it full width in the current row.
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--border-color-2);
+
+        @media (--xs-breakpoint-down) {
+            margin-top: 1rem;
+            padding-bottom: 1rem;
+        }
+    }
+}

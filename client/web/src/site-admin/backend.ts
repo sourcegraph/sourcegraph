@@ -57,6 +57,9 @@ import type {
     GitserversVariables,
     GitserversResult,
     GitserverFields,
+    RepositoryJobFields,
+    GlobalRepositoryJobsResult,
+    GlobalRepositoryJobsVariables,
 } from '../graphql-operations'
 import { accessTokenFragment } from '../settings/tokens/AccessTokenNode'
 
@@ -1065,6 +1068,13 @@ const gitserverFieldsFragment = gql`
         address
         freeDiskSpaceBytes
         totalDiskSpaceBytes
+        repositoryJobs(first: 0) {
+            stats {
+                queued
+                processing
+                longestQueuedTime
+            }
+        }
     }
 `
 
@@ -1074,6 +1084,9 @@ export const GITSERVERS = gql`
             nodes {
                 ...GitserverFields
             }
+        }
+        site {
+            gitserverDiskUsageWarningThreshold
         }
     }
 
@@ -1087,5 +1100,76 @@ export const useGitserversConnection = (): UseShowMorePaginationResult<Gitserver
         getConnection: result => {
             const { gitservers } = dataOrThrowErrors(result)
             return gitservers
+        },
+    })
+
+const repositoryJobFieldsFragment = gql`
+    fragment RepositoryJobFields on RepositoryJob {
+        id
+        backend
+        type
+        scheduleReason
+        placeInQueue
+        state
+        failureMessage
+        queuedAt
+        startedAt
+        finishedAt
+        executionDeadlineSeconds
+        repository {
+            id
+            name
+            url
+        }
+        executionLogs {
+            ...RepositoryJobExecutionLogEntryFields
+        }
+    }
+
+    fragment RepositoryJobExecutionLogEntryFields on ExecutionLogEntry {
+        key
+        command
+        startTime
+        exitCode
+        out
+        durationMilliseconds
+    }
+`
+
+export const GLOBAL_REPOSITORY_JOBS = gql`
+    query GlobalRepositoryJobs($first: Int!, $after: String) {
+        repositoryJobs(first: $first, after: $after) {
+            totalCount
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
+            nodes {
+                ...RepositoryJobFields
+            }
+        }
+    }
+
+    ${repositoryJobFieldsFragment}
+`
+
+export const REPOSITORY_JOBS_PER_PAGE_COUNT = 15
+
+export const useGlobalRepositoryJobsConnection = (): UseShowMorePaginationResult<
+    GlobalRepositoryJobsResult,
+    RepositoryJobFields
+> =>
+    useShowMorePagination<GlobalRepositoryJobsResult, GlobalRepositoryJobsVariables, RepositoryJobFields>({
+        query: GLOBAL_REPOSITORY_JOBS,
+        variables: {
+            first: REPOSITORY_JOBS_PER_PAGE_COUNT,
+            after: null,
+        },
+        options: {
+            useURL: true,
+        },
+        getConnection: result => {
+            const { repositoryJobs } = dataOrThrowErrors(result)
+            return repositoryJobs
         },
     })

@@ -1,15 +1,9 @@
+@import 'wildcard/src/global-styles/breakpoints';
+
 .node {
     border-radius: var(--border-radius);
     padding: 1rem;
     background-color: var(--color-bg-1);
-
-    &-wrapper {
-        list-style: none;
-        padding: 0;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
 
     &-icon {
         margin-bottom: 0.5rem;
@@ -18,4 +12,17 @@
         border-radius: var(--border-radius);
         background-color: var(--gray-02);
     }
+
+    @media (--sm-breakpoint-down) {
+        // Use up remaining width of the row.
+        grid-column: 1 / -1;
+    }
+}
+
+.wrapper {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }

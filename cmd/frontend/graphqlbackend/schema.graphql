@@ -10838,3 +10838,117 @@ type CodeHost implements Node {
     """
     externalServices(first: Int = 50, after: String): ExternalServiceConnection!
 }
+
+extend type Query {
+    repositoryJobs(first: Int!, after: String): RepositoryJobConnection!
+}
+
+type RepositoryJobConnection {
+    totalCount: Int!
+    pageInfo: PageInfo!
+    stats: RepositoryJobConnectionStats!
+    nodes: [RepositoryJob!]!
+}
+
+type RepositoryJobConnectionStats {
+    queued: Int!
+    processing: Int!
+    """
+    Null, if nothing is queued.
+    """
+    longestQueuedTime: DateTime
+}
+
+type RepositoryJob implements Node {
+    """
+    The id of the repository job.
+    """
+    id: ID!
+
+    """
+    The repository this job targets.
+    """
+    repository: Repository!
+    """
+    The time the job was queued.
+    """
+    queuedAt: DateTime!
+    """
+    The time at which the job started processing. Null if the job has not started yet.
+    """
+    startedAt: DateTime
+    """
+    The time at which the job finished processing. Null if the job has not finished yet.
+    """
+    finishedAt: DateTime
+    state: RepositoryJobState!
+    """
+    Optional failure message, set when the execution failed.
+    """
+    failureMessage: String
+    """
+    The rank of this execution in the queue of the user. The value of this field is null if the
+    execution has started.
+    """
+    placeInQueue: Int
+    type: RepositoryJobType!
+    scheduleReason: RepositoryJobScheduleReason!
+    """
+    Null, if the job has not started execution yet.
+    """
+    executionLogs: [ExecutionLogEntry!]
+    backend: RepositoryBackendType
+
+    """
+    Null, if the job has not started execution yet, or the job has no deadline.
+    """
+    executionDeadlineSeconds: Int
+}
+
+enum RepositoryBackendType {
+    GIT_CLI
+}
+
+enum RepositoryJobScheduleReason {
+    USER
+    SCHEDULED
+}
+
+enum RepositoryJobType {
+    CLONE
+    FETCH
+    RECLONE
+    JANITOR
+    DELETE
+}
+
+enum RepositoryJobState {
+    QUEUED
+    PROCESSING
+    FAILED
+    COMPLETED
+    CANCELING
+    CANCELED
+}
+
+extend type Repository {
+    """
+    The planned time at which the repository will be enqueued for syncing the next
+    time. Null, if no additional sync is planned at this time.
+    """
+    nextFetchScheduleTime: DateTime
+    repositoryJobs(first: Int!, after: String): RepositoryJobConnection!
+}
+
+extend type GitserverInstance {
+    repositoryJobs(first: Int!, after: String): RepositoryJobConnection!
+}
+
+extend type Site {
+    """
+    The limit of disk usage at which gitserver will start complaining about
+    disk pressure. The default is 90, but can be overwritten by gitserver.diskUsageWarningThreshold
+    in site config.
+    """
+    gitserverDiskUsageWarningThreshold: Int!
+}

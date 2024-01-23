@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { mdiAlertCircle, mdiCheckCircle } from '@mdi/js'
+import classNames from 'classnames'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { Card, CardBody, Icon, LoadingSpinner } from '@sourcegraph/wildcard'
@@ -19,15 +20,17 @@ interface ExecutionLogEntryProps extends React.PropsWithChildren<{}> {
         out: string
         durationMilliseconds: number | null
     }
+    className?: string
     now?: () => Date
 }
 
 export const ExecutionLogEntry: React.FunctionComponent<React.PropsWithChildren<ExecutionLogEntryProps>> = ({
     logEntry,
     children,
+    className,
     now,
 }) => (
-    <Card className="mb-3">
+    <Card className={classNames('mb-3', className)}>
         <CardBody>
             {logEntry.command.length > 0 ? (
                 <LogOutput text={logEntry.command.join(' ')} className="mb-3" logDescription="Executed command:" />

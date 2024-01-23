@@ -548,6 +548,10 @@ func (r *siteResolver) AutoUpgradeEnabled(ctx context.Context) (bool, error) {
 	return enabled, nil
 }
 
+func (r *siteResolver) GitserverDiskUsageWarningThreshold() int32 {
+	return int32(conf.GitserverDiskUsageWarningThreshold())
+}
+
 func (r *schemaResolver) SetAutoUpgrade(ctx context.Context, args *struct {
 	Enable bool
 },

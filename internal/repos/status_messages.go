@@ -10,7 +10,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
-	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
 var MockStatusMessages func(context.Context) ([]StatusMessage, error)
@@ -108,11 +107,7 @@ func FetchStatusMessages(ctx context.Context, db database.DB, gitserverClient gi
 		}
 	}
 
-	diskUsageThreshold := conf.Get().SiteConfig().GitserverDiskUsageWarningThreshold
-	if diskUsageThreshold == nil {
-		// This is the default threshold if not configured
-		diskUsageThreshold = pointers.Ptr(90)
-	}
+	diskUsageThreshold := conf.GitserverDiskUsageWarningThreshold()
 
 	si, err := gitserverClient.SystemsInfo(context.Background())
 	if err != nil {
@@ -120,10 +115,10 @@ func FetchStatusMessages(ctx context.Context, db database.DB, gitserverClient gi
 	}
 
 	for _, s := range si {
-		if s.PercentUsed >= float32(*diskUsageThreshold) {
+		if s.PercentUsed >= float32(diskUsageThreshold) {
 			messages = append(messages, StatusMessage{
 				GitserverDiskThresholdReached: &GitserverDiskThresholdReached{
-					Message: fmt.Sprintf("The disk usage on gitserver %q is over %d%% (%.2f%% used).", s.Address, *diskUsageThreshold, s.PercentUsed),
+					Message: fmt.Sprintf("The disk usage on gitserver %q is over %d%% (%.2f%% used).", s.Address, diskUsageThreshold, s.PercentUsed),
 				},
 			})
 		}
