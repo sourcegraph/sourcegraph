@@ -606,8 +606,6 @@ func resolveLatestSettings(ctx context.Context, user *graphqlbackend.UserResolve
 func publicSiteConfiguration() schema.SiteConfiguration {
 	c := conf.Get()
 	return schema.SiteConfiguration{
-		AuthPublic:                  c.AuthPublic,
-		UpdateChannel:               conf.UpdateChannel(),
 		AuthzEnforceForSiteAdmins:   c.AuthzEnforceForSiteAdmins,
 		DisableNonCriticalTelemetry: c.DisableNonCriticalTelemetry,
 	}

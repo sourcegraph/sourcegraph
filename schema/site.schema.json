@@ -2420,6 +2420,7 @@
       "default": 3
     },
     "update.channel": {
+      "deprecationMessage": "Deprecated. No alternative channels exist.",
       "description": "The channel on which to automatically check for Sourcegraph updates.",
       "type": ["string"],
       "enum": ["release", "none"],

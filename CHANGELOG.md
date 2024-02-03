@@ -43,6 +43,7 @@ All notable changes to Sourcegraph are documented in this file.
 - Search Jobs switches the format of downloaded results from CSV to JSON. [#59619](https://github.com/sourcegraph/sourcegraph/pull/59619)
 - [Search Jobs](https://docs.sourcegraph.com/code_search/how-to/search-jobs) is now in beta and enabled by default. It can be disabled in the site configuration by setting `experimentalFeatures.searchJobs: false`.
 - The search input on the search homepage is now automatically focused when the page loads.
+- The site config setting `update.channel` has been deprecated and is not longer having an effect. Previously, overwriting the update channel with anything other than `release` would have disabled the update check and sending pings data along with it. Now, instances with a license that allows air gapped usage will NOT send those pings instead.
 
 ### Fixed
 

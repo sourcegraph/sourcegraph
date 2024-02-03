@@ -261,6 +261,7 @@ The most common scenario in which Sourcegraph stops sending pings is a change to
 ```
 *This setting [must be set to "release"](https://sourcegraph.com/github.com/sourcegraph/sourcegraph/-/blob/internal/updatecheck/client.go?L803-806) in order for the telemetry goroutine to run.*
 
+> Note: This setting has been deprecated in Sourcegraph 5.3 and is no longer active.
 
 ### Check if the goroutine is running
 

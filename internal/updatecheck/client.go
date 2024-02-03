@@ -25,6 +25,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/versions"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
+	"github.com/sourcegraph/sourcegraph/internal/licensing"
 	"github.com/sourcegraph/sourcegraph/internal/metrics"
 	"github.com/sourcegraph/sourcegraph/internal/redispool"
 	"github.com/sourcegraph/sourcegraph/internal/siteid"
@@ -771,8 +772,9 @@ var telemetryHTTPProxy = env.Get("TELEMETRY_HTTP_PROXY", "", "if set, HTTP proxy
 
 // check performs an update check and updates the global state.
 func check(logger log.Logger, db database.DB) {
-	// If the update channel is not set to release, we don't do a check.
-	if channel := conf.UpdateChannel(); channel != "release" {
+	// skip if has explicitly allowed air-gapped feature
+	if err := licensing.Check(licensing.FeatureAllowAirGapped); err == nil {
+		logger.Info("license is air-gapped, skipping update check")
 		return // no update check
 	}
 

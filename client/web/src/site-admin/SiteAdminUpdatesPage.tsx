@@ -22,7 +22,6 @@ import {
     PageHeader,
     Alert,
     Icon,
-    Code,
     Container,
     Text,
     ErrorAlert,
@@ -48,7 +47,7 @@ const capitalize = (text: string): string => (text && text[0].toUpperCase() + te
 
 const SiteUpdateCheck: React.FC = () => {
     const { data, loading, error } = useQuery<SiteUpdateCheckResult, SiteUpdateCheckVariables>(SITE_UPDATE_CHECK, {})
-    const autoUpdateCheckingEnabled = window.context.site['update.channel'] === 'release'
+    const autoUpdateCheckingEnabled = window.context.licenseInfo?.features.allowAirGapped ?? false
 
     return (
         <>
@@ -123,9 +122,7 @@ const SiteUpdateCheck: React.FC = () => {
             <small>
                 {autoUpdateCheckingEnabled
                     ? 'Automatically checking for updates.'
-                    : 'Automatic checking for updates disabled.'}{' '}
-                Change <Code>update.channel</Code> in <Link to="/site-admin/configuration">site configuration</Link> to{' '}
-                {autoUpdateCheckingEnabled ? 'disable' : 'enable'} automatic checking.
+                    : 'Automatic checking for updates disabled.'}
             </small>
         </>
     )

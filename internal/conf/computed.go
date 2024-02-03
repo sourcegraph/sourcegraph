@@ -153,15 +153,6 @@ func EmailSenderName() string {
 	return "Sourcegraph"
 }
 
-// UpdateChannel tells the update channel. Default is "release".
-func UpdateChannel() string {
-	channel := Get().UpdateChannel
-	if channel == "" {
-		return "release"
-	}
-	return channel
-}
-
 func BatchChangesEnabled() bool {
 	if enabled := Get().BatchChangesEnabled; enabled != nil {
 		return *enabled

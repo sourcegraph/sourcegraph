@@ -521,7 +521,6 @@ func getTestSiteWithSecrets(testSecrets testSecrets, optionalEdit ...string) str
   "email.address": "%s",
   "executors.accessToken": "%s",
   "externalURL": "https://sourcegraph.test:3443",
-  "update.channel": "release",
   "auth.providers": [
     {
       "allowSignup": true,

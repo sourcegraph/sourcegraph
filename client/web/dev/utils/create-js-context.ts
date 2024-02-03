@@ -64,9 +64,7 @@ export const createJsContext = ({ sourcegraphBaseUrl }: { sourcegraphBaseUrl: st
         searchAggregationEnabled: true,
         searchContextsEnabled: true,
         sentryDSN: null,
-        site: {
-            'update.channel': 'release',
-        },
+        site: {},
         siteID: 'TestSiteID',
         siteGQLID: 'TestGQLSiteID',
         sourcegraphDotComMode: ENVIRONMENT_CONFIG.SOURCEGRAPHDOTCOM_MODE,

@@ -22,8 +22,9 @@ type FeatureBatchChanges struct {
 // LicenseFeatures contains information about licensed features that are
 // enabled/disabled on the current license.
 type LicenseFeatures struct {
-	CodeSearch bool `json:"codeSearch"`
-	Cody       bool `json:"cody"`
+	CodeSearch     bool `json:"codeSearch"`
+	Cody           bool `json:"cody"`
+	AllowAirGapped bool `json:"allowAirGapped"`
 }
 
 // LicenseInfo contains non-sensitive information about the legitimate usage of the

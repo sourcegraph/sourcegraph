@@ -110,8 +110,9 @@ func Init(
 		}
 
 		licenseInfo.Features = hooks.LicenseFeatures{
-			CodeSearch: licensing.Check(licensing.FeatureCodeSearch) == nil,
-			Cody:       licensing.Check(licensing.FeatureCody) == nil,
+			CodeSearch:     licensing.Check(licensing.FeatureCodeSearch) == nil,
+			Cody:           licensing.Check(licensing.FeatureCody) == nil,
+			AllowAirGapped: licensing.Check(licensing.FeatureAllowAirGapped) == nil,
 		}
 
 		return licenseInfo

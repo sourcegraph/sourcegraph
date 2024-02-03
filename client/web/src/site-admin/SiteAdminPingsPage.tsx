@@ -44,7 +44,7 @@ export const SiteAdminPingsPage: React.FunctionComponent<React.PropsWithChildren
         eventLogger.logViewEvent('SiteAdminPings')
     }, [])
 
-    const updatesDisabled = window.context.site['update.channel'] !== 'release'
+    const updatesDisabled = window.context.licenseInfo?.features.allowAirGapped ?? false
     const jsonEditorContainerRef = useRef<HTMLDivElement | null>(null)
     const editorRef = useRef<EditorView | null>(null)
 
