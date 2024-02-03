@@ -8360,6 +8360,90 @@ type AnalyticsCodesInsightsResult {
     """
     insightDataPointClicks: AnalyticsStatItem!
 }
+
+"""
+User counts for a custom list of events.
+"""
+type AnalyticsCustomResult {
+    """
+    Custom events user count statistics.
+    """
+    users: AnalyticsStatItem!
+    """
+    List of users who completed any of the custom list of events in periods.
+    """
+    userActivity(
+        """
+        Returns the first n teams from the list.
+        """
+        first: Int
+
+        """
+        Opaque pagination cursor.
+        """
+        after: String
+    ): AnalyticsUserActivityConnection!
+}
+
+"""
+List of active users by date for a custom list of events.
+"""
+type AnalyticsUserActivityConnection {
+    """
+    A list of Users.
+    """
+    nodes: [AnalyticsUserActivity!]!
+    """
+    The total count of event logs in the connection. This total count may be larger than the number of nodes
+    in this object when the result is paginated.
+    """
+    totalCount: Int!
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+}
+
+"""
+A node that reflects a user and their activity level in a recent period.
+"""
+type AnalyticsUserActivity {
+    """
+    The database ID for the user.
+    """
+    userID: Int!
+    """
+    The user's username.
+    """
+    username: String
+    """
+    The display name chosen by the user.
+    """
+    displayName: String
+    """
+    The total count of events completed by this user across all periods in the query.
+    """
+    totalEventCount: Int!
+    """
+    A collection of time periods with event counts.
+    """
+    periods: [AnalyticsUserActivePeriod!]!
+}
+
+"""
+A single time period with an event count.
+"""
+type AnalyticsUserActivePeriod {
+    """
+    The date for which the user was active, in ISO format.
+    """
+    date: String!
+    """
+    Total number of events.
+    """
+    count: Float!
+}
+
 """
 Analytics describes a new site statistics.
 """
@@ -8404,6 +8488,14 @@ type Analytics {
     Code insights statistics
     """
     codeInsights(dateRange: AnalyticsDateRange, grouping: AnalyticsGrouping): AnalyticsCodesInsightsResult!
+    """
+    Custom event statistics
+    """
+    custom(dateRange: AnalyticsDateRange, grouping: AnalyticsGrouping, events: [String!]!): AnalyticsCustomResult!
+    """
+    A list of all event names for custom event autocomplete
+    """
+    allEventNames: [String]!
 }
 
 """

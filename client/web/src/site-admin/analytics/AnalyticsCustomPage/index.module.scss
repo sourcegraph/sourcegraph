@@ -1,0 +1,24 @@
+.connection-container {
+    overflow: auto;
+}
+
+.node {
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.user {
+    min-width: 150px;
+}
+
+.period {
+    min-width: 40px;
+    text-overflow: wrap;
+    padding: 0.25rem;
+}
+
+.textarea {
+    width: auto;
+}

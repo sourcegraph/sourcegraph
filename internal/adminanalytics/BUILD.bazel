@@ -4,12 +4,16 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "adminanalytics",
     srcs = [
+        "allEventNames.go",
+        "analyticsUserActivePeriodsConnection.go",
+        "archive.go",
         "batchchanges.go",
         "cache.go",
         "codeinsights.go",
         "codeintel.go",
         "codeintelbylanguage.go",
         "codeinteltoprepositories.go",
+        "custom.go",
         "extensions.go",
         "fetcher.go",
         "notebooks.go",
@@ -21,6 +25,7 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/internal/adminanalytics",
     visibility = ["//:__subpackages__"],
     deps = [
+        "//cmd/frontend/graphqlbackend/graphqlutil",
         "//internal/database",
         "//internal/featureflag",
         "//internal/redispool",

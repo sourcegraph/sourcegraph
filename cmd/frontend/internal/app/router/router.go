@@ -35,6 +35,7 @@ const (
 	CheckUsernameTaken = "check-username-taken"
 
 	UsageStatsDownload = "usage-stats.download"
+	AllEventsDownload  = "all-events.download"
 
 	OneClickExportArchive = "one-click-export.archive"
 
@@ -95,6 +96,7 @@ func newRouter() *mux.Router {
 	base.Path("/tools").Methods("GET").Name(OldToolsRedirect)
 
 	base.Path("/site-admin/usage-statistics/archive").Methods("GET").Name(UsageStatsDownload)
+	base.Path("/site-admin/admin-analytics-all-events/archive").Methods("GET").Name(AllEventsDownload)
 
 	base.Path("/site-admin/data-export/archive").Methods("POST").Name(OneClickExportArchive)
 

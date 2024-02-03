@@ -74,6 +74,63 @@ LEFT OUTER JOIN users ON users.id = event_logs.user_id
 %s
 `
 
+// Return a row per user with a column `events_over_time` containing a JSON object with (date, event count) key/value pairs.
+const eventLogsUserActivePeriodsNodesQuery = `
+WITH users_dates AS (
+	SELECT
+		event_logs.user_id,
+		users.username,
+		users.display_name,
+		%s AS date,
+		COUNT(*) as events_count
+	FROM
+		event_logs
+	LEFT OUTER JOIN users ON users.id = event_logs.user_id
+	%s
+	GROUP BY
+		user_id,
+		username,
+		display_name,
+		date
+),
+users_aggregated_dates AS (
+	SELECT
+		user_id,
+		username,
+		display_name,
+		JSONB_OBJECT_AGG(date, events_count) OVER (PARTITION BY user_id) AS events_over_time,
+		SUM(events_count) OVER (PARTITION BY user_id) AS total_events
+	FROM
+		users_dates
+)
+SELECT
+	user_id,
+	username,
+	display_name,
+	events_over_time,
+	total_events
+FROM
+	users_aggregated_dates
+GROUP BY
+	user_id,
+	username,
+	display_name,
+	events_over_time,
+	total_events
+ORDER BY
+	total_events DESC
+%s
+`
+
+const eventLogsUserActivePeriodsCountQuery = `
+SELECT
+	COUNT(DISTINCT user_id) registered_users
+FROM
+	event_logs
+LEFT OUTER JOIN users ON users.id = event_logs.user_id
+%s
+`
+
 func getDefaultConds() []*sqlf.Query {
 	commonConds := database.BuildCommonUsageConds(&database.CommonUsageOptions{
 		ExcludeSystemUsers:          true,
@@ -86,6 +143,28 @@ func getDefaultConds() []*sqlf.Query {
 }
 
 func makeEventLogsQueries(dateRange string, grouping string, events []string, conditions ...*sqlf.Query) (*sqlf.Query, *sqlf.Query, error) {
+	dateTruncExp, conds, err := getQueryConds(dateRange, grouping, events, conditions)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nodesQuery := sqlf.Sprintf(eventLogsNodesQuery, dateTruncExp, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")))
+	summaryQuery := sqlf.Sprintf(eventLogsSummaryQuery, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")))
+	return nodesQuery, summaryQuery, nil
+}
+
+func makeUserActivePeriodsQueries(dateRange string, grouping string, events []string, opt analyticsUserActivePeriodsListOptions, conditions ...*sqlf.Query) (*sqlf.Query, *sqlf.Query, error) {
+	dateTruncExp, conds, err := getQueryConds(dateRange, grouping, events, conditions)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	nodesQuery := sqlf.Sprintf(eventLogsUserActivePeriodsNodesQuery, dateTruncExp, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")), opt.LimitOffset.SQL())
+	countQuery := sqlf.Sprintf(eventLogsUserActivePeriodsCountQuery, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")))
+	return nodesQuery, countQuery, nil
+}
+
+func getQueryConds(dateRange string, grouping string, events []string, conditions []*sqlf.Query) (*sqlf.Query, []*sqlf.Query, error) {
 	dateTruncExp, dateBetweenCond, err := makeDateParameters(dateRange, grouping, "timestamp")
 	if err != nil {
 		return nil, nil, err
@@ -100,15 +179,12 @@ func makeEventLogsQueries(dateRange string, grouping string, events []string, co
 	if len(events) > 0 {
 		var eventNames []*sqlf.Query
 		for _, name := range events {
-			eventNames = append(eventNames, sqlf.Sprintf("%s", name))
+			eventNames = append(eventNames, sqlf.Sprintf("LOWER(%s)", name))
 		}
-		conds = append(conds, sqlf.Sprintf("name IN (%s)", sqlf.Join(eventNames, ",")))
+		conds = append(conds, sqlf.Sprintf("LOWER(name) IN (%s)", sqlf.Join(eventNames, ",")))
 	}
 
-	nodesQuery := sqlf.Sprintf(eventLogsNodesQuery, dateTruncExp, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")))
-	summaryQuery := sqlf.Sprintf(eventLogsSummaryQuery, sqlf.Sprintf("WHERE (%s)", sqlf.Join(conds, ") AND (")))
-
-	return nodesQuery, summaryQuery, nil
+	return dateTruncExp, conds, nil
 }
 
 // getTimestamps returns the start and end timestamps for the given number of months.

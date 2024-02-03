@@ -9,9 +9,10 @@ interface IProps {
     aggregation?: IAggregation
     dateRange?: AnalyticsDateRange
     grouping?: AnalyticsGrouping
+    events?: string
 }
 
-interface IResult {
+export interface IResult {
     dateRange: {
         value: AnalyticsDateRange
         label: string
@@ -29,6 +30,11 @@ interface IResult {
         onChange: (value: AnalyticsGrouping) => void
         items: { value: AnalyticsGrouping; label: string }[]
     }
+    events: {
+        value: string
+        label: string
+        onChange: (value: string) => void
+    }
 }
 
 export function useChartFilters(props: IProps): IResult {
@@ -36,6 +42,7 @@ export function useChartFilters(props: IProps): IResult {
         dateRange: props.dateRange || AnalyticsDateRange.LAST_THREE_MONTHS,
         aggregation: props.aggregation || 'count',
         grouping: props.grouping || AnalyticsGrouping.WEEKLY,
+        events: props.events || '',
     })
 
     return {
@@ -86,6 +93,13 @@ export function useChartFilters(props: IProps): IResult {
                 { value: AnalyticsGrouping.DAILY, label: 'Daily' },
                 { value: AnalyticsGrouping.WEEKLY, label: 'Weekly' },
             ],
+        },
+        events: {
+            value: data.events,
+            label: 'Event names to query',
+            onChange: value => {
+                setData({ events: value })
+            },
         },
     }
 }

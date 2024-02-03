@@ -72,6 +72,9 @@ func NewHandler(db database.DB, logger log.Logger) http.Handler {
 	// Usage statistics ZIP download
 	r.Get(router.UsageStatsDownload).Handler(trace.Route(usageStatsArchiveHandler(db)))
 
+	// Admin analytics all events ZIP download
+	r.Get(router.AllEventsDownload).Handler(trace.Route(allEventsArchiveHandler(db)))
+
 	// One-click export ZIP download
 	r.Get(router.OneClickExportArchive).Handler(trace.Route(oneClickExportHandler(db, logger)))
 

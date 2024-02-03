@@ -1488,6 +1488,7 @@ type Event struct {
 	Source          string
 	Version         string
 	Timestamp       time.Time
+	Client          *string
 }
 
 // GrowthStatistics represents the total users that were created,

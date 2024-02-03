@@ -33,6 +33,7 @@ go_library(
         "//cmd/frontend/internal/routevar",
         "//cmd/frontend/oneclickexport",
         "//internal/actor",
+        "//internal/adminanalytics",
         "//internal/api",
         "//internal/auth",
         "//internal/auth/accessrequest",
