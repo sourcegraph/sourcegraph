@@ -70,12 +70,12 @@ func TestGRPCServer_Blame(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
 				b := git.NewMockGitBackend()
 				hr := git.NewMockBlameHunkReader()
 				hr.ReadFunc.SetDefaultReturn(nil, io.EOF)
 				b.BlameFunc.SetDefaultReturn(hr, nil)
-				return b
+				return b, nil
 			},
 		}
 
@@ -120,8 +120,8 @@ func TestGRPCServer_Blame(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 
@@ -181,8 +181,8 @@ func TestGRPCServer_DefaultBranch(t *testing.T) {
 		b.RevParseHeadFunc.SetDefaultReturn("deadbeef", nil)
 		gs := &grpcServer{
 			svc: svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 
@@ -242,8 +242,8 @@ func TestGRPCServer_MergeBase(t *testing.T) {
 		b.MergeBaseFunc.SetDefaultReturn("deadbeef", nil)
 		gs := &grpcServer{
 			svc: svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 
@@ -298,10 +298,10 @@ func TestGRPCServer_ReadFile(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
 				b := git.NewMockGitBackend()
 				b.ReadFileFunc.SetDefaultReturn(io.NopCloser(bytes.NewReader([]byte("filecontent"))), nil)
-				return b
+				return b, nil
 			},
 		}
 
@@ -343,8 +343,8 @@ func TestGRPCServer_ReadFile(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 
@@ -429,8 +429,8 @@ func TestGRPCServer_GetCommit(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 
@@ -490,8 +490,8 @@ func TestGRPCServer_GetCommit(t *testing.T) {
 		gs := &grpcServer{
 			subRepoChecker: srp,
 			svc:            svc,
-			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
-				return b
+			getBackendFunc: func(common.GitDir, api.RepoName) (git.GitBackend, error) {
+				return b, nil
 			},
 		}
 

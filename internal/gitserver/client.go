@@ -286,6 +286,7 @@ type Client interface {
 
 	// HasCommitAfter indicates the staleness of a repository. It returns a boolean indicating if a repository
 	// contains a commit past a specified date.
+	// TODO: Could this be implemented by getting the tip Commit of a branch and looking at it's date?
 	HasCommitAfter(ctx context.Context, repo api.RepoName, date string, revspec string) (bool, error)
 
 	// IsRepoCloneable returns nil if the repository is cloneable.
@@ -378,12 +379,6 @@ type Client interface {
 	// longer required.
 	Diff(ctx context.Context, opts DiffOptions) (*DiffFileIterator, error)
 
-	// BranchesContaining returns a map from branch names to branch tip hashes for
-	// each branch containing the given commit.
-	// The returned branches will be in short form (e.g. "master" instead of
-	// "refs/heads/master").
-	BranchesContaining(ctx context.Context, repo api.RepoName, commit api.CommitID) ([]string, error)
-
 	// RefDescriptions returns a map from commits to descriptions of the tip of each
 	// branch and tag of the given repository.
 	RefDescriptions(ctx context.Context, repo api.RepoName, gitObjs ...string) (map[string][]gitdomain.RefDescription, error)
@@ -397,6 +392,7 @@ type Client interface {
 	// CommitLog returns the repository commit log, including the file paths that were changed. The general approach to parsing
 	// is to separate the first line (the metadata line) from the remaining lines (the files), and then parse the metadata line
 	// into component parts separately.
+	// TODO: Only used by own. Does what Commits does, just with added file paths.
 	CommitLog(ctx context.Context, repo api.RepoName, after time.Time) ([]CommitLog, error)
 
 	// CommitsUniqueToBranch returns a map from commits that exist on a particular

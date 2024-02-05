@@ -21,7 +21,6 @@ func (r *GitTreeEntryResolver) IsRoot() bool {
 
 type gitTreeEntryConnectionArgs struct {
 	graphqlutil.ConnectionArgs
-	Recursive bool
 	// If Ancestors is true and the tree is loaded from a subdirectory, we will
 	// return a flat list of all entries in all parent directories.
 	Ancestors bool
@@ -47,27 +46,13 @@ func (r *GitTreeEntryResolver) entries(ctx context.Context, args *gitTreeEntryCo
 		return nil, errors.Newf("invalid argument for first, must be non-negative")
 	}
 
-	entries, err := r.gitserverClient.ReadDir(ctx, r.commit.repoResolver.RepoName(), api.CommitID(r.commit.OID()), r.Path(), args.Recursive)
+	entries, err := r.gitserverClient.ReadDir(ctx, r.commit.repoResolver.RepoName(), api.CommitID(r.commit.OID()), r.Path(), false)
 	if err != nil {
 		if strings.Contains(err.Error(), "file does not exist") { // TODO proper error value
 			// empty tree is not an error
 		} else {
 			return nil, err
 		}
-	}
-
-	// When using recursive: true on gitserverClient.ReadDir, we get entries for
-	// all parent trees (directories) from git as well, so we filter those out.
-	// Ideally, we fix this in the ReadDir API, but this might have other unforseen
-	// side-effects so we will revisit that later.
-	// Example output from git for ls-tree cmd/gitserver with -r -t (recursive: true):
-	// cmd
-	// gitserver
-	// [...] files in cmd/gitserver and deeper.
-	// To drop those, we just have to drop as many entries as the level of nesting
-	// r.Path is at.
-	if args.Recursive && !r.IsRoot() {
-		entries = entries[len(strings.Split(strings.Trim(r.Path(), "/"), "/")):]
 	}
 
 	maxResolvers := len(entries)

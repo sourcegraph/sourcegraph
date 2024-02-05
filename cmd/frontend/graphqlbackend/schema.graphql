@@ -5636,10 +5636,6 @@ type GitTree implements TreeEntry {
         Returns the first n directories in the tree.
         """
         first: Int
-        """
-        Recurse into sub-trees.
-        """
-        recursive: Boolean = false
     ): [GitTree!]!
     """
     A list of files in this tree.
@@ -5649,10 +5645,6 @@ type GitTree implements TreeEntry {
         Returns the first n files in the tree.
         """
         first: Int
-        """
-        Recurse into sub-trees.
-        """
-        recursive: Boolean = false
     ): [File!]!
     """
     A list of entries in this tree.
@@ -5662,10 +5654,6 @@ type GitTree implements TreeEntry {
         Returns the first n files in the tree.
         """
         first: Int
-        """
-        Recurse into sub-trees.
-        """
-        recursive: Boolean = false
         """
         Includes all parent directories and their entries. For example, if the path is
         `/client/web/something`, it will return the following entries in this order:

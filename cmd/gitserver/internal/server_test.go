@@ -145,7 +145,7 @@ func TestExecRequest(t *testing.T) {
 		ObservationCtx:    observation.TestContextTB(t),
 		ReposDir:          reposDir,
 		skipCloneForTests: true,
-		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
+		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) (git.GitBackend, error) {
 			backend := git.NewMockGitBackend()
 			backend.ExecFunc.SetDefaultHook(func(ctx context.Context, args ...string) (io.ReadCloser, error) {
 				if !gitcli.IsAllowedGitCmd(logtest.Scoped(t), args, gitserverfs.RepoDirFromName(reposDir, repoName)) {
@@ -176,7 +176,7 @@ func TestExecRequest(t *testing.T) {
 				}
 				return io.NopCloser(&bytes.Buffer{}), nil
 			})
-			return backend
+			return backend, nil
 		},
 		GetRemoteURLFunc: func(ctx context.Context, name api.RepoName) (string, error) {
 			return "https://" + string(name) + ".git", nil
@@ -307,8 +307,8 @@ func makeTestServer(ctx context.Context, t *testing.T, repoDir, remote string, d
 		Logger:         logger,
 		ObservationCtx: obctx,
 		ReposDir:       repoDir,
-		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
-			return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName)
+		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) (git.GitBackend, error) {
+			return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName), nil
 		},
 		GetRemoteURLFunc: func(context.Context, api.RepoName) (string, error) {
 			return remote, nil
@@ -1037,8 +1037,8 @@ func TestHandleBatchLog(t *testing.T) {
 				DB:                      dbmocks.NewMockDB(),
 				RecordingCommandFactory: wrexec.NewNoOpRecordingCommandFactory(),
 				Locker:                  NewRepositoryLocker(),
-				GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
-					return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName)
+				GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) (git.GitBackend, error) {
+					return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName), nil
 				},
 			}
 			// Initialize side-effects.

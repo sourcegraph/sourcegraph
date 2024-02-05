@@ -22,7 +22,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/cloneurl"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
-	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git/gitcli"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git/gogit"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git/switching"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/perforce"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/vcssyncer"
@@ -91,12 +92,14 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 	recordingCommandFactory := wrexec.NewRecordingCommandFactory(nil, 0)
 	cloneQueue := server.NewCloneQueue(observationCtx, list.New())
 	locker := server.NewRepositoryLocker()
+	// Allow up to 10GB of cache data.
+	gogitFactory := gogit.NewCachingBackendFactory(10 * 1024 * 1024 * 1024)
 	gitserver := server.Server{
 		Logger:         logger,
 		ObservationCtx: observationCtx,
 		ReposDir:       config.ReposDir,
-		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
-			return gitcli.NewBackend(logger, recordingCommandFactory, dir, repoName)
+		GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) (git.GitBackend, error) {
+			return switching.NewBackend(logger, recordingCommandFactory, dir, repoName, gogitFactory)
 		},
 		GetRemoteURLFunc: func(ctx context.Context, repo api.RepoName) (string, error) {
 			return getRemoteURLFunc(ctx, logger, db, repo)

@@ -286,7 +286,10 @@ func (gs *grpcServer) GetObject(ctx context.Context, req *proto.GetObjectRequest
 	// Log which actor is accessing the repo.
 	accesslog.Record(ctx, string(repoName), log.String("objectname", req.GetObjectName()))
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return nil, err
+	}
 
 	obj, err := backend.GetObject(ctx, req.GetObjectName())
 	if err != nil {
@@ -725,7 +728,10 @@ func (gs *grpcServer) MergeBase(ctx context.Context, req *proto.MergeBaseRequest
 	// TODO: This should be included in requests where we do ensure the revision exists.
 	// gs.server.ensureRevision(ctx, repoName, "THE REVISION", repoDir)
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return nil, err
+	}
 
 	sha, err := backend.MergeBase(ctx, string(req.GetBase()), string(req.GetHead()))
 	if err != nil {
@@ -776,7 +782,10 @@ func (gs *grpcServer) GetCommit(ctx context.Context, req *proto.GetCommitRequest
 		return nil, err
 	}
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return nil, err
+	}
 
 	commit, err := backend.GetCommit(ctx, api.CommitID(req.GetCommit()), subRepoPermsEnabled)
 	if err != nil {
@@ -873,7 +882,10 @@ func (gs *grpcServer) Blame(req *proto.BlameRequest, ss proto.GitserverService_B
 		return s.Err()
 	}
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return err
+	}
 
 	r, err := backend.Blame(ctx, req.GetPath(), git.BlameOptions{
 		NewestCommit:     api.CommitID(req.GetCommit()),
@@ -934,7 +946,10 @@ func (gs *grpcServer) DefaultBranch(ctx context.Context, req *proto.DefaultBranc
 		return nil, s.Err()
 	}
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return nil, err
+	}
 
 	refName, err := backend.SymbolicRefHead(ctx, req.GetShortRef())
 	if err != nil {
@@ -1026,7 +1041,10 @@ func (gs *grpcServer) ReadFile(req *proto.ReadFileRequest, ss proto.GitserverSer
 		return s.Err()
 	}
 
-	backend := gs.getBackendFunc(repoDir, repoName)
+	backend, err := gs.getBackendFunc(repoDir, repoName)
+	if err != nil {
+		return err
+	}
 
 	r, err := backend.ReadFile(ctx, api.CommitID(req.GetCommit()), req.GetPath())
 	if err != nil {

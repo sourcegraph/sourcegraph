@@ -151,10 +151,11 @@ func EnsureAbsoluteCommit(commitID api.CommitID) error {
 
 // Commit represents a git commit
 type Commit struct {
-	ID        api.CommitID `json:"ID,omitempty"`
-	Author    Signature    `json:"Author"`
-	Committer *Signature   `json:"Committer,omitempty"`
-	Message   Message      `json:"Message,omitempty"`
+	ID     api.CommitID `json:"ID,omitempty"`
+	Author Signature    `json:"Author"`
+	// TODO: Should not be a pointer.
+	Committer *Signature `json:"Committer,omitempty"`
+	Message   Message    `json:"Message,omitempty"`
 	// Parents are the commit IDs of this commit's parent commits.
 	Parents []api.CommitID `json:"Parents,omitempty"`
 }

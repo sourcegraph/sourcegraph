@@ -113,7 +113,7 @@ func NewCloneQueue(obctx *observation.Context, jobs *list.List) *common.Queue[*c
 	return common.NewQueue[*cloneJob](obctx, "clone-queue", jobs)
 }
 
-type Backender func(common.GitDir, api.RepoName) git.GitBackend
+type Backender func(common.GitDir, api.RepoName) (git.GitBackend, error)
 
 // Server is a gitserver server.
 type Server struct {
@@ -535,7 +535,10 @@ type execStatus struct {
 func (s *Server) Exec(ctx context.Context, req *protocol.ExecRequest, w io.Writer) (execStatus, error) {
 	repoName := protocol.NormalizeRepo(req.Repo)
 	dir := gitserverfs.RepoDirFromName(s.ReposDir, repoName)
-	backend := s.GetBackendFunc(dir, repoName)
+	backend, err := s.GetBackendFunc(dir, repoName)
+	if err != nil {
+		return execStatus{}, err
+	}
 
 	if req.NoTimeout {
 		var cancel context.CancelFunc
@@ -928,7 +931,7 @@ func (s *Server) doClone(
 		testRepoCorrupter(ctx, common.GitDir(tmpPath))
 	}
 
-	if err := postRepoFetchActions(ctx, logger, s.DB, s.Hostname, s.RecordingCommandFactory, repo, common.GitDir(tmpPath), remoteURL, syncer); err != nil {
+	if err := postRepoFetchActions(ctx, logger, s.GetBackendFunc, s.DB, s.Hostname, s.RecordingCommandFactory, repo, common.GitDir(tmpPath), remoteURL, syncer); err != nil {
 		return err
 	}
 
@@ -1017,6 +1020,7 @@ func (w *linebasedBufferedWriter) Bytes() []byte {
 func postRepoFetchActions(
 	ctx context.Context,
 	logger log.Logger,
+	backender Backender,
 	db database.DB,
 	shardID string,
 	rcf *wrexec.RecordingCommandFactory,
@@ -1025,7 +1029,10 @@ func postRepoFetchActions(
 	remoteURL *vcs.URL,
 	syncer vcssyncer.VCSSyncer,
 ) (errs error) {
-	backend := gitcli.NewBackend(logger, rcf, dir, repo)
+	backend, err := backender(dir, repo)
+	if err != nil {
+		return err
+	}
 
 	// Note: We use a multi error in this function to try to make as many of the
 	// post repo fetch actions succeed.
@@ -1324,7 +1331,7 @@ func (s *Server) doBackgroundRepoUpdate(repo api.RepoName, revspec string) error
 		}
 	}
 
-	return postRepoFetchActions(ctx, logger, s.DB, s.Hostname, s.RecordingCommandFactory, repo, dir, remoteURL, syncer)
+	return postRepoFetchActions(ctx, logger, s.GetBackendFunc, s.DB, s.Hostname, s.RecordingCommandFactory, repo, dir, remoteURL, syncer)
 }
 
 // setHEAD configures git repo defaults (such as what HEAD is) which are

@@ -100,8 +100,8 @@ func TestClient_ArchiveReader(t *testing.T) {
 				Logger:   logtest.Scoped(t),
 				ReposDir: filepath.Join(root, "repos"),
 				DB:       newMockDB(),
-				GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
-					return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName)
+				GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) (git.GitBackend, error) {
+					return gitcli.NewBackend(logtest.Scoped(t), wrexec.NewNoOpRecordingCommandFactory(), dir, repoName), nil
 				},
 				GetRemoteURLFunc: func(_ context.Context, name api.RepoName) (string, error) {
 					if test.remote != "" {

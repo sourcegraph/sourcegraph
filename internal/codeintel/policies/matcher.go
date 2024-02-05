@@ -225,7 +225,7 @@ func (m *Matcher) matchCommitsOnBranch(ctx context.Context, context matcherConte
 		for commit, commitDate := range commitDates {
 		policyLoop:
 			for policyID, policyDuration := range branchRequestMeta.policyDurationByIDs {
-				for _, match := range context.commitMap[commit] {
+				for _, match := range context.commitMap[string(commit)] {
 					if match.PolicyID != nil && *match.PolicyID == policyID {
 						// Skip duplicates (can happen at head of branch)
 						continue policyLoop
@@ -241,7 +241,7 @@ func (m *Matcher) matchCommitsOnBranch(ctx context.Context, context matcherConte
 				localPolicyID := policyID
 				commitDate := commitDate
 
-				context.commitMap[commit] = append(context.commitMap[commit], PolicyMatch{
+				context.commitMap[string(commit)] = append(context.commitMap[string(commit)], PolicyMatch{
 					Name:           branchName,
 					PolicyID:       &localPolicyID,
 					PolicyDuration: policyDuration,

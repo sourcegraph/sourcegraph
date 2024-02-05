@@ -178,23 +178,15 @@ func createLogFields(upload uploadsshared.Upload) []attribute.KeyValue {
 
 // defaultBranchContains tells if the default branch contains the given commit ID.
 func (c *handler) defaultBranchContains(ctx context.Context, repo api.RepoName, commit string) (bool, error) {
-	// Determine default branch name.
-	defaultBranchName, _, err := c.gitserverClient.GetDefaultBranch(ctx, repo, true)
+	// By checking for the merge base of <commit> and HEAD, we can tell if the default branch contains the commit.
+	// If the merge base is equal to the commit, then the commit is contained in the default branch,
+	// otherwise it is not.
+	base, err := c.gitserverClient.MergeBase(ctx, repo, commit, "HEAD")
 	if err != nil {
 		return false, err
 	}
 
-	// Determine if branch contains commit.
-	branches, err := c.gitserverClient.BranchesContaining(ctx, repo, api.CommitID(commit))
-	if err != nil {
-		return false, err
-	}
-	for _, branch := range branches {
-		if branch == defaultBranchName {
-			return true, nil
-		}
-	}
-	return false, nil
+	return string(base) == commit, nil
 }
 
 // HandleRawUpload converts a raw upload into a dump within the given transaction context. Returns true if the

@@ -1571,7 +1571,7 @@ func (c *clientImplementor) CommitsUniqueToBranch(ctx context.Context, repo api.
 		return nil, err
 	}
 
-	commits, err := parseCommitsUniqueToBranch(strings.Split(string(out), "\n"))
+	commits, err := parseCommitsUniqueToBranch(out)
 	if authz.SubRepoEnabled(c.subRepoPermsChecker) && err == nil {
 		return c.filterCommitsUniqueToBranch(ctx, repo, commits), nil
 	}
@@ -1589,9 +1589,12 @@ func (c *clientImplementor) filterCommitsUniqueToBranch(ctx context.Context, rep
 	return filtered
 }
 
-func parseCommitsUniqueToBranch(lines []string) (_ map[string]time.Time, err error) {
-	commitDates := make(map[string]time.Time, len(lines))
-	for _, line := range lines {
+func parseCommitsUniqueToBranch(out []byte) (_ map[string]time.Time, err error) {
+	lr := byteutils.NewLineReader(out)
+
+	commitDates := make(map[string]time.Time, bytes.Count(out, []byte("\n"))+1)
+	for lr.Scan() {
+		line := string(lr.Line())
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -1954,51 +1957,6 @@ func parseCommitFromLog(parts [][]byte) (*wrappedCommit, error) {
 			Parents:   parents,
 		}, files: fileNames,
 	}, nil
-}
-
-// BranchesContaining returns a map from branch names to branch tip hashes for
-// each branch containing the given commit.
-func (c *clientImplementor) BranchesContaining(ctx context.Context, repo api.RepoName, commit api.CommitID) (_ []string, err error) {
-	ctx, _, endObservation := c.operations.branchesContaining.With(ctx, &err, observation.Args{
-		MetricLabelValues: []string{c.scope},
-		Attrs: []attribute.KeyValue{
-			repo.Attr(),
-			attribute.String("commit", string(commit)),
-		},
-	})
-	defer endObservation(1, observation.Args{})
-
-	if authz.SubRepoEnabled(c.subRepoPermsChecker) {
-		// GetCommit to validate that the user has permissions to access it.
-		if _, err := c.GetCommit(ctx, repo, commit); err != nil {
-			return nil, err
-		}
-	}
-	cmd := c.gitCommand(repo, "branch", "--contains", string(commit), "--format", "%(refname)")
-
-	out, err := cmd.CombinedOutput(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseBranchesContaining(strings.Split(string(out), "\n")), nil
-}
-
-var refReplacer = strings.NewReplacer("refs/heads/", "", "refs/tags/", "")
-
-func parseBranchesContaining(lines []string) []string {
-	names := make([]string, 0, len(lines))
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		line = refReplacer.Replace(line)
-		names = append(names, line)
-	}
-	sort.Strings(names)
-
-	return names
 }
 
 // RefDescriptions returns a map from commits to descriptions of the tip of each
