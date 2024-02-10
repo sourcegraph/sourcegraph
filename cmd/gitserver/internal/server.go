@@ -456,7 +456,7 @@ func (s *Server) IsRepoCloneable(ctx context.Context, repo api.RepoName) (protoc
 	return resp, nil
 }
 
-func (s *Server) RepoUpdate(req *protocol.RepoUpdateRequest) protocol.RepoUpdateResponse {
+func (s *Server) RepoUpdate(ctx context.Context, req *protocol.RepoUpdateRequest) protocol.RepoUpdateResponse {
 	logger := s.Logger.Scoped("handleRepoUpdate")
 	var resp protocol.RepoUpdateResponse
 	req.Repo = protocol.NormalizeRepo(req.Repo)
@@ -478,32 +478,23 @@ func (s *Server) RepoUpdate(req *protocol.RepoUpdateRequest) protocol.RepoUpdate
 		return resp
 	}
 
-	var statusErr, updateErr error
+	var updateErr error
 
 	if debounce(req.Repo, req.Since) {
 		updateErr = s.doRepoUpdate(ctx, req.Repo, "")
 	}
 
-	// attempts to acquire these values are not contingent on the success of
-	// the update.
-	lastFetched, err := repoLastFetched(dir)
-	if err != nil {
-		statusErr = err
+	r, err := s.DB.GitserverRepos().GetByName(ctx, req.Repo)
+	if err == nil {
+		resp.LastChanged = &r.LastChanged
+		resp.LastFetched = &r.LastFetched
 	} else {
-		resp.LastFetched = &lastFetched
-	}
-	lastChanged, err := repoLastChanged(dir)
-	if err != nil {
-		statusErr = err
-	} else {
-		resp.LastChanged = &lastChanged
-	}
-	if statusErr != nil {
-		logger.Error("failed to get status of repo", log.String("repo", string(req.Repo)), log.Error(statusErr))
+		logger.Error("failed to get status of repo", log.String("repo", string(req.Repo)), log.Error(err))
 		// report this error in-band, but still produce a valid response with the
 		// other information.
-		resp.Error = statusErr.Error()
+		resp.Error = err.Error()
 	}
+
 	// If an error occurred during update, report it but don't actually make
 	// it into an http error; we want the client to get the information cleanly.
 	// An update error "wins" over a status error.

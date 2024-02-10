@@ -62,7 +62,7 @@ func testDeleteRepo(t *testing.T, deletedInDB bool) {
 	_ = s.Handler()
 
 	// This will perform an initial clone
-	s.RepoUpdate(&protocol.RepoUpdateRequest{
+	s.RepoUpdate(context.Background(), &protocol.RepoUpdateRequest{
 		Repo: repoName,
 	})
 

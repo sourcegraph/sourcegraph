@@ -214,6 +214,17 @@ func makeHTTPServer(logger log.Logger, server *repoupdater.Server) goroutine.Bac
 	grpcServer := grpc.NewServer(defaults.ServerOptions(logger)...)
 	proto.RegisterRepoUpdaterServiceServer(grpcServer, server)
 	reflection.Register(grpcServer)
+
+	lc := net.ListenConfig{
+		KeepAlive: -1,
+	}
+	l, err := lc.Listen(ctx, "tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	grpcServer.Serve(l)
+
 	handler := internalgrpc.MultiplexHandlers(grpcServer, healthServer())
 
 	// NOTE: Internal actor is required to have full visibility of the repo table
@@ -587,12 +598,4 @@ FROM
 		}
 		return count
 	})
-}
-
-func healthServer() http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", trace.WithRouteName("healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	return mux
 }

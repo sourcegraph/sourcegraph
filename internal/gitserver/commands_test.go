@@ -559,8 +559,8 @@ func runFileListingTest(t *testing.T,
 		"git commit -m commit1",
 	}
 
-	repo, dir := MakeGitRepositoryAndReturnDir(t, gitCommands...)
-	headCommit := GetHeadCommitFromGitDir(t, dir)
+	repo, dir := makeGitRepositoryAndReturnDir(t, gitCommands...)
+	headCommit := getHeadCommitFromGitDir(t, dir)
 	ctx := context.Background()
 
 	checker := authz.NewMockSubRepoPermissionChecker()
@@ -763,10 +763,10 @@ func TestListTags(t *testing.T) {
 
 	repo := MakeGitRepository(t, gitCommands...)
 	wantTags := []*gitdomain.Tag{
-		{Name: "t0", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t1", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t2", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t3", CommitID: "afeafc4a918c144329807df307e68899e6b65018", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+		{Name: "t0", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+		{Name: "t1", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+		{Name: "t2", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+		{Name: "t3", CommitID: "afeafc4a918c144329807df307e68899e6b65018", CreatorDate: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 	}
 
 	client := NewClient("test")
@@ -856,7 +856,7 @@ func TestRepository_FileSystem_Symlinks(t *testing.T) {
 
 	client := NewClient("test")
 
-	commitID := api.CommitID(ComputeCommitHash(dir, true))
+	commitID := api.CommitID(ComputeCommitHash(dir))
 
 	ctx := context.Background()
 
@@ -947,7 +947,7 @@ func TestStat(t *testing.T) {
 	})
 	client := NewTestClient(t).WithChecker(checker)
 
-	commitID := api.CommitID(ComputeCommitHash(dir, true))
+	commitID := api.CommitID(ComputeCommitHash(dir))
 
 	ctx := context.Background()
 
@@ -1339,15 +1339,15 @@ func TestRepository_Commits(t *testing.T) {
 	wantGitCommits := []*gitdomain.Commit{
 		{
 			ID:        "b266c7e3ca00b1a17ad0b1449825d0854225c007",
-			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
-			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
+			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
 			Message:   "bar",
 			Parents:   []api.CommitID{"ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"},
 		},
 		{
 			ID:        "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8",
-			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-			Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+			Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 			Message:   "foo",
 			Parents:   nil,
 		},
@@ -1415,15 +1415,15 @@ func TestCommits_SubRepoPerms(t *testing.T) {
 			wantCommits: []*gitdomain.Commit{
 				{
 					ID:        "b96d097108fa49e339ca88bc97ab07f833e62131",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
-					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
+					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
 					Message:   "commit2",
 					Parents:   []api.CommitID{"d38233a79e037d2ab8170b0d0bc0aa438473e6da"},
 				},
 				{
 					ID:        "d38233a79e037d2ab8170b0d0bc0aa438473e6da",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-					Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 					Message:   "commit1",
 				},
 			},
@@ -1445,8 +1445,8 @@ func TestCommits_SubRepoPerms(t *testing.T) {
 			wantCommits: []*gitdomain.Commit{
 				{
 					ID:        "d38233a79e037d2ab8170b0d0bc0aa438473e6da",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-					Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 					Message:   "commit1",
 				},
 			},
@@ -1522,15 +1522,15 @@ func TestCommits_SubRepoPerms_ReturnNCommits(t *testing.T) {
 			wantCommits: []*gitdomain.Commit{
 				{
 					ID:        "61dbc35f719c53810904a2d359309d4e1e98a6be",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
-					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
 					Message:   "commit7",
 					Parents:   []api.CommitID{"66566c8aa223f3e1b94ebe09e6cdb14c3a5bfb36"},
 				},
 				{
 					ID:        "2e6b2c94293e9e339f781b2a2f7172e15460f88c",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 					Parents: []api.CommitID{
 						"9a7ec70986d657c4c86d6ac476f0c5181ece509a",
 					},
@@ -1538,8 +1538,8 @@ func TestCommits_SubRepoPerms_ReturnNCommits(t *testing.T) {
 				},
 				{
 					ID:        "9a7ec70986d657c4c86d6ac476f0c5181ece509a",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:04Z")},
-					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:04Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:04Z")},
+					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:04Z")},
 					Message:   "commit4",
 					Parents: []api.CommitID{
 						"f3fa8cf6ec56d0469402523385d6ca4b7cb222d8",
@@ -1581,8 +1581,8 @@ func TestRepository_Commits_options(t *testing.T) {
 	wantGitCommits := []*gitdomain.Commit{
 		{
 			ID:        "b266c7e3ca00b1a17ad0b1449825d0854225c007",
-			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
-			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
+			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
 			Message:   "bar",
 			Parents:   []api.CommitID{"ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"},
 		},
@@ -1590,8 +1590,8 @@ func TestRepository_Commits_options(t *testing.T) {
 	wantGitCommits2 := []*gitdomain.Commit{
 		{
 			ID:        "ade564eba4cf904492fb56dcd287ac633e6e082c",
-			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:08Z")},
-			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:08Z")},
+			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:08Z")},
+			Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:08Z")},
 			Message:   "qux",
 			Parents:   []api.CommitID{"b266c7e3ca00b1a17ad0b1449825d0854225c007"},
 		},
@@ -1622,8 +1622,8 @@ func TestRepository_Commits_options(t *testing.T) {
 			wantCommits: []*gitdomain.Commit{
 				{
 					ID:        "b266c7e3ca00b1a17ad0b1449825d0854225c007",
-					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
-					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
+					Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:06Z")},
+					Committer: &gitdomain.Signature{Name: "c", Email: "c@c.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:07Z")},
 					Message:   "bar",
 					Parents:   []api.CommitID{"ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"},
 				},
@@ -1686,8 +1686,8 @@ func TestRepository_Commits_options_path(t *testing.T) {
 	wantGitCommits := []*gitdomain.Commit{
 		{
 			ID:        "546a3ef26e581624ef997cb8c0ba01ee475fc1dc",
-			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-			Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+			Author:    gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
+			Committer: &gitdomain.Signature{Name: "a", Email: "a@a.com", Date: mustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
 			Message:   "commit2",
 			Parents:   []api.CommitID{"a04652fa1998a0a7d2f2f77ecb7021de943d3aab"},
 		},
@@ -2180,11 +2180,6 @@ func TestArchiveReaderForRepoWithSubRepoPermissions(t *testing.T) {
 		// sub-repo permissions are enabled only for repo with repoID = 1
 		return name == repoName, nil
 	})
-	ClientMocks.Archive = func(ctx context.Context, repo api.RepoName, opt ArchiveOptions) (io.ReadCloser, error) {
-		stringReader := strings.NewReader("1337")
-		return io.NopCloser(stringReader), nil
-	}
-	defer ResetClientMocks()
 
 	repo := &types.Repo{Name: repoName, ID: 1}
 
@@ -2215,11 +2210,6 @@ func TestArchiveReaderForRepoWithoutSubRepoPermissions(t *testing.T) {
 		// sub-repo permissions are not present for repo with repoID = 1
 		return name != repoName, nil
 	})
-	ClientMocks.Archive = func(ctx context.Context, repo api.RepoName, opt ArchiveOptions) (io.ReadCloser, error) {
-		stringReader := strings.NewReader("1337")
-		return io.NopCloser(stringReader), nil
-	}
-	defer ResetClientMocks()
 
 	repo := &types.Repo{Name: repoName, ID: 1}
 
@@ -2228,7 +2218,15 @@ func TestArchiveReaderForRepoWithoutSubRepoPermissions(t *testing.T) {
 		Treeish:   commitID,
 		Pathspecs: []gitdomain.Pathspec{"."},
 	}
-	client := NewClient("test")
+	client := NewTestClient(t).WithClientSource(NewTestClientSource(t, []string{"test"}, func(o *TestClientSourceOptions) {
+		o.ClientFunc = func(conn *grpc.ClientConn) proto.GitserverServiceClient {
+			c := NewMockGitserverServiceClient()
+			c.ArchiveFunc.SetDefaultHook(func(ctx context.Context, ar *proto.ArchiveRequest, co ...grpc.CallOption) (proto.GitserverService_ArchiveClient, error) {
+				return nil, nil
+			})
+			return c
+		}
+	}))
 	readCloser, err := client.ArchiveReader(context.Background(), repo.Name, opts)
 	if err != nil {
 		t.Error("Error should not be thrown because ArchiveReader is invoked for a repo without sub-repo permissions")

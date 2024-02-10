@@ -16,6 +16,8 @@ import (
 	"github.com/sourcegraph/log"
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthv1 "google.golang.org/grpc/health/grpc_health_v1"
 
 	server "github.com/sourcegraph/sourcegraph/cmd/gitserver/internal"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/accesslog"
@@ -255,6 +257,11 @@ func makeGRPCServer(logger log.Logger, s *server.Server) *grpc.Server {
 	}
 
 	grpcServer := defaults.NewServer(logger, additionalServerOptions...)
+	hs := health.NewServer()
+	hs.SetServingStatus(proto.GitserverService_ServiceDesc.ServiceName, healthv1.HealthCheckResponse_SERVING)
+	// TODO: The health server should be listening to the debugeserver readiness
+	// probe.
+	healthv1.RegisterHealthServer(grpcServer, hs)
 	proto.RegisterGitserverServiceServer(grpcServer, server.NewGRPCServer(s))
 
 	return grpcServer

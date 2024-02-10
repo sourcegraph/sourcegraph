@@ -2254,9 +2254,9 @@ func (c *clientImplementor) ArchiveReader(
 		}
 	}
 
-	if ClientMocks.Archive != nil {
-		return ClientMocks.Archive(ctx, repo, options)
-	}
+	// if ClientMocks.Archive != nil {
+	// 	return ClientMocks.Archive(ctx, repo, options)
+	// }
 
 	// Check that ctx is not expired.
 	if err := ctx.Err(); err != nil {

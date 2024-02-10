@@ -18,6 +18,9 @@ contents:
     - p4cli@sourcegraph
     - p4-fusion-sg@sourcegraph
 
+    # Used for gRPC health checks in kubernetes until we can use native gRPC health checks (requires v1.27).
+    - grpc-health-probe
+
 paths:
   - path: /data/repos
     type: directory

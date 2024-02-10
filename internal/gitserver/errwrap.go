@@ -21,6 +21,8 @@ func convertGRPCErrorToGitDomainError(err error) error {
 		return err
 	}
 
+	// TODO: Is this needed? Seems like we handle context cancellation errors properly
+	// in gRPC interceptors: https://sourcegraph.com/-/editor?remote_url=github.com%2Fsourcegraph%2Fsourcegraph&branch=es%2Fget-commit-rpc&file=internal%2Fgrpc%2Fcontextconv%2Fconversion.go&editor=VSCode&version=2.2.16&start_row=56&start_col=5&end_row=56&end_col=6
 	if st.Code() == codes.Canceled {
 		return context.Canceled
 	}

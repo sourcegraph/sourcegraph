@@ -37,7 +37,7 @@ type service interface {
 	Exec(ctx context.Context, req *protocol.ExecRequest, w io.Writer) (execStatus, error)
 	MaybeStartClone(ctx context.Context, repo api.RepoName) (notFound *protocol.NotFoundPayload, cloned bool)
 	IsRepoCloneable(ctx context.Context, repo api.RepoName) (protocol.IsRepoCloneableResponse, error)
-	RepoUpdate(req *protocol.RepoUpdateRequest) protocol.RepoUpdateResponse
+	RepoUpdate(ctx context.Context, req *protocol.RepoUpdateRequest) protocol.RepoUpdateResponse
 	CloneRepo(ctx context.Context, repo api.RepoName, opts CloneOptions) (cloneProgress string, err error)
 	SearchWithObservability(ctx context.Context, tr trace.Trace, args *protocol.SearchRequest, onMatch func(*protocol.CommitMatch) error) (limitHit bool, err error)
 
@@ -207,7 +207,10 @@ func (gs *grpcServer) Archive(req *proto.ArchiveRequest, ss proto.GitserverServi
 	execReq.Args = append(execReq.Args, req.GetTreeish(), "--")
 	execReq.Args = append(execReq.Args, req.GetPathspecs()...)
 
-	w := streamio.NewWriter(func(p []byte) error {
+	// Archives can be huge, to make up a little of the overhead on transmit,
+	// we use a chunk size of 2MB. This effectively reduces the number of messages
+	// sent by a factor of 16 vs the default for larger archives.
+	w := streamio.NewWriterWithChunkSize(2*1024*1024, func(p []byte) error {
 		return ss.Send(&proto.ArchiveResponse{
 			Data: p,
 		})
@@ -403,10 +406,10 @@ func (gs *grpcServer) RepoDelete(ctx context.Context, req *proto.RepoDeleteReque
 	return &proto.RepoDeleteResponse{}, nil
 }
 
-func (gs *grpcServer) RepoUpdate(_ context.Context, req *proto.RepoUpdateRequest) (*proto.RepoUpdateResponse, error) {
+func (gs *grpcServer) RepoUpdate(ctx context.Context, req *proto.RepoUpdateRequest) (*proto.RepoUpdateResponse, error) {
 	var in protocol.RepoUpdateRequest
 	in.FromProto(req)
-	grpcResp := gs.svc.RepoUpdate(&in)
+	grpcResp := gs.svc.RepoUpdate(ctx, &in)
 
 	return grpcResp.ToProto(), nil
 }

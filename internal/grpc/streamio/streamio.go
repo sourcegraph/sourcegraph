@@ -73,15 +73,22 @@ func (rr *receiveReader) WriteTo(w io.Writer) (int64, error) {
 // NewWriter turns sender into an io.Writer. The sender callback will
 // receive []byte arguments of length at most WriteBufferSize.
 func NewWriter(sender func(p []byte) error) io.Writer {
-	return &sendWriter{sender: sender}
+	return NewWriterWithChunkSize(DefaultWriteBufferSize, sender)
 }
 
-// WriteBufferSize is the largest []byte that Write() will pass to its
+// NewWriter turns sender into an io.Writer. The sender callback will
+// receive []byte arguments of length at most maxChunkSize.
+func NewWriterWithChunkSize(maxChunkSize int, sender func(p []byte) error) io.Writer {
+	return &sendWriter{sender: sender, maxChunkSize: maxChunkSize}
+}
+
+// DefaultWriteBufferSize is the largest []byte that Write() will pass to its
 // underlying send function.
-var WriteBufferSize = 128 * 1024
+var DefaultWriteBufferSize = 128 * 1024
 
 type sendWriter struct {
-	sender func([]byte) error
+	sender       func([]byte) error
+	maxChunkSize int
 }
 
 func (sw *sendWriter) Write(p []byte) (int, error) {
@@ -89,8 +96,8 @@ func (sw *sendWriter) Write(p []byte) (int, error) {
 
 	for len(p) > 0 {
 		chunkSize := len(p)
-		if chunkSize > WriteBufferSize {
-			chunkSize = WriteBufferSize
+		if chunkSize > sw.maxChunkSize {
+			chunkSize = sw.maxChunkSize
 		}
 
 		if err := sw.sender(p[:chunkSize]); err != nil {
@@ -107,7 +114,7 @@ func (sw *sendWriter) Write(p []byte) (int, error) {
 // ReadFrom implements io.ReaderFrom.
 func (sw *sendWriter) ReadFrom(r io.Reader) (int64, error) {
 	var nRead int64
-	buf := make([]byte, WriteBufferSize)
+	buf := make([]byte, sw.maxChunkSize)
 
 	var errRead, errSend error
 	for errSend == nil && errRead != io.EOF {

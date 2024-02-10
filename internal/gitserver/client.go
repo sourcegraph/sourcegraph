@@ -38,8 +38,6 @@ import (
 const git = "git"
 
 var ClientMocks, emptyClientMocks struct {
-	GetObject               func(repo api.RepoName, objectName string) (*gitdomain.GitObject, error)
-	Archive                 func(ctx context.Context, repo api.RepoName, opt ArchiveOptions) (_ io.ReadCloser, err error)
 	LocalGitserver          bool
 	LocalGitCommandReposDir string
 }
@@ -537,11 +535,7 @@ func (c *clientImplementor) getDiskInfo(ctx context.Context, addr AddressWithCli
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.DiskInfo(ctx, &proto.DiskInfoRequest{})
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return client.DiskInfo(ctx, &proto.DiskInfoRequest{})
 }
 
 func (c *clientImplementor) AddrForRepo(ctx context.Context, repo api.RepoName) string {
@@ -712,7 +706,7 @@ func (c *clientImplementor) Search(ctx context.Context, args *protocol.SearchReq
 
 	repoName := protocol.NormalizeRepo(args.Repo)
 
-	client, err := c.ClientForRepo(ctx, repoName)
+	client, err := c.clientSource.ClientForRepo(ctx, repoName)
 	if err != nil {
 		return false, err
 	}
@@ -780,7 +774,7 @@ func (c *clientImplementor) RequestRepoUpdate(ctx context.Context, repo api.Repo
 		Since: since,
 	}
 
-	client, err := c.ClientForRepo(ctx, repo)
+	client, err := c.clientSource.ClientForRepo(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -806,7 +800,7 @@ func (c *clientImplementor) RequestRepoClone(ctx context.Context, repo api.RepoN
 	})
 	defer endObservation(1, observation.Args{})
 
-	client, err := c.ClientForRepo(ctx, repo)
+	client, err := c.clientSource.ClientForRepo(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -843,7 +837,7 @@ func (c *clientImplementor) IsRepoCloneable(ctx context.Context, repo api.RepoNa
 
 	var resp protocol.IsRepoCloneableResponse
 
-	client, err := c.ClientForRepo(ctx, repo)
+	client, err := c.clientSource.ClientForRepo(ctx, repo)
 	if err != nil {
 		return err
 	}
@@ -911,7 +905,7 @@ func (c *clientImplementor) RepoCloneProgress(ctx context.Context, repos ...api.
 
 	shards := make(map[proto.GitserverServiceClient]*proto.RepoCloneProgressRequest, (len(repos)/numPossibleShards)*2) // 2x because it may not be a perfect division
 	for _, r := range repos {
-		client, err := c.ClientForRepo(ctx, r)
+		client, err := c.clientSource.ClientForRepo(ctx, r)
 		if err != nil {
 			return nil, err
 		}
@@ -967,7 +961,7 @@ func (c *clientImplementor) Remove(ctx context.Context, repo api.RepoName) (err 
 	// the old name in order to land on the correct gitserver instance
 	undeletedName := api.UndeletedRepoName(repo)
 
-	client, err := c.ClientForRepo(ctx, undeletedName)
+	client, err := c.clientSource.ClientForRepo(ctx, undeletedName)
 	if err != nil {
 		return err
 	}
@@ -986,7 +980,7 @@ func (c *clientImplementor) IsPerforcePathCloneable(ctx context.Context, conn pr
 	// depotPath is not actually a repo name, but it will spread the load of isPerforcePathCloneable
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(depotPath))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(depotPath))
 	if err != nil {
 		return err
 	}
@@ -1014,7 +1008,7 @@ func (c *clientImplementor) CheckPerforceCredentials(ctx context.Context, conn p
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return err
 	}
@@ -1041,7 +1035,7 @@ func (c *clientImplementor) PerforceUsers(ctx context.Context, conn protocol.Per
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return nil, err
 	}
@@ -1071,7 +1065,7 @@ func (c *clientImplementor) PerforceProtectsForUser(ctx context.Context, conn pr
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return nil, err
 	}
@@ -1102,7 +1096,7 @@ func (c *clientImplementor) PerforceProtectsForDepot(ctx context.Context, conn p
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return nil, err
 	}
@@ -1133,7 +1127,7 @@ func (c *clientImplementor) PerforceGroupMembers(ctx context.Context, conn proto
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return nil, err
 	}
@@ -1157,7 +1151,7 @@ func (c *clientImplementor) IsPerforceSuperUser(ctx context.Context, conn protoc
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return err
 	}
@@ -1179,7 +1173,7 @@ func (c *clientImplementor) PerforceGetChangelist(ctx context.Context, conn prot
 	// p4port is not actually a repo name, but it will spread the load of CheckPerforceCredentials
 	// a bit over the different gitserver instances. It's really just used as a consistent hashing
 	// key here.
-	client, err := c.ClientForRepo(ctx, api.RepoName(conn.P4Port))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(conn.P4Port))
 	if err != nil {
 		return nil, err
 	}
@@ -1203,7 +1197,7 @@ func (c *clientImplementor) CreateCommitFromPatch(ctx context.Context, req proto
 	})
 	defer endObservation(1, observation.Args{})
 
-	client, err := c.ClientForRepo(ctx, req.Repo)
+	client, err := c.clientSource.ClientForRepo(ctx, req.Repo)
 	if err != nil {
 		return nil, err
 	}
@@ -1283,15 +1277,15 @@ func (c *clientImplementor) GetObject(ctx context.Context, repo api.RepoName, ob
 	})
 	defer endObservation(1, observation.Args{})
 
-	if ClientMocks.GetObject != nil {
-		return ClientMocks.GetObject(repo, objectName)
-	}
+	// if ClientMocks.GetObject != nil {
+	// 	return ClientMocks.GetObject(repo, objectName)
+	// }
 
 	req := protocol.GetObjectRequest{
 		Repo:       repo,
 		ObjectName: objectName,
 	}
-	client, err := c.ClientForRepo(ctx, req.Repo)
+	client, err := c.clientSource.ClientForRepo(ctx, req.Repo)
 	if err != nil {
 		return nil, err
 	}
@@ -1388,7 +1382,7 @@ func stringsToByteSlices(in []string) [][]byte {
 }
 
 func (c *clientImplementor) ListGitoliteRepos(ctx context.Context, gitoliteHost string) (list []*gitolite.Repo, err error) {
-	client, err := c.ClientForRepo(ctx, api.RepoName(gitoliteHost))
+	client, err := c.clientSource.ClientForRepo(ctx, api.RepoName(gitoliteHost))
 	if err != nil {
 		return nil, err
 	}

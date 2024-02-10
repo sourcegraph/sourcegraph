@@ -2,7 +2,6 @@ package gitserver
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path"
@@ -17,12 +16,12 @@ import (
 // CreateRepoDir creates a repo directory for testing purposes.
 // This includes creating a tmp dir and deleting it after test finishes running.
 func CreateRepoDir(t *testing.T) string {
-	return CreateRepoDirWithName(t, "")
+	return createRepoDirWithName(t, "")
 }
 
-// CreateRepoDirWithName creates a repo directory with a given name for testing purposes.
+// createRepoDirWithName creates a repo directory with a given name for testing purposes.
 // This includes creating a tmp dir and deleting it after test finishes running.
-func CreateRepoDirWithName(t *testing.T, name string) string {
+func createRepoDirWithName(t *testing.T, name string) string {
 	t.Helper()
 	if name == "" {
 		name = t.Name()
@@ -38,7 +37,7 @@ func CreateRepoDirWithName(t *testing.T, name string) string {
 	return root
 }
 
-func MustParseTime(layout, value string) time.Time {
+func mustParseTime(layout, value string) time.Time {
 	tm, err := time.Parse(layout, value)
 	if err != nil {
 		panic(err.Error())
@@ -55,16 +54,16 @@ func MakeGitRepository(t *testing.T, cmds ...string) api.RepoName {
 	return repo
 }
 
-// MakeGitRepositoryAndReturnDir calls initGitRepository to create a new Git repository and returns
+// makeGitRepositoryAndReturnDir calls initGitRepository to create a new Git repository and returns
 // the repo name and directory.
-func MakeGitRepositoryAndReturnDir(t *testing.T, cmds ...string) (api.RepoName, string) {
+func makeGitRepositoryAndReturnDir(t *testing.T, cmds ...string) (api.RepoName, string) {
 	t.Helper()
 	dir := InitGitRepository(t, cmds...)
 	repo := api.RepoName(filepath.Base(dir))
 	return repo, dir
 }
 
-func GetHeadCommitFromGitDir(t *testing.T, gitDir string) string {
+func getHeadCommitFromGitDir(t *testing.T, gitDir string) string {
 	t.Helper()
 	cmd := CreateGitCommand(gitDir, "bash", []string{"-c", "git rev-parse HEAD"}...)
 	out, err := cmd.CombinedOutput()
@@ -120,14 +119,6 @@ func CreateGitCommand(dir, name string, args ...string) *exec.Cmd {
 	return c
 }
 
-func AsJSON(v any) string {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
-
 func AppleTime(t string) string {
 	ti, _ := time.Parse(time.RFC3339, t)
 	return ti.Local().Format("200601021504.05")
@@ -147,25 +138,19 @@ var Times = []string{
 // because for example Git for Windows (http://git-scm.com) is not aware of symlinks and computes link file's SHA which
 // may differ from original file content's SHA.
 // As a temporary workaround, we calculating SHA hash by asking git/hg to compute it
-func ComputeCommitHash(repoDir string, git bool) string {
+func ComputeCommitHash(repoDir string) string {
 	buf := &bytes.Buffer{}
 
-	if git {
-		// git cat-file tree "master^{commit}" | git hash-object -t commit --stdin
-		cat := exec.Command("git", "cat-file", "commit", "master^{commit}")
-		cat.Dir = repoDir
-		hash := exec.Command("git", "hash-object", "-t", "commit", "--stdin")
-		hash.Stdin, _ = cat.StdoutPipe()
-		hash.Stdout = buf
-		hash.Dir = repoDir
-		_ = hash.Start()
-		_ = cat.Run()
-		_ = hash.Wait()
-	} else {
-		hash := exec.Command("hg", "--debug", "id", "-i")
-		hash.Dir = repoDir
-		hash.Stdout = buf
-		_ = hash.Run()
-	}
+	// git cat-file tree "master^{commit}" | git hash-object -t commit --stdin
+	cat := exec.Command("git", "cat-file", "commit", "master^{commit}")
+	cat.Dir = repoDir
+	hash := exec.Command("git", "hash-object", "-t", "commit", "--stdin")
+	hash.Stdin, _ = cat.StdoutPipe()
+	hash.Stdout = buf
+	hash.Dir = repoDir
+	_ = hash.Start()
+	_ = cat.Run()
+	_ = hash.Wait()
+
 	return strings.TrimSpace(buf.String())
 }

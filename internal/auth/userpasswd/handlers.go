@@ -160,6 +160,7 @@ func handleSignUp(logger log.Logger, db database.DB, eventRecorder *telemetry.Ev
 
 	// New event - we record legacy event manually for now, hence teestore.WithoutV1
 	// TODO: Remove in 5.3
+	//
 	events := telemetry.NewBestEffortEventRecorder(logger, eventRecorder)
 	events.Record(teestore.WithoutV1(r.Context()), telemetry.FeatureSignUp, telemetry.ActionSucceeded, &telemetry.EventParameters{
 		Metadata: telemetry.EventMetadata{

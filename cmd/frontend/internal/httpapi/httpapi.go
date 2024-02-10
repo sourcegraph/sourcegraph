@@ -284,6 +284,7 @@ func RegisterInternalServices(
 	m.Path("/git/{RepoName:.*}/git-upload-pack").Methods("GET", "POST").Name(gitUploadPack).Handler(trace.Route(handler(gitService.serveGitUploadPack())))
 
 	// TODO: Can be removed after 5.3 is cut.
+	//
 	m.Path("/configuration").Methods("POST").Handler(trace.Route(handler(serveConfiguration)))
 
 	m.Path("/lsif/upload").Methods("POST").Handler(trace.Route(newCodeIntelUploadHandler(false)))

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2064,SC2207
 
+# TODO: What does this do?
+
 # create a file to hold the output of p4-fusion
 # TODO: consider recording/storing/capturing the file for logs display in the UI if there's a problem
 fusionout=$(mktemp || mktemp -t fusionout_XXXXXXXX)

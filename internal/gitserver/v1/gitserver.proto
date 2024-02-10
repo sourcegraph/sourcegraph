@@ -4,8 +4,14 @@ package gitserver.v1;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/descriptor.proto";
 
 option go_package = "github.com/sourcegraph/sourcegraph/internal/gitserver/v1";
+
+extend google.protobuf.FieldOptions {
+  // repo_identifier is used to mark target repository.
+  bool repo_identifier = 96121;
+}
 
 service GitserverService {
   rpc BatchLog(BatchLogRequest) returns (BatchLogResponse) {
@@ -117,7 +123,7 @@ message BlameRequest {
 
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(repo_identifier) = true];
   // commit is the commit sha to start the blame operation at.
   string commit = 3;
   string path = 4;
@@ -154,7 +160,7 @@ message BlameAuthor {
 message DefaultBranchRequest {
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(repo_identifier) = true];
   bool short_ref = 3;
 }
 
@@ -166,7 +172,7 @@ message DefaultBranchResponse {
 message ReadFileRequest {
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(repo_identifier) = true];
   string commit = 3;
   string path = 4;
 }
@@ -262,7 +268,7 @@ message PushConfig {
 message CreateCommitFromPatchBinaryRequest {
   message Metadata {
     // repo is the name of the repo to be updated
-    string repo = 1;
+    string repo = 1 [(repo_identifier) = true];
     // base_commit is the revision that the staging area object is based on
     string base_commit = 2;
     // target_ref is the ref that will be created for this patch
@@ -315,7 +321,7 @@ message CreateCommitFromPatchBinaryResponse {
 }
 
 message ExecRequest {
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
   bytes ensure_revision = 2;
   repeated bytes args = 3;
   bytes stdin = 4 [deprecated = true];
@@ -359,7 +365,7 @@ message UnauthorizedPayload {
 
 message SearchRequest {
   // repo is the name of the repo to be searched
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
   // revisions is the list of git revision to be searched. They are all passed
   // to the same underlying git command, so the searched commits will be the
   // union of all revisions listed.
@@ -517,7 +523,7 @@ message CommitMatch {
 // ArchiveRequest is set of parameters for the Archive RPC.
 message ArchiveRequest {
   // repo is the name of the repo to be archived
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
   // treeish is the tree or commit to produce an archive for
   string treeish = 2;
   // format is the format of the resulting archive (usually "tar" or "zip")
@@ -536,7 +542,7 @@ message ArchiveResponse {
 // IsRepoCloneableRequest is a request to check if a repository is cloneable.
 message IsRepoCloneableRequest {
   // repo is the name of the repo to check.
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
 }
 
 // IsRepoCloneableResponse is the response from the IsCloneable RPC.
@@ -552,7 +558,7 @@ message IsRepoCloneableResponse {
 // RepoCloneRequest is a request to clone a repository.
 message RepoCloneRequest {
   // repo is the name of the repo to clone.
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
 }
 
 message RepoCloneResponse {
@@ -586,7 +592,7 @@ message RepoCloneProgressResponse {
 // RepoDeleteRequest is a request to delete a repository.
 message RepoDeleteRequest {
   // repo is the name of the repo to delete.
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
 }
 
 // RepoDeleteResponse is the response from the RepoDelete RPC.
@@ -597,7 +603,7 @@ message RepoUpdateRequest {
   // RepoUpdateRequest used to have an unused clone_from_shard field.
   reserved 3;
   // repo is the name of the repo to update.
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
   // since is the debounce interval for queries, used only with
   // request-repo-update
   google.protobuf.Duration since = 2;
@@ -649,7 +655,7 @@ message ListGitoliteResponse {
 // GetObjectRequest is a request to get a git object.
 message GetObjectRequest {
   // repo is the name of the repo to get the object from.
-  string repo = 1;
+  string repo = 1 [(repo_identifier) = true];
   // object_name is the name of the object to get.
   string object_name = 2;
 }
@@ -809,7 +815,7 @@ message PerforceUser {
 message MergeBaseRequest {
   // repo_name is the name of the repo to get the merge base for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(repo_identifier) = true];
   // base is a revspec, for now, we allow non-utf8 revspecs.
   bytes base = 3;
   // head is a revspec, for now, we allow non-utf8 revspecs.

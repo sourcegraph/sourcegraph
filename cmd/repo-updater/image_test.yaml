@@ -8,6 +8,7 @@ commandTests:
         value: "true"
   - name: "coursier is runnable"
     command: "coursier"
+  #
   # TODO: This test can be removed after the 5.3 release
   # - name: "p4 is runnable"
   #   command: "p4"

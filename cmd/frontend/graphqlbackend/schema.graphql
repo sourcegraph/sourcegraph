@@ -10818,6 +10818,7 @@ type PerforceChangelist {
     commit: GitCommit!
 }
 
+# TODO: Keep?
 extend type Query {
     """
     List of all configured code hosts on this instance.

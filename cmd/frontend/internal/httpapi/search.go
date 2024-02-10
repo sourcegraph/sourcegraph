@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -251,7 +250,7 @@ func (h *searchIndexerServer) doSearchConfiguration(ctx context.Context, paramet
 			commitID, err := h.gitserverClient.ResolveRevision(ctx, repo.Name, branch, gitserver.ResolveRevisionOptions{
 				NoEnsureRevision: true,
 			})
-			if err != nil && errcode.HTTP(err) == http.StatusNotFound {
+			if err != nil && errcode.IsNotFound(err) {
 				// GetIndexOptions wants an empty rev for a missing rev or empty
 				// repo.
 				return "", nil
