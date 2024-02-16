@@ -291,28 +291,6 @@ func (r *RepoUpdateResponse) FromProto(p *proto.RepoUpdateResponse) {
 	}
 }
 
-// RepoCloneRequest is a request to clone a repository asynchronously.
-type RepoCloneRequest struct {
-	Repo api.RepoName `json:"repo"`
-}
-
-// RepoCloneResponse returns an error if the repo clone request failed.
-type RepoCloneResponse struct {
-	Error string `json:",omitempty"`
-}
-
-func (r *RepoCloneResponse) ToProto() *proto.RepoCloneResponse {
-	return &proto.RepoCloneResponse{
-		Error: r.Error,
-	}
-}
-
-func (r *RepoCloneResponse) FromProto(p *proto.RepoCloneResponse) {
-	*r = RepoCloneResponse{
-		Error: p.GetError(),
-	}
-}
-
 type NotFoundPayload struct {
 	CloneInProgress bool `json:"cloneInProgress"` // If true, exec returned with noop because clone is in progress.
 

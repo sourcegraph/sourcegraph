@@ -181,25 +181,6 @@ func TestClient_CreateCommitFromPatchRequest_ProtoRoundTrip(t *testing.T) {
 	})
 }
 
-func TestClient_RepoClone_ProtoRoundTrip(t *testing.T) {
-	var diff string
-
-	fn := func(original protocol.RepoCloneResponse) bool {
-		var converted protocol.RepoCloneResponse
-		converted.FromProto(original.ToProto())
-
-		if diff = cmp.Diff(original, converted); diff != "" {
-			return false
-		}
-
-		return true
-	}
-
-	if err := quick.Check(fn, nil); err != nil {
-		t.Errorf("RepoCloneResponse proto roundtrip failed (-want +got):\n%s", diff)
-	}
-}
-
 func TestClient_ListGitolite_ProtoRoundTrip(t *testing.T) {
 	var diff string
 

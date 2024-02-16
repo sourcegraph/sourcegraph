@@ -845,13 +845,15 @@ func (r *schemaResolver) RecloneRepository(ctx context.Context, args *struct {
 		return nil, err
 	}
 
+	// r.gitserverClient.RequestRepoReclone(ctx, repoID)
+
 	if _, err := r.DeleteRepositoryFromDisk(ctx, args); err != nil {
 		return &EmptyResponse{}, errors.Wrap(err, fmt.Sprintf("could not delete repository with ID %d", repoID))
 	}
 
-	if err := backend.NewRepos(r.logger, r.db, r.gitserverClient).RequestRepositoryClone(ctx, repoID); err != nil {
-		return &EmptyResponse{}, errors.Wrap(err, fmt.Sprintf("error while requesting clone for repository with ID %d", repoID))
-	}
+	// if err := backend.NewRepos(r.logger, r.db, r.gitserverClient).RequestRepositoryClone(ctx, repoID); err != nil {
+	// 	return &EmptyResponse{}, errors.Wrap(err, fmt.Sprintf("error while requesting clone for repository with ID %d", repoID))
+	// }
 
 	return &EmptyResponse{}, nil
 }

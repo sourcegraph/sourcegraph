@@ -145,9 +145,6 @@ type MockClient struct {
 	// RepoCloneProgressFunc is an instance of a mock function object
 	// controlling the behavior of the method RepoCloneProgress.
 	RepoCloneProgressFunc *ClientRepoCloneProgressFunc
-	// RequestRepoCloneFunc is an instance of a mock function object
-	// controlling the behavior of the method RequestRepoClone.
-	RequestRepoCloneFunc *ClientRequestRepoCloneFunc
 	// RequestRepoUpdateFunc is an instance of a mock function object
 	// controlling the behavior of the method RequestRepoUpdate.
 	RequestRepoUpdateFunc *ClientRequestRepoUpdateFunc
@@ -378,11 +375,6 @@ func NewMockClient() *MockClient {
 		},
 		RepoCloneProgressFunc: &ClientRepoCloneProgressFunc{
 			defaultHook: func(context.Context, api.RepoName) (r0 *protocol.RepoCloneProgress, r1 error) {
-				return
-			},
-		},
-		RequestRepoCloneFunc: &ClientRequestRepoCloneFunc{
-			defaultHook: func(context.Context, api.RepoName) (r0 *protocol.RepoCloneResponse, r1 error) {
 				return
 			},
 		},
@@ -638,11 +630,6 @@ func NewStrictMockClient() *MockClient {
 				panic("unexpected invocation of MockClient.RepoCloneProgress")
 			},
 		},
-		RequestRepoCloneFunc: &ClientRequestRepoCloneFunc{
-			defaultHook: func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error) {
-				panic("unexpected invocation of MockClient.RequestRepoClone")
-			},
-		},
 		RequestRepoUpdateFunc: &ClientRequestRepoUpdateFunc{
 			defaultHook: func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error) {
 				panic("unexpected invocation of MockClient.RequestRepoUpdate")
@@ -814,9 +801,6 @@ func NewMockClientFrom(i Client) *MockClient {
 		},
 		RepoCloneProgressFunc: &ClientRepoCloneProgressFunc{
 			defaultHook: i.RepoCloneProgress,
-		},
-		RequestRepoCloneFunc: &ClientRequestRepoCloneFunc{
-			defaultHook: i.RequestRepoClone,
 		},
 		RequestRepoUpdateFunc: &ClientRequestRepoUpdateFunc{
 			defaultHook: i.RequestRepoUpdate,
@@ -5287,114 +5271,6 @@ func (c ClientRepoCloneProgressFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c ClientRepoCloneProgressFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0, c.Result1}
-}
-
-// ClientRequestRepoCloneFunc describes the behavior when the
-// RequestRepoClone method of the parent MockClient instance is invoked.
-type ClientRequestRepoCloneFunc struct {
-	defaultHook func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)
-	hooks       []func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)
-	history     []ClientRequestRepoCloneFuncCall
-	mutex       sync.Mutex
-}
-
-// RequestRepoClone delegates to the next hook function in the queue and
-// stores the parameter and result values of this invocation.
-func (m *MockClient) RequestRepoClone(v0 context.Context, v1 api.RepoName) (*protocol.RepoCloneResponse, error) {
-	r0, r1 := m.RequestRepoCloneFunc.nextHook()(v0, v1)
-	m.RequestRepoCloneFunc.appendCall(ClientRequestRepoCloneFuncCall{v0, v1, r0, r1})
-	return r0, r1
-}
-
-// SetDefaultHook sets function that is called when the RequestRepoClone
-// method of the parent MockClient instance is invoked and the hook queue is
-// empty.
-func (f *ClientRequestRepoCloneFunc) SetDefaultHook(hook func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// RequestRepoClone method of the parent MockClient instance invokes the
-// hook at the front of the queue and discards it. After the queue is empty,
-// the default hook function is invoked for any future action.
-func (f *ClientRequestRepoCloneFunc) PushHook(hook func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *ClientRequestRepoCloneFunc) SetDefaultReturn(r0 *protocol.RepoCloneResponse, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error) {
-		return r0, r1
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *ClientRequestRepoCloneFunc) PushReturn(r0 *protocol.RepoCloneResponse, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error) {
-		return r0, r1
-	})
-}
-
-func (f *ClientRequestRepoCloneFunc) nextHook() func(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *ClientRequestRepoCloneFunc) appendCall(r0 ClientRequestRepoCloneFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of ClientRequestRepoCloneFuncCall objects
-// describing the invocations of this function.
-func (f *ClientRequestRepoCloneFunc) History() []ClientRequestRepoCloneFuncCall {
-	f.mutex.Lock()
-	history := make([]ClientRequestRepoCloneFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// ClientRequestRepoCloneFuncCall is an object that describes an invocation
-// of method RequestRepoClone on an instance of MockClient.
-type ClientRequestRepoCloneFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is the value of the 2nd argument passed to this method
-	// invocation.
-	Arg1 api.RepoName
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 *protocol.RepoCloneResponse
-	// Result1 is the value of the 2nd result returned from this method
-	// invocation.
-	Result1 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c ClientRequestRepoCloneFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c ClientRequestRepoCloneFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 

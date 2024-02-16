@@ -72,6 +72,7 @@ type GitserverServiceClient interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	Archive(ctx context.Context, in *ArchiveRequest, opts ...grpc.CallOption) (GitserverService_ArchiveClient, error)
+	// Deprecated: Do not use.
 	RepoClone(ctx context.Context, in *RepoCloneRequest, opts ...grpc.CallOption) (*RepoCloneResponse, error)
 	RepoCloneProgress(ctx context.Context, in *RepoCloneProgressRequest, opts ...grpc.CallOption) (*RepoCloneProgressResponse, error)
 	RepoDelete(ctx context.Context, in *RepoDeleteRequest, opts ...grpc.CallOption) (*RepoDeleteResponse, error)
@@ -321,6 +322,7 @@ func (x *gitserverServiceArchiveClient) Recv() (*ArchiveResponse, error) {
 	return m, nil
 }
 
+// Deprecated: Do not use.
 func (c *gitserverServiceClient) RepoClone(ctx context.Context, in *RepoCloneRequest, opts ...grpc.CallOption) (*RepoCloneResponse, error) {
 	out := new(RepoCloneResponse)
 	err := c.cc.Invoke(ctx, GitserverService_RepoClone_FullMethodName, in, out, opts...)
@@ -554,6 +556,7 @@ type GitserverServiceServer interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	Archive(*ArchiveRequest, GitserverService_ArchiveServer) error
+	// Deprecated: Do not use.
 	RepoClone(context.Context, *RepoCloneRequest) (*RepoCloneResponse, error)
 	RepoCloneProgress(context.Context, *RepoCloneProgressRequest) (*RepoCloneProgressResponse, error)
 	RepoDelete(context.Context, *RepoDeleteRequest) (*RepoDeleteResponse, error)

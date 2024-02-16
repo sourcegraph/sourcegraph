@@ -366,9 +366,6 @@ type Client interface {
 	// recently, the update won't happen.
 	RequestRepoUpdate(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)
 
-	// RequestRepoClone is an asynchronous request to clone a repository.
-	RequestRepoClone(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)
-
 	// Search executes a search as specified by args, streaming the results as
 	// it goes by calling onMatches with each set of results it receives in
 	// response.
@@ -732,35 +729,6 @@ func (c *clientImplementor) RequestRepoUpdate(ctx context.Context, repo api.Repo
 	var info protocol.RepoUpdateResponse
 	info.FromProto(resp)
 
-	return &info, nil
-}
-
-// RequestRepoClone requests that the gitserver does an asynchronous clone of the repository.
-func (c *clientImplementor) RequestRepoClone(ctx context.Context, repo api.RepoName) (_ *protocol.RepoCloneResponse, err error) {
-	ctx, _, endObservation := c.operations.requestRepoClone.With(ctx, &err, observation.Args{
-		MetricLabelValues: []string{c.scope},
-		Attrs: []attribute.KeyValue{
-			repo.Attr(),
-		},
-	})
-	defer endObservation(1, observation.Args{})
-
-	client, err := c.ClientForRepo(ctx, repo)
-	if err != nil {
-		return nil, err
-	}
-
-	req := proto.RepoCloneRequest{
-		Repo: string(repo),
-	}
-
-	resp, err := client.RepoClone(ctx, &req)
-	if err != nil {
-		return nil, err
-	}
-
-	var info protocol.RepoCloneResponse
-	info.FromProto(resp)
 	return &info, nil
 }
 

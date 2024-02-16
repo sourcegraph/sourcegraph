@@ -1,7 +1,6 @@
 package graphqlbackend
 
 import (
-	"context"
 	"encoding/base64"
 	"flag"
 	"fmt"
@@ -11,19 +10,14 @@ import (
 	"reflect"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
 	"github.com/grafana/regexp"
-	"github.com/graph-gophers/graphql-go"
 	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 	sglog "github.com/sourcegraph/log"
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
-	"github.com/sourcegraph/sourcegraph/internal/gitserver"
-	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 )
 
@@ -83,38 +77,6 @@ func TestRepository(t *testing.T) {
 			`,
 		},
 	})
-}
-
-func TestRecloneRepository(t *testing.T) {
-	resetMocks()
-
-	repos := dbmocks.NewMockRepoStore()
-	repos.GetFunc.SetDefaultReturn(&types.Repo{ID: 1, Name: "github.com/gorilla/mux"}, nil)
-
-	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: 1, SiteAdmin: true}, nil)
-
-	gitserverRepos := dbmocks.NewMockGitserverRepoStore()
-	gitserverRepos.GetByIDFunc.SetDefaultReturn(&types.GitserverRepo{RepoID: 1, CloneStatus: "cloned"}, nil)
-
-	db := dbmocks.NewMockDB()
-	db.ReposFunc.SetDefaultReturn(repos)
-	db.UsersFunc.SetDefaultReturn(users)
-	db.GitserverReposFunc.SetDefaultReturn(gitserverRepos)
-
-	repoID := MarshalRepositoryID(1)
-
-	gc := gitserver.NewMockClient()
-	gc.RequestRepoCloneFunc.SetDefaultReturn(&protocol.RepoCloneResponse{}, nil)
-	r := newSchemaResolver(db, gc)
-
-	_, err := r.RecloneRepository(context.Background(), &struct{ Repo graphql.ID }{Repo: repoID})
-	require.NoError(t, err)
-
-	// To reclone, we first make a request to delete the repository, followed by a request
-	// to clone the repository again.
-	mockassert.CalledN(t, gc.RemoveFunc, 1)
-	mockassert.CalledN(t, gc.RequestRepoCloneFunc, 1)
 }
 
 func TestDeleteRepositoryFromDisk(t *testing.T) {

@@ -604,9 +604,6 @@ type MockReposService struct {
 	// ListIndexableFunc is an instance of a mock function object
 	// controlling the behavior of the method ListIndexable.
 	ListIndexableFunc *ReposServiceListIndexableFunc
-	// RequestRepositoryCloneFunc is an instance of a mock function object
-	// controlling the behavior of the method RequestRepositoryClone.
-	RequestRepositoryCloneFunc *ReposServiceRequestRepositoryCloneFunc
 	// ResolveRevFunc is an instance of a mock function object controlling
 	// the behavior of the method ResolveRev.
 	ResolveRevFunc *ReposServiceResolveRevFunc
@@ -643,11 +640,6 @@ func NewMockReposService() *MockReposService {
 		},
 		ListIndexableFunc: &ReposServiceListIndexableFunc{
 			defaultHook: func(context.Context) (r0 []types.MinimalRepo, r1 error) {
-				return
-			},
-		},
-		RequestRepositoryCloneFunc: &ReposServiceRequestRepositoryCloneFunc{
-			defaultHook: func(context.Context, api.RepoID) (r0 error) {
 				return
 			},
 		},
@@ -693,11 +685,6 @@ func NewStrictMockReposService() *MockReposService {
 				panic("unexpected invocation of MockReposService.ListIndexable")
 			},
 		},
-		RequestRepositoryCloneFunc: &ReposServiceRequestRepositoryCloneFunc{
-			defaultHook: func(context.Context, api.RepoID) error {
-				panic("unexpected invocation of MockReposService.RequestRepositoryClone")
-			},
-		},
 		ResolveRevFunc: &ReposServiceResolveRevFunc{
 			defaultHook: func(context.Context, api.RepoName, string) (api.CommitID, error) {
 				panic("unexpected invocation of MockReposService.ResolveRev")
@@ -728,9 +715,6 @@ func NewMockReposServiceFrom(i ReposService) *MockReposService {
 		},
 		ListIndexableFunc: &ReposServiceListIndexableFunc{
 			defaultHook: i.ListIndexable,
-		},
-		RequestRepositoryCloneFunc: &ReposServiceRequestRepositoryCloneFunc{
-			defaultHook: i.RequestRepositoryClone,
 		},
 		ResolveRevFunc: &ReposServiceResolveRevFunc{
 			defaultHook: i.ResolveRev,
@@ -1386,114 +1370,6 @@ func (c ReposServiceListIndexableFuncCall) Args() []interface{} {
 // invocation.
 func (c ReposServiceListIndexableFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
-}
-
-// ReposServiceRequestRepositoryCloneFunc describes the behavior when the
-// RequestRepositoryClone method of the parent MockReposService instance is
-// invoked.
-type ReposServiceRequestRepositoryCloneFunc struct {
-	defaultHook func(context.Context, api.RepoID) error
-	hooks       []func(context.Context, api.RepoID) error
-	history     []ReposServiceRequestRepositoryCloneFuncCall
-	mutex       sync.Mutex
-}
-
-// RequestRepositoryClone delegates to the next hook function in the queue
-// and stores the parameter and result values of this invocation.
-func (m *MockReposService) RequestRepositoryClone(v0 context.Context, v1 api.RepoID) error {
-	r0 := m.RequestRepositoryCloneFunc.nextHook()(v0, v1)
-	m.RequestRepositoryCloneFunc.appendCall(ReposServiceRequestRepositoryCloneFuncCall{v0, v1, r0})
-	return r0
-}
-
-// SetDefaultHook sets function that is called when the
-// RequestRepositoryClone method of the parent MockReposService instance is
-// invoked and the hook queue is empty.
-func (f *ReposServiceRequestRepositoryCloneFunc) SetDefaultHook(hook func(context.Context, api.RepoID) error) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// RequestRepositoryClone method of the parent MockReposService instance
-// invokes the hook at the front of the queue and discards it. After the
-// queue is empty, the default hook function is invoked for any future
-// action.
-func (f *ReposServiceRequestRepositoryCloneFunc) PushHook(hook func(context.Context, api.RepoID) error) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *ReposServiceRequestRepositoryCloneFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoID) error {
-		return r0
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *ReposServiceRequestRepositoryCloneFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, api.RepoID) error {
-		return r0
-	})
-}
-
-func (f *ReposServiceRequestRepositoryCloneFunc) nextHook() func(context.Context, api.RepoID) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *ReposServiceRequestRepositoryCloneFunc) appendCall(r0 ReposServiceRequestRepositoryCloneFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of ReposServiceRequestRepositoryCloneFuncCall
-// objects describing the invocations of this function.
-func (f *ReposServiceRequestRepositoryCloneFunc) History() []ReposServiceRequestRepositoryCloneFuncCall {
-	f.mutex.Lock()
-	history := make([]ReposServiceRequestRepositoryCloneFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// ReposServiceRequestRepositoryCloneFuncCall is an object that describes an
-// invocation of method RequestRepositoryClone on an instance of
-// MockReposService.
-type ReposServiceRequestRepositoryCloneFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is the value of the 2nd argument passed to this method
-	// invocation.
-	Arg1 api.RepoID
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c ReposServiceRequestRepositoryCloneFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c ReposServiceRequestRepositoryCloneFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0}
 }
 
 // ReposServiceResolveRevFunc describes the behavior when the ResolveRev
