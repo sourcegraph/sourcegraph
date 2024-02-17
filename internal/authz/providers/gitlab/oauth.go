@@ -50,23 +50,28 @@ type OAuthProviderOp struct {
 
 	DB database.DB
 
-	CLI httpcli.Doer
+	HTTPFactory *httpcli.Factory
 
 	SyncInternalRepoPermissions bool
 }
 
-func newOAuthProvider(op OAuthProviderOp, cli httpcli.Doer) *OAuthProvider {
+func newOAuthProvider(op OAuthProviderOp, cf *httpcli.Factory) (*OAuthProvider, error) {
+	p, err := gitlab.NewClientProvider(op.URN, op.BaseURL, cf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &OAuthProvider{
 		token:     op.Token,
 		tokenType: op.TokenType,
 
 		urn:                         op.URN,
-		clientProvider:              gitlab.NewClientProvider(op.URN, op.BaseURL, cli),
+		clientProvider:              p,
 		clientURL:                   op.BaseURL,
 		codeHost:                    extsvc.NewCodeHost(op.BaseURL, extsvc.TypeGitLab),
 		db:                          op.DB,
 		syncInternalRepoPermissions: op.SyncInternalRepoPermissions,
-	}
+	}, nil
 }
 
 func (p *OAuthProvider) ValidateConnection(context.Context) error {

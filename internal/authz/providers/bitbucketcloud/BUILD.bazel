@@ -41,6 +41,7 @@ go_test(
         "//internal/database/dbmocks",
         "//internal/extsvc",
         "//internal/extsvc/bitbucketcloud",
+        "//internal/httpcli",
         "//internal/licensing",
         "//internal/ratelimit",
         "//internal/types",

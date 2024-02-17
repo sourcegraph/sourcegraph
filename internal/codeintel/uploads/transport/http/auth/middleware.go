@@ -13,12 +13,13 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 type (
-	AuthValidator    func(context.Context, url.Values, string) (int, error)
+	AuthValidator    func(context.Context, httpcli.Doer, url.Values, string) (int, error)
 	AuthValidatorMap = map[string]AuthValidator
 )
 
@@ -61,7 +62,7 @@ func AuthMiddleware(next http.Handler, userStore UserStore, authValidators AuthV
 				}
 				trace.AddEvent("TODO Domain Owner", attribute.String("codeHost", codeHost))
 
-				return validator(ctx, query, repositoryName)
+				return validator(ctx, httpcli.ExternalDoer, query, repositoryName)
 			}
 
 			return http.StatusUnprocessableEntity, errVerificationNotSupported

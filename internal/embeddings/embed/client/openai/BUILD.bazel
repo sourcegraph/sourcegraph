@@ -10,6 +10,7 @@ go_library(
         "//internal/conf/conftypes",
         "//internal/embeddings/embed/client",
         "//internal/embeddings/embed/client/modeltransformations",
+        "//internal/httpcli",
         "//lib/errors",
     ],
 )

@@ -2,6 +2,7 @@ package executorqueue
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -29,6 +30,12 @@ func gitserverProxy(logger log.Logger, gitserverClient GitserverClient, gitPath 
 
 		addrForRepo := gitserverClient.AddrForRepo(r.Context(), api.RepoName(repo))
 
+		cli, err := httpcli.NewInternalClientFactory("gitserverproxy").Client()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to create http client: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
 		p := httputil.ReverseProxy{
 			Director: func(r *http.Request) {
 				u := &url.URL{
@@ -39,7 +46,7 @@ func gitserverProxy(logger log.Logger, gitserverClient GitserverClient, gitPath 
 				}
 				r.URL = u
 			},
-			Transport: httpcli.InternalClient.Transport,
+			Transport: cli.Transport,
 		}
 		defer func() {
 			e := recover()

@@ -44,7 +44,7 @@ func NewProvider(db database.DB, conn *types.BitbucketCloudConnection, opts Prov
 	}
 
 	if opts.BitbucketCloudClient == nil {
-		opts.BitbucketCloudClient, err = bitbucketcloud.NewClient(conn.URN, conn.BitbucketCloudConnection, httpcli.ExternalClient)
+		opts.BitbucketCloudClient, err = bitbucketcloud.NewClient(conn.URN, conn.BitbucketCloudConnection, httpcli.NewExternalClientFactory())
 		if err != nil {
 			return nil
 		}

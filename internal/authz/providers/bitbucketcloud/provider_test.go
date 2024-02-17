@@ -17,6 +17,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/bitbucketcloud"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/schema"
@@ -143,7 +144,7 @@ func TestProvider_FetchUserPerms(t *testing.T) {
 			ApiURL: server.URL,
 			Url:    server.URL,
 		}
-		client, err := bitbucketcloud.NewClient(server.URL, conn, http.DefaultClient)
+		client, err := bitbucketcloud.NewClient(server.URL, conn, httpcli.NewFactory(nil))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -189,7 +190,7 @@ func TestProvider_FetchRepoPerms(t *testing.T) {
 		ApiURL: server.URL,
 		Url:    server.URL,
 	}
-	client, err := bitbucketcloud.NewClient(server.URL, conn, http.DefaultClient)
+	client, err := bitbucketcloud.NewClient(server.URL, conn, httpcli.NewFactory(nil))
 	if err != nil {
 		t.Fatal(err)
 	}

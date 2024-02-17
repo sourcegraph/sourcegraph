@@ -153,10 +153,7 @@ func (h *bitbucketProjectPermissionsHandler) getBitbucketClient(ctx context.Cont
 		opts = append(opts, httpcli.NewCertPoolOpt(c.Certificate))
 	}
 
-	cli, err := httpcli.NewExternalClientFactory(httpcli.NewLoggingMiddleware(logger)).Doer(opts...)
-	if err != nil {
-		return nil, err
-	}
+	cli := httpcli.NewExternalClientFactory(httpcli.NewLoggingMiddleware(logger)).WithOpts(opts...)
 
 	return bitbucketserver.NewClient(svc.URN(), &c, cli)
 }

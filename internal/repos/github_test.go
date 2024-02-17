@@ -603,7 +603,8 @@ func TestGitHubSource_doRecursively(t *testing.T) {
 
 			apiURL, err := url.Parse(srv.URL)
 			require.NoError(t, err)
-			ghCli := github.NewV4Client("", apiURL, nil, httpcli.TestExternalDoer)
+			ghCli, err := github.NewV4Client("", apiURL, nil, httpcli.NewFactory(nil))
+			require.NoError(t, err)
 			q := newRepositoryQuery("stars:>=5", ghCli, logtest.NoOp(t))
 			q.Limit = 5
 
@@ -956,20 +957,18 @@ func TestRepositoryQuery_DoWithRefinedWindow(t *testing.T) {
 			cf, save := httptestutil.NewGitHubRecorderFactory(t, Update(t.Name()), t.Name())
 			t.Cleanup(save)
 
-			cli, err := cf.Doer()
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			apiURL, _ := url.Parse("https://api.github.com")
 			token := &auth.OAuthBearerToken{Token: os.Getenv("GITHUB_TOKEN")}
+
+			c, err := github.NewV4Client("Test", apiURL, token, cf)
+			require.NoError(t, err)
 
 			q := repositoryQuery{
 				Logger:   logtest.Scoped(t),
 				Query:    tc.query,
 				First:    tc.first,
 				Limit:    tc.limit,
-				Searcher: github.NewV4Client("Test", apiURL, token, cli),
+				Searcher: c,
 			}
 
 			results := make(chan *githubResult)
@@ -1028,20 +1027,18 @@ func TestRepositoryQuery_DoSingleRequest(t *testing.T) {
 			cf, save := httptestutil.NewGitHubRecorderFactory(t, Update(t.Name()), t.Name())
 			t.Cleanup(save)
 
-			cli, err := cf.Doer()
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			apiURL, _ := url.Parse("https://api.github.com")
 			token := &auth.OAuthBearerToken{Token: os.Getenv("GITHUB_TOKEN")}
+
+			c, err := github.NewV4Client("Test", apiURL, token, cf)
+			require.NoError(t, err)
 
 			q := repositoryQuery{
 				Logger:   logtest.Scoped(t),
 				Query:    tc.query,
 				First:    tc.first,
 				Limit:    tc.limit,
-				Searcher: github.NewV4Client("Test", apiURL, token, cli),
+				Searcher: c,
 			}
 
 			results := make(chan *githubResult)

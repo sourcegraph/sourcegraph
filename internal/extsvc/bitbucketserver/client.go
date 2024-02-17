@@ -61,10 +61,9 @@ type Client struct {
 }
 
 // NewClient returns an authenticated Bitbucket Server API client with
-// the provided configuration. If a nil httpClient is provided, http.DefaultClient
-// will be used.
-func NewClient(urn string, config *schema.BitbucketServerConnection, httpClient httpcli.Doer) (*Client, error) {
-	client, err := newClient(urn, config, httpClient)
+// the provided configuration.
+func NewClient(urn string, config *schema.BitbucketServerConnection, cf *httpcli.Factory) (*Client, error) {
+	client, err := newClient(urn, config, cf)
 	if err != nil {
 		return nil, err
 	}
@@ -91,14 +90,19 @@ func NewClient(urn string, config *schema.BitbucketServerConnection, httpClient 
 	return client, nil
 }
 
-func newClient(urn string, config *schema.BitbucketServerConnection, httpClient httpcli.Doer) (*Client, error) {
+func newClient(urn string, config *schema.BitbucketServerConnection, cf *httpcli.Factory) (*Client, error) {
 	u, err := url.Parse(config.Url)
 	if err != nil {
 		return nil, err
 	}
 
-	if httpClient == nil {
-		httpClient = httpcli.ExternalDoer
+	if cf == nil {
+		cf = httpcli.NewExternalClientFactory()
+	}
+
+	httpClient, err := cf.Doer(httpcli.CachedTransportOpt)
+	if err != nil {
+		return nil, err
 	}
 	httpClient = requestCounter.Doer(httpClient, categorize)
 

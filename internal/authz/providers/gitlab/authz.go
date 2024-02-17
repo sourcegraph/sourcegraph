@@ -94,7 +94,7 @@ func newAuthzProvider(db database.DB, c *types.GitLabConnection, ps []schema.Aut
 			TokenType:                   gitlab.TokenType(c.TokenType),
 			DB:                          db,
 			SyncInternalRepoPermissions: syncInternalRepoPermissions,
-		}), nil
+		})
 	case idp.Username != nil:
 		return NewSudoProvider(SudoProviderOp{
 			URN:                         c.URN,
@@ -102,7 +102,7 @@ func newAuthzProvider(db database.DB, c *types.GitLabConnection, ps []schema.Aut
 			SudoToken:                   c.Token,
 			UseNativeUsername:           true,
 			SyncInternalRepoPermissions: !c.MarkInternalReposAsPublic,
-		}), nil
+		})
 	case idp.External != nil:
 		ext := idp.External
 		for _, authProvider := range ps {
@@ -122,7 +122,7 @@ func newAuthzProvider(db database.DB, c *types.GitLabConnection, ps []schema.Aut
 					SudoToken:                   c.Token,
 					UseNativeUsername:           false,
 					SyncInternalRepoPermissions: !c.MarkInternalReposAsPublic,
-				}), nil
+				})
 			}
 		}
 		return nil, errors.Errorf("Did not find authentication provider matching type %s and configID %s. Check the [**site configuration**](/site-admin/configuration) to verify that an entry in [`auth.providers`](https://sourcegraph.com/docs/admin/auth) matches the type and configID.", ext.AuthProviderType, ext.AuthProviderID)
@@ -132,12 +132,12 @@ func newAuthzProvider(db database.DB, c *types.GitLabConnection, ps []schema.Aut
 }
 
 // NewOAuthProvider is a mockable constructor for new OAuthProvider instances.
-var NewOAuthProvider = func(op OAuthProviderOp) authz.Provider {
-	return newOAuthProvider(op, op.CLI)
+var NewOAuthProvider = func(op OAuthProviderOp) (authz.Provider, error) {
+	return newOAuthProvider(op, op.HTTPFactory)
 }
 
 // NewSudoProvider is a mockable constructor for new SudoProvider instances.
-var NewSudoProvider = func(op SudoProviderOp) authz.Provider {
+var NewSudoProvider = func(op SudoProviderOp) (authz.Provider, error) {
 	return newSudoProvider(op, nil)
 }
 

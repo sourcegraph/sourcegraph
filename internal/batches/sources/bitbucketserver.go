@@ -40,17 +40,12 @@ func NewBitbucketServerSource(ctx context.Context, svc *types.ExternalService, c
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
 
-	opts := httpClientCertificateOptions(nil, c.Certificate)
+	cf = cf.WithOpts(httpClientCertificateOptions(nil, c.Certificate)...)
 
-	cli, err := cf.Doer(opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := bitbucketserver.NewClient(svc.URN(), &c, cli)
+	client, err := bitbucketserver.NewClient(svc.URN(), &c, cf)
 	if err != nil {
 		return nil, err
 	}

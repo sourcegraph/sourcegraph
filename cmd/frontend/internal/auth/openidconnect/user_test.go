@@ -14,7 +14,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/encryption"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
-	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 
@@ -62,8 +61,7 @@ func TestAllowSignup(t *testing.T) {
 					RequireEmailDomain: "example.com",
 					AllowSignup:        test.allowSignup,
 				},
-				oidc:       &oidcProvider{},
-				httpClient: httpcli.ExternalClient,
+				oidc: &oidcProvider{},
 			}
 			_, _, _, err := getOrCreateUser(
 				context.Background(),

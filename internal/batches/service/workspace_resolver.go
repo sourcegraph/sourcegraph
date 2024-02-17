@@ -403,7 +403,12 @@ func (wr *workspaceResolver) runSearch(ctx context.Context, query string, onMatc
 		return errors.New("no user set in workspaceResolver.runSearch")
 	}
 
-	resp, err := httpcli.InternalClient.Do(req)
+	cli, err := httpcli.NewInternalClientFactory("batches_resolver").Doer()
+	if err != nil {
+		return errors.Wrap(err, "failed to create internal client")
+	}
+
+	resp, err := cli.Do(req)
 	if err != nil {
 		return err
 	}

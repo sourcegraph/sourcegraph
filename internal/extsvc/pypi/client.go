@@ -50,35 +50,29 @@ type Client struct {
 	// A list of PyPI proxies. Each url should point to the root of the simple-API.
 	// For example for pypi.org the url should be https://pypi.org/simple with or
 	// without a trailing slash.
-	urls           []string
-	uncachedClient httpcli.Doer
-	cachedClient   httpcli.Doer
+	urls []string
+	cf   *httpcli.Factory
 
 	// Self-imposed rate-limiter. pypi.org does not impose a rate limiting policy.
 	limiter *ratelimit.InstrumentedLimiter
 }
 
-func NewClient(urn string, urls []string, httpfactory *httpcli.Factory) (*Client, error) {
-	uncached, err := httpfactory.Doer(httpcli.NewCachedTransportOpt(httpcli.NoopCache{}, false))
-	if err != nil {
-		return nil, err
-	}
-	cached, err := httpfactory.Doer()
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(urn string, urls []string, httpfactory *httpcli.Factory) *Client {
 	return &Client{
-		urls:           urls,
-		uncachedClient: uncached,
-		cachedClient:   cached,
-		limiter:        ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("PyPiClient"), urn)),
-	}, nil
+		urls:    urls,
+		cf:      httpfactory,
+		limiter: ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("PyPiClient"), urn)),
+	}
 }
 
 // Project returns the Files of the simple-API /<project>/ endpoint.
 func (c *Client) Project(ctx context.Context, project reposource.PackageName) ([]File, error) {
-	data, err := c.get(ctx, c.cachedClient, reposource.PackageName(normalize(string(project))))
+	doer, err := c.cf.Doer(httpcli.CachedTransportOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := c.get(ctx, doer, reposource.PackageName(normalize(string(project))))
 	if err != nil {
 		return nil, errors.Wrap(err, "PyPI")
 	}
@@ -288,7 +282,12 @@ func (c *Client) Download(ctx context.Context, url string) (io.ReadCloser, error
 		return nil, err
 	}
 
-	b, err := c.do(c.uncachedClient, req)
+	doer, err := c.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.do(doer, req)
 	if err != nil {
 		return nil, errors.Wrap(err, "PyPI")
 	}

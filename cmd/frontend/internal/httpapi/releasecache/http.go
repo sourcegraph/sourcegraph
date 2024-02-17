@@ -70,7 +70,12 @@ func NewHandler(logger log.Logger) http.Handler {
 		}
 
 		// Otherwise, let's build a new release cache and start a fresh updater.
-		rc := config.NewReleaseCache(logger)
+		rc, err := config.NewReleaseCache(logger)
+		if err != nil {
+			logger.Error("Failed to create GitHub client", log.Error(err))
+			return
+		}
+
 		handler.updater = goroutine.NewPeriodicGoroutine(
 			ctx,
 			rc,

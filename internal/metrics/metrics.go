@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -60,28 +61,51 @@ func TaskFromContext(ctx context.Context) string {
 	return "unknown"
 }
 
+var (
+	requestMeterMu         sync.Mutex
+	requestCounterMetrics  map[string]*prometheus.CounterVec
+	requestDurationMetrics map[string]*prometheus.HistogramVec
+)
+
 // NewRequestMeter creates a new request meter.
 func NewRequestMeter(subsystem, help string) *RequestMeter {
-	requestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "src",
-		Subsystem: subsystem,
-		Name:      "requests_total",
-		Help:      help,
-	}, []string{labelCategory, labelCode, labelHost, labelTask, labelFromCache})
-	registerer.MustRegister(requestCounter)
+	requestMeterMu.Lock()
+	defer requestMeterMu.Unlock()
+
+	requestCounter, ok := requestCounterMetrics[subsystem]
+	if !ok {
+		if requestCounterMetrics == nil {
+			requestCounterMetrics = make(map[string]*prometheus.CounterVec)
+		}
+		requestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "src",
+			Subsystem: subsystem,
+			Name:      "requests_total",
+			Help:      help,
+		}, []string{labelCategory, labelCode, labelHost, labelTask, labelFromCache})
+		requestCounterMetrics[subsystem] = requestCounter
+		registerer.MustRegister(requestCounter)
+	}
 
 	// TODO(uwedeportivo):
 	// A prometheus histogram has a request counter built in.
 	// It will have the suffix _count (ie src_subsystem_request_duration_count).
 	// See if we can get rid of requestCounter (if it hasn't been used by a customer yet) and use this counter instead.
-	requestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: "src",
-		Subsystem: subsystem,
-		Name:      "request_duration_seconds",
-		Help:      "Time (in seconds) spent on request.",
-		Buckets:   prometheus.DefBuckets,
-	}, []string{"category", "code", "host"})
-	registerer.MustRegister(requestDuration)
+	requestDuration, ok := requestDurationMetrics[subsystem]
+	if !ok {
+		if requestDurationMetrics == nil {
+			requestDurationMetrics = make(map[string]*prometheus.HistogramVec)
+		}
+		requestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "src",
+			Subsystem: subsystem,
+			Name:      "request_duration_seconds",
+			Help:      "Time (in seconds) spent on request.",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"category", "code", "host"})
+		requestDurationMetrics[subsystem] = requestDuration
+		registerer.MustRegister(requestDuration)
+	}
 
 	return &RequestMeter{
 		counter:  requestCounter,

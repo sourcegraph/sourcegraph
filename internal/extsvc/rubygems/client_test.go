@@ -30,7 +30,7 @@ func newTestHTTPClient(t *testing.T) (client *Client, stop func()) {
 	t.Helper()
 	recorderFactory, stop := httptestutil.NewRecorderFactory(t, *updateRecordings, t.Name())
 
-	client, _ = NewClient("rubygems_urn", "https://rubygems.org", recorderFactory)
+	client = NewClient("rubygems_urn", "https://rubygems.org", recorderFactory)
 	client.limiter = ratelimit.NewInstrumentedLimiter("rubygems", rate.NewLimiter(100, 10))
 	return client, stop
 }

@@ -64,11 +64,17 @@ type CommonOp struct {
 	NoCache bool
 }
 
-func NewClientProvider(urn string, baseURL *url.URL, cli httpcli.Doer) *ClientProvider {
-	if cli == nil {
-		cli = httpcli.ExternalDoer
+func NewClientProvider(urn string, baseURL *url.URL, cf *httpcli.Factory) (*ClientProvider, error) {
+	if cf == nil {
+		cf = httpcli.NewExternalClientFactory()
 	}
-	cli = requestCounter.Doer(cli, func(u *url.URL) string {
+
+	httpClient, err := cf.Doer(httpcli.CachedTransportOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient = requestCounter.Doer(httpClient, func(u *url.URL) string {
 		// The 3rd component of the Path (/api/v4/XYZ) mostly maps to the type of API
 		// request we are making.
 		var category string
@@ -81,9 +87,9 @@ func NewClientProvider(urn string, baseURL *url.URL, cli httpcli.Doer) *ClientPr
 	return &ClientProvider{
 		urn:           urn,
 		baseURL:       baseURL.ResolveReference(&url.URL{Path: path.Join(baseURL.Path, "api/v4") + "/"}),
-		httpClient:    cli,
+		httpClient:    httpClient,
 		gitlabClients: make(map[string]*Client),
-	}
+	}, nil
 }
 
 // GetAuthenticatorClient returns a client authenticated by the given

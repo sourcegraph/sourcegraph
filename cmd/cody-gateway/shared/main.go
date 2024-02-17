@@ -88,10 +88,7 @@ func Main(ctx context.Context, obctx *observation.Context, ready service.ReadyFu
 		}
 	}
 
-	// Create an uncached external doer, we never want to cache any responses.
-	// Not only is the cache hit rate going to be really low and requests large-ish,
-	// but also do we not want to retain any data.
-	httpClient, err := httpcli.UncachedExternalClientFactory.Doer()
+	httpClient, err := httpcli.NewExternalClientFactory().Doer()
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize external http client")
 	}

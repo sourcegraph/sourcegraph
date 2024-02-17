@@ -102,7 +102,7 @@ func Test_verifyAllowOrgs(t *testing.T) {
 			s := &sessionIssuerHelper{allowOrgs: tc.allowOrgs}
 
 			ctx := context.Background()
-			allow, err := s.verifyAllowOrgs(ctx, &profile, &oauth2.Token{AccessToken: "foo"}, httpcli.TestExternalDoer)
+			allow, err := s.verifyAllowOrgs(ctx, &profile, &oauth2.Token{AccessToken: "foo"}, httpcli.NewFactory(nil))
 			require.NoError(t, err, "unexpected error")
 			if allow != tc.expectedAllow {
 				t.Fatalf("expected allow to be %v, but got %v", tc.expectedAllow, allow)

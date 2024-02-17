@@ -65,7 +65,6 @@ go_test(
         "//internal/database/dbtest",
         "//internal/extsvc",
         "//internal/extsvc/bitbucketcloud",
-        "//internal/httpcli",
         "//internal/ratelimit",
         "//lib/errors",
         "//schema",

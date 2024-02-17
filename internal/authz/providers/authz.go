@@ -167,7 +167,7 @@ func ProvidersFromConfig(
 	initResult.Append(perforce.NewAuthzProviders(perforceConns))
 	initResult.Append(bitbucketcloud.NewAuthzProviders(db, bitbucketCloudConns, cfg.SiteConfig().AuthProviders))
 	initResult.Append(gerrit.NewAuthzProviders(gerritConns, cfg.SiteConfig().AuthProviders))
-	initResult.Append(azuredevops.NewAuthzProviders(db, azuredevopsConns, httpcli.ExternalClient))
+	initResult.Append(azuredevops.NewAuthzProviders(db, azuredevopsConns, httpcli.NewExternalClientFactory()))
 
 	return allowAccessByDefault, initResult.Providers, initResult.Problems, initResult.Warnings, initResult.InvalidConnections
 }

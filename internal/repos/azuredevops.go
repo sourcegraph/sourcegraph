@@ -42,15 +42,10 @@ func NewAzureDevOpsSource(ctx context.Context, logger log.Logger, svc *types.Ext
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
 
-	httpCli, err := cf.Doer()
-	if err != nil {
-		return nil, err
-	}
-
-	cli, err := azuredevops.NewClient(svc.URN(), c.Url, &auth.BasicAuth{Username: c.Username, Password: c.Token}, httpCli)
+	cli, err := azuredevops.NewClient(svc.URN(), c.Url, &auth.BasicAuth{Username: c.Username, Password: c.Token}, cf)
 	if err != nil {
 		return nil, err
 	}

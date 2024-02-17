@@ -23,16 +23,18 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/repos"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // executePlan executes the given reconciler plan.
-func executePlan(ctx context.Context, logger log.Logger, client gitserver.Client, sourcer sources.Sourcer, noSleepBeforeSync bool, tx *store.Store, plan *Plan) (afterDone func(store *store.Store), err error) {
+func executePlan(ctx context.Context, logger log.Logger, cli httpcli.Doer, client gitserver.Client, sourcer sources.Sourcer, noSleepBeforeSync bool, tx *store.Store, plan *Plan) (afterDone func(store *store.Store), err error) {
 	e := &executor{
 		client:            client,
 		logger:            logger.Scoped("executor"),
+		cli:               cli,
 		sourcer:           sourcer,
 		noSleepBeforeSync: noSleepBeforeSync,
 		tx:                tx,
@@ -46,6 +48,7 @@ func executePlan(ctx context.Context, logger log.Logger, client gitserver.Client
 type executor struct {
 	client            gitserver.Client
 	logger            log.Logger
+	cli               httpcli.Doer
 	sourcer           sources.Sourcer
 	noSleepBeforeSync bool
 	tx                *store.Store
@@ -738,7 +741,7 @@ func handleArchivedRepo(
 }
 
 func (e *executor) enqueueWebhook(ctx context.Context, store *store.Store, eventType string) {
-	webhooks.EnqueueChangeset(ctx, e.logger, store, eventType, bgql.MarshalChangesetID(e.ch.ID))
+	webhooks.EnqueueChangeset(ctx, e.logger, e.cli, store, eventType, bgql.MarshalChangesetID(e.ch.ID))
 }
 
 type getBatchChanger interface {

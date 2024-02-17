@@ -18,6 +18,7 @@ go_library(
         "//internal/batches/webhooks",
         "//internal/errcode",
         "//internal/gitserver",
+        "//internal/httpcli",
         "//internal/types",
         "//lib/errors",
         "@com_github_sourcegraph_log//:log",

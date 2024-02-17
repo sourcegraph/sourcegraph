@@ -36,7 +36,7 @@ func newTestHTTPClient(t *testing.T) (client *HTTPClient, stop func()) {
 	t.Helper()
 	recorderFactory, stop := httptestutil.NewRecorderFactory(t, *updateRecordings, t.Name())
 
-	client, _ = NewHTTPClient("urn", "https://registry.npmjs.org", "", recorderFactory)
+	client = NewHTTPClient("urn", "https://registry.npmjs.org", "", recorderFactory)
 	client.limiter = ratelimit.NewInstrumentedLimiter("npm", rate.NewLimiter(100, 10))
 	return client, stop
 }
@@ -76,7 +76,7 @@ func TestCredentials(t *testing.T) {
 	defer server.Close()
 
 	ctx := context.Background()
-	client, _ := NewHTTPClient("urn", server.URL, credentials, httpcli.TestExternalClientFactory)
+	client := NewHTTPClient("urn", server.URL, credentials, httpcli.NewFactory(nil))
 	client.limiter = ratelimit.NewInstrumentedLimiter("npm", rate.NewLimiter(100, 10))
 
 	presentDep, err := reposource.ParseNpmVersionedPackage("left-pad@1.3.0")

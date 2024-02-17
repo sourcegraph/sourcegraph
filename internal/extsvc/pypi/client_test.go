@@ -450,7 +450,7 @@ func newTestClient(t testing.TB, name string, update bool) *Client {
 
 	doer := httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec))
 
-	c, _ := NewClient("urn", []string{"https://pypi.org/simple"}, doer)
+	c := NewClient("urn", []string{"https://pypi.org/simple"}, doer)
 	c.limiter = ratelimit.NewInstrumentedLimiter("pypi", rate.NewLimiter(100, 10))
 	return c
 }

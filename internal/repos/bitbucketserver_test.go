@@ -66,7 +66,7 @@ func TestBitbucketServerSource_MakeRepo(t *testing.T) {
 			// httpcli uses rcache, so we need to prepare the redis connection.
 			rcache.SetupForTest(t)
 
-			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -147,7 +147,7 @@ func TestBitbucketServerSource_Exclude(t *testing.T) {
 			// httpcli uses rcache, so we need to prepare the redis connection.
 			rcache.SetupForTest(t)
 
-			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -188,7 +188,7 @@ func TestBitbucketServerSource_WithAuthenticator(t *testing.T) {
 		})
 
 	ctx := context.Background()
-	bbsSrc, err := NewBitbucketServerSource(ctx, logtest.Scoped(t), svc, httpcli.TestExternalClientFactory)
+	bbsSrc, err := NewBitbucketServerSource(ctx, logtest.Scoped(t), svc, httpcli.NewFactory(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,7 +262,7 @@ func TestBitbucketServerSource_ListByReposOnly(t *testing.T) {
 			// httpcli uses rcache, so we need to prepare the redis connection.
 			rcache.SetupForTest(t)
 
-			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -369,7 +369,7 @@ func TestBitbucketServerSource_ListByRepositoryQuery(t *testing.T) {
 				// httpcli uses rcache, so we need to prepare the redis connection.
 				rcache.SetupForTest(t)
 
-				s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+				s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -435,7 +435,7 @@ func TestBitbucketServerSource_ListByProjectKeyMock(t *testing.T) {
 			// httpcli uses rcache, so we need to prepare the redis connection.
 			rcache.SetupForTest(t)
 
-			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -469,7 +469,7 @@ func TestBitbucketServerSource_ListByProjectKeyAuthentic(t *testing.T) {
 			// httpcli uses rcache, so we need to prepare the redis connection.
 			rcache.SetupForTest(t)
 
-			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.TestExternalClientFactory)
+			s, err := newBitbucketServerSource(logtest.Scoped(t), &svc, config, httpcli.NewFactory(nil))
 			if err != nil {
 				t.Fatal(err)
 			}

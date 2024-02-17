@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -79,7 +80,7 @@ func (c *Client) Post(ctx context.Context, payload *Payload) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	resp, err := http.DefaultClient.Do(req.WithContext(timeoutCtx))
+	resp, err := httpcli.ExternalDoer.Do(req.WithContext(timeoutCtx))
 	if err != nil {
 		return errors.Wrap(err, "slack: http request")
 	}

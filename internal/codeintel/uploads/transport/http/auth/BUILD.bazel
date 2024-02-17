@@ -21,6 +21,7 @@ go_library(
         "//internal/extsvc",
         "//internal/extsvc/auth",
         "//internal/extsvc/github",
+        "//internal/httpcli",
         "//internal/observation",
         "//internal/rcache",
         "//internal/types",
@@ -42,7 +43,9 @@ go_test(
     embed = [":auth"],
     deps = [
         "//internal/extsvc/github",
+        "//internal/httpcli",
         "//lib/errors",
+        "@com_github_stretchr_testify//require",
         "@com_github_tomnomnom_linkheader//:linkheader",
     ],
 )

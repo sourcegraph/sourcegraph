@@ -8,7 +8,10 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/tomnomnom/linkheader"
+
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 )
 
 func TestEnforceAuthViaGitLab(t *testing.T) {
@@ -70,9 +73,12 @@ func TestEnforceAuthViaGitLab(t *testing.T) {
 		},
 	}
 
+	cli, err := httpcli.NewFactory(nil).Doer()
+	require.NoError(t, err)
+
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
-			statusCode, err := enforceAuthViaGitLab(context.Background(), testCase.query, testCase.repoName)
+			statusCode, err := enforceAuthViaGitLab(context.Background(), cli, testCase.query, testCase.repoName)
 			if statusCode != testCase.expectedStatusCode {
 				t.Errorf("unexpected status code. want=%d have=%d", testCase.expectedStatusCode, statusCode)
 			}

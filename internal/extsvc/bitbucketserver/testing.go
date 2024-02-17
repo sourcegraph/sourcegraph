@@ -34,11 +34,6 @@ func NewTestClient(t testing.TB, name string, update bool) *Client {
 	})
 	rec.SetMatcher(ignoreHostMatcher)
 
-	hc, err := httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)).Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	instanceURL := os.Getenv("BITBUCKET_SERVER_URL")
 	if instanceURL == "" {
 		instanceURL = "https://bitbucket.sgdev.org"
@@ -49,7 +44,7 @@ func NewTestClient(t testing.TB, name string, update bool) *Client {
 		Url:   instanceURL,
 	}
 
-	cli, err := NewClient("urn", c, hc)
+	cli, err := NewClient("urn", c, httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -50,6 +50,7 @@ go_test(
         "//internal/extsvc/auth",
         "//internal/extsvc/gitlab",
         "//internal/featureflag",
+        "//internal/httpcli",
         "//internal/oauthutil",
         "//internal/ratelimit",
         "//internal/rcache",

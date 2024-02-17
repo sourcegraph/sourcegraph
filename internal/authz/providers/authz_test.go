@@ -72,11 +72,11 @@ func (m gitlabAuthzProviderParams) FetchRepoPerms(context.Context, *extsvc.Repos
 
 func TestAuthzProvidersFromConfig(t *testing.T) {
 	t.Cleanup(licensing.TestingSkipFeatureChecks())
-	gitlab.NewOAuthProvider = func(op gitlab.OAuthProviderOp) authz.Provider {
-		return gitlabAuthzProviderParams{OAuthOp: op}
+	gitlab.NewOAuthProvider = func(op gitlab.OAuthProviderOp) (authz.Provider, error) {
+		return gitlabAuthzProviderParams{OAuthOp: op}, nil
 	}
-	gitlab.NewSudoProvider = func(op gitlab.SudoProviderOp) authz.Provider {
-		return gitlabAuthzProviderParams{SudoOp: op}
+	gitlab.NewSudoProvider = func(op gitlab.SudoProviderOp) (authz.Provider, error) {
+		return gitlabAuthzProviderParams{SudoOp: op}, nil
 	}
 
 	providersEqual := func(want ...authz.Provider) func(*testing.T, []authz.Provider) {

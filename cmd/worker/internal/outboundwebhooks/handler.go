@@ -14,6 +14,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/encryption"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/webhooks/outbound"
 	"github.com/sourcegraph/sourcegraph/internal/workerutil"
@@ -21,7 +22,7 @@ import (
 )
 
 type handler struct {
-	client   *http.Client
+	client   httpcli.Doer
 	store    database.OutboundWebhookStore
 	logStore database.OutboundWebhookLogStore
 }

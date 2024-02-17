@@ -57,11 +57,15 @@ type ProviderOptions struct {
 	SyncInternalRepoPermissions bool
 }
 
-func NewProvider(urn string, opts ProviderOptions) *Provider {
+func NewProvider(urn string, opts ProviderOptions) (*Provider, error) {
 	if opts.GitHubClient == nil {
 		apiURL, _ := github.APIRoot(opts.GitHubURL)
-		opts.GitHubClient = github.NewV3Client(log.Scoped("provider.github.v3"),
+		var err error
+		opts.GitHubClient, err = github.NewV3Client(log.Scoped("provider.github.v3"),
 			urn, apiURL, opts.BaseAuther, nil)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	codeHost := extsvc.NewCodeHost(opts.GitHubURL, extsvc.TypeGitHub)
@@ -84,7 +88,7 @@ func NewProvider(urn string, opts ProviderOptions) *Provider {
 		},
 		db:                          opts.DB,
 		syncInternalRepoPermissions: opts.SyncInternalRepoPermissions,
-	}
+	}, nil
 }
 
 var _ authz.Provider = (*Provider)(nil)

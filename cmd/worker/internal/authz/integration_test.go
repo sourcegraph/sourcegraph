@@ -190,13 +190,14 @@ func TestIntegration_GitHubPermissions(t *testing.T) {
 		t.Run("no-groups", func(t *testing.T) {
 			cli := newTestRecorderClient(t, svc.URN(), uri, token)
 
-			provider := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
+			provider, err := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
 				GitHubClient:   cli,
 				GitHubURL:      uri,
 				BaseAuther:     &auth.OAuthBearerToken{Token: token},
 				GroupsCacheTTL: -1,
 				DB:             testDB,
 			})
+			require.NoError(t, err)
 
 			authz.SetProviders(false, []authz.Provider{provider})
 			defer authz.SetProviders(true, nil)
@@ -207,13 +208,14 @@ func TestIntegration_GitHubPermissions(t *testing.T) {
 		t.Run("groups-enabled", func(t *testing.T) {
 			cli := newTestRecorderClient(t, svc.URN(), uri, token)
 
-			provider := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
+			provider, err := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
 				GitHubClient:   cli,
 				GitHubURL:      uri,
 				BaseAuther:     &auth.OAuthBearerToken{Token: token},
 				GroupsCacheTTL: 72,
 				DB:             testDB,
 			})
+			require.NoError(t, err)
 
 			authz.SetProviders(false, []authz.Provider{provider})
 			defer authz.SetProviders(true, nil)
@@ -229,13 +231,14 @@ func TestIntegration_GitHubPermissions(t *testing.T) {
 		t.Run("no-groups", func(t *testing.T) {
 			cli := newTestRecorderClient(t, svc.URN(), uri, token)
 
-			provider := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
+			provider, err := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
 				GitHubClient:   cli,
 				GitHubURL:      uri,
 				BaseAuther:     &auth.OAuthBearerToken{Token: token},
 				GroupsCacheTTL: -1,
 				DB:             testDB,
 			})
+			require.NoError(t, err)
 
 			authz.SetProviders(false, []authz.Provider{provider})
 			defer authz.SetProviders(true, nil)
@@ -246,13 +249,14 @@ func TestIntegration_GitHubPermissions(t *testing.T) {
 		t.Run("groups-enabled", func(t *testing.T) {
 			cli := newTestRecorderClient(t, svc.URN(), uri, token)
 
-			provider := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
+			provider, err := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
 				GitHubClient:   cli,
 				GitHubURL:      uri,
 				BaseAuther:     &auth.OAuthBearerToken{Token: token},
 				GroupsCacheTTL: 72,
 				DB:             testDB,
 			})
+			require.NoError(t, err)
 
 			authz.SetProviders(false, []authz.Provider{provider})
 			defer authz.SetProviders(true, nil)
@@ -267,11 +271,8 @@ func newTestRecorderClient(t *testing.T, urn string, apiURL *url.URL, token stri
 
 	cf, save := httptestutil.NewGitHubRecorderFactory(t, update(name), name)
 	t.Cleanup(save)
-	doer, err := cf.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-	cli := extsvcGitHub.NewV3Client(logtest.Scoped(t), urn, apiURL, &auth.OAuthBearerToken{Token: token}, doer)
+	cli, err := extsvcGitHub.NewV3Client(logtest.Scoped(t), urn, apiURL, &auth.OAuthBearerToken{Token: token}, cf)
+	require.NoError(t, err)
 	return cli
 }
 
@@ -321,13 +322,14 @@ func TestIntegration_GitHubInternalRepositories(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	provider := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
+	provider, err := authzGitHub.NewProvider(svc.URN(), authzGitHub.ProviderOptions{
 		GitHubClient:   cli,
 		GitHubURL:      uri,
 		BaseAuther:     &auth.OAuthBearerToken{Token: token},
 		GroupsCacheTTL: -1, // disable groups caching
 		DB:             testDB,
 	})
+	require.NoError(t, err)
 
 	authz.SetProviders(false, []authz.Provider{provider})
 	defer authz.SetProviders(true, nil)
@@ -454,8 +456,6 @@ func TestIntegration_GitLabPermissions(t *testing.T) {
 
 		cf, save := httptestutil.NewRecorderFactory(t, update(name), name)
 		defer save()
-		doer, err := cf.Doer()
-		require.NoError(t, err)
 
 		testDB := database.NewDB(logger, dbtest.NewDB(t))
 
@@ -466,12 +466,13 @@ func TestIntegration_GitLabPermissions(t *testing.T) {
 		err = reposStore.ExternalServiceStore().Upsert(ctx, &svc)
 		require.NoError(t, err)
 
-		provider := authzGitLab.NewOAuthProvider(authzGitLab.OAuthProviderOp{
+		provider, err := authzGitLab.NewOAuthProvider(authzGitLab.OAuthProviderOp{
 			BaseURL:                     uri,
 			DB:                          testDB,
-			CLI:                         doer,
+			HTTPFactory:                 cf,
 			SyncInternalRepoPermissions: true,
 		})
+		require.NoError(t, err)
 
 		authz.SetProviders(false, []authz.Provider{provider})
 		defer authz.SetProviders(true, nil)

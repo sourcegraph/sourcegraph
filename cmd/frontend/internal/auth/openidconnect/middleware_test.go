@@ -22,7 +22,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
-	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/licensing"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -130,7 +129,6 @@ func TestMiddleware(t *testing.T) {
 			Type:               providerType,
 		},
 		callbackUrl: ".auth/callback",
-		httpClient:  httpcli.TestExternalClient,
 	}
 	defer func() { mockGetProviderValue = nil }()
 	providers.MockProviders = []providers.Provider{mockGetProviderValue}
@@ -333,7 +331,6 @@ func TestMiddleware_NoOpenRedirect(t *testing.T) {
 			Type:         providerType,
 		},
 		callbackUrl: ".auth/callback",
-		httpClient:  httpcli.TestExternalClient,
 	}
 	defer func() { mockGetProviderValue = nil }()
 	providers.MockProviders = []providers.Provider{mockGetProviderValue}

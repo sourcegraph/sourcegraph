@@ -39,12 +39,7 @@ func NewGerritSource(ctx context.Context, svc *types.ExternalService, cf *httpcl
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
-	}
-
-	cli, err := cf.Doer()
-	if err != nil {
-		return nil, errors.Wrap(err, "creating external client")
+		cf = httpcli.NewExternalClientFactory()
 	}
 
 	gerritURL, err := url.Parse(c.Url)
@@ -52,7 +47,7 @@ func NewGerritSource(ctx context.Context, svc *types.ExternalService, cf *httpcl
 		return nil, errors.Wrap(err, "parsing Gerrit CodeHostURL")
 	}
 
-	client, err := gerrit.NewClient(svc.URN(), gerritURL, &gerrit.AccountCredentials{Username: c.Username, Password: c.Password}, cli)
+	client, err := gerrit.NewClient(svc.URN(), gerritURL, &gerrit.AccountCredentials{Username: c.Username, Password: c.Password}, cf)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating Gerrit client")
 	}

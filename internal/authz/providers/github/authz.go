@@ -138,7 +138,7 @@ func newAuthzProvider(
 		GroupsCacheTTL:              ttl,
 		DB:                          db,
 		SyncInternalRepoPermissions: (c.Authorization != nil) && c.Authorization.SyncInternalRepoPermissions,
-	}), nil
+	})
 }
 
 // ValidateAuthz validates the authorization fields of the given GitHub external

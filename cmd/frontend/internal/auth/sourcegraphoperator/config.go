@@ -40,7 +40,7 @@ func Init() {
 
 	conf.ContributeValidator(validateConfig)
 
-	p := NewProvider(*cloudSiteConfig.AuthProviders.SourcegraphOperator, httpcli.ExternalClient)
+	p := NewProvider(*cloudSiteConfig.AuthProviders.SourcegraphOperator, httpcli.ExternalDoer)
 	logger := log.Scoped(auth.SourcegraphOperatorProviderType)
 	go func() {
 		if err := p.Refresh(context.Background()); err != nil {

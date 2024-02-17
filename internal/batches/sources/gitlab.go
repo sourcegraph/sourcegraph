@@ -54,15 +54,9 @@ func newGitLabSource(urn string, c *schema.GitLabConnection, cf *httpcli.Factory
 	baseURL = extsvc.NormalizeBaseURL(baseURL)
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
-
-	opts := httpClientCertificateOptions(nil, c.Certificate)
-
-	cli, err := cf.Doer(opts...)
-	if err != nil {
-		return nil, err
-	}
+	cf = cf.WithOpts(httpClientCertificateOptions(nil, c.Certificate)...)
 
 	// Don't modify passed-in parameter.
 	var authr auth.Authenticator
@@ -75,7 +69,11 @@ func newGitLabSource(urn string, c *schema.GitLabConnection, cf *httpcli.Factory
 		}
 	}
 
-	provider := gitlab.NewClientProvider(urn, baseURL, cli)
+	provider, err := gitlab.NewClientProvider(urn, baseURL, cf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GitLabSource{
 		au:     authr,
 		client: provider.GetAuthenticatorClient(authr),

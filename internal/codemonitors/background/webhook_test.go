@@ -77,6 +77,9 @@ func TestTriggerTestWebhookAction(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := SendTestWebhook(context.Background(), httpcli.TestExternalDoer, "My test monitor", s.URL)
+	cli, err := httpcli.NewFactory(nil).Doer()
+	require.NoError(t, err)
+
+	err = SendTestWebhook(context.Background(), cli, "My test monitor", s.URL)
 	require.NoError(t, err)
 }

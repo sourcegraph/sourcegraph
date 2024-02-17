@@ -127,5 +127,9 @@ func gitlabClientFromAuthURL(authURL, oauthToken string) (*gitlab.Client, error)
 	baseURL.Path = ""
 	baseURL.RawQuery = ""
 	baseURL.Fragment = ""
-	return gitlab.NewClientProvider(extsvc.URNGitLabOAuth, baseURL, nil).GetOAuthClient(oauthToken), nil
+	p, err := gitlab.NewClientProvider(extsvc.URNGitLabOAuth, baseURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	return p.GetOAuthClient(oauthToken), nil
 }

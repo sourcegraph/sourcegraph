@@ -147,7 +147,7 @@ type response struct {
 // Client represents a client connection to a syntect_server.
 type Client struct {
 	syntectServer string
-	httpClient    *http.Client
+	cf            *httpcli.Factory
 }
 
 func IsTreesitterSupported(filetype string) bool {
@@ -194,8 +194,13 @@ func (c *Client) Highlight(ctx context.Context, q *Query, format HighlightRespon
 		req.Header.Set("X-Stabilize-Timeout", q.StabilizeTimeout.String())
 	}
 
+	cli, err := c.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
 	// Perform the request.
-	resp, err := c.httpClient.Do(req)
+	resp, err := cli.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("making request to %s", c.url("/")))
 	}
@@ -247,6 +252,6 @@ func (c *Client) url(path string) string {
 func New(syntectServer string) *Client {
 	return &Client{
 		syntectServer: strings.TrimSuffix(syntectServer, "/"),
-		httpClient:    httpcli.InternalClient,
+		cf:            httpcli.NewInternalClientFactory("syntect"),
 	}
 }

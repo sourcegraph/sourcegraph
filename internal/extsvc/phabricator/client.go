@@ -3,7 +3,6 @@ package phabricator
 
 import (
 	"context"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -57,7 +56,7 @@ type Client struct {
 // capabilities as part of the dial process.
 func NewClient(ctx context.Context, phabUrl, token string, cli httpcli.Doer) (*Client, error) {
 	if cli == nil {
-		cli = http.DefaultClient
+		cli = httpcli.ExternalDoer
 	}
 
 	conn, err := gonduit.DialContext(ctx, phabUrl, &core.ClientOptions{

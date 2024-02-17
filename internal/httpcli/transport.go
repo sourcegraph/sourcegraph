@@ -26,6 +26,13 @@ func unwrapAll(transport WrappedTransport) *http.RoundTripper {
 	return wrapped
 }
 
+func WrapTransport(transport, base http.RoundTripper) WrappedTransport {
+	return &wrappedTransport{
+		RoundTripper: transport,
+		Wrapped:      base,
+	}
+}
+
 // wrappedTransport is an http.RoundTripper that allows the underlying RoundTripper to be
 // exposed for modification.
 type wrappedTransport struct {

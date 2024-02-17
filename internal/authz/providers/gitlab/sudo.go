@@ -66,19 +66,23 @@ type SudoProviderOp struct {
 	SyncInternalRepoPermissions bool
 }
 
-func newSudoProvider(op SudoProviderOp, cli httpcli.Doer) *SudoProvider {
+func newSudoProvider(op SudoProviderOp, cf *httpcli.Factory) (*SudoProvider, error) {
+	p, err := gitlab.NewClientProvider(op.URN, op.BaseURL, cf)
+	if err != nil {
+		return nil, err
+	}
 	return &SudoProvider{
 		sudoToken: op.SudoToken,
 
 		urn:                         op.URN,
-		clientProvider:              gitlab.NewClientProvider(op.URN, op.BaseURL, cli),
+		clientProvider:              p,
 		clientURL:                   op.BaseURL,
 		codeHost:                    extsvc.NewCodeHost(op.BaseURL, extsvc.TypeGitLab),
 		authnConfigID:               op.AuthnConfigID,
 		gitlabProvider:              op.GitLabProvider,
 		useNativeUsername:           op.UseNativeUsername,
 		syncInternalRepoPermissions: op.SyncInternalRepoPermissions,
-	}
+	}, nil
 }
 
 func (p *SudoProvider) ValidateConnection(ctx context.Context) error {

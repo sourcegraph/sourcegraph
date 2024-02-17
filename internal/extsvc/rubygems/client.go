@@ -18,22 +18,18 @@ import (
 type Client struct {
 	registryURL string
 
-	uncachedClient httpcli.Doer
+	cf *httpcli.Factory
 
 	// Self-imposed rate-limiter.
 	limiter *ratelimit.InstrumentedLimiter
 }
 
-func NewClient(urn string, registryURL string, httpfactory *httpcli.Factory) (*Client, error) {
-	uncached, err := httpfactory.Doer(httpcli.NewCachedTransportOpt(httpcli.NoopCache{}, false))
-	if err != nil {
-		return nil, err
-	}
+func NewClient(urn string, registryURL string, httpfactory *httpcli.Factory) *Client {
 	return &Client{
-		registryURL:    registryURL,
-		uncachedClient: uncached,
-		limiter:        ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("RubyGemsClient"), urn)),
-	}, nil
+		registryURL: registryURL,
+		cf:          httpfactory,
+		limiter:     ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("RubyGemsClient"), urn)),
+	}
 }
 
 func (c *Client) GetPackageContents(ctx context.Context, dep reposource.VersionedPackage) (body io.ReadCloser, err error) {
@@ -49,7 +45,12 @@ func (c *Client) GetPackageContents(ctx context.Context, dep reposource.Versione
 	}
 	req.Header.Add("User-Agent", "sourcegraph-rubygems-syncer (sourcegraph.com)")
 
-	body, err = c.do(c.uncachedClient, req)
+	doer, err := c.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
+	body, err = c.do(doer, req)
 	if err != nil {
 		return nil, err
 	}

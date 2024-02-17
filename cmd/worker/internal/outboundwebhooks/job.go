@@ -2,7 +2,6 @@ package outboundwebhooks
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/sourcegraph/sourcegraph/cmd/worker/job"
@@ -44,13 +43,17 @@ func (s *sender) Routines(_ context.Context, observationCtx *observation.Context
 		return nil, errors.Wrap(err, "initialising database")
 	}
 
-	client := httpcli.ExternalClient
+	cli, err := httpcli.NewExternalClientFactory().Doer()
+	if err != nil {
+		return nil, err
+	}
+
 	key := keyring.Default().OutboundWebhookKey
 	workerStore := makeStore(observationCtx, db.Handle(), key)
 
 	return []goroutine.BackgroundRoutine{
 		makeWorker(
-			ctx, observationCtx, workerStore, client,
+			ctx, observationCtx, workerStore, cli,
 			database.OutboundWebhooksWith(db, key),
 			database.OutboundWebhookLogsWith(db, key),
 		),
@@ -63,7 +66,7 @@ func makeWorker(
 	ctx context.Context,
 	observationCtx *observation.Context,
 	workerStore store.Store[*types.OutboundWebhookJob],
-	client *http.Client,
+	client httpcli.Doer,
 	webhookStore database.OutboundWebhookStore,
 	logStore database.OutboundWebhookLogStore,
 ) *workerutil.Worker[*types.OutboundWebhookJob] {

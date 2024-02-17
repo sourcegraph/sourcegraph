@@ -45,7 +45,12 @@ func Search(ctx context.Context, query string, patternType *string, decoder stre
 	req = req.WithContext(ctx)
 	req.Header.Set("User-Agent", "code-insights-backend")
 
-	resp, err := httpcli.InternalClient.Do(req)
+	cli, err := httpcli.NewInternalClientFactory("insights_searcher").Doer()
+	if err != nil {
+		return err
+	}
+
+	resp, err := cli.Do(req)
 	if err != nil {
 		return err
 	}
@@ -69,7 +74,12 @@ func genericComputeStream(ctx context.Context, handler func(io.Reader) error, qu
 	req = req.WithContext(ctx)
 	req.Header.Set("User-Agent", "code-insights-backend")
 
-	resp, err := httpcli.InternalClient.Do(req)
+	cli, err := httpcli.NewInternalClientFactory("insights_compute").Doer()
+	if err != nil {
+		return err
+	}
+
+	resp, err := cli.Do(req)
 	if err != nil {
 		return err
 	}

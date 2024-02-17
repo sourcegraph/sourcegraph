@@ -68,7 +68,10 @@ func (s *sessionIssuerHelper) GetOrCreateUser(ctx context.Context, token *oauth2
 		return false, nil, fmt.Sprintf("Error normalizing the username %q. See https://sourcegraph.com/docs/admin/auth/#username-normalization.", login), err
 	}
 
-	ghClient := s.newClient(token.AccessToken)
+	ghClient, err := s.newClient(token.AccessToken)
+	if err != nil {
+		return false, nil, "Error creating GitHub client", err
+	}
 
 	// 🚨 SECURITY: Ensure that the user email is verified
 	verifiedEmails := getVerifiedEmails(ctx, ghClient)
@@ -196,7 +199,7 @@ func derefInt64(i *int64) int64 {
 	return *i
 }
 
-func (s *sessionIssuerHelper) newClient(token string) *githubsvc.V3Client {
+func (s *sessionIssuerHelper) newClient(token string) (*githubsvc.V3Client, error) {
 	apiURL, _ := githubsvc.APIRoot(s.BaseURL)
 	return githubsvc.NewV3Client(log.Scoped("session.github.v3"),
 		extsvc.URNGitHubOAuth, apiURL, &esauth.OAuthBearerToken{Token: token}, nil)

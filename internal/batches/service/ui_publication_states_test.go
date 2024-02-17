@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
 	batcheslib "github.com/sourcegraph/sourcegraph/lib/batches"
@@ -121,7 +122,7 @@ func TestUiPublicationStates_prepareAndValidate(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				var ps UiPublicationStates
 				for rid, pv := range tc.changesetUIs {
-					ps.Add(rid, pv)
+					require.NoError(t, ps.Add(rid, pv))
 				}
 
 				if err := ps.prepareAndValidate(mappings); err == nil {
@@ -134,7 +135,7 @@ func TestUiPublicationStates_prepareAndValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		var ps UiPublicationStates
 
-		ps.Add(changesetUI.RandID, batcheslib.PublishedValue{Val: true})
+		require.NoError(t, ps.Add(changesetUI.RandID, batcheslib.PublishedValue{Val: true}))
 		if err := ps.prepareAndValidate(mappings); err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}

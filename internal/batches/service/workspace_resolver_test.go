@@ -464,12 +464,12 @@ func newStreamSearchTestServer(t *testing.T, matches map[string][]streamhttp.Eve
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		ew.Event("progress", ev{
+		require.NoError(t, ew.Event("progress", ev{
 			Name:  "progress",
 			Value: &streamapi.Progress{MatchCount: len(match)},
-		})
-		ew.Event("matches", match)
-		ew.Event("done", struct{}{})
+		}))
+		require.NoError(t, ew.Event("matches", match))
+		require.NoError(t, ew.Event("done", struct{}{}))
 	}))
 
 	t.Cleanup(ts.Close)

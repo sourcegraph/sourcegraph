@@ -48,12 +48,9 @@ func createTestProvider(t *testing.T) *ClientProvider {
 	t.Helper()
 	fac, cleanup := httptestutil.NewRecorderFactory(t, update(t.Name()), t.Name())
 	t.Cleanup(cleanup)
-	doer, err := fac.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
 	baseURL, _ := url.Parse("https://gitlab.com/")
-	provider := NewClientProvider("Test", baseURL, doer)
+	provider, err := NewClientProvider("Test", baseURL, fac)
+	require.NoError(t, err)
 	return provider
 }
 
@@ -74,11 +71,11 @@ func update(name string) bool {
 	return regexp.MustCompile(*updateRegex).MatchString(name)
 }
 
-type mockDoer struct {
+type mockTransport struct {
 	do func(*http.Request) (*http.Response, error)
 }
 
-func (c *mockDoer) Do(r *http.Request) (*http.Response, error) {
+func (c *mockTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	return c.do(r)
 }
 
@@ -86,7 +83,7 @@ func TestClient_doWithBaseURL(t *testing.T) {
 	baseURL, err := url.Parse("https://gitlab.com/")
 	require.NoError(t, err)
 
-	doer := &mockDoer{
+	cf := httpcli.WrapTransport(&mockTransport{
 		do: func(r *http.Request) (*http.Response, error) {
 			if r.Header.Get("Authorization") == "Bearer bad token" {
 				return &http.Response{
@@ -102,13 +99,16 @@ func TestClient_doWithBaseURL(t *testing.T) {
 				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(bytes.NewReader([]byte(body))),
 			}, nil
-
 		},
-	}
+	}, http.DefaultTransport)
 
 	ctx := context.Background()
 
-	provider := NewClientProvider("Test", baseURL, doer)
+	provider, err := NewClientProvider("Test", baseURL, httpcli.NewFactory(nil, func(c *http.Client) error {
+		c.Transport = cf
+		return nil
+	}))
+	require.NoError(t, err)
 
 	client := provider.getClient(&auth.OAuthBearerToken{Token: "bad token", RefreshToken: "refresh token", RefreshFunc: func(ctx context.Context, cli httpcli.Doer, obt *auth.OAuthBearerToken) (string, string, time.Time, error) {
 		obt.Token = "refreshed-token"
@@ -197,7 +197,8 @@ func TestRateLimitRetry(t *testing.T) {
 			srvURL, err := url.Parse(srv.URL)
 			require.NoError(t, err)
 
-			provider := NewClientProvider("Test", srvURL, httpcli.TestExternalDoer)
+			provider, err := NewClientProvider("Test", srvURL, httpcli.NewFactory(nil))
+			require.NoError(t, err)
 			client := provider.getClient(nil)
 			client.internalRateLimiter = ratelimit.NewInstrumentedLimiter("gitlab", rate.NewLimiter(100, 10))
 			client.waitForRateLimit = tt.waitForRateLimit

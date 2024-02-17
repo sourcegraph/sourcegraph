@@ -118,7 +118,7 @@ func TestProvider_NewAuthzProviders(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			licensing.MockCheckFeature = tc.mockCheckFeature
-			result := NewAuthzProviders(db, tc.connections, httpcli.TestExternalClient)
+			result := NewAuthzProviders(db, tc.connections, httpcli.NewFactory(nil))
 
 			if diff := cmp.Diff(tc.expectedInvalidConnections, result.InvalidConnections); diff != "" {
 				t.Errorf("mismatched InvalidConnections (-want, +got)\n%s", diff)
@@ -643,7 +643,7 @@ func TestProvider_FetchUserPerms(t *testing.T) {
 					URN:                   "",
 					AzureDevOpsConnection: tc.connection,
 				},
-			}, httpcli.TestExternalClient)
+			}, httpcli.NewFactory(nil))
 
 			// We don't need to test for the inner type yet. Asserting the length is sufficient.
 			if len(expectedProviders) != len(result.Providers) {
@@ -730,7 +730,7 @@ func TestProvider_FetchUserPerms(t *testing.T) {
 					Projects:           []string{"solar/system", "milky/way"},
 				},
 			},
-		}, httpcli.TestExternalClient)
+		}, httpcli.NewFactory(nil))
 
 		if len(result.Providers) == 0 {
 			t.Fatal("No providers found, expected one")
@@ -895,7 +895,7 @@ func Test_ValidateConnection(t *testing.T) {
 				Projects:           []string{"solar/system", "milky/way"},
 			},
 		},
-	}, httpcli.TestExternalClient)
+	}, httpcli.NewFactory(nil))
 
 	if len(result.Providers) == 0 {
 		fmt.Println(result)

@@ -13,21 +13,17 @@ import (
 )
 
 type Client struct {
-	uncachedClient httpcli.Doer
+	cf *httpcli.Factory
 
 	// Self-imposed rate-limiter.
 	limiter *ratelimit.InstrumentedLimiter
 }
 
-func NewClient(urn string, httpfactory *httpcli.Factory) (*Client, error) {
-	uncached, err := httpfactory.Doer(httpcli.NewCachedTransportOpt(httpcli.NoopCache{}, false))
-	if err != nil {
-		return nil, err
-	}
+func NewClient(urn string, cf *httpcli.Factory) *Client {
 	return &Client{
-		uncachedClient: uncached,
-		limiter:        ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("RustCratesClient"), urn)),
-	}, nil
+		cf:      cf,
+		limiter: ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("RustCratesClient"), urn)),
+	}
 }
 
 func (c *Client) Get(ctx context.Context, url string) (io.ReadCloser, error) {
@@ -41,7 +37,12 @@ func (c *Client) Get(ctx context.Context, url string) (io.ReadCloser, error) {
 	}
 	req.Header.Add("User-Agent", "sourcegraph-crates-syncer (sourcegraph.com)")
 
-	b, err := c.do(c.uncachedClient, req)
+	cli, err := c.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := c.do(cli, req)
 	if err != nil {
 		return nil, err
 	}

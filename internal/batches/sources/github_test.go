@@ -22,6 +22,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/github"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/rcache"
 	"github.com/sourcegraph/sourcegraph/internal/testutil"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -115,12 +116,12 @@ func TestGithubSource_CreateChangeset(t *testing.T) {
 }
 
 func TestGithubSource_CreateChangeset_CreationLimit(t *testing.T) {
-	cli := new(mockDoer)
+	rt := new(mockTransport)
 	// Version lookup
 	versionMatchedBy := func(req *http.Request) bool {
 		return req.Method == http.MethodGet && req.URL.Path == "/"
 	}
-	cli.On("Do", mock.MatchedBy(versionMatchedBy)).
+	rt.On("RoundTrip", mock.MatchedBy(versionMatchedBy)).
 		Once().
 		Return(
 			&http.Response{
@@ -136,7 +137,7 @@ func TestGithubSource_CreateChangeset_CreationLimit(t *testing.T) {
 	createChangesetMatchedBy := func(req *http.Request) bool {
 		return req.Method == http.MethodPost && req.URL.Path == "/graphql"
 	}
-	cli.On("Do", mock.MatchedBy(createChangesetMatchedBy)).
+	rt.On("RoundTrip", mock.MatchedBy(createChangesetMatchedBy)).
 		Once().
 		Return(
 			&http.Response{
@@ -148,7 +149,11 @@ func TestGithubSource_CreateChangeset_CreationLimit(t *testing.T) {
 
 	apiURL, err := url.Parse("https://fake.api.github.com")
 	require.NoError(t, err)
-	client := github.NewV4Client("extsvc:github:0", apiURL, nil, cli)
+	client, err := github.NewV4Client("extsvc:github:0", apiURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+		c.Transport = httpcli.WrapTransport(rt, http.DefaultTransport)
+		return nil
+	}))
+	require.NoError(t, err)
 	source := &GitHubSource{
 		client: client,
 	}
@@ -179,11 +184,11 @@ func TestGithubSource_CreateChangeset_CreationLimit(t *testing.T) {
 	)
 }
 
-type mockDoer struct {
+type mockTransport struct {
 	mock.Mock
 }
 
-func (d *mockDoer) Do(req *http.Request) (*http.Response, error) {
+func (d *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	args := d.Called(req)
 	return args.Get(0).(*http.Response), args.Error(1)
 }

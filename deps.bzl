@@ -472,13 +472,6 @@ def go_dependencies():
         version = "v1.13.5",
     )
     go_repository(
-        name = "com_github_aybabtme_iocontrol",
-        build_file_proto_mode = "disable_global",
-        importpath = "github.com/aybabtme/iocontrol",
-        sum = "h1:0NmehRCgyk5rljDQLKUO+cRJCnduDyn11+zGZIc9Z48=",
-        version = "v0.0.0-20150809002002-ad15bcfc95a0",
-    )
-    go_repository(
         name = "com_github_aymerick_douceur",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/aymerick/douceur",
@@ -4675,13 +4668,6 @@ def go_dependencies():
         importpath = "github.com/PuerkitoBio/purell",
         sum = "h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tNFfI=",
         version = "v1.1.1",
-    )
-    go_repository(
-        name = "com_github_puerkitobio_rehttp",
-        build_file_proto_mode = "disable_global",
-        importpath = "github.com/PuerkitoBio/rehttp",
-        sum = "h1:JFZ7OeK+hbJpTxhNB0NDZT47AuXqCU0Smxfjtph7/Rs=",
-        version = "v1.1.0",
     )
     go_repository(
         name = "com_github_puerkitobio_urlesc",

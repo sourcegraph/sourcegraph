@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v55/github"
 
@@ -74,8 +75,13 @@ type V3Client struct {
 //
 // apiURL must point to the base URL of the GitHub API. See the docstring for
 // V3Client.apiURL.
-func NewV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.Doer) *V3Client {
-	return newV3Client(logger, urn, apiURL, a, "rest", cli)
+func NewV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, cf *httpcli.Factory) (*V3Client, error) {
+	cli, err := clientForFactory(cf)
+	if err != nil {
+		return nil, err
+	}
+
+	return newV3Client(logger, urn, apiURL, a, "rest", cli), nil
 }
 
 // NewV3SearchClient creates a new GitHub API client intended for use with the
@@ -83,12 +89,31 @@ func NewV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenti
 //
 // apiURL must point to the base URL of the GitHub API. See the docstring for
 // V3Client.apiURL.
-func NewV3SearchClient(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.Doer) *V3Client {
-	return newV3Client(logger, urn, apiURL, a, "search", cli)
+func NewV3SearchClient(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, cf *httpcli.Factory) (*V3Client, error) {
+	cli, err := clientForFactory(cf)
+	if err != nil {
+		return nil, err
+	}
+
+	return newV3Client(logger, urn, apiURL, a, "search", cli), nil
 }
 
-func newV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, resource string, cli httpcli.Doer) *V3Client {
-	apiURL = canonicalizedURL(apiURL)
+func clientForFactory(cf *httpcli.Factory) (httpcli.Doer, error) {
+	if cf == nil {
+		cf = httpcli.NewExternalClientFactory()
+	}
+	cf = cf.WithOpts(
+		httpcli.CachedTransportOpt,
+		// Use a 30s timeout to avoid running into EOF errors, because GitHub
+		// closes idle connections after 60s
+		httpcli.NewIdleConnTimeoutOpt(30*time.Second),
+	)
+
+	cli, err := cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
 	if gitHubDisable {
 		cli = disabledClient{}
 	}
@@ -106,6 +131,12 @@ func newV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenti
 		}
 		return category
 	})
+
+	return cli, nil
+}
+
+func newV3Client(logger log.Logger, urn string, apiURL *url.URL, a auth.Authenticator, resource string, cli httpcli.Doer) *V3Client {
+	apiURL = canonicalizedURL(apiURL)
 
 	var tokenHash string
 	if a != nil {

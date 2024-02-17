@@ -20,6 +20,7 @@ import (
 	"github.com/beevik/etree"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlidp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/auth"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/external/session"
@@ -188,7 +189,10 @@ func TestMiddleware(t *testing.T) {
 		ServiceProviderPrivateKey:   testSAMLSPKey,
 	})
 
-	mockGetProviderValue = &provider{config: *config, httpClient: httpcli.TestExternalClient}
+	cli, err := httpcli.NewFactory(nil).Client()
+	require.NoError(t, err)
+
+	mockGetProviderValue = &provider{config: *config, httpClient: cli}
 	defer func() { mockGetProviderValue = nil }()
 	providers.MockProviders = []providers.Provider{mockGetProviderValue}
 	defer func() { providers.MockProviders = nil }()

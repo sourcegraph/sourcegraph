@@ -23,22 +23,18 @@ import (
 
 // A Client to Go module proxies.
 type Client struct {
-	urls           []string // list of proxy URLs
-	uncachedClient httpcli.Doer
-	cachedClient   httpcli.Doer
-	limiter        *ratelimit.InstrumentedLimiter
+	urls    []string // list of proxy URLs
+	cf      *httpcli.Factory
+	limiter *ratelimit.InstrumentedLimiter
 }
 
 // NewClient returns a new Client for the given urls. urn represents the
 // unique urn of the external service this client's config is from.
 func NewClient(urn string, urls []string, httpfactory *httpcli.Factory) *Client {
-	uncached, _ := httpfactory.Doer(httpcli.NewCachedTransportOpt(httpcli.NoopCache{}, false))
-	cached, _ := httpfactory.Doer()
 	return &Client{
-		urls:           urls,
-		cachedClient:   cached,
-		uncachedClient: uncached,
-		limiter:        ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("GoModClient"), urn)),
+		urls:    urls,
+		cf:      httpfactory,
+		limiter: ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("GoModClient"), urn)),
 	}
 }
 
@@ -55,7 +51,11 @@ func (c *Client) GetVersion(ctx context.Context, mod reposource.PackageName, ver
 		paths = []string{"@latest"}
 	}
 
-	respBody, err := c.get(ctx, c.cachedClient, mod, paths...)
+	doer, err := c.cf.Doer(httpcli.CachedTransportOpt)
+	if err != nil {
+		return nil, err
+	}
+	respBody, err := c.get(ctx, doer, mod, paths...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,12 @@ func (c *Client) GetZip(ctx context.Context, mod reposource.PackageName, version
 		return nil, errors.Wrap(err, "failed to escape version")
 	}
 
-	zip, err := c.get(ctx, c.uncachedClient, mod, "@v", escapedVersion+".zip")
+	doer, err := c.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
+	zip, err := c.get(ctx, doer, mod, "@v", escapedVersion+".zip")
 	if err != nil {
 		return nil, err
 	}

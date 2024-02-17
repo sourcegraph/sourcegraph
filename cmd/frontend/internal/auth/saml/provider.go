@@ -23,6 +23,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
@@ -32,7 +33,7 @@ const providerType = "saml"
 type provider struct {
 	config     schema.SAMLAuthProvider
 	multiple   bool // whether there are multiple SAML auth providers
-	httpClient *http.Client
+	httpClient httpcli.Doer
 
 	mu         sync.Mutex
 	samlSP     *saml2.SAMLServiceProvider
@@ -104,7 +105,7 @@ func (p *provider) CachedInfo() *providers.Info {
 	return info
 }
 
-func getServiceProvider(ctx context.Context, pc *schema.SAMLAuthProvider, httpClient *http.Client) (*saml2.SAMLServiceProvider, error) {
+func getServiceProvider(ctx context.Context, pc *schema.SAMLAuthProvider, httpClient httpcli.Doer) (*saml2.SAMLServiceProvider, error) {
 	c, err := readProviderConfig(pc)
 	if err != nil {
 		return nil, err
@@ -276,7 +277,7 @@ func readProviderConfig(pc *schema.SAMLAuthProvider) (*providerConfig, error) {
 	return &c, nil
 }
 
-func readIdentityProviderMetadata(ctx context.Context, c *providerConfig, httpClient *http.Client) ([]byte, error) {
+func readIdentityProviderMetadata(ctx context.Context, c *providerConfig, httpClient httpcli.Doer) ([]byte, error) {
 	if c.identityProviderMetadata != nil {
 		return c.identityProviderMetadata, nil
 	}

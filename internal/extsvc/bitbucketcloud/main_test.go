@@ -59,16 +59,11 @@ func newTestClient(t testing.TB) *client {
 		}
 	})
 
-	hc, err := httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)).Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	cli, err := newClient("urn", &schema.BitbucketCloudConnection{
 		ApiURL:      "https://api.bitbucket.org",
 		Username:    bbtest.GetenvTestBitbucketCloudUsername(),
 		AppPassword: os.Getenv("BITBUCKET_CLOUD_APP_PASSWORD"),
-	}, hc)
+	}, httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)))
 	if err != nil {
 		t.Fatal(err)
 	}

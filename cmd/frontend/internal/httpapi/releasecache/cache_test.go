@@ -136,13 +136,12 @@ func newTestClient(t *testing.T) *github.V4Client {
 	cf, save := newClientFactory(t, t.Name())
 	t.Cleanup(func() { save(t) })
 
-	doer, err := cf.Doer()
-	require.NoError(t, err)
-
 	u, err := url.Parse("https://api.github.com")
 	require.NoError(t, err)
 
 	a := auth.OAuthBearerToken{Token: os.Getenv("GITHUB_TOKEN")}
 
-	return github.NewV4Client("https://github.com", u, &a, doer)
+	c, err := github.NewV4Client("https://github.com", u, &a, cf)
+	require.NoError(t, err)
+	return c
 }

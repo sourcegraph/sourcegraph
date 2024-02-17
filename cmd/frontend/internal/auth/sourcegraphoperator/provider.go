@@ -1,7 +1,6 @@
 package sourcegraphoperator
 
 import (
-	"net/http"
 	"path"
 
 	feAuth "github.com/sourcegraph/sourcegraph/cmd/frontend/auth"
@@ -9,6 +8,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
 	"github.com/sourcegraph/sourcegraph/internal/cloud"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 
@@ -27,7 +27,7 @@ type provider struct {
 
 // NewProvider creates and returns a new Sourcegraph Operator authentication
 // provider using the given config.
-func NewProvider(config cloud.SchemaAuthProviderSourcegraphOperator, httpClient *http.Client) providers.Provider {
+func NewProvider(config cloud.SchemaAuthProviderSourcegraphOperator, cli httpcli.Doer) providers.Provider {
 	allowSignUp := true
 	return &provider{
 		config: config,
@@ -44,7 +44,7 @@ func NewProvider(config cloud.SchemaAuthProviderSourcegraphOperator, httpClient 
 			},
 			authPrefix,
 			path.Join(feAuth.AuthURLPrefix, "sourcegraph-operator", "callback"),
-			httpClient,
+			cli,
 		).(*openidconnect.Provider),
 	}
 }

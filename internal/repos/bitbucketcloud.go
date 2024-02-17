@@ -47,12 +47,7 @@ func NewBitbucketCloudSource(ctx context.Context, logger log.Logger, svc *types.
 
 func newBitbucketCloudSource(logger log.Logger, svc *types.ExternalService, c *schema.BitbucketCloudConnection, cf *httpcli.Factory) (*BitbucketCloudSource, error) {
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
-	}
-
-	cli, err := cf.Doer()
-	if err != nil {
-		return nil, err
+		cf = httpcli.NewExternalClientFactory()
 	}
 
 	var ex repoExcluder
@@ -66,7 +61,7 @@ func newBitbucketCloudSource(logger log.Logger, svc *types.ExternalService, c *s
 		return nil, err
 	}
 
-	client, err := bitbucketcloud.NewClient(svc.URN(), c, cli)
+	client, err := bitbucketcloud.NewClient(svc.URN(), c, cf)
 	if err != nil {
 		return nil, err
 	}

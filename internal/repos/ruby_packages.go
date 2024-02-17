@@ -25,10 +25,7 @@ func NewRubyPackagesSource(ctx context.Context, svc *types.ExternalService, cf *
 		return nil, errors.Errorf("external service id=%d config error: %s", svc.ID, err)
 	}
 
-	client, err := rubygems.NewClient(svc.URN(), c.Repository, cf)
-	if err != nil {
-		return nil, err
-	}
+	client := rubygems.NewClient(svc.URN(), c.Repository, cf)
 
 	return &PackagesSource{
 		svc:        svc,

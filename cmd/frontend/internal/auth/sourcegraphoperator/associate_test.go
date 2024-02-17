@@ -49,9 +49,13 @@ func TestAddSourcegraphOperatorExternalAccountBinding(t *testing.T) {
 
 func TestAddSourcegraphOperatorExternalAccount(t *testing.T) {
 	ctx := context.Background()
+
+	cli, err := httpcli.NewFactory(nil).Doer()
+	require.NoError(t, err)
+
 	soap := NewProvider(cloud.SchemaAuthProviderSourcegraphOperator{
 		ClientID: "soap_client",
-	}, httpcli.TestExternalClient)
+	}, cli)
 	serviceID := soap.ConfigID().ID
 
 	mockDB := func(siteAdmin bool) database.DB {

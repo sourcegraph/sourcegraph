@@ -53,10 +53,10 @@ func NewOtherSource(ctx context.Context, svc *types.ExternalService, cf *httpcli
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
 
-	cli, err := cf.Doer()
+	cli, err := cf.Doer(httpcli.CachedTransportOpt)
 	if err != nil {
 		return nil, err
 	}

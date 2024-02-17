@@ -14,6 +14,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/external/globals"
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
@@ -26,7 +27,7 @@ type Provider struct {
 	config      schema.OpenIDConnectAuthProvider
 	authPrefix  string
 	callbackUrl string
-	httpClient  *http.Client
+	httpClient  httpcli.Doer
 
 	mu         sync.Mutex
 	oidc       *oidcProvider
@@ -35,7 +36,7 @@ type Provider struct {
 
 // NewProvider creates and returns a new OpenID Connect authentication provider
 // using the given config.
-func NewProvider(config schema.OpenIDConnectAuthProvider, authPrefix string, callbackUrl string, httpClient *http.Client) providers.Provider {
+func NewProvider(config schema.OpenIDConnectAuthProvider, authPrefix string, callbackUrl string, httpClient httpcli.Doer) providers.Provider {
 	return &Provider{
 		config:      config,
 		authPrefix:  authPrefix,
@@ -159,12 +160,17 @@ type providerExtraClaims struct {
 
 var mockNewProvider func(issuerURL string) (*oidcProvider, error)
 
-func newOIDCProvider(issuerURL string, httpClient *http.Client) (*oidcProvider, error) {
+func newOIDCProvider(issuerURL string, httpClient httpcli.Doer) (*oidcProvider, error) {
 	if mockNewProvider != nil {
 		return mockNewProvider(issuerURL)
 	}
 
-	bp, err := oidc.NewProvider(oidc.ClientContext(context.Background(), httpClient), issuerURL)
+	cli, err := httpcli.NewExternalClientFactory().Client()
+	if err != nil {
+		return nil, err
+	}
+
+	bp, err := oidc.NewProvider(oidc.ClientContext(context.Background(), cli), issuerURL)
 	if err != nil {
 		return nil, err
 	}

@@ -39,11 +39,6 @@ func NewTestClient(t testing.TB, name string, update bool) (Client, func()) {
 	}
 	rec.SetMatcher(ignoreHostMatcher)
 
-	hc, err := httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)).Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	cli, err := NewClient(
 		"urn",
 		AzureDevOpsAPIURL,
@@ -51,7 +46,7 @@ func NewTestClient(t testing.TB, name string, update bool) (Client, func()) {
 			Username: os.Getenv("AZURE_DEV_OPS_USERNAME"),
 			Password: os.Getenv("AZURE_DEV_OPS_TOKEN"),
 		},
-		hc,
+		httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -139,7 +134,7 @@ func TestRateLimitRetry(t *testing.T) {
 				MockVisualStudioAppURL = ""
 			})
 			a := &auth.BasicAuth{Username: "test", Password: "test"}
-			c, err := NewClient("test", srv.URL, a, httpcli.TestExternalDoer)
+			c, err := NewClient("test", srv.URL, a, httpcli.NewFactory(nil))
 			c.(*client).internalRateLimiter = ratelimit.NewInstrumentedLimiter("azuredevops", rate.NewLimiter(100, 10))
 			require.NoError(t, err)
 			c.SetWaitForRateLimit(tt.waitForRateLimit)

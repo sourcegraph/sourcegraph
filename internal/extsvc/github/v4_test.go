@@ -24,6 +24,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/httptestutil"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
 	"github.com/sourcegraph/sourcegraph/internal/rcache"
@@ -79,7 +80,7 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestGetAuthenticatedUserV4(t *testing.T) {
-	cli, save := newV4Client(t, "GetAuthenticatedUserV4")
+	cli, save := newTestV4Client(t, "GetAuthenticatedUserV4")
 	defer save()
 
 	ctx := context.Background()
@@ -151,10 +152,13 @@ func TestV4Client_RateLimitRetry(t *testing.T) {
 			srvURL, err := url.Parse(srv.URL)
 			require.NoError(t, err)
 
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
-			cli := &http.Client{Transport: transport}
-			client := NewV4Client("test", srvURL, nil, cli)
+			client, err := NewV4Client("test", srvURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+				transport := http.DefaultTransport.(*http.Transport).Clone()
+				transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
+				c.Transport = transport
+				return nil
+			}))
+			require.NoError(t, err)
 			client.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv4", rate.NewLimiter(100, 10))
 			client.githubDotCom = true // Otherwise it will make an extra request to determine GH version
 			_, err = client.SearchRepos(ctx, SearchReposParams{Query: "test"})
@@ -191,10 +195,6 @@ func TestV4Client_RequestGraphQL_RequestUnmutated(t *testing.T) {
 
 	ctx := context.Background()
 
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
-	cli := &http.Client{Transport: transport}
-
 	numRequests := 0
 	requestPaths := []string{}
 	requestBodies := []string{}
@@ -229,7 +229,13 @@ func TestV4Client_RequestGraphQL_RequestUnmutated(t *testing.T) {
 
 	// Now we create a client to talk to our test server with the API path
 	// appended.
-	client := NewV4Client("test", apiURL, nil, cli)
+	client, err := NewV4Client("test", apiURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
+		c.Transport = transport
+		return nil
+	}))
+	require.NoError(t, err)
 
 	// Now we send a request that should run into rate limiting error.
 	err = client.requestGraphQL(ctx, query, vars, &result)
@@ -248,7 +254,7 @@ func TestV4Client_RequestGraphQL_RequestUnmutated(t *testing.T) {
 func TestV4Client_SearchRepos(t *testing.T) {
 	rcache.SetupForTest(t)
 	ratelimit.SetupForTest(t)
-	cli, save := newV4Client(t, "SearchRepos")
+	cli, save := newTestV4Client(t, "SearchRepos")
 	t.Cleanup(save)
 
 	for _, tc := range []struct {
@@ -301,7 +307,7 @@ func TestV4Client_SearchRepos(t *testing.T) {
 }
 
 func TestLoadPullRequest(t *testing.T) {
-	cli, save := newV4Client(t, "LoadPullRequest")
+	cli, save := newTestV4Client(t, "LoadPullRequest")
 	defer save()
 
 	for i, tc := range []struct {
@@ -358,7 +364,7 @@ func TestLoadPullRequest(t *testing.T) {
 }
 
 func TestCreatePullRequest(t *testing.T) {
-	cli, save := newV4Client(t, "CreatePullRequest")
+	cli, save := newTestV4Client(t, "CreatePullRequest")
 	defer save()
 
 	// Repository used: https://github.com/sourcegraph/automation-testing
@@ -448,7 +454,7 @@ func TestCreatePullRequest(t *testing.T) {
 func TestCreatePullRequest_Archived(t *testing.T) {
 	ctx := context.Background()
 
-	cli, save := newV4Client(t, "CreatePullRequest_Archived")
+	cli, save := newTestV4Client(t, "CreatePullRequest_Archived")
 	defer save()
 
 	// Repository used: sourcegraph-testing/archived
@@ -478,7 +484,7 @@ func TestCreatePullRequest_Archived(t *testing.T) {
 }
 
 func TestClosePullRequest(t *testing.T) {
-	cli, save := newV4Client(t, "ClosePullRequest")
+	cli, save := newTestV4Client(t, "ClosePullRequest")
 	defer save()
 
 	// Repository used: https://github.com/sourcegraph/automation-testing
@@ -535,7 +541,7 @@ func TestClosePullRequest(t *testing.T) {
 }
 
 func TestReopenPullRequest(t *testing.T) {
-	cli, save := newV4Client(t, "ReopenPullRequest")
+	cli, save := newTestV4Client(t, "ReopenPullRequest")
 	defer save()
 
 	// Repository used: https://github.com/sourcegraph/automation-testing
@@ -583,7 +589,7 @@ func TestReopenPullRequest(t *testing.T) {
 }
 
 func TestMarkPullRequestReadyForReview(t *testing.T) {
-	cli, save := newV4Client(t, "MarkPullRequestReadyForReview")
+	cli, save := newTestV4Client(t, "MarkPullRequestReadyForReview")
 	defer save()
 
 	// Repository used: https://github.com/sourcegraph/automation-testing
@@ -631,7 +637,7 @@ func TestMarkPullRequestReadyForReview(t *testing.T) {
 }
 
 func TestCreatePullRequestComment(t *testing.T) {
-	cli, save := newV4Client(t, "CreatePullRequestComment")
+	cli, save := newTestV4Client(t, "CreatePullRequestComment")
 	defer save()
 
 	pr := &PullRequest{
@@ -646,7 +652,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 }
 
 func TestMergePullRequest(t *testing.T) {
-	cli, save := newV4Client(t, "TestMergePullRequest")
+	cli, save := newTestV4Client(t, "TestMergePullRequest")
 	defer save()
 
 	t.Run("success", func(t *testing.T) {
@@ -689,7 +695,7 @@ func TestMergePullRequest(t *testing.T) {
 func TestUpdatePullRequest_Archived(t *testing.T) {
 	ctx := context.Background()
 
-	cli, save := newV4Client(t, "UpdatePullRequest_Archived")
+	cli, save := newTestV4Client(t, "UpdatePullRequest_Archived")
 	defer save()
 
 	// Repository used: sourcegraph-testing/archived
@@ -861,7 +867,7 @@ query{
 }
 
 func TestRecentCommitters(t *testing.T) {
-	cli, save := newV4Client(t, "RecentCommitters")
+	cli, save := newTestV4Client(t, "RecentCommitters")
 	t.Cleanup(save)
 
 	recentCommitters, err := cli.RecentCommitters(context.Background(), &RecentCommittersParams{
@@ -957,7 +963,7 @@ func TestV4Client_WithAuthenticator(t *testing.T) {
 	}
 }
 
-func newV4Client(t testing.TB, name string) (*V4Client, func()) {
+func newTestV4Client(t testing.TB, name string) (*V4Client, func()) {
 	t.Helper()
 
 	cf, save := httptestutil.NewGitHubRecorderFactory(t, update(name), name)
@@ -966,12 +972,8 @@ func newV4Client(t testing.TB, name string) (*V4Client, func()) {
 		t.Fatal(err)
 	}
 
-	doer, err := cf.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cli := NewV4Client("Test", uri, vcrToken, doer)
+	cli, err := NewV4Client("Test", uri, vcrToken, cf)
+	require.NoError(t, err)
 	cli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv4", rate.NewLimiter(100, 10))
 
 	return cli, save
@@ -987,12 +989,8 @@ func newEnterpriseV4Client(t testing.TB, name string) (*V4Client, func()) {
 	}
 	uri, _ = APIRoot(uri)
 
-	doer, err := cf.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cli := NewV4Client("Test", uri, gheToken, doer)
+	cli, err := NewV4Client("Test", uri, gheToken, cf)
+	require.NoError(t, err)
 	cli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv4", rate.NewLimiter(100, 10))
 	return cli, save
 }
@@ -1177,9 +1175,18 @@ func TestClient_GetReposByNameWithOwner(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mock := mockHTTPResponseBody{responseBody: tc.mockResponseBody}
 			apiURL := &url.URL{Scheme: "https", Host: "example.com", Path: "/"}
-			c := NewV4Client("Test", apiURL, nil, &mock)
+			c, err := NewV4Client("Test", apiURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+				c.Transport = httpcli.WrapTransport(&mockTransport{do: func(r *http.Request) (*http.Response, error) {
+					return &http.Response{
+						Request:    r,
+						StatusCode: 200,
+						Body:       io.NopCloser(strings.NewReader(tc.mockResponseBody)),
+					}, nil
+				}}, http.DefaultTransport)
+				return nil
+			}))
+			require.NoError(t, err)
 			c.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv4", rate.NewLimiter(100, 10))
 
 			repos, err := c.GetReposByNameWithOwner(context.Background(), namesWithOwners...)
@@ -1229,9 +1236,20 @@ repo6: repository(owner: "sourcegraph", name: "pydep") { ... on Repository { ...
 repo7: repository(owner: "sourcegraph", name: "vcsstore") { ... on Repository { ...RepositoryFields parent { nameWithOwner, isFork } } }
 repo8: repository(owner: "sourcegraph", name: "contains.dot") { ... on Repository { ...RepositoryFields parent { nameWithOwner, isFork } } }`
 
-	mock := mockHTTPResponseBody{responseBody: ""}
 	apiURL := &url.URL{Scheme: "https", Host: "example.com", Path: "/"}
-	c := NewV4Client("Test", apiURL, nil, &mock)
+	c, err := NewV4Client("Test", apiURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+		c.Transport = httpcli.WrapTransport(&mockTransport{do: func(r *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Request:    r,
+				StatusCode: 200,
+				Body:       io.NopCloser(strings.NewReader("")),
+			}, nil
+		}}, http.DefaultTransport)
+		return nil
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
 	query, err := c.buildGetReposBatchQuery(context.Background(), repos)
 	if err != nil {
 		t.Fatal(err)
@@ -1243,7 +1261,7 @@ repo8: repository(owner: "sourcegraph", name: "contains.dot") { ... on Repositor
 }
 
 func TestClient_Releases(t *testing.T) {
-	cli, save := newV4Client(t, "Releases")
+	cli, save := newTestV4Client(t, "Releases")
 	t.Cleanup(save)
 
 	releases, err := cli.Releases(context.Background(), &ReleasesParams{

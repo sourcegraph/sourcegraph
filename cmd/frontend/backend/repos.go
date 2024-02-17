@@ -179,9 +179,9 @@ func (s *repos) isGitRepoPubliclyCloneable(ctx context.Context, name api.RepoNam
 		return errors.Wrap(err, "failed to construct request to check if repository exists")
 	}
 
-	cf := httpcli.ExternalDoer
-	if s.cf != nil {
-		cf = s.cf
+	cf := s.cf
+	if cf == nil {
+		cf = httpcli.ExternalDoer
 	}
 
 	resp, err := cf.Do(req)

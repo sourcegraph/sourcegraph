@@ -107,7 +107,7 @@ func getProviders() []providers.Provider {
 	multiple := len(cfgs) >= 2
 	ps := make([]providers.Provider, 0, len(cfgs))
 	for _, cfg := range cfgs {
-		p := &provider{config: *cfg, multiple: multiple, httpClient: httpcli.ExternalClient}
+		p := &provider{config: *cfg, multiple: multiple, httpClient: httpcli.ExternalDoer}
 		ps = append(ps, p)
 	}
 	return ps

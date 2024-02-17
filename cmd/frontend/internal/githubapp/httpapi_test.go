@@ -517,7 +517,10 @@ func TestCreateGitHubApp(t *testing.T) {
 			srv := httptest.NewServer(test.handlerAssert(t))
 			defer srv.Close()
 
-			app, err := createGitHubApp(srv.URL, test.domain, httpcli.TestExternalClient)
+			cli, err := httpcli.NewFactory(nil).Doer()
+			require.NoError(t, err)
+
+			app, err := createGitHubApp(srv.URL, test.domain, cli)
 			if test.expectedErr != nil {
 				require.Error(t, err)
 				assert.EqualError(t, err, test.expectedErr.Error())

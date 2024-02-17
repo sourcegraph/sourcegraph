@@ -1796,5 +1796,5 @@ func (s *Service) GetChangesetsByIDs(ctx context.Context, batchChange int64, ids
 }
 
 func (s *Service) enqueueBatchChangeWebhook(ctx context.Context, eventType string, id graphql.ID) {
-	webhooks.EnqueueBatchChange(ctx, s.logger, s.store, eventType, id)
+	webhooks.EnqueueBatchChange(ctx, s.logger, httpcli.InternalDoer, s.store, eventType, id)
 }

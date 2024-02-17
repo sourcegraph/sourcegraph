@@ -13,6 +13,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
@@ -20,6 +21,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/gitlab"
 	"github.com/sourcegraph/sourcegraph/internal/featureflag"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/rcache"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -203,7 +205,8 @@ func Test_GitLab_FetchAccount(t *testing.T) {
 			defer func() { providers.MockProviders = nil }()
 
 			ctx := context.Background()
-			authzProvider := newSudoProvider(test.op, nil)
+			authzProvider, err := newSudoProvider(test.op, nil)
+			require.NoError(t, err)
 			for _, c := range test.calls {
 				t.Run(c.description, func(t *testing.T) {
 					acct, err := authzProvider.FetchAccount(ctx, c.user, c.current, nil)
@@ -228,10 +231,11 @@ func Test_GitLab_FetchAccount(t *testing.T) {
 
 func TestSudoProvider_FetchUserPerms(t *testing.T) {
 	t.Run("nil account", func(t *testing.T) {
-		p := newSudoProvider(SudoProviderOp{
+		p, err := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, err := p.FetchUserPerms(context.Background(), nil, authz.FetchPermsOptions{})
+		require.NoError(t, err)
+		_, err = p.FetchUserPerms(context.Background(), nil, authz.FetchPermsOptions{})
 		want := "no account provided"
 		got := fmt.Sprintf("%v", err)
 		if got != want {
@@ -240,10 +244,12 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 	})
 
 	t.Run("not the code host of the account", func(t *testing.T) {
-		p := newSudoProvider(SudoProviderOp{
+		p, err := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, err := p.FetchUserPerms(context.Background(),
+		require.NoError(t, err)
+
+		_, err = p.FetchUserPerms(context.Background(),
 			&extsvc.Account{
 				AccountSpec: extsvc.AccountSpec{
 					ServiceType: extsvc.TypeGitHub,
@@ -265,47 +271,51 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 		// We need to clear the cache before we run the tests
 		rcache.SetupForTest(t)
 
-		p := newSudoProvider(
+		p, err := newSudoProvider(
 			SudoProviderOp{
 				BaseURL:                     mustURL(t, "https://gitlab.com"),
 				SudoToken:                   "admin_token",
 				SyncInternalRepoPermissions: true,
 			},
-			&mockDoer{
-				do: func(r *http.Request) (*http.Response, error) {
-					visibility := r.URL.Query().Get("visibility")
-					if visibility != "private" && visibility != "internal" {
-						return nil, errors.Errorf("URL visibility: want private or internal, got %s", visibility)
-					}
-					want := fmt.Sprintf("https://gitlab.com/api/v4/projects?min_access_level=20&per_page=100&visibility=%s", visibility)
-					if r.URL.String() != want {
-						return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
-					}
+			httpcli.NewFactory(nil, func(c *http.Client) error {
+				c.Transport = httpcli.WrapTransport(&mockTransport{
+					do: func(r *http.Request) (*http.Response, error) {
+						visibility := r.URL.Query().Get("visibility")
+						if visibility != "private" && visibility != "internal" {
+							return nil, errors.Errorf("URL visibility: want private or internal, got %s", visibility)
+						}
+						want := fmt.Sprintf("https://gitlab.com/api/v4/projects?min_access_level=20&per_page=100&visibility=%s", visibility)
+						if r.URL.String() != want {
+							return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
+						}
 
-					want = "admin_token"
-					got := r.Header.Get("Private-Token")
-					if got != want {
-						return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
-					}
+						want = "admin_token"
+						got := r.Header.Get("Private-Token")
+						if got != want {
+							return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
+						}
 
-					want = "999"
-					got = r.Header.Get("Sudo")
-					if got != want {
-						return nil, errors.Errorf("HTTP Sudo: want %q but got %q", want, got)
-					}
+						want = "999"
+						got = r.Header.Get("Sudo")
+						if got != want {
+							return nil, errors.Errorf("HTTP Sudo: want %q but got %q", want, got)
+						}
 
-					body := `[{"id": 1, "default_branch": "main"}, {"id": 2, "default_branch": "main"}]`
-					if visibility == "internal" {
-						body = `[{"id": 3, "default_branch": "main"}, {"id": 4}]`
-					}
-					return &http.Response{
-						Status:     http.StatusText(http.StatusOK),
-						StatusCode: http.StatusOK,
-						Body:       io.NopCloser(bytes.NewReader([]byte(body))),
-					}, nil
-				},
-			},
+						body := `[{"id": 1, "default_branch": "main"}, {"id": 2, "default_branch": "main"}]`
+						if visibility == "internal" {
+							body = `[{"id": 3, "default_branch": "main"}, {"id": 4}]`
+						}
+						return &http.Response{
+							Status:     http.StatusText(http.StatusOK),
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(bytes.NewReader([]byte(body))),
+						}, nil
+					},
+				}, http.DefaultTransport)
+				return nil
+			}),
 		)
+		require.NoError(t, err)
 
 		accountData := json.RawMessage(`{"id": 999}`)
 		repoIDs, err := p.FetchUserPerms(context.Background(),
@@ -339,46 +349,50 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 		flags := map[string]bool{"gitLabProjectVisibilityExperimental": true}
 		ctx = featureflag.WithFlags(ctx, featureflag.NewMemoryStore(flags, flags, flags))
 
-		p := newSudoProvider(
+		p, err := newSudoProvider(
 			SudoProviderOp{
 				BaseURL:   mustURL(t, "https://gitlab.com"),
 				SudoToken: "admin_token",
 			},
-			&mockDoer{
-				do: func(r *http.Request) (*http.Response, error) {
-					visibility := r.URL.Query().Get("visibility")
-					if visibility != "private" && visibility != "internal" {
-						return nil, errors.Errorf("URL visibility: want private or internal, got %s", visibility)
-					}
-					want := fmt.Sprintf("https://gitlab.com/api/v4/projects?per_page=100&visibility=%s", visibility)
-					if r.URL.String() != want {
-						return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
-					}
+			httpcli.NewFactory(nil, func(c *http.Client) error {
+				c.Transport = httpcli.WrapTransport(&mockTransport{
+					do: func(r *http.Request) (*http.Response, error) {
+						visibility := r.URL.Query().Get("visibility")
+						if visibility != "private" && visibility != "internal" {
+							return nil, errors.Errorf("URL visibility: want private or internal, got %s", visibility)
+						}
+						want := fmt.Sprintf("https://gitlab.com/api/v4/projects?per_page=100&visibility=%s", visibility)
+						if r.URL.String() != want {
+							return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
+						}
 
-					want = "admin_token"
-					got := r.Header.Get("Private-Token")
-					if got != want {
-						return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
-					}
+						want = "admin_token"
+						got := r.Header.Get("Private-Token")
+						if got != want {
+							return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
+						}
 
-					want = "999"
-					got = r.Header.Get("Sudo")
-					if got != want {
-						return nil, errors.Errorf("HTTP Sudo: want %q but got %q", want, got)
-					}
+						want = "999"
+						got = r.Header.Get("Sudo")
+						if got != want {
+							return nil, errors.Errorf("HTTP Sudo: want %q but got %q", want, got)
+						}
 
-					body := `[{"id": 1, "default_branch": "main"}, {"id": 2, "default_branch": "main"}]`
-					if visibility == "internal" {
-						body = `[{"id": 3, "default_branch": "main"}, {"id": 4}]`
-					}
-					return &http.Response{
-						Status:     http.StatusText(http.StatusOK),
-						StatusCode: http.StatusOK,
-						Body:       io.NopCloser(bytes.NewReader([]byte(body))),
-					}, nil
-				},
-			},
+						body := `[{"id": 1, "default_branch": "main"}, {"id": 2, "default_branch": "main"}]`
+						if visibility == "internal" {
+							body = `[{"id": 3, "default_branch": "main"}, {"id": 4}]`
+						}
+						return &http.Response{
+							Status:     http.StatusText(http.StatusOK),
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(bytes.NewReader([]byte(body))),
+						}, nil
+					},
+				}, http.DefaultTransport)
+				return nil
+			}),
 		)
+		require.NoError(t, err)
 
 		accountData := json.RawMessage(`{"id": 999}`)
 		acct := &extsvc.Account{
@@ -423,10 +437,12 @@ func TestSudoProvider_FetchUserPerms(t *testing.T) {
 
 func TestSudoProvider_FetchRepoPerms(t *testing.T) {
 	t.Run("nil repository", func(t *testing.T) {
-		p := newSudoProvider(SudoProviderOp{
+		p, err := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, err := p.FetchRepoPerms(context.Background(), nil, authz.FetchPermsOptions{})
+		require.NoError(t, err)
+
+		_, err = p.FetchRepoPerms(context.Background(), nil, authz.FetchPermsOptions{})
 		want := "no repository provided"
 		got := fmt.Sprintf("%v", err)
 		if got != want {
@@ -435,10 +451,12 @@ func TestSudoProvider_FetchRepoPerms(t *testing.T) {
 	})
 
 	t.Run("not the code host of the repository", func(t *testing.T) {
-		p := newSudoProvider(SudoProviderOp{
+		p, err := newSudoProvider(SudoProviderOp{
 			BaseURL: mustURL(t, "https://gitlab.com"),
 		}, nil)
-		_, err := p.FetchRepoPerms(context.Background(),
+		require.NoError(t, err)
+
+		_, err = p.FetchRepoPerms(context.Background(),
 			&extsvc.Repository{
 				URI: "https://github.com/user/repo",
 				ExternalRepoSpec: api.ExternalRepoSpec{
@@ -460,38 +478,42 @@ func TestSudoProvider_FetchRepoPerms(t *testing.T) {
 	// We need to clear the cache before we run the tests
 	rcache.SetupForTest(t)
 
-	p := newSudoProvider(
+	p, err := newSudoProvider(
 		SudoProviderOp{
 			BaseURL:   mustURL(t, "https://gitlab.com"),
 			SudoToken: "admin_token",
 		},
-		&mockDoer{
-			do: func(r *http.Request) (*http.Response, error) {
-				want := "https://gitlab.com/api/v4/projects/gitlab_project_id/members/all?per_page=100"
-				if r.URL.String() != want {
-					return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
-				}
+		httpcli.NewFactory(nil, func(c *http.Client) error {
+			c.Transport = httpcli.WrapTransport(&mockTransport{
+				do: func(r *http.Request) (*http.Response, error) {
+					want := "https://gitlab.com/api/v4/projects/gitlab_project_id/members/all?per_page=100"
+					if r.URL.String() != want {
+						return nil, errors.Errorf("URL: want %q but got %q", want, r.URL)
+					}
 
-				want = "admin_token"
-				got := r.Header.Get("Private-Token")
-				if got != want {
-					return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
-				}
+					want = "admin_token"
+					got := r.Header.Get("Private-Token")
+					if got != want {
+						return nil, errors.Errorf("HTTP Private-Token: want %q but got %q", want, got)
+					}
 
-				body := `
-[
-	{"id": 1, "access_level": 10},
-	{"id": 2, "access_level": 20},
-	{"id": 3, "access_level": 30}
-]`
-				return &http.Response{
-					Status:     http.StatusText(http.StatusOK),
-					StatusCode: http.StatusOK,
-					Body:       io.NopCloser(bytes.NewReader([]byte(body))),
-				}, nil
-			},
-		},
+					body := `
+			[
+			{"id": 1, "access_level": 10},
+			{"id": 2, "access_level": 20},
+			{"id": 3, "access_level": 30}
+			]`
+					return &http.Response{
+						Status:     http.StatusText(http.StatusOK),
+						StatusCode: http.StatusOK,
+						Body:       io.NopCloser(bytes.NewReader([]byte(body))),
+					}, nil
+				},
+			}, http.DefaultTransport)
+			return nil
+		}),
 	)
+	require.NoError(t, err)
 
 	accountIDs, err := p.FetchRepoPerms(context.Background(),
 		&extsvc.Repository{

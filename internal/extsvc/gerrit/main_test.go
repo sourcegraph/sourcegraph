@@ -36,11 +36,6 @@ func NewTestClient(t testing.TB, name string, update bool) (Client, func()) {
 	}
 	rec.SetMatcher(ignoreHostMatcher)
 
-	hc, err := httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)).Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	u, err := url.Parse("https://gerrit.sgdev.org")
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +44,7 @@ func NewTestClient(t testing.TB, name string, update bool) (Client, func()) {
 	cli, err := NewClient("urn", u, &AccountCredentials{
 		Username: os.Getenv("GERRIT_USERNAME"),
 		Password: os.Getenv("GERRIT_PASSWORD"),
-	}, hc)
+	}, httpcli.NewFactory(nil, httptestutil.NewRecorderOpt(rec)))
 	if err != nil {
 		t.Fatal(err)
 	}

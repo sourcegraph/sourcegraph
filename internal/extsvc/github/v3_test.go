@@ -31,16 +31,17 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
-func newTestClient(t *testing.T, cli httpcli.Doer) *V3Client {
-	return newTestClientWithAuthenticator(t, nil, cli)
+func newTestClient(t *testing.T, cf *httpcli.Factory) *V3Client {
+	return newTestClientWithAuthenticator(t, nil, cf)
 }
 
-func newTestClientWithAuthenticator(t *testing.T, auth auth.Authenticator, cli httpcli.Doer) *V3Client {
+func newTestClientWithAuthenticator(t *testing.T, auth auth.Authenticator, cf *httpcli.Factory) *V3Client {
 	rcache.SetupForTest(t)
 	ratelimit.SetupForTest(t)
 
 	apiURL := &url.URL{Scheme: "https", Host: "example.com", Path: "/"}
-	c := NewV3Client(logtest.Scoped(t), "Test", apiURL, auth, cli)
+	c, err := NewV3Client(logtest.Scoped(t), "Test", apiURL, auth, cf)
+	require.NoError(t, err)
 	c.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 	return c
 }
@@ -656,7 +657,12 @@ func TestListOrganizations(t *testing.T) {
 		}))
 
 		uri, _ := url.Parse(testServer.URL)
-		testCli := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, testServer.Client())
+		testCli, err := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, httpcli.NewFactory(nil, func(c *http.Client) error {
+			tc := testServer.Client()
+			*c = *tc
+			return nil
+		}))
+		require.NoError(t, err)
 		testCli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 
 		runTest := func(since int, expectedNextSince int, expectedOrgs []*Org) {
@@ -984,12 +990,8 @@ func newV3TestClient(t testing.TB, name string) (*V3Client, func()) {
 		t.Fatal(err)
 	}
 
-	doer, err := cf.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cli := NewV3Client(logtest.Scoped(t), "Test", uri, vcrToken, doer)
+	cli, err := NewV3Client(logtest.Scoped(t), "Test", uri, vcrToken, cf)
+	require.NoError(t, err)
 	cli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 
 	return cli, save
@@ -1004,12 +1006,8 @@ func newV3TestEnterpriseClient(t testing.TB, name string) (*V3Client, func()) {
 		t.Fatal(err)
 	}
 
-	doer, err := cf.Doer()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cli := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, doer)
+	cli, err := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, cf)
+	require.NoError(t, err)
 	cli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 	return cli, save
 }
@@ -1037,31 +1035,37 @@ func TestClient_ListRepositoriesForSearch(t *testing.T) {
 }
 
 func TestClient_ListRepositoriesForSearch_incomplete(t *testing.T) {
-	mock := mockHTTPResponseBody{
-		responseBody: `
-{
-  "total_count": 2,
-  "incomplete_results": true,
-  "items": [
-    {
-      "node_id": "i",
-      "full_name": "o/r",
-      "description": "d",
-      "html_url": "https://github.example.com/o/r",
-      "fork": true
-    },
-    {
-      "node_id": "j",
-      "full_name": "a/b",
-      "description": "c",
-      "html_url": "https://github.example.com/a/b",
-      "fork": false
-    }
-  ]
-}
-`,
-	}
-	c := newTestClient(t, &mock)
+	c := newTestClient(t, httpcli.NewFactory(nil, func(c *http.Client) error {
+		c.Transport = httpcli.WrapTransport(&mockTransport{do: func(r *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Request:    r,
+				StatusCode: 200,
+				Body: io.NopCloser(strings.NewReader(`
+				{
+				  "total_count": 2,
+				  "incomplete_results": true,
+				  "items": [
+					{
+					  "node_id": "i",
+					  "full_name": "o/r",
+					  "description": "d",
+					  "html_url": "https://github.example.com/o/r",
+					  "fork": true
+					},
+					{
+					  "node_id": "j",
+					  "full_name": "a/b",
+					  "description": "c",
+					  "html_url": "https://github.example.com/a/b",
+					  "fork": false
+					}
+				  ]
+				}
+				`)),
+			}, nil
+		}}, http.DefaultTransport)
+		return nil
+	}))
 
 	// If we have incomplete results we want to fail. Our syncer requires all
 	// repositories to be returned, otherwise it will delete the missing
@@ -1071,6 +1075,14 @@ func TestClient_ListRepositoriesForSearch_incomplete(t *testing.T) {
 	if have, want := err, ErrIncompleteResults; want != have {
 		t.Errorf("\nhave: %s\nwant: %s", have, want)
 	}
+}
+
+type mockTransport struct {
+	do func(*http.Request) (*http.Response, error)
+}
+
+func (c *mockTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	return c.do(r)
 }
 
 type testCase struct {
@@ -1258,7 +1270,10 @@ func TestRateLimitRetry(t *testing.T) {
 		srvURL, err := url.Parse(srv.URL)
 		require.NoError(t, err)
 
-		testCase.client = newV3Client(logtest.NoOp(t), "test", srvURL, nil, "", httpcli.TestExternalDoer)
+		cli, err := httpcli.NewFactory(nil).Doer()
+		require.NoError(t, err)
+
+		testCase.client = newV3Client(logtest.NoOp(t), "test", srvURL, nil, "", cli)
 		testCase.client.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 		testCase.client.waitForRateLimit = true
 
@@ -1343,10 +1358,6 @@ func TestV3Client_Request_RequestUnmutated(t *testing.T) {
 
 	ctx := context.Background()
 
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
-	cli := &http.Client{Transport: transport}
-
 	numRequests := 0
 	requestPaths := []string{}
 	requestBodies := []string{}
@@ -1381,7 +1392,13 @@ func TestV3Client_Request_RequestUnmutated(t *testing.T) {
 
 	// Now we create a client to talk to our test server with the API path
 	// appended.
-	client := NewV3Client(logtest.Scoped(t), "test", apiURL, nil, cli)
+	client, err := NewV3Client(logtest.Scoped(t), "test", apiURL, nil, httpcli.NewFactory(nil, func(c *http.Client) error {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.DisableKeepAlives = true // Disable keep-alives otherwise the read of the request body is cached
+		*c = http.Client{Transport: transport}
+		return nil
+	}))
+	require.NoError(t, err)
 
 	// We use client.post as a shortcut to send a request with a payload, so
 	// we can test that the payload and the path are untouched when retried.
@@ -1410,7 +1427,12 @@ func TestListPublicRepositories(t *testing.T) {
 		}))
 
 		uri, _ := url.Parse(testServer.URL)
-		testCli := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, testServer.Client())
+		testCli, err := NewV3Client(logtest.Scoped(t), "Test", uri, gheToken, httpcli.NewFactory(nil, func(c *http.Client) error {
+			tc := testServer.Client()
+			*c = *tc
+			return nil
+		}))
+		require.NoError(t, err)
 		testCli.internalRateLimiter = ratelimit.NewInstrumentedLimiter("githubv3", rate.NewLimiter(100, 10))
 
 		repositories, hasNextPage, err := testCli.ListPublicRepositories(context.Background(), 0)

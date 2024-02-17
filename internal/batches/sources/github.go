@@ -5,7 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/sourcegraph/log"
 
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -25,8 +26,9 @@ import (
 )
 
 type GitHubSource struct {
-	client *github.V4Client
-	au     auth.Authenticator
+	client   *github.V4Client
+	v3Client *github.V3Client
+	au       auth.Authenticator
 }
 
 var _ ForkableChangesetSource = GitHubSource{}
@@ -53,28 +55,30 @@ func newGitHubSource(ctx context.Context, db database.DB, urn string, c *schema.
 	apiURL, _ := github.APIRoot(baseURL)
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
 
-	opts := httpClientCertificateOptions([]httpcli.Opt{
-		// Use a 30s timeout to avoid running into EOF errors, because GitHub
-		// closes idle connections after 60s
-		httpcli.NewIdleConnTimeoutOpt(30 * time.Second),
-	}, c.Certificate)
-
-	cli, err := cf.Doer(opts...)
-	if err != nil {
-		return nil, err
-	}
+	cf = cf.WithOpts(httpClientCertificateOptions(nil, c.Certificate)...)
 
 	auther, err := ghauth.FromConnection(ctx, c, db.GitHubApps(), keyring.Default().GitHubAppKey)
 	if err != nil {
 		return nil, err
 	}
 
+	v3Client, err := github.NewV3Client(log.Scoped("batches.githubsource"), urn, apiURL, auther, cf)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := github.NewV4Client(urn, apiURL, auther, cf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GitHubSource{
-		au:     auther,
-		client: github.NewV4Client(urn, apiURL, auther, cli),
+		au:       auther,
+		client:   client,
+		v3Client: v3Client,
 	}, nil
 }
 
@@ -129,7 +133,7 @@ func (s GitHubSource) DuplicateCommit(ctx context.Context, opts protocol.CreateC
 	}
 
 	// Get the original, unsigned commit.
-	commit, err := s.client.GetRef(ctx, owner, repoName, rev)
+	commit, err := s.v3Client.GetRef(ctx, owner, repoName, rev)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting commit to duplicate")
 	}
@@ -142,7 +146,7 @@ func (s GitHubSource) DuplicateCommit(ctx context.Context, opts protocol.CreateC
 	// Create the new commit using the tree SHA of the original and its parents. Author
 	// and committer will not be respected since we are authenticating as a GitHub App
 	// installation, so we just omit them.
-	newCommit, err := s.client.CreateCommit(ctx, owner, repoName, message, commit.Commit.Tree.SHA, parents, nil, nil)
+	newCommit, err := s.v3Client.CreateCommit(ctx, owner, repoName, message, commit.Commit.Tree.SHA, parents, nil, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating new commit")
 	}
@@ -150,7 +154,7 @@ func (s GitHubSource) DuplicateCommit(ctx context.Context, opts protocol.CreateC
 	// Update the branch ref to point to the new commit, orphaning the original. There's
 	// no way to delete a commit over the API, but the orphaned commit will be garbage
 	// collected automatically by GitHub so it's okay to leave it.
-	_, err = s.client.UpdateRef(ctx, owner, repoName, rev, newCommit.SHA)
+	_, err = s.v3Client.UpdateRef(ctx, owner, repoName, rev, newCommit.SHA)
 	if err != nil {
 		return nil, errors.Wrap(err, "updating ref to point to new commit")
 	}
@@ -250,7 +254,7 @@ func (s GitHubSource) CloseChangeset(ctx context.Context, c *Changeset) error {
 			return errors.Wrap(err, "getting owner and repo name to delete source branch")
 		}
 
-		if err := s.client.DeleteBranch(ctx, owner, repoName, pr.HeadRefName); err != nil {
+		if err := s.v3Client.DeleteBranch(ctx, owner, repoName, pr.HeadRefName); err != nil {
 			return errors.Wrap(err, "deleting source branch")
 		}
 	}
@@ -366,7 +370,7 @@ func (s GitHubSource) MergeChangeset(ctx context.Context, c *Changeset, squash b
 			return errors.Wrap(err, "getting owner and repo name to delete source branch")
 		}
 
-		if err := s.client.DeleteBranch(ctx, owner, repoName, pr.HeadRefName); err != nil {
+		if err := s.v3Client.DeleteBranch(ctx, owner, repoName, pr.HeadRefName); err != nil {
 			return errors.Wrap(err, "deleting source branch")
 		}
 	}
@@ -378,7 +382,7 @@ func (GitHubSource) IsPushResponseArchived(s string) bool {
 }
 
 func (s GitHubSource) GetFork(ctx context.Context, targetRepo *types.Repo, namespace, n *string) (*types.Repo, error) {
-	return getGitHubForkInternal(ctx, targetRepo, s.client, namespace, n)
+	return getGitHubForkInternal(ctx, targetRepo, s.v3Client, namespace, n)
 }
 
 func (s GitHubSource) BuildCommitOpts(repo *types.Repo, _ *btypes.Changeset, spec *btypes.ChangesetSpec, pushOpts *protocol.PushConfig) protocol.CreateCommitFromPatchRequest {

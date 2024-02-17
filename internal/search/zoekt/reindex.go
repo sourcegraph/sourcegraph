@@ -33,7 +33,12 @@ func Reindex(ctx context.Context, name api.RepoName, id api.RepoID) error {
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := httpcli.InternalClient.Do(req)
+	cli, err := httpcli.NewInternalClientFactory("zoekt").Doer()
+	if err != nil {
+		return err
+	}
+
+	resp, err := cli.Do(req)
 	if err != nil {
 		return err
 	}
@@ -69,7 +74,12 @@ func GetIndexserverHost(ctx context.Context, name api.RepoName) (Host, error) {
 		return Host{}, err
 	}
 
-	resp, err := httpcli.InternalClient.Do(req)
+	cli, err := httpcli.NewInternalClientFactory("zoekt").Doer()
+	if err != nil {
+		return Host{}, err
+	}
+
+	resp, err := cli.Do(req)
 	if err != nil {
 		return Host{}, err
 	}

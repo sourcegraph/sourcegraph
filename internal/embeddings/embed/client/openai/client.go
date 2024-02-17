@@ -12,10 +12,11 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed/client"
 	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed/client/modeltransformations"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func NewClient(httpClient *http.Client, config *conftypes.EmbeddingsConfig) *openaiEmbeddingsClient {
+func NewClient(httpClient httpcli.Doer, config *conftypes.EmbeddingsConfig) *openaiEmbeddingsClient {
 	return &openaiEmbeddingsClient{
 		httpClient:  httpClient,
 		dimensions:  config.Dimensions,
@@ -26,7 +27,7 @@ func NewClient(httpClient *http.Client, config *conftypes.EmbeddingsConfig) *ope
 }
 
 type openaiEmbeddingsClient struct {
-	httpClient  *http.Client
+	httpClient  httpcli.Doer
 	model       string
 	dimensions  int
 	endpoint    string

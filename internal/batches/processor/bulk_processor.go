@@ -17,6 +17,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/batches/webhooks"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -290,5 +291,5 @@ func (b *bulkProcessor) publishChangeset(ctx context.Context, job *btypes.Change
 }
 
 func (b *bulkProcessor) enqueueWebhook(ctx context.Context, store *store.Store, eventType string) {
-	webhooks.EnqueueChangeset(ctx, b.logger, store, eventType, bgql.MarshalChangesetID(b.ch.ID))
+	webhooks.EnqueueChangeset(ctx, b.logger, httpcli.InternalDoer, store, eventType, bgql.MarshalChangesetID(b.ch.ID))
 }

@@ -351,7 +351,11 @@ func (r *gitHubAppResolver) syncInstallationsWithError(ctx context.Context) erro
 	}
 	apiURL, _ := github.APIRoot(baseURL)
 
-	client := github.NewV3Client(r.logger, "", apiURL, auther, nil)
+	client, err := github.NewV3Client(r.logger, "", apiURL, auther, nil)
+	if err != nil {
+		r.logger.Warn("Error creating GitHub client", log.Error(err))
+		return
+	}
 
 	errs := r.db.GitHubApps().SyncInstallations(ctx, *r.app, r.logger, client)
 	if errs != nil && len(errs.Errors()) > 0 {

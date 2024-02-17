@@ -77,5 +77,5 @@ func newGithubClient(app *ghtypes.GitHubApp, logger log.Logger) (ghtypes.GitHubA
 	}
 
 	apiURL, _ := github.APIRoot(baseURL)
-	return github.NewV3Client(logger, "", apiURL, auther, nil), nil
+	return github.NewV3Client(logger, "", apiURL, auther, nil)
 }

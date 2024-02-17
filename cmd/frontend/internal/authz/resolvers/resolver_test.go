@@ -1195,7 +1195,8 @@ func TestResolver_AuthzProviderTypes(t *testing.T) {
 
 		ctx := actor.WithActor(context.Background(), &actor.Actor{UID: 1})
 
-		ghProvider := github.NewProvider("https://github.com", github.ProviderOptions{GitHubURL: mustURL(t, "https://github.com")})
+		ghProvider, err := github.NewProvider("https://github.com", github.ProviderOptions{GitHubURL: mustURL(t, "https://github.com")})
+		require.NoError(t, err)
 		authz.SetProviders(false, []authz.Provider{ghProvider})
 		result, err := (&Resolver{db: db}).AuthzProviderTypes(ctx)
 		assert.NoError(t, err)

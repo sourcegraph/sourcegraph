@@ -16,10 +16,11 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed/client"
 	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed/client/modeltransformations"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func NewClient(client *http.Client, config *conftypes.EmbeddingsConfig) *sourcegraphEmbeddingsClient {
+func NewClient(client httpcli.Doer, config *conftypes.EmbeddingsConfig) *sourcegraphEmbeddingsClient {
 	return &sourcegraphEmbeddingsClient{
 		httpClient:  client,
 		model:       config.Model,
@@ -30,7 +31,7 @@ func NewClient(client *http.Client, config *conftypes.EmbeddingsConfig) *sourceg
 }
 
 type sourcegraphEmbeddingsClient struct {
-	httpClient  *http.Client
+	httpClient  httpcli.Doer
 	model       string
 	dimensions  int
 	endpoint    string

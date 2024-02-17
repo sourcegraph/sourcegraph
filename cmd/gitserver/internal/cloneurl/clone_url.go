@@ -236,7 +236,11 @@ func githubCloneURL(ctx context.Context, logger log.Logger, db database.DB, repo
 		return "", err
 	}
 	if auther.NeedsRefresh() {
-		if err := auther.Refresh(ctx, httpcli.ExternalClient); err != nil {
+		cli, err := httpcli.NewExternalClientFactory().Doer()
+		if err != nil {
+			return "", err
+		}
+		if err := auther.Refresh(ctx, cli); err != nil {
 			return "", err
 		}
 	}

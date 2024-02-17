@@ -12,7 +12,6 @@ import (
 	"strconv"
 
 	"github.com/sourcegraph/log"
-	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 )
@@ -49,7 +48,7 @@ const schemeJobToken = "Bearer"
 //	    return s, err
 //	}
 type BaseClient struct {
-	httpClient *http.Client
+	httpClient httpcli.Doer
 	options    BaseClientOptions
 	baseURL    *url.URL
 	logger     log.Logger
@@ -84,8 +83,12 @@ func NewBaseClient(logger log.Logger, options BaseClientOptions) (*BaseClient, e
 	if err != nil {
 		return nil, err
 	}
+	cli, err := httpcli.NewInternalClientFactory("executor").Doer()
+	if err != nil {
+		return nil, err
+	}
 	return &BaseClient{
-		httpClient: httpcli.InternalClient,
+		httpClient: cli,
 		options:    options,
 		baseURL:    baseURL,
 		logger:     logger,
@@ -99,7 +102,7 @@ func (c *BaseClient) Do(ctx context.Context, req *http.Request) (hasContent bool
 	req.Header.Set("User-Agent", c.options.UserAgent)
 	req = req.WithContext(ctx)
 
-	resp, err := ctxhttp.Do(req.Context(), c.httpClient, req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return false, nil, err
 	}

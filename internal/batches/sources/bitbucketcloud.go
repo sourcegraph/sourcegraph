@@ -36,17 +36,12 @@ func NewBitbucketCloudSource(ctx context.Context, svc *types.ExternalService, cf
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		// No options to provide here, since Bitbucket Cloud doesn't support custom
+		// certificates, unlike the other
+		cf = httpcli.NewExternalClientFactory()
 	}
 
-	// No options to provide here, since Bitbucket Cloud doesn't support custom
-	// certificates, unlike the other
-	cli, err := cf.Doer()
-	if err != nil {
-		return nil, errors.Wrap(err, "creating external client")
-	}
-
-	client, err := bitbucketcloud.NewClient(svc.URN(), &c, cli)
+	client, err := bitbucketcloud.NewClient(svc.URN(), &c, cf)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating Bitbucket Cloud client")
 	}

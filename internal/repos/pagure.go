@@ -38,7 +38,7 @@ func NewPagureSource(ctx context.Context, svc *types.ExternalService, cf *httpcl
 	}
 
 	if cf == nil {
-		cf = httpcli.ExternalClientFactory
+		cf = httpcli.NewExternalClientFactory()
 	}
 
 	httpCli, err := cf.Doer()

@@ -47,7 +47,10 @@ func NewRecorderOpt(rec *recorder.Recorder) httpcli.Opt {
 		}
 
 		rec.SetTransport(tr)
-		c.Transport = rec
+		c.Transport = httpcli.WrapTransport(
+			rec,
+			tr,
+		)
 
 		return nil
 	}

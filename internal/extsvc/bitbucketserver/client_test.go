@@ -92,7 +92,7 @@ func TestClientKeepsBaseURLPath(t *testing.T) {
 	srvURL, err := url.JoinPath(srv.URL, "/testpath")
 	require.NoError(t, err)
 	bbConf := &schema.BitbucketServerConnection{Url: srvURL}
-	client, err := NewClient("test", bbConf, httpcli.TestExternalDoer)
+	client, err := NewClient("test", bbConf, httpcli.NewFactory(nil))
 	require.NoError(t, err)
 	client.rateLimit = ratelimit.NewInstrumentedLimiter("bitbucket", rate.NewLimiter(100, 10))
 

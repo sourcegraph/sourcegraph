@@ -68,13 +68,30 @@ type V4Client struct {
 //
 // apiURL must point to the base URL of the GitHub API. See the docstring for
 // V4Client.apiURL.
-func NewV4Client(urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.Doer) *V4Client {
+func NewV4Client(urn string, apiURL *url.URL, a auth.Authenticator, cf *httpcli.Factory) (*V4Client, error) {
 	apiURL = canonicalizedURL(apiURL)
+
+	if cf == nil {
+		// We don't need a cached doer here like we initialize for the v3 client,
+		// because GraphQL is using POST only and we don't cache that, also GitHub
+		// doesn't have a way to not count GraphQL requests that are cacheable
+		// to the rate limits.
+		cf = httpcli.NewExternalClientFactory()
+	}
+
+	cf = cf.WithOpts(
+		// Use a 30s timeout to avoid running into EOF errors, because GitHub
+		// closes idle connections after 60s
+		httpcli.NewIdleConnTimeoutOpt(30 * time.Second),
+	)
+
+	cli, err := cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
 	if gitHubDisable {
 		cli = disabledClient{}
-	}
-	if cli == nil {
-		cli = httpcli.ExternalDoer
 	}
 
 	cli = requestCounter.Doer(cli, func(u *url.URL) string {
@@ -88,9 +105,13 @@ func NewV4Client(urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.
 		return category
 	})
 
+	return newV4Client(urn, apiURL, a, cli), nil
+}
+
+func newV4Client(urn string, apiURL *url.URL, auth auth.Authenticator, cli httpcli.Doer) *V4Client {
 	var tokenHash string
-	if a != nil {
-		tokenHash = a.Hash()
+	if auth != nil {
+		tokenHash = auth.Hash()
 	}
 
 	rl := ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("GitHubClient"), urn))
@@ -101,7 +122,7 @@ func NewV4Client(urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.
 		urn:                 urn,
 		apiURL:              apiURL,
 		githubDotCom:        URLIsGitHubDotCom(apiURL),
-		auth:                a,
+		auth:                auth,
 		httpClient:          cli,
 		internalRateLimiter: rl,
 		externalRateLimiter: rlm,
@@ -114,7 +135,7 @@ func NewV4Client(urn string, apiURL *url.URL, a auth.Authenticator, cli httpcli.
 // the current V4Client, except authenticated as the GitHub user with the given
 // authenticator instance (most likely a token).
 func (c *V4Client) WithAuthenticator(a auth.Authenticator) *V4Client {
-	return NewV4Client(c.urn, c.apiURL, a, c.httpClient)
+	return newV4Client(c.urn, c.apiURL, a, c.httpClient)
 }
 
 // ExternalRateLimiter exposes the rate limit monitor.
@@ -388,7 +409,7 @@ func (c *V4Client) fetchGitHubVersion(ctx context.Context) (version *semver.Vers
 
 	// Initiate a v3Client since this requires a V3 API request.
 	logger := c.log.Scoped("fetchGitHubVersion")
-	v3Client := NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient)
+	v3Client := newV3Client(logger, c.urn, c.apiURL, c.auth, "rest", c.httpClient)
 	v, err := v3Client.GetVersion(ctx)
 	if err != nil {
 		c.log.Warn("Failed to fetch GitHub enterprise version",
@@ -648,58 +669,6 @@ fragment RepositoryFields on Repository {
 	%s
 }
 	`, strings.Join(conditionalGHEFields, "\n	"))
-}
-
-func (c *V4Client) GetRepo(ctx context.Context, owner, repo string) (*Repository, error) {
-	logger := c.log.Scoped("GetRepo")
-	// We technically don't need to use the REST API for this but it's just a bit easier.
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).GetRepo(ctx, owner, repo)
-}
-
-// Fork forks the given repository. If org is given, then the repository will
-// be forked into that organisation, otherwise the repository is forked into
-// the authenticated user's account.
-func (c *V4Client) Fork(ctx context.Context, owner, repo string, org *string, forkName string) (*Repository, error) {
-	// Unfortunately, the GraphQL API doesn't provide a mutation to fork as of
-	// December 2021, so we have to fall back to the REST API.
-	logger := c.log.Scoped("Fork")
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).Fork(ctx, owner, repo, org, forkName)
-}
-
-// DeleteBranch deletes the given branch from the given repository.
-func (c *V4Client) DeleteBranch(ctx context.Context, owner, repo, branch string) error {
-	// Unfortunately, the GraphQL API doesn't provide a mutation to delete a ref/branch as
-	// of May 2023, so we have to fall back to the REST API.
-	logger := c.log.Scoped("DeleteBranch")
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).DeleteBranch(ctx, owner, repo, branch)
-}
-
-// GetRef gets the contents of a single commit reference in a repository. The ref should
-// be supplied in a fully qualified format, such as `refs/heads/branch` or
-// `refs/tags/tag`.
-func (c *V4Client) GetRef(ctx context.Context, owner, repo, ref string) (*restCommitRef, error) {
-	logger := c.log.Scoped("GetRef")
-	// We technically don't need to use the REST API for this but it's just a bit easier.
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).GetRef(ctx, owner, repo, ref)
-}
-
-// CreateCommit creates a commit in the given repository based on a tree object.
-func (c *V4Client) CreateCommit(ctx context.Context, owner, repo, message, tree string, parents []string, author, committer *restAuthorCommiter) (*RestCommit, error) {
-	logger := c.log.Scoped("CreateCommit")
-	// As of May 2023, the GraphQL API does not expose any mutations for creating commits
-	// other than one which requires sending the entire file contents for any files
-	// changed by the commit, which is not feasible for creating large commits. Therefore,
-	// we fall back on a REST API endpoint which allows us to create a commit based on a
-	// tree object.
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).CreateCommit(ctx, owner, repo, message, tree, parents, author, committer)
-}
-
-// UpdateRef updates the ref of a branch to point to the given commit. The ref should be
-// supplied in a fully qualified format, such as `refs/heads/branch` or `refs/tags/tag`.
-func (c *V4Client) UpdateRef(ctx context.Context, owner, repo, ref, commit string) (*restUpdatedRef, error) {
-	logger := c.log.Scoped("UpdateRef")
-	// We technically don't need to use the REST API for this but it's just a bit easier.
-	return NewV3Client(logger, c.urn, c.apiURL, c.auth, c.httpClient).UpdateRef(ctx, owner, repo, ref, commit)
 }
 
 type RecentCommittersParams struct {

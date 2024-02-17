@@ -10,6 +10,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/batches/store"
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/metrics"
 	"github.com/sourcegraph/sourcegraph/internal/workerutil"
 )
@@ -102,6 +103,7 @@ func (r *Reconciler) process(ctx context.Context, logger log.Logger, tx *store.S
 	return executePlan(
 		ctx,
 		logger,
+		httpcli.InternalDoer,
 		r.client,
 		r.sourcer,
 		r.noSleepBeforeSync,

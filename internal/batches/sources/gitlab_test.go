@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -20,6 +21,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/gitlab"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/versions"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/testutil"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -1076,7 +1078,11 @@ type gitLabChangesetSourceTestProvider struct {
 // objects, along with a handful of methods to mock underlying
 // internal/extsvc/gitlab functions.
 func newGitLabChangesetSourceTestProvider(t *testing.T) *gitLabChangesetSourceTestProvider {
-	prov := gitlab.NewClientProvider("Test", &url.URL{}, &panicDoer{})
+	prov, err := gitlab.NewClientProvider("Test", &url.URL{}, httpcli.NewFactory(nil, func(c *http.Client) error {
+		c.Transport = &panicTransport{}
+		return nil
+	}))
+	require.NoError(t, err)
 	repo := &types.Repo{Metadata: &gitlab.Project{}}
 	p := &gitLabChangesetSourceTestProvider{
 		changeset: &Changeset{
@@ -1271,12 +1277,12 @@ func (p *gitLabChangesetSourceTestProvider) unmock() {
 	versions.MockGetVersions = nil
 }
 
-// panicDoer provides a httpcli.Doer implementation that panics if any attempt
+// panicTransport provides a httpcli.Doer implementation that panics if any attempt
 // is made to issue a HTTP request; thereby ensuring that our unit tests don't
 // actually try to talk to GitLab.
-type panicDoer struct{}
+type panicTransport struct{}
 
-func (d *panicDoer) Do(r *http.Request) (*http.Response, error) {
+func (d *panicTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	panic("this function should not be called; a mock must be missing")
 }
 

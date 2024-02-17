@@ -49,32 +49,21 @@ func FetchSources(ctx context.Context, client Client, dependency *reposource.Npm
 }
 
 type HTTPClient struct {
-	registryURL    string
-	uncachedClient httpcli.Doer
-	cachedClient   httpcli.Doer
-	limiter        *ratelimit.InstrumentedLimiter
-	credentials    string
+	registryURL string
+	cf          *httpcli.Factory
+	limiter     *ratelimit.InstrumentedLimiter
+	credentials string
 }
 
 var _ Client = &HTTPClient{}
 
-func NewHTTPClient(urn string, registryURL string, credentials string, httpfactory *httpcli.Factory) (*HTTPClient, error) {
-	uncached, err := httpfactory.Doer(httpcli.NewCachedTransportOpt(httpcli.NoopCache{}, false))
-	if err != nil {
-		return nil, err
-	}
-	cached, err := httpfactory.Doer()
-	if err != nil {
-		return nil, err
-	}
-
+func NewHTTPClient(urn string, registryURL string, credentials string, httpfactory *httpcli.Factory) *HTTPClient {
 	return &HTTPClient{
-		registryURL:    registryURL,
-		uncachedClient: uncached,
-		cachedClient:   cached,
-		limiter:        ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("NPMClient"), urn)),
-		credentials:    credentials,
-	}, nil
+		registryURL: registryURL,
+		cf:          httpfactory,
+		limiter:     ratelimit.NewInstrumentedLimiter(urn, ratelimit.NewGlobalRateLimiter(log.Scoped("NPMClient"), urn)),
+		credentials: credentials,
+	}
 }
 
 type PackageInfo struct {
@@ -83,8 +72,13 @@ type PackageInfo struct {
 }
 
 func (client *HTTPClient) GetPackageInfo(ctx context.Context, pkg *reposource.NpmPackageName) (info *PackageInfo, err error) {
+	doer, err := client.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
 	url := fmt.Sprintf("%s/%s", client.registryURL, pkg.PackageSyntax())
-	body, err := client.makeGetRequest(ctx, client.uncachedClient, url)
+	body, err := client.makeGetRequest(ctx, doer, url)
 	if err != nil {
 		return nil, err
 	}
@@ -174,9 +168,14 @@ func (client *HTTPClient) makeGetRequest(ctx context.Context, doer httpcli.Doer,
 }
 
 func (client *HTTPClient) GetDependencyInfo(ctx context.Context, dep *reposource.NpmVersionedPackage) (*DependencyInfo, error) {
+	doer, err := client.cf.Doer(httpcli.CachedTransportOpt)
+	if err != nil {
+		return nil, err
+	}
+
 	// https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md#getVersionedPackage
 	url := fmt.Sprintf("%s/%s/%s", client.registryURL, dep.PackageSyntax(), dep.Version)
-	body, err := client.makeGetRequest(ctx, client.cachedClient, url)
+	body, err := client.makeGetRequest(ctx, doer, url)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +194,10 @@ func (client *HTTPClient) FetchTarball(ctx context.Context, dep *reposource.NpmV
 		return nil, errors.New("empty TarballURL")
 	}
 
-	// don't want to store these in redis
-	return client.makeGetRequest(ctx, client.uncachedClient, dep.TarballURL)
+	doer, err := client.cf.Doer()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.makeGetRequest(ctx, doer, dep.TarballURL)
 }

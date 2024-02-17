@@ -20,6 +20,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/uploadhandler"
@@ -107,7 +108,7 @@ func TestHandleEnqueueAuth(t *testing.T) {
 		}
 
 		authValidators := auth.AuthValidatorMap{
-			"github": func(context.Context, url.Values, string) (int, error) {
+			"github": func(context.Context, httpcli.Doer, url.Values, string) (int, error) {
 				if user.name != "owning-user" {
 					return http.StatusUnauthorized, errors.New("sample text import cycle")
 				}

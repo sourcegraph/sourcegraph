@@ -40,7 +40,12 @@ func NewMiddleware(db database.DB, serviceType, authPrefix string, isAPIHandler 
 		// Delegate to the auth flow handler
 		if !isAPIHandler && strings.HasPrefix(r.URL.Path, authPrefix+"/") {
 			span.AddEvent("delegate to auth flow handler")
-			r = withOAuthExternalClient(r)
+			var err error
+			r, err = withOAuthExternalClient(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			span.End()
 			oauthFlowHandler.ServeHTTP(w, r)
 			return
@@ -121,18 +126,22 @@ func newOAuthFlowHandler(serviceType string) http.Handler {
 // withOAuthExternalClient updates client such that the
 // golang.org/x/oauth2 package will use our http client which is configured
 // with proxy and TLS settings/etc.
-func withOAuthExternalClient(r *http.Request) *http.Request {
-	client := httpcli.ExternalClient
+func withOAuthExternalClient(r *http.Request) (*http.Request, error) {
+	cli, err := httpcli.NewExternalClientFactory().Client()
+	if err != nil {
+		return nil, err
+	}
+
 	if traceLogEnabled {
-		loggingClient := *client
+		loggingClient := *cli
 		loggingClient.Transport = &loggingRoundTripper{
 			log:        log.Scoped("oauth_external.transport"),
-			underlying: client.Transport,
+			underlying: cli.Transport,
 		}
-		client = &loggingClient
+		cli = &loggingClient
 	}
-	ctx := context.WithValue(r.Context(), oauth2.HTTPClient, client)
-	return r.WithContext(ctx)
+	ctx := context.WithValue(r.Context(), oauth2.HTTPClient, cli)
+	return r.WithContext(ctx), nil
 }
 
 var traceLogEnabled, _ = strconv.ParseBool(env.Get("INSECURE_OAUTH2_LOG_TRACES", "false", "Log all OAuth2-related HTTP requests and responses. Only use during testing because the log messages will contain sensitive data."))

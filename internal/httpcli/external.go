@@ -9,11 +9,62 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"code.gitea.io/gitea/modules/hostmatcher"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
+
+// ExternalTransportOpt returns an Opt that ensures the http.Client.Transport
+// can contact non-Sourcegraph services. For example Admins can configure
+// TLS/SSL settings. This adds filtering for external requests based on
+// predefined deny lists. Can be extended using the EXTERNAL_DENY_LIST
+// environment variable.
+func ExternalTransportOpt(cli *http.Client) error {
+	tr, err := getTransportForMutation(cli)
+	if err != nil {
+		return errors.Wrap(err, "httpcli.ExternalTransportOpt")
+	}
+
+	var denyMatchList = hostmatcher.ParseHostMatchList("EXTERNAL_DENY_LIST", externalDenyList)
+
+	denyList := defaultDenylist
+	if env.InsecureDev {
+		denyList = localDevDenylist
+	}
+
+	for _, rule := range denyList {
+		if rule.builtin != "" {
+			denyMatchList.AppendBuiltin(rule.builtin)
+		} else if rule.pattern != "" {
+			denyMatchList.AppendPattern(rule.pattern)
+		}
+	}
+
+	// this dialer will match resolved domain names against the deny list
+	tr.DialContext = hostmatcher.NewDialContext("", nil, denyMatchList)
+	cli.Transport = WrapTransport(&externalTransport{base: tr}, tr)
+	return nil
+}
+
+var externalDenyList = env.Get("EXTERNAL_DENY_LIST", "", "Deny list for outgoing requests")
+
+type denyRule struct {
+	pattern string
+	builtin string
+}
+
+var defaultDenylist = []denyRule{
+	{builtin: "loopback"},
+	{pattern: "169.254.169.254"},
+}
+
+var localDevDenylist = []denyRule{
+	{pattern: "169.254.169.254"},
+}
 
 type externalTransport struct {
 	base      *http.Transport

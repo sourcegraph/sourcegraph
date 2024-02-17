@@ -23,6 +23,7 @@ go_library(
         "//internal/errcode",
         "//internal/gitserver",
         "//internal/gitserver/protocol",
+        "//internal/httpcli",
         "//internal/metrics",
         "//internal/repos",
         "//internal/types",

@@ -106,7 +106,7 @@ func getProviders() []providers.Provider {
 	}
 	ps := make([]providers.Provider, 0, len(cfgs))
 	for _, cfg := range cfgs {
-		ps = append(ps, NewProvider(*cfg, authPrefix, path.Join(auth.AuthURLPrefix, "callback"), httpcli.ExternalClient))
+		ps = append(ps, NewProvider(*cfg, authPrefix, path.Join(auth.AuthURLPrefix, "callback"), httpcli.ExternalDoer))
 	}
 	return ps
 }
