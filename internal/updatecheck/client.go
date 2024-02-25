@@ -389,6 +389,35 @@ func getAndMarshalRepoMetadataUsageJSON(ctx context.Context, db database.DB) (_ 
 	return json.Marshal(repoMetadataUsage)
 }
 
+func getAndMarshalConfigurationMetaJSON(ctx context.Context, db database.DB) (_ json.RawMessage, err error) {
+	defer recordOperation("getAndMarshalConfigurationMetaJSON")(&err)
+
+	cfg := conf.Get()
+
+	configurationTags := []string{}
+	if conf.IsAccessRequestEnabled() {
+		configurationTags = append(configurationTags, "access-requests")
+	}
+
+	if cfg.AuthEnableUsernameChanges {
+		configurationTags = append(configurationTags, "username-changes")
+	}
+
+	if len(cfg.AuthUserOrgMap) > 0 {
+		configurationTags = append(configurationTags, "user-org-map")
+	}
+
+	if cfg.GitserverDiskUsageWarningThreshold != nil {
+		configurationTags = append(configurationTags, "gitserver-disk-usage-warning")
+	}
+
+	if cfg.GitRecorder != nil {
+		configurationTags = append(configurationTags, "git-recorder")
+	}
+
+	return json.Marshal(configurationTags)
+}
+
 func getDependencyVersions(ctx context.Context, db database.DB, logger log.Logger) (json.RawMessage, error) {
 	logFunc := logFuncFrom(logger.Scoped("getDependencyVersions"))
 	var (
@@ -500,6 +529,7 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 		CodyUsage:                     []byte("{}"),
 		CodyProviders:                 []byte("{}"),
 		RepoMetadataUsage:             []byte("{}"),
+		ConfigurationMeta:             []byte("{}"),
 	}
 
 	totalUsers, err := getTotalUsersCount(ctx, db)
@@ -667,6 +697,11 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 	r.RepoMetadataUsage, err = getAndMarshalRepoMetadataUsageJSON(ctx, db)
 	if err != nil {
 		logFunc("repoMetadataUsage failed", log.Error(err))
+	}
+
+	r.ConfigurationMeta, err = getAndMarshalConfigurationMetaJSON(ctx, db)
+	if err != nil {
+		logFunc("configurationMeta failed", log.Error(err))
 	}
 
 	r.HasExtURL = conf.UsingExternalURL()

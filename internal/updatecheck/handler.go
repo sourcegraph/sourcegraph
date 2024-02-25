@@ -239,6 +239,7 @@ type pingRequest struct {
 	CodyUsage                     json.RawMessage `json:"codyUsage,omitempty"`
 	CodyProviders                 json.RawMessage `json:"codyProviders,omitempty"`
 	RepoMetadataUsage             json.RawMessage `json:"repoMetadataUsage,omitempty"`
+	ConfigurationMeta             json.RawMessage `json:"configurationMeta,omitempty"`
 }
 
 type dependencyVersions struct {
@@ -369,6 +370,7 @@ type pingPayload struct {
 	CodyUsage                     json.RawMessage `json:"cody_usage"`
 	CodyProviders                 json.RawMessage `json:"cody_providers"`
 	RepoMetadataUsage             json.RawMessage `json:"repo_metadata_usage"`
+	ConfigurationMeta             json.RawMessage `json:"configuration_meta"`
 }
 
 func logPing(logger log.Logger, pubsubClient pubsub.TopicPublisher, meter *Meter, r *http.Request, pr *pingRequest, hasUpdate bool) {
@@ -476,6 +478,7 @@ func marshalPing(pr *pingRequest, hasUpdate bool, clientAddr string, now time.Ti
 		CodyUsage:                     codyUsage,
 		CodyProviders:                 pr.CodyProviders,
 		RepoMetadataUsage:             pr.RepoMetadataUsage,
+		ConfigurationMeta:             pr.ConfigurationMeta,
 	})
 }
 
