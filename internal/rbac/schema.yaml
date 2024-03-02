@@ -9,8 +9,13 @@ namespaces:
   - name: REPO_METADATA
     actions:
       - WRITE
+  - name: LICENSE_MANAGER
+    actions:
+      - READ
+      - WRITE
   - name: CODY
     actions:
       - ACCESS
 excludeFromUserRole:
   - OWNERSHIP
+  - LICENSE_MANAGER

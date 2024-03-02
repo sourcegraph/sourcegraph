@@ -6,6 +6,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/rbac"
 )
 
 const (
@@ -19,21 +20,21 @@ const (
 )
 
 // 🚨 SECURITY: Use this to check if access to a subscription query or mutation
-// is authorized for service accounts and site admins.
-func serviceAccountOrSiteAdmin(
+// is authorized for service accounts and license managers.
+func serviceAccountOrLicenseManager(
 	ctx context.Context,
 	db database.DB,
 	// requiresWriterServiceAccount, if true, requires "product-subscriptions-service-account",
 	// otherwise just "product-subscriptions-reader-service-account" is sufficient.
 	requiresWriterServiceAccount bool,
 ) (string, error) {
-	return serviceAccountOrOwnerOrSiteAdmin(ctx, db, nil, requiresWriterServiceAccount)
+	return serviceAccountOrOwnerOrLicenseManager(ctx, db, nil, requiresWriterServiceAccount)
 }
 
 // 🚨 SECURITY: Use this to check if access to a subscription query or mutation
-// is authorized for service accounts, the owning user, and site admins. Callers
+// is authorized for service accounts, the owning user, and license managers. Callers
 // should record the returned grant reason in an audit log tracking the access.
-func serviceAccountOrOwnerOrSiteAdmin(
+func serviceAccountOrOwnerOrLicenseManager(
 	ctx context.Context,
 	db database.DB,
 	ownerUserID *int32,
@@ -63,11 +64,17 @@ func serviceAccountOrOwnerOrSiteAdmin(
 
 	// If ownerUserID is specified, the user must be the owner, or a site admin.
 	if ownerUserID != nil {
-		return "same_user_or_site_admin", auth.CheckSiteAdminOrSameUser(ctx, db, *ownerUserID)
+		// If it's the same user, return. Otherwise, fallthrough to the license manager check.
+		if err := auth.CheckSameUser(ctx, *ownerUserID); err == nil {
+			return "same_user_or_license_manager", nil
+		}
 	}
 
-	// Otherwise, the user must be a site admin.
-	return "site_admin", auth.CheckCurrentUserIsSiteAdmin(ctx, db)
+	// Otherwise, the user must be a license manager.
+	if requiresWriterServiceAccount {
+		return "license_manager", rbac.CheckCurrentUserHasPermission(ctx, db, rbac.LicenseManagerWritePermission)
+	}
+	return "license_manager", rbac.CheckCurrentUserHasPermission(ctx, db, rbac.LicenseManagerReadPermission)
 }
 
 // readFeatureFlagFromDB explicitly reads the feature flag values from the database,

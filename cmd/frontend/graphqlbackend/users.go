@@ -10,6 +10,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gqlutil"
+	"github.com/sourcegraph/sourcegraph/internal/rbac"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/usagestats"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -24,9 +25,15 @@ type usersArgs struct {
 }
 
 func (r *schemaResolver) Users(ctx context.Context, args *usersArgs) (*userConnectionResolver, error) {
-	// 🚨 SECURITY: Verify listing users is allowed.
-	if err := checkMembersAccess(ctx, r.db); err != nil {
-		return nil, err
+	// 🚨 SECURITY: Only license manager and site admins can list users on sourcegraph.com.
+	if envvar.SourcegraphDotComMode() {
+		// First, check if they have the rbac permission for license manager.
+		if err := rbac.CheckCurrentUserHasPermission(ctx, r.db, rbac.LicenseManagerReadPermission); err != nil {
+			// Otherwise, check that they are site admin.
+			if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	opt := database.UsersListOptions{
@@ -140,14 +147,4 @@ func (r *userConnectionResolver) PageInfo(ctx context.Context) (*graphqlutil.Pag
 		return graphqlutil.NextPageCursor(strconv.Itoa(after)), nil
 	}
 	return graphqlutil.HasNextPage(false), nil
-}
-
-func checkMembersAccess(ctx context.Context, db database.DB) error {
-	// 🚨 SECURITY: Only site admins can list users on sourcegraph.com.
-	if envvar.SourcegraphDotComMode() {
-		if err := auth.CheckCurrentUserIsSiteAdmin(ctx, db); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -11,6 +11,7 @@ export enum PageRoutes {
     User = '/user/*',
     Organizations = '/organizations/*',
     SiteAdmin = '/site-admin/*',
+    LicenseManagement = '/license-admin/*',
     SiteAdminInit = '/site-admin/init',
     PasswordReset = '/password-reset',
     ApiConsole = '/api/console',

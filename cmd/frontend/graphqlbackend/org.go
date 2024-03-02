@@ -179,6 +179,16 @@ func (o *OrgResolver) Members(ctx context.Context, args struct {
 	})
 }
 
+func checkMembersAccess(ctx context.Context, db database.DB) error {
+	// 🚨 SECURITY: Only site admins can list members on sourcegraph.com.
+	if envvar.SourcegraphDotComMode() {
+		if err := auth.CheckCurrentUserIsSiteAdmin(ctx, db); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type membersConnectionStore struct {
 	db    database.DB
 	orgID int32

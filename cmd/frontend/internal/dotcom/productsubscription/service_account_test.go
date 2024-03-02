@@ -113,7 +113,7 @@ func TestServiceAccountOrOwnerOrSiteAdmin(t *testing.T) {
 					featureFlagProductSubscriptionsServiceAccount:       true,
 				}, nil, nil))
 
-			grantReason, err := serviceAccountOrOwnerOrSiteAdmin(
+			grantReason, err := serviceAccountOrOwnerOrLicenseManager(
 				actor.WithActor(ctx, &actor.Actor{UID: actorID}),
 				db,
 				tc.ownerUserID,

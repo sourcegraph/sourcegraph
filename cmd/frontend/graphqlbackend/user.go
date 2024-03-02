@@ -797,9 +797,12 @@ func (r *UserResolver) BatchChangesCodeHosts(ctx context.Context, args *ListBatc
 	return EnterpriseResolvers.batchChangesResolver.BatchChangesCodeHosts(ctx, args)
 }
 
-func (r *UserResolver) Roles(_ context.Context, args *ListRoleArgs) (*graphqlutil.ConnectionResolver[RoleResolver], error) {
+func (r *UserResolver) Roles(ctx context.Context, args *ListRoleArgs) (*graphqlutil.ConnectionResolver[RoleResolver], error) {
 	if envvar.SourcegraphDotComMode() {
-		return nil, errors.New("roles are not available on sourcegraph.com")
+		// On Sourcegraph.com, only site admins can view other users' roles.
+		if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
+			return nil, err
+		}
 	}
 	userID := r.user.ID
 	connectionStore := &roleConnectionStore{

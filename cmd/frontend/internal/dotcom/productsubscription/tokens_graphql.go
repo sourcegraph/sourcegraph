@@ -28,7 +28,7 @@ func (e ErrProductSubscriptionNotFound) Extensions() map[string]any {
 // given access token.
 func (r ProductSubscriptionLicensingResolver) ProductSubscriptionByAccessToken(ctx context.Context, args *graphqlbackend.ProductSubscriptionByAccessTokenArgs) (graphqlbackend.ProductSubscription, error) {
 	// 🚨 SECURITY: Only specific entities may use this functionality.
-	if _, err := serviceAccountOrSiteAdmin(ctx, r.DB, false); err != nil {
+	if _, err := serviceAccountOrLicenseManager(ctx, r.DB, false); err != nil {
 		return nil, err
 	}
 

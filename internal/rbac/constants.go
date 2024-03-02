@@ -9,4 +9,8 @@ const OwnershipAssignPermission string = "OWNERSHIP#ASSIGN"
 
 const RepoMetadataWritePermission string = "REPO_METADATA#WRITE"
 
+const LicenseManagerReadPermission string = "LICENSE_MANAGER#READ"
+
+const LicenseManagerWritePermission string = "LICENSE_MANAGER#WRITE"
+
 const CodyAccessPermission string = "CODY#ACCESS"
