@@ -1,0 +1,21 @@
+diff --git a/pkg/apk/cache.go b/pkg/apk/cache.go
+index a769ce6..7e0752b 100644
+--- a/pkg/apk/cache.go
++++ b/pkg/apk/cache.go
+@@ -206,11 +206,15 @@ func (t *cacheTransport) RoundTrip(request *http.Request) (*http.Response, error
+ 				return nil, err
+ 			}
+
+-			if fi.ModTime().After(newest.ModTime()) {
++			if (fi.ModTime().After(newest.ModTime()) || newest.IsDir()) && !fi.IsDir() {
+ 				newest = fi
+ 			}
+ 		}
+
++		if newest.IsDir() {
++			return nil, fmt.Errorf("%s is a directory", newest.Name())
++		}
++
+ 		f, err := os.Open(filepath.Join(cacheDir, newest.Name()))
+ 		if err != nil {
+ 			return nil, err

@@ -174,6 +174,18 @@ http_archive(
     url = "https://github.com/fmeum/with_cfg.bzl/releases/download/v0.2.1/with_cfg.bzl-v0.2.1.tar.gz",
 )
 
+http_archive(
+    name = "rules_apko",
+    patch_args = ["-p1"],
+    patches = [
+        # required due to https://github.com/chainguard-dev/apko/issues/1052
+        "//third_party/rules_apko:repository_label_strip.patch",
+    ],
+    sha256 = "f176171f95ee2b6eef1572c6da796d627940a1e898a32d476a2d7a9a99332960",
+    strip_prefix = "rules_apko-1.2.2",
+    url = "https://github.com/chainguard-dev/rules_apko/releases/download/v1.2.2/rules_apko-v1.2.2.tar.gz",
+)
+
 # hermetic_cc_toolchain setup ================================
 HERMETIC_CC_TOOLCHAIN_VERSION = "v2.2.1"
 
@@ -294,8 +306,8 @@ go_repository(
     name = "com_github_aws_aws_sdk_go_v2_service_ssooidc",
     build_file_proto_mode = "disable_global",
     importpath = "github.com/aws/aws-sdk-go-v2/service/ssooidc",
-    sum = "h1:xLPZMyuZ4GuqRCIec/zWuIhRFPXh2UOJdLXBSi64ZWQ=",
-    version = "v1.14.5",
+    sum = "h1:NZaj0ngZMzsubWZbrEFSB4rgSQRbFq38Sd6KBxHuOIU=",
+    version = "v1.14.8",
 )
 
 # Overrides the default provided protobuf dep from rules_go by a more
@@ -503,3 +515,35 @@ load("//dev:schema_migrations.bzl", "schema_migrations")
 schema_migrations(
     name = "schemas_migrations",
 )
+
+# wolfi images setup ================================
+
+load("@rules_apko//apko:repositories.bzl", "apko_register_toolchains", "rules_apko_dependencies")
+
+rules_apko_dependencies()
+
+# We don't register the default toolchains, and regsiter our own from a patched go_repository sourced
+# go_binary target that contains some fixes that are not yet merged upstream.
+# https://github.com/chainguard-dev/go-apk/pull/216
+apko_register_toolchains(
+    name = "apko",
+    register = False,
+)
+
+register_toolchains("//:apko_linux_toolchain")
+
+register_toolchains("//:apko_darwin_arm64_toolchain")
+
+register_toolchains("//:apko_darwin_amd64_toolchain")
+
+load("//wolfi-images:repo.bzl", "wolfi_lockfiles")
+
+wolfi_lockfiles(name = "apko_lockfiles")
+
+load("@apko_lockfiles//:translates.bzl", "apko_translate_locks")
+
+apko_translate_locks()
+
+load("@apko_lockfiles//:repositories.bzl", "apko_repositories")
+
+apko_repositories()

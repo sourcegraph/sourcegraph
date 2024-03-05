@@ -3,6 +3,7 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("//dev:go_defs.bzl", "go_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 go_library(
     name = "batcheshelper_lib",
@@ -50,7 +51,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@wolfi_batcheshelper_base",
+    base = ":wolfi_base_image",
     tars = [":tar_batcheshelper"],
 )
 
@@ -77,3 +78,5 @@ oci_push(
     image = ":image",
     repository = image_repository("batcheshelper"),
 )
+
+wolfi_base()

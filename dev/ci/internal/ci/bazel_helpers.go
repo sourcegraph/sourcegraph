@@ -152,6 +152,7 @@ var allowedBazelFlags = map[string]struct{}{
 	"--config":               {},
 	"--test_output":          {},
 	"--verbose_failures":     {},
+	"--subcommands":          {},
 }
 
 var bazelFlagsRe = regexp.MustCompile(`--\w+`)
@@ -193,6 +194,7 @@ func verifyBazelCommand(command string) error {
 	switch strs[0] {
 	case "build":
 	case "test":
+	case "aquery":
 	default:
 		return errors.Newf("disallowed bazel command: %q", strs[0])
 	}

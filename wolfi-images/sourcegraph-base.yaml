@@ -3,11 +3,9 @@ contents:
   keyring:
     - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     - https://packages.sgdev.org/sourcegraph-melange-prod.rsa.pub
-    - https://packages.sgdev.org/chainguard/chainguard-enterprise.rsa.pub
   repositories:
     - https://packages.wolfi.dev/os
     - '@sourcegraph https://packages.sgdev.org/main'
-    - '@chainguard https://packages.sgdev.org/chainguard'
   packages:
     ## Base set of packages
     - wolfi-baselayout

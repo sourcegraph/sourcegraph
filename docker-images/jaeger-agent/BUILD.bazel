@@ -1,9 +1,10 @@
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 oci_image(
     name = "image",
-    base = "@wolfi_jaeger_agent_base",
+    base = ":wolfi_base_image",
     entrypoint = ["/usr/local/bin/jaeger-agent"],
 )
 
@@ -30,3 +31,5 @@ oci_push(
     image = ":image",
     repository = image_repository("jaeger-agent"),
 )
+
+wolfi_base()

@@ -1,6 +1,10 @@
 include: ./sourcegraph-base.yaml
 
 contents:
+  keyring:
+  - https://packages.sgdev.org/chainguard/chainguard-enterprise.rsa.pub
+  repositories:
+  - '@chainguard https://packages.sgdev.org/chainguard'
   packages:
     # Included by existing SG base image
     - tini

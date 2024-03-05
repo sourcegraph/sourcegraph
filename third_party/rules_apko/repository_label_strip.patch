@@ -1,0 +1,99 @@
+diff --git a/apko/private/apk.bzl b/apko/private/apk.bzl
+index ebd9780..6204cfb 100644
+--- a/apko/private/apk.bzl
++++ b/apko/private/apk.bzl
+@@ -16,8 +16,13 @@ def _range(url, range):
+
+ def _check_initial_setup(rctx):
+     output = rctx.path(".rangecheck/output")
++
++    url = rctx.attr.url
++    if url[0] == '@':
++        url = url.partition(' ')[2]
++
+     rctx.download(
+-        url = [_range(rctx.attr.url, "bytes=0-0")],
++        url = [_range(url, "bytes=0-0")],
+         output = output,
+     )
+     r = rctx.execute(["wc", "-c", output])
+@@ -40,7 +45,11 @@ To resolve this issue and enable partial package fetching, please follow the ste
+ """.format(bytes[0]))
+
+ def _apk_import_impl(rctx):
+-    repo = util.repo_url(rctx.attr.url, rctx.attr.architecture)
++    url = rctx.attr.url
++    if url[0] == '@':
++        url = url.partition(' ')[2]
++
++    repo = util.repo_url(url, rctx.attr.architecture)
+     repo_escaped = util.url_escape(repo)
+
+     output = "{}/{}/{}-{}".format(repo_escaped, rctx.attr.architecture, rctx.attr.package_name, rctx.attr.version)
+@@ -54,18 +63,18 @@ def _apk_import_impl(rctx):
+     apk_output = "{}/{}/{}-{}.apk".format(repo_escaped, rctx.attr.architecture, rctx.attr.package_name, rctx.attr.version)
+
+     rctx.download(
+-        url = [_range(rctx.attr.url, rctx.attr.signature_range)],
++        url = [_range(url, rctx.attr.signature_range)],
+         output = sig_output,
+         # TODO: signatures does not have stable checksums. find a way to fail gracefully.
+         integrity = rctx.attr.signature_checksum,
+     )
+     rctx.download(
+-        url = [_range(rctx.attr.url, rctx.attr.control_range)],
++        url = [_range(url, rctx.attr.control_range)],
+         output = control_output,
+         integrity = rctx.attr.control_checksum,
+     )
+     rctx.download(
+-        url = [_range(rctx.attr.url, rctx.attr.data_range)],
++        url = [_range(url, rctx.attr.data_range)],
+         output = data_output,
+         integrity = rctx.attr.data_checksum,
+     )
+@@ -105,11 +114,16 @@ filegroup(
+ """
+
+ def _apk_repository_impl(rctx):
+-    repo = util.repo_url(rctx.attr.url, rctx.attr.architecture)
++    url = rctx.attr.url
++    if url[0] == '@':
++        url = url.partition(' ')[2]
++
++    repo = util.repo_url(url, rctx.attr.architecture)
+     repo_escaped = util.url_escape(repo)
+     _check_initial_setup(rctx)
++
+     rctx.download(
+-        url = [rctx.attr.url],
++        url = [url],
+         output = "{}/{}/APKINDEX/latest.tar.gz".format(repo_escaped, rctx.attr.architecture),
+     )
+     rctx.file("BUILD.bazel", APK_REPOSITORY_TMPL)
+@@ -142,6 +156,11 @@ def _cachePathFromURL(url):
+       https://packages.wolfi.dev/os/wolfi-signing.rsa.pub              -> https%3A%2F%2Fpackages.wolfi.dev%2F/os/wolfi-signing.rsa.pub
+       https://packages.wolfi.dev/os/aarch64/sqlite-libs-3.44.0-r0.apk  -> https%3A%2F%2Fpackages.wolfi.dev%2Fos/arch64/sqlite-libs-3.44.0-r0.apk
+     """
++    if url.count("/") <= 3:
++        url_split = url.rsplit("/", 1)
++        repo = url_split[0] + "/"
++        return "{}/{}".format(util.url_escape(repo), url_split[1])
++
+     url_split = url.rsplit("/", 2)
+     repo = url_split[0]
+     if len(repo.split("/")) <= 3:
+@@ -151,8 +170,11 @@ def _cachePathFromURL(url):
+     return "{}/{}/{}".format(repo_escaped, url_split[1], url_split[2])
+
+ def _apk_keyring_impl(rctx):
+-    public_key = _cachePathFromURL(rctx.attr.url)
+-    rctx.download(url = [rctx.attr.url], output = public_key)
++    url = rctx.attr.url
++    if url[0] == '@':
++        url = url.partition(' ')[2]
++    public_key = _cachePathFromURL(url)
++    rctx.download(url = [url], output = public_key)
+     rctx.file("BUILD.bazel", APK_KEYRING_TMPL.format(public_key = public_key))
+
+ apk_keyring = repository_rule(

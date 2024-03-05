@@ -1,6 +1,7 @@
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 filegroup(
     name = "redis_conf",
@@ -32,7 +33,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@wolfi_redis_base",
+    base = ":wolfi_base_image",
     entrypoint = [
         "redis-server",
         "/etc/redis/redis.conf",
@@ -64,3 +65,5 @@ oci_push(
     image = ":image",
     repository = image_repository("redis-cache"),
 )
+
+wolfi_base(target = "redis")

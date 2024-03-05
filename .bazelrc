@@ -8,6 +8,8 @@ import %workspace%/.aspect/bazelrc/javascript.bazelrc
 import %workspace%/.aspect/bazelrc/performance.bazelrc
 import %workspace%/.aspect/bazelrc/rules_ts.bazelrc
 
+try-import %workspace%/.apko/.bazelrc
+
 ### YOUR PROJECT SPECIFIC SETTINGS GO HERE ###
 
 # Load any settings & overrides specific to the current user from `.aspect/bazelrc/user.bazelrc`.

@@ -1,6 +1,7 @@
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 filegroup(
     name = "config",
@@ -15,7 +16,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@wolfi_jaeger_all_in_one_base",
+    base = ":wolfi_base_image",
     cmd = ["--sampling.strategies-file=/etc/jaeger/sampling_strategies.json"],
     entrypoint = ["/usr/local/bin/jaeger-all-in-one"],
     env = {
@@ -51,3 +52,5 @@ oci_push(
     image = ":image",
     repository = image_repository("jaeger-all-in-one"),
 )
+
+wolfi_base()

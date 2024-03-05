@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 go_library(
     name = "executor_lib",
@@ -73,7 +74,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@wolfi_executor_base",
+    base = ":wolfi_base_image",
     entrypoint = [
         "/sbin/tini",
         "--",
@@ -126,3 +127,5 @@ sh_binary(
         "//dev/tools:gsutil",
     ],
 )
+
+wolfi_base()

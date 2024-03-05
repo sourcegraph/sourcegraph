@@ -1,6 +1,7 @@
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 filegroup(
     name = "config",
@@ -20,7 +21,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@wolfi_postgresql-12_base",
+    base = ":wolfi_base_image",
     entrypoint = ["/postgres-wolfi.sh"],
     env = {
         "POSTGRES_PASSWORD": "",
@@ -79,3 +80,5 @@ oci_push(
     image = ":legacy_image",
     repository = image_repository("postgres-12-alpine"),
 )
+
+wolfi_base(target = "postgresql-12")

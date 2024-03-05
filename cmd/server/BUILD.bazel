@@ -3,6 +3,7 @@ load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tar
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("macro.bzl", "container_dependencies", "dependencies_tars")
+load("//wolfi-images:defs.bzl", "wolfi_base")
 
 go_library(
     name = "server_lib",
@@ -158,7 +159,7 @@ pkg_tar(
 #   bazel cquery '//cmd/server:image' --output build
 oci_image(
     name = "image",
-    base = "@wolfi_server_base",
+    base = ":wolfi_base_image",
     entrypoint = [
         "/sbin/tini",
         "--",
@@ -211,3 +212,5 @@ oci_push(
     image = ":image",
     repository = image_repository("server"),
 )
+
+wolfi_base()
