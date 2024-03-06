@@ -6,6 +6,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/externallink"
 	"github.com/sourcegraph/sourcegraph/internal/highlight"
+	"github.com/sourcegraph/sourcegraph/internal/ipynb"
 	"github.com/sourcegraph/sourcegraph/internal/markdown"
 )
 
@@ -33,11 +34,11 @@ type FileResolver interface {
 func richHTML(content, ext string) (string, error) {
 	switch strings.ToLower(ext) {
 	case ".md", ".mdown", ".markdown", ".markdn":
-		break
-	default:
-		return "", nil
+		return markdown.Render(content)
+	case ".ipynb":
+		return ipynb.Render(content)
 	}
-	return markdown.Render(content)
+	return "", nil
 }
 
 type markdownOptions struct {

@@ -661,6 +661,13 @@ def go_dependencies():
         version = "v1.0.1",
     )
     go_repository(
+        name = "com_github_bevzzz_nb",
+        build_file_proto_mode = "disable_global",
+        importpath = "github.com/bevzzz/nb",
+        sum = "h1:iY8NcqZIAUfjdgalebeBrVA5i5JYyLiVoKqBbTPoGIc=",
+        version = "v0.1.0",
+    )
+    go_repository(
         name = "com_github_bgentry_speakeasy",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/bgentry/speakeasy",

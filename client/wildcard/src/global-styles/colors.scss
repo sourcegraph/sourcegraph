@@ -134,6 +134,23 @@ $violet-09: #5f3dc4;
     // Color for the <mark> element and highlighted/hovered tokens.
     --mark-bg-dark: rgba(217, 72, 15, 0.5);
     --mark-bg-light: rgba(255, 192, 120, 0.5);
+
+    --ansi-black: black;
+    --ansi-red: red;
+    --ansi-green: green;
+    --ansi-yellow: yellow;
+    --ansi-blue: blue;
+    --ansi-magenta: magenta;
+    --ansi-cyan: cyan;
+    --ansi-white: white;
+    --ansi-bright-black: #222024;
+    --ansi-bright-red: #ff160c;
+    --ansi-bright-green: #66ff00;
+    --ansi-bright-yellow: #ffea00;
+    --ansi-bright-blue: #0096ff;
+    --ansi-bright-magenta: #ff08e8;
+    --ansi-bright-cyan: #41fdfe;
+    --ansi-bright-white: #ffffff;
 }
 
 .theme-light {

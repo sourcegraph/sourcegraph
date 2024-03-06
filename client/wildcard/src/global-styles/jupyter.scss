@@ -1,0 +1,365 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|
+| Source: https://unpkg.com/@jupyterlab/nbconvert-css@4.0.2/style/index.css
+|
+| Modified: styling specifications for classes that are not used
+| in the final document were removed, and some classes were renamed.
+| Some sections were re-arranged, no new sections have been added.
+|----------------------------------------------------------------------------*/
+
+:global {
+    /*-----------------------------------------------------------------------------
+    | Cell
+    |----------------------------------------------------------------------------*/
+    .jp-Cell {
+        padding: 5px;
+        margin: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+    }
+
+    /* Put a space between input and output when there IS output */
+    .jp-Cell:not(.jp-mod-noOutputs) .jp-Cell-outputWrapper {
+        margin-top: 5px;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Collapser
+    |----------------------------------------------------------------------------*/
+
+    .jp-Collapser {
+        flex: 0 0 8px;
+        padding: 0;
+        margin: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        border-radius: 2px;
+        opacity: 1;
+    }
+
+    .jp-Collapser-child {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+
+        /* height: 100% doesn't work because the height of its parent is computed from content */
+        position: absolute;
+        top: 0;
+        bottom: 0;
+    }
+
+    /* Make the output collapser disappear when there is not output, but do so
+ * in a manner that leaves it in the layout and preserves its width.
+ */
+    .jp-Cell.jp-mod-noOutputs .jp-Cell-outputCollapser {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .jp-Cell:not(.jp-mod-noOutputs) .jp-Cell-outputCollapser {
+        min-height: 20px;
+    }
+
+    .jp-Cell:not(.jp-mod-noOutputs) .jp-Cell-outputCollapser {
+        min-height: 20px;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Common input/output
+    |----------------------------------------------------------------------------*/
+
+    .jp-Cell-inputWrapper,
+    .jp-Cell-outputWrapper {
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        margin: 0;
+
+        /* Added to reveal the box-shadow on the input and output collapsers. */
+        overflow: visible;
+    }
+
+    /* Only input/output areas inside cells */
+    .jp-Cell-inputArea,
+    .jp-Cell-outputArea {
+        flex: 1 1 auto;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Input
+    |----------------------------------------------------------------------------*/
+
+    /* All input areas */
+    .jp-InputArea {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .jp-InputArea-editor {
+        display: table-cell;
+        overflow: hidden;
+        vertical-align: top;
+    }
+
+    .theme-dark {
+        .jp-InputArea-editor {
+            border: 0.5px solid #262b38;
+            border-radius: 0;
+        }
+    }
+
+    .theme-light {
+        .jp-InputArea-editor {
+            border: 0.5px solid #f5f5f5a2;
+            border-radius: 0;
+        }
+    }
+
+    .jp-InputPrompt {
+        display: table-cell;
+        vertical-align: top;
+        width: 100px;
+        color: lightgray;
+        font-family: menlo, consolas, 'DejaVu Sans Mono', monospace;
+        padding: 5px;
+        letter-spacing: 0;
+        opacity: 1;
+        line-height: 1.3077;
+        font-size: 13px;
+        border: 1px solid transparent;
+
+        /* Right align prompt text, don't wrap to handle large prompt numbers */
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        /* Disable text selection */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Markdown Cell
+    |----------------------------------------------------------------------------*/
+
+    .jp-MarkdownOutput {
+        display: table-cell;
+        width: 100%;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-left: var(--jp-code-padding);
+    }
+
+    .jp-MarkdownOutput.jp-RenderedHTMLCommon {
+        overflow: auto;
+    }
+
+    .jp-RenderedMarkdown.jp-RenderedHTMLCommon td,
+    .jp-RenderedMarkdown.jp-RenderedHTMLCommon th {
+        max-width: none;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Code Cell
+    |----------------------------------------------------------------------------*/
+
+    .jp-CodeMirrorEditor {
+        cursor: text;
+    }
+
+    .jp-Cell {
+        pre.chroma {
+            padding: 0 5px;
+            margin-bottom: 0rem !important;
+
+            code {
+                min-width: 100%;
+            }
+        }
+    }
+
+    .cm-editor.cm-s-jupyter {
+        font-family: menlo, consolas, 'DejaVu Sans Mono', monospace;
+        border: 0;
+        border-radius: 0;
+        height: auto;
+
+        pre {
+            padding: 0 5px;
+            margin: 0.1rem !important;
+
+            code {
+                min-width: 100%;
+            }
+        }
+
+        .highlight pre {
+            padding: 5px 4px;
+            margin: 0;
+
+            font-family: inherit;
+            font-size: inherit;
+            line-height: inherit;
+            color: inherit;
+        }
+    }
+
+    /*-----------------------------------------------------------------------------
+    | RenderedHTML
+    |----------------------------------------------------------------------------*/
+
+    /* Most direct children of .jp-RenderedHTMLCommon have a margin-bottom of 1.0.
+    * At the bottom of cells this is a bit too much as there is also spacing
+    * between cells. Going all the way to 0 gets too tight between markdown and
+    * code cells.
+    */
+    // .jp-RenderedHTMLCommon>*:last-child {
+    //     margin-bottom: 0.5em;
+    // }
+
+    /*-----------------------------------------------------------------------------
+    | Main OutputArea
+    | OutputArea has a list of Outputs
+    |----------------------------------------------------------------------------*/
+
+    .jp-OutputArea {
+        overflow-y: auto;
+    }
+
+    .jp-OutputArea-child {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .jp-OutputPrompt {
+        width: 100px;
+        color: lightgray;
+        font-family: menlo, consolas, 'DejaVu Sans Mono', monospace;
+        padding: 5px;
+        letter-spacing: 0;
+        opacity: 1;
+        line-height: 1.3077;
+        font-size: 13px;
+        border: 1px solid transparent;
+
+        /* Right align prompt text, don't wrap to handle large prompt numbers */
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        /* Disable text selection */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .jp-OutputArea-prompt {
+        display: table-cell;
+        vertical-align: top;
+    }
+
+    .jp-OutputArea-output {
+        display: table-cell;
+        height: auto;
+        overflow: auto;
+        user-select: text;
+        -moz-user-select: text;
+        -webkit-user-select: text;
+        -ms-user-select: text;
+    }
+
+    .jp-OutputArea-output pre {
+        border: none;
+        margin: 0;
+        padding-left: 1ch;
+        overflow-x: auto;
+        overflow-y: auto;
+        word-break: break-all;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .jp-OutputArea-output.jp-RenderedHTMLCommon table {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Hide the gutter in case of
+ *  - nested output areas (e.g. in the case of output widgets)
+ *  - mirrored output areas
+ */
+    .jp-OutputArea .jp-OutputArea .jp-OutputArea-prompt {
+        display: none;
+    }
+
+    /* executeResult is added to any Output-result for the display of the object returned by a cell. */
+    .jp-OutputArea-output.jp-OutputArea-executeResult {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    /* Text output with the Out[] prompt needs a top padding to match the alignment of the Out[] prompt itself. */
+    .jp-OutputArea-executeResult .jp-RenderedText.jp-OutputArea-output {
+        padding-top: 5px;
+        border-top: 1px solid transparent;
+
+        &:has(> pre.chroma) {
+            padding-left: 0px;
+        }
+    }
+
+    /*-----------------------------------------------------------------------------
+    | RenderedText
+    |----------------------------------------------------------------------------*/
+
+    .jp-RenderedText {
+        text-align: left;
+        padding-left: 5px;
+        line-height: 1.3077;
+        font-family: menlo, consolas, 'DejaVu Sans Mono', monospace;
+    }
+
+    .jp-RenderedText[data-mime-type='application/vnd.jupyter.stderr'] {
+        background: lightcoral;
+        padding-top: 5px;
+    }
+
+    /*-----------------------------------------------------------------------------
+    | Mobile
+    |----------------------------------------------------------------------------*/
+
+    @media only screen and (max-width: 760px) {
+        .jp-InputArea-editor {
+            display: table-row;
+            margin-left: var(--jp-notebook-padding);
+        }
+
+        .jp-InputPrompt {
+            display: table-row;
+            text-align: left;
+        }
+
+        .jp-OutputPrompt {
+            display: table-row;
+            text-align: left;
+        }
+
+        .jp-OutputArea-child .jp-OutputArea-output {
+            display: table-row;
+            margin-left: var(--jp-notebook-padding);
+        }
+    }
+}

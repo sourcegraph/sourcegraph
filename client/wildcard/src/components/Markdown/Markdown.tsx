@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 
 import { createLinkClickHandler } from '../../utils'
 
+import { useMathJax } from './mathjax'
+
 import styles from './Markdown.module.scss'
 
 interface MarkdownProps {
@@ -12,10 +14,18 @@ interface MarkdownProps {
     dangerousInnerHTML: string
     className?: string
     testId?: string
+    /**
+     * When enableMathJax is `true`, Markdown loads MathJax script from CDN with a hook.
+     * It should be explicitly enabled, as it may cause performance issues and/or break tests.
+     *
+     * @default false
+     */
+    enableMathJax?: boolean
 }
 
 export const Markdown = React.forwardRef<HTMLElement, MarkdownProps>(
-    ({ wrapper: RootComponent = 'div', className, dangerousInnerHTML, testId }, reference) => {
+    ({ wrapper: RootComponent = 'div', className, dangerousInnerHTML, testId, enableMathJax = false }, reference) => {
+        useMathJax(enableMathJax)
         const navigate = useNavigate()
 
         // Links in markdown cannot use react-router's <Link>.

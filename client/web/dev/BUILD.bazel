@@ -23,6 +23,7 @@ ts_project(
         "esbuild/config.ts",
         "esbuild/manifest.ts",
         "esbuild/manifestPlugin.ts",
+        "esbuild/mathjaxPlugin.ts",
         "esbuild/server.ts",
         "server/development.server.ts",
         "server/production.server.ts",

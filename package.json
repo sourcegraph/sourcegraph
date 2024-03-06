@@ -367,6 +367,7 @@
     "lodash-es": "^4.17.21",
     "lru-cache": "^7.8.0",
     "marked": "4.0.16",
+    "mathjax-full": "^3.2.2",
     "mdi-react": "^8.1.0",
     "minimatch": "^3.0.4",
     "mockdate": "^3.0.2",

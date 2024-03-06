@@ -6,9 +6,8 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/internal/markdown",
     visibility = ["//:__subpackages__"],
     deps = [
-        "@com_github_alecthomas_chroma_v2//:chroma",
-        "@com_github_alecthomas_chroma_v2//formatters/html",
-        "@com_github_microcosm_cc_bluemonday//:bluemonday",
+        "//internal/htmlutil",
+        "@com_github_bevzzz_nb//extension/extra/goldmark-jupyter",
         "@com_github_yuin_goldmark//:goldmark",
         "@com_github_yuin_goldmark//ast",
         "@com_github_yuin_goldmark//extension",

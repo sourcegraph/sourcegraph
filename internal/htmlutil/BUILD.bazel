@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "htmlutil",
+    srcs = [
+        "policy.go",
+        "syntax.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/htmlutil",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "@com_github_alecthomas_chroma_v2//:chroma",
+        "@com_github_alecthomas_chroma_v2//formatters/html",
+        "@com_github_microcosm_cc_bluemonday//:bluemonday",
+    ],
+)
+
+go_test(
+    name = "htmlutil_test",
+    srcs = ["htmlutil_test.go"],
+    deps = [
+        ":htmlutil",
+        "@com_github_alecthomas_chroma_v2//:chroma",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_stretchr_testify//require",
+    ],
+)

@@ -256,6 +256,7 @@ ts_project(
         "src/components/LoadingSpinner/index.ts",
         "src/components/Markdown/Markdown.tsx",
         "src/components/Markdown/index.ts",
+        "src/components/Markdown/mathjax.ts",
         "src/components/Menu/Menu.tsx",
         "src/components/Menu/MenuButton.tsx",
         "src/components/Menu/MenuDisabledItem.tsx",

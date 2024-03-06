@@ -254,6 +254,9 @@ require (
 	github.com/aws/constructs-go/constructs/v10 v10.2.69
 	github.com/aws/jsii-runtime-go v1.84.0
 	github.com/bazelbuild/bazel-gazelle v0.35.0
+	github.com/bevzzz/nb v0.3.0
+	github.com/bevzzz/nb-synth v0.0.0-20240128164931-35fdda0583a0
+	github.com/bevzzz/nb/extension/extra/goldmark-jupyter v0.0.0-20240131001330-e69229bd9da4
 	github.com/dghubble/gologin/v2 v2.4.0
 	github.com/edsrzf/mmap-go v1.1.0
 	github.com/go-json-experiment/json v0.0.0-20231102232822-2e55bd4e08b0
@@ -275,6 +278,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.6
 	github.com/prometheus/statsd_exporter v0.22.7
 	github.com/qdrant/go-client v1.4.1
+	github.com/robert-nix/ansihtml v1.0.1
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/cloudflare v0.0.0-20230822024612-edb48c530722
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/google v0.0.0-20231222002716-51aa712b9bcc
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20231222002716-51aa712b9bcc
@@ -416,7 +420,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/alecthomas/chroma v0.10.0 // indirect
-	github.com/alecthomas/chroma/v2 v2.4.0
+	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/alecthomas/kingpin v2.2.6+incompatible // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137
@@ -592,7 +596,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
-	github.com/yuin/goldmark v1.5.6
+	github.com/yuin/goldmark v1.6.0
 	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20220924101305-151362477c87
 	go.bobheadxi.dev/streamline v1.2.2

@@ -5,17 +5,18 @@ import type * as esbuild from 'esbuild'
 
 import { ROOT_PATH, STATIC_ASSETS_PATH } from '@sourcegraph/build-config'
 import {
-    stylePlugin,
-    packageResolutionPlugin,
-    monacoPlugin,
     RXJS_RESOLUTIONS,
     buildTimerPlugin,
+    monacoPlugin,
+    packageResolutionPlugin,
+    stylePlugin,
 } from '@sourcegraph/build-config/src/esbuild/plugins'
 import { MONACO_LANGUAGES_AND_FEATURES } from '@sourcegraph/build-config/src/monaco-editor'
 
 import type { EnvironmentConfig } from '../utils'
 
 import { manifestPlugin } from './manifestPlugin'
+import { mathjaxPlugin } from './mathjaxPlugin'
 
 /**
  * Creates esbuild build options for the client/web app.
@@ -43,6 +44,7 @@ export function esbuildBuildOptions(ENVIRONMENT_CONFIG: EnvironmentConfig): esbu
         plugins: [
             stylePlugin,
             manifestPlugin,
+            mathjaxPlugin,
             packageResolutionPlugin({
                 path: require.resolve('path-browserify'),
                 ...RXJS_RESOLUTIONS,
@@ -97,6 +99,7 @@ export function esbuildBuildOptions(ENVIRONMENT_CONFIG: EnvironmentConfig): esbu
         loader: {
             '.yaml': 'text',
             '.ttf': 'file',
+            '.woff': 'file',
             '.woff2': 'file',
             '.png': 'file',
         },

@@ -26,7 +26,7 @@ export const RenderedFile = forwardRef<HTMLDivElement, Props>(function RenderedF
     return (
         <div ref={reference} className={classNames(styles.renderedFile, className)}>
             <div className={styles.container}>
-                <Markdown dangerousInnerHTML={dangerousInnerHTML} />
+                <Markdown dangerousInnerHTML={dangerousInnerHTML} enableMathJax={true} />
             </div>
         </div>
     )

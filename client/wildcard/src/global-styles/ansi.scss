@@ -1,0 +1,245 @@
+:global {
+    pre {
+        .ansi-bold {
+            font-weight: bold;
+        }
+
+        .ansi-faint {
+            font-weight: lighter;
+        }
+
+        .ansi-italic {
+            font-style: italic;
+        }
+
+        .ansi-underline {
+            text-decoration-line: underline;
+        }
+
+        .ansi-strikethrough {
+            text-decoration-line: line-through;
+        }
+
+        .ansi-overline {
+            text-decoration-line: overline;
+        }
+
+        .ansi-invert {
+            filter: invert(100%);
+        }
+
+        .ansi-hide {
+            opacity: 0;
+        }
+
+        .ansi-proportional {
+            font-family: sans-serif;
+        }
+
+        .ansi-superscript {
+            vertical-align: super;
+        }
+
+        .ansi-subscript {
+            vertical-align: sub;
+        }
+
+        // Foreground colours ------------------
+
+        .ansi-fg-black {
+            color: var(--ansi-black);
+        }
+
+        .ansi-fg-red {
+            color: var(--ansi-red);
+        }
+
+        .ansi-fg-green {
+            color: var(--ansi-green);
+        }
+
+        .ansi-fg-yellow {
+            color: var(--ansi-yellow);
+        }
+
+        .ansi-fg-blue {
+            color: var(--ansi-blue);
+        }
+
+        .ansi-fg-magenta {
+            color: var(--ansi-magenta);
+        }
+
+        .ansi-fg-cyan {
+            color: var(--ansi-cyan);
+        }
+
+        .ansi-fg-white {
+            color: var(--ansi-white);
+        }
+
+        .ansi-fg-bright-black {
+            color: var(--ansi-bright-black);
+        }
+
+        .ansi-fg-bright-red {
+            color: var(--ansi-bright-red);
+        }
+
+        .ansi-fg-bright-green {
+            color: var(--ansi-bright-green);
+        }
+
+        .ansi-fg-bright-yellow {
+            color: var(--ansi-bright-yellow);
+        }
+
+        .ansi-fg-bright-blue {
+            color: var(--ansi-bright-blue);
+        }
+
+        .ansi-fg-bright-magenta {
+            color: var(--ansi-bright-magenta);
+        }
+
+        .ansi-fg-bright-cyan {
+            color: var(--ansi-bright-cyan);
+        }
+
+        .ansi-fg-bright-white {
+            color: var(--ansi-bright-white);
+        }
+
+        // Background colours ------------------
+
+        .ansi-bg-black {
+            background-color: var(--ansi-black);
+        }
+
+        .ansi-bg-red {
+            background-color: var(--ansi-red);
+        }
+
+        .ansi-bg-green {
+            background-color: var(--ansi-green);
+        }
+
+        .ansi-bg-yellow {
+            background-color: var(--ansi-yellow);
+        }
+
+        .ansi-bg-blue {
+            background-color: var(--ansi-blue);
+        }
+
+        .ansi-bg-magenta {
+            background-color: var(--ansi-magenta);
+        }
+
+        .ansi-bg-cyan {
+            background-color: var(--ansi-cyan);
+        }
+
+        .ansi-bg-white {
+            background-color: var(--ansi-white);
+        }
+
+        .ansi-bg-bright-black {
+            background-color: var(--ansi-bright-black);
+        }
+
+        .ansi-bg-bright-red {
+            background-color: var(--ansi-bright-red);
+        }
+
+        .ansi-bg-bright-green {
+            background-color: var(--ansi-bright-green);
+        }
+
+        .ansi-bg-bright-yellow {
+            background-color: var(--ansi-bright-yellow);
+        }
+
+        .ansi-bg-bright-blue {
+            background-color: var(--ansi-bright-blue);
+        }
+
+        .ansi-bg-bright-magenta {
+            background-color: var(--ansi-bright-magenta);
+        }
+
+        .ansi-bg-bright-cyan {
+            background-color: var(--ansi-bright-cyan);
+        }
+
+        .ansi-bg-bright-white {
+            background-color: var(--ansi-bright-white);
+        }
+
+        // Underline colours ------------------
+
+        .ansi-underline-black {
+            text-decoration-color: var(--ansi-black);
+        }
+
+        .ansi-underline-red {
+            text-decoration-color: var(--ansi-red);
+        }
+
+        .ansi-underline-green {
+            text-decoration-color: var(--ansi-green);
+        }
+
+        .ansi-underline-yellow {
+            text-decoration-color: var(--ansi-yellow);
+        }
+
+        .ansi-underline-blue {
+            text-decoration-color: var(--ansi-blue);
+        }
+
+        .ansi-underline-magenta {
+            text-decoration-color: var(--ansi-magenta);
+        }
+
+        .ansi-underline-cyan {
+            text-decoration-color: var(--ansi-cyan);
+        }
+
+        .ansi-underline-white {
+            text-decoration-color: var(--ansi-white);
+        }
+
+        .ansi-underline-bright-black {
+            text-decoration-color: var(--ansi-bright-black);
+        }
+
+        .ansi-underline-bright-red {
+            text-decoration-color: var(--ansi-bright-red);
+        }
+
+        .ansi-underline-bright-green {
+            text-decoration-color: var(--ansi-bright-green);
+        }
+
+        .ansi-underline-bright-yellow {
+            text-decoration-color: var(--ansi-bright-yellow);
+        }
+
+        .ansi-underline-bright-blue {
+            text-decoration-color: var(--ansi-bright-blue);
+        }
+
+        .ansi-underline-bright-magenta {
+            text-decoration-color: var(--ansi-bright-magenta);
+        }
+
+        .ansi-underline-bright-cyan {
+            text-decoration-color: var(--ansi-bright-cyan);
+        }
+
+        .ansi-underline-bright-white {
+            text-decoration-color: var(--ansi-bright-white);
+        }
+    }
+}

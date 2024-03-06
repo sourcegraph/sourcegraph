@@ -295,6 +295,7 @@ go_library(
         "//internal/httpcli",
         "//internal/insights",
         "//internal/inventory",
+        "//internal/ipynb",
         "//internal/jsonc",
         "//internal/lazyregexp",
         "//internal/licensing",

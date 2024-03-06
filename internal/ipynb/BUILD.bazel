@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ipynb",
+    srcs = ["ipynb.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/ipynb",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/htmlutil",
+        "//internal/markdown",
+        "@com_github_bevzzz_nb//:nb",
+        "@com_github_bevzzz_nb//extension",
+        "@com_github_bevzzz_nb//extension/adapter",
+        "@com_github_bevzzz_nb//extension/extra/goldmark-jupyter",
+        "@com_github_bevzzz_nb_synth//:go_default_library",
+        "@com_github_robert_nix_ansihtml//:go_default_library",
+    ],
+)
