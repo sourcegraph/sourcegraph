@@ -2122,6 +2122,7 @@ Stores data points for a code insight that do not need to be queried directly, b
  repository_patterns         | text[]                   |           |          | 
  last_resolved_at            | timestamp with time zone |           |          | 
  embeddings_enabled          | boolean                  |           | not null | false
+ syntactic_indexing_enabled  | boolean                  |           |          | true
 Indexes:
     "lsif_configuration_policies_pkey" PRIMARY KEY, btree (id)
     "lsif_configuration_policies_repository_id" btree (repository_id)
@@ -2365,10 +2366,11 @@ Stores metadata about a code intel index job.
 
 # Table "public.lsif_last_index_scan"
 ```
-       Column       |           Type           | Collation | Nullable | Default 
---------------------+--------------------------+-----------+----------+---------
+       Column       |           Type           | Collation | Nullable |         Default          
+--------------------+--------------------------+-----------+----------+--------------------------
  repository_id      | integer                  |           | not null | 
  last_index_scan_at | timestamp with time zone |           | not null | 
+ indexing_type      | indexing_type            |           | not null | 'precise'::indexing_type
 Indexes:
     "lsif_last_index_scan_pkey" PRIMARY KEY, btree (repository_id)
 
@@ -5078,6 +5080,11 @@ Foreign-key constraints:
 
 - bool
 - rollout
+
+# Type indexing_type
+
+- precise
+- syntactic
 
 # Type persistmode
 

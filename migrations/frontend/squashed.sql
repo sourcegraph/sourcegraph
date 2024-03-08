@@ -65,6 +65,11 @@ CREATE TYPE feature_flag_type AS ENUM (
     'rollout'
 );
 
+CREATE TYPE indexing_type AS ENUM (
+    'precise',
+    'syntactic'
+);
+
 CREATE TYPE lsif_uploads_transition_columns AS (
 	state text,
 	expired boolean,
@@ -1721,7 +1726,8 @@ CREATE TABLE lsif_configuration_policies (
     protected boolean DEFAULT false NOT NULL,
     repository_patterns text[],
     last_resolved_at timestamp with time zone,
-    embeddings_enabled boolean DEFAULT false NOT NULL
+    embeddings_enabled boolean DEFAULT false NOT NULL,
+    syntactic_indexing_enabled boolean DEFAULT true
 );
 
 COMMENT ON COLUMN lsif_configuration_policies.repository_id IS 'The identifier of the repository to which this configuration policy applies. If absent, this policy is applied globally.';
@@ -3273,7 +3279,8 @@ CREATE VIEW lsif_indexes_with_repository_name AS
 
 CREATE TABLE lsif_last_index_scan (
     repository_id integer NOT NULL,
-    last_index_scan_at timestamp with time zone NOT NULL
+    last_index_scan_at timestamp with time zone NOT NULL,
+    indexing_type indexing_type DEFAULT 'precise'::indexing_type NOT NULL
 );
 
 COMMENT ON TABLE lsif_last_index_scan IS 'Tracks the last time repository was checked for auto-indexing job scheduling.';
@@ -7045,9 +7052,9 @@ ALTER TABLE ONLY webhooks
 ALTER TABLE ONLY zoekt_repos
     ADD CONSTRAINT zoekt_repos_repo_id_fkey FOREIGN KEY (repo_id) REFERENCES repo(id) ON DELETE CASCADE;
 
-INSERT INTO lsif_configuration_policies VALUES (1, NULL, 'Default tip-of-branch retention policy', 'GIT_TREE', '*', true, 2016, false, false, 0, false, true, NULL, NULL, false);
-INSERT INTO lsif_configuration_policies VALUES (2, NULL, 'Default tag retention policy', 'GIT_TAG', '*', true, 8064, false, false, 0, false, true, NULL, NULL, false);
-INSERT INTO lsif_configuration_policies VALUES (3, NULL, 'Default commit retention policy', 'GIT_TREE', '*', true, 168, true, false, 0, false, true, NULL, NULL, false);
+INSERT INTO lsif_configuration_policies VALUES (1, NULL, 'Default tip-of-branch retention policy', 'GIT_TREE', '*', true, 2016, false, false, 0, false, true, NULL, NULL, false, true);
+INSERT INTO lsif_configuration_policies VALUES (2, NULL, 'Default tag retention policy', 'GIT_TAG', '*', true, 8064, false, false, 0, false, true, NULL, NULL, false, true);
+INSERT INTO lsif_configuration_policies VALUES (3, NULL, 'Default commit retention policy', 'GIT_TREE', '*', true, 168, true, false, 0, false, true, NULL, NULL, false, true);
 
 SELECT pg_catalog.setval('lsif_configuration_policies_id_seq', 3, true);
 

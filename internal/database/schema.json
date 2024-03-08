@@ -46,6 +46,13 @@
       ]
     },
     {
+      "Name": "indexing_type",
+      "Labels": [
+        "precise",
+        "syntactic"
+      ]
+    },
+    {
       "Name": "persistmode",
       "Labels": [
         "record",
@@ -15547,6 +15554,19 @@
           "Comment": "Whether or not this configuration policy affects data retention rules."
         },
         {
+          "Name": "syntactic_indexing_enabled",
+          "Index": 17,
+          "TypeName": "boolean",
+          "IsNullable": true,
+          "Default": "true",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
+        {
           "Name": "type",
           "Index": 4,
           "TypeName": "text",
@@ -16870,6 +16890,19 @@
       "Name": "lsif_last_index_scan",
       "Comment": "Tracks the last time repository was checked for auto-indexing job scheduling.",
       "Columns": [
+        {
+          "Name": "indexing_type",
+          "Index": 3,
+          "TypeName": "indexing_type",
+          "IsNullable": false,
+          "Default": "'precise'::indexing_type",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
         {
           "Name": "last_index_scan_at",
           "Index": 2,

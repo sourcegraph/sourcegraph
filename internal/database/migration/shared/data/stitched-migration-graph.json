@@ -11153,6 +11153,19 @@
 					"TableName": "access_tokens",
 					"IndexName": "access_tokens_lookup_double_hash"
 				}
+			},
+			{
+				"ID": 1709738515,
+				"Name": "Add syntactic indexing support to policies",
+				"UpQuery": "alter table lsif_configuration_policies add column syntactic_indexing_enabled bool default true;\nCREATE TYPE indexing_type AS ENUM ('precise', 'syntactic');\nalter table lsif_last_index_scan add column indexing_type indexing_type not null default 'precise';",
+				"DownQuery": "alter table lsif_configuration_policies drop column syntactic_indexing_enabled;\nalter table lsif_last_index_scan drop column indexing_type;\ndrop type if exists indexing_type;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1708596613
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
 			}
 		],
 		"BoundsByRev": {
@@ -11404,7 +11417,7 @@
 			"v5.3.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
-					1708596613
+					1709738515
 				],
 				"PreCreation": false
 			}
