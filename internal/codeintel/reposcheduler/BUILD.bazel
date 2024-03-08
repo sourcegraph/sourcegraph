@@ -27,6 +27,7 @@ go_test(
     name = "reposcheduler_test",
     srcs = ["store_test.go"],
     embed = [":reposcheduler"],
+    tags = ["requires-network"],
     deps = [
         "//internal/database",
         "//internal/database/dbtest",
