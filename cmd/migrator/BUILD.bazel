@@ -28,14 +28,36 @@ go_binary(
     },
 )
 
-# See tools/release/README.md for details.
+# This rule builds a tarball of the database schema descriptions that only contains the current database schema
+# description. If the build is not stamped with a proper VERSION env var, this will end up as "dev-...".
 genrule(
-    name = "tar_schema_descriptions",
-    srcs = ["@schemas_archive//file"],
-    outs = ["schema_descriptions.tar"],
+    name = "tar_current_schema_descriptions",
+    srcs = [
+        "//internal/database:schema.json",
+        "//internal/database:schema.codeinsights.json",
+        "//internal/database:schema.codeintel.json",
+    ],
+    outs = ["current_schema_description.tar"],
     cmd = """\
+    if grep -q "STABLE_VERSION" bazel-out/stable-status.txt; then
+        # When we're stamping, we can find the current version in the stable-status.
+        # But we do stamp main builds with a specific format, which is irrelevant for migrator, so we override this to be dev.
+        stable_version="$$(cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2)"
+        if ! [[ $$stable_version =~ ^[0-9]\\.[0-9]+\\.[0-9]+ ]]; then
+            echo "🟠 (//cmd/migrator:tar_current_schema_descriptions) Stamping with dev version, will use "dev" as current version"
+            echo $$stable_version
+            version="dev"
+        else
+            version="v$$stable_version"
+        fi
+    else
+        # When not, usually during local development, we just use dev instead.
+        version="dev"
+    fi
     mkdir -p schema-descriptions/
-    tar zxf $(location @schemas_archive//file:file) --no-same-owner -C schema-descriptions/
+    cp $(location //internal/database:schema.json) schema-descriptions/$${version}-internal_database_schema.json
+    cp $(location //internal/database:schema.codeinsights.json) schema-descriptions/$${version}-internal_database_schema.codeinsights.json
+    cp $(location //internal/database:schema.codeintel.json) schema-descriptions/$${version}-internal_database_schema.codeintel.json
 
     if tar --version | grep -q bsdtar; then
         tar -cf $@ --uid=0 --gid=0 --numeric-owner schema-descriptions/
@@ -43,6 +65,8 @@ genrule(
         tar -cf $@ --owner=:0 --group=:0 --numeric-owner schema-descriptions/
     fi
     """,
+    stamp = 1,
+    visibility = ["//visibility:public"],
 )
 
 pkg_tar(
@@ -60,7 +84,8 @@ oci_image(
     ],
     tars = [
         ":tar_migrator",
-        ":tar_schema_descriptions",
+        ":tar_current_schema_descriptions",
+        "//cmd/migrator/airgappedgen:tar_schema_descriptions",
     ],
     user = "sourcegraph",
 )

@@ -3,6 +3,7 @@ package ci
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	bk "github.com/sourcegraph/sourcegraph/dev/ci/internal/buildkite"
@@ -18,7 +19,7 @@ func bazelBuildExecutorVM(c Config, alwaysRebuild bool) operations.Operation {
 			bk.Key(candidateImageStepKey("executor.vm-image")),
 			bk.Env("VERSION", c.Version),
 			bk.Env("IMAGE_FAMILY", imageFamily),
-			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease))),
+			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease))),
 		}
 
 		cmd := bazelStampedCmd("run //cmd/executor/vm-image:ami.build")
@@ -36,13 +37,19 @@ func bazelBuildExecutorVM(c Config, alwaysRebuild bool) operations.Operation {
 
 func bazelPublishExecutorVM(c Config, alwaysRebuild bool) operations.Operation {
 	return func(pipeline *bk.Pipeline) {
+		// TODO(rfc795) because we don't have a real testbed for those, let's not push
+		// those amis for now.
+		if strings.Contains(c.Branch, "rfc795/v") {
+			return
+		}
+
 		imageFamily := executorImageFamilyForConfig(c)
 		stepOpts := []bk.StepOpt{
 			bk.Agent("queue", AspectWorkflows.QueueDefault),
 			bk.DependsOn(candidateImageStepKey("executor.vm-image")),
 			bk.Env("VERSION", c.Version),
 			bk.Env("IMAGE_FAMILY", imageFamily),
-			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease))),
+			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease))),
 		}
 
 		cmd := bazelStampedCmd("run //cmd/executor/vm-image:ami.push")
@@ -68,7 +75,7 @@ func bazelBuildExecutorDockerMirror(c Config) operations.Operation {
 			bk.Key(candidateImageStepKey("executor-docker-miror.vm-image")),
 			bk.Env("VERSION", c.Version),
 			bk.Env("IMAGE_FAMILY", imageFamily),
-			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease))),
+			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease))),
 			bk.Cmd(bazelStampedCmd("run //cmd/executor/docker-mirror:ami.build")),
 		}
 		pipeline.AddStep(":bazel::packer: :construction: Build docker registry mirror image", stepOpts...)
@@ -77,6 +84,11 @@ func bazelBuildExecutorDockerMirror(c Config) operations.Operation {
 
 func bazelPublishExecutorDockerMirror(c Config) operations.Operation {
 	return func(pipeline *bk.Pipeline) {
+		// TODO(rfc795) because we don't have a real testbed for those, let's not push
+		// those amis for now.
+		if strings.Contains(c.Branch, "rfc795/v") {
+			return
+		}
 		candidateBuildStep := candidateImageStepKey("executor-docker-miror.vm-image")
 		imageFamily := executorDockerMirrorImageFamilyForConfig(c)
 		stepOpts := []bk.StepOpt{
@@ -84,7 +96,7 @@ func bazelPublishExecutorDockerMirror(c Config) operations.Operation {
 			bk.DependsOn(candidateBuildStep),
 			bk.Env("VERSION", c.Version),
 			bk.Env("IMAGE_FAMILY", imageFamily),
-			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease))),
+			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease))),
 			bk.Cmd(bazelStampedCmd("run //cmd/executor/docker-mirror:ami.push")),
 		}
 		pipeline.AddStep(":bazel::packer: :white_check_mark: Publish docker registry mirror image", stepOpts...)
@@ -96,7 +108,7 @@ func bazelPublishExecutorBinary(c Config) operations.Operation {
 		stepOpts := []bk.StepOpt{
 			bk.Agent("queue", AspectWorkflows.QueueDefault),
 			bk.Env("VERSION", c.Version),
-			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease))),
+			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease))),
 			bk.Cmd(bazelStampedCmd(`run //cmd/executor:binary.push`)),
 		}
 		pipeline.AddStep(":bazel::arrow_heading_up: Publish executor binary", stepOpts...)
@@ -108,7 +120,7 @@ func bazelPublishExecutorBinary(c Config) operations.Operation {
 // build.
 func executorDockerMirrorImageFamilyForConfig(c Config) string {
 	imageFamily := "sourcegraph-executors-docker-mirror-nightly"
-	if c.RunType.Is(runtype.TaggedRelease) {
+	if c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease) {
 		ver, err := semver.NewVersion(c.Version)
 		if err != nil {
 			panic("cannot parse version")
@@ -123,7 +135,7 @@ func executorDockerMirrorImageFamilyForConfig(c Config) string {
 // build.
 func executorImageFamilyForConfig(c Config) string {
 	imageFamily := "sourcegraph-executors-nightly"
-	if c.RunType.Is(runtype.TaggedRelease) {
+	if c.RunType.Is(runtype.TaggedRelease, runtype.RFC795InternalRelease) {
 		ver, err := semver.NewVersion(c.Version)
 		if err != nil {
 			panic("cannot parse version")

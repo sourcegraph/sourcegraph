@@ -32,8 +32,9 @@ func TestComputeRunType(t *testing.T) {
 	}, {
 		name: "tagged release",
 		args: args{
-			branch: "1.3",
-			tag:    "v1.2.3",
+			// TODO(@jh) RFC795 check about this?
+			// branch: "1.3",
+			tag: "v1.2.3",
 		},
 		want: TaggedRelease,
 	}, {
@@ -51,6 +52,22 @@ func TestComputeRunType(t *testing.T) {
 			},
 		},
 		want: BextNightly,
+	}, {
+		name: "rfc795 internal release",
+		args: args{
+			env: map[string]string{
+				"RELEASE_INTERNAL": "true",
+			},
+		},
+		want: RFC795InternalRelease,
+	}, {
+		name: "rfc795 public release",
+		args: args{
+			env: map[string]string{
+				"RELEASE_PUBLIC": "true",
+			},
+		},
+		want: RFC795PromoteRelease,
 	}, {
 		name: "wolfi base image rebuild",
 		args: args{

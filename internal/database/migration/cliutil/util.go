@@ -223,7 +223,7 @@ func checkForMigratorUpdate(ctx context.Context) (latest string, hasUpdate bool,
 		return "", false, errors.Newf("last section in path is an invalid format: %s", latest)
 	}
 
-	isMigratorOutOfDate := oobmigration.CompareVersions(latestVersion, migratorVersion) == oobmigration.VersionOrderBefore || (latestPatch > migratorPatch)
+	isMigratorOutOfDate := oobmigration.CompareVersions(latestVersion, migratorVersion) == oobmigration.VersionOrderBefore || (latestVersion.Minor == migratorVersion.Minor && latestPatch > migratorPatch)
 
 	return latest, isMigratorOutOfDate, nil
 }

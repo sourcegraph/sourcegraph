@@ -1,0 +1,76 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "airgappedgen_lib",
+    srcs = [
+        "main.go",
+        "schema_description.go",
+    ],
+    embedsrcs = ["gcs_versions.json"],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/migrator/airgappedgen",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//lib/errors",
+        "@com_github_google_go_github_v55//github",
+        "@com_github_grafana_regexp//:regexp",
+        "@com_github_masterminds_semver//:semver",
+        "@com_github_sourcegraph_conc//pool",
+        "@org_golang_x_oauth2//:oauth2",
+    ],
+)
+
+go_binary(
+    name = "airgappedgen",
+    embed = [":airgappedgen_lib"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "tar_schema_descriptions",
+    srcs = [],
+    outs = ["schema_descriptions.tar"],
+    cmd = """\
+    if grep -q "STABLE_VERSION" bazel-out/stable-status.txt; then
+        # When we're stamping, we can find the current version in the stable-status.
+        stable_version="$$(cat bazel-out/stable-status.txt | grep STABLE_VERSION | cut -d' ' -f2)"
+        # Don't miss the not operator!
+        if ! [[ $$stable_version =~ ^[0-9]\\.[0-9]+\\.[0-9]+ ]]; then
+            echo "🟠 (//cmd/migrator/airgappedgen:tar_schema_descriptions) Stamping with dev version, will use "dev" as current version"
+            version="dev"
+        else
+            version="v$$stable_version"
+        fi
+    else
+        # When not, usually during local development, we just use dev instead.
+        version="dev"
+    fi
+    # Create the folder that we'll tar for the OCI container.
+    mkdir -p schema-descriptions/
+    # If we're building this without stamping, we don't want to generate anything.
+    # We leave an explanation to help debugging if something goes wrong and this end up
+    # in a tagged release.
+    if [ $$version = "dev" ]; then
+        echo "This is a dev version of the airgapped migrator, if you see this in production, please reach out the support" > schema-descriptions/README.md
+    else
+        set +u
+        if [[ -z "$$GH_TOKEN" ]]; then
+            echo "🔴 GH_TOKEN is not set. Please ensure it's set and accessible to Bazel."
+            echo "🔴 If you're running this locally, append --action_env=GH_TOKEN to make it visible to Bazel."
+            echo "🔴 If you see this in CI, please reach out on #discuss-dev-infra."
+            exit 1
+        fi
+        set -u
+        # Fetch all the database schema descriptions up to the version we're releasing right now.
+        $(execpath :airgappedgen) $$version schema-descriptions/
+    fi
+    if tar --version | grep -q bsdtar; then
+        tar -cf $@ --uid=0 --gid=0 --numeric-owner schema-descriptions/
+    else
+        tar -cf $@ --owner=:0 --group=:0 --numeric-owner schema-descriptions/
+    fi
+    """,
+    stamp = 1,
+    tags = ["requires-network"],
+    tools = [":airgappedgen"],
+    visibility = ["//cmd/migrator:__subpackages__"],
+)

@@ -16,12 +16,23 @@ const (
 	SourcegraphDockerDevRegistry = "us.gcr.io/sourcegraph-dev"
 	// SourcegraphDockerPublishRegistry is a public registry for final images, and does not require authentication to pull from.
 	SourcegraphDockerPublishRegistry = "index.docker.io/sourcegraph"
+	// SourcegraphInternalReleaseRegistry is a private registry storing internal releases.
+	SourcegraphInternalReleaseRegistry = "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-internal"
+	// SourcegraphPublicReleaseRegistry is a currently private registry for storing public releases.
+	SourcegraphPublicReleaseRegistry = "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-public"
 )
 
 // DevRegistryImage returns the name of the image for the given app and tag on the
 // private dev registry.
 func DevRegistryImage(app, tag string) string {
 	root := fmt.Sprintf("%s/%s", SourcegraphDockerDevRegistry, app)
+	return maybeTaggedImage(root, tag)
+}
+
+// InternalReleaseRegistry returns the name of the image for the given app and tag on the
+// internal releases private registry.
+func InternalReleaseRegistry(app, tag string) string {
+	root := fmt.Sprintf("%s/%s", SourcegraphInternalReleaseRegistry, app)
 	return maybeTaggedImage(root, tag)
 }
 

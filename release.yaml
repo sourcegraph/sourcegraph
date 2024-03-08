@@ -1,0 +1,84 @@
+meta:
+  productName: sourcegraph
+  repository: "github.com/sourcegraph/sourcegraph"
+  owners:
+    - "@sourcegraph/release"
+
+requirements:
+  - name: "curl"
+    cmd: "curl --help"
+  - name: "Buidkite access token"
+    env: BUILDKITE_ACCESS_TOKEN
+
+internal:
+  create:
+    steps:
+      patch:
+        - name: "buildkite"
+          cmd: |
+            echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
+            body=$(curl -s --fail-with-body -X POST "https://api.buildkite.com/v2/organizations/sourcegraph/pipelines/sourcegraph/builds" -H "Content-Type: application/json" -H "Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" -d '{
+                "commit": "HEAD",
+                "branch": "{{git.branch}}",
+                "message": "Internal release build for {{version}}",
+                "env": {
+                  "RELEASE_INTERNAL": "true",
+                  "VERSION": "{{tag}}"
+                }
+              }')
+            exit_code=$?
+
+            if [ $exit_code != 0 ]; then
+              echo "❌ Failed to create build on Buildkite, got:"
+              echo "--- raw body ---"
+              echo $body
+              echo "--- raw body ---"
+              exit $exit_code
+            else
+              echo "Build created, see:"
+              echo $body | jq .web_url
+            fi
+  finalize:
+    steps:
+      - name: "Register on release registry"
+        cmd: |
+          echo "pretending to call release registry api"
+
+test:
+  steps:
+    - name: "placeholder"
+      cmd: |
+        echo "-- pretending to test release ..."
+
+promoteToPublic:
+  create:
+    steps:
+      - name: "buildkite"
+        cmd: |
+          echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
+          body=$(curl -s --fail-with-body -X POST "https://api.buildkite.com/v2/organizations/sourcegraph/pipelines/sourcegraph/builds" -H "Content-Type: application/json" -H "Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" -d '{
+              "commit": "HEAD",
+              "branch": "{{git.branch}}",
+              "message": "Promoting internal release {{version}} to public",
+              "env": {
+                "RELEASE_PUBLIC": "true",
+                "VERSION": "{{tag}}"
+              }
+            }')
+          exit_code=$?
+
+          if [ $exit_code != 0 ]; then
+            echo "❌ Failed to create build on Buildkite, got:"
+            echo "--- raw body ---"
+            echo $body
+            echo "--- raw body ---"
+            exit $exit_code
+          else
+            echo "Build created, see:"
+            echo $body | jq .web_url
+          fi
+  finalize:
+    steps:
+      - name: "Register on release registry"
+        cmd: |
+          echo "pretending to call release registry api"

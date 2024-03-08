@@ -45,9 +45,13 @@ function create_push_command() {
 
 dev_registries=(
   "us.gcr.io/sourcegraph-dev"
+  # Temporary registry we use to test release process with internal releases
+  # "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-internal"
 )
 prod_registries=(
-  "index.docker.io/sourcegraph"
+  # "index.docker.io/sourcegraph"
+  # Temporary registry we use to test release process with public releases
+  "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-internal"
 )
 
 date_fragment="$(date +%Y-%m-%d)"
@@ -69,7 +73,8 @@ push_prod=false
 # ok: main-dry-run
 # ok: main-dry-run-123
 # no: main-foo
-if [[ "$BUILDKITE_BRANCH" =~ ^main$ ]] || [[ "$BUILDKITE_BRANCH" =~ ^docker-images-candidates-notest/.* ]]; then
+# TODO(rfc795)
+if [[ "$BUILDKITE_BRANCH" =~ ^rfc795/main ]]|| [[ "$BUILDKITE_BRANCH" =~ ^docker-images-candidates-notest/.* ]]; then
   dev_tags+=("insiders")
   prod_tags+=("insiders")
   push_prod=true
@@ -80,6 +85,11 @@ if [[ "$BUILDKITE_BRANCH" =~ ^main-dry-run/.*  ]]; then
   dev_tags+=("insiders")
   prod_tags+=("insiders")
   push_prod=false
+fi
+
+# TODO(rfc795)
+if [[ "$BUILDKITE_BRANCH" =~ ^rfc795/v[0-9.]+$ ]]; then
+  push_prod=true
 fi
 
 # All release branch builds must be published to prod tags to support

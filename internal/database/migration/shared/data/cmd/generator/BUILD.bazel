@@ -11,6 +11,7 @@ go_library(
     deps = [
         "//internal/database/migration/schemas",
         "//internal/database/migration/shared",
+        "//internal/database/migration/shared/data/cmd/generator/version",
         "//internal/database/migration/stitch",
         "//internal/oobmigration",
         "@com_github_sourcegraph_log//:log",
@@ -24,5 +25,6 @@ go_binary(
     x_defs = {
         "github.com/sourcegraph/sourcegraph/internal/version.version": "{STABLE_VERSION}",
         "github.com/sourcegraph/sourcegraph/internal/version.timestamp": "{VERSION_TIMESTAMP}",
+        "github.com/sourcegraph/sourcegraph/internal/database/migration/shared/data/cmd/generator/version.FinalVersionString": "{STABLE_VERSION}",
     },
 )

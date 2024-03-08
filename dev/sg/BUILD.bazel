@@ -10,6 +10,7 @@ go_library(
         "live.go",
         "main.go",
         "os.go",
+        "release_create.go",
         "sg_analytics.go",
         "sg_audit.go",
         "sg_backport.go",

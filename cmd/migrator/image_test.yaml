@@ -13,50 +13,17 @@ commandTests:
       - -u
     excludedOutput: ["^0"]
     exitCode: 0
+  - name: "has current database schema descriptions"
+    # Because the version prefix is generated on the fly, we can't write this
+    # as a file existence test. So instead, we just count the files in that folder
+    # to make sure we have at least three json files.
+    command: "sh"
+    args: ["-c", "[ $(ls -al /schema-descriptions/*-internal_database_schema*.json | wc -l) -eq 3 ]"]
 
 fileExistenceTests:
-  # Following files are fetched through GCS
-- name: '/schema-descriptions 3.20.0 schema'
-  path: '/schema-descriptions/v3.20.0-internal_database_schema.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
-- name: '/schema-descriptions 3.20.0 schema.codeintel does not exists'
-  path: '/schema-descriptions/v3.20.0-internal_database_schema.codeintel.json'
-  shouldExist: false
-  uid: 0
-  gid: 0
-
-- name: '/schema-descriptions 3.21.0 schema'
-  path: '/schema-descriptions/v3.21.0-internal_database_schema.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
-- name: '/schema-descriptions 3.21.0 schema.codeintel'
-  path: '/schema-descriptions/v3.21.0-internal_database_schema.codeintel.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
-- name: '/schema-descriptions 3.21.0 schema.codeinsights does not exists'
-  # We don't have codeinsights for that version, there should not be a file
-  path: '/schema-descriptions/v3.21.0-internal_database_schema.codeinsights.json'
-  shouldExist: false
-  uid: 0
-  gid: 0
-
-  # Following files are fetched through GitHub raw HTTP requests
-- name: '/schema-descriptions 5.0.1 schema'
-  path: '/schema-descriptions/v5.0.1-internal_database_schema.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
-- name: '/schema-descriptions 5.0.1 schema.codeintel'
-  path: '/schema-descriptions/v5.0.1-internal_database_schema.codeintel.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
-- name: '/schema-descriptions 5.0.1 schema.codeinsights'
-  path: '/schema-descriptions/v5.0.1-internal_database_schema.codeinsights.json'
-  shouldExist: true
-  uid: 0
-  gid: 0
+    # Unless built with stamping + VERSION, we won't end up with the schema descriptions here.
+    # Instead we should test that at release time to still guarnatee that our customers are getting
+    # the correct schemas.
+    # TODO https://github.com/sourcegraph/sourcegraph/issues/59721
+  - name: '/schema-descriptions README'
+    path: '/schema-descriptions/README.md'

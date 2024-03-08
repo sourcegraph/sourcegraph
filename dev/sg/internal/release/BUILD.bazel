@@ -3,15 +3,23 @@ load("//dev:go_defs.bzl", "go_test")
 
 go_library(
     name = "release",
-    srcs = ["cve.go"],
+    srcs = [
+        "config.go",
+        "cve.go",
+        "release.go",
+    ],
     importpath = "github.com/sourcegraph/sourcegraph/dev/sg/internal/release",
     visibility = ["//dev/sg:__subpackages__"],
     deps = [
         "//dev/sg/internal/bk",
+        "//dev/sg/internal/category",
         "//dev/sg/internal/std",
         "//lib/errors",
         "//lib/output",
         "@com_github_grafana_regexp//:regexp",
+        "@com_github_sourcegraph_run//:run",
+        "@com_github_urfave_cli_v2//:cli",
+        "@in_gopkg_yaml_v3//:yaml_v3",
     ],
 )
 

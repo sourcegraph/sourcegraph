@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/sourcegraph/sourcegraph/internal/database/migration/shared/data/cmd/generator/version"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration"
 )
 
@@ -13,11 +14,15 @@ const maxVersionString = "5.3.0"
 
 // MaxVersion is the highest known released version at the time the migrator was built.
 var MaxVersion = func() oobmigration.Version {
-	if version, ok := oobmigration.NewVersionFromString(maxVersionString); ok {
+	ver := maxVersionString
+	if version.FinalVersionString != "dev" {
+		ver = version.FinalVersionString
+	}
+	if version, ok := oobmigration.NewVersionFromString(ver); ok {
 		return version
 	}
 
-	panic(fmt.Sprintf("malformed maxVersionString %q", maxVersionString))
+	panic(fmt.Sprintf("malformed maxVersionString %q", ver))
 }()
 
 // MinVersion is the minimum version a migrator can support upgrading to a newer version of

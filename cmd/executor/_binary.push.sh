@@ -42,7 +42,15 @@ if [ "${EXECUTOR_IS_TAGGED_RELEASE}" = "true" ]; then
   # Without it, the tag will be empty and the gsutil rm -rf below will
   # drop the entire folder.
   if [ -z "$BUILDKITE_TAG" ] || [ "$BUILDKITE_TAG" = "" ]; then
-    exit 1
+    # But if a version is set and matches releases numbering scheme, we can
+    # still use this. It's
+    if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo ":warning: inferring \$BUILDKITE_TAG from \$VERSION"
+      export BUILDKITE_TAG="v${VERSION}"
+    else
+      echo ":red_circle: inferring \$BUILDKITE_TAG from \$VERSION"
+      exit 1
+    fi
   fi
 
   echo "Uploading binaries for the ${BUILDKITE_TAG} tag"

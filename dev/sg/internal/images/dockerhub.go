@@ -133,7 +133,7 @@ func (r *DockerHub) fetchDigest(repo string, tag string) (digest.Digest, error) 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		data, _ := io.ReadAll(resp.Body)
-		return "", errors.Newf("fetchDigest (%s) %s:%s, got %v: %s", r.host, repo, tag, resp.Status, string(data))
+		return "", errors.Newf("DockerHub fetchDigest (%s) %s:%s, got %v: %s", r.host, repo, tag, resp.Status, string(data))
 	}
 
 	d := resp.Header.Get("Docker-Content-Digest")

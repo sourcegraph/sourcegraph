@@ -16,6 +16,7 @@ go_library(
         "misc_operations.go",
         "operations.go",
         "pipeline.go",
+        "release_operations.go",
         "security_operations.go",
         "web-integration-workloads.go",
         "wolfi_operations.go",

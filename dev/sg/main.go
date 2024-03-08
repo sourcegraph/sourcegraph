@@ -15,6 +15,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/sg/ci"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/background"
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/release"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/secrets"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/sgconf"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
@@ -299,7 +300,7 @@ var sg = &cli.App{
 		funkyLogoCommand,
 		helpCommand,
 		installCommand,
-		releaseCommand,
+		release.Command(),
 		updateCommand,
 		versionCommand,
 	},
