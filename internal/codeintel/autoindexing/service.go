@@ -22,7 +22,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-type Service struct {
+type AutoIndexingService struct {
 	store           store.Store
 	repoStore       database.RepoStore
 	gitserverClient gitserver.Client
@@ -31,13 +31,14 @@ type Service struct {
 	operations      *operations
 }
 
+
 func newService(
 	observationCtx *observation.Context,
 	store store.Store,
 	inferenceSvc InferenceService,
 	repoStore database.RepoStore,
 	gitserverClient gitserver.Client,
-) *Service {
+) *AutoIndexingService {
 	// NOTE - this should go up a level in init.go.
 	// Not going to do this now so that we don't blow up all of the
 	// tests (which have pretty good coverage of the whole service).
@@ -61,7 +62,7 @@ func newService(
 		jobSelector,
 	)
 
-	return &Service{
+	return &AutoIndexingService{
 		store:           store,
 		repoStore:       repoStore,
 		gitserverClient: gitserverClient,
@@ -71,13 +72,13 @@ func newService(
 	}
 }
 
-func (s *Service) GetIndexConfigurationByRepositoryID(ctx context.Context, repositoryID int) (shared.IndexConfiguration, bool, error) {
+func (s *AutoIndexingService) GetIndexConfigurationByRepositoryID(ctx context.Context, repositoryID int) (shared.IndexConfiguration, bool, error) {
 	return s.store.GetIndexConfigurationByRepositoryID(ctx, repositoryID)
 }
 
 // InferIndexConfiguration looks at the repository contents at the latest commit on the default branch of the given
 // repository and determines an index configuration that is likely to succeed.
-func (s *Service) InferIndexConfiguration(ctx context.Context, repositoryID int, commit string, localOverrideScript string, bypassLimit bool) (_ *shared.InferenceResult, err error) {
+func (s *AutoIndexingService) InferIndexConfiguration(ctx context.Context, repositoryID int, commit string, localOverrideScript string, bypassLimit bool) (_ *shared.InferenceResult, err error) {
 	ctx, trace, endObservation := s.operations.inferIndexConfiguration.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("repositoryID", repositoryID),
 	}})
@@ -113,31 +114,31 @@ func (s *Service) InferIndexConfiguration(ctx context.Context, repositoryID int,
 	return s.InferIndexJobsFromRepositoryStructure(ctx, repositoryID, commit, localOverrideScript, bypassLimit)
 }
 
-func (s *Service) UpdateIndexConfigurationByRepositoryID(ctx context.Context, repositoryID int, data []byte) error {
+func (s *AutoIndexingService) UpdateIndexConfigurationByRepositoryID(ctx context.Context, repositoryID int, data []byte) error {
 	return s.store.UpdateIndexConfigurationByRepositoryID(ctx, repositoryID, data)
 }
 
-func (s *Service) QueueRepoRev(ctx context.Context, repositoryID int, rev string) error {
+func (s *AutoIndexingService) QueueRepoRev(ctx context.Context, repositoryID int, rev string) error {
 	return s.store.QueueRepoRev(ctx, repositoryID, rev)
 }
 
-func (s *Service) SetInferenceScript(ctx context.Context, script string) error {
+func (s *AutoIndexingService) SetInferenceScript(ctx context.Context, script string) error {
 	return s.store.SetInferenceScript(ctx, script)
 }
 
-func (s *Service) GetInferenceScript(ctx context.Context) (string, error) {
+func (s *AutoIndexingService) GetInferenceScript(ctx context.Context) (string, error) {
 	return s.store.GetInferenceScript(ctx)
 }
 
-func (s *Service) QueueIndexes(ctx context.Context, repositoryID int, rev, configuration string, force, bypassLimit bool) ([]uploadsshared.Index, error) {
+func (s *AutoIndexingService) QueueIndexes(ctx context.Context, repositoryID int, rev, configuration string, force, bypassLimit bool) ([]uploadsshared.Index, error) {
 	return s.indexEnqueuer.QueueIndexes(ctx, repositoryID, rev, configuration, force, bypassLimit)
 }
 
-func (s *Service) QueueIndexesForPackage(ctx context.Context, pkg dependencies.MinimialVersionedPackageRepo) error {
+func (s *AutoIndexingService) QueueIndexesForPackage(ctx context.Context, pkg dependencies.MinimialVersionedPackageRepo) error {
 	return s.indexEnqueuer.QueueIndexesForPackage(ctx, pkg)
 }
 
-func (s *Service) InferIndexJobsFromRepositoryStructure(ctx context.Context, repositoryID int, commit string, localOverrideScript string, bypassLimit bool) (*shared.InferenceResult, error) {
+func (s *AutoIndexingService) InferIndexJobsFromRepositoryStructure(ctx context.Context, repositoryID int, commit string, localOverrideScript string, bypassLimit bool) (*shared.InferenceResult, error) {
 	return s.jobSelector.InferIndexJobsFromRepositoryStructure(ctx, repositoryID, commit, localOverrideScript, bypassLimit)
 }
 
@@ -145,14 +146,14 @@ func IsLimitError(err error) bool {
 	return errors.As(err, &inference.LimitError{})
 }
 
-func (s *Service) GetRepositoriesForIndexScan(ctx context.Context, processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int, now time.Time) ([]int, error) {
-	return s.store.GetRepositoriesForIndexScan(ctx, processDelay, allowGlobalPolicies, repositoryMatchLimit, limit, now)
-}
+// func (s *Service) GetRepositoriesForIndexScan(ctx context.Context, processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int, now time.Time) ([]int, error) {
+// 	return s.store.GetRepositoriesForIndexScan(ctx, processDelay, allowGlobalPolicies, repositoryMatchLimit, limit, now)
+// }
 
-func (s *Service) RepositoryIDsWithConfiguration(ctx context.Context, offset, limit int) ([]uploadsshared.RepositoryWithAvailableIndexers, int, error) {
+func (s *AutoIndexingService) RepositoryIDsWithConfiguration(ctx context.Context, offset, limit int) ([]uploadsshared.RepositoryWithAvailableIndexers, int, error) {
 	return s.store.RepositoryIDsWithConfiguration(ctx, offset, limit)
 }
 
-func (s *Service) GetLastIndexScanForRepository(ctx context.Context, repositoryID int) (*time.Time, error) {
+func (s *AutoIndexingService) GetLastIndexScanForRepository(ctx context.Context, repositoryID int) (*time.Time, error) {
 	return s.store.GetLastIndexScanForRepository(ctx, repositoryID)
 }

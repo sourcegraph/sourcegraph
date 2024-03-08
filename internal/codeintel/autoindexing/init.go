@@ -7,6 +7,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/summary"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/inference"
 	autoindexingstore "github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/store"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
@@ -25,7 +26,7 @@ func NewService(
 	depsSvc DependenciesService,
 	policiesSvc PoliciesService,
 	gitserverClient gitserver.Client,
-) *Service {
+) *AutoIndexingService {
 	store := autoindexingstore.New(scopedContext("store", observationCtx), db)
 	inferenceSvc := inference.NewService(db)
 
@@ -49,17 +50,18 @@ func NewIndexSchedulers(
 	uploadSvc UploadService,
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
-	autoindexingSvc *Service,
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
+	autoindexingDeps AutoIndexingService,
 	repoStore database.RepoStore,
 ) []goroutine.BackgroundRoutine {
 	return background.NewIndexSchedulers(
 		scopedContext("scheduler", observationCtx),
 		policiesSvc,
 		policyMatcher,
-		autoindexingSvc,
-		autoindexingSvc.indexEnqueuer,
+		repoSchedulingSvc,
+		autoindexingDeps.indexEnqueuer,
 		repoStore,
-		autoindexingSvc.store,
+		autoindexingDeps.store,
 		SchedulerConfigInst,
 	)
 }
@@ -69,7 +71,7 @@ func NewDependencyIndexSchedulers(
 	db database.DB,
 	uploadSvc UploadService,
 	depsSvc DependenciesService,
-	autoindexingSvc *Service,
+	autoindexingSvc *AutoIndexingService,
 	repoUpdater RepoUpdaterClient,
 ) []goroutine.BackgroundRoutine {
 	return background.NewDependencyIndexSchedulers(
@@ -86,7 +88,7 @@ func NewDependencyIndexSchedulers(
 
 func NewSummaryBuilder(
 	observationCtx *observation.Context,
-	autoindexingSvc *Service,
+	autoindexingSvc *AutoIndexingService,
 	uploadSvc UploadService,
 ) []goroutine.BackgroundRoutine {
 	return background.NewSummaryBuilder(

@@ -34,7 +34,6 @@ type Store interface {
 	TruncateConfigurationSummary(ctx context.Context, numRecordsToRetain int) error
 
 	// Scheduler
-	GetRepositoriesForIndexScan(ctx context.Context, processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int, now time.Time) ([]int, error)
 	GetQueuedRepoRev(ctx context.Context, batchSize int) ([]RepoRev, error)
 	MarkRepoRevsAsProcessed(ctx context.Context, ids []int) error
 
