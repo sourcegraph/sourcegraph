@@ -12,6 +12,7 @@ go_library(
         "//internal/codeintel/dependencies",
         "//internal/codeintel/policies",
         "//internal/codeintel/ranking",
+        "//internal/codeintel/reposcheduler",
         "//internal/codeintel/sentinel",
         "//internal/codeintel/shared",
         "//internal/codeintel/uploads",

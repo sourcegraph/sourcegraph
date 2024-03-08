@@ -11,6 +11,7 @@ go_library(
         "//internal/codeintel/autoindexing/internal/background/summary",
         "//internal/codeintel/autoindexing/internal/jobselector",
         "//internal/codeintel/autoindexing/internal/store",
+        "//internal/codeintel/reposcheduler",
         "//internal/database",
         "//internal/goroutine",
         "//internal/observation",
