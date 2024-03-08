@@ -31,7 +31,6 @@ type AutoIndexingService struct {
 	operations      *operations
 }
 
-
 func newService(
 	observationCtx *observation.Context,
 	store store.Store,
