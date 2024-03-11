@@ -18,6 +18,7 @@ def container_dependencies(targets):
             name = "tar_{}".format(name),
             srcs = [target],
             remap_paths = {"/{}".format(name): "/usr/local/bin/{}".format(name)},
+            modes = {"/usr/local/bin/{}".format(name): "0555"},
         )
 
 def dependencies_tars(targets):
