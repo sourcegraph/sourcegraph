@@ -255,6 +255,19 @@ type CommitLog struct {
 	ChangedFiles []string
 }
 
+// ListRefsOpts are additional options passed to ListRefs.
+type ListRefsOpts struct {
+	// If true, only heads are returned. Can be combined with TagsOnly.
+	HeadsOnly bool
+	// If true, only tags are returned. Can be combined with HeadsOnly.
+	TagsOnly bool
+	// If set, only return refs that point at the given commit sha. Multiple
+	// values are ORed together.
+	PointsAtCommit []api.CommitID
+	// If set, only return refs that contain the given commit sha in their history.
+	Contains api.CommitID
+}
+
 // ArchiveOptions contains options for the Archive func.
 type ArchiveOptions struct {
 	Treeish string        // the tree or commit to produce an archive for
@@ -336,10 +349,7 @@ type Client interface {
 	IsRepoCloneable(context.Context, api.RepoName) error
 
 	// ListRefs returns a list of all refs in the repository.
-	ListRefs(ctx context.Context, repo api.RepoName) ([]gitdomain.Ref, error)
-
-	// ListBranches returns a list of all branches in the repository.
-	ListBranches(ctx context.Context, repo api.RepoName) ([]*gitdomain.Branch, error)
+	ListRefs(ctx context.Context, repo api.RepoName, opt ListRefsOpts) ([]gitdomain.Ref, error)
 
 	// MergeBase returns the merge base commit sha for the specified revspecs.
 	MergeBase(ctx context.Context, repo api.RepoName, base, head string) (api.CommitID, error)
@@ -409,9 +419,6 @@ type Client interface {
 	// FirstEverCommit returns the first commit ever made to the repository.
 	FirstEverCommit(ctx context.Context, repo api.RepoName) (*gitdomain.Commit, error)
 
-	// ListTags returns a list of all tags in the repository. If commitObjs is non-empty, only all tags pointing at those commits are returned.
-	ListTags(ctx context.Context, repo api.RepoName, commitObjs ...string) ([]*gitdomain.Tag, error)
-
 	// ListDirectoryChildren fetches the list of children under the given directory
 	// names. The result is a map keyed by the directory names with the list of files
 	// under each.
@@ -421,16 +428,6 @@ type Client interface {
 	// commits on a per-file basis. The iterator must be closed with Close when no
 	// longer required.
 	Diff(ctx context.Context, opts DiffOptions) (*DiffFileIterator, error)
-
-	// BranchesContaining returns a map from branch names to branch tip hashes for
-	// each branch containing the given commit.
-	// The returned branches will be in short form (e.g. "master" instead of
-	// "refs/heads/master").
-	BranchesContaining(ctx context.Context, repo api.RepoName, commit api.CommitID) ([]string, error)
-
-	// RefDescriptions returns a map from commits to descriptions of the tip of each
-	// branch and tag of the given repository.
-	RefDescriptions(ctx context.Context, repo api.RepoName, gitObjs ...string) (map[string][]gitdomain.RefDescription, error)
 
 	// CommitGraph returns the commit graph for the given repository as a mapping
 	// from a commit to its parents. If a commit is supplied, the returned graph will

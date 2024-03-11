@@ -275,6 +275,45 @@ func (r *observableReadCloser) Close() error {
 	return err
 }
 
+func (b *observableBackend) ListRefs(ctx context.Context, opt ListRefsOpts) (_ RefIterator, err error) {
+	ctx, errCollector, endObservation := b.operations.listRefs.WithErrors(ctx, &err, observation.Args{})
+	ctx, cancel := context.WithCancel(ctx)
+	endObservation.OnCancel(ctx, 1, observation.Args{})
+
+	concurrentOps.WithLabelValues("ListRefs").Inc()
+
+	it, err := b.backend.ListRefs(ctx, opt)
+	if err != nil {
+		concurrentOps.WithLabelValues("ListRefs").Dec()
+		cancel()
+		return nil, err
+	}
+
+	return &observableRefIterator{
+		inner: it,
+		onClose: func(err error) {
+			concurrentOps.WithLabelValues("ListRefs").Dec()
+			errCollector.Collect(&err)
+			cancel()
+		},
+	}, nil
+}
+
+type observableRefIterator struct {
+	inner   RefIterator
+	onClose func(err error)
+}
+
+func (hr *observableRefIterator) Next() (*gitdomain.Ref, error) {
+	return hr.inner.Next()
+}
+
+func (hr *observableRefIterator) Close() error {
+	err := hr.inner.Close()
+	hr.onClose(err)
+	return err
+}
+
 type operations struct {
 	configGet       *observation.Operation
 	configSet       *observation.Operation
@@ -289,6 +328,7 @@ type operations struct {
 	getCommit       *observation.Operation
 	archiveReader   *observation.Operation
 	resolveRevision *observation.Operation
+	listRefs        *observation.Operation
 }
 
 func newOperations(observationCtx *observation.Context) *operations {
@@ -330,6 +370,7 @@ func newOperations(observationCtx *observation.Context) *operations {
 		getCommit:       op("get-commit"),
 		archiveReader:   op("archive-reader"),
 		resolveRevision: op("resolve-revision"),
+		listRefs:        op("list-refs"),
 	}
 }
 

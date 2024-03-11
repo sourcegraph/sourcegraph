@@ -3837,16 +3837,6 @@ type Repository implements Node & GenericSearchResultInterface {
         other Git refs.
         """
         type: GitRefType
-        """
-        Ordering for Git refs in the list.
-        """
-        orderBy: GitRefOrder
-        """
-        Ordering is an expensive operation that doesn't scale for lots of
-        references. If this is true we fallback on not ordering. This should
-        never be false in interactive API requests.
-        """
-        interactive: Boolean = true
     ): GitRefConnection!
     """
     The repository's Git branches.
@@ -3860,16 +3850,6 @@ type Repository implements Node & GenericSearchResultInterface {
         Return Git branches whose names match the query.
         """
         query: String
-        """
-        Ordering for Git branches in the list.
-        """
-        orderBy: GitRefOrder
-        """
-        Ordering is an expensive operation that doesn't scale for lots of
-        references. If this is true we fallback on not ordering. This should
-        never be false in interactive API requests.
-        """
-        interactive: Boolean = true
     ): GitRefConnection!
     """
     The repository's Git tags.
@@ -5047,16 +5027,6 @@ enum GitRefType {
     A Git ref that is neither a branch nor tag.
     """
     GIT_REF_OTHER
-}
-
-"""
-Ordering options for Git refs.
-"""
-enum GitRefOrder {
-    """
-    By the authored or committed at date, whichever is more recent.
-    """
-    AUTHORED_OR_COMMITTED_AT
 }
 
 """

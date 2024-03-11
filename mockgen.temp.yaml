@@ -149,3 +149,4 @@
     - GitBackend
     - GitConfigBackend
     - BlameHunkReader
+    - RefIterator

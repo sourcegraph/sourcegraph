@@ -37,7 +37,7 @@ var (
 		"archive":      {"--worktree-attributes", "--format", "-0", "HEAD", "--"},
 		"ls-tree":      {"--name-only", "HEAD", "--long", "--full-name", "--object-only", "--", "-z", "-r", "-t"},
 		"ls-files":     {"--with-tree", "-z"},
-		"for-each-ref": {"--format", "--points-at"},
+		"for-each-ref": {"--format", "--points-at", "--sort", "-creatordate", "-refname", "-HEAD"},
 		"tag":          {"--list", "--sort", "-creatordate", "--format", "--points-at"},
 		"merge-base":   {"--"},
 		"show-ref":     {"--heads"},

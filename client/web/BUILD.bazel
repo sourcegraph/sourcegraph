@@ -1314,6 +1314,7 @@ ts_project(
         "src/repo/branches/RepositoryBranchesArea.tsx",
         "src/repo/branches/RepositoryBranchesNavbar.tsx",
         "src/repo/branches/RepositoryBranchesOverviewPage.tsx",
+        "src/repo/branches/backend.ts",
         "src/repo/cody/AskCodyButton.tsx",
         "src/repo/commit/CommitMessageWithLinks.tsx",
         "src/repo/commit/DiffModeSelector.tsx",

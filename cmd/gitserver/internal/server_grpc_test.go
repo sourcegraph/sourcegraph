@@ -776,6 +776,59 @@ func TestGRPCServer_ResolveRevision(t *testing.T) {
 	})
 }
 
+func TestGRPCServer_ListRefs(t *testing.T) {
+	ctx := context.Background()
+	t.Run("argument validation", func(t *testing.T) {
+		gs := &grpcServer{}
+		_, err := gs.ListRefs(ctx, &v1.ListRefsRequest{RepoName: ""})
+		require.ErrorContains(t, err, "repo must be specified")
+		assertGRPCStatusCode(t, err, codes.InvalidArgument)
+	})
+	t.Run("checks for uncloned repo", func(t *testing.T) {
+		svc := NewMockService()
+		svc.MaybeStartCloneFunc.SetDefaultReturn(&protocol.NotFoundPayload{CloneInProgress: true, CloneProgress: "cloning"}, false)
+		gs := &grpcServer{svc: svc}
+		_, err := gs.ListRefs(ctx, &v1.ListRefsRequest{RepoName: "therepo"})
+		require.Error(t, err)
+		assertGRPCStatusCode(t, err, codes.NotFound)
+		assertHasGRPCErrorDetailOfType(t, err, &proto.RepoNotFoundPayload{})
+		require.Contains(t, err.Error(), "repo not found")
+		mockassert.Called(t, svc.MaybeStartCloneFunc)
+	})
+	t.Run("e2e", func(t *testing.T) {
+		svc := NewMockService()
+		// Repo is cloned, proceed!
+		svc.MaybeStartCloneFunc.SetDefaultReturn(nil, true)
+		b := git.NewMockGitBackend()
+		it := git.NewMockRefIterator()
+		it.NextFunc.PushReturn(&gitdomain.Ref{Name: "refs/heads/master"}, nil)
+		it.NextFunc.PushReturn(nil, io.EOF)
+		b.ListRefsFunc.SetDefaultReturn(it, nil)
+		gs := &grpcServer{
+			svc: svc,
+			getBackendFunc: func(common.GitDir, api.RepoName) git.GitBackend {
+				return b
+			},
+		}
+
+		cli := spawnServer(t, gs)
+		res, err := cli.ListRefs(ctx, &v1.ListRefsRequest{
+			RepoName: "therepo",
+		})
+		require.NoError(t, err)
+		if diff := cmp.Diff(&proto.ListRefsResponse{
+			Refs: []*v1.GitRef{
+				{
+					RefName:   "refs/heads/master",
+					CreatedAt: timestamppb.New(time.Time{}),
+				},
+			},
+		}, res, cmpopts.IgnoreUnexported(proto.ListRefsResponse{}, proto.GitRef{}, timestamppb.Timestamp{})); diff != "" {
+			t.Fatalf("unexpected response (-want +got):\n%s", diff)
+		}
+	})
+}
+
 func assertGRPCStatusCode(t *testing.T, err error, want codes.Code) {
 	t.Helper()
 	s, ok := status.FromError(err)

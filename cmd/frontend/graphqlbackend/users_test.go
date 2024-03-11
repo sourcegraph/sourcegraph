@@ -275,10 +275,6 @@ func runUsersQuery(t *testing.T, schema *graphql.Schema, want usersQueryTest) {
 		Username string `json:"username"`
 	}
 
-	type pageInfo struct {
-		HasNextPage bool `json:"hasNextPage"`
-	}
-
 	type users struct {
 		Nodes      []node `json:"nodes"`
 		TotalCount *int   `json:"totalCount"`

@@ -558,7 +558,7 @@ func (r *Resolver) normalizeRepoRefs(
 		return nil, err
 	}
 
-	allRefs, err := r.gitserver.ListRefs(ctx, repo.Name)
+	allRefs, err := r.gitserver.ListRefs(ctx, repo.Name, gitserver.ListRefsOpts{})
 	if err != nil {
 		return nil, err
 	}

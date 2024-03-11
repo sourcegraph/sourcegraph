@@ -152,7 +152,7 @@ func parseEntry(rev string, content string) (*gitdomain.Hunk, error) {
 	if err != nil {
 		return nil, err
 	}
-	numLines, _ := strconv.Atoi(fields[2])
+	numLines, err := strconv.Atoi(fields[2])
 	if err != nil {
 		return nil, err
 	}

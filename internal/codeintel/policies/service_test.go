@@ -35,7 +35,7 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 		expectedMatches int
 		upload          shared.Upload
 		mockPolicies    []policiesshared.RetentionPolicyMatchCandidate
-		refDescriptions map[string][]gitdomain.RefDescription
+		refs            []gitdomain.Ref
 	}{
 		{
 			name:            "basic single upload match",
@@ -55,13 +55,12 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 					Matched: true,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef0": {
-					{
-						Name:            "v4.2.0",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "v4.2.0",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef0",
 				},
 			},
 		},
@@ -83,13 +82,12 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 					Matched: false,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef0": {
-					{
-						Name:            "v4.2.0",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "v4.2.0",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef0",
 				},
 			},
 		},
@@ -106,13 +104,12 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 					Matched:             true,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef0": {
-					{
-						Name:            "main",
-						Type:            gitdomain.RefTypeBranch,
-						IsDefaultBranch: true,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "main",
+					Type:     gitdomain.RefTypeBranch,
+					IsHead:   true,
+					CommitID: "deadbeef0",
 				},
 			},
 		},
@@ -143,13 +140,12 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 					Matched: false,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef0": {
-					{
-						Name:            "v4.2.0",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "v4.2.0",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef0",
 				},
 			},
 		},
@@ -171,20 +167,18 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 					Matched: true,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef1": {
-					{
-						Name:            "v4.2.0",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "v4.2.0",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef1",
 				},
-				"deadbeef0": {
-					{
-						Name:            "v4.1.9",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+				{
+					Name:     "v4.1.9",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef0",
 				},
 			},
 		},
@@ -195,7 +189,7 @@ func TestGetRetentionPolicyOverview(t *testing.T) {
 			expectedPolicyCandidates, mockedStorePolicies := mockConfigurationPolicies(c.mockPolicies)
 			mockStore.GetConfigurationPoliciesFunc.PushReturn(mockedStorePolicies, len(mockedStorePolicies), nil)
 
-			mockGitserverClient.RefDescriptionsFunc.PushReturn(c.refDescriptions, nil)
+			mockGitserverClient.ListRefsFunc.PushReturn(c.refs, nil)
 
 			matches, _, err := svc.GetRetentionPolicyOverview(context.Background(), c.upload, false, 10, 0, "", mockClock.Now())
 			if err != nil {
@@ -239,7 +233,7 @@ func TestRetentionPolicyOverview_ByVisibility(t *testing.T) {
 		upload          shared.Upload
 		mockPolicies    []policiesshared.RetentionPolicyMatchCandidate
 		visibleCommits  []string
-		refDescriptions map[string][]gitdomain.RefDescription
+		refs            []gitdomain.Ref
 		expectedMatches int
 	}{
 		{
@@ -262,13 +256,12 @@ func TestRetentionPolicyOverview_ByVisibility(t *testing.T) {
 					Matched:           true,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef1": {
-					{
-						Name:            "v4.2.0",
-						Type:            gitdomain.RefTypeTag,
-						IsDefaultBranch: false,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "v4.2.0",
+					Type:     gitdomain.RefTypeTag,
+					IsHead:   false,
+					CommitID: "deadbeef1",
 				},
 			},
 		},
@@ -287,13 +280,12 @@ func TestRetentionPolicyOverview_ByVisibility(t *testing.T) {
 					Matched:             true,
 				},
 			},
-			refDescriptions: map[string][]gitdomain.RefDescription{
-				"deadbeef1": {
-					{
-						Name:            "main",
-						Type:            gitdomain.RefTypeBranch,
-						IsDefaultBranch: true,
-					},
+			refs: []gitdomain.Ref{
+				{
+					Name:     "main",
+					Type:     gitdomain.RefTypeBranch,
+					IsHead:   true,
+					CommitID: "deadbeef1",
 				},
 			},
 		},
@@ -305,7 +297,7 @@ func TestRetentionPolicyOverview_ByVisibility(t *testing.T) {
 			mockStore.GetConfigurationPoliciesFunc.PushReturn(mockedStorePolicies, len(mockedStorePolicies), nil)
 			mockUploadSvc.GetCommitsVisibleToUploadFunc.PushReturn(c.visibleCommits, nil, nil)
 
-			mockGitserverClient.RefDescriptionsFunc.PushReturn(c.refDescriptions, nil)
+			mockGitserverClient.ListRefsFunc.PushReturn(c.refs, nil)
 
 			matches, _, err := svc.GetRetentionPolicyOverview(context.Background(), c.upload, false, 10, 0, "", mockClock.Now())
 			if err != nil {

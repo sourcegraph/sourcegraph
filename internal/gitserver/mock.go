@@ -60,6 +60,9 @@ type MockGitserverServiceClient struct {
 	// ListGitoliteFunc is an instance of a mock function object controlling
 	// the behavior of the method ListGitolite.
 	ListGitoliteFunc *GitserverServiceClientListGitoliteFunc
+	// ListRefsFunc is an instance of a mock function object controlling the
+	// behavior of the method ListRefs.
+	ListRefsFunc *GitserverServiceClientListRefsFunc
 	// MergeBaseFunc is an instance of a mock function object controlling
 	// the behavior of the method MergeBase.
 	MergeBaseFunc *GitserverServiceClientMergeBaseFunc
@@ -168,6 +171,11 @@ func NewMockGitserverServiceClient() *MockGitserverServiceClient {
 		},
 		ListGitoliteFunc: &GitserverServiceClientListGitoliteFunc{
 			defaultHook: func(context.Context, *v1.ListGitoliteRequest, ...grpc.CallOption) (r0 *v1.ListGitoliteResponse, r1 error) {
+				return
+			},
+		},
+		ListRefsFunc: &GitserverServiceClientListRefsFunc{
+			defaultHook: func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (r0 *v1.ListRefsResponse, r1 error) {
 				return
 			},
 		},
@@ -309,6 +317,11 @@ func NewStrictMockGitserverServiceClient() *MockGitserverServiceClient {
 				panic("unexpected invocation of MockGitserverServiceClient.ListGitolite")
 			},
 		},
+		ListRefsFunc: &GitserverServiceClientListRefsFunc{
+			defaultHook: func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error) {
+				panic("unexpected invocation of MockGitserverServiceClient.ListRefs")
+			},
+		},
 		MergeBaseFunc: &GitserverServiceClientMergeBaseFunc{
 			defaultHook: func(context.Context, *v1.MergeBaseRequest, ...grpc.CallOption) (*v1.MergeBaseResponse, error) {
 				panic("unexpected invocation of MockGitserverServiceClient.MergeBase")
@@ -420,6 +433,9 @@ func NewMockGitserverServiceClientFrom(i v1.GitserverServiceClient) *MockGitserv
 		},
 		ListGitoliteFunc: &GitserverServiceClientListGitoliteFunc{
 			defaultHook: i.ListGitolite,
+		},
+		ListRefsFunc: &GitserverServiceClientListRefsFunc{
+			defaultHook: i.ListRefs,
 		},
 		MergeBaseFunc: &GitserverServiceClientMergeBaseFunc{
 			defaultHook: i.MergeBase,
@@ -2027,6 +2043,126 @@ func (c GitserverServiceClientListGitoliteFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitserverServiceClientListGitoliteFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitserverServiceClientListRefsFunc describes the behavior when the
+// ListRefs method of the parent MockGitserverServiceClient instance is
+// invoked.
+type GitserverServiceClientListRefsFunc struct {
+	defaultHook func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error)
+	hooks       []func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error)
+	history     []GitserverServiceClientListRefsFuncCall
+	mutex       sync.Mutex
+}
+
+// ListRefs delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitserverServiceClient) ListRefs(v0 context.Context, v1 *v1.ListRefsRequest, v2 ...grpc.CallOption) (*v1.ListRefsResponse, error) {
+	r0, r1 := m.ListRefsFunc.nextHook()(v0, v1, v2...)
+	m.ListRefsFunc.appendCall(GitserverServiceClientListRefsFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the ListRefs method of
+// the parent MockGitserverServiceClient instance is invoked and the hook
+// queue is empty.
+func (f *GitserverServiceClientListRefsFunc) SetDefaultHook(hook func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// ListRefs method of the parent MockGitserverServiceClient instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *GitserverServiceClientListRefsFunc) PushHook(hook func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitserverServiceClientListRefsFunc) SetDefaultReturn(r0 *v1.ListRefsResponse, r1 error) {
+	f.SetDefaultHook(func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitserverServiceClientListRefsFunc) PushReturn(r0 *v1.ListRefsResponse, r1 error) {
+	f.PushHook(func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error) {
+		return r0, r1
+	})
+}
+
+func (f *GitserverServiceClientListRefsFunc) nextHook() func(context.Context, *v1.ListRefsRequest, ...grpc.CallOption) (*v1.ListRefsResponse, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitserverServiceClientListRefsFunc) appendCall(r0 GitserverServiceClientListRefsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitserverServiceClientListRefsFuncCall
+// objects describing the invocations of this function.
+func (f *GitserverServiceClientListRefsFunc) History() []GitserverServiceClientListRefsFuncCall {
+	f.mutex.Lock()
+	history := make([]GitserverServiceClientListRefsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitserverServiceClientListRefsFuncCall is an object that describes an
+// invocation of method ListRefs on an instance of
+// MockGitserverServiceClient.
+type GitserverServiceClientListRefsFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 *v1.ListRefsRequest
+	// Arg2 is a slice containing the values of the variadic arguments
+	// passed to this method invocation.
+	Arg2 []grpc.CallOption
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *v1.ListRefsResponse
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation. The variadic slice argument is flattened in this array such
+// that one positional argument and three variadic arguments would result in
+// a slice of four, not two.
+func (c GitserverServiceClientListRefsFuncCall) Args() []interface{} {
+	trailing := []interface{}{}
+	for _, val := range c.Arg2 {
+		trailing = append(trailing, val)
+	}
+
+	return append([]interface{}{c.Arg0, c.Arg1}, trailing...)
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitserverServiceClientListRefsFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 

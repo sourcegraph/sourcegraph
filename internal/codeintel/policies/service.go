@@ -245,7 +245,7 @@ func (s *Service) GetPreviewGitObjectFilter(
 			gitObjects = append(gitObjects, GitObject{
 				Name:        policyMatch.Name,
 				Rev:         commit,
-				CommittedAt: *policyMatch.CommittedAt,
+				CommittedAt: policyMatch.CommittedAt,
 			})
 		}
 	}

@@ -45,6 +45,7 @@ const (
 	GitserverService_ReadFile_FullMethodName                    = "/gitserver.v1.GitserverService/ReadFile"
 	GitserverService_GetCommit_FullMethodName                   = "/gitserver.v1.GitserverService/GetCommit"
 	GitserverService_ResolveRevision_FullMethodName             = "/gitserver.v1.GitserverService/ResolveRevision"
+	GitserverService_ListRefs_FullMethodName                    = "/gitserver.v1.GitserverService/ListRefs"
 )
 
 // GitserverServiceClient is the client API for GitserverService service.
@@ -145,6 +146,19 @@ type GitserverServiceClient interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(ctx context.Context, in *ResolveRevisionRequest, opts ...grpc.CallOption) (*ResolveRevisionResponse, error)
+	// ListRefs returns a list of all the refs known to the repository, this includes
+	// heads, tags, and other potential refs, but filters can be applied.
+	//
+	// The refs are ordered in the following order:
+	// HEAD first, if part of the result set.
+	// The rest will be ordered by creation date, in descending order, i.e., newest
+	// first.
+	// If two resources are created at the same timestamp, the records are ordered
+	// alphabetically.
+	//
+	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
+	// error will be returned, with a RepoNotFoundPayload in the details.
+	ListRefs(ctx context.Context, in *ListRefsRequest, opts ...grpc.CallOption) (*ListRefsResponse, error)
 }
 
 type gitserverServiceClient struct {
@@ -529,6 +543,15 @@ func (c *gitserverServiceClient) ResolveRevision(ctx context.Context, in *Resolv
 	return out, nil
 }
 
+func (c *gitserverServiceClient) ListRefs(ctx context.Context, in *ListRefsRequest, opts ...grpc.CallOption) (*ListRefsResponse, error) {
+	out := new(ListRefsResponse)
+	err := c.cc.Invoke(ctx, GitserverService_ListRefs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GitserverServiceServer is the server API for GitserverService service.
 // All implementations must embed UnimplementedGitserverServiceServer
 // for forward compatibility
@@ -627,6 +650,19 @@ type GitserverServiceServer interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error)
+	// ListRefs returns a list of all the refs known to the repository, this includes
+	// heads, tags, and other potential refs, but filters can be applied.
+	//
+	// The refs are ordered in the following order:
+	// HEAD first, if part of the result set.
+	// The rest will be ordered by creation date, in descending order, i.e., newest
+	// first.
+	// If two resources are created at the same timestamp, the records are ordered
+	// alphabetically.
+	//
+	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
+	// error will be returned, with a RepoNotFoundPayload in the details.
+	ListRefs(context.Context, *ListRefsRequest) (*ListRefsResponse, error)
 	mustEmbedUnimplementedGitserverServiceServer()
 }
 
@@ -711,6 +747,9 @@ func (UnimplementedGitserverServiceServer) GetCommit(context.Context, *GetCommit
 }
 func (UnimplementedGitserverServiceServer) ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveRevision not implemented")
+}
+func (UnimplementedGitserverServiceServer) ListRefs(context.Context, *ListRefsRequest) (*ListRefsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRefs not implemented")
 }
 func (UnimplementedGitserverServiceServer) mustEmbedUnimplementedGitserverServiceServer() {}
 
@@ -1216,6 +1255,24 @@ func _GitserverService_ResolveRevision_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitserverService_ListRefs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRefsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverServiceServer).ListRefs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverService_ListRefs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverServiceServer).ListRefs(ctx, req.(*ListRefsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GitserverService_ServiceDesc is the grpc.ServiceDesc for GitserverService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1302,6 +1359,10 @@ var GitserverService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveRevision",
 			Handler:    _GitserverService_ResolveRevision_Handler,
+		},
+		{
+			MethodName: "ListRefs",
+			Handler:    _GitserverService_ListRefs_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

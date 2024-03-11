@@ -21,9 +21,7 @@ type operations struct {
 	getBehindAhead           *observation.Operation
 	getCommit                *observation.Operation
 	hasCommitAfter           *observation.Operation
-	listBranches             *observation.Operation
 	listRefs                 *observation.Operation
-	listTags                 *observation.Operation
 	lstat                    *observation.Operation
 	mergeBase                *observation.Operation
 	newFileReader            *observation.Operation
@@ -51,8 +49,6 @@ type operations struct {
 	createCommitFromPatch    *observation.Operation
 	getObject                *observation.Operation
 	commitGraph              *observation.Operation
-	refDescriptions          *observation.Operation
-	branchesContaining       *observation.Operation
 	commitsUniqueToBranch    *observation.Operation
 	getDefaultBranch         *observation.Operation
 	listDirectoryChildren    *observation.Operation
@@ -118,9 +114,7 @@ func newOperations(observationCtx *observation.Context) *operations {
 		getBehindAhead:           op("GetBehindAhead"),
 		getCommit:                op("GetCommit"),
 		hasCommitAfter:           op("HasCommitAfter"),
-		listBranches:             op("ListBranches"),
 		listRefs:                 op("ListRefs"),
-		listTags:                 op("ListTags"),
 		lstat:                    subOp("lStat"),
 		mergeBase:                op("MergeBase"),
 		newFileReader:            op("NewFileReader"),
@@ -148,8 +142,6 @@ func newOperations(observationCtx *observation.Context) *operations {
 		createCommitFromPatch:    op("CreateCommitFromPatch"),
 		getObject:                op("GetObject"),
 		commitGraph:              op("CommitGraph"),
-		refDescriptions:          op("RefDescriptions"),
-		branchesContaining:       op("BranchesContaining"),
 		commitsUniqueToBranch:    op("CommitsUniqueToBranch"),
 		getDefaultBranch:         op("GetDefaultBranch"),
 		listDirectoryChildren:    op("ListDirectoryChildren"),

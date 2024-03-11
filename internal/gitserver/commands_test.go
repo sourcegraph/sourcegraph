@@ -1,7 +1,6 @@
 package gitserver
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -623,90 +621,6 @@ func TestListDirectoryChildren(t *testing.T) {
 		"dir3/": nil,
 	}
 	if diff := cmp.Diff(expected, children); diff != "" {
-		t.Fatal(diff)
-	}
-}
-
-func TestListTags(t *testing.T) {
-	ClientMocks.LocalGitserver = true
-	defer ResetClientMocks()
-
-	dateEnv := "GIT_COMMITTER_NAME=a GIT_COMMITTER_EMAIL=a@a.com GIT_COMMITTER_DATE=2006-01-02T15:04:05Z"
-	gitCommands := []string{
-		dateEnv + " git commit --allow-empty -m foo --author='a <a@a.com>' --date 2006-01-02T15:04:05Z",
-		"git tag t0",
-		"git tag t1",
-		dateEnv + " git tag --annotate -m foo t2",
-		dateEnv + " git commit --allow-empty -m foo --author='a <a@a.com>' --date 2006-01-02T15:04:05Z",
-		"git tag t3",
-	}
-
-	repo := MakeGitRepository(t, gitCommands...)
-	wantTags := []*gitdomain.Tag{
-		{Name: "t0", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t1", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t2", CommitID: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-		{Name: "t3", CommitID: "afeafc4a918c144329807df307e68899e6b65018", CreatorDate: MustParseTime(time.RFC3339, "2006-01-02T15:04:05Z")},
-	}
-
-	client := NewClient("test")
-	tags, err := client.ListTags(context.Background(), repo)
-	require.Nil(t, err)
-
-	sort.Sort(sortedTags(tags))
-	sort.Sort(sortedTags(wantTags))
-
-	if diff := cmp.Diff(wantTags, tags); diff != "" {
-		t.Fatalf("tag mismatch (-want +got):\n%s", diff)
-	}
-
-	tags, err = client.ListTags(context.Background(), repo, "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8")
-	require.Nil(t, err)
-	if diff := cmp.Diff(wantTags[:3], tags); diff != "" {
-		t.Fatalf("tag mismatch (-want +got):\n%s", diff)
-	}
-
-	tags, err = client.ListTags(context.Background(), repo, "afeafc4a918c144329807df307e68899e6b65018")
-	require.Nil(t, err)
-	if diff := cmp.Diff([]*gitdomain.Tag{wantTags[3]}, tags); diff != "" {
-		t.Fatalf("tag mismatch (-want +got):\n%s", diff)
-	}
-}
-
-type sortedTags []*gitdomain.Tag
-
-func (p sortedTags) Len() int           { return len(p) }
-func (p sortedTags) Less(i, j int) bool { return p[i].Name < p[j].Name }
-func (p sortedTags) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-
-// See https://github.com/sourcegraph/sourcegraph/issues/5453
-func TestParseTags_WithoutCreatorDate(t *testing.T) {
-	have, err := parseTags([]byte(
-		"9ee1c939d1cb936b1f98e8d81aeffab57bae46ab\x00v2.6.12\x001119037709\n" +
-			"c39ae07f393806ccf406ef966e9a15afc43cc36a\x00v2.6.11-tree\x00\n" +
-			"c39ae07f393806ccf406ef966e9a15afc43cc36a\x00v2.6.11\x00\n",
-	))
-	if err != nil {
-		t.Fatalf("parseTags: have err %v, want nil", err)
-	}
-
-	want := []*gitdomain.Tag{
-		{
-			Name:        "v2.6.12",
-			CommitID:    "9ee1c939d1cb936b1f98e8d81aeffab57bae46ab",
-			CreatorDate: time.Unix(1119037709, 0).UTC(),
-		},
-		{
-			Name:     "v2.6.11-tree",
-			CommitID: "c39ae07f393806ccf406ef966e9a15afc43cc36a",
-		},
-		{
-			Name:     "v2.6.11",
-			CommitID: "c39ae07f393806ccf406ef966e9a15afc43cc36a",
-		},
-	}
-
-	if diff := cmp.Diff(have, want); diff != "" {
 		t.Fatal(diff)
 	}
 }
@@ -1522,224 +1436,6 @@ func TestParseCommitsUniqueToBranch(t *testing.T) { // KEEP
 	}
 }
 
-func TestParseBranchesContaining(t *testing.T) { // KEEP
-	names := parseBranchesContaining([]string{
-		"refs/tags/v0.7.0",
-		"refs/tags/v0.5.1",
-		"refs/tags/v1.1.4",
-		"refs/heads/symbols", "refs/heads/bl/symbols",
-		"refs/tags/v1.2.0",
-		"refs/tags/v1.1.0",
-		"refs/tags/v0.10.0",
-		"refs/tags/v1.0.0",
-		"refs/heads/garo/index-specific-files",
-		"refs/heads/bl/symbols-2",
-		"refs/tags/v1.3.1",
-		"refs/tags/v0.5.2",
-		"refs/tags/v1.1.2",
-		"refs/tags/v0.8.0",
-		"refs/heads/ef/wtf",
-		"refs/tags/v1.5.0",
-		"refs/tags/v0.9.0",
-		"refs/heads/garo/go-and-typescript-lsif-indexing",
-		"refs/heads/master",
-		"refs/heads/sg/document-symbols",
-		"refs/tags/v1.1.1",
-		"refs/tags/v1.4.0",
-		"refs/heads/nsc/bump-go-version",
-		"refs/heads/nsc/random",
-		"refs/heads/nsc/markupcontent",
-		"refs/tags/v0.6.0",
-		"refs/tags/v1.1.3",
-		"refs/tags/v0.5.3",
-		"refs/tags/v1.3.0",
-	})
-
-	expectedNames := []string{
-		"bl/symbols",
-		"bl/symbols-2",
-		"ef/wtf",
-		"garo/go-and-typescript-lsif-indexing",
-		"garo/index-specific-files",
-		"master",
-		"nsc/bump-go-version",
-		"nsc/markupcontent",
-		"nsc/random",
-		"sg/document-symbols",
-		"symbols",
-		"v0.10.0",
-		"v0.5.1",
-		"v0.5.2",
-		"v0.5.3",
-		"v0.6.0",
-		"v0.7.0",
-		"v0.8.0",
-		"v0.9.0",
-		"v1.0.0",
-		"v1.1.0",
-		"v1.1.1",
-		"v1.1.2",
-		"v1.1.3",
-		"v1.1.4",
-		"v1.2.0",
-		"v1.3.0",
-		"v1.3.1",
-		"v1.4.0",
-		"v1.5.0",
-	}
-	if diff := cmp.Diff(expectedNames, names); diff != "" {
-		t.Errorf("unexpected names (-want +got):\n%s", diff)
-	}
-}
-
-func TestParseRefDescriptions(t *testing.T) { // KEEP
-	refDescriptions, err := parseRefDescriptions(bytes.Join([][]byte{
-		[]byte("66a7ac584740245fc523da443a3f540a52f8af72\x00refs/heads/bl/symbols\x00 \x001611017211"),
-		[]byte("58537c06cf7ba8a562a3f5208fb7a8efbc971d0e\x00refs/heads/bl/symbols-2\x00 \x001614176480"),
-		[]byte("a40716031ae97ee7c5cdf1dec913567a4a7c50c8\x00refs/heads/ef/wtf\x00 \x001612975808"),
-		[]byte("e2e283fdaf6ea4a419cdbad142bbfd4b730080f8\x00refs/heads/garo/go-and-typescript-lsif-indexing\x00 \x001588178746"),
-		[]byte("c485d92c3d2065041bf29b3fe0b55ffac7e66b2a\x00refs/heads/garo/index-specific-files\x00 \x001614632982"),
-		[]byte("ce30aee6cc56f39d0ac6fee03c4c151c08a8cd2e\x00refs/heads/master\x00*\x001623869469"),
-		[]byte("ec5cfc8ab33370c698273b1a097af73ea289c92b\x00refs/heads/nsc/bump-go-version\x00 \x001615588397"),
-		[]byte("22b2c4f734f62060cae69da856fe3854defdcc87\x00refs/heads/nsc/markupcontent\x00 \x001620082202"),
-		[]byte("9df3358a18792fa9dbd40d506f2e0ad23fc11ee8\x00refs/heads/nsc/random\x00 \x001612974546"),
-		[]byte("a02b85b63345a1406d7a19727f7a5472c976e053\x00refs/heads/sg/document-symbols\x00 \x001617921183"),
-		[]byte("234b0a484519129b251164ecb0674ec27d154d2f\x00refs/heads/symbols\x00 \x001609570315"),
-		[]byte("6b5ae2e0ce568a7641174072271d109d7d0977c7\x00refs/tags/v0.0.0\x00 \x00"),
-		[]byte("c165bfff52e9d4f87891bba497e3b70fea144d89\x00refs/tags/v0.10.0\x00 \x001596547410"),
-		[]byte("f73ee8ed601efea74f3b734eeb073307e1615606\x00refs/tags/v0.5.1\x00 \x001587067581"),
-		[]byte("6057f7ed8d331c82030c713b650fc8fd2c0c2347\x00refs/tags/v0.5.2\x00 \x001587068426"),
-		[]byte("7886287b8758d1baf19cf7b8253856128369a2a7\x00refs/tags/v0.5.3\x00 \x001587070558"),
-		[]byte("b69f89473bbcc04dc52cafaf6baa504e34791f5a\x00refs/tags/v0.6.0\x00 \x001587399049"),
-		[]byte("172b7fcf8b8c49b37b231693433586c2bfd1619e\x00refs/tags/v0.7.0\x00 \x001587400656"),
-		[]byte("5bc35c78fb5fb388891ca944cd12d85fd6dede95\x00refs/tags/v0.8.0\x00 \x001588701198"),
-		[]byte("14faa49ef098df9488536ca3c9b26d79e6bec4d6\x00refs/tags/v0.9.0\x00 \x001594754800"),
-		[]byte("0a82af8b6914d8c81326eee5f3a7e1d1106547f1\x00refs/tags/v1.0.0\x00 \x001597883619"),
-		[]byte("262defb72b96261a7d56b000d438c5c7ec6d0f3e\x00refs/tags/v1.1.0\x00 \x001598037344"),
-		[]byte("806b96eb544e7e632a617c26402eccee6d67faed\x00refs/tags/v1.1.1\x00 \x001598043755"),
-		[]byte("5d8865d6feacb4fce3313cade2c61dc29c6271e6\x00refs/tags/v1.1.2\x00 \x001598121926"),
-		[]byte("8c45a5635cf0a4968cc8c9dac2d61c388b53251e\x00refs/tags/v1.1.3\x00 \x001598368246"),
-		[]byte("fc212da31ce157ef0795e934381509c5a50654f6\x00refs/tags/v1.1.4\x00 \x001598468567"),
-		[]byte("4fd8b2c3522df32ffc8be983d42c3a504cc75fbc\x00refs/tags/v1.2.0\x00 \x001599490363"),
-		[]byte("9741f54aa0f14be1103b00c89406393ea4d8a08a\x00refs/tags/v1.3.0\x00 \x001612999291"),
-		[]byte("b358977103d2d66e2a3fc5f8081075c2834c4936\x00refs/tags/v1.3.1\x00 \x001614197805"),
-		[]byte("2882ad236da4b649b4c1259d815bf1a378e3b92f\x00refs/tags/v1.4.0\x00 \x001620920462"),
-		[]byte("340b84452286c18000afad9b140a32212a82840a\x00refs/tags/v1.5.0\x00 \x001621554101"),
-	}, []byte("\n")))
-	if err != nil {
-		t.Fatalf("unexpected error parsing ref descriptions: %s", err)
-	}
-
-	makeBranch := func(name, createdDate string, isDefaultBranch bool) gitdomain.RefDescription {
-		return gitdomain.RefDescription{Name: name, Type: gitdomain.RefTypeBranch, IsDefaultBranch: isDefaultBranch, CreatedDate: mustParseDate(createdDate, t)}
-	}
-
-	makeTag := func(name, createdDate string) gitdomain.RefDescription {
-		return gitdomain.RefDescription{Name: name, Type: gitdomain.RefTypeTag, IsDefaultBranch: false, CreatedDate: mustParseDate(createdDate, t)}
-	}
-
-	expectedRefDescriptions := map[string][]gitdomain.RefDescription{
-		"66a7ac584740245fc523da443a3f540a52f8af72": {makeBranch("bl/symbols", "2021-01-18T16:46:51-08:00", false)},
-		"58537c06cf7ba8a562a3f5208fb7a8efbc971d0e": {makeBranch("bl/symbols-2", "2021-02-24T06:21:20-08:00", false)},
-		"a40716031ae97ee7c5cdf1dec913567a4a7c50c8": {makeBranch("ef/wtf", "2021-02-10T10:50:08-06:00", false)},
-		"e2e283fdaf6ea4a419cdbad142bbfd4b730080f8": {makeBranch("garo/go-and-typescript-lsif-indexing", "2020-04-29T16:45:46+00:00", false)},
-		"c485d92c3d2065041bf29b3fe0b55ffac7e66b2a": {makeBranch("garo/index-specific-files", "2021-03-01T13:09:42-08:00", false)},
-		"ce30aee6cc56f39d0ac6fee03c4c151c08a8cd2e": {makeBranch("master", "2021-06-16T11:51:09-07:00", true)},
-		"ec5cfc8ab33370c698273b1a097af73ea289c92b": {makeBranch("nsc/bump-go-version", "2021-03-12T22:33:17+00:00", false)},
-		"22b2c4f734f62060cae69da856fe3854defdcc87": {makeBranch("nsc/markupcontent", "2021-05-03T23:50:02+01:00", false)},
-		"9df3358a18792fa9dbd40d506f2e0ad23fc11ee8": {makeBranch("nsc/random", "2021-02-10T16:29:06+00:00", false)},
-		"a02b85b63345a1406d7a19727f7a5472c976e053": {makeBranch("sg/document-symbols", "2021-04-08T15:33:03-07:00", false)},
-		"234b0a484519129b251164ecb0674ec27d154d2f": {makeBranch("symbols", "2021-01-01T22:51:55-08:00", false)},
-		"6b5ae2e0ce568a7641174072271d109d7d0977c7": {gitdomain.RefDescription{Name: "v0.0.0", Type: gitdomain.RefTypeTag, IsDefaultBranch: false}},
-		"c165bfff52e9d4f87891bba497e3b70fea144d89": {makeTag("v0.10.0", "2020-08-04T08:23:30-05:00")},
-		"f73ee8ed601efea74f3b734eeb073307e1615606": {makeTag("v0.5.1", "2020-04-16T16:06:21-04:00")},
-		"6057f7ed8d331c82030c713b650fc8fd2c0c2347": {makeTag("v0.5.2", "2020-04-16T16:20:26-04:00")},
-		"7886287b8758d1baf19cf7b8253856128369a2a7": {makeTag("v0.5.3", "2020-04-16T16:55:58-04:00")},
-		"b69f89473bbcc04dc52cafaf6baa504e34791f5a": {makeTag("v0.6.0", "2020-04-20T12:10:49-04:00")},
-		"172b7fcf8b8c49b37b231693433586c2bfd1619e": {makeTag("v0.7.0", "2020-04-20T12:37:36-04:00")},
-		"5bc35c78fb5fb388891ca944cd12d85fd6dede95": {makeTag("v0.8.0", "2020-05-05T12:53:18-05:00")},
-		"14faa49ef098df9488536ca3c9b26d79e6bec4d6": {makeTag("v0.9.0", "2020-07-14T14:26:40-05:00")},
-		"0a82af8b6914d8c81326eee5f3a7e1d1106547f1": {makeTag("v1.0.0", "2020-08-19T19:33:39-05:00")},
-		"262defb72b96261a7d56b000d438c5c7ec6d0f3e": {makeTag("v1.1.0", "2020-08-21T14:15:44-05:00")},
-		"806b96eb544e7e632a617c26402eccee6d67faed": {makeTag("v1.1.1", "2020-08-21T16:02:35-05:00")},
-		"5d8865d6feacb4fce3313cade2c61dc29c6271e6": {makeTag("v1.1.2", "2020-08-22T13:45:26-05:00")},
-		"8c45a5635cf0a4968cc8c9dac2d61c388b53251e": {makeTag("v1.1.3", "2020-08-25T10:10:46-05:00")},
-		"fc212da31ce157ef0795e934381509c5a50654f6": {makeTag("v1.1.4", "2020-08-26T14:02:47-05:00")},
-		"4fd8b2c3522df32ffc8be983d42c3a504cc75fbc": {makeTag("v1.2.0", "2020-09-07T09:52:43-05:00")},
-		"9741f54aa0f14be1103b00c89406393ea4d8a08a": {makeTag("v1.3.0", "2021-02-10T23:21:31+00:00")},
-		"b358977103d2d66e2a3fc5f8081075c2834c4936": {makeTag("v1.3.1", "2021-02-24T20:16:45+00:00")},
-		"2882ad236da4b649b4c1259d815bf1a378e3b92f": {makeTag("v1.4.0", "2021-05-13T10:41:02-05:00")},
-		"340b84452286c18000afad9b140a32212a82840a": {makeTag("v1.5.0", "2021-05-20T18:41:41-05:00")},
-	}
-	if diff := cmp.Diff(expectedRefDescriptions, refDescriptions); diff != "" {
-		t.Errorf("unexpected ref descriptions (-want +got):\n%s", diff)
-	}
-}
-
-func TestFilterRefDescriptions(t *testing.T) { // KEEP
-	refDescriptions := map[string][]gitdomain.RefDescription{
-		"d38233a79e037d2ab8170b0d0bc0aa438473e6da": {},
-		"2775e60f523d3151a2a34ffdc659f500d0e73022": {},
-		"2ba4dd2b9a27ec125fea7d72e12b9824ead18631": {},
-		"9019942b8b92d5a70a7f546d97c451621c5059a6": {},
-	}
-
-	client := NewTestClient(t).WithClientSource(NewTestClientSource(t, []string{"test"}, func(o *TestClientSourceOptions) {
-		o.ClientFunc = func(conn *grpc.ClientConn) proto.GitserverServiceClient {
-			c := NewMockGitserverServiceClient()
-			c.GetCommitFunc.SetDefaultHook(func(ctx context.Context, gcr *proto.GetCommitRequest, co ...grpc.CallOption) (*proto.GetCommitResponse, error) {
-				if gcr.GetCommit() == "2775e60f523d3151a2a34ffdc659f500d0e73022" {
-					s, err := status.New(codes.NotFound, "bad revision").WithDetails(&proto.RevisionNotFoundPayload{Repo: "repo", Spec: "deadbeef"})
-					require.NoError(t, err)
-					return nil, s.Err()
-				}
-				return &proto.GetCommitResponse{}, nil
-			})
-			return c
-		}
-	})).(*clientImplementor)
-	filtered := client.filterRefDescriptions(context.Background(), "repo", refDescriptions)
-	expectedRefDescriptions := map[string][]gitdomain.RefDescription{
-		"d38233a79e037d2ab8170b0d0bc0aa438473e6da": {},
-		"2ba4dd2b9a27ec125fea7d72e12b9824ead18631": {},
-		"9019942b8b92d5a70a7f546d97c451621c5059a6": {},
-	}
-	if diff := cmp.Diff(expectedRefDescriptions, filtered); diff != "" {
-		t.Errorf("unexpected ref descriptions (-want +got):\n%s", diff)
-	}
-}
-
-func TestRefDescriptions(t *testing.T) { // KEEP
-	ClientMocks.LocalGitserver = true
-	defer ResetClientMocks()
-	ctx := actor.WithActor(context.Background(), &actor.Actor{
-		UID: 1,
-	})
-	client := NewClient("test")
-	gitCommands := append(getGitCommandsWithFiles("file1", "file2"), "git checkout -b my-other-branch")
-	gitCommands = append(gitCommands, getGitCommandsWithFiles("file1-b2", "file2-b2")...)
-	gitCommands = append(gitCommands, "git checkout -b my-branch-no-access")
-	gitCommands = append(gitCommands, getGitCommandsWithFiles("file", "file-with-no-access")...)
-	repo := MakeGitRepository(t, gitCommands...)
-
-	makeBranch := func(name, createdDate string, isDefaultBranch bool) gitdomain.RefDescription {
-		return gitdomain.RefDescription{Name: name, Type: gitdomain.RefTypeBranch, IsDefaultBranch: isDefaultBranch, CreatedDate: mustParseDate(createdDate, t)}
-	}
-
-	refDescriptions, err := client.RefDescriptions(ctx, repo)
-	if err != nil {
-		t.Errorf("err calling RefDescriptions: %s", err)
-	}
-	expectedRefDescriptions := map[string][]gitdomain.RefDescription{
-		"2ba4dd2b9a27ec125fea7d72e12b9824ead18631": {makeBranch("master", "2006-01-02T15:04:05Z", false)},
-		"9d7a382983098eed6cf911bd933dfacb13116e42": {makeBranch("my-other-branch", "2006-01-02T15:04:05Z", false)},
-		"7cf006d0599531db799c08d3b00d7fd06da33015": {makeBranch("my-branch-no-access", "2006-01-02T15:04:05Z", true)},
-	}
-	if diff := cmp.Diff(expectedRefDescriptions, refDescriptions); diff != "" {
-		t.Errorf("unexpected ref descriptions (-want +got):\n%s", diff)
-	}
-}
-
 func TestCommitsUniqueToBranch(t *testing.T) {
 	ClientMocks.LocalGitserver = true
 	defer ResetClientMocks()
@@ -1753,7 +1449,7 @@ func TestCommitsUniqueToBranch(t *testing.T) {
 	client := NewClient("test")
 	commits, err := client.CommitsUniqueToBranch(ctx, repo, "my-branch", true, &time.Time{})
 	if err != nil {
-		t.Errorf("err calling RefDescriptions: %s", err)
+		t.Errorf("err calling CommitsUniqueToBranch: %s", err)
 	}
 	expectedCommits := map[string]time.Time{
 		"2775e60f523d3151a2a34ffdc659f500d0e73022": *mustParseDate("2006-01-02T15:04:05-00:00", t),
@@ -1905,45 +1601,6 @@ func CommitsEqual(a, b *gitdomain.Commit) bool {
 	}
 	return reflect.DeepEqual(a, b)
 }
-
-func TestRepository_ListBranches(t *testing.T) {
-	ClientMocks.LocalGitserver = true
-	t.Cleanup(func() {
-		ResetClientMocks()
-	})
-
-	gitCommands := []string{
-		"git commit --allow-empty -m foo",
-		"git checkout -b b0",
-		"git checkout -b b1",
-	}
-
-	wantBranches := []*gitdomain.Branch{{Name: "b0", Head: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"}, {Name: "b1", Head: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"}, {Name: "master", Head: "ea167fe3d76b1e5fd3ed8ca44cbd2fe3897684f8"}}
-
-	testBranches(t, gitCommands, wantBranches)
-}
-
-func testBranches(t *testing.T, gitCommands []string, wantBranches []*gitdomain.Branch) {
-	t.Helper()
-
-	repo := MakeGitRepository(t, gitCommands...)
-	gotBranches, err := NewClient("test").ListBranches(context.Background(), repo)
-	require.Nil(t, err)
-
-	sort.Sort(branches(wantBranches))
-	sort.Sort(branches(gotBranches))
-
-	if diff := cmp.Diff(wantBranches, gotBranches); diff != "" {
-		t.Fatalf("Branch mismatch (-want +got):\n%s", diff)
-	}
-}
-
-// branches is a sortable slice of type Branch
-type branches []*gitdomain.Branch
-
-func (p branches) Len() int           { return len(p) }
-func (p branches) Less(i, j int) bool { return p[i].Name < p[j].Name }
-func (p branches) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func usePermissionsForFilePermissionsFunc(m *authz.MockSubRepoPermissionChecker) {
 	m.FilePermissionsFuncFunc.SetDefaultHook(func(ctx context.Context, userID int32, repo api.RepoName) (authz.FilePermissionFunc, error) {

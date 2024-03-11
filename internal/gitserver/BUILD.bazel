@@ -23,7 +23,6 @@ go_library(
         "//internal/actor",
         "//internal/api",
         "//internal/authz",
-        "//internal/byteutils",
         "//internal/conf",
         "//internal/extsvc/gitolite",
         "//internal/fileutil",

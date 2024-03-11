@@ -1261,6 +1261,65 @@ func (gs *grpcServer) ResolveRevision(ctx context.Context, req *proto.ResolveRev
 	}, nil
 }
 
+func (gs *grpcServer) ListRefs(ctx context.Context, req *proto.ListRefsRequest) (*proto.ListRefsResponse, error) {
+	accesslog.Record(
+		ctx,
+		req.GetRepoName(),
+	)
+
+	if req.GetRepoName() == "" {
+		return nil, status.New(codes.InvalidArgument, "repo must be specified").Err()
+	}
+
+	repoName := api.RepoName(req.GetRepoName())
+	repoDir := gitserverfs.RepoDirFromName(gs.reposDir, repoName)
+
+	if err := gs.maybeStartClone(ctx, repoName); err != nil {
+		return nil, err
+	}
+
+	backend := gs.getBackendFunc(repoDir, repoName)
+
+	pointsAtCommit := []api.CommitID{}
+	for _, c := range req.GetPointsAtCommit() {
+		pointsAtCommit = append(pointsAtCommit, api.CommitID(c))
+	}
+
+	contains := []api.CommitID{}
+	if c := req.GetContainsSha(); c != "" {
+		contains = append(contains, api.CommitID(c))
+	}
+
+	opt := git.ListRefsOpts{
+		HeadsOnly:      req.GetHeadsOnly(),
+		TagsOnly:       req.GetTagsOnly(),
+		PointsAtCommit: pointsAtCommit,
+		Contains:       contains,
+	}
+
+	it, err := backend.ListRefs(ctx, opt)
+	if err != nil {
+		gs.svc.LogIfCorrupt(ctx, repoName, err)
+		// TODO: Better error checking.
+		return nil, err
+	}
+
+	res := &proto.ListRefsResponse{}
+
+	for {
+		ref, err := it.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		res.Refs = append(res.Refs, ref.ToProto())
+	}
+
+	return res, nil
+}
+
 func (gs *grpcServer) maybeStartClone(ctx context.Context, repo api.RepoName) error {
 	// Ensure that the repo is cloned and if not start a background clone, then
 	// return a well-known NotFound payload error.

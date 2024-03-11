@@ -271,6 +271,11 @@ func (r *errorTranslatingClient) ReadFile(ctx context.Context, in *proto.ReadFil
 	return &errorTranslatingReadFileClient{cc}, nil
 }
 
+func (r *errorTranslatingClient) ListRefs(ctx context.Context, in *proto.ListRefsRequest, opts ...grpc.CallOption) (*proto.ListRefsResponse, error) {
+	res, err := r.base.ListRefs(ctx, in, opts...)
+	return res, convertGRPCErrorToGitDomainError(err)
+}
+
 type errorTranslatingReadFileClient struct {
 	proto.GitserverService_ReadFileClient
 }

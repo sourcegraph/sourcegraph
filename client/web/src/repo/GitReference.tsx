@@ -142,7 +142,7 @@ export const REPOSITORY_GIT_REFS = gql`
         node(id: $repo) {
             __typename
             ... on Repository {
-                gitRefs(first: $first, query: $query, type: $type, orderBy: AUTHORED_OR_COMMITTED_AT) {
+                gitRefs(first: $first, query: $query, type: $type) {
                     __typename
                     ...GitRefConnectionFields
                 }

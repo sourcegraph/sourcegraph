@@ -226,7 +226,7 @@ func mockGitserver(repoMocks []repoMock) *gitserver.MockClient {
 		}
 		return "", &gitdomain.RevisionNotFoundError{}
 	})
-	gsClient.ListRefsFunc.SetDefaultHook(func(_ context.Context, name api.RepoName) ([]gitdomain.Ref, error) {
+	gsClient.ListRefsFunc.SetDefaultHook(func(_ context.Context, name api.RepoName, _ gitserver.ListRefsOpts) ([]gitdomain.Ref, error) {
 		repo, err := get(name)
 		if err != nil {
 			return nil, err

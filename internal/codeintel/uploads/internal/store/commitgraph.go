@@ -72,7 +72,7 @@ func (s *store) UpdateUploadsVisibleToCommits(
 	ctx context.Context,
 	repositoryID int,
 	commitGraph *gitdomain.CommitGraph,
-	refDescriptions map[string][]gitdomain.RefDescription,
+	refs map[string][]gitdomain.Ref,
 	maxAgeForNonStaleBranches time.Duration,
 	maxAgeForNonStaleTags time.Duration,
 	dirtyToken int,
@@ -81,7 +81,7 @@ func (s *store) UpdateUploadsVisibleToCommits(
 	ctx, trace, endObservation := s.operations.updateUploadsVisibleToCommits.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("repositoryID", repositoryID),
 		attribute.Int("numCommitGraphKeys", len(commitGraph.Order())),
-		attribute.Int("numRefDescriptions", len(refDescriptions)),
+		attribute.Int("numRefs", len(refs)),
 		attribute.Int("dirtyToken", dirtyToken),
 	}})
 	defer endObservation(1, observation.Args{})
@@ -117,7 +117,7 @@ func (s *store) UpdateUploadsVisibleToCommits(
 		// these channels in parallel. We need to make sure that once we return from this function that
 		// the producer routine shuts down. This prevents the producer from leaking if there is an
 		// error in one of the consumers before all values have been emitted.
-		sanitizedInput := sanitizeCommitInput(pctx, graph, refDescriptions, maxAgeForNonStaleBranches, maxAgeForNonStaleTags)
+		sanitizedInput := sanitizeCommitInput(pctx, graph, refs, maxAgeForNonStaleBranches, maxAgeForNonStaleTags)
 
 		// Write the graph into temporary tables in Postgres
 		if err := s.writeVisibleUploads(ctx, sanitizedInput, tx.db); err != nil {
@@ -571,7 +571,7 @@ type sanitizedCommitInput struct {
 func sanitizeCommitInput(
 	ctx context.Context,
 	graph *commitgraph.Graph,
-	refDescriptions map[string][]gitdomain.RefDescription,
+	refs map[string][]gitdomain.Ref,
 	maxAgeForNonStaleBranches time.Duration,
 	maxAgeForNonStaleTags time.Duration,
 ) *sanitizedCommitInput {
@@ -626,21 +626,21 @@ func sanitizeCommitInput(
 			}
 		}
 
-		for commit, refDescriptions := range refDescriptions {
+		for commit, refs := range refs {
 			isDefaultBranch := false
-			names := make([]string, 0, len(refDescriptions))
+			names := make([]string, 0, len(refs))
 
-			for _, refDescription := range refDescriptions {
-				if refDescription.IsDefaultBranch {
+			for _, ref := range refs {
+				if ref.IsHead {
 					isDefaultBranch = true
 				} else {
-					maxAge, ok := maxAges[refDescription.Type]
-					if !ok || refDescription.CreatedDate == nil || time.Since(*refDescription.CreatedDate) > maxAge {
+					maxAge, ok := maxAges[ref.Type]
+					if !ok || time.Since(ref.CreatedDate) > maxAge {
 						continue
 					}
 				}
 
-				names = append(names, refDescription.Name)
+				names = append(names, ref.Name)
 			}
 			sort.Strings(names)
 

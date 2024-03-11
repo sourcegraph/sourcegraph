@@ -59,6 +59,16 @@ type GitBackend interface {
 	// If passed a commit sha, will also verify that the commit exists.
 	// If the revspec can not be resolved to a commit, a RevisionNotFoundError is returned.
 	ResolveRevision(ctx context.Context, revspec string) (api.CommitID, error)
+	// ListRefs returns a list of all the refs known to the repository, this includes
+	// heads, tags, and other potential refs, but filters can be applied.
+	//
+	// The refs are ordered in the following order:
+	// HEAD first, if part of the result set.
+	// The rest will be ordered by creation date, in descending order, i.e., newest
+	// first.
+	// If two resources are created at the same timestamp, the records are ordered
+	// alphabetically.
+	ListRefs(ctx context.Context, opt ListRefsOpts) (RefIterator, error)
 
 	// Exec is a temporary helper to run arbitrary git commands from the exec endpoint.
 	// No new usages of it should be introduced and once the migration is done we will
@@ -116,3 +126,24 @@ const (
 	// ArchiveFormatTar indicates a tar archive is desired.
 	ArchiveFormatTar ArchiveFormat = "tar"
 )
+
+// ListRefsOpts are additional options passed to ListRefs.
+type ListRefsOpts struct {
+	// If true, only heads are returned. Can be combined with tags_only.
+	HeadsOnly bool
+	// If true, only tags are returned. Can be combined with heads_only.
+	TagsOnly bool
+	// If set, only return refs that point at the given commit shas. Multiple
+	// values will be ORed together.
+	PointsAtCommit []api.CommitID
+	// If set, only return refs that contain the given commit shas.
+	Contains []api.CommitID
+}
+
+// RefIterator iterates over refs.
+type RefIterator interface {
+	// Next returns the next ref.
+	Next() (*gitdomain.Ref, error)
+	// Close releases resources associated with the iterator.
+	Close() error
+}

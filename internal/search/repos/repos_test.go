@@ -74,7 +74,7 @@ func TestRevisionValidation(t *testing.T) {
 		}
 		return "", &gitdomain.RevisionNotFoundError{Repo: "repoFoo", Spec: spec}
 	})
-	mockGitserver.ListRefsFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName) ([]gitdomain.Ref, error) {
+	mockGitserver.ListRefsFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName, _ gitserver.ListRefsOpts) ([]gitdomain.Ref, error) {
 		return []gitdomain.Ref{{
 			Name: "refs/heads/revBar",
 		}, {

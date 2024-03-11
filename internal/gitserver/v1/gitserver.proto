@@ -148,6 +148,67 @@ service GitserverService {
   rpc ResolveRevision(ResolveRevisionRequest) returns (ResolveRevisionResponse) {
     option idempotency_level = IDEMPOTENT;
   }
+  // ListRefs returns a list of all the refs known to the repository, this includes
+  // heads, tags, and other potential refs, but filters can be applied.
+  //
+  // The refs are ordered in the following order:
+  // HEAD first, if part of the result set.
+  // The rest will be ordered by creation date, in descending order, i.e., newest
+  // first.
+  // If two resources are created at the same timestamp, the records are ordered
+  // alphabetically.
+  //
+  // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
+  // error will be returned, with a RepoNotFoundPayload in the details.
+  rpc ListRefs(ListRefsRequest) returns (ListRefsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message ListRefsRequest {
+  // repo_name is the name of the repo to run the blame operation in.
+  // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
+  string repo_name = 2;
+  // If true, only heads are returned. Can be combined with tags_only.
+  bool heads_only = 3;
+  // If true, only tags are returned. Can be combined with heads_only.
+  bool tags_only = 4;
+  // If set, only return refs that point at the given commit sha. Multiple values
+  // will be ORed together.
+  repeated string points_at_commit = 5;
+  // If set, only return refs that contain the given commit sha.
+  optional string contains_sha = 6;
+}
+
+message ListRefsResponse {
+  repeated GitRef refs = 1;
+}
+
+message GitRef {
+  // ref_name is the unabbreviated name of the reference, i.e., refs/heads/main, or refs/tags/1.0.
+  string ref_name = 1;
+  // short_rev_name is the abbreviated name of the reference, if unambiguous.
+  // I.e., main, or 1.0.
+  string short_ref_name = 2;
+  // target_commit is the hash of the commit the reference is currently pointing at.
+  // For a head reference, this is the commit the head is currently pointing at.
+  // For a tag, this is the commit that the tag is attached to.
+  string target_commit = 3;
+  // ref_oid is the full object ID of the reference. For a head reference and
+  // a lightweight tag, this value is the same as target_commit. For annotated tags,
+  // it is the object ID of the tag.
+  string ref_oid = 4;
+  // CreatedAt is the timestamp when the ref was created or modified last.
+  google.protobuf.Timestamp created_at = 5;
+  enum RefType {
+    REF_TYPE_UNSPECIFIED = 0;
+    REF_TYPE_BRANCH = 1;
+    REF_TYPE_TAG = 2;
+  }
+  // ref_type is the type of the reference.
+  RefType ref_type = 6;
+  // is_head is true if the reference is the head reference.
+  bool is_head = 7;
 }
 
 message ResolveRevisionRequest {

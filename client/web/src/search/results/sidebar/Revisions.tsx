@@ -20,13 +20,13 @@ import {
 import revisionStyles from './Revisions.module.scss'
 
 const DEFAULT_FIRST = 10
-export const GIT_REVS_QUERY = gql`
+const GIT_REVS_QUERY = gql`
     query SearchSidebarGitRefs($repo: String, $first: Int, $query: String, $type: GitRefType) {
         repository(name: $repo) {
             ... on Repository {
                 __typename
                 id
-                gitRefs(first: $first, query: $query, type: $type, orderBy: AUTHORED_OR_COMMITTED_AT) {
+                gitRefs(first: $first, query: $query, type: $type) {
                     __typename
                     nodes {
                         ...SearchSidebarGitRefFields
