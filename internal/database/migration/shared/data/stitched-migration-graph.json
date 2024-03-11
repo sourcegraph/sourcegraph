@@ -11157,8 +11157,8 @@
 			{
 				"ID": 1709738515,
 				"Name": "Add syntactic indexing support to policies",
-				"UpQuery": "alter table lsif_configuration_policies add column syntactic_indexing_enabled bool default true;\nCREATE TYPE indexing_type AS ENUM ('precise', 'syntactic');\nalter table lsif_last_index_scan add column indexing_type indexing_type not null default 'precise';",
-				"DownQuery": "alter table lsif_configuration_policies drop column syntactic_indexing_enabled;\nalter table lsif_last_index_scan drop column indexing_type;\ndrop type if exists indexing_type;",
+				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nDO $$\nBEGIN\n    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'indexing_type') THEN\n        CREATE TYPE indexing_type AS ENUM ('precise', 'syntactic');\n    END IF;\nEND$$;\n\nalter table lsif_last_index_scan add column if not exists indexing_type indexing_type not null default 'precise';",
+				"DownQuery": "alter table lsif_configuration_policies drop column if exists syntactic_indexing_enabled;\nalter table lsif_last_index_scan drop column if exists indexing_type;\ndrop type if exists indexing_type;",
 				"Privileged": false,
 				"NonIdempotent": false,
 				"Parents": [
