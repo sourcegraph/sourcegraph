@@ -23,13 +23,6 @@ type RepoRev struct {
 type RepositorySchedulingStore interface {
 	WithTransaction(ctx context.Context, f func(tx RepositorySchedulingStore) error) error
 	GetRepositoriesForIndexScan(ctx context.Context, batchOptions RepositoryBatchOptions, now time.Time) ([]int, error)
-
-	// GetQueuedRepoRev(ctx context.Context, batchSize int) ([]RepoRev, error)
-	// MarkRepoRevsAsProcessed(ctx context.Context, ids []int) error
-	// QueueRepoRev(ctx context.Context, repositoryID int, commit string) error
-	// // TODO: this method is tightly coupled with autoindexing, and should be removed from this
-	// // interface. Perhaps with rest of methods that access the queued stuff
-	// IsQueued(ctx context.Context, repositoryID int, commit string) (_ bool, err error)
 }
 
 type StoreType int32
@@ -153,6 +146,8 @@ func (s *store) GetRepositoriesForIndexScan(
 		indexingType,
 		now,
 	)
+
+	// fmt.Println("Final query", finalQuery)
 
 	return basestore.ScanInts(s.db.Query(ctx, finalQuery))
 

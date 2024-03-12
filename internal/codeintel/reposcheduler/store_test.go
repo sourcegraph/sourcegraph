@@ -17,11 +17,15 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/timeutil"
 )
 
-func TestSelectRepositoriesForIndexScan(t *testing.T) {
+/*
+This set of assertions verifies that repo scheduling logic works with syntactic
+indexing in isolation - i.e. we assume that there is no overlapping precise/syntactic scheduling running.
+For that we have a separate test.
+*/
+func TestSelectRepositoriesForSyntacticIndexing(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
-	preciseStore := testPreciseStoreWithoutConfigurationPolicies(t, db)
-	syntacticStore := testSyntacticStoreWithoutConfigurationPolicies(t, db)
+	store := testSyntacticStoreWithoutConfigurationPolicies(t, db)
 
 	now := timeutil.Now()
 	insertRepo(t, db, 50, "r0")
@@ -42,79 +46,50 @@ func TestSelectRepositoriesForIndexScan(t *testing.T) {
 			retention_duration_hours,
 			retain_intermediate_commits,
 			indexing_enabled,
+			syntactic_indexing_enabled,
 			index_commit_max_age_hours,
 			index_intermediate_commits
 		) VALUES
-			(101, 50, 'policy 1', 'GIT_COMMIT', 'HEAD', null, true, 0, false, true,  0, false),
-			(102, 51, 'policy 2', 'GIT_COMMIT', 'HEAD', null, true, 0, false, true,  0, false),
-			(103, 52, 'policy 3', 'GIT_TREE',   'ef/',  null, true, 0, false, true,  0, false),
-			(104, 53, 'policy 4', 'GIT_TREE',   'gh/',  null, true, 0, false, true,  0, false),
-			(105, 54, 'policy 5', 'GIT_TREE',   'gh/',  null, true, 0, false, false, 0, false)
+	        --                                                         indexing |      | syntactic indexing
+	        --                                                                  v      v
+			(101, 50, 'policy 1', 'GIT_COMMIT', 'HEAD', null, true, 0, false, false, true,  0, false),
+			(102, 51, 'policy 2', 'GIT_COMMIT', 'HEAD', null, true, 0, false, false, true,  0, false),
+			(103, 52, 'policy 3', 'GIT_TREE',   'ef/',  null, true, 0, false, false, true,  0, false),
+			(104, 53, 'policy 4', 'GIT_TREE',   'gh/',  null, true, 0, false, false, true,  0, false),
+			(105, 54, 'policy 5', 'GIT_TREE',   'gh/',  null, true, 0, false, false, false, 0, false)
 	`
 	if _, err := db.ExecContext(context.Background(), query); err != nil {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	defaultOptions := NewBatchOptions(time.Hour, true, nil, 100)
-	repos, _ := syntacticStore.GetRepositoriesForIndexScan(context.Background(), defaultOptions, now)
-	fmt.Printf("repos: %v\n", repos)
-
 	// Can return null last_index_scan
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 2), now); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{50, 51}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 2), now, []int{50, 51})
 
 	// 20 minutes later, first two repositories are still on cooldown
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{52, 53}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
 	// 30 minutes later, all repositories are still on cooldown
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int(nil), repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
 
 	// 90 minutes later, all repositories are visible
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*90)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{50, 51, 52, 53}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*89), []int{50, 51, 52, 53})
 
 	// Make new invisible repository
 	insertRepo(t, db, 54, "r4")
 
 	// 95 minutes later, new repository is not yet visible
-	if repositoryIDs, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*95)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int(nil), repositoryIDs); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
 
-	query = `UPDATE lsif_configuration_policies SET indexing_enabled = true WHERE id = 105`
+	query = `UPDATE lsif_configuration_policies SET syntactic_indexing_enabled = true WHERE id = 105`
 	if _, err := db.ExecContext(context.Background(), query); err != nil {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
 	// 100 minutes later, only new repository is visible
-	if repositoryIDs, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*100)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{54}, repositoryIDs); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
 
 	// 110 minutes later, nothing is ready to go (too close to last index scan)
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int(nil), repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
 
 	// Update repo 50 (GIT_COMMIT/HEAD policy), and 51 (GIT_TREE policy)
 	gitserverReposQuery := sqlf.Sprintf(`UPDATE gitserver_repos SET last_changed = %s WHERE repo_id IN (50, 52)`, now.Add(time.Minute*105))
@@ -123,11 +98,91 @@ func TestSelectRepositoriesForIndexScan(t *testing.T) {
 	}
 
 	// 110 minutes later, updated repositories are ready for re-indexing
-	if repositories, err := preciseStore.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{50}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int{50})
+}
+
+/*
+This set of assertions verifies that repo scheduling logic works with syntactic
+indexing in isolation - i.e. we assume that there is no overlapping precise/syntactic scheduling running.
+For that we have a separate test.
+*/
+func TestSelectRepositoriesForPreciseIndexing(t *testing.T) {
+	logger := logtest.Scoped(t)
+	db := database.NewDB(logger, dbtest.NewDB(t))
+	store := testPreciseStoreWithoutConfigurationPolicies(t, db)
+
+	now := timeutil.Now()
+	insertRepo(t, db, 50, "r0")
+	insertRepo(t, db, 51, "r1")
+	insertRepo(t, db, 52, "r2")
+	insertRepo(t, db, 53, "r3")
+	updateGitserverUpdatedAt(t, db, now)
+
+	query := `
+		INSERT INTO lsif_configuration_policies (
+			id,
+			repository_id,
+			name,
+			type,
+			pattern,
+			repository_patterns,
+			retention_enabled,
+			retention_duration_hours,
+			retain_intermediate_commits,
+			indexing_enabled,
+			syntactic_indexing_enabled,
+			index_commit_max_age_hours,
+			index_intermediate_commits
+		) VALUES
+	        --                                                         indexing |      | syntactic indexing
+	        --                                                                  v      v
+			(101, 50, 'policy 1', 'GIT_COMMIT', 'HEAD', null, true, 0, false, true,  false,  0, false),
+			(102, 51, 'policy 2', 'GIT_COMMIT', 'HEAD', null, true, 0, false, true,  false,  0, false),
+			(103, 52, 'policy 3', 'GIT_TREE',   'ef/',  null, true, 0, false, true,  false,  0, false),
+			(104, 53, 'policy 4', 'GIT_TREE',   'gh/',  null, true, 0, false, true,  false,  0, false),
+			(105, 54, 'policy 5', 'GIT_TREE',   'gh/',  null, true, 0, false, false, false, 0, false)
+	`
+	if _, err := db.ExecContext(context.Background(), query); err != nil {
+		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
+
+	// Can return null last_index_scan
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 2), now, []int{50, 51})
+
+	// 20 minutes later, first two repositories are still on cooldown
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
+
+	// 30 minutes later, all repositories are still on cooldown
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+
+	// 90 minutes later, all repositories are visible
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*89), []int{50, 51, 52, 53})
+
+	// Make new invisible repository
+	insertRepo(t, db, 54, "r4")
+
+	// 95 minutes later, new repository is not yet visible
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
+
+	query = `UPDATE lsif_configuration_policies SET indexing_enabled = true WHERE id = 105`
+	if _, err := db.ExecContext(context.Background(), query); err != nil {
+		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
+	}
+
+	// 100 minutes later, only new repository is visible
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
+
+	// 110 minutes later, nothing is ready to go (too close to last index scan)
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
+
+	// Update repo 50 (GIT_COMMIT/HEAD policy), and 51 (GIT_TREE policy)
+	gitserverReposQuery := sqlf.Sprintf(`UPDATE gitserver_repos SET last_changed = %s WHERE repo_id IN (50, 52)`, now.Add(time.Minute*105))
+	if _, err := db.ExecContext(context.Background(), gitserverReposQuery.Query(sqlf.PostgresBindVar), gitserverReposQuery.Args()...); err != nil {
+		t.Fatalf("unexpected error while upodating gitserver_repos last updated time: %s", err)
+	}
+
+	// 110 minutes later, updated repositories are ready for re-indexing
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int{50})
 }
 
 func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
@@ -204,54 +259,6 @@ func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
 	}
 }
 
-// func TestMarkRepoRevsAsProcessed(t *testing.T) {
-// 	ctx := context.Background()
-// 	logger := logtest.Scoped(t)
-// 	db := database.NewDB(logger, dbtest.NewDB(t))
-// 	store := NewPreciseStore(&observation.TestContext, db)
-
-// 	expected := []RepoRev{
-// 		{1, 50, "HEAD"},
-// 		{2, 50, "HEAD~1"},
-// 		{3, 50, "HEAD~2"},
-// 		{4, 51, "HEAD"},
-// 		{5, 51, "HEAD~1"},
-// 		{6, 51, "HEAD~2"},
-// 		{7, 52, "HEAD"},
-// 		{8, 52, "HEAD~1"},
-// 		{9, 52, "HEAD~2"},
-// 	}
-// 	for _, repoRev := range expected {
-// 		if err := store.QueueRepoRev(ctx, repoRev.RepositoryID, repoRev.Rev); err != nil {
-// 			t.Fatalf("unexpected error: %s", err)
-// 		}
-// 	}
-
-// 	// entire set
-// 	repoRevs, err := store.GetQueuedRepoRev(ctx, 50)
-// 	if err != nil {
-// 		t.Fatalf("unexpected error: %s", err)
-// 	}
-// 	if diff := cmp.Diff(expected, repoRevs); diff != "" {
-// 		t.Errorf("unexpected repo revs (-want +got):\n%s", diff)
-// 	}
-
-// 	// mark first elements as complete; re-request remaining
-// 	if err := store.MarkRepoRevsAsProcessed(ctx, []int{1, 2, 3, 4, 5}); err != nil {
-// 		t.Fatalf("unexpected error: %s", err)
-// 	}
-// 	repoRevs, err = store.GetQueuedRepoRev(ctx, 50)
-// 	if err != nil {
-// 		t.Fatalf("unexpected error: %s", err)
-// 	}
-// 	if diff := cmp.Diff(expected[5:], repoRevs); diff != "" {
-// 		t.Errorf("unexpected repo revs (-want +got):\n%s", diff)
-// 	}
-// }
-
-//
-//
-
 // removes default configuration policies
 func testPreciseStoreWithoutConfigurationPolicies(t *testing.T, db database.DB) RepositorySchedulingStore {
 	if _, err := db.ExecContext(context.Background(), `TRUNCATE lsif_configuration_policies`); err != nil {
@@ -267,6 +274,14 @@ func testSyntacticStoreWithoutConfigurationPolicies(t *testing.T, db database.DB
 	}
 
 	return NewSyntacticStore(&observation.TestContext, db)
+}
+
+func assertRepoList(t *testing.T, store RepositorySchedulingStore, batchOptions RepositoryBatchOptions, now time.Time, want []int) {
+	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), batchOptions, now); err != nil {
+		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
+	} else if diff := cmp.Diff(want, repositories); diff != "" {
+		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
+	}
 }
 
 func updateGitserverUpdatedAt(t *testing.T, db database.DB, now time.Time) {
