@@ -209,54 +209,35 @@ func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
 			retention_duration_hours,
 			retain_intermediate_commits,
 			indexing_enabled,
+			syntactic_indexing_enabled,
 			index_commit_max_age_hours,
 			index_intermediate_commits
 		) VALUES
-			(101, NULL, 'policy 1', 'GIT_TREE', 'ab/', null, true, 0, false, true, 0, false)
+	        --                                                       indexing |     | syntactic indexing
+	        --                                                                v     v
+			(101, NULL, 'policy 1', 'GIT_TREE', 'ab/', null, true, 0, false, true, true, 0, false)
 	`
 	if _, err := db.ExecContext(context.Background(), query); err != nil {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
 	// Returns nothing when disabled
-	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, false, nil, 100), now); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int(nil), repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, false, nil, 100), now, []int(nil))
 
 	// Returns at most configured limit
 	limit := 2
 
 	// Can return null last_index_scan
-	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, &limit, 100), now); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{50, 51}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, &limit, 100), now, []int{50, 51})
 
 	// 20 minutes later, first two repositories are still on cooldown
-	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{52, 53}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
 	// 30 minutes later, all repositories are still on cooldown
-	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int(nil), repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
 
 	// 90 minutes later, all repositories are visible
-	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(),
-		NewBatchOptions(time.Hour, true, nil, 100),
-		now.Add(time.Minute*90)); err != nil {
-		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff([]int{50, 51, 52, 53}, repositories); diff != "" {
-		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
-	}
+	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
 }
 
 // removes default configuration policies
