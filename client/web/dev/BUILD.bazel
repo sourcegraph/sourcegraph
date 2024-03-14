@@ -44,7 +44,6 @@ ts_project(
         "//:node_modules/@types/connect-history-api-fallback",
         "//:node_modules/@types/express",
         "//:node_modules/@types/lodash",
-        "//:node_modules/@types/node",
         "//:node_modules/@types/signale",
         "//:node_modules/chalk",
         "//:node_modules/compression",
@@ -58,6 +57,7 @@ ts_project(
         "//:node_modules/signale",
         "//client/web:node_modules/@sourcegraph/build-config",
         "//client/web:node_modules/@sourcegraph/shared",
+        "//client/web:node_modules/@types/node",
         "//client/web:web_lib",
     ],
 )

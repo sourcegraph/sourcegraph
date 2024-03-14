@@ -1,0 +1,78 @@
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//client/playwright:@playwright/test/package_json.bzl", playwright_test_bin = "bin")
+load("@npm//client/playwright:playwright/package_json.bzl", playwright_bin = "bin")
+load("//dev:defs.bzl", "ts_project")
+load("//dev:eslint.bzl", "eslint_config_and_lint_root")
+
+npm_link_all_packages(name = "node_modules")
+
+eslint_config_and_lint_root()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//client:__subpackages__"],
+    deps = [
+        "//:tsconfig",
+        # ERROR: /.../client/playwright/BUILD.bazel:12:10: in ts_config rule //client/playwright:tsconfig: cycle in dependency graph
+        # "//client/playwright:tsconfig",
+    ],
+)
+
+playwright_bin.playwright_test(
+    name = "playwright_install",
+    args = [
+        "install",
+    ],
+    # env = {
+    #     "PLAYWRIGHT_BROWSERS_PATH": "0",
+    # },
+    local = True,
+    tags = [
+        "no-sandbox",
+        "requires-network",
+    ],
+)
+
+# filegroup(
+#     name = "test_files",
+#     srcs = glob([
+#         "src/playwright/*.spec.ts",
+#     ]),
+# )
+
+# ts_project(
+#     name = "p_project",
+#     srcs = glob(["src/playwright/*.spec.ts"]),
+#     deps = [":node_modules/@playwright/test"],
+# )
+
+playwright_test_bin.playwright_test(
+    name = "e2e_test",
+    args = ["test"],
+    data = [
+        "playwright.config.ts",
+        # "//:node_modules/@playwright/browser-chromium",
+        # "@npm//client/playwright:@playwright/test",
+        # "//:node_modules/playwright",
+        "//client/playwright:node_modules/@playwright/test",
+        ":playwright",
+        # ":test_files",
+        ":playwright_install",
+    ],
+    # env = {
+    #     "PLAYWRIGHT_BROWSERS_PATH": "0",
+    # },
+    local = True,
+    tags = ["requires-network"],
+)
+
+ts_project(
+    name = "playwright",
+    srcs = glob([
+        "src/playwright/*.spec.ts",
+    ]),
+    tsconfig = ":tsconfig",
+    deps = [":node_modules/@playwright/test"],
+)

@@ -101,6 +101,7 @@ js_library(
             "src/**/*.tsx",
         ],
         [
+            "src/playwright/*.spec.ts",
             "src/end-to-end/**/*.*",
             # TODO: Ignore legacy build generated file as it conflicts with the Bazel
             # build. This can be removed after the migration.
@@ -140,7 +141,7 @@ filegroup(
 
 ts_project(
     name = "web_lib",
-    srcs = [
+    srcs = glob(["!src/playwright/*.spec.ts"]) + [
         "src/Index.tsx",
         "src/LegacyLayout.tsx",
         "src/LegacyRouteContext.tsx",
@@ -1745,6 +1746,7 @@ ts_project(
         ":node_modules/@sourcegraph/shared",
         ":node_modules/@sourcegraph/telemetry",
         ":node_modules/@sourcegraph/wildcard",
+        ":node_modules/@types/node",
         "//:node_modules/@apollo/client",
         "//:node_modules/@codemirror/commands",
         "//:node_modules/@codemirror/lang-json",
@@ -1785,7 +1787,6 @@ ts_project(
         "//:node_modules/@types/lru-cache",
         "//:node_modules/@types/marked",
         "//:node_modules/@types/mocha",  #keep
-        "//:node_modules/@types/node",
         "//:node_modules/@types/react",
         "//:node_modules/@types/react-calendar",
         "//:node_modules/@types/react-circular-progressbar",
@@ -2013,6 +2014,7 @@ ts_project(
         ":node_modules/@sourcegraph/shared",
         ":node_modules/@sourcegraph/testing",
         ":node_modules/@sourcegraph/wildcard",
+        ":node_modules/@types/node",
         ":web_lib",
         "//:node_modules/@apollo/client",
         "//:node_modules/@codemirror/state",
@@ -2025,7 +2027,6 @@ ts_project(
         "//:node_modules/@types/history",
         "//:node_modules/@types/lodash",
         "//:node_modules/@types/mocha",
-        "//:node_modules/@types/node",
         "//:node_modules/@types/react",
         "//:node_modules/@types/react-dom",
         "//:node_modules/@types/semver",
@@ -2448,3 +2449,28 @@ ts_project(
         "//client/web/src/rbac:constants",
     ],
 )
+
+# integration_test(
+#     name = "playwright_test",
+#     srcs = glob(["src/playwright/*.spec.ts"]) + ["playwright.config.ts"],
+#     commands = [
+#         "npm run playwright:test",
+#     ],
+#     data = [
+#         # Makes the chromium binaries available for the `ng test` command.
+#         "//client/shared/browsers/chromium",
+#         "//:node_modules/@playwright/test",
+#         "playwright.config.ts",
+#     ],
+#     environment = {
+#         "CHROME_BIN": "$(CHROMIUM)",
+#     },
+#     tags = [
+#         # This test relies on `yarn` so there needs to be internet access.
+#         "requires-network",
+#     ],
+#     tool_mappings = {
+#         "@nodejs_toolchains//:resolved_toolchain": "node",
+#     },
+#     toolchains = ["//client/shared/browsers/chromium:toolchain_alias"],
+# )

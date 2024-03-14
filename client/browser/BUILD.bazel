@@ -78,6 +78,7 @@ copy_to_bin(
         [
             "src/**/*.ts",
             "src/**/*.tsx",
+            "!src/**/*.spec.ts",
         ],
         # TODO: Ignore legacy build generated file as it conflicts with the Bazel
         # build. This can be removed after the migration.

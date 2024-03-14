@@ -267,10 +267,10 @@ esbuild_register_toolchains(
 
 # Go toolchain setup
 
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
-load("//:linter_deps.bzl", "linter_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 load("//:deps.bzl", "go_dependencies")
+load("//:linter_deps.bzl", "linter_dependencies")
 
 go_repository(
     name = "com_github_aws_aws_sdk_go_v2_service_ssooidc",
@@ -429,8 +429,8 @@ rules_proto_dependencies()
 rules_proto_toolchains()
 
 load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
-load("@rules_proto_grpc//go:repositories.bzl", rules_proto_grpc_go_repos = "go_repos")
 load("@rules_proto_grpc//doc:repositories.bzl", rules_proto_grpc_doc_repos = "doc_repos")
+load("@rules_proto_grpc//go:repositories.bzl", rules_proto_grpc_go_repos = "go_repos")
 
 rules_proto_grpc_toolchains()
 

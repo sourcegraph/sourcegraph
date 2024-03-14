@@ -17,6 +17,7 @@ const SHARED_DOCUMENTS_GLOB = [`${SHARED_FOLDER}/src/**/*.{ts,tsx}`]
 
 const WEB_DOCUMENTS_GLOB = [
     `${WEB_FOLDER}/src/**/*.{ts,tsx}`,
+    `!${WEB_FOLDER}/src/**/*.spec.ts`,
     `${WEB_FOLDER}/src/regression/**/*.*`,
     `!${WEB_FOLDER}/src/end-to-end/**/*.*`, // TODO(bazel): can remove when non-bazel dropped
 ]

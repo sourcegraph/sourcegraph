@@ -87,7 +87,6 @@ ts_project(
         ":integration",
         "//:node_modules/@types/lodash",
         "//:node_modules/@types/mocha",
-        "//:node_modules/@types/node",
         "//:node_modules/@types/puppeteer",
         "//:node_modules/date-fns",
         "//:node_modules/delay",
@@ -100,6 +99,7 @@ ts_project(
         "//client/web:graphql_operations",
         "//client/web:node_modules/@sourcegraph/common",
         "//client/web:node_modules/@sourcegraph/shared",
+        "//client/web:node_modules/@types/node",
         "//client/web:web_lib",
     ],
 )
