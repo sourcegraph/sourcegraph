@@ -188,7 +188,8 @@ func TestSelectRepositoriesForPreciseIndexing(t *testing.T) {
 func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
-	store := testPreciseStoreWithoutConfigurationPolicies(t, db)
+	preciseStore := testPreciseStoreWithoutConfigurationPolicies(t, db)
+	syntacticStore := testSyntacticStoreWithoutConfigurationPolicies(t, db)
 
 	now := timeutil.Now()
 	insertRepo(t, db, 50, "r0")
@@ -221,23 +222,37 @@ func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	// Returns nothing when disabled
-	assertRepoList(t, store, NewBatchOptions(time.Hour, false, nil, 100), now, []int(nil))
+	var tests = []struct {
+		name  string
+		store RepositorySchedulingStore
+	}{
+		{"precise store", preciseStore},
+		{"syntactic store", syntacticStore},
+	}
 
 	// Returns at most configured limit
 	limit := 2
 
-	// Can return null last_index_scan
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, &limit, 100), now, []int{50, 51})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Returns nothing when disabled
+			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, false, nil, 100), now, []int(nil))
 
-	// 20 minutes later, first two repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
+			// Can return null last_index_scan
+			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, &limit, 100), now, []int{50, 51})
 
-	// 30 minutes later, all repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+			// 20 minutes later, first two repositories are still on cooldown
+			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
-	// 90 minutes later, all repositories are visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
+			// 30 minutes later, all repositories are still on cooldown
+			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+
+			// 90 minutes later, all repositories are visible
+			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
+
+		})
+	}
+
 }
 
 // removes default configuration policies
@@ -258,6 +273,7 @@ func testSyntacticStoreWithoutConfigurationPolicies(t *testing.T, db database.DB
 }
 
 func assertRepoList(t *testing.T, store RepositorySchedulingStore, batchOptions RepositoryBatchOptions, now time.Time, want []int) {
+	t.Helper()
 	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), batchOptions, now); err != nil {
 		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
 	} else if diff := cmp.Diff(want, repositories); diff != "" {

@@ -147,8 +147,6 @@ func (s *store) GetRepositoriesForIndexScan(
 		now,
 	)
 
-	// fmt.Println("Final query", finalQuery)
-
 	return basestore.ScanInts(s.db.Query(ctx, finalQuery))
 
 }
@@ -177,20 +175,24 @@ repositories AS (
 	FROM repositories_matching_policy rmp
 	LEFT JOIN lsif_last_index_scan lrs ON lrs.repository_id = rmp.id and lrs.indexing_type = %%s
 	WHERE
-		-- Records that have not been checked within the global reindex threshold are also eligible for
-		-- indexing. Note that condition here is true for a record that has never been indexed.
-		(%%s - lrs.last_index_scan_at > (%%s * '1 second'::interval)) IS DISTINCT FROM FALSE OR
-		-- Records that have received an update since their last scan are also eligible for re-indexing.
-		-- Note that last_changed is NULL unless the repository is attached to a policy for HEAD.
-		(rmp.last_changed > lrs.last_index_scan_at)
+		-- there is no record for this repository, so it should be indexed unconditionally
+		lrs.indexing_type is NULL OR
+		(
+			-- Records that have not been checked within the global reindex threshold are also eligible for
+			-- indexing. Note that condition here is true for a record that has never been indexed.
+			(%%s - lrs.last_index_scan_at > (%%s * '1 second'::interval)) IS DISTINCT FROM FALSE OR
+			-- Records that have received an update since their last scan are also eligible for re-indexing.
+			-- Note that last_changed is NULL unless the repository is attached to a policy for HEAD.
+			(rmp.last_changed > lrs.last_index_scan_at)
+		)
 	ORDER BY
 		lrs.last_index_scan_at NULLS FIRST,
 		rmp.id -- tie breaker
 	LIMIT %%s
 )
-INSERT INTO lsif_last_index_scan (repository_id, last_index_scan_at, indexing_Type)
+INSERT INTO lsif_last_index_scan (repository_id, last_index_scan_at, indexing_type)
 SELECT DISTINCT r.id, %%s::timestamp, %%s::indexing_type FROM repositories r
-ON CONFLICT (repository_id) DO UPDATE
+ON CONFLICT (repository_id, indexing_type) DO UPDATE
 SET last_index_scan_at = %%s
 RETURNING repository_id
 `, enabledFieldName)
