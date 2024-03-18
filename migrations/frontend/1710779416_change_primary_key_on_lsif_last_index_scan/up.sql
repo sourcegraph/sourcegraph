@@ -10,5 +10,6 @@
 --  * If you are modifying Postgres extensions, you must also declare "privileged: true"
 --    in the associated metadata.yaml file.
 
-alter table lsif_last_index_scan drop constraint lsif_last_index_scan_pkey;
-ALTER TABLE lsif_last_index_scan add primary key (repository_id, indexing_type);
+alter table lsif_last_index_scan
+      drop constraint lsif_last_index_scan_pkey,
+      add constraint lsif_last_index_scan_pkey primary key (repository_id, indexing_type);
