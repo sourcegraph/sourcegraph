@@ -60,7 +60,7 @@ var Targets = []Target{
 		Name:        "docs",
 		Description: "Documentation checks",
 		Checks: []*linter{
-			onlyLocal(bazelExec("Docsite lint (bazel)", "test //doc:test")),
+			onlyLocal(bazelExec("Docsite lint (bazel)", "test //doc-legacy:test")),
 			timeCheck(docChangesLint()),
 		},
 	},

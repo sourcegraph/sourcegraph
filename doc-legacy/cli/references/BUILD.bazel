@@ -9,7 +9,7 @@ filegroup(
             "*.sh",
         ],
     ),
-    visibility = ["//doc:__pkg__"],
+    visibility = ["//doc-legacy:__pkg__"],
 )
 
 OUTPUT_FILES = [

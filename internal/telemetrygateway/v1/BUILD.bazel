@@ -108,5 +108,5 @@ doc_template_compile(
     name = "protocol.md",
     protos = [":v1_proto"],
     template = "protoc-gen-doc.tmpl",
-    visibility = ["//doc/dev/background-information/telemetry:__pkg__"],
+    visibility = ["//doc-legacy/dev/background-information/telemetry:__pkg__"],
 )

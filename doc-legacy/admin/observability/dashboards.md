@@ -1,6 +1,6 @@
 # Dashboards reference
 
-<!-- DO NOT EDIT: generated via: bazel run //doc/admin/observability:write_monitoring_docs -->
+<!-- DO NOT EDIT: generated via: bazel run //doc-legacy/admin/observability:write_monitoring_docs -->
 
 This document contains a complete reference on Sourcegraph's available dashboards, as well as details on how to interpret the panels and metrics.
 

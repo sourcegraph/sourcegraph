@@ -476,7 +476,7 @@ commands:
       # We also specifically put this in .bin, since that directory is gitignored, otherwise the run script is left
       # around and currently there is no clean way to remove it - even using a bash trap doesn't work, since the trap
       # never gets executed due to sg running the script.
-      bazel run --script_path=${RUN_SCRIPT_NAME} --noshow_progress --noshow_loading_progress //doc:serve
+      bazel run --script_path=${RUN_SCRIPT_NAME} --noshow_progress --noshow_loading_progress //doc-legacy:serve
 
       ./${RUN_SCRIPT_NAME}
 
@@ -1007,7 +1007,7 @@ bazelCommands:
       # Enables metrics in dev via debugserver
       SRC_PROF_HTTP: '127.0.0.1:6098'
   docsite:
-    runTarget: //doc:serve
+    runTarget: //doc-legacy:serve
   searcher:
     target: //cmd/searcher
   syntax-highlighter:

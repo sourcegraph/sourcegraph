@@ -2,7 +2,6 @@ load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 exports_files(srcs = [
     "eslint-report-test.sh",
-    "go-mockgen.tpl",
 ])
 
 write_source_files(
@@ -12,9 +11,9 @@ write_source_files(
         "//cmd/cody-gateway/internal/dotcom:write_genql_yaml",
         "//cmd/frontend/internal/guardrails/dotcom:write_genql_yaml",
         "//dev/linters/staticcheck:write_generated_bazelfile",
-        "//doc/admin/observability:write_monitoring_docs",
-        "//doc/cli/references:write_doc_files",
-        "//doc/dev/background-information/telemetry:write_telemetrygateway_doc",
+        "//doc-legacy/admin/observability:write_monitoring_docs",
+        "//doc-legacy/cli/references:write_doc_files",
+        "//doc-legacy/dev/background-information/telemetry:write_telemetrygateway_doc",
         "//internal/batches/search/syntax:write_token_type",
         "//internal/database/migration/shared:write_stitched_migration_graph",
         "//internal/database:write_schemas",

@@ -6,9 +6,9 @@ sh_test(
     args = ["$(location //dev/tools:docsite)"],
     data = [
         "//dev/tools:docsite",
-        "//doc/admin/observability:doc_files",
-        "//doc/cli/references:doc_files",
-        "//doc/dev/background-information/telemetry:doc_files",
+        "//doc-legacy/admin/observability:doc_files",
+        "//doc-legacy/cli/references:doc_files",
+        "//doc-legacy/dev/background-information/telemetry:doc_files",
     ] + glob(
         ["**/*"],
         ["test.sh"],
@@ -24,7 +24,7 @@ sh_binary(
     args = ["$(location //dev/tools:docsite)"],
     data = [
         "//dev/tools:docsite",
-        "//doc/cli/references:doc_files",
+        "//doc-legacy/cli/references:doc_files",
     ] + glob(
         ["**/*"],
         ["test.sh"],

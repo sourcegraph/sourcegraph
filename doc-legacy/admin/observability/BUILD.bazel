@@ -6,7 +6,7 @@ filegroup(
         ["**/*"],
         [".gitattributes"],
     ),
-    visibility = ["//doc:__pkg__"],
+    visibility = ["//doc-legacy:__pkg__"],
 )
 
 write_generated_to_source_files(

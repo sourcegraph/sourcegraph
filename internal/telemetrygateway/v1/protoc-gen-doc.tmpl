@@ -2,7 +2,7 @@
 <a name="top"></a>
 
 <!--
-    DO NOT EDIT: This file is auto-generated with 'bazel run //doc/dev/background-information/telemetry:write_telemetrygateway_doc',
+    DO NOT EDIT: This file is auto-generated with 'bazel run //doc-legacy/dev/background-information/telemetry:write_telemetrygateway_doc',
     and the template is in 'internal/telemetrygateway/v1/protoc-gen-doc.tmpl'.
 -->
 

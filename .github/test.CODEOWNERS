@@ -50,13 +50,13 @@
 
 /dev/gqltest/**/* @unknwon
 
-/doc/dev/background-information/adding_ping_data.md @ebrodymoore @dadlerj
+/doc-legacy/dev/background-information/adding_ping_data.md @ebrodymoore @dadlerj
 
-/doc/batch_changes/**/* @eseliger
+/doc-legacy/batch_changes/**/* @eseliger
 
-/doc/code_search/**/* @rvantonder
+/doc-legacy/code_search/**/* @rvantonder
 
-/doc/dev/adr/**/* @unknwon
+/doc-legacy/dev/adr/**/* @unknwon
 
 /docker-images/cadvisor/**/* @bobheadxi
 
