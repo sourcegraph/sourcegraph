@@ -16937,9 +16937,9 @@
           "IsUnique": true,
           "IsExclusion": false,
           "IsDeferrable": false,
-          "IndexDefinition": "CREATE UNIQUE INDEX lsif_last_index_scan_pkey ON lsif_last_index_scan USING btree (repository_id)",
+          "IndexDefinition": "CREATE UNIQUE INDEX lsif_last_index_scan_pkey ON lsif_last_index_scan USING btree (repository_id, indexing_type)",
           "ConstraintType": "p",
-          "ConstraintDefinition": "PRIMARY KEY (repository_id)"
+          "ConstraintDefinition": "PRIMARY KEY (repository_id, indexing_type)"
         }
       ],
       "Constraints": null,

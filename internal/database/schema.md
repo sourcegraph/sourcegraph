@@ -2372,7 +2372,7 @@ Stores metadata about a code intel index job.
  last_index_scan_at | timestamp with time zone |           | not null | 
  indexing_type      | indexing_type            |           | not null | 'precise'::indexing_type
 Indexes:
-    "lsif_last_index_scan_pkey" PRIMARY KEY, btree (repository_id)
+    "lsif_last_index_scan_pkey" PRIMARY KEY, btree (repository_id, indexing_type)
 
 ```
 

@@ -11166,6 +11166,19 @@
 				],
 				"IsCreateIndexConcurrently": false,
 				"IndexMetadata": null
+			},
+			{
+				"ID": 1710779416,
+				"Name": "Change primary key on lsif_last_index_scan",
+				"UpQuery": "-- Perform migration here.\n--\n-- See /migrations/README.md. Highlights:\n--  * Make migrations idempotent (use IF EXISTS)\n--  * Make migrations backwards-compatible (old readers/writers must continue to work)\n--  * If you are using CREATE INDEX CONCURRENTLY, then make sure that only one statement\n--    is defined per file, and that each such statement is NOT wrapped in a transaction.\n--    Each such migration must also declare \"createIndexConcurrently: true\" in their\n--    associated metadata.yaml file.\n--  * If you are modifying Postgres extensions, you must also declare \"privileged: true\"\n--    in the associated metadata.yaml file.\n\nalter table lsif_last_index_scan\n      drop constraint lsif_last_index_scan_pkey,\n      add constraint lsif_last_index_scan_pkey primary key (repository_id, indexing_type);",
+				"DownQuery": "alter table lsif_last_index_scan\n      drop constraint lsif_last_index_scan_pkey,\n      add constraint lsif_last_index_scan_pkey primary key (repository_id);",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1709738515
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
 			}
 		],
 		"BoundsByRev": {
@@ -11417,7 +11430,7 @@
 			"v5.3.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
-					1709738515
+					1710779416
 				],
 				"PreCreation": false
 			}

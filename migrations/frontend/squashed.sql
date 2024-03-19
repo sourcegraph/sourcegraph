@@ -5624,7 +5624,7 @@ ALTER TABLE ONLY lsif_indexes
     ADD CONSTRAINT lsif_indexes_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY lsif_last_index_scan
-    ADD CONSTRAINT lsif_last_index_scan_pkey PRIMARY KEY (repository_id);
+    ADD CONSTRAINT lsif_last_index_scan_pkey PRIMARY KEY (repository_id, indexing_type);
 
 ALTER TABLE ONLY lsif_last_retention_scan
     ADD CONSTRAINT lsif_last_retention_scan_pkey PRIMARY KEY (repository_id);
