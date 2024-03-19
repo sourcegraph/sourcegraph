@@ -171,7 +171,7 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 
 			subLogger := s.logger.Scoped("RunUpdateLoop")
 
-			go func(ctx context.Context, repo configuredRepo, cancel context.CancelFunc) {
+			go func() {
 				defer cancel()
 				defer s.updateQueue.remove(repo, true)
 
@@ -179,7 +179,7 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 				// if it doesn't exist or update it if it does. The timeout of this request depends
 				// on the value of conf.GitLongCommandTimeout() or if the passed context has a set
 				// deadline shorter than the value of this config.
-				resp, err := s.gitserverClient.RequestRepoUpdate(ctx, repo.Name, 1*time.Second)
+				resp, err := s.gitserverClient.RequestRepoUpdate(ctx, repo.Name)
 				if err != nil {
 					schedError.WithLabelValues("requestRepoUpdate").Inc()
 					subLogger.Error("error requesting repo update", log.Error(err), log.String("uri", string(repo.Name)))
@@ -209,7 +209,7 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 					interval := resp.LastFetched.Sub(*resp.LastChanged) / 2
 					s.schedule.updateInterval(repo, interval)
 				}
-			}(ctx, repo, cancel)
+			}()
 		}
 	}
 }

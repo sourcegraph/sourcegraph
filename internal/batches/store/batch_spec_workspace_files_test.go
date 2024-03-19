@@ -25,7 +25,7 @@ func testStoreBatchSpecWorkspaceFiles(t *testing.T, ctx context.Context, s *Stor
 	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
-		for i := 0; i < cap(files); i++ {
+		for i := range cap(files) {
 			file := &btypes.BatchSpecWorkspaceFile{
 				BatchSpecID: spec.ID,
 				FileName:    fmt.Sprintf("hello-%d.txt", i),

@@ -8,7 +8,7 @@ import { takeWhile } from 'rxjs/operators'
 
 import { type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Alert,

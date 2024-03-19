@@ -11,7 +11,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/auth"
 	workerauthz "github.com/sourcegraph/sourcegraph/cmd/worker/internal/authz"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/batches"
@@ -343,7 +342,7 @@ func runRoutinesConcurrently(observationCtx *observation.Context, jobs map[strin
 		wg.Add(1)
 		jobLogger.Debug("Running job")
 
-		go func(name string) {
+		go func() {
 			defer wg.Done()
 
 			routines, err := jobs[name].Routines(ctx, observationCtx)
@@ -361,7 +360,7 @@ func runRoutinesConcurrently(observationCtx *observation.Context, jobs map[strin
 			} else {
 				cancel()
 			}
-		}(name)
+		}()
 	}
 
 	wg.Wait()
@@ -390,9 +389,6 @@ func setAuthzProviders(ctx context.Context, observationCtx *observation.Context)
 	if err != nil {
 		return
 	}
-
-	// authz also relies on UserMappings being setup.
-	globals.WatchPermissionsUserMapping()
 
 	for range time.NewTicker(providers.RefreshInterval()).C {
 		allowAccessByDefault, authzProviders, _, _, _ := providers.ProvidersFromConfig(ctx, conf.Get(), db)

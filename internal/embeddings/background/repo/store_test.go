@@ -22,8 +22,7 @@ import (
 )
 
 func TestRepoEmbeddingJobsStore(t *testing.T) {
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
@@ -240,8 +239,7 @@ func TestCancelRepoEmbeddingJob(t *testing.T) {
 }
 
 func TestGetEmbeddableRepos(t *testing.T) {
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
@@ -392,8 +390,8 @@ func TestGetEmbeddableReposLimit(t *testing.T) {
 }
 
 func TestGetEmbeddableRepoOpts(t *testing.T) {
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
+
 	conf.Mock(&conf.Unified{})
 	defer conf.Mock(nil)
 	conf.Mock(&conf.Unified{SiteConfiguration: schema.SiteConfiguration{

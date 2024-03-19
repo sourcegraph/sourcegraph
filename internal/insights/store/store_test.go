@@ -829,7 +829,7 @@ func Test_coalesceZeroValues(t *testing.T) {
 
 	generateTimes := func(n int) []time.Time {
 		times := []time.Time{}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			times = append(times, testTime.AddDate(0, 0, i))
 		}
 		return times

@@ -10,12 +10,14 @@ import (
 	"github.com/sourcegraph/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/sourcegraph/sourcegraph/internal/debugserver"
 	internalgrpc "github.com/sourcegraph/sourcegraph/internal/grpc"
 	"github.com/sourcegraph/sourcegraph/internal/grpc/defaults"
 	"github.com/sourcegraph/sourcegraph/internal/httpserver"
 	"github.com/sourcegraph/sourcegraph/internal/pubsub"
+	"github.com/sourcegraph/sourcegraph/internal/sams"
 	"github.com/sourcegraph/sourcegraph/internal/trace/policy"
 	"github.com/sourcegraph/sourcegraph/internal/version"
 
@@ -61,11 +63,23 @@ func (Service) Initialize(ctx context.Context, logger log.Logger, contract runti
 		return nil, errors.Wrap(err, "create pubsub.published_message_size metric")
 	}
 
+	// Prepare SAMS client, so that we can enforce SAMS-based M2M authz/authn
+	logger.Debug("using SAMS client",
+		log.String("samsServer", config.SAMS.ServerURL),
+		log.String("clientID", config.SAMS.ClientID))
+	samsClient := sams.NewClient(config.SAMS.ServerURL, clientcredentials.Config{
+		ClientID:     config.SAMS.ClientID,
+		ClientSecret: config.SAMS.ClientSecret,
+		TokenURL:     fmt.Sprintf("%s/oauth/token", config.SAMS.ServerURL),
+		Scopes:       []string{"openid", "profile", "email"},
+	})
+
 	// Initialize our gRPC server
 	grpcServer := defaults.NewPublicServer(logger)
 	telemetryGatewayServer, err := server.New(
 		logger,
 		eventsTopic,
+		samsClient,
 		events.PublishStreamOptions{
 			ConcurrencyLimit:     config.Events.StreamPublishConcurrency,
 			MessageSizeHistogram: publishMessageBytes,
@@ -87,6 +101,7 @@ func (Service) Initialize(ctx context.Context, logger log.Logger, contract runti
 		// development!
 		grpcUI := debugserver.NewGRPCWebUIEndpoint("telemetry-gateway", listenAddr)
 		diagnosticsServer.Handle(grpcUI.Path, grpcUI.Handler)
+		logger.Warn("gRPC web UI enabled", log.String("url", fmt.Sprintf("%s%s", listenAddr, grpcUI.Path)))
 	}
 
 	return background.LIFOStopRoutine{

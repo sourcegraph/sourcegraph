@@ -10,7 +10,7 @@ import type { Test } from 'mocha'
 import { readFile, mkdir } from 'mz/fs'
 import pTimeout from 'p-timeout'
 import * as prettier from 'prettier'
-import { Subject, Subscription, throwError } from 'rxjs'
+import { Subject, Subscription, lastValueFrom, throwError } from 'rxjs'
 import { first, timeoutWith } from 'rxjs/operators'
 
 import { STATIC_ASSETS_PATH } from '@sourcegraph/build-config'
@@ -288,15 +288,15 @@ export const createSharedIntegrationTestContext = async <
             triggerRequest: () => Promise<void> | void,
             operationName: O
         ): Promise<Parameters<TGraphQlOperations[O]>[0]> => {
-            const requestPromise = graphQlRequests
-                .pipe(
+            const requestPromise = lastValueFrom(
+                graphQlRequests.pipe(
                     first(
                         (request: GraphQLRequestEvent<TGraphQlOperationNames>): request is GraphQLRequestEvent<O> =>
                             request.operationName === operationName
                     ),
                     timeoutWith(4000, throwError(new Error(`Timeout waiting for GraphQL request "${operationName}"`)))
                 )
-                .toPromise()
+            )
             await triggerRequest()
             const { variables } = await requestPromise
             return variables

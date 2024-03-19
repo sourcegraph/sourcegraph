@@ -11,7 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/guardrails/resolvers"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel"
 	"github.com/sourcegraph/sourcegraph/internal/codygateway"
-	"github.com/sourcegraph/sourcegraph/internal/conf"
+	confpkg "github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
@@ -30,7 +30,7 @@ func Init(
 	observationCtx *observation.Context,
 	db database.DB,
 	_ codeintel.Services,
-	_ conftypes.UnifiedWatchable,
+	conf conftypes.UnifiedWatchable,
 	enterpriseServices *enterprise.Services,
 ) error {
 	var resolver *resolvers.GuardrailsResolver
@@ -42,9 +42,14 @@ func Init(
 	} else {
 		// On an Enterprise instance endpoint proxies to gateway, and is re-initialized
 		// in case site-config changes.
-		initLogic := &enterpriseInitialization{observationCtx: observationCtx}
-		resolver = resolvers.NewGuardrailsResolver(initLogic.Service())
-		go conf.Watch(func() {
+		initLogic := &enterpriseInitialization{
+			observationCtx: observationCtx,
+			conf:           conf,
+		}
+		// conf.Watch will first call UpdateService synchronously before
+		// returning. So we can initialize with Unitialized at first.
+		resolver = resolvers.NewGuardrailsResolver(attribution.Uninitialized{})
+		conf.Watch(func() {
 			resolver.UpdateService(initLogic.Service())
 		})
 	}
@@ -56,10 +61,12 @@ func Init(
 // as opposed to dotcom.
 type enterpriseInitialization struct {
 	observationCtx *observation.Context
-	mu             sync.Mutex
-	client         codygateway.Client
-	endpoint       string
-	token          string
+	conf           conftypes.SiteConfigQuerier
+
+	mu       sync.Mutex
+	client   codygateway.Client
+	endpoint string
+	token    string
 }
 
 // Service creates an attribution.Service. It tries to get gateway endpoint from site config
@@ -68,8 +75,7 @@ type enterpriseInitialization struct {
 func (e *enterpriseInitialization) Service() attribution.Service {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	config := conf.Get().SiteConfig()
-	endpoint, token := conf.GetAttributionGateway(config)
+	endpoint, token := confpkg.GetAttributionGateway(e.conf.SiteConfig())
 	if e.endpoint != endpoint || e.token != token {
 		e.endpoint = endpoint
 		e.token = token
@@ -92,15 +98,18 @@ func alwaysAllowed(context.Context, string) (bool, error) {
 	return true, nil
 }
 
-func NewAttributionTest(observationCtx *observation.Context) func(context.Context, string) (bool, error) {
+func NewAttributionTest(observationCtx *observation.Context, conf conftypes.SiteConfigQuerier) func(context.Context, string) (bool, error) {
 	// Attribution is only-enterprise, dotcom lets everything through.
 	if dotcom.SourcegraphDotComMode() {
 		return alwaysAllowed
 	}
-	initLogic := &enterpriseInitialization{observationCtx: observationCtx}
+	initLogic := &enterpriseInitialization{
+		observationCtx: observationCtx,
+		conf:           conf,
+	}
 	return func(ctx context.Context, snippet string) (bool, error) {
 		// Check if attribution is on, permit everything if it's off.
-		c := conf.GetConfigFeatures(conf.Get().SiteConfig())
+		c := confpkg.GetConfigFeatures(conf.SiteConfig())
 		if !c.Attribution {
 			return true, nil
 		}

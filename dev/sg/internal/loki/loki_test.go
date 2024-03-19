@@ -26,7 +26,7 @@ func TestChunkEntry(t *testing.T) {
 	}
 
 	allLines := bytes.NewBuffer(nil)
-	for i := 0; i < len(results); i++ {
+	for i := range len(results) {
 		expectedTs := fmt.Sprintf("%d", ts+int64(i))
 		if results[i][0] != expectedTs {
 			t.Errorf("wrong timestamp at %d. Got %s wanted %s", i, results[i][0], expectedTs)

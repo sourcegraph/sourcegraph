@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Container, Link, Text } from '@sourcegraph/wildcard'
@@ -27,6 +27,7 @@ export interface SignUpPageProps extends TelemetryProps, TelemetryV2Props {
     context: Pick<
         SourcegraphContext,
         | 'allowSignup'
+        | 'externalURL'
         | 'authProviders'
         | 'sourcegraphDotComMode'
         | 'xhrHeaders'

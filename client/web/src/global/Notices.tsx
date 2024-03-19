@@ -69,6 +69,7 @@ export const Notices: React.FunctionComponent<React.PropsWithChildren<Props>> = 
     }
 
     const notices = settings.notices.filter(notice => notice.location === location)
+
     if (notices.length === 0) {
         return null
     }

@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/gomodule/redigo/redis"
 	"github.com/rafaeljusto/redigomock/v3"
 	"github.com/stretchr/testify/require"

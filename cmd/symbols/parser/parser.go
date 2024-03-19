@@ -106,7 +106,7 @@ func (p *parser) Parse(ctx context.Context, args search.SymbolsParameters, paths
 		}()
 	}()
 
-	for i := 0; i < p.numParserProcesses; i++ {
+	for range p.numParserProcesses {
 		wg.Add(1)
 
 		go func() {

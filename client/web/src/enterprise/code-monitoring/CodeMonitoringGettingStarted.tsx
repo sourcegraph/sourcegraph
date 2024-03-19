@@ -4,7 +4,7 @@ import { mdiPlus } from '@mdi/js'
 import classNames from 'classnames'
 
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Link, Button, CardBody, Card, Icon, H2, H3, H4, Text } from '@sourcegraph/wildcard'
 

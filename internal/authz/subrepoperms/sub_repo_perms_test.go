@@ -391,7 +391,7 @@ func TestSubRepoPermsPermissionsCache(t *testing.T) {
 	}
 
 	// Should hit DB only once
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		_, err := client.Permissions(ctx, 1, content)
 		if err != nil {
 			t.Fatal(err)

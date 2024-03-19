@@ -1,7 +1,7 @@
 import { scanSearchQuery } from '@sourcegraph/shared/src/search/query/scanner'
-import { Keyword } from '@sourcegraph/shared/src/search/query/token'
-import { Filter } from '@sourcegraph/shared/src/search/stream'
-import { SetStateResult, useSyncedWithURLState } from '@sourcegraph/wildcard'
+import type { Keyword } from '@sourcegraph/shared/src/search/query/token'
+import type { Filter } from '@sourcegraph/shared/src/search/stream'
+import { type SetStateResult, useSyncedWithURLState } from '@sourcegraph/wildcard'
 
 export const FILTERS_URL_KEY = 'filters'
 export type URLQueryFilter = Pick<Filter, 'kind' | 'label' | 'value'>

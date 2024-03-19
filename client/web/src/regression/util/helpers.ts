@@ -1,6 +1,6 @@
 import * as jsonc from 'jsonc-parser'
 import { first } from 'lodash'
-import { throwError } from 'rxjs'
+import { lastValueFrom, throwError } from 'rxjs'
 import { catchError, map } from 'rxjs/operators'
 import { Key } from 'ts-key-enum'
 
@@ -131,7 +131,7 @@ export async function createAuthProvider(
     gqlClient: GraphQLClient,
     authProvider: GitHubAuthProvider | GitLabAuthProvider | OpenIDConnectAuthProvider | SAMLAuthProvider
 ): Promise<ResourceDestructor> {
-    const siteConfig = await fetchSiteConfiguration(gqlClient).toPromise()
+    const siteConfig = await lastValueFrom(fetchSiteConfiguration(gqlClient))
     const siteConfigParsed: SiteConfiguration = jsonc.parse(siteConfig.configuration.effectiveContents)
     const authProviders = siteConfigParsed['auth.providers']
     if (
@@ -185,7 +185,7 @@ export async function ensureNewOrganization(
     { requestGraphQL }: Pick<PlatformContext, 'requestGraphQL'>,
     variables: CreateOrganizationVariables
 ): Promise<{ destroy: ResourceDestructor; result: CreateOrganizationResult['createOrganization'] }> {
-    const matchingOrgs = (await fetchAllOrganizations({ requestGraphQL }, { first: 1000 }).toPromise()).nodes.filter(
+    const matchingOrgs = (await lastValueFrom(fetchAllOrganizations({ requestGraphQL }, { first: 1000 }))).nodes.filter(
         org => org.name === variables.name
     )
     if (matchingOrgs.length > 1) {
@@ -194,7 +194,7 @@ export async function ensureNewOrganization(
     if (matchingOrgs.length === 1) {
         await deleteOrganization({ requestGraphQL }, matchingOrgs[0].id).toPromise()
     }
-    const createdOrg = await createOrganization({ requestGraphQL }, variables).toPromise()
+    const createdOrg = await lastValueFrom(createOrganization({ requestGraphQL }, variables))
     return {
         destroy: () => deleteOrganization({ requestGraphQL }, createdOrg.id).toPromise(),
         result: createdOrg,
@@ -239,15 +239,15 @@ export async function editSiteConfig(
     gqlClient: GraphQLClient,
     ...edits: ((contents: string) => jsonc.Edit[])[]
 ): Promise<{ destroy: ResourceDestructor; result: boolean }> {
-    const origConfig = await fetchSiteConfiguration(gqlClient).toPromise()
+    const origConfig = await lastValueFrom(fetchSiteConfiguration(gqlClient))
     let newContents = origConfig.configuration.effectiveContents
     for (const editFunc of edits) {
         newContents = jsonc.applyEdits(newContents, editFunc(newContents))
     }
     return {
-        result: await updateSiteConfiguration(gqlClient, origConfig.configuration.id, newContents).toPromise(),
+        result: await lastValueFrom(updateSiteConfiguration(gqlClient, origConfig.configuration.id, newContents)),
         destroy: async () => {
-            const site = await fetchSiteConfiguration(gqlClient).toPromise()
+            const site = await lastValueFrom(fetchSiteConfiguration(gqlClient))
             await updateSiteConfiguration(
                 gqlClient,
                 site.configuration.id,

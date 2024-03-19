@@ -396,7 +396,7 @@ describe('getDefinitionURL', () => {
                         Partial<ViewStateSpec>
                 ) => ''
             )
-            await of<MaybeLoadingResult<Location[]>>({
+            await of({
                 isLoading: false,
                 result: [{ uri: 'git://r3?c3#f' }],
             })
@@ -424,7 +424,7 @@ describe('getDefinitionURL', () => {
         describe('when the result is inside the current root', () => {
             it('emits the definition URL the user input revision (not commit SHA) of the root', () =>
                 expect(
-                    of<MaybeLoadingResult<Location[]>>({
+                    of({
                         isLoading: false,
                         result: [{ uri: 'git://r3?c3#f' }],
                     })
@@ -445,7 +445,7 @@ describe('getDefinitionURL', () => {
         describe('when the result is not inside the current root (different repo and/or commit)', () => {
             it('emits the definition URL with range', () =>
                 expect(
-                    of<MaybeLoadingResult<Location[]>>({
+                    of({
                         isLoading: false,
                         result: [FIXTURE_LOCATION_CLIENT],
                     })
@@ -464,7 +464,7 @@ describe('getDefinitionURL', () => {
 
             it('emits the definition URL without range', () =>
                 expect(
-                    of<MaybeLoadingResult<Location[]>>({
+                    of({
                         isLoading: false,
                         result: [{ ...FIXTURE_LOCATION_CLIENT, range: undefined }],
                     })
@@ -485,7 +485,7 @@ describe('getDefinitionURL', () => {
 
     it('emits the definition panel URL if there is more than 1 location result', () =>
         expect(
-            of<MaybeLoadingResult<Location[]>>({
+            of({
                 isLoading: false,
                 result: [FIXTURE_LOCATION_CLIENT, { ...FIXTURE_LOCATION, uri: 'other' }],
             })

@@ -1272,3 +1272,17 @@ func RepoConcurrentExternalServiceSyncers() int {
 	}
 	return v
 }
+
+// PermissionsUserMapping returns the last valid value of permissions user mapping in the site configuration.
+// Callers must not mutate the returned pointer.
+func PermissionsUserMapping() *schema.PermissionsUserMapping {
+	c := Get().PermissionsUserMapping
+	if c == nil {
+		return &schema.PermissionsUserMapping{Enabled: false, BindID: "email"}
+	}
+	// Invalid config.
+	if c.BindID != "email" && c.BindID != "username" {
+		return &schema.PermissionsUserMapping{Enabled: false, BindID: "email"}
+	}
+	return c
+}

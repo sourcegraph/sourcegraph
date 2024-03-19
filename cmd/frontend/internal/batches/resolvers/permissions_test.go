@@ -1382,7 +1382,7 @@ func TestRepositoryPermissions(t *testing.T) {
 
 	// Create 2 repositories
 	repos := make([]*types.Repo, 0, 2)
-	for i := 0; i < cap(repos); i++ {
+	for i := range cap(repos) {
 		name := fmt.Sprintf("github.com/sourcegraph/test-repository-permissions-repo-%d", i)
 		r := newGitHubTestRepo(name, newGitHubExternalService(t, esStore))
 		if err := repoStore.Create(ctx, r); err != nil {

@@ -27,7 +27,7 @@
     <div slot="title">
         &nbsp;
         {#if ownerURL}
-            <a data-sveltekit-reload href={ownerURL}>{displayName}</a>
+            <a href={ownerURL}>{displayName}</a>
         {:else}
             {displayName}
         {/if}

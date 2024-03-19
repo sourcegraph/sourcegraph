@@ -285,7 +285,7 @@ func benchSearchRegex(b *testing.B, p *protocol.Request) {
 
 	b.ResetTimer()
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_, err := regexSearchBatch(ctx, &p.PatternInfo, zf, 0)
 		if err != nil {
 			b.Fatal(err)
@@ -353,7 +353,7 @@ func TestMaxMatches(t *testing.T) {
 	buf := new(bytes.Buffer)
 	zw := zip.NewWriter(buf)
 	maxMatches := 33
-	for i := 0; i < maxMatches+1; i++ {
+	for i := range maxMatches + 1 {
 		w, err := zw.CreateHeader(&zip.FileHeader{
 			Name:   strconv.Itoa(i),
 			Method: zip.Store,
@@ -361,7 +361,7 @@ func TestMaxMatches(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for j := 0; j < 10; j++ {
+		for range 10 {
 			_, _ = w.Write([]byte(pattern))
 			_, _ = w.Write([]byte{' '})
 			_, _ = w.Write([]byte{'\n'})
@@ -699,7 +699,8 @@ func TestLangFilters(t *testing.T) {
 			},
 			wantFm: []protocol.FileMatch{{
 				Path:     "a.go",
-				Language: "Go"}},
+				Language: "Go",
+			}},
 		},
 		{
 			name: "include filter with no matches",
@@ -755,7 +756,8 @@ func TestLangFilters(t *testing.T) {
 			},
 			wantFm: []protocol.FileMatch{{
 				Path:     "README.md",
-				Language: "Markdown"}},
+				Language: "Markdown",
+			}},
 		},
 		{
 			name: "include filter with ambiguous extension",
@@ -771,7 +773,8 @@ func TestLangFilters(t *testing.T) {
 			},
 			wantFm: []protocol.FileMatch{{
 				Path:     "file.m",
-				Language: "MATLAB"}},
+				Language: "MATLAB",
+			}},
 		},
 		{
 			name: "include filter with ambiguous extension and no matches",
@@ -811,83 +814,85 @@ func Test_locsToRanges(t *testing.T) {
 		buf    string
 		locs   [][]int
 		ranges []protocol.Range
-	}{{
-		// simple multimatch
-		buf:  "0.2.4.6.8.",
-		locs: [][]int{{0, 2}, {4, 8}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{0, 0, 0},
-			End:   protocol.Location{2, 0, 2},
+	}{
+		{
+			// simple multimatch
+			buf:  "0.2.4.6.8.",
+			locs: [][]int{{0, 2}, {4, 8}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{0, 0, 0},
+				End:   protocol.Location{2, 0, 2},
+			}, {
+				Start: protocol.Location{4, 0, 4},
+				End:   protocol.Location{8, 0, 8},
+			}},
 		}, {
-			Start: protocol.Location{4, 0, 4},
-			End:   protocol.Location{8, 0, 8},
-		}},
-	}, {
-		// multibyte match
-		buf:  "0.2.🔧.8.",
-		locs: [][]int{{2, 8}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{2, 0, 2},
-			End:   protocol.Location{8, 0, 5},
-		}},
-	}, {
-		// match crosses newlines and ends on a newline
-		buf:  "0.2.4.6.\n9.11.14.17",
-		locs: [][]int{{2, 9}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{2, 0, 2},
-			End:   protocol.Location{9, 1, 0},
-		}},
-	}, {
-		// match starts on a newline
-		buf:  "0.2.4.6.\n9.11.14.17",
-		locs: [][]int{{8, 11}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{8, 0, 8},
-			End:   protocol.Location{11, 1, 2},
-		}},
-	}, {
-		// match crosses a few lines and has multibyte chars
-		buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
-		locs: [][]int{{0, 25}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{0, 0, 0},
-			End:   protocol.Location{25, 2, 3},
-		}},
-	}, {
-		// multiple matches on different lines
-		buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
-		locs: [][]int{{0, 2}, {2, 3}, {10, 14}, {23, 28}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{0, 0, 0},
-			End:   protocol.Location{2, 0, 2},
+			// multibyte match
+			buf:  "0.2.🔧.8.",
+			locs: [][]int{{2, 8}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{2, 0, 2},
+				End:   protocol.Location{8, 0, 5},
+			}},
 		}, {
-			Start: protocol.Location{2, 0, 2},
-			End:   protocol.Location{3, 0, 3},
+			// match crosses newlines and ends on a newline
+			buf:  "0.2.4.6.\n9.11.14.17",
+			locs: [][]int{{2, 9}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{2, 0, 2},
+				End:   protocol.Location{9, 1, 0},
+			}},
 		}, {
-			Start: protocol.Location{10, 0, 7},
-			End:   protocol.Location{14, 1, 2},
+			// match starts on a newline
+			buf:  "0.2.4.6.\n9.11.14.17",
+			locs: [][]int{{8, 11}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{8, 0, 8},
+				End:   protocol.Location{11, 1, 2},
+			}},
 		}, {
-			Start: protocol.Location{23, 2, 1},
-			End:   protocol.Location{28, 2, 6},
-		}},
-	}, {
-		// multiple adjacent matches with overlap
-		buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
-		locs: [][]int{{1, 3}, {3, 8}, {13, 14}, {14, 25}},
-		ranges: []protocol.Range{{
-			Start: protocol.Location{1, 0, 1},
-			End:   protocol.Location{3, 0, 3},
+			// match crosses a few lines and has multibyte chars
+			buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
+			locs: [][]int{{0, 25}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{0, 0, 0},
+				End:   protocol.Location{25, 2, 3},
+			}},
 		}, {
-			Start: protocol.Location{3, 0, 3},
-			End:   protocol.Location{8, 0, 5},
+			// multiple matches on different lines
+			buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
+			locs: [][]int{{0, 2}, {2, 3}, {10, 14}, {23, 28}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{0, 0, 0},
+				End:   protocol.Location{2, 0, 2},
+			}, {
+				Start: protocol.Location{2, 0, 2},
+				End:   protocol.Location{3, 0, 3},
+			}, {
+				Start: protocol.Location{10, 0, 7},
+				End:   protocol.Location{14, 1, 2},
+			}, {
+				Start: protocol.Location{23, 2, 1},
+				End:   protocol.Location{28, 2, 6},
+			}},
 		}, {
-			Start: protocol.Location{13, 1, 1},
-			End:   protocol.Location{14, 1, 2},
-		}, {
-			Start: protocol.Location{14, 1, 2},
-			End:   protocol.Location{25, 2, 3},
-		}}},
+			// multiple adjacent matches with overlap
+			buf:  "0.2.🔧.9.\n12.15.18.\n22.25.28.",
+			locs: [][]int{{1, 3}, {3, 8}, {13, 14}, {14, 25}},
+			ranges: []protocol.Range{{
+				Start: protocol.Location{1, 0, 1},
+				End:   protocol.Location{3, 0, 3},
+			}, {
+				Start: protocol.Location{3, 0, 3},
+				End:   protocol.Location{8, 0, 5},
+			}, {
+				Start: protocol.Location{13, 1, 1},
+				End:   protocol.Location{14, 1, 2},
+			}, {
+				Start: protocol.Location{14, 1, 2},
+				End:   protocol.Location{25, 2, 3},
+			}},
+		},
 	}
 
 	for _, tc := range cases {

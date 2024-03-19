@@ -2,21 +2,11 @@
 bazel:
   rcfiles:
     - ".aspect/bazelrc/ci.sourcegraph.bazelrc"
-  flags:
-    # This flag is required because otherwise the integration tests fail with `fcmod` Operation not permitted
-    # which is probably related to the launced containers writing to mapped in directories as root and then
-    # when the container exits the files that are left over are root.
-    # TODO(burmudar): launch containers with uid/guid mapped in
-    - --noexperimental_reuse_sandbox_directories
-    # TODO(gregmagolan): can be moved to .aspect/workflows/bazelrc in the future
-    - --remote_download_minimal
-    - --nobuild_runfile_links
-    # As per recommendation from https://analyzer.engflow.com/suggestions/829decb5-e3f4-4930-b60c-0494d154f8c1
-    - --experimental_profile_include_target_label
-    - --noslim_profile
 env:
   REDIS_CACHE_ENDPOINT: ":6379"
   GIT_PAGER: ""
+# Temporary work-around to resolve a slow post task agent health check
+observability: false
 tasks:
   # Checks that BUILD files are formatted
   - buildifier:
@@ -28,13 +18,12 @@ tasks:
       fix_target: //:configure
   # Checks that all tests are passing
   - test:
-      include_eternal_tests: true
       targets:
         - //...
         # exclude testing as it is executed in a seperate job
         - -//testing/...
   - test:
-      include_eternal_tests: true
+      name: Integration/E2E
       targets:
         - //testing/...
         # This target should only really run when on main which we aren't handling. For the time being while we

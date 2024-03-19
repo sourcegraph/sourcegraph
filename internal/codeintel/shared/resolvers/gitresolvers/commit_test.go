@@ -24,7 +24,7 @@ func TestCommit(t *testing.T) {
 	}}
 	resolver := NewGitCommitResolver(gsClient, repo, api.CommitID("deadbeef"), "")
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		tags, err := resolver.Tags(ctx)
 		if err != nil {
 			t.Fatalf("unexpected error from tags: %s", err)

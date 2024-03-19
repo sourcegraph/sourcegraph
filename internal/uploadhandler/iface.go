@@ -5,7 +5,8 @@ import (
 )
 
 type Upload[T any] struct {
-	ID               int
+	ID int
+	// TODO(id: state-refactoring) Change this to shared.UploadState
 	State            string
 	NumParts         int
 	UploadedParts    []int

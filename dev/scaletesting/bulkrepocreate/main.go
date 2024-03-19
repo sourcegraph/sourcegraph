@@ -135,7 +135,7 @@ func main() {
 	if clonesCount < 1 {
 		clonesCount = 1
 	}
-	for i := 0; i < clonesCount; i++ {
+	for i := range clonesCount {
 		clone, err := blank.clone(ctx, i)
 		if err != nil {
 			log.Fatal(err)
@@ -151,7 +151,7 @@ func main() {
 	}
 
 	// Distribute the blank repos.
-	for i := 0; i < cfg.count; i++ {
+	for i := range cfg.count {
 		repos[i].blank = blanks[i%clonesCount]
 	}
 
@@ -275,7 +275,7 @@ func writeFailure(out *output.Output, format string, a ...any) {
 
 func generateNames(prefix string, count int) []string {
 	names := make([]string, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		names[i] = fmt.Sprintf("%s%09d", prefix, i)
 	}
 	return names

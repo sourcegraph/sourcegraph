@@ -76,7 +76,7 @@ func (s *store) GetBulkMonikerLocations(ctx context.Context, tableName string, u
 		totalCount += len(monikerLocations.Locations)
 	}
 	trace.AddEvent("TODO Domain Owner",
-		attribute.Int("numDumps", len(locationData)),
+		attribute.Int("numUploads", len(locationData)),
 		attribute.Int("totalCount", totalCount))
 
 	max := totalCount
@@ -94,9 +94,9 @@ outer:
 			}
 
 			locations = append(locations, shared.Location{
-				DumpID: monikerLocations.DumpID,
-				Path:   row.URI,
-				Range:  newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
+				UploadID: monikerLocations.UploadID,
+				Path:     row.URI,
+				Range:    newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
 			})
 
 			if len(locations) >= limit {
@@ -176,9 +176,9 @@ func (s *store) getLocations(
 			for _, monikerLocation := range monikerLocations {
 				for _, row := range monikerLocation.Locations {
 					locations = append(locations, shared.Location{
-						DumpID: monikerLocation.DumpID,
-						Path:   row.URI,
-						Range:  newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
+						UploadID: monikerLocation.UploadID,
+						Path:     row.URI,
+						Range:    newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
 					})
 				}
 			}
@@ -492,7 +492,7 @@ func deduplicateLocations(locations []shared.Location) []shared.Location {
 
 func locationKey(l shared.Location) string {
 	return fmt.Sprintf("%d:%s:%d:%d:%d:%d",
-		l.DumpID,
+		l.UploadID,
 		l.Path,
 		l.Range.Start.Line,
 		l.Range.Start.Character,
@@ -555,7 +555,7 @@ func (s *store) GetMinimalBulkMonikerLocations(ctx context.Context, tableName st
 		totalCount += len(monikerLocations.Locations)
 	}
 	trace.AddEvent("TODO Domain Owner",
-		attribute.Int("numDumps", len(locationData)),
+		attribute.Int("numUploads", len(locationData)),
 		attribute.Int("totalCount", totalCount))
 
 	max := totalCount
@@ -573,9 +573,9 @@ outer:
 			}
 
 			locations = append(locations, shared.Location{
-				DumpID: monikerLocations.DumpID,
-				Path:   row.URI,
-				Range:  newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
+				UploadID: monikerLocations.UploadID,
+				Path:     row.URI,
+				Range:    newRange(row.StartLine, row.StartCharacter, row.EndLine, row.EndCharacter),
 			})
 
 			if len(locations) >= limit {

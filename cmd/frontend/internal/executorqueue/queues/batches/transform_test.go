@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
 	"github.com/google/go-cmp/cmp"
 	"gopkg.in/yaml.v2"
 

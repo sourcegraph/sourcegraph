@@ -1,12 +1,17 @@
 []store.RecordSeriesPointArgs{{
 	SeriesID: "series1",
 	Point: store.SeriesPoint{
-		Time: time.Time{
-			ext: 63713433600,
-		},
+		Time: time.Date(2020,
+			1,
+			1,
+			0,
+			0,
+			0,
+			0,
+			time.UTC),
 		Value: 5,
 	},
-	RepoName:    valast.Addr("repoName1").(*string),
-	RepoID:      valast.Addr(api.RepoID(1)).(*api.RepoID),
+	RepoName:    valast.Ptr("repoName1"),
+	RepoID:      valast.Ptr(api.RepoID(1)),
 	PersistMode: store.PersistMode("record"),
 }}

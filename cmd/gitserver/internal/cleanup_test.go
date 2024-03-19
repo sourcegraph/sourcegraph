@@ -281,7 +281,7 @@ func TestGitGCAuto(t *testing.T) {
 	runCmd(t, wd, "git", "init", "--initial-branch", "main", repo)
 
 	// First we need to generate a moderate number of commits.
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		runCmd(t, repo, "sh", "-c", "echo 1 >> file1")
 		runCmd(t, repo, "git", "add", "file1")
 		runCmd(t, repo, "git", "commit", "-m", "file1")
@@ -289,7 +289,7 @@ func TestGitGCAuto(t *testing.T) {
 
 	// Now on a second branch, we do the same thing.
 	runCmd(t, repo, "git", "checkout", "-b", "secondary")
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		runCmd(t, repo, "sh", "-c", "echo 2 >> file2")
 		runCmd(t, repo, "git", "add", "file2")
 		runCmd(t, repo, "git", "commit", "-m", "file2")

@@ -6,6 +6,107 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mkSymbolMatch(name string, line int) *SymbolMatch {
+	return &SymbolMatch{
+		Symbol: Symbol{
+			Name: name,
+			Line: line,
+		},
+	}
+}
+
+func TestAppendSymbols(t *testing.T) {
+	cases := []struct {
+		name   string
+		input1 *FileMatch
+		input2 *FileMatch
+		output *FileMatch
+	}{
+		{
+			name: "duplicate symbol",
+			input1: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym2", 42),
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+			input2: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym2", 42),
+					mkSymbolMatch("sym3", 43),
+				},
+			},
+			output: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+					mkSymbolMatch("sym2", 42),
+					mkSymbolMatch("sym3", 43),
+				},
+			},
+		},
+		{
+			name: "same line, different symbol",
+			input1: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+			input2: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym2", 41),
+				},
+			},
+			output: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+					mkSymbolMatch("sym2", 41),
+				},
+			},
+		},
+		{
+			name:   "empty left side",
+			input1: &FileMatch{},
+			input2: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+			output: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+		},
+		{
+			name: "empty right side",
+			input1: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+			input2: &FileMatch{},
+			output: &FileMatch{
+				Symbols: []*SymbolMatch{
+					mkSymbolMatch("sym1", 41),
+				},
+			},
+		},
+		{
+			name:   "both empty",
+			input1: &FileMatch{},
+			input2: &FileMatch{},
+			output: &FileMatch{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.input1.mergeSymbols(tc.input2)
+			require.Equal(t, tc.output, tc.input1)
+		})
+	}
+}
+
 func TestConvertMatches(t *testing.T) {
 	t.Run("AsLineMatches", func(t *testing.T) {
 		cases := []struct {
@@ -291,6 +392,26 @@ func TestChunkMatches_MatchedContent(t *testing.T) {
 			}},
 		},
 		output: []string{"ab", "c\nd", "ef"},
+	}, {
+		input: ChunkMatch{
+			Content:      "abc\ndef",
+			ContentStart: Location{0, 0, 0},
+			// Out of bounds ranges
+			Ranges: Ranges{{
+				// Starts at beginning, ends past end
+				Start: Location{0, 0, 0},
+				End:   Location{30, 3, 2},
+			}, {
+				// Starts in middle, ends past end
+				Start: Location{4, 1, 0},
+				End:   Location{1000, 1, 996},
+			}, {
+				// Starts past end, ends past end
+				Start: Location{1000, 1000, 1000},
+				End:   Location{2000, 2000, 2000},
+			}},
+		},
+		output: []string{"abc\ndef", "def", ""},
 	}}
 
 	for _, tc := range cases {

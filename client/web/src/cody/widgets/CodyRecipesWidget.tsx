@@ -5,6 +5,7 @@ import React, { useEffect } from 'react'
 import { mdiCardBulletedOutline, mdiDotsVertical, mdiProgressPencil, mdiShuffleVariant } from '@mdi/js'
 
 import { TranslateToLanguage } from '@sourcegraph/cody-shared/dist/chat/recipes/translate'
+import type { TelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 
 import { eventLogger } from '../../tracking/eventLogger'
 import { EventName } from '../../util/constants'
@@ -15,10 +16,14 @@ import { Recipe } from './components/Recipe'
 import { RecipeAction } from './components/RecipeAction'
 import { Recipes } from './components/Recipes'
 
-export const CodyRecipesWidget: React.FC<{ editor?: CodeMirrorEditor }> = ({ editor }) => {
+export const CodyRecipesWidget: React.FC<{ editor?: CodeMirrorEditor; telemetryRecorder: TelemetryRecorder }> = ({
+    editor,
+    telemetryRecorder,
+}) => {
     useEffect(() => {
         eventLogger.log(EventName.CODY_CHAT_EDITOR_WIDGET_VIEWED)
-    }, [])
+        telemetryRecorder.recordEvent('cody.chat.editor-widget', 'view')
+    }, [telemetryRecorder])
 
     // dirty fix becasue it is rendered under a separate React DOM tree.
     const codySidebarStore = (window as any).codySidebarStore as ReturnType<typeof useCodySidebar>

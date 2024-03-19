@@ -30,7 +30,7 @@ func TestAllReposIterator(t *testing.T) {
 	repoStore.ListFunc.SetDefaultHook(func(ctx context.Context, opt database.ReposListOptions) ([]*types.Repo, error) {
 		repoStoreListCalls = append(repoStoreListCalls, opt)
 		var result []*types.Repo
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			nextRepoID++
 			result = append(result, &types.Repo{ID: nextRepoID, Name: api.RepoName(fmt.Sprint(nextRepoID))})
 		}

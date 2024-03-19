@@ -51,6 +51,7 @@ describe('SignUpPage', () => {
                                         authMinPasswordLength: 12,
                                         authProviders,
                                         xhrHeaders: {},
+                                        externalURL: 'https://sourcegraph.test:3443',
                                     }}
                                     telemetryService={NOOP_TELEMETRY_SERVICE}
                                     telemetryRecorder={noOpTelemetryRecorder}
@@ -81,6 +82,7 @@ describe('SignUpPage', () => {
                                         authMinPasswordLength: 12,
                                         authProviders,
                                         xhrHeaders: {},
+                                        externalURL: 'https://sourcegraph.test:3443',
                                     }}
                                     telemetryService={NOOP_TELEMETRY_SERVICE}
                                     telemetryRecorder={noOpTelemetryRecorder}
@@ -119,6 +121,7 @@ describe('SignUpPage', () => {
                                         authMinPasswordLength: 12,
                                         authProviders,
                                         xhrHeaders: {},
+                                        externalURL: 'https://sourcegraph.test:3443',
                                     }}
                                     telemetryService={NOOP_TELEMETRY_SERVICE}
                                     telemetryRecorder={noOpTelemetryRecorder}

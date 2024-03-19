@@ -2,7 +2,7 @@ import React from 'react'
 
 import { mdiCloudAlert, mdiCloudClock } from '@mdi/js'
 import classNames from 'classnames'
-import format from 'date-fns/format'
+import { format } from 'date-fns'
 
 import { Icon, Tooltip } from '@sourcegraph/wildcard'
 

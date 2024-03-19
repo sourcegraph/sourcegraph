@@ -1,4 +1,4 @@
-import { Suspense, type PropsWithChildren, type FC, useCallback, ChangeEvent } from 'react'
+import { Suspense, type PropsWithChildren, type FC, useCallback, type ChangeEvent } from 'react'
 
 import classNames from 'classnames'
 

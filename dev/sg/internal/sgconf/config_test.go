@@ -1,6 +1,7 @@
 package sgconf
 
 import (
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -47,13 +48,16 @@ commandsets:
 
 	want := &Config{
 		Env: map[string]string{"SRC_REPOS_DIR": "$HOME/.sourcegraph/repos"},
-		Commands: map[string]run.Command{
+		Commands: map[string]*run.Command{
 			"frontend": {
-				Name:        "frontend",
+				Config: run.SGConfigCommandOptions{
+					Name:           "frontend",
+					Env:            map[string]string{"CONFIGURATION_MODE": "server"},
+					RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
+				},
 				Cmd:         "ulimit -n 10000 && .bin/frontend",
 				Install:     "go build -o .bin/frontend github.com/sourcegraph/sourcegraph/cmd/frontend",
 				CheckBinary: ".bin/frontend",
-				Env:         map[string]string{"CONFIGURATION_MODE": "server"},
 				Watch:       []string{"lib"},
 			},
 		},
@@ -113,12 +117,15 @@ commands:
 		t.Fatalf("command not found")
 	}
 
-	want := run.Command{
-		Name:        "frontend",
+	want := &run.Command{
+		Config: run.SGConfigCommandOptions{
+			Name:           "frontend",
+			Env:            map[string]string{"EXTSVC_CONFIG_FILE": ""},
+			RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
+		},
 		Cmd:         ".bin/frontend",
 		Install:     "go build .bin/frontend github.com/sourcegraph/sourcegraph/cmd/frontend",
 		CheckBinary: ".bin/frontend",
-		Env:         map[string]string{"EXTSVC_CONFIG_FILE": ""},
 		Watch: []string{
 			"lib",
 			"internal",

@@ -41,8 +41,8 @@ export const EnqueueForm: FunctionComponent<EnqueueFormProps> = ({
 
             const queueResultLength = indexes?.queueAutoIndexJobsForRepo.length || 0
             setQueueResult(queueResultLength)
-            if (queueResultLength > 0) {
-                querySubject.next(indexes?.queueAutoIndexJobsForRepo[0].inputCommit)
+            if (queueResultLength > 0 && indexes?.queueAutoIndexJobsForRepo[0].inputCommit !== undefined) {
+                querySubject.next(indexes.queueAutoIndexJobsForRepo[0].inputCommit)
             }
         } catch (error) {
             setEnqueueError(error)

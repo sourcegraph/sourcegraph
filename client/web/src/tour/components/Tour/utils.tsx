@@ -1,6 +1,6 @@
 import isAbsoluteURL from 'is-absolute-url'
 import { memoize, noop } from 'lodash'
-import { type Subscriber, type Subscription, fromEvent, of } from 'rxjs'
+import { type Subscriber, type Subscription, fromEvent, of, lastValueFrom } from 'rxjs'
 import { map } from 'rxjs/operators'
 
 import {
@@ -77,22 +77,22 @@ const firstMatchMessageHandlers: MessageHandlers = {
  */
 const fetchStreamSuggestions = memoize(
     (query: string, sourcegraphURL?: string): Promise<SearchMatch[]> =>
-        search(
-            of(query),
-            {
-                version: LATEST_VERSION,
-                patternType: SearchPatternType.standard,
-                caseSensitive: false,
-                trace: undefined,
-                sourcegraphURL,
-            },
-            firstMatchMessageHandlers
-        )
-            .pipe(
+        lastValueFrom(
+            search(
+                of(query),
+                {
+                    version: LATEST_VERSION,
+                    patternType: SearchPatternType.standard,
+                    caseSensitive: false,
+                    trace: undefined,
+                    sourcegraphURL,
+                },
+                firstMatchMessageHandlers
+            ).pipe(
                 switchAggregateSearchResults,
                 map(suggestions => suggestions.results)
             )
-            .toPromise(),
+        ),
     (query, sourcegraphURL) => `${query}|${sourcegraphURL}`
 )
 

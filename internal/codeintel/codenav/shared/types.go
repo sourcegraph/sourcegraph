@@ -7,16 +7,16 @@ import (
 
 // Location is an LSP-like location scoped to a dump.
 type Location struct {
-	DumpID int
-	Path   string
-	Range  Range
+	UploadID int
+	Path     string
+	Range    Range
 }
 
 // Diagnostic describes diagnostic information attached to a location within a
 // particular dump.
 type Diagnostic struct {
-	DumpID int
-	Path   string
+	UploadID int
+	Path     string
 	precise.DiagnosticData
 }
 
@@ -32,7 +32,7 @@ type CodeIntelligenceRange struct {
 // UploadLocation is a path and range pair from within a particular upload. The target commit
 // denotes the target commit for which the location was set (the originally requested commit).
 type UploadLocation struct {
-	Dump         shared.Dump
+	Upload       shared.CompletedUpload
 	Path         string
 	TargetCommit string
 	TargetRange  Range

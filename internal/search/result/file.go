@@ -3,8 +3,11 @@ package result
 import (
 	"net/url"
 	"path"
+	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/search/filter"
@@ -163,13 +166,17 @@ func (fm *FileMatch) Select(selectPath filter.SelectPath) Match {
 	return nil
 }
 
-// AppendMatches appends the line matches from src as well as updating match
-// counts and limit.
 func (fm *FileMatch) AppendMatches(src *FileMatch) {
 	// TODO merge hunk matches smartly
 	fm.ChunkMatches = append(fm.ChunkMatches, src.ChunkMatches...)
-	fm.Symbols = append(fm.Symbols, src.Symbols...)
+	fm.mergeSymbols(src)
 	fm.LimitHit = fm.LimitHit || src.LimitHit
+}
+
+func (fm *FileMatch) mergeSymbols(src *FileMatch) {
+	fm.Symbols = append(fm.Symbols, src.Symbols...)
+	slices.SortFunc(fm.Symbols, compareSymbolMatches)
+	fm.Symbols = DedupSymbols(fm.Symbols)
 }
 
 // Limit will mutate fm such that it only has limit results. limit is a number
@@ -247,13 +254,22 @@ type ChunkMatch struct {
 }
 
 // MatchedContent returns the content matched by the ranges in this ChunkMatch.
-func (h ChunkMatch) MatchedContent() []string {
+func (cm ChunkMatch) MatchedContent() []string {
 	// Create a new set of ranges whose offsets are
 	// relative to the start of the content.
-	relRanges := h.Ranges.Sub(h.ContentStart)
+	relRanges := cm.Ranges.Sub(cm.ContentStart)
 	res := make([]string, 0, len(relRanges))
 	for _, rr := range relRanges {
-		res = append(res, h.Content[rr.Start.Offset:rr.End.Offset])
+		// TODO(camdencheek): fix root cause(s).
+		// See https://github.com/sourcegraph/sourcegraph/issues/60605
+		start := rr.Start.Offset
+		end := rr.End.Offset
+		if start > len(cm.Content) || end > len(cm.Content) {
+			log.Scoped("search").Error("matched range out of bounds", log.String("content", cm.Content), log.Int("start", start), log.Int("end", end))
+			start = min(len(cm.Content), start)
+			end = min(len(cm.Content), end)
+		}
+		res = append(res, cm.Content[start:end])
 	}
 	return res
 }

@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { useLocation } from 'react-router-dom'
 
 import { asError, logger } from '@sourcegraph/common'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Label, Button, LoadingSpinner, Link, Text, Input, Form } from '@sourcegraph/wildcard'
 
 import type { SourcegraphContext } from '../jscontext'

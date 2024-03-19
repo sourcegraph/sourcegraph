@@ -31,7 +31,6 @@ export const injectedAppConfig = {} as unknown as StaticInjectedAppConfig
 export const staticWebAppConfig = {
     setSelectedSearchContextSpec: () => {},
     platformContext: NOOP_PLATFORM_CONTEXT as PlatformContext,
-    extensionsController: null,
 } satisfies StaticSourcegraphWebAppContext
 
 export const dynamicWebAppConfig = {

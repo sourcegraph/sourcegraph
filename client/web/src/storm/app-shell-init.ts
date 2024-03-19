@@ -1,6 +1,6 @@
 import type { GraphQLClient } from '@sourcegraph/http-client'
 import { TemporarySettingsStorage } from '@sourcegraph/shared/src/settings/temporary/TemporarySettingsStorage'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 
 import { getWebGraphQLClient } from '../backend/graphql'
 import { useDeveloperSettings } from '../stores'

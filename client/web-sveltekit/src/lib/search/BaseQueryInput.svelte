@@ -54,6 +54,7 @@
     import { multiline, parseInputAsQuery, searchInputEventHandlers, toSingleLine } from '$lib/branded'
     import type { SearchPatternType } from '$lib/graphql-operations'
     import { createCompartments } from '$lib/codemirror/utils'
+    import { afterNavigate } from '$app/navigation'
 
     export let value: string
     export let patternType: SearchPatternType
@@ -127,10 +128,19 @@
             staticExtensions,
         ])
 
-        if (autoFocus) {
-            window.requestAnimationFrame(() => view!.focus())
+        // This is only run once when the view is created
+        if (view && autoFocus) {
+            view.focus()
         }
     }
+
+    afterNavigate(() => {
+        // We also set focus after navigation because SvelteKit resets the focus
+        // when navigating to a new page.
+        if (autoFocus) {
+            view?.focus()
+        }
+    })
 </script>
 
 {#if browser}
@@ -152,7 +162,6 @@
     .root {
         flex: 1;
         box-sizing: border-box;
-        background-color: var(--color-bg-1);
         min-width: 0;
         padding-left: 1px;
 

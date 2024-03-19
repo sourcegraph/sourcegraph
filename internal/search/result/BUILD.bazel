@@ -7,7 +7,6 @@ go_library(
         "commit.go",
         "commit_diff.go",
         "commit_json.go",
-        "deduper.go",
         "file.go",
         "highlight.go",
         "match.go",
@@ -31,6 +30,7 @@ go_library(
         "@com_github_bits_and_blooms_bitset//:bitset",
         "@com_github_grafana_regexp//:regexp",
         "@com_github_sourcegraph_go_lsp//:go-lsp",
+        "@com_github_sourcegraph_log//:log",
         "@com_github_xeonx_timeago//:timeago",
     ],
 )
@@ -42,7 +42,6 @@ go_test(
         "commit_diff_test.go",
         "commit_json_test.go",
         "commit_test.go",
-        "deduper_test.go",
         "file_test.go",
         "match_test.go",
         "merger_test.go",

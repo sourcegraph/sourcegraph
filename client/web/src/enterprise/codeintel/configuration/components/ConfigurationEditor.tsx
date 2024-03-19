@@ -2,7 +2,7 @@ import { type FunctionComponent, useCallback, useMemo, useState } from 'react'
 
 import type { editor } from 'monaco-editor'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { LoadingSpinner, screenReaderAnnounce, ErrorAlert, BeforeUnloadPrompt } from '@sourcegraph/wildcard'

@@ -1,9 +1,10 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, useEffect } from 'react'
 
 import { noop } from 'rxjs'
 
 import { Toggle } from '@sourcegraph/branded/src/components/Toggle'
 import { useMutation, useQuery } from '@sourcegraph/http-client'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, PageHeader, H3, Text, Label, Button, LoadingSpinner, ErrorAlert } from '@sourcegraph/wildcard'
 
 import { PageTitle } from '../../../components/PageTitle'
@@ -19,10 +20,16 @@ import { GET_OWN_JOB_CONFIGURATIONS, UPDATE_SIGNAL_CONFIGURATIONS } from './quer
 
 import styles from './own-status-page-styles.module.scss'
 
-export const OwnStatusPage: FC = () => {
+interface OwnStatusPageProps extends TelemetryV2Props {}
+
+export const OwnStatusPage: FC<OwnStatusPageProps> = ({ telemetryRecorder }) => {
     const [hasLocalChanges, setHasLocalChanges] = useState<boolean>(false)
     const [localData, setLocalData] = useState<OwnSignalConfig[]>([])
     const [saveError, setSaveError] = useState<Error | null>()
+
+    useEffect(() => {
+        telemetryRecorder.recordEvent('admin.ownershipSignals', 'view')
+    }, [telemetryRecorder])
 
     const { loading, error } = useQuery<GetOwnSignalConfigurationsResult>(GET_OWN_JOB_CONFIGURATIONS, {
         onCompleted: data => {
@@ -68,6 +75,7 @@ export const OwnStatusPage: FC = () => {
                         aria-label="Save changes"
                         variant="primary"
                         onClick={() => {
+                            telemetryRecorder.recordEvent('admin.ownershipSignals', 'save')
                             setSaveError(null)
                             // do network stuff
                             saveConfigs({
@@ -112,6 +120,7 @@ export const OwnStatusPage: FC = () => {
                                     <Toggle
                                         onToggle={value => {
                                             onUpdateJob(index, { ...job, isEnabled: value })
+                                            telemetryRecorder.recordEvent('admin.ownershipSignals.job', 'toggle')
                                         }}
                                         title={job.isEnabled ? 'Enabled' : 'Disabled'}
                                         id="job-enabled"

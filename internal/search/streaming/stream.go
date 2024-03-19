@@ -86,38 +86,6 @@ func (c *resultCountingStream) Count() int {
 	return int(c.count.Load())
 }
 
-// NewDedupingStream ensures only unique results are sent on the stream. Any
-// result that has already been seen is discard. Note: using this function
-// requires storing the result set of seen result.
-func NewDedupingStream(s Sender) *dedupingStream {
-	return &dedupingStream{
-		parent:  s,
-		deduper: result.NewDeduper(),
-	}
-}
-
-type dedupingStream struct {
-	parent Sender
-	sync.Mutex
-	deduper result.Deduper
-}
-
-func (d *dedupingStream) Send(event SearchEvent) {
-	d.Mutex.Lock()
-	results := event.Results[:0]
-	for _, match := range event.Results {
-		seen := d.deduper.Seen(match)
-		if seen {
-			continue
-		}
-		d.deduper.Add(match)
-		results = append(results, match)
-	}
-	event.Results = results
-	d.Mutex.Unlock()
-	d.parent.Send(event)
-}
-
 // NewBatchingStream returns a stream that batches results sent to it, holding
 // delaying their forwarding by a max time of maxDelay, then sending the batched
 // event to the parent stream. The first event is passed through without delay.

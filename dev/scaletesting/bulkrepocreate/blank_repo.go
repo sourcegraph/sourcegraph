@@ -59,7 +59,7 @@ func (r *blankRepo) init(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(filepath.Join(r.path, "README.md"), []byte("blank repo"), 0755)
+	err = os.WriteFile(filepath.Join(r.path, "README.md"), []byte("blank repo"), 0o755)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (r *blankRepo) addRemote(ctx context.Context, name string, gitURL string) e
 
 func (r *blankRepo) pushRemote(ctx context.Context, name string, retry int) error {
 	var err error
-	for i := 0; i < retry; i++ {
+	for range retry {
 		err = r.doPushRemote(ctx, name)
 		if err == nil {
 			break

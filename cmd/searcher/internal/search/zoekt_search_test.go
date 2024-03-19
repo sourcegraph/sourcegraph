@@ -32,7 +32,7 @@ func Test_zoektSearch(t *testing.T) {
 	// Create a mock client that will send a few files worth of matches
 	client := &mockClient{
 		mockStreamSearch: func(ctx context.Context, q query.Q, so *zoekt.SearchOptions, s zoekt.Sender) error {
-			for i := 0; i < 10; i++ {
+			for range 10 {
 				s.Send(&zoekt.SearchResult{
 					Files: []zoekt.FileMatch{{}, {}},
 				})

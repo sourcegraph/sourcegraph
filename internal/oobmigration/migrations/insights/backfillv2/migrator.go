@@ -74,7 +74,7 @@ func (m *backfillerv2Migrator) Up(ctx context.Context) (err error) {
 		return errors.Wrap(err, "selectBackfillMigrationSeries")
 	}
 
-	for i := 0; i < len(toMigrate); i++ {
+	for i := range len(toMigrate) {
 		series := toMigrate[i]
 		err = m.migrateSeries(ctx, tx, series)
 		if err != nil {

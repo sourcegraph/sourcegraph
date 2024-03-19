@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config",
     visibility = ["//visibility:public"],
     deps = [
+        "//cmd/cody-gateway/internal/httpapi/embeddings",
         "//internal/codygateway",
         "//internal/completions/client/fireworks",
         "//internal/env",

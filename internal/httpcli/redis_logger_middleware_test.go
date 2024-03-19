@@ -146,7 +146,7 @@ func TestRedisLoggerMiddleware_multiple(t *testing.T) {
 	// Send requests and track the URLs we send so we can compare later to
 	// what was stored.
 	var wantURLs []string
-	for i := 0; i < requests; i++ {
+	for i := range requests {
 		u := fmt.Sprintf("http://dev/%d", i)
 		wantURLs = append(wantURLs, u)
 

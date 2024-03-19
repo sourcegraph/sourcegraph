@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Text, Link, ErrorAlert, Form, Input, TextArea, Container, Alert } from '@sourcegraph/wildcard'
 
 import { LoaderButton } from '../components/LoaderButton'

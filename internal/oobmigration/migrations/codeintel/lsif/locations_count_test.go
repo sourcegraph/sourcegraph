@@ -44,7 +44,7 @@ func TestLocationsCountMigrator(t *testing.T) {
 	expectedCounts := make([]int, 0, n)
 	locations := make([]LocationData, 0, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		expectedCounts = append(expectedCounts, i+1)
 		locations = append(locations, LocationData{URI: fmt.Sprintf("file://%d", i)})
 

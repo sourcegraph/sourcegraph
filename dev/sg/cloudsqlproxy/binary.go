@@ -21,10 +21,10 @@ const CloudSQLProxyVersion = "2.8.1"
 // optionally downloading if requested
 func Init(download bool) error {
 	if download {
-		err := Download()
-		if err != nil {
+		if err := Download(); err != nil {
 			return err
 		}
+		// If download succeeded, still continue and run the binary check
 	}
 
 	cloudSQLProxyPath, err := Path()
@@ -33,9 +33,21 @@ func Init(download bool) error {
 	}
 	_, err = os.Stat(cloudSQLProxyPath)
 	if err != nil && os.IsNotExist(err) {
-		std.Out.WriteWarningf("cloud-sql-proxy binary not found at %q. try running again with '-download' flag",
-			cloudSQLProxyPath)
-		return errors.Wrapf(err, "failed to find binary")
+		std.Out.WriteWarningf("cloud-sql-proxy binary not found at %q", cloudSQLProxyPath)
+
+		std.Out.Promptf("Would you like me to install cloud-sql-proxy for you? [y/N]")
+		var input string
+		if _, err := fmt.Scan(&input); err != nil {
+			return err
+		}
+		if input != "y" {
+			// We should NOT install it, throw the error back at the user
+			return errors.Wrap(err, "failed to find cloud-sql-proxy")
+		}
+
+		// Call self again, but this time, set download=true. If it fails again
+		// hopefully the user doesn't say yes
+		return Init(true)
 	} else if err != nil {
 		return errors.Wrapf(err, "failed to read %s binary", cloudSQLProxyPath)
 	}

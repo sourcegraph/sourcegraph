@@ -20,7 +20,7 @@ func SplitIntoChunks[T any](slice []T, size int) ([][]T, error) {
 	}
 	numChunks := min(1+(len(slice)-1)/size, len(slice))
 	chunks := make([][]T, numChunks)
-	for i := 0; i < numChunks; i++ {
+	for i := range numChunks {
 		maxIndex := min((i+1)*size, len(slice))
 		chunks[i] = slice[i*size : maxIndex]
 	}

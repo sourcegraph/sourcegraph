@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby@d4526a55538b775af234ba4af27118ed6f8f6677 # SECURITY: pin third-party action hashes
       with:
         ruby-version: '3.1.3' # Not needed with a .ruby-version file   - uses: actions/setup-ruby@v1
     - name: Install asdf plugins
@@ -28,7 +28,7 @@ jobs:
       run: git --no-pager diff
 
     - name: Create pull request
-      uses: peter-evans/create-pull-request@v4 # https://github.com/peter-evans/create-pull-request
+      uses: peter-evans/create-pull-request@38e0b6e68b4c852a5500a94740f0e535e0d7ba54 # SECURITY: pin third-party action hashes https://github.com/peter-evans/create-pull-request
       id: cpr
       with:
         labels: automerge
@@ -52,7 +52,7 @@ jobs:
 
     - name: Enable pull request automerge
       if: steps.cpr.outputs.pull-request-operation == 'created'
-      uses: peter-evans/enable-pull-request-automerge@v1
+      uses: peter-evans/enable-pull-request-automerge@21d45e1c52f5d111d2019b5d33f953ed2e735c46 # SECURITY: pin third-party action hashes
       with:
         token: ${{ secrets.GH_REPO_TOKEN }}
         pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}

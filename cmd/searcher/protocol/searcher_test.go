@@ -65,7 +65,6 @@ func TestQueryNodeProtoRoundtrip(t *testing.T) {
 
 		return true
 	}, nil)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,13 +95,13 @@ func generateQuery(rand *rand.Rand, depth int) protocol.QueryNode {
 	switch rand.Int() % 3 {
 	case 0:
 		children := make([]protocol.QueryNode, 0)
-		for i := 0; i < rand.Int()%4; i++ {
+		for range rand.Int() % 4 {
 			children = append(children, generateQuery(rand, depth-1))
 		}
 		return &protocol.AndNode{Children: children}
 	case 1:
 		children := make([]protocol.QueryNode, 0)
-		for i := 0; i < rand.Int()%4; i++ {
+		for range rand.Int() % 4 {
 			children = append(children, generateQuery(rand, depth-1))
 		}
 		return &protocol.OrNode{Children: children}
@@ -124,7 +123,6 @@ func generateRegexpNode(rand *rand.Rand) protocol.QueryNode {
 func TestFileMatchProtoRoundTrip(t *testing.T) {
 	var errString string
 	err := quick.Check(func(original protocol.FileMatch) bool {
-
 		var converted protocol.FileMatch
 		converted.FromProto(original.ToProto())
 
@@ -134,9 +132,7 @@ func TestFileMatchProtoRoundTrip(t *testing.T) {
 		}
 
 		return true
-
 	}, nil)
-
 	if err != nil {
 		t.Fatal(errString)
 	}

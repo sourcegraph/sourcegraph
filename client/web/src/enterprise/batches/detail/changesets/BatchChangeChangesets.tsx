@@ -3,7 +3,7 @@ import React, { useState, useCallback, useMemo, useEffect, useContext } from 're
 import { Subject } from 'rxjs'
 
 import { dataOrThrowErrors } from '@sourcegraph/http-client'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container } from '@sourcegraph/wildcard'
 
 import { useShowMorePagination } from '../../../../components/FilteredConnection/hooks/useShowMorePagination'

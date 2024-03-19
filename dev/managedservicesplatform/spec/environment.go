@@ -78,6 +78,10 @@ type EnvironmentSpec struct {
 	// target project will be automatically granted.
 	SecretEnv map[string]string `yaml:"secretEnv,omitempty"`
 
+	// SecretVolumes configures volumes to mount from secrets. Keys are used
+	// as volume names.
+	SecretVolumes map[string]EnvironmentSecretVolume `yaml:"secretVolumes,omitempty"`
+
 	// Resources configures additional resources that a service may depend on.
 	Resources *EnvironmentResourcesSpec `yaml:"resources,omitempty"`
 
@@ -121,6 +125,12 @@ func (s EnvironmentSpec) Validate() []error {
 	errs = append(errs, s.Deploy.Validate()...)
 	errs = append(errs, s.Resources.Validate()...)
 	errs = append(errs, s.Instances.Validate()...)
+	for k, v := range s.SecretVolumes {
+		if k == "" {
+			errs = append(errs, errors.New("secretVolumes key cannot be empty"))
+		}
+		errs = append(errs, v.Validate()...)
+	}
 
 	// Validate service-specific specs
 	errs = append(errs, s.EnvironmentServiceSpec.Validate()...)
@@ -637,6 +647,30 @@ func (s *EnvironmentJobScheduleSpec) FindMaxCronInterval() (*time.Duration, erro
 	}
 
 	return &maxGap, nil
+}
+
+type EnvironmentSecretVolume struct {
+	// MountPath is the path within the container where the secret will be
+	// mounted. The mounted file is read-only.
+	MountPath string `yaml:"mountPath"`
+	// Secret is name of the secret in the service's project to populate in the
+	// environment.
+	//
+	// To point to a secret in another project, use the format
+	// 'projects/{project}/secrets/{secretName}' in the value. Access to the
+	// target project will be automatically granted.
+	Secret string `yaml:"secret"`
+}
+
+func (v EnvironmentSecretVolume) Validate() []error {
+	var errs []error
+	if v.MountPath == "" {
+		errs = append(errs, errors.New("mountPath is required"))
+	}
+	if v.Secret == "" {
+		errs = append(errs, errors.New("secret is required"))
+	}
+	return errs
 }
 
 type EnvironmentResourcesSpec struct {

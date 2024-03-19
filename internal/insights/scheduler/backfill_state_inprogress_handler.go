@@ -186,7 +186,7 @@ func (h *inProgressHandler) doExecution(ctx context.Context, execution *backfill
 				p := pool.New().WithContext(ctx).WithMaxGoroutines(concurrency)
 				repoErrors := map[int32]error{}
 				startPage := time.Now()
-				for i := 0; i < len(repoIds); i++ {
+				for i := range len(repoIds) {
 					repoId := repoIds[i]
 					p.Go(func(ctx context.Context) error {
 						repo, repoErr := h.repoStore.Get(ctx, repoId)

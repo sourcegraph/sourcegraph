@@ -556,7 +556,7 @@ func TestExecutorSecretsIntegration(t *testing.T) {
 	}
 
 	// Read secret2 twice.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		_, err := secret2.Value(userCtx, db.ExecutorSecretAccessLogs())
 		if err != nil {
 			t.Fatal(err)

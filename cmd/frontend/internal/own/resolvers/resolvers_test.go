@@ -711,7 +711,7 @@ func TestOwnershipPagination(t *testing.T) {
 	var lastResponseData *paginationResponse
 	// Limit iterations to number of owners total, so that the test
 	// has a stop condition in case something malfunctions.
-	for i := 0; i < len(rule.Owner); i++ {
+	for range len(rule.Owner) {
 		var responseData paginationResponse
 		variables := map[string]any{
 			"repo":        string(graphqlbackend.MarshalRepositoryID(42)),

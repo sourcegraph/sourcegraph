@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18.17.1
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # SECURITY: pin third-party action hashes
         with:
           version: latest
       - name: Get current date
@@ -35,7 +35,7 @@ jobs:
       - name: check list in doc folder
         run: head -n 10 doc/cody/embedded-repos.md
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@38e0b6e68b4c852a5500a94740f0e535e0d7ba54 # SECURITY: pin third-party action hashes
         with:
           title: "Cody: Update list of embedded repos"
           commit-message: update list - ${{ steps.date.outputs.date }}

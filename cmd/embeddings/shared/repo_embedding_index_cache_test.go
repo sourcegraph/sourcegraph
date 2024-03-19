@@ -181,7 +181,7 @@ func TestConcurrentGetCachedRepoEmbeddingIndex(t *testing.T) {
 	numRequests := 4
 	var wg sync.WaitGroup
 	wg.Add(numRequests)
-	for i := 0; i < numRequests; i++ {
+	for range numRequests {
 		ctx := context.Background()
 		go func() {
 			defer wg.Done()

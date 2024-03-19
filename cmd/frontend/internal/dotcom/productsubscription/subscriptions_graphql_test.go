@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/graph-gophers/graphql-go"
+	"github.com/hexops/autogold/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,8 +17,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
-	"github.com/sourcegraph/sourcegraph/internal/featureflag"
 	"github.com/sourcegraph/sourcegraph/internal/license"
+	"github.com/sourcegraph/sourcegraph/internal/rbac"
 )
 
 func TestProductSubscription_Account(t *testing.T) {
@@ -43,10 +44,6 @@ func TestProductSubscriptionActiveLicense(t *testing.T) {
 	subscriptionsDB := dbSubscriptions{db: db}
 	licensesDB := dbLicenses{db: db}
 
-	// Set global feature flag so we can override it per-user
-	_, err := db.FeatureFlags().CreateBool(ctx, featureFlagProductSubscriptionsServiceAccount, false)
-	require.NoError(t, err)
-
 	// Site admin
 	adminUser, err := db.Users().Create(ctx, database.NewUser{Username: "admin"})
 	require.NoError(t, err)
@@ -61,13 +58,31 @@ func TestProductSubscriptionActiveLicense(t *testing.T) {
 	_, err = licensesDB.Create(ctx, sub, "license-key", 1, license.Info{})
 	require.NoError(t, err)
 
-	// Service account user
+	// Subscriptions writer user
 	serviceAccountUser, err := db.Users().Create(ctx, database.NewUser{Username: "serviceaccount"})
 	require.NoError(t, err)
-	_, err = db.FeatureFlags().CreateOverride(ctx, &featureflag.Override{
-		UserID:   &serviceAccountUser.ID,
-		FlagName: featureFlagProductSubscriptionsServiceAccount,
+	ns, action, err := rbac.ParsePermissionDisplayName(rbac.ProductSubscriptionsWritePermission)
+	require.NoError(t, err)
+	perm, err := db.Permissions().Create(ctx, database.CreatePermissionOpts{
+		Namespace: ns,
+		Action:    action,
 	})
+	require.NoError(t, err)
+	role, err := db.Roles().Create(ctx, "SUBSCRIPTIONS_WRITER", false)
+	require.NoError(t, err)
+	err = db.RolePermissions().Assign(ctx, database.AssignRolePermissionOpts{
+		PermissionID: perm.ID,
+		RoleID:       role.ID,
+	})
+	require.NoError(t, err)
+	err = db.UserRoles().Assign(ctx, database.AssignUserRoleOpts{
+		UserID: serviceAccountUser.ID,
+		RoleID: role.ID,
+	})
+	require.NoError(t, err)
+
+	// Boring user
+	boringUser, err := db.Users().Create(ctx, database.NewUser{Username: "boring"})
 	require.NoError(t, err)
 
 	// Test cases
@@ -75,6 +90,7 @@ func TestProductSubscriptionActiveLicense(t *testing.T) {
 		name           string
 		actor          *actor.Actor
 		subscriptionID graphql.ID
+		wantError      autogold.Value
 	}{
 		{
 			name:           "site admin",
@@ -91,6 +107,13 @@ func TestProductSubscriptionActiveLicense(t *testing.T) {
 			actor:          actor.FromActualUser(adminUser),
 			subscriptionID: marshalProductSubscriptionID(sub),
 		},
+		{
+			name:           "boring user",
+			actor:          actor.FromActualUser(boringUser),
+			subscriptionID: marshalProductSubscriptionID(sub),
+			// Should fail on access error
+			wantError: autogold.Expect("unauthorized"),
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			logger, exportLogs := logtest.Captured(t)
@@ -101,6 +124,11 @@ func TestProductSubscriptionActiveLicense(t *testing.T) {
 
 			// Resolve the subscription and then the active license of the subscription
 			sub, err := r.ProductSubscriptionByID(requestCtx, test.subscriptionID)
+			if test.wantError != nil {
+				require.Error(t, err)
+				test.wantError.Equal(t, err.Error())
+				return // done
+			}
 			require.NoError(t, err)
 			_, err = sub.ActiveLicense(requestCtx)
 			require.NoError(t, err)

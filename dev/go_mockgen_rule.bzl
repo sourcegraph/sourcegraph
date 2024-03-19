@@ -101,7 +101,7 @@ go_mockgen_generate = rule(
             cfg = "exec",
         ),
         "_gomockgen": attr.label(
-            default = Label("@com_github_derision_test_go_mockgen//cmd/go-mockgen:go-mockgen"),
+            default = Label("@com_github_derision_test_go_mockgen_v2//cmd/go-mockgen:go-mockgen"),
             executable = True,
             cfg = "exec",
         ),

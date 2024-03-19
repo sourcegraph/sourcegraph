@@ -78,11 +78,7 @@ eb-bundle.zip
 
 .gtm/
 
-cmd/src/debug
 cmd/gitserver/debug
-cmd/indexer/debug
-
-/.gtm/
 
 # Client
 node_modules
@@ -100,9 +96,6 @@ graphql-operations.ts
 *.module.scss.d.ts
 *.module.css.d.ts
 dll-bundle
-
-# Extensions
-/client/extension-api/dist
 
 # Direnv
 .envrc
@@ -131,10 +124,6 @@ storybook-static/
 sg.config.overwrite.yaml
 # sg Google Cloud API OAuth token
 .sg.token.json
-
-# Generated sitemaps are not committed, they're hosted in a GCS bucket.
-sitemap/
-sitemap_query.db
 
 # Lighthouse CI reports
 .lighthouseci/
@@ -177,8 +166,8 @@ index.scip
 .aspect/bazelrc/ci.generated.bazelrc
 
 # nix
-result
-result-*
+/result
+/result-*
 
 # Windows
 /cmd/sourcegraph/__debug_bin.exe

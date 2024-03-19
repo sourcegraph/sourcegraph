@@ -33,7 +33,7 @@ func TestRecordEncrypter(t *testing.T) {
 
 	var writtenValues []string
 	var encodedValues []string
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		var data *string
 		if i%6 == 0 {
 			data = nil
@@ -64,7 +64,7 @@ func TestRecordEncrypter(t *testing.T) {
 	}
 
 	// Encode data in chunks
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		count, err := encrypter.EncryptBatch(ctx, config)
 		if err != nil {
 			t.Fatalf("unexpected error encrypting batch: %s", err)
@@ -104,7 +104,7 @@ func TestRecordEncrypter(t *testing.T) {
 	}
 
 	// Decode data in chunks
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		count, err := encrypter.DecryptBatch(ctx, config)
 		if err != nil {
 			t.Fatalf("unexpected error decrypting batch: %s", err)

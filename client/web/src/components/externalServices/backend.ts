@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from 'react'
 
 import type { QueryTuple, MutationTuple, QueryResult } from '@apollo/client'
 import { parse } from 'jsonc-parser'
-import type { Observable } from 'rxjs'
+import { type Observable, lastValueFrom } from 'rxjs'
 import { map } from 'rxjs/operators'
 
 import { createAggregateError } from '@sourcegraph/common'
@@ -111,28 +111,30 @@ export const useUpdateExternalService = (
 export function updateExternalService(
     variables: UpdateExternalServiceVariables
 ): Promise<UpdateExternalServiceResult['updateExternalService']> {
-    return requestGraphQL<UpdateExternalServiceResult, UpdateExternalServiceVariables>(
-        UPDATE_EXTERNAL_SERVICE,
-        variables
-    )
-        .pipe(
+    return lastValueFrom(
+        requestGraphQL<UpdateExternalServiceResult, UpdateExternalServiceVariables>(
+            UPDATE_EXTERNAL_SERVICE,
+            variables
+        ).pipe(
             map(dataOrThrowErrors),
             map(data => data.updateExternalService)
         )
-        .toPromise()
+    )
 }
 
 export async function deleteExternalService(externalService: Scalars['ID']): Promise<void> {
-    const result = await requestGraphQL<DeleteExternalServiceResult, DeleteExternalServiceVariables>(
-        gql`
-            mutation DeleteExternalService($externalService: ID!) {
-                deleteExternalService(externalService: $externalService) {
-                    alwaysNil
+    const result = await lastValueFrom(
+        requestGraphQL<DeleteExternalServiceResult, DeleteExternalServiceVariables>(
+            gql`
+                mutation DeleteExternalService($externalService: ID!) {
+                    deleteExternalService(externalService: $externalService) {
+                        alwaysNil
+                    }
                 }
-            }
-        `,
-        { externalService }
-    ).toPromise()
+            `,
+            { externalService }
+        )
+    )
     dataOrThrowErrors(result)
 }
 

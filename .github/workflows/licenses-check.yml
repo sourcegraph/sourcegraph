@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v2
         with: { node-version: "${{ steps.node-setup.outputs.NODE_VERSION }}" }
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # SECURITY: pin third-party action hashes
         id: pnpm-install
         with:
           version: 8.9.2
@@ -29,11 +29,11 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@d4526a55538b775af234ba4af27118ed6f8f6677 # SECURITY: pin third-party action hashes
         with:
           ruby-version: "3.2.2" # Not needed with a .ruby-version file   - uses: actions/setup-ruby@v1
       - uses: actions/setup-go@v2
-        with: { go-version: "1.21" }
+        with: { go-version: "1.22" }
 
 
       - name: Install license_finder

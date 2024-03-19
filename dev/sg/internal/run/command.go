@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/grafana/regexp"
@@ -16,71 +18,61 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/secrets"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
 	"github.com/sourcegraph/sourcegraph/dev/sg/interrupt"
-	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/output"
 	"github.com/sourcegraph/sourcegraph/lib/process"
 )
 
 type Command struct {
-	Name                string
-	Cmd                 string            `yaml:"cmd"`
-	Install             string            `yaml:"install"`
-	InstallFunc         string            `yaml:"install_func"`
-	CheckBinary         string            `yaml:"checkBinary"`
-	Env                 map[string]string `yaml:"env"`
-	Watch               []string          `yaml:"watch"`
-	IgnoreStdout        bool              `yaml:"ignoreStdout"`
-	IgnoreStderr        bool              `yaml:"ignoreStderr"`
-	DefaultArgs         string            `yaml:"defaultArgs"`
-	ContinueWatchOnExit bool              `yaml:"continueWatchOnExit"`
-	// Preamble is a short and visible message, displayed when the command is launched.
-	Preamble string `yaml:"preamble"`
-
-	ExternalSecrets map[string]secrets.ExternalSecret `yaml:"external_secrets"`
-	Description     string                            `yaml:"description"`
+	Config      SGConfigCommandOptions
+	Cmd         string   `yaml:"cmd"`
+	DefaultArgs string   `yaml:"defaultArgs"`
+	Install     string   `yaml:"install"`
+	InstallFunc string   `yaml:"install_func"`
+	CheckBinary string   `yaml:"checkBinary"`
+	Watch       []string `yaml:"watch"`
 
 	// ATTENTION: If you add a new field here, be sure to also handle that
 	// field in `Merge` (below).
 }
 
-func (cmd Command) GetName() string {
-	return cmd.Name
+// UnmarshalYAML implements the Unmarshaler interface for Command.
+// This allows us to parse the flat YAML configuration into nested struct.
+func (cmd *Command) UnmarshalYAML(unmarshal func(any) error) error {
+	// In order to not recurse infinitely (calling UnmarshalYAML over and over) we create a
+	// temporary type alias.
+	// First parse the Command specific options
+	type rawCommand Command
+	if err := unmarshal((*rawCommand)(cmd)); err != nil {
+		return err
+	}
+
+	// Then parse the common options from the same list into a nested struct
+	return unmarshal(&cmd.Config)
 }
 
-func (cmd Command) GetContinueWatchOnExit() bool {
-	return cmd.ContinueWatchOnExit
+func (cmd Command) GetConfig() SGConfigCommandOptions {
+	return cmd.Config
+}
+
+func (cmd Command) UpdateConfig(f func(*SGConfigCommandOptions)) SGConfigCommand {
+	f(&cmd.Config)
+	return cmd
+}
+
+func (cmd Command) GetName() string {
+	return cmd.Config.Name
 }
 
 func (cmd Command) GetBinaryLocation() (string, error) {
 	if cmd.CheckBinary != "" {
-		repoRoot, err := root.RepositoryRoot()
-		if err != nil {
-			return "", err
-		}
-		return filepath.Join(repoRoot, cmd.CheckBinary), nil
+		return filepath.Join(cmd.Config.RepositoryRoot, cmd.CheckBinary), nil
 	}
-	return "", noBinaryError{name: cmd.Name}
+	return "", noBinaryError{name: cmd.Config.Name}
 }
 
-func (cmd Command) GetExternalSecrets() map[string]secrets.ExternalSecret {
-	return cmd.ExternalSecrets
-}
-
-func (cmd Command) GetIgnoreStdout() bool {
-	return cmd.IgnoreStdout
-}
-
-func (cmd Command) GetIgnoreStderr() bool {
-	return cmd.IgnoreStderr
-}
-
-func (cmd Command) GetPreamble() string {
-	return cmd.Preamble
-}
-
-func (cmd Command) GetEnv() map[string]string {
-	return cmd.Env
+func (cmd Command) GetBazelTarget() string {
+	return ""
 }
 
 func (cmd Command) GetExecCmd(ctx context.Context) (*exec.Cmd, error) {
@@ -115,9 +107,9 @@ func (cmd Command) hasBashInstaller() bool {
 }
 
 func (cmd Command) bashInstall(ctx context.Context, parentEnv map[string]string) error {
-	output, err := BashInRoot(ctx, cmd.Install, makeEnv(parentEnv, cmd.Env))
+	output, err := BashInRoot(ctx, cmd.Install, makeEnv(parentEnv, cmd.Config.Env))
 	if err != nil {
-		return installErr{cmdName: cmd.Name, output: output, originalErr: err}
+		return installErr{cmdName: cmd.Config.Name, output: output, originalErr: err}
 	}
 	return nil
 }
@@ -125,43 +117,33 @@ func (cmd Command) bashInstall(ctx context.Context, parentEnv map[string]string)
 func (cmd Command) functionInstall(ctx context.Context, parentEnv map[string]string) error {
 	fn, ok := installFuncs[cmd.InstallFunc]
 	if !ok {
-		return installErr{cmdName: cmd.Name, originalErr: errors.Newf("no install func with name %q found", cmd.InstallFunc)}
+		return installErr{cmdName: cmd.Config.Name, originalErr: errors.Newf("no install func with name %q found", cmd.InstallFunc)}
 	}
-	if err := fn(ctx, makeEnvMap(parentEnv, cmd.Env)); err != nil {
-		return installErr{cmdName: cmd.Name, originalErr: err}
+	if err := fn(ctx, makeEnvMap(parentEnv, cmd.Config.Env)); err != nil {
+		return installErr{cmdName: cmd.Config.Name, originalErr: err}
 	}
 
 	return nil
 }
 
-func (cmd Command) getWatchPaths() ([]string, error) {
-	root, err := root.RepositoryRoot()
-	if err != nil {
-		return nil, err
-	}
-
+func (cmd Command) getWatchPaths() []string {
 	fullPaths := make([]string, len(cmd.Watch))
 	for i, path := range cmd.Watch {
-		fullPaths[i] = filepath.Join(root, path)
+		fullPaths[i] = filepath.Join(cmd.Config.RepositoryRoot, path)
 	}
 
-	return fullPaths, nil
+	return fullPaths
 }
 
 func (cmd Command) StartWatch(ctx context.Context) (<-chan struct{}, error) {
-	if watchPaths, err := cmd.getWatchPaths(); err != nil {
-		return nil, err
-	} else {
-		return WatchPaths(ctx, watchPaths)
-	}
+	return WatchPaths(ctx, cmd.getWatchPaths())
 }
 
 func (c Command) Merge(other Command) Command {
 	merged := c
 
-	if other.Name != merged.Name && other.Name != "" {
-		merged.Name = other.Name
-	}
+	merged.Config = c.Config.Merge(other.Config)
+
 	if other.Cmd != merged.Cmd && other.Cmd != "" {
 		merged.Cmd = other.Cmd
 	}
@@ -170,36 +152,6 @@ func (c Command) Merge(other Command) Command {
 	}
 	if other.InstallFunc != merged.InstallFunc && other.InstallFunc != "" {
 		merged.InstallFunc = other.InstallFunc
-	}
-	if other.IgnoreStdout != merged.IgnoreStdout && !merged.IgnoreStdout {
-		merged.IgnoreStdout = other.IgnoreStdout
-	}
-	if other.IgnoreStderr != merged.IgnoreStderr && !merged.IgnoreStderr {
-		merged.IgnoreStderr = other.IgnoreStderr
-	}
-	if other.DefaultArgs != merged.DefaultArgs && other.DefaultArgs != "" {
-		merged.DefaultArgs = other.DefaultArgs
-	}
-	if other.Preamble != merged.Preamble && other.Preamble != "" {
-		merged.Preamble = other.Preamble
-	}
-	if other.Description != merged.Description && other.Description != "" {
-		merged.Description = other.Description
-	}
-	merged.ContinueWatchOnExit = other.ContinueWatchOnExit || merged.ContinueWatchOnExit
-
-	for k, v := range other.Env {
-		if merged.Env == nil {
-			merged.Env = make(map[string]string)
-		}
-		merged.Env[k] = v
-	}
-
-	for k, v := range other.ExternalSecrets {
-		if merged.ExternalSecrets == nil {
-			merged.ExternalSecrets = make(map[string]secrets.ExternalSecret)
-		}
-		merged.ExternalSecrets[k] = v
 	}
 
 	if !equal(merged.Watch, other.Watch) && len(other.Watch) != 0 {
@@ -276,6 +228,9 @@ type outputOptions struct {
 	// When true, output will be ignored and not written to any writers
 	ignore bool
 
+	// When non-nil, all output will be flushed to this file and not to the terminal
+	logfile io.Writer
+
 	// when enabled, output will not be streamed to the writers until
 	// after the process is begun, only captured for later retrieval
 	buffer bool
@@ -291,32 +246,58 @@ type outputOptions struct {
 	start chan struct{}
 }
 
-func startSgCmd(ctx context.Context, cmd SGConfigCommand, dir string, parentEnv map[string]string) (*startedCmd, error) {
+func startSgCmd(ctx context.Context, cmd SGConfigCommand, parentEnv map[string]string) (*startedCmd, error) {
 	exec, err := cmd.GetExecCmd(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	secretsEnv, err := getSecrets(ctx, cmd.GetName(), cmd.GetExternalSecrets())
+	conf := cmd.GetConfig()
+
+	secretsEnv, err := getSecrets(ctx, conf.Name, conf.ExternalSecrets)
 	if err != nil {
 		std.Out.WriteLine(output.Styledf(output.StyleWarning, "[%s] %s %s",
-			cmd.GetName(), output.EmojiFailure, err.Error()))
+			conf.Name, output.EmojiFailure, err.Error()))
 	}
 
 	opts := commandOptions{
-		name:   cmd.GetName(),
+		name:   conf.Name,
 		exec:   exec,
-		env:    makeEnv(parentEnv, secretsEnv, cmd.GetEnv()),
-		dir:    dir,
-		stdout: outputOptions{ignore: cmd.GetIgnoreStdout()},
-		stderr: outputOptions{ignore: cmd.GetIgnoreStderr()},
+		env:    makeEnv(parentEnv, secretsEnv, conf.Env),
+		dir:    conf.RepositoryRoot,
+		stdout: outputOptions{ignore: conf.IgnoreStdout},
+		stderr: outputOptions{ignore: conf.IgnoreStderr},
+	}
+	if conf.Logfile != "" {
+		if logfile, err := initLogFile(conf.Logfile); err != nil {
+			return nil, err
+		} else {
+			opts.stdout.logfile = logfile
+			opts.stderr.logfile = logfile
+		}
 	}
 
-	if cmd.GetPreamble() != "" {
-		std.Out.WriteLine(output.Styledf(output.StyleOrange, "[%s] %s %s", cmd.GetName(), output.EmojiInfo, cmd.GetPreamble()))
+	if conf.Preamble != "" {
+		std.Out.WriteLine(output.Styledf(output.StyleOrange, "[%s] %s %s", conf.Name, output.EmojiInfo, conf.Preamble))
 	}
 
 	return startCmd(ctx, opts)
+}
+
+func initLogFile(logfile string) (io.Writer, error) {
+	if strings.HasPrefix(logfile, "~/") || strings.HasPrefix(logfile, "$HOME") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get user home directory")
+		}
+		logfile = filepath.Join(home, strings.Replace(strings.Replace(logfile, "~/", "", 1), "$HOME", "", 1))
+	}
+	parent := filepath.Dir(logfile)
+	if err := os.MkdirAll(parent, os.ModePerm); err != nil {
+		return nil, err
+	}
+	// we don't have to worry about the file existing already and growing large, since this will truncate the file if it exists
+	return os.Create(logfile)
 }
 
 func startCmd(ctx context.Context, opts commandOptions) (*startedCmd, error) {
@@ -395,6 +376,8 @@ func (sc *startedCmd) getOutputWriter(ctx context.Context, opts *outputOptions, 
 
 	if opts.ignore {
 		std.Out.WriteLine(output.Styledf(output.StyleSuggestion, "Ignoring %s of %s", outputName, sc.opts.name))
+	} else if opts.logfile != nil {
+		return opts.logfile
 	} else {
 		// Create a channel to signal when output should start. If buffering is disabled, close
 		// the channel so output starts immediately.

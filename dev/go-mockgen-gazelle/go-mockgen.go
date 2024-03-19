@@ -88,10 +88,10 @@ func (*gomockgen) Kinds() map[string]rule.KindInfo {
 				"manifests": true,
 			},
 		},
-		"multirun": {
+		"write_source_files": {
 			MatchAttrs: []string{"name"},
 			MergeableAttrs: map[string]bool{
-				"commands": true,
+				"additional_update_targets": true,
 			},
 		},
 	}
@@ -111,8 +111,8 @@ func (*gomockgen) ApparentLoads(moduleToApparentName func(string) string) []rule
 			Symbols: []string{"go_mockgen"},
 		},
 		{
-			Name:    "@rules_multirun//:defs.bzl",
-			Symbols: []string{"multirun"},
+			Name:    "@aspect_bazel_lib//lib:write_source_files.bzl",
+			Symbols: []string{"write_source_files"},
 		},
 	}
 }
@@ -123,7 +123,7 @@ func (g *gomockgen) GenerateRules(args language.GenerateArgs) language.GenerateR
 		log.Fatalf("failed to load go-mockgen config: %v", err)
 	}
 
-	// if we're in the ./dev folder, we want to generate an "all" multirun.
+	// if we're in the ./dev folder, we want to generate an "all" target.
 	if args.Rel == "dev" {
 		var targets []string
 		for _, mock := range yamlPayload.Mocks {
@@ -133,12 +133,11 @@ func (g *gomockgen) GenerateRules(args language.GenerateArgs) language.GenerateR
 		slices.Sort(targets)
 		targets = slices.Compact(targets)
 
-		multirunRule := rule.NewRule("multirun", "go_mockgen")
-		multirunRule.SetAttr("commands", targets)
-		multirunRule.SetAttr("jobs", 1)
+		catchallRule := rule.NewRule("write_source_files", "go_mockgen")
+		catchallRule.SetAttr("additional_update_targets", targets)
 
 		return language.GenerateResult{
-			Gen:     []*rule.Rule{multirunRule},
+			Gen:     []*rule.Rule{catchallRule},
 			Imports: []interface{}{nil},
 		}
 	}

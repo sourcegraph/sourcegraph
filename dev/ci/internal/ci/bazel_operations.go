@@ -7,14 +7,6 @@ import (
 
 func BazelOperations(buildOpts bk.BuildOptions, opts CoreTestOperationsOptions) []operations.Operation {
 	ops := []operations.Operation{bazelPrechecks()}
-	if !opts.AspectWorkflows {
-		if opts.IsMainBranch {
-			ops = append(ops, bazelTest("//...", "//client/web:test", "//testing:codeintel_integration_test"))
-		} else {
-			ops = append(ops, bazelTest("//...", "//client/web:test"))
-		}
-	}
-
-	ops = append(ops, triggerBackCompatTest(buildOpts, opts.AspectWorkflows), bazelGoModTidy())
+	ops = append(ops, triggerBackCompatTest(buildOpts), bazelGoModTidy())
 	return ops
 }

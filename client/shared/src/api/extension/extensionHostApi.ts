@@ -1,6 +1,6 @@
 import { proxy } from 'comlink'
 import { castArray, isEqual } from 'lodash'
-import { combineLatest, concat, type Observable, of, type Subscribable } from 'rxjs'
+import { combineLatest, concat, type Observable, of } from 'rxjs'
 import { catchError, defaultIfEmpty, distinctUntilChanged, map, switchMap } from 'rxjs/operators'
 import type { ProviderResult } from 'sourcegraph'
 
@@ -319,7 +319,7 @@ export function createExtensionHostAPI(state: ExtensionHostState): FlatExtension
                         })
                     ),
                     state.settings,
-                    state.context as Subscribable<Context<unknown>>,
+                    state.context as Observable<Context<unknown>>,
                 ]).pipe(
                     map(([multiContributions, activeEditor, settings, context]) => {
                         // Merge in extra context.
@@ -431,7 +431,7 @@ export function callProviders<TRegisteredProvider, TProviderResult, TMergedResul
                         concat(
                             [LOADING],
                             providerResultToObservable(safeInvokeProvider(provider)).pipe(
-                                defaultIfEmpty<typeof LOADING | TProviderResult | null | undefined>(null),
+                                defaultIfEmpty(null),
                                 catchError(error => {
                                     logError(error)
                                     return [null]
@@ -443,7 +443,7 @@ export function callProviders<TRegisteredProvider, TProviderResult, TMergedResul
             )
         )
         .pipe(
-            defaultIfEmpty<(typeof LOADING | TProviderResult | null | undefined)[]>([]),
+            defaultIfEmpty([]),
             map(results => ({
                 isLoading: results.some(hover => hover === LOADING),
                 result: mergeResult(results),

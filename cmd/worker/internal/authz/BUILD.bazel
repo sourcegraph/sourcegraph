@@ -84,7 +84,7 @@ go_test(
         "//internal/workerutil/dbworker",
         "//internal/workerutil/dbworker/store",
         "//lib/errors",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_google_go_cmp//cmp",
         "@com_github_grafana_regexp//:regexp",
         "@com_github_inconshreveable_log15//:log15",

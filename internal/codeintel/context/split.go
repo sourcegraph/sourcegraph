@@ -73,7 +73,7 @@ func SplitIntoEmbeddableChunks(text string, fileName string, splitOptions SplitO
 		startLine, tokensSum = endLine, 0
 	}
 
-	for i := 0; i < len(lines); i++ {
+	for i := range len(lines) {
 		if tokensSum > splitOptions.ChunkTokensThreshold || (tokensSum > splitOptions.ChunkEarlySplitTokensThreshold && isSplittableLine(lines[i])) {
 			addChunk(i)
 		}

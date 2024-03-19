@@ -81,3 +81,19 @@ export function createPromiseStore<D, E = Error>(): PromiseStore<D, E> {
         },
     }
 }
+
+/**
+ * Returns a store that publishes updates when the promise is resolved or rejected.
+ */
+export function toReadable<D, E = Error>(promise: PromiseLike<D>): Readable<Result<D, E>> {
+    const resultStore = writable<Result<D, E>>({ value: null, error: null, pending: true })
+    promise.then(
+        result => {
+            resultStore.set({ value: result, error: null, pending: false })
+        },
+        error => {
+            resultStore.set({ value: null, error: error, pending: false })
+        }
+    )
+    return resultStore
+}

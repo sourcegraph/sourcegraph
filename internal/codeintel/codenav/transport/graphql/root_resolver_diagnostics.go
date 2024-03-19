@@ -79,7 +79,7 @@ func (r *diagnosticResolver) Location(ctx context.Context) (resolverstubs.Locati
 		ctx,
 		r.locationResolver,
 		shared.UploadLocation{
-			Dump:         r.diagnostic.Dump,
+			Upload:       r.diagnostic.Upload,
 			Path:         r.diagnostic.Path,
 			TargetCommit: r.diagnostic.AdjustedCommit,
 			TargetRange:  r.diagnostic.AdjustedRange,

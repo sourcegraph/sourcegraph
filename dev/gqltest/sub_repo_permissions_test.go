@@ -100,7 +100,7 @@ func TestSubRepoPermissionsSymbols(t *testing.T) {
 		// for the revision, after which symbols of this revision are indexed. The search
 		// is repeated 10 times and the test runs for ~50 seconds in total to increase
 		// the probability of symbols being indexed.
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			symbols, err := userClient.GitGetCommitSymbols(repoName, "main")
 			if err != nil {
 				t.Fatal(err)

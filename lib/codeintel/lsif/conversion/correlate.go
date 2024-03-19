@@ -146,15 +146,15 @@ func correlateFromReader(ctx context.Context, r io.Reader, root string) (*State,
 
 type wrappedState struct {
 	*State
-	dumpRoot            string
+	uploadRoot          string
 	unsupportedVertices *datastructures.IDSet
 	rangeToDoc          map[int]int
 }
 
-func newWrappedState(dumpRoot string) *wrappedState {
+func newWrappedState(uploadRoot string) *wrappedState {
 	return &wrappedState{
 		State:               newState(),
-		dumpRoot:            dumpRoot,
+		uploadRoot:          uploadRoot,
 		unsupportedVertices: datastructures.NewIDSet(),
 		rangeToDoc:          map[int]int{},
 	}
@@ -252,8 +252,8 @@ func correlateMetaData(state *wrappedState, element Element) error {
 		payload.ProjectRoot += "/"
 	}
 
-	if state.dumpRoot != "" && !strings.HasSuffix(payload.ProjectRoot, "/"+state.dumpRoot) {
-		payload.ProjectRoot += state.dumpRoot
+	if state.uploadRoot != "" && !strings.HasSuffix(payload.ProjectRoot, "/"+state.uploadRoot) {
+		payload.ProjectRoot += state.uploadRoot
 	}
 
 	state.LSIFVersion = payload.Version

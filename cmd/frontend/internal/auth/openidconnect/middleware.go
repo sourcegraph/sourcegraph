@@ -38,6 +38,32 @@ type userClaims struct {
 	EmailVerified     *bool  `json:"email_verified"`
 }
 
+// getLogin returns the preferred username or email address from the user claims,
+// or the email address if the preferred username is not set.
+func getLogin(c *userClaims, i *oidc.UserInfo) string {
+	if c.PreferredUsername != "" {
+		return c.PreferredUsername
+	}
+
+	return i.Email
+}
+
+// getDisplayName returns a display name from the user claims in this order:
+// 1. GivenName
+// 2. Name
+// 3. provided defaultName
+func getDisplayName(c *userClaims, defaultName string) string {
+	if c.GivenName != "" {
+		return c.GivenName
+	}
+
+	if c.Name != "" {
+		return c.Name
+	}
+
+	return defaultName
+}
+
 // Middleware is middleware for OpenID Connect (OIDC) authentication, adding endpoints under the
 // auth path prefix ("/.auth") to enable the login flow and requiring login for all other endpoints.
 //
@@ -165,7 +191,6 @@ func authHandler(db database.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 			if err := db.SecurityEventLogs().LogSecurityEvent(r.Context(), database.SecurityEventOIDCLoginSucceeded, r.URL.Path, uint32(result.User.ID), "", "BACKEND", nil); err != nil {
 				log15.Warn("Error logging security event.", "error", err)
-
 			}
 
 			var exp time.Duration

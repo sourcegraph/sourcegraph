@@ -363,9 +363,8 @@ type Client interface {
 	// with more detailed responses. Do not use this if you are not repo-updater.
 	//
 	// Repo updates are not guaranteed to occur. If a repo has been updated
-	// recently (within the Since duration specified in the request), the
-	// update won't happen.
-	RequestRepoUpdate(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error)
+	// recently, the update won't happen.
+	RequestRepoUpdate(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)
 
 	// RequestRepoClone is an asynchronous request to clone a repository.
 	RequestRepoClone(context.Context, api.RepoName) (*protocol.RepoCloneResponse, error)
@@ -707,19 +706,17 @@ func (c *clientImplementor) gitCommand(repo api.RepoName, arg ...string) GitComm
 	}
 }
 
-func (c *clientImplementor) RequestRepoUpdate(ctx context.Context, repo api.RepoName, since time.Duration) (_ *protocol.RepoUpdateResponse, err error) {
+func (c *clientImplementor) RequestRepoUpdate(ctx context.Context, repo api.RepoName) (_ *protocol.RepoUpdateResponse, err error) {
 	ctx, _, endObservation := c.operations.requestRepoUpdate.With(ctx, &err, observation.Args{
 		MetricLabelValues: []string{c.scope},
 		Attrs: []attribute.KeyValue{
 			repo.Attr(),
-			attribute.Stringer("since", since),
 		},
 	})
 	defer endObservation(1, observation.Args{})
 
 	req := &protocol.RepoUpdateRequest{
-		Repo:  repo,
-		Since: since,
+		Repo: repo,
 	}
 
 	client, err := c.ClientForRepo(ctx, repo)

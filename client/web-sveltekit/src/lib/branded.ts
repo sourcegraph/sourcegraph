@@ -14,4 +14,6 @@ export * from '@sourcegraph/branded/src/search-ui/input/experimental/suggestions
 export { placeholder } from '@sourcegraph/branded/src/search-ui/input/codemirror/placeholder'
 export { showWhenEmptyWithoutContext } from '@sourcegraph/branded/src/search-ui/input/experimental/placeholder'
 export { filterDecoration } from '@sourcegraph/branded/src/search-ui/input/experimental/codemirror/syntax-highlighting'
+export { searchHistoryExtension } from '@sourcegraph/branded/src/search-ui/input/experimental/codemirror/history'
+export { onModeChange } from '@sourcegraph/branded/src/search-ui/input/experimental/modes'
 export { overrideContextOnPaste } from '@sourcegraph/branded/src/search-ui/input/experimental/codemirror/searchcontext'

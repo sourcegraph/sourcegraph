@@ -74,27 +74,24 @@ func TestRedirects(t *testing.T) {
 	}
 
 	t.Run("on Sourcegraph.com", func(t *testing.T) {
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig) // reset
+		dotcom.MockSourcegraphDotComMode(t, true)
+
 		t.Run("root", func(t *testing.T) {
 			check(t, "/", http.StatusTemporaryRedirect, "/search", "Mozilla/5.0")
 		})
 	})
 
 	t.Run("on Sourcegraph.com from Cookiebot", func(t *testing.T) {
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig) // reset
+		dotcom.MockSourcegraphDotComMode(t, true)
+
 		t.Run("root", func(t *testing.T) {
 			check(t, "/", http.StatusTemporaryRedirect, "/search", "Mozilla/5.0 Cookiebot")
 		})
 	})
 
 	t.Run("non-Sourcegraph.com", func(t *testing.T) {
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(false)
-		defer dotcom.MockSourcegraphDotComMode(orig) // reset
+		dotcom.MockSourcegraphDotComMode(t, false)
+
 		t.Run("root", func(t *testing.T) {
 			check(t, "/", http.StatusTemporaryRedirect, "/search", "Mozilla/5.0")
 		})

@@ -1,6 +1,6 @@
 import type { Endpoint } from 'comlink'
 import { isObject } from 'lodash'
-import type { Observable, Subscribable, Subscription } from 'rxjs'
+import type { Observable, Subscription } from 'rxjs'
 
 import type { DiffPart } from '@sourcegraph/codeintellify'
 import { hasProperty } from '@sourcegraph/common'
@@ -73,7 +73,7 @@ export interface PlatformContext {
      *
      * @deprecated Use useSettings instead
      */
-    readonly settings: Subscribable<SettingsCascadeOrError<Settings>>
+    readonly settings: Observable<SettingsCascadeOrError<Settings>>
 
     /**
      * Update the settings for the subject, either by inserting/changing a specific value or by overwriting the

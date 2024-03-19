@@ -1,7 +1,8 @@
-import { type FC, useState } from 'react'
+import { type FC, useState, useEffect } from 'react'
 
 import { mdiChevronDown } from '@mdi/js'
 
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import {
     Text,
@@ -48,9 +49,13 @@ const setupOptions: SetupOption[] = [
     },
 ]
 
-interface CodyDashboardPageProps {}
+interface CodyDashboardPageProps extends TelemetryV2Props {}
 
-export const CodyDashboardPage: FC<CodyDashboardPageProps> = () => {
+export const CodyDashboardPage: FC<CodyDashboardPageProps> = ({ telemetryRecorder }) => {
+    useEffect(() => {
+        telemetryRecorder.recordEvent('cody.dashboard', 'view')
+    }, [telemetryRecorder])
+
     const isLightTheme = useIsLightTheme()
     const codySetupLink = 'https://sourcegraph.com/docs/cody'
     const features = getLicenseFeatures()

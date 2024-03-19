@@ -15,7 +15,15 @@ const (
 	// SourcegraphDockerDevRegistry is a private registry for dev images, and requires authentication to pull from.
 	SourcegraphDockerDevRegistry = "us.gcr.io/sourcegraph-dev"
 	// SourcegraphDockerPublishRegistry is a public registry for final images, and does not require authentication to pull from.
+	// TODO RFC795: safeguard
 	SourcegraphDockerPublishRegistry = "index.docker.io/sourcegraph"
+	// SourcegraphInternalReleaseRegistry is a private registry storing internal releases.
+	SourcegraphInternalReleaseRegistry = "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-internal"
+	// SourcegraphPublicReleaseRegistry is a currently private registry for storing public releases.
+	SourcegraphPublicReleaseRegistry = "us-central1-docker.pkg.dev/sourcegraph-ci/rfc795-public"
+
+	// CloudEphemeralRegistry is the registry where images get published too which should be used for Cloud Ephemeral deployments
+	CloudEphemeralRegistry = "us-central1-docker.pkg.dev/sourcegraph-ci/cloud-ephemeral"
 )
 
 // DevRegistryImage returns the name of the image for the given app and tag on the
@@ -25,10 +33,22 @@ func DevRegistryImage(app, tag string) string {
 	return maybeTaggedImage(root, tag)
 }
 
+// InternalReleaseRegistry returns the name of the image for the given app and tag on the
+// internal releases private registry.
+func InternalReleaseRegistry(app, tag string) string {
+	root := fmt.Sprintf("%s/%s", SourcegraphInternalReleaseRegistry, app)
+	return maybeTaggedImage(root, tag)
+}
+
 // PublishedRegistryImage returns the name of the image for the given app and tag on the
 // publish registry.
 func PublishedRegistryImage(app, tag string) string {
 	root := fmt.Sprintf("%s/%s", SourcegraphDockerPublishRegistry, app)
+	return maybeTaggedImage(root, tag)
+}
+
+func CloudEphemeralRegistryImage(app, tag string) string {
+	root := fmt.Sprintf("%s/%s", CloudEphemeralRegistry, app)
 	return maybeTaggedImage(root, tag)
 }
 
@@ -94,7 +114,6 @@ var DeploySourcegraphDockerImages = []string{
 	"gitserver",
 	"grafana",
 	"indexed-searcher",
-	"jaeger",
 	"jaeger-all-in-one",
 	"migrator",
 	"node-exporter",

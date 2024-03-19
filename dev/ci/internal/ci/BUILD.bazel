@@ -4,6 +4,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "ci",
     srcs = [
+        "aspect_workflows.go",
         "bazel_helpers.go",
         "bazel_operations.go",
         "cache_helpers.go",
@@ -15,6 +16,7 @@ go_library(
         "misc_operations.go",
         "operations.go",
         "pipeline.go",
+        "release_operations.go",
         "security_operations.go",
         "web-integration-workloads.go",
         "wolfi_operations.go",
@@ -41,6 +43,7 @@ go_library(
 go_test(
     name = "ci_test",
     srcs = [
+        "aspect_workflows_test.go",
         "bazel_operations_test.go",
         "wolfi_operations_test.go",
     ],

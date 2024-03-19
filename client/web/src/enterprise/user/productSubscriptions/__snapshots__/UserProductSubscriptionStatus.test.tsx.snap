@@ -27,9 +27,9 @@ exports[`UserProductSubscriptionStatus > toggle > license key hidden 1`] = `
           <span>
             expired on 
             <span
-              title="Jan 1, 1970, 12:00:23 AM"
+              title="Jan 1, 1970, 12:00:23 AM GMT+0"
             >
-              1970-01-01
+              1970-01-01 GMT+0
             </span>
              (36 years ago)
           </span>
@@ -100,9 +100,9 @@ exports[`UserProductSubscriptionStatus > toggle > license key revealed 1`] = `
           <span>
             expired on 
             <span
-              title="Jan 1, 1970, 12:00:23 AM"
+              title="Jan 1, 1970, 12:00:23 AM GMT+0"
             >
-              1970-01-01
+              1970-01-01 GMT+0
             </span>
              (36 years ago)
           </span>

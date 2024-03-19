@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/run"
+	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -32,15 +33,25 @@ func parseConfig(data []byte) (*Config, error) {
 		return nil, err
 	}
 
+	root, err := root.RepositoryRoot()
+	if err != nil {
+		return nil, err
+	}
+
 	for name, cmd := range conf.BazelCommands {
-		cmd.Name = name
-		conf.BazelCommands[name] = cmd
+		cmd.Config.Name = name
+		cmd.Config.RepositoryRoot = root
+	}
+
+	for name, cmd := range conf.DockerCommands {
+		cmd.Config.Name = name
+		cmd.Config.RepositoryRoot = root
 	}
 
 	for name, cmd := range conf.Commands {
-		cmd.Name = name
-		normalizeCmd(&cmd)
-		conf.Commands[name] = cmd
+		cmd.Config.Name = name
+		cmd.Config.RepositoryRoot = root
+		normalizeCmd(cmd)
 	}
 
 	for name, cmd := range conf.Commandsets {
@@ -49,8 +60,9 @@ func parseConfig(data []byte) (*Config, error) {
 	}
 
 	for name, cmd := range conf.Tests {
-		cmd.Name = name
-		normalizeCmd(&cmd)
+		cmd.Config.Name = name
+		cmd.Config.RepositoryRoot = root
+		normalizeCmd(cmd)
 		conf.Tests[name] = cmd
 	}
 
@@ -64,11 +76,12 @@ func normalizeCmd(cmd *run.Command) {
 }
 
 type Commandset struct {
-	Name          string            `yaml:"-"`
-	Commands      []string          `yaml:"commands"`
-	BazelCommands []string          `yaml:"bazelCommands"`
-	Checks        []string          `yaml:"checks"`
-	Env           map[string]string `yaml:"env"`
+	Name           string            `yaml:"-"`
+	Commands       []string          `yaml:"commands"`
+	BazelCommands  []string          `yaml:"bazelCommands"`
+	DockerCommands []string          `yaml:"dockerCommands"`
+	Checks         []string          `yaml:"checks"`
+	Env            map[string]string `yaml:"env"`
 
 	// If this is set to true, then the commandset requires the dev-private
 	// repository to be cloned at the same level as the sourcegraph repository.
@@ -114,6 +127,10 @@ func (c *Commandset) Merge(other *Commandset) *Commandset {
 		merged.BazelCommands = other.BazelCommands
 	}
 
+	if !equal(merged.DockerCommands, other.DockerCommands) && len(other.DockerCommands) != 0 {
+		merged.DockerCommands = other.DockerCommands
+	}
+
 	for k, v := range other.Env {
 		merged.Env[k] = v
 	}
@@ -124,12 +141,13 @@ func (c *Commandset) Merge(other *Commandset) *Commandset {
 }
 
 type Config struct {
-	Env               map[string]string           `yaml:"env"`
-	Commands          map[string]run.Command      `yaml:"commands"`
-	BazelCommands     map[string]run.BazelCommand `yaml:"bazelCommands"`
-	Commandsets       map[string]*Commandset      `yaml:"commandsets"`
-	DefaultCommandset string                      `yaml:"defaultCommandset"`
-	Tests             map[string]run.Command      `yaml:"tests"`
+	Env               map[string]string             `yaml:"env"`
+	Commands          map[string]*run.Command       `yaml:"commands"`
+	BazelCommands     map[string]*run.BazelCommand  `yaml:"bazelCommands"`
+	DockerCommands    map[string]*run.DockerCommand `yaml:"dockerCommands"`
+	Commandsets       map[string]*Commandset        `yaml:"commandsets"`
+	DefaultCommandset string                        `yaml:"defaultCommandset"`
+	Tests             map[string]*run.Command       `yaml:"tests"`
 }
 
 // Merges merges the top-level entries of two Config objects, with the receiver
@@ -141,7 +159,8 @@ func (c *Config) Merge(other *Config) {
 
 	for k, v := range other.Commands {
 		if original, ok := c.Commands[k]; ok {
-			c.Commands[k] = original.Merge(v)
+			merged := original.Merge(*v)
+			c.Commands[k] = &merged
 		} else {
 			c.Commands[k] = v
 		}
@@ -161,7 +180,8 @@ func (c *Config) Merge(other *Config) {
 
 	for k, v := range other.Tests {
 		if original, ok := c.Tests[k]; ok {
-			c.Tests[k] = original.Merge(v)
+			merged := original.Merge(*v)
+			c.Tests[k] = &merged
 		} else {
 			c.Tests[k] = v
 		}

@@ -9,9 +9,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/featureflag"
-	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 func (r *schemaResolver) Organizations(args *struct {
@@ -32,11 +30,6 @@ type orgConnectionResolver struct {
 }
 
 func (r *orgConnectionResolver) Nodes(ctx context.Context) ([]*OrgResolver, error) {
-	// 🚨 SECURITY: Not allowed on Cloud.
-	if dotcom.SourcegraphDotComMode() {
-		return nil, errors.New("listing organizations is not allowed")
-	}
-
 	// 🚨 SECURITY: Only site admins can list organisations.
 	if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
 		return nil, err

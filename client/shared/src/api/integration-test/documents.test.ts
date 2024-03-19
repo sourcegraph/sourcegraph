@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { fromSubscribable } from '@sourcegraph/common'
+
 import type { TextDocument } from '../../codeintel/legacy-extensions/api'
 import { assertToJSON, collectSubscribableValues, integrationTestContext } from '../../testing/testHelpers'
 
@@ -28,7 +30,7 @@ describe('Documents (integration)', () => {
         test('fires when a text document is opened', async () => {
             const { extensionAPI, extensionHostAPI } = await integrationTestContext()
 
-            const values = collectSubscribableValues(extensionAPI.workspace.openedTextDocuments)
+            const values = collectSubscribableValues(fromSubscribable(extensionAPI.workspace.openedTextDocuments))
             expect(values).toEqual([] as TextDocument[])
 
             await extensionHostAPI.addTextDocumentIfNotExists({ uri: 'file:///f2', languageId: 'l2', text: 't2' })

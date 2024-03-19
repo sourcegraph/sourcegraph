@@ -264,7 +264,6 @@ func TestSearch(t *testing.T) {
 		require.True(t, utf8.ValidString(match.Author.Name))
 		require.True(t, utf8.ValidString(match.Author.Email))
 		require.True(t, utf8.ValidString(match.Message.Content))
-
 	})
 }
 
@@ -720,13 +719,13 @@ func generateQuery(rand *rand.Rand, depth int) protocol.Node {
 	switch rand.Int() % 3 {
 	case 0:
 		var operands []protocol.Node
-		for i := 0; i < rand.Int()%4; i++ {
+		for range rand.Int() % 4 {
 			operands = append(operands, generateQuery(rand, depth-1))
 		}
 		return &protocol.Operator{Kind: protocol.And, Operands: operands}
 	case 1:
 		var operands []protocol.Node
-		for i := 0; i < rand.Int()%4; i++ {
+		for range rand.Int() % 4 {
 			operands = append(operands, generateQuery(rand, depth-1))
 		}
 		return &protocol.Operator{Kind: protocol.Or, Operands: operands}
@@ -747,7 +746,7 @@ func (authorNameGenerator) Generate(rand *rand.Rand, size int) reflect.Value {
 		size = 10
 	}
 	buf := make([]byte, size)
-	for i := 0; i < len(buf); i++ {
+	for i := range len(buf) {
 		buf[i] = randomChars[rand.Int()%len(randomChars)]
 	}
 	return reflect.ValueOf(buf)

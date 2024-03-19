@@ -4,7 +4,6 @@ import (
 	"regexp/syntax" //nolint:depguard // using the grafana fork of regexp clashes with zoekt, which uses the std regexp/syntax.
 
 	"github.com/go-enry/go-enry/v2"
-	"github.com/grafana/regexp"
 
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
@@ -145,12 +144,7 @@ func toZoektPattern(
 			fileNameOnly := patternMatchesPath && !patternMatchesContent
 			contentOnly := !patternMatchesPath && patternMatchesContent
 
-			pattern := n.Value
-			if n.Annotation.Labels.IsSet(query.Literal) {
-				pattern = regexp.QuoteMeta(pattern)
-			}
-
-			q, err = parseRe(pattern, fileNameOnly, contentOnly, isCaseSensitive)
+			q, err = parseRe(n.RegExpPattern(), fileNameOnly, contentOnly, isCaseSensitive)
 			if err != nil {
 				return nil, err
 			}

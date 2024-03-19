@@ -4,7 +4,6 @@ set -eu -o pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
 
-# TODO: Manage these variables properly
 GCP_PROJECT="sourcegraph-ci"
 GCS_BUCKET="package-repository"
 TARGET_ARCH="x86_64"
@@ -21,9 +20,6 @@ fi
 cd wolfi-packages/packages/$TARGET_ARCH
 
 # Check that this exact package does not already exist in the repo - fail if so
-
-echo " * Uploading package to repository"
-
 # List all .apk files under wolfi-packages/packages/$TARGET_ARCH/
 error="false"
 package_usage_list=""

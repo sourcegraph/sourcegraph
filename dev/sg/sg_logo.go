@@ -90,7 +90,7 @@ func logoExec(ctx *cli.Context) error {
 	)
 
 	times := 20
-	for i := 0; i < times; i++ {
+	for i := range times {
 		const linesPrinted = 23
 
 		std.Out.Writef("%s", color2)

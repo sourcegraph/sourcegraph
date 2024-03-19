@@ -21,7 +21,7 @@ func BenchmarkIndexableRepos_List_Empty(b *testing.B) {
 	default:
 	}
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_, err := NewIndexableReposLister(logger, db.Repos()).List(ctx)
 		if err != nil {
 			b.Fatal(err)

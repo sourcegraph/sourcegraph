@@ -208,7 +208,7 @@ func nthIndex(in []byte, sep byte, n int) (idx int) {
 	}
 
 	start := 0
-	for i := 0; i < n; i++ {
+	for range n {
 		idx := bytes.IndexByte(in[start:], sep)
 		if idx == -1 {
 			return idx
@@ -237,13 +237,11 @@ func (r *GitTreeEntryResolver) Binary(ctx context.Context) (bool, error) {
 	return binary.IsBinary(r.fullContentBytes), nil
 }
 
-var (
-	syntaxHighlightFileBlocklist = []string{
-		"yarn.lock",
-		"pnpm-lock.yaml",
-		"package-lock.json",
-	}
-)
+var syntaxHighlightFileBlocklist = []string{
+	"yarn.lock",
+	"pnpm-lock.yaml",
+	"package-lock.json",
+}
 
 func (r *GitTreeEntryResolver) Highlight(ctx context.Context, args *HighlightArgs) (*HighlightedFileResolver, error) {
 	// Currently, pagination + highlighting is not supported, throw out an error if it is attempted.

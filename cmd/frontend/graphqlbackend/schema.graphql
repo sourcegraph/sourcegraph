@@ -6063,7 +6063,7 @@ type GitBlob implements TreeEntry & File2 {
     """
     Blame the blob.
     """
-    blame(startLine: Int!, endLine: Int!, ignoreWhitespace: Boolean = false): [Hunk!]!
+    blame(startLine: Int, endLine: Int, ignoreWhitespace: Boolean = false): [Hunk!]!
     """
     Highlight the blob contents.
     """
@@ -6380,7 +6380,6 @@ enum CodySubscriptionStatus {
     UNPAID
     CANCELED
     TRIALING
-    PENDING
     OTHER
 }
 
@@ -6639,6 +6638,11 @@ type User implements Node & SettingsSubject & Namespace {
     """
     codySubscription: CodySubscription
     """
+    The rate limit status for the user stored in Cody Gateway.
+    On dotcom only the user and site admins can access this field.
+    """
+    codyGatewayRateLimitStatus: [CodyGatewayRateLimitStatus!]
+    """
     DEPRECATED
     Whether the user has enrolled for Cody Pro.
     """
@@ -6659,6 +6663,10 @@ type User implements Node & SettingsSubject & Namespace {
     The limit of Cody code completions for the current billing period.
     """
     codyCurrentPeriodCodeLimit: Int!
+    """
+    Evaluates a feature flag for the user. Returns null if the feature flag does not exist.
+    """
+    evaluateFeatureFlag(flagName: String!): Boolean
 }
 
 """
@@ -6840,6 +6848,11 @@ type ExternalAccount implements Node {
     may query this field.
     """
     publicAccountData: PublicExternalAccountData
+    """
+    TEMPORARY: to debug #inc-284-plg-users-paying-for-and-being-billed-for-pro-without-being-upgrade.
+    Cody Subscription associated with the external account.
+    """
+    codySubscription: CodySubscription
 }
 
 """
@@ -10470,6 +10483,11 @@ enum PermissionNamespace {
     This represents the Cody namespace.
     """
     CODY
+
+    """
+    ❗ Product subscriptions are only available in Sourcegraph.com
+    """
+    PRODUCT_SUBSCRIPTIONS
 }
 
 """

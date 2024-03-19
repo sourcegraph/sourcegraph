@@ -2,7 +2,7 @@ import { isEqual } from 'lodash'
 import { EMPTY, NEVER, of, Subject, Subscription } from 'rxjs'
 import { delay, distinctUntilChanged, filter, first, map, takeWhile } from 'rxjs/operators'
 import { TestScheduler } from 'rxjs/testing'
-import { afterAll, afterEach, beforeAll, describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, it, expect } from 'vitest'
 
 import { isDefined } from '@sourcegraph/common'
 import type { Range } from '@sourcegraph/extension-api-types'
@@ -27,17 +27,18 @@ import {
 import { dispatchMouseEventAtPositionImpure } from './testutils/mouse'
 
 describe('Hoverifier', () => {
-    const dom = new DOM()
-    afterAll(dom.cleanup)
-
+    let dom: DOM
     let testcases: CodeViewProps[] = []
-    beforeAll(() => {
+
+    beforeEach(() => {
+        dom = new DOM()
         testcases = dom.createCodeViews()
     })
 
     let subscriptions = new Subscription()
 
     afterEach(() => {
+        dom.cleanup()
         subscriptions.unsubscribe()
         subscriptions = new Subscription()
     })

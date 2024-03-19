@@ -50,7 +50,7 @@ type InstallManager struct {
 	stats               *installAnalytics
 }
 
-func Install(ctx context.Context, env map[string]string, verbose bool, cmds ...Installer) error {
+func Install(ctx context.Context, env map[string]string, verbose bool, cmds []Installer) error {
 	installer := newInstallManager(cmds, std.Out, env, verbose)
 
 	installer.start(ctx)
@@ -100,7 +100,7 @@ func (installer *InstallManager) start(ctx context.Context) {
 // Starts the installation process in a non-blocking process
 func (installer *InstallManager) install(ctx context.Context, cmds []Installer) {
 	for _, cmd := range cmds {
-		go func(ctx context.Context, cmd Installer) {
+		go func() {
 			// Set the log channel for the installer
 			cmd.SetInstallerOutput(installer.logs)
 
@@ -110,7 +110,7 @@ func (installer *InstallManager) install(ctx context.Context, cmds []Installer) 
 			}
 
 			installer.installed <- cmd.GetName()
-		}(ctx, cmd)
+		}()
 	}
 }
 

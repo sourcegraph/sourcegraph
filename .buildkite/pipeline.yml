@@ -8,30 +8,17 @@
 # https://sourcegraph.com/github.com/sourcegraph/infrastructure/-/blob/buildkite/kubernetes/buildkite-agent/buildkite-agent.Deployment.yaml
 
 steps:
-  - group: "Pipeline setup"
-    if: pipeline.slug == "sourcegraph"
-    steps:
-      - label: ':bazel::pipeline: Generate pipeline'
-        key: 'pipeline-gen'
-        agents: { queue: bazel }
-        # Prioritize generating pipelines so that jobs can get generated and queued up as soon
-        # as possible, so as to better assess pipeline load e.g. to scale the Buildkite fleet.
-        priority: 10
-        command: './dev/ci/gen-pipeline.sh'
   - group: ":aspect: Aspect Workflows "
-    if: pipeline.slug == "aspect-experimental"
     steps:
       - key: aspect-workflows-upload
+        if: build.env("DISABLE_ASPECT_WORKFLOWS") != "true"
         label: ":aspect: Setup Aspect Workflows"
-        commands:
-          - "rosetta steps | buildkite-agent pipeline upload"
+        commands: |
+          rosetta steps | buildkite-agent pipeline upload
         agents:
           queue: aspect-small
       - label: ":pipeline: Generate pipeline"
-        if: build.branch !~ /^main(-dry-run\/)?.*/
         commands:
           - "./dev/ci/gen-pipeline.sh"
         agents:
-          queue: bazel
-        env:
-          ASPECT_WORKFLOWS_BUILD: "1"
+          queue: aspect-default

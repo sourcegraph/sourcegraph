@@ -2,9 +2,9 @@ import React, { useEffect } from 'react'
 
 import { mdiPlus } from '@mdi/js'
 
-import { Button, Link, Icon, PageHeader, Container } from '@sourcegraph/wildcard'
+import { Button, Container, Icon, Link, PageHeader } from '@sourcegraph/wildcard'
 
-import { AuthenticatedUser } from '../../../../auth'
+import type { AuthenticatedUser } from '../../../../auth'
 import { FilteredConnection } from '../../../../components/FilteredConnection'
 import { PageTitle } from '../../../../components/PageTitle'
 import type { SiteAdminProductSubscriptionFields } from '../../../../graphql-operations'
@@ -24,7 +24,8 @@ interface Props {
 }
 
 /**
- * Displays the product subscriptions that have been created on Sourcegraph.com.
+ * Displays the enterprise subscriptions (formerly known as "product subscriptions") that have been
+ * created on Sourcegraph.com.
  */
 export const SiteAdminProductSubscriptionsPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
     authenticatedUser,
@@ -33,14 +34,14 @@ export const SiteAdminProductSubscriptionsPage: React.FunctionComponent<React.Pr
 
     return (
         <div className="site-admin-product-subscriptions-page">
-            <PageTitle title="Product subscriptions" />
+            <PageTitle title="Enterprise subscriptions" />
             <PageHeader
                 headingElement="h2"
-                path={[{ text: 'Product subscriptions' }]}
+                path={[{ text: 'Enterprise subscriptions' }]}
                 actions={
                     <Button to="./new" variant="primary" as={Link}>
                         <Icon aria-hidden={true} svgPath={mdiPlus} />
-                        Create product subscription
+                        Create Enterprise subscription
                     </Button>
                 }
                 className="mb-3"
@@ -51,8 +52,8 @@ export const SiteAdminProductSubscriptionsPage: React.FunctionComponent<React.Pr
                     listComponent="table"
                     listClassName="table"
                     contentWrapperComponent={ListContentWrapper}
-                    noun="product subscription"
-                    pluralNoun="product subscriptions"
+                    noun="Enterprise subscription"
+                    pluralNoun="Enterprise subscriptions"
                     queryConnection={queryProductSubscriptions}
                     headComponent={SiteAdminProductSubscriptionNodeHeader}
                     nodeComponent={SiteAdminProductSubscriptionNode}

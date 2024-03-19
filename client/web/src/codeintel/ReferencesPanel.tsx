@@ -13,11 +13,10 @@ import { type ErrorLike, logger, pluralize } from '@sourcegraph/common'
 import { Position } from '@sourcegraph/extension-api-classes'
 import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import type { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { HighlightResponseFormat } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     type RepoSpec,
@@ -51,7 +50,7 @@ import type { HoverThresholdProps } from '../repo/RepoContainer'
 import { parseBrowserRepoURL } from '../util/url'
 
 import type { CodeIntelligenceProps } from '.'
-import { type Location, LocationsGroup, type LocationsGroupedByRepo, type LocationsGroupedByFile } from './location'
+import type { Location, LocationsGroup, LocationsGroupedByRepo, LocationsGroupedByFile } from './location'
 import { newSettingsGetter } from './settings'
 import { SideBlob, type SideBlobProps } from './SideBlob'
 import { findSearchToken, type ZeroBasedPosition } from './token'
@@ -72,7 +71,6 @@ export interface ReferencesPanelProps
         TelemetryProps,
         TelemetryV2Props,
         HoverThresholdProps,
-        ExtensionsControllerProps,
         HighlightedFileLineRangesProps {
     /** Whether to show the first loaded reference in mini code view */
     jumpToFirst?: boolean

@@ -277,7 +277,7 @@ func TestMarkFailed(t *testing.T) {
 	}
 }
 
-func TestDeleteOverlappingDumps(t *testing.T) {
+func TestDeleteOverlappingCompletedUploads(t *testing.T) {
 	logger := logtest.Scoped(t)
 	sqlDB := dbtest.NewDB(t)
 	db := database.NewDB(logger, sqlDB)
@@ -290,7 +290,7 @@ func TestDeleteOverlappingDumps(t *testing.T) {
 		Indexer: "lsif-go",
 	})
 
-	err := store.DeleteOverlappingDumps(context.Background(), 50, makeCommit(1), "cmd/", "lsif-go")
+	err := store.DeleteOverlappingCompletedUploads(context.Background(), 50, makeCommit(1), "cmd/", "lsif-go")
 	if err != nil {
 		t.Fatalf("unexpected error deleting dump: %s", err)
 	}
@@ -303,7 +303,7 @@ func TestDeleteOverlappingDumps(t *testing.T) {
 	}
 }
 
-func TestDeleteOverlappingDumpsNoMatches(t *testing.T) {
+func TestDeleteOverlappingCompletedUploadsNoMatches(t *testing.T) {
 	logger := logtest.Scoped(t)
 	sqlDB := dbtest.NewDB(t)
 	db := database.NewDB(logger, sqlDB)
@@ -327,21 +327,21 @@ func TestDeleteOverlappingDumpsNoMatches(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := store.DeleteOverlappingDumps(context.Background(), 50, testCase.commit, testCase.root, testCase.indexer)
+		err := store.DeleteOverlappingCompletedUploads(context.Background(), 50, testCase.commit, testCase.root, testCase.indexer)
 		if err != nil {
 			t.Fatalf("unexpected error deleting dump: %s", err)
 		}
 	}
 
 	// Original dump still exists
-	if dumps, err := store.GetDumpsByIDs(context.Background(), []int{1}); err != nil {
+	if uploads, err := store.GetCompletedUploadsByIDs(context.Background(), []int{1}); err != nil {
 		t.Fatalf("unexpected error getting dump: %s", err)
-	} else if len(dumps) != 1 {
+	} else if len(uploads) != 1 {
 		t.Fatal("expected dump record to still exist")
 	}
 }
 
-func TestDeleteOverlappingDumpsIgnoresIncompleteUploads(t *testing.T) {
+func TestDeleteOverlappingCompletedUploadsIgnoresIncompleteUploads(t *testing.T) {
 	logger := logtest.Scoped(t)
 	sqlDB := dbtest.NewDB(t)
 	db := database.NewDB(logger, sqlDB)
@@ -355,7 +355,7 @@ func TestDeleteOverlappingDumpsIgnoresIncompleteUploads(t *testing.T) {
 		State:   "queued",
 	})
 
-	err := store.DeleteOverlappingDumps(context.Background(), 50, makeCommit(1), "cmd/", "lsif-go")
+	err := store.DeleteOverlappingCompletedUploads(context.Background(), 50, makeCommit(1), "cmd/", "lsif-go")
 	if err != nil {
 		t.Fatalf("unexpected error deleting dump: %s", err)
 	}

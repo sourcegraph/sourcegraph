@@ -32,6 +32,7 @@ func robotsTxtHelper(w io.Writer, allowRobots bool) {
 		fmt.Fprintln(&buf, "Allow: /")
 		if dotcom.SourcegraphDotComMode() {
 			fmt.Fprintln(&buf, "Sitemap: https://sourcegraph.com/sitemap.xml.gz")
+			fmt.Fprintln(&buf, "Disallow: /search?q=*")
 		}
 	} else {
 		fmt.Fprintln(&buf, "Disallow: /")

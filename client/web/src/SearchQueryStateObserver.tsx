@@ -1,8 +1,7 @@
 import { type FC, useLayoutEffect, useRef, useState } from 'react'
 
 import { type Location, useLocation } from 'react-router-dom'
-import { BehaviorSubject } from 'rxjs'
-import { first } from 'rxjs/operators'
+import { BehaviorSubject, firstValueFrom } from 'rxjs'
 
 import type { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import { isSearchContextSpecAvailable } from '@sourcegraph/shared/src/search'
@@ -45,12 +44,13 @@ export const SearchQueryStateObserver: FC<SearchQueryStateObserverProps> = props
             location: locationSubject,
             isSearchContextAvailable: (searchContext: string) =>
                 searchContextsEnabled
-                    ? isSearchContextSpecAvailable({
-                          spec: searchContext,
-                          platformContext,
-                      })
-                          .pipe(first())
-                          .toPromise()
+                    ? firstValueFrom(
+                          isSearchContextSpecAvailable({
+                              spec: searchContext,
+                              platformContext,
+                          }),
+                          { defaultValue: false }
+                      )
                     : Promise.resolve(false),
         }).subscribe(parsedSearchURLAndContext => {
             if (parsedSearchURLAndContext.query) {

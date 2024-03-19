@@ -1,5 +1,5 @@
 import type { ApolloError } from '@apollo/client'
-import { GraphQLError } from 'graphql'
+import type { GraphQLError } from 'graphql'
 import { isEqual } from 'lodash'
 
 /**

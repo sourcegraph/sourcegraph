@@ -22,7 +22,7 @@ import (
 // repo IDs are generated automatically, so we just specify the number we want.
 func createRepos(t *testing.T, ctx context.Context, store RepoStore, numOfRepos int) {
 	t.Helper()
-	for i := 0; i < numOfRepos; i++ {
+	for i := range numOfRepos {
 		if err := store.Create(ctx, &types.Repo{
 			Name: api.RepoName(fmt.Sprintf("%d", i)),
 		}); err != nil {
@@ -175,7 +175,7 @@ func TestCodeowners_GetListCount(t *testing.T) {
 
 		// List with cursor pagination
 		var lastCursor int32
-		for i := 0; i < len(all); i++ {
+		for i := range len(all) {
 			t.Run(fmt.Sprintf("list codeowners n#%d", i), func(t *testing.T) {
 				opts := ListCodeownersOpts{LimitOffset: &LimitOffset{Limit: 1}, Cursor: lastCursor}
 				cf, c, err := store.ListCodeowners(ctx, opts)

@@ -2,6 +2,9 @@ package runtime
 
 import (
 	"context"
+	"flag"
+	"fmt"
+	"os"
 
 	"cloud.google.com/go/profiler"
 	"github.com/getsentry/sentry-go"
@@ -29,6 +32,8 @@ type Service[ConfigT any] interface {
 	) (background.Routine, error)
 }
 
+var showHelp = flag.Bool("help", false, "Show service help text")
+
 // Start handles the entire lifecycle of the program running Service, and should
 // be the only thing called in a MSP program's main package, for example:
 //
@@ -40,6 +45,7 @@ func Start[
 	ConfigT any,
 	LoaderT ConfigLoader[ConfigT],
 ](service Service[ConfigT]) {
+	flag.Parse()
 	passSanityCheck(service)
 
 	// Resource representing the service
@@ -69,6 +75,23 @@ func Start[
 	// Load configuration variables from environment
 	config.Load(env)
 	contract := newContract(log.Scoped("msp.contract"), env, service)
+
+	// Fast-exit with configuration facts if requested
+	if *showHelp {
+		fmt.Printf("SERVICE: %s\nVERSION: %s\n",
+			service.Name(), service.Version())
+		fmt.Printf("CONFIGURATION OPTIONS:\n")
+		for _, v := range env.requestedEnvVars {
+			fmt.Printf("- '%s': %s", v.name, v.description)
+			if v.defaultValue != "" {
+				fmt.Printf(" (default: %q)", v.defaultValue)
+			} else {
+				fmt.Printf(" (required)")
+			}
+			fmt.Println()
+		}
+		os.Exit(0)
+	}
 
 	// Enable Sentry error log reporting
 	var sentryEnabled bool

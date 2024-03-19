@@ -14,7 +14,7 @@ import { useNavigationType, useLocation } from 'react-router-dom'
 import { merge, of } from 'rxjs'
 import { last, share, tap, throttleTime } from 'rxjs/operators'
 
-import { URLQueryFilter, serializeURLQueryFilters, mergeQueryAndFilters } from '@sourcegraph/branded'
+import { type URLQueryFilter, serializeURLQueryFilters, mergeQueryAndFilters } from '@sourcegraph/branded'
 import type { AggregateStreamingSearchResults, StreamSearchOptions } from '@sourcegraph/shared/src/search/stream'
 import type { TelemetryService } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useObservable } from '@sourcegraph/wildcard'

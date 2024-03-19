@@ -1,6 +1,7 @@
 import React, { type FunctionComponent, useEffect, useState, useCallback } from 'react'
 
 import classNames from 'classnames'
+import { lastValueFrom } from 'rxjs'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { gql, dataOrThrowErrors, useQuery } from '@sourcegraph/http-client'
@@ -142,27 +143,29 @@ export const UserSettingsEmailsPage: FunctionComponent<React.PropsWithChildren<P
 
 async function fetchUserEmails(userID: Scalars['ID']): Promise<UserEmailsResult> {
     return dataOrThrowErrors(
-        await requestGraphQL<UserEmailsResult, UserEmailsVariables>(
-            gql`
-                fragment UserEmail on UserEmail {
-                    email
-                    isPrimary
-                    verified
-                    verificationPending
-                    viewerCanManuallyVerify
-                }
-                query UserEmails($user: ID!) {
-                    node(id: $user) {
-                        ... on User {
-                            __typename
-                            emails {
-                                ...UserEmail
+        await lastValueFrom(
+            requestGraphQL<UserEmailsResult, UserEmailsVariables>(
+                gql`
+                    fragment UserEmail on UserEmail {
+                        email
+                        isPrimary
+                        verified
+                        verificationPending
+                        viewerCanManuallyVerify
+                    }
+                    query UserEmails($user: ID!) {
+                        node(id: $user) {
+                            ... on User {
+                                __typename
+                                emails {
+                                    ...UserEmail
+                                }
                             }
                         }
                     }
-                }
-            `,
-            { user: userID }
-        ).toPromise()
+                `,
+                { user: userID }
+            )
+        )
     )
 }

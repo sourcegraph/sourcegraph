@@ -32,7 +32,7 @@ import {
     useDebounce,
 } from '@sourcegraph/wildcard'
 
-import { type RepositoriesSuggestionsResult, type RepositoriesSuggestionsVariables } from '../graphql-operations'
+import type { RepositoriesSuggestionsResult, RepositoriesSuggestionsVariables } from '../graphql-operations'
 
 import { CodeHostType } from './constants'
 import { getInitialSearchTerm, stringToCodeHostType } from './utils'

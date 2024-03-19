@@ -24,7 +24,7 @@ import (
 
 func testStoreBatchSpecExecutionCacheEntries(t *testing.T, ctx context.Context, s *Store, clock bt.Clock) {
 	entries := make([]*btypes.BatchSpecExecutionCacheEntry, 0, 3)
-	for i := 0; i < cap(entries); i++ {
+	for i := range cap(entries) {
 		job := &btypes.BatchSpecExecutionCacheEntry{
 			UserID: 900 + int32(i),
 			Key:    fmt.Sprintf("check-out-this-cache-key-%d", i),

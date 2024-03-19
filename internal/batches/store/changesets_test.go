@@ -1706,7 +1706,7 @@ func testStoreListChangesetSyncData(t *testing.T, ctx context.Context, s *Store,
 	changesets := make(btypes.Changesets, 0, 3)
 	events := make([]*btypes.ChangesetEvent, 0)
 
-	for i := 0; i < cap(changesets); i++ {
+	for i := range cap(changesets) {
 		ch := &btypes.Changeset{
 			RepoID:              githubRepo.ID,
 			CreatedAt:           clock.Now(),
@@ -2433,7 +2433,7 @@ func TestCancelQueuedBatchChangeChangesets(t *testing.T) {
 
 	// We start this goroutine to simulate the processing of these
 	// changesets to stop after 50ms
-	go func(t *testing.T) {
+	go func() {
 		time.Sleep(50 * time.Millisecond)
 
 		// c5 ends up errored, which would be retried, so it needs to be
@@ -2450,7 +2450,7 @@ func TestCancelQueuedBatchChangeChangesets(t *testing.T) {
 		if err := s.UpdateChangeset(ctx, c6); err != nil {
 			t.Errorf("update changeset failed: %s", err)
 		}
-	}(t)
+	}()
 
 	if err := s.CancelQueuedBatchChangeChangesets(ctx, batchChange.ID); err != nil {
 		t.Fatal(err)
@@ -2618,7 +2618,7 @@ func TestEnqueueChangesetsToClose(t *testing.T) {
 		// sure that we finish it, otherwise the loop in
 		// EnqueueChangesetsToClose will take 2min and then fail.
 		if c.ReconcilerState == btypes.ReconcilerStateProcessing {
-			go func(t *testing.T) {
+			go func() {
 				time.Sleep(50 * time.Millisecond)
 
 				c.ReconcilerState = btypes.ReconcilerStateCompleted
@@ -2626,7 +2626,7 @@ func TestEnqueueChangesetsToClose(t *testing.T) {
 				if err := s.UpdateChangeset(ctx, c); err != nil {
 					t.Errorf("update changeset failed: %s", err)
 				}
-			}(t)
+			}()
 		}
 	}
 

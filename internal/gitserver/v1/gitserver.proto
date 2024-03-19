@@ -648,8 +648,12 @@ message RepoUpdateRequest {
   // repo is the name of the repo to update.
   string repo = 1;
   // since is the debounce interval for queries, used only with
-  // request-repo-update
-  google.protobuf.Duration since = 2;
+  // request-repo-update.
+  // This field has now been deprecated and is no longer respected.
+  // The caller should make sure to not call this endpoint more often
+  // than needed, and gitserver may make it's own internal decisions
+  // on when to fast-pass a request.
+  google.protobuf.Duration since = 2 [deprecated = true];
 }
 
 // RepoUpdateResponse is the response from the RepoUpdate RPC.

@@ -1,4 +1,3 @@
-load("@rules_multirun//:defs.bzl", "multirun")
 load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
 
 exports_files(srcs = [
@@ -30,12 +29,13 @@ write_source_files(
         "//migrations/codeintel:write_squashed",
         "//migrations/frontend:write_squashed",
         "//schema:write_generated_schema",
+        ":go_mockgen",
     ],
 )
 
-multirun(
+write_source_files(
     name = "go_mockgen",
-    commands = [
+    additional_update_targets = [
         "//cmd/cody-gateway/internal/auth:generate_mocks",
         "//cmd/cody-gateway/internal/dotcom:generate_mocks",
         "//cmd/executor/internal/worker/cmdlogger:generate_mocks",
@@ -111,6 +111,5 @@ multirun(
         "//internal/workerutil/dbworker/store/mocks:generate_mocks",
         "//internal/workerutil:generate_mocks",
         "//lib/background:generate_mocks",
-    ],  # TODO: this list doesn't get smaller, why
-    jobs = 1,
+    ],
 )

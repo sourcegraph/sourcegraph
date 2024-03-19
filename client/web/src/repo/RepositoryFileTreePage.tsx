@@ -24,7 +24,7 @@ import styles from './RepositoryFileTreePage.module.scss'
 
 export interface RepositoryFileTreePageProps extends RepoRevisionContainerContext, NotebookProps, OwnConfigProps {
     objectType: 'blob' | 'tree' | undefined
-    globalContext: Pick<SourcegraphContext, 'authProviders'>
+    globalContext: Pick<SourcegraphContext, 'externalURL'>
 }
 
 /** Dev feature flag to make benchmarking the file tree in isolation easier. */

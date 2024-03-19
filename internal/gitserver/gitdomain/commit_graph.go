@@ -17,13 +17,13 @@ func (c *CommitGraph) Order() []string            { return c.order }
 // before children. If a commit is listed but has no ancestors then its parent
 // slice is empty, but is still present in the map and the ordering. If the
 // ordering is to be correct, the git log output must be formatted with
-// --topo-order.
+// `git log --pretty="%H %P" --topo-order`.
 func ParseCommitGraph(lines []string) *CommitGraph {
 	// Process lines backwards so that we see all parents before children. We get a
 	// topological ordering by simply scraping the keys off in this order.
 
 	n := len(lines) - 1
-	for i := 0; i < len(lines)/2; i++ {
+	for i := range len(lines) / 2 {
 		lines[i], lines[n-i] = lines[n-i], lines[i]
 	}
 

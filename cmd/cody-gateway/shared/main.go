@@ -180,6 +180,7 @@ func Main(ctx context.Context, obctx *observation.Context, ready service.ReadyFu
 			EmbeddingsAllowedModels:     cfg.AllowedEmbeddingsModels,
 			AutoFlushStreamingResponses: cfg.AutoFlushStreamingResponses,
 			EnableAttributionSearch:     cfg.Attribution.Enabled,
+			Sourcegraph:                 cfg.Sourcegraph,
 		},
 		dotcomClient)
 	if err != nil {

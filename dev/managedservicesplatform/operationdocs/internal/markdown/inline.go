@@ -89,7 +89,7 @@ func renderList(lines any, depth int) string {
 		buffer.WriteString(indent(depth))
 		buffer.WriteString(fmt.Sprintf("- %v\n", v))
 	case reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
+		for i := range v.Len() {
 			buffer.WriteString(renderList(v.Index(i).Interface(), depth+1))
 		}
 	default:

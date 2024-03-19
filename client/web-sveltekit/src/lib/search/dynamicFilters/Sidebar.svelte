@@ -1,151 +1,213 @@
-<script lang="ts">
-    import { mdiBookOpenVariant } from '@mdi/js'
+<script context="module" lang="ts">
+    function queryHasTypeFilter(query: string): boolean {
+        const tokens = scanSearchQuery(query)
+        if (tokens.type !== 'success') {
+            return false
+        }
+        const filters = tokens.term.filter((token): token is QueryFilter => token.type === 'filter')
+        return filters.some(filter => filter.field.value === 'type')
+    }
 
-    import Icon from '$lib/Icon.svelte'
-    import CodeHostIcon from '$lib/search/CodeHostIcon.svelte'
-    import Section from '$lib/search/dynamicFilters/Section.svelte'
-    import TypeSection from '$lib/search/dynamicFilters/TypeSection.svelte'
-    import type { QueryStateStore } from '$lib/search/state'
-    import SymbolKind from '$lib/search/SymbolKind.svelte'
-    import { groupFilters } from '$lib/search/utils'
-    import { displayRepoName, type Filter } from '$lib/shared'
+    function inferOperatingSystem(userAgent: string): 'Windows' | 'MacOS' | 'Linux' | undefined {
+        if (userAgent.includes('Win')) {
+            return 'Windows'
+        }
 
-    export let queryFromURL: string
-    export let streamFilters: Filter[]
-    export let queryFilters: string
-    export let queryState: QueryStateStore
-    export let size: number
+        if (userAgent.includes('Mac')) {
+            return 'MacOS'
+        }
 
-    $: width = `max(100px, min(50%, ${size * 100}%))`
-    $: filters = groupFilters(streamFilters)
-    $: hasFilters = filters.lang.length > 0 || filters.repo.length > 0 || filters.file.length > 0
+        if (userAgent.includes('Linux')) {
+            return 'Linux'
+        }
+
+        return undefined
+    }
 </script>
 
-<aside class="sidebar" style:width>
-    <div class="section">
-        <TypeSection {queryFromURL} {queryState} />
+<script lang="ts">
+    import { onMount } from 'svelte'
+
+    import type { Filter as QueryFilter } from '@sourcegraph/shared/src/search/query/token'
+
+    import { goto } from '$app/navigation'
+    import { page } from '$app/stores'
+    import Icon from '$lib/Icon.svelte'
+    import ArrowBendIcon from '$lib/icons/ArrowBend.svelte'
+    import LanguageIcon from '$lib/LanguageIcon.svelte'
+    import CodeHostIcon from '$lib/search/CodeHostIcon.svelte'
+    import SymbolKind from '$lib/search/SymbolKind.svelte'
+    import { displayRepoName, scanSearchQuery, type Filter } from '$lib/shared'
+    import Tooltip from '$lib/Tooltip.svelte'
+    import Button from '$lib/wildcard/Button.svelte'
+
+    import HelpFooter from './HelpFooter.svelte'
+    import {
+        type URLQueryFilter,
+        type SectionItem,
+        staticTypeFilters,
+        typeFilterIcons,
+        groupFilters,
+        moveFiltersToQuery,
+        resetFilters,
+    } from './index'
+    import LoadingSkeleton from './LoadingSkeleton.svelte'
+    import Section from './Section.svelte'
+
+    export let searchQuery: string
+    export let loading: boolean
+    export let streamFilters: Filter[]
+    export let selectedFilters: URLQueryFilter[]
+
+    $: groupedFilters = groupFilters(streamFilters, selectedFilters)
+    $: typeFilters = staticTypeFilters.map((staticTypeFilter): SectionItem => {
+        const selectedOrStreamFilter = groupedFilters.type.find(
+            typeFilter => typeFilter.label === staticTypeFilter.label
+        )
+        return {
+            ...staticTypeFilter,
+            count: selectedOrStreamFilter?.count,
+            exhaustive: selectedOrStreamFilter?.exhaustive || false,
+            selected: selectedOrStreamFilter?.selected || false,
+        }
+    })
+
+    $: resetModifier = inferOperatingSystem(navigator.userAgent) === 'MacOS' ? '⌥' : 'Alt'
+    $: resetURL = resetFilters($page.url).toString()
+    $: enableReset = selectedFilters.length > 0
+    function handleResetKeydown(event: KeyboardEvent) {
+        if (enableReset && event.altKey && event.key === 'Backspace') {
+            goto(resetURL)
+        }
+    }
+    onMount(() => {
+        window.addEventListener('keydown', handleResetKeydown)
+        return () => window.removeEventListener('keydown', handleResetKeydown)
+    })
+</script>
+
+<aside class="sidebar">
+    <div class="scroll-container">
+        <div class="header">
+            <h3>Filter results</h3>
+            {#if enableReset}
+                <a href={resetURL}>
+                    <small>Reset all <kbd>{resetModifier} ⌫</kbd></small>
+                </a>
+            {/if}
+        </div>
+
+        {#if !queryHasTypeFilter(searchQuery)}
+            <Section items={typeFilters} title="By type" showAll>
+                <svelte:fragment slot="label" let:label>
+                    <Icon svgPath={typeFilterIcons[label]} inline aria-hidden="true" />&nbsp;
+                    {label}
+                </svelte:fragment>
+            </Section>
+        {/if}
+
+        <Section items={groupedFilters.repo} title="By repository" filterPlaceholder="Filter repositories">
+            <svelte:fragment slot="label" let:label>
+                <Tooltip tooltip={label} placement="right">
+                    <span>
+                        <CodeHostIcon disableTooltip repository={label} />
+                        <span>{displayRepoName(label)}</span>
+                    </span>
+                </Tooltip>
+            </svelte:fragment>
+        </Section>
+        <Section items={groupedFilters.lang} title="By language" filterPlaceholder="Filter languages">
+            <svelte:fragment slot="label" let:label>
+                <LanguageIcon class="icon" language={label} inline />&nbsp;
+                {label}
+            </svelte:fragment>
+        </Section>
+        <Section items={groupedFilters['symbol type']} title="By symbol type" filterPlaceholder="Filter symbol types">
+            <svelte:fragment slot="label" let:label>
+                <SymbolKind symbolKind={label.toUpperCase()} />
+                {label}
+            </svelte:fragment>
+        </Section>
+        <Section items={groupedFilters.author} title="By author" filterPlaceholder="Filter authors" />
+        <Section items={groupedFilters['commit date']} title="By commit date">
+            <span class="commit-date-label" slot="label" let:label let:value>
+                {label}
+                <small><pre>{value}</pre></small>
+            </span>
+        </Section>
+        <Section items={groupedFilters.file} title="By file" showAll />
+        <Section items={groupedFilters.utility} title="Utility" showAll />
+
+        {#if loading}
+            <LoadingSkeleton />
+        {/if}
+
+        <div class="help-footer">
+            <HelpFooter />
+        </div>
     </div>
-    {#if hasFilters}
-        <div class="section">
-            {#if filters['symbol type'].length > 0}
-                <Section
-                    items={filters['symbol type']}
-                    title="By symbol type"
-                    filterPlaceholder="Filter symbol types"
-                    showFilter
-                    {queryFilters}
-                >
-                    <svelte:fragment slot="label" let:label>
-                        <SymbolKind symbolKind={label.toUpperCase()} />
-                        {label}
-                    </svelte:fragment>
-                </Section>
-            {/if}
-            {#if filters.author.length > 0}
-                <Section
-                    items={filters.author}
-                    title="By author"
-                    filterPlaceholder="Filter authors"
-                    showFilter
-                    {queryFilters}
-                />
-            {/if}
-            {#if filters['commit date'].length > 0}
-                <Section items={filters['commit date']} title="By commit date" {queryFilters}>
-                    <svelte:fragment slot="label" let:label let:value>
-                        <span class="commit-date-label">
-                            {label}
-                            <small><pre>{value}</pre></small>
-                        </span>
-                    </svelte:fragment>
-                </Section>
-            {/if}
-            {#if filters.lang.length > 0}
-                <Section
-                    items={filters.lang}
-                    title="By language"
-                    showFilter
-                    filterPlaceholder="Filter languages"
-                    {queryFilters}
-                />
-            {/if}
-            {#if filters.repo.length > 0}
-                <Section
-                    items={filters.repo}
-                    title="By repository"
-                    showFilter
-                    filterPlaceholder="Filter repositories"
-                    preprocessLabel={displayRepoName}
-                    {queryFilters}
-                >
-                    <svelte:fragment slot="label" let:label>
-                        <CodeHostIcon repository={label} />
-                        {displayRepoName(label)}
-                    </svelte:fragment>
-                </Section>
-            {/if}
-            {#if filters.file.length > 0}
-                <Section items={filters.file} title="By file" {queryFilters} />
-            {/if}
-            {#if filters.utility.length > 0}
-                <Section items={filters.utility} title="Utility" {queryFilters} />
-            {/if}
+    {#if selectedFilters.length > 0}
+        <div class="move-button">
+            <Button variant="secondary" display="block" outline on:click={() => goto(moveFiltersToQuery($page.url))}>
+                <svelte:fragment>
+                    Move filters to query&nbsp;
+                    <ArrowBendIcon aria-hidden class="arrow-icon" />
+                </svelte:fragment>
+            </Button>
         </div>
     {/if}
-    <a class="section help" href="/help/code_search/reference/queries" target="_blank">
-        <span class="icon">
-            <Icon svgPath={mdiBookOpenVariant} inline />
-        </span>
-        <div>
-            <h4>Need more advanced filters?</h4>
-            <span>Explore the query syntax docs</span>
-        </div>
-    </a>
 </aside>
 
 <style lang="scss">
     .sidebar {
-        flex: 0 0 auto;
-        background-color: var(--sidebar-bg);
-        overflow-y: auto;
         display: flex;
         flex-direction: column;
-
-        h4 {
-            font-weight: 600;
-            white-space: nowrap;
-            margin-bottom: 1rem;
-        }
+        height: 100%;
     }
 
-    .section {
-        padding: 1rem 0.5rem 1rem 1rem;
-        border-top: 1px solid var(--border-color);
+    .scroll-container {
+        padding-top: 1rem;
+        height: 100%;
+        background-color: var(--sidebar-bg);
+        overflow-y: auto;
 
-        &:first-child {
-            border-top: none;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+
+        .header {
+            display: flex;
+            padding: 0 1rem;
+            h3 {
+                margin: 0;
+            }
+            a {
+                margin-left: auto;
+                line-height: 1;
+                kbd {
+                    // TODO: use this style globally
+                    font-family: var(--font-family-base);
+                    color: var(--text-muted);
+                    background: var(--color-bg-1);
+                    box-shadow: inset 0 -2px 0 var(--border-color-2);
+                    border: 1px solid var(--border-color-2);
+                }
+            }
         }
 
-        &:last-child {
+        .help-footer {
             margin-top: auto;
         }
     }
 
-    .help {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-
-        text-decoration: none;
-        color: var(--text-muted);
-        font-size: 0.75rem;
-
-        h4 {
-            margin: 0;
-        }
-
-        .icon {
-            flex-shrink: 0;
+    .move-button {
+        margin-top: auto;
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        :global(svg) {
+            transform: rotateX(180deg);
+            fill: none !important;
+            --icon-color: var(--body-color);
         }
     }
 

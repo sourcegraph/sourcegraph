@@ -40,8 +40,8 @@ func TestDBPaginationWithRepoFilter(t *testing.T) {
 	require.NoError(t, err)
 
 	// Enable embeddings, so that resolvers work:
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
+
 	conf.Mock(&conf.Unified{
 		SiteConfiguration: schema.SiteConfiguration{
 			CodyEnabled: pointers.Ptr(true),

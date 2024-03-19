@@ -138,7 +138,7 @@ func (r *yesReader) Read(p []byte) (int, error) {
 	if len(r.Expletive) == 0 {
 		return 0, errors.New("yesReader.Expletive is empty")
 	}
-	for n := 0; n < len(p); n++ {
+	for n := range len(p) {
 		p[n] = r.Expletive[r.offset]
 		r.offset++
 		if r.offset == len(r.Expletive) {

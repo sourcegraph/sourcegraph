@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/hexops/autogold/v2"
-	sglog "github.com/sourcegraph/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +15,7 @@ func TestExperimentalPhraseBoost(t *testing.T) {
 			Init(input, SearchTypeKeyword))
 		require.NoError(t, err)
 
-		plan = MapPlan(plan, ExperimentalPhraseBoost(sglog.NoOp(), input))
+		plan = MapPlan(plan, ExperimentalPhraseBoost)
 
 		return plan.ToQ().String()
 	}

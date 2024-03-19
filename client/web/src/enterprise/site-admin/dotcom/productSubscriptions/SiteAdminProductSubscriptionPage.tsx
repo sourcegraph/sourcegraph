@@ -122,11 +122,11 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
     return (
         <>
             <div className="site-admin-product-subscription-page">
-                <PageTitle title="Product subscription" />
+                <PageTitle title="Enterprise subscription" />
                 <PageHeader
                     headingElement="h2"
                     path={[
-                        { text: 'Product subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
+                        { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
                         { text: productSubscription.name },
                     ]}
                     description={

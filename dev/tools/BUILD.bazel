@@ -67,3 +67,13 @@ sh_binary(
     }),
     visibility = ["//visibility:public"],
 )
+
+sh_binary(
+    name = "gh",
+    srcs = select({
+        "@bazel_tools//src/conditions:darwin_x86_64": ["@gh_darwin-amd64//:gh"],
+        "@bazel_tools//src/conditions:darwin_arm64": ["@gh_darwin-arm64//:gh"],
+        "@bazel_tools//src/conditions:linux_x86_64": ["@gh_linux-amd64//:gh"],
+    }),
+    visibility = ["//visibility:public"],
+)

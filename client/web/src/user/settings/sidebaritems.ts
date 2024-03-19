@@ -15,11 +15,6 @@ export const userSettingsSideBarItems: UserSettingsSidebarItems = [
         exact: true,
     },
     {
-        label: 'Subscriptions',
-        to: '/subscriptions',
-        condition: ({ user }) => SHOW_BUSINESS_FEATURES && user.viewerCanAdminister,
-    },
-    {
         to: '/batch-changes',
         label: 'Batch Changes',
         condition: ({ batchChangesEnabled, user: { viewerCanAdminister }, authenticatedUser }) =>
@@ -45,6 +40,11 @@ export const userSettingsSideBarItems: UserSettingsSidebarItems = [
         label: 'Account security',
         to: '/security',
         exact: true,
+    },
+    {
+        label: 'Enterprise subscriptions',
+        to: '/subscriptions',
+        condition: ({ user }) => SHOW_BUSINESS_FEATURES && user.viewerCanAdminister,
     },
     {
         label: 'Quotas',

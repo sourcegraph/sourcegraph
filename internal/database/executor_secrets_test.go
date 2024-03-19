@@ -432,6 +432,12 @@ func TestExecutorSecrets_GetListCount(t *testing.T) {
 		if err := store.Create(internalCtx, database.ExecutorSecretScopeBatches, secret, secretVal); err != nil {
 			t.Fatal(err)
 		}
+		otherSecret := *secret
+		// We generate a second version of the secret in a separate scope (namespace)
+		// to test that they're properly isolated.
+		if err := store.Create(internalCtx, database.ExecutorSecretScopeCodeIntel, &otherSecret, secretVal); err != nil {
+			t.Fatal(err)
+		}
 		return secret
 	}
 	globalGHToken := createSecret(&database.ExecutorSecret{Key: "GH_TOKEN"})

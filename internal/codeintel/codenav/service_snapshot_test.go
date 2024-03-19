@@ -28,7 +28,7 @@ func TestSnapshotForDocument(t *testing.T) {
 	// Init service
 	svc := newService(&observation.TestContext, mockRepoStore, mockLsifStore, mockUploadSvc, mockGitserverClient)
 
-	mockUploadSvc.GetDumpsByIDsFunc.SetDefaultReturn([]shared.Dump{{}}, nil)
+	mockUploadSvc.GetCompletedUploadsByIDsFunc.SetDefaultReturn([]shared.CompletedUpload{{}}, nil)
 	mockRepoStore.GetFunc.SetDefaultReturn(&types.Repo{}, nil)
 	mockGitserverClient.NewFileReaderFunc.SetDefaultReturn(io.NopCloser(bytes.NewReader([]byte(sampleFile1))), nil)
 	mockLsifStore.SCIPDocumentFunc.SetDefaultReturn(&scip.Document{

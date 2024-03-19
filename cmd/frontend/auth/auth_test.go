@@ -97,7 +97,7 @@ func Test_AddRandomSuffixToMakeUnique(t *testing.T) {
 	rand.Seed(0)
 	for _, tc := range testCases {
 		// Run a bunch of times to see we're getting consistent results
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			out, err := userpasswd.AddRandomSuffix(tc.username)
 			assert.NoError(t, err, tc.username)
 			assert.Len(t, out, tc.wantLength)

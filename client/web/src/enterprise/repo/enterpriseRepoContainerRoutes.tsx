@@ -57,6 +57,8 @@ export const enterpriseRepoContainerRoutes: readonly RepoContainerRoute[] = [
     {
         path: '/-/own/edit',
         condition: ({ isSourcegraphDotCom }) => !isSourcegraphDotCom,
-        render: context => <RepositoryOwnEditPage {...context} />,
+        render: context => (
+            <RepositoryOwnEditPage {...context} telemetryRecorder={context.platformContext.telemetryRecorder} />
+        ),
     },
 ]

@@ -3,7 +3,7 @@ import { Decoration, EditorView } from '@codemirror/view'
 
 import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import { FilterType } from '@sourcegraph/shared/src/search/query/filters'
-import { Token } from '@sourcegraph/shared/src/search/query/token'
+import type { Token } from '@sourcegraph/shared/src/search/query/token'
 import { isFilterOfType } from '@sourcegraph/shared/src/search/query/utils'
 
 import { queryTokens } from '../../codemirror/parsedQuery'

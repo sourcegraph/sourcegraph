@@ -62,11 +62,11 @@ type operations struct {
 	deleteUploads                        *observation.Operation
 
 	// Dumps
-	findClosestDumps                   *observation.Operation
-	findClosestDumpsFromGraphFragment  *observation.Operation
-	getDumpsWithDefinitionsForMonikers *observation.Operation
-	getDumpsByIDs                      *observation.Operation
-	deleteOverlappingDumps             *observation.Operation
+	findClosestCompletedUploads                   *observation.Operation
+	findClosestCompletedUploadsFromGraphFragment  *observation.Operation
+	getCompletedUploadsWithDefinitionsForMonikers *observation.Operation
+	getCompletedUploadsByIDs                      *observation.Operation
+	deleteOverlappingCompletedUploads             *observation.Operation
 
 	// Packages
 	updatePackages *observation.Operation
@@ -169,11 +169,11 @@ func newOperations(observationCtx *observation.Context) *operations {
 		persistUploadsVisibleAtTip: op("persistUploadsVisibleAtTip"),
 
 		// Dumps
-		findClosestDumps:                   op("FindClosestDumps"),
-		findClosestDumpsFromGraphFragment:  op("FindClosestDumpsFromGraphFragment"),
-		getDumpsWithDefinitionsForMonikers: op("GetUploadsWithDefinitionsForMonikers"),
-		getDumpsByIDs:                      op("GetDumpsByIDs"),
-		deleteOverlappingDumps:             op("DeleteOverlappingDumps"),
+		findClosestCompletedUploads:                   op("FindClosestCompletedUploads"),
+		findClosestCompletedUploadsFromGraphFragment:  op("FindClosestCompletedUploadsFromGraphFragment"),
+		getCompletedUploadsWithDefinitionsForMonikers: op("GetUploadsWithDefinitionsForMonikers"),
+		getCompletedUploadsByIDs:                      op("GetCompletedUploadsByIDs"),
+		deleteOverlappingCompletedUploads:             op("DeleteOverlappingCompletedUploads"),
 
 		// Packages
 		updatePackages: op("UpdatePackages"),

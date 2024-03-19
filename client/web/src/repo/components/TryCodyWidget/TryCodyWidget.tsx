@@ -4,7 +4,7 @@ import { mdiClose } from '@mdi/js'
 import classNames from 'classnames'
 
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Button, H2, H4, Icon, Link, Text } from '@sourcegraph/wildcard'
@@ -28,7 +28,7 @@ interface WidgetContentProps extends TelemetryProps, TelemetryV2Props {
 }
 
 interface NoAuhWidgetContentProps extends WidgetContentProps {
-    context: Pick<SourcegraphContext, 'authProviders'>
+    context: Pick<SourcegraphContext, 'externalURL'>
 }
 
 function useTryCodyWidget(telemetryService: TelemetryProps['telemetryService']): {
@@ -174,7 +174,7 @@ interface TryCodyWidgetProps extends TelemetryProps, TelemetryV2Props {
     className?: string
     type: 'blob' | 'repo'
     authenticatedUser: AuthenticatedUser | null
-    context: Pick<SourcegraphContext, 'authProviders'>
+    context: Pick<SourcegraphContext, 'externalURL'>
     isSourcegraphDotCom: boolean
 }
 

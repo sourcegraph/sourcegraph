@@ -1,6 +1,7 @@
 import React, { type FunctionComponent, useMemo, useState } from 'react'
 
 import classNames from 'classnames'
+import { lastValueFrom } from 'rxjs'
 
 import { asError, isErrorLike, type ErrorLike } from '@sourcegraph/common'
 import { gql, dataOrThrowErrors } from '@sourcegraph/http-client'
@@ -55,16 +56,18 @@ export const AddUserEmailForm: FunctionComponent<React.PropsWithChildren<Props>>
 
             try {
                 dataOrThrowErrors(
-                    await requestGraphQL<AddUserEmailResult, AddUserEmailVariables>(
-                        gql`
-                            mutation AddUserEmail($user: ID!, $email: String!) {
-                                addUserEmail(user: $user, email: $email) {
-                                    alwaysNil
+                    await lastValueFrom(
+                        requestGraphQL<AddUserEmailResult, AddUserEmailVariables>(
+                            gql`
+                                mutation AddUserEmail($user: ID!, $email: String!) {
+                                    addUserEmail(user: $user, email: $email) {
+                                        alwaysNil
+                                    }
                                 }
-                            }
-                        `,
-                        { user: user.id, email: emailState.value }
-                    ).toPromise()
+                            `,
+                            { user: user.id, email: emailState.value }
+                        )
+                    )
                 )
 
                 eventLogger.log('NewUserEmailAddressAdded')

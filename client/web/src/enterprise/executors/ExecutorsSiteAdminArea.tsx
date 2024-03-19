@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { Route, Routes } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
 import { NotFoundPage } from '../../components/HeroPage'

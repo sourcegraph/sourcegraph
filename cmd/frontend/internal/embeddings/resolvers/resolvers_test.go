@@ -32,8 +32,8 @@ import (
 
 func TestEmbeddingSearchResolver(t *testing.T) {
 	logger := logtest.Scoped(t)
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
+
 	oldMock := licensing.MockCheckFeature
 	licensing.MockCheckFeature = func(feature licensing.Feature) error {
 		return nil

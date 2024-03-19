@@ -31,12 +31,18 @@ jobs:
           curl -L https://sourcegraph.com/.api/src-cli/src_linux_amd64 -o /usr/local/bin/src
           chmod +x /usr/local/bin/src
 
-      # Run scip-go
+      - name: Install ASDF
+        uses: asdf-vm/actions/setup@v3
+
+      - name: Install matching Go toolchain
+        run: |
+          asdf plugin add golang
+          asdf install golang
+
       - name: Run scip-go
         working-directory: ${{ matrix.root }}
         run: scip-go --no-animation
 
-      # Upload scip-go data to Dotcom, S2, Dogfood, and Demo instances
       - name: Upload scip-go dump to Dotcom
         working-directory: ${{ matrix.root }}
         run: src code-intel upload -github-token='${{ secrets.GITHUB_TOKEN }}' -no-progress -repo=github.com/sourcegraph/sourcegraph

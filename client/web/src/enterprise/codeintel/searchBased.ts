@@ -62,7 +62,7 @@ export function referencesQuery({
 
 function languageFilter(languages: string[], path: string): string[] {
     if (languages.length > 0) {
-        return ['(', languages.map(language => `lang:${language}`).join(' OR '), ')']
+        return ['(', languages.map(language => `lang:"${language}"`).join(' OR '), ')']
     }
     const extension = extname(path).slice(1)
     if (extension === '') {

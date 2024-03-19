@@ -32,8 +32,9 @@ func TestComputeRunType(t *testing.T) {
 	}, {
 		name: "tagged release",
 		args: args{
-			branch: "1.3",
-			tag:    "v1.2.3",
+			// TODO(@jh) RFC795 check about this?
+			// branch: "1.3",
+			tag: "v1.2.3",
 		},
 		want: TaggedRelease,
 	}, {
@@ -52,6 +53,22 @@ func TestComputeRunType(t *testing.T) {
 		},
 		want: BextNightly,
 	}, {
+		name: "internal release",
+		args: args{
+			env: map[string]string{
+				"RELEASE_INTERNAL": "true",
+			},
+		},
+		want: InternalRelease,
+	}, {
+		name: "public release",
+		args: args{
+			env: map[string]string{
+				"RELEASE_PUBLIC": "true",
+			},
+		},
+		want: PromoteRelease,
+	}, {
 		name: "wolfi base image rebuild",
 		args: args{
 			branch: "main",
@@ -60,28 +77,8 @@ func TestComputeRunType(t *testing.T) {
 			},
 		},
 		want: WolfiBaseRebuild,
-	}, {
-		name: "app release",
-		args: args{
-			branch: "app/release",
-		},
-		want: AppRelease,
-	}, {
-		name: "app release insiders",
-		args: args{
-			branch: "app/insiders",
-		},
-		want: AppInsiders,
-	}, {
-		name: "release nightly",
-		args: args{
-			branch: "main",
-			env: map[string]string{
-				"RELEASE_NIGHTLY": "true",
-			},
-		},
-		want: ReleaseNightly,
-	}}
+	},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Compute(tt.args.tag, tt.args.branch, tt.args.env)

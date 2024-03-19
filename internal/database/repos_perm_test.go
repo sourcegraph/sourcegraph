@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcegraph/log/logtest"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
@@ -58,12 +57,15 @@ func (p *fakeProvider) FetchRepoPerms(context.Context, *extsvc.Repository, authz
 }
 
 func mockExplicitPermsConfig(enabled bool) func() {
-	before := globals.PermissionsUserMapping()
-	globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: enabled})
-
-	return func() {
-		globals.SetPermissionsUserMapping(before)
-	}
+	conf.Mock(&conf.Unified{
+		SiteConfiguration: schema.SiteConfiguration{
+			PermissionsUserMapping: &schema.PermissionsUserMapping{
+				Enabled: enabled,
+				BindID:  "email",
+			},
+		},
+	})
+	return func() { conf.Mock(nil) }
 }
 
 // 🚨 SECURITY: Tests are necessary to ensure security.
@@ -748,9 +750,15 @@ VALUES
 		t.Fatal(err)
 	}
 
-	before := globals.PermissionsUserMapping()
-	globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: true})
-	defer globals.SetPermissionsUserMapping(before)
+	conf.Mock(&conf.Unified{
+		SiteConfiguration: schema.SiteConfiguration{
+			PermissionsUserMapping: &schema.PermissionsUserMapping{
+				Enabled: true,
+				BindID:  "email",
+			},
+		},
+	})
+	t.Cleanup(func() { conf.Mock(nil) })
 
 	// Alice should see "alice_private_repo" and public repos, but not "bob_private_repo"
 	aliceCtx := actor.WithActor(ctx, &actor.Actor{UID: alice.ID})
@@ -884,7 +892,7 @@ func benchmarkAuthzQuery(b *testing.B, numRepos, numUsers, reposPerUser int) {
 	for i := 1; i <= numUsers; i++ {
 		objectIDs := make(map[int]struct{})
 		// Assign a random set of repos to the user
-		for j := 0; j < reposPerUser; j++ {
+		for range reposPerUser {
 			repoID := rand.Intn(numRepos) + 1
 			objectIDs[repoID] = struct{}{}
 		}
@@ -919,7 +927,7 @@ func benchmarkAuthzQuery(b *testing.B, numRepos, numUsers, reposPerUser int) {
 	b.ResetTimer()
 
 	b.Run("list repos", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			fetchMinRepos()
 		}
 	})

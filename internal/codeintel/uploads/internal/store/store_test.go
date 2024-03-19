@@ -63,7 +63,7 @@ func insertNearestUploads(t testing.TB, db database.DB, repositoryID int, upload
 // insertPackages populates the lsif_packages table with the given packages.
 func insertPackages(t testing.TB, store Store, packages []shared.Package) {
 	for _, pkg := range packages {
-		if err := store.UpdatePackages(context.Background(), pkg.DumpID, []precise.Package{
+		if err := store.UpdatePackages(context.Background(), pkg.UploadID, []precise.Package{
 			{
 				Scheme:  pkg.Scheme,
 				Manager: pkg.Manager,
@@ -79,7 +79,7 @@ func insertPackages(t testing.TB, store Store, packages []shared.Package) {
 // insertPackageReferences populates the lsif_references table with the given package references.
 func insertPackageReferences(t testing.TB, store Store, packageReferences []shared.PackageReference) {
 	for _, packageReference := range packageReferences {
-		if err := store.UpdatePackageReferences(context.Background(), packageReference.DumpID, []precise.PackageReference{
+		if err := store.UpdatePackageReferences(context.Background(), packageReference.UploadID, []precise.PackageReference{
 			{
 				Package: precise.Package{
 					Scheme:  packageReference.Scheme,

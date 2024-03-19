@@ -3,7 +3,7 @@ import React, { useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { of } from 'rxjs'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, Link, H2, H3 } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../auth'

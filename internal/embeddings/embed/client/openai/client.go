@@ -101,7 +101,7 @@ func (c *openaiEmbeddingsClient) getEmbeddings(ctx context.Context, texts []stri
 }
 
 func (c *openaiEmbeddingsClient) requestSingleEmbeddingWithRetryOnNull(ctx context.Context, input string, retries int) (*openaiEmbeddingAPIResponse, error) {
-	for i := 0; i < retries; i++ {
+	for range retries {
 		response, err := c.do(ctx, openaiEmbeddingAPIRequest{Model: c.model, Input: []string{input}})
 		if err != nil {
 			return nil, err

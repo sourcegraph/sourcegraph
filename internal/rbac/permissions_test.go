@@ -5,9 +5,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	rtypes "github.com/sourcegraph/sourcegraph/internal/rbac/types"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 )
@@ -22,11 +24,15 @@ func TestComparePermissions(t *testing.T) {
 	}
 
 	t.Run("no changes to permissions", func(t *testing.T) {
+		dotcom.MockSourcegraphDotComMode(t, false)
+
 		schemaPerms := Schema{
 			Namespaces: []Namespace{
 				{Name: "TEST-NAMESPACE", Actions: []rtypes.NamespaceAction{"READ", "WRITE"}},
 				{Name: "TEST-NAMESPACE-2", Actions: []rtypes.NamespaceAction{"READ", "WRITE"}},
 				{Name: "TEST-NAMESPACE-3", Actions: []rtypes.NamespaceAction{"READ"}},
+				{Name: "DOTCOM-NAMESPACE", Actions: []rtypes.NamespaceAction{"READ"},
+					DotCom: true}, // not included by default
 			},
 		}
 
@@ -119,6 +125,31 @@ func TestComparePermissions(t *testing.T) {
 		require.Len(t, deleted, 2)
 		less := func(a, b database.DeletePermissionOpts) bool { return a.ID < b.ID }
 		if diff := cmp.Diff(wantDeleted, deleted, cmpopts.SortSlices(less)); diff != "" {
+			t.Error(diff)
+		}
+	})
+
+	t.Run("dotcom permission added", func(t *testing.T) {
+		dotcom.MockSourcegraphDotComMode(t, true)
+
+		schemaPerms := Schema{
+			Namespaces: []Namespace{
+				{Name: "TEST-NAMESPACE", Actions: []rtypes.NamespaceAction{"READ", "WRITE"}},
+				{Name: "TEST-NAMESPACE-2", Actions: []rtypes.NamespaceAction{"READ", "WRITE"}},
+				{Name: "TEST-NAMESPACE-3", Actions: []rtypes.NamespaceAction{"READ"}},
+				{Name: "DOTCOM-NAMESPACE", Actions: []rtypes.NamespaceAction{"READ"},
+					DotCom: true}, // now should be included
+			},
+		}
+
+		added, deleted := ComparePermissions(dbPerms, schemaPerms)
+
+		assert.Len(t, added, 1)
+		assert.Len(t, deleted, 0)
+
+		if diff := cmp.Diff([]database.CreatePermissionOpts{
+			{Namespace: "DOTCOM-NAMESPACE", Action: "READ"},
+		}, added); diff != "" {
 			t.Error(diff)
 		}
 	})

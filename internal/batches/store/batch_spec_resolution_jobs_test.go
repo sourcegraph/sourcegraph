@@ -21,7 +21,7 @@ import (
 
 func testStoreBatchSpecResolutionJobs(t *testing.T, ctx context.Context, s *Store, clock bt.Clock) {
 	jobs := make([]*btypes.BatchSpecResolutionJob, 0, 2)
-	for i := 0; i < cap(jobs); i++ {
+	for i := range cap(jobs) {
 		job := &btypes.BatchSpecResolutionJob{
 			BatchSpecID: int64(i + 567),
 			InitiatorID: int32(i + 123),

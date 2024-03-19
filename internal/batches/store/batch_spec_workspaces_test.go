@@ -34,7 +34,7 @@ func testStoreBatchSpecWorkspaces(t *testing.T, ctx context.Context, s *Store, c
 	bt.MockRepoPermissions(t, s.DatabaseDB(), user.ID, repos[0].ID, repos[1].ID, repos[3].ID)
 
 	workspaces := make([]*btypes.BatchSpecWorkspace, 0, 4)
-	for i := 0; i < cap(workspaces); i++ {
+	for i := range cap(workspaces) {
 		job := &btypes.BatchSpecWorkspace{
 			BatchSpecID:      int64(i + 567),
 			ChangesetSpecIDs: []int64{int64(i + 456), int64(i + 678)},

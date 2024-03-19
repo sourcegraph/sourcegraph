@@ -274,7 +274,7 @@ Sourcegraph Cloud instances are single-tenant, limiting exposure to outages and 
 
 Sourcegraph Cloud utilizes a single-tenant architecture. Each customer's data is isolated and stored in a dedicated GCP project. Data is [encrypted in transit](https://cloud.google.com/docs/security/encryption-in-transit) and [at rest](https://cloud.google.com/docs/security/encryption/default-encryption) and is backed up daily. The data encryption keys are unique to each customer and are fully managed by GCP. Such data includes but is not limited to, customer source code, repository metadata, code host connection configuration, and user profile. Sourcegraph Cloud also has [4 supported regions](https://docs.sourcegraph.com/cloud#multiple-region-availability) on GCP to meet data sovereignty requirements.
 
-Sourcegraph continuously monitors Cloud instances for security vulnerability using manual reviews and automated tools. Third-party auditors regularly perform testing to ensure maximum protection against vulnerabilities and are automatically upgraded to fix any vulnerability in third-party dependencies. In addition, GCP’s managed offering regularly patches any vulnerability in the underlying infrastructure. Any infrastructure changes must pass security checks, which are tested against industry-standard controls. 
+Sourcegraph continuously monitors Cloud instances for security vulnerability using manual reviews and automated tools. Third-party auditors regularly perform testing to ensure maximum protection against vulnerabilities and are automatically upgraded to fix any vulnerability in third-party dependencies. In addition, GCP’s managed offering regularly patches any vulnerability in the underlying infrastructure. Any infrastructure changes must pass security checks, which are tested against industry-standard controls.
 
 Access to Cloud instances are not permitted by default to all Sourcegraph teammates and requires an audit-logged approval to escalate permissions.
 
@@ -306,6 +306,22 @@ Sourcegraph Cloud instances have intrusion detection capabilities through [Falco
 ### What are uptime guarantees?
 
 Sourcegraph Cloud offers a 99.5% uptime guarantee. Learn more from our [SLA](../sla/index.md#sourcegraph-cloud-sla-managed-instance).
+
+### What is the latency of Sourcegraph Cloud?
+
+Sourcegraph measures latency internally for each service, but because of the variability in response times incurred by a search product, these metrics are not meaningful when aggregated into a single "network latency" figure. Because Sourcegraph’s services operate transactionally across several platforms, latency has proven to be too broad a number that averages out many disconnected performance factors to be useful or meaningful for our customers.
+
+The below are for example purposes only:
+
+In the case of things like Code Search, latency is directly correlated with user input / shape of the query, ex. on our public [sourcegraph.com](https://sourcegraph.com/search) instance:
+
+- searching for “squirrel” in the [sourcegraph/sourcegraph](https://sourcegraph.com/github.com/sourcegraph/sourcegraph) repo takes 30ms and returns 163 results
+- searching for “squirrel” in all OSS repos, but only requesting 1000 matches takes 540ms
+- searching for all matches of “squirrel” in all OSS repos returns 1.7million results in 30000ms
+- In the case of other features, latency of Sourcegraph directly depends on latency / uptime / rate-limits of customer managed systems, ex. for:
+- repo syncing (depends on code-host system)
+- user account syncing (depends on Identity Provider)
+- permission syncing (depends on Identity Provider / Code Host / customer calling our Explicit Permissions API)
 
 ### How to connect Sourcegraph Cloud instances to on-prem resources?
 

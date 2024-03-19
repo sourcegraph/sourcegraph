@@ -2,6 +2,7 @@ import React, { useContext, useMemo } from 'react'
 
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
+import { lastValueFrom } from 'rxjs'
 
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { PageHeader, Container, Button, LoadingSpinner, useObservable, Link, Tooltip } from '@sourcegraph/wildcard'
@@ -40,7 +41,7 @@ export const InsightsDashboardCreationPage: React.FunctionComponent<
             throw new Error('You have to specify a dashboard visibility')
         }
 
-        const createdDashboard = await createDashboard({ name, owners: [owner] }).toPromise()
+        const createdDashboard = await lastValueFrom(createDashboard({ name, owners: [owner] }))
 
         telemetryService.log('CodeInsightsDashboardCreationPageSubmitClick')
 

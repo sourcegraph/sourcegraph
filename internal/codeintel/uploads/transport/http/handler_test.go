@@ -91,7 +91,7 @@ func TestHandleEnqueueAuth(t *testing.T) {
 
 	for _, user := range users {
 		var expectedContents []byte
-		for i := 0; i < 20000; i++ {
+		for i := range 20000 {
 			expectedContents = append(expectedContents, byte(i))
 		}
 

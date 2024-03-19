@@ -1,0 +1,19 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "anthropicmessages",
+    srcs = ["decoder.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/completions/client/anthropicmessages",
+    visibility = ["//:__subpackages__"],
+    deps = ["//lib/errors"],
+)
+
+go_test(
+    name = "anthropicmessages_test",
+    timeout = "short",
+    srcs = ["decoder_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":anthropicmessages"],
+    deps = ["@com_github_stretchr_testify//require"],
+)

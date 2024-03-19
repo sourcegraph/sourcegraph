@@ -1,8 +1,10 @@
 /**
  * This provides CodeMirror extension for highlighting a static set of ranges.
  */
-import { Extension, EditorState, StateField, Facet } from '@codemirror/state'
-import { Decoration, EditorView, showPanel, Panel, ViewUpdate } from '@codemirror/view'
+
+import type { ApolloClient } from '@apollo/client'
+import { type Extension, type EditorState, StateField, Facet } from '@codemirror/state'
+import { Decoration, EditorView, showPanel, type Panel, type ViewUpdate } from '@codemirror/view'
 import { mdiChevronLeft, mdiChevronRight } from '@mdi/js'
 import classNames from 'classnames'
 import { sortedIndexBy } from 'lodash'
@@ -34,7 +36,11 @@ export interface Location {
  * staticHighlights is an extension that highlights a static set of ranges
  * and opens a panel that allows navigation between these highlights.
  */
-export function staticHighlights(navigate: NavigateFunction, ranges: Range[]): Extension {
+export function staticHighlights(
+    navigate: NavigateFunction,
+    graphQLClient: ApolloClient<any>,
+    ranges: Range[]
+): Extension {
     if (ranges.length === 0) {
         return []
     }
@@ -50,7 +56,7 @@ export function staticHighlights(navigate: NavigateFunction, ranges: Range[]): E
                 }))
                 return codeMirrorRanges.sort((a, b) => a.from - b.from)
             }),
-            showPanel.of(view => new StaticHighlightsPanel(view, navigate)),
+            showPanel.of(view => new StaticHighlightsPanel(view, navigate, graphQLClient)),
             scrollToFirstRange(),
         ],
     })
@@ -143,7 +149,11 @@ class StaticHighlightsPanel implements Panel {
 
     private root: Root | null = null
 
-    constructor(private view: EditorView, private navigate: NavigateFunction) {
+    constructor(
+        private view: EditorView,
+        private navigate: NavigateFunction,
+        private graphQLClient: ApolloClient<any>
+    ) {
         this.dom = createElement('div', {
             className: classNames('cm-sg-search-container', styles.root),
             id: STATIC_HIGHLIGHTS_CONTAINER_ID,
@@ -209,7 +219,7 @@ class StaticHighlightsPanel implements Panel {
         const selectedIdx = ranges.findIndex(range => range.selected)
 
         this.root.render(
-            <CodeMirrorContainer navigate={this.navigate}>
+            <CodeMirrorContainer navigate={this.navigate} graphQLClient={this.graphQLClient}>
                 {totalMatches > 1 && (
                     <div>
                         <Button

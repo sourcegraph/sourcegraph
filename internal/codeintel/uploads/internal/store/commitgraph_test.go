@@ -114,7 +114,7 @@ func TestCalculateVisibleUploadsResetsDirtyFlagTransactionTimestamp(t *testing.T
 		makeCommit(3): {{IsDefaultBranch: true}},
 	}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		// Set dirty token to 3
 		if err := store.SetRepositoryAsDirty(context.Background(), 50); err != nil {
 			t.Fatalf("unexpected error marking repository as dirty: %s", err)
@@ -496,7 +496,7 @@ func TestUpdateUploadsVisibleToCommitsOverlappingRoots(t *testing.T) {
 	//          |       |
 	//          +-- 4 --+
 	//
-	// With the following LSIF dumps:
+	// With the following LSIF uploads:
 	//
 	// | UploadID | Commit | Root    | Indexer |
 	// | -------- + ------ + ------- + ------- |
@@ -638,7 +638,7 @@ func TestUpdateUploadsVisibleToCommitsResetsDirtyFlag(t *testing.T) {
 		makeCommit(3): {{IsDefaultBranch: true}},
 	}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		// Set dirty token to 3
 		if err := store.SetRepositoryAsDirty(context.Background(), 50); err != nil {
 			t.Fatalf("unexpected error marking repository as dirty: %s", err)
@@ -683,7 +683,7 @@ func TestUpdateUploadsVisibleToCommitsResetsDirtyFlag(t *testing.T) {
 	}
 }
 
-func TestFindClosestDumps(t *testing.T) {
+func TestFindClosestCompletedUploads(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -737,7 +737,7 @@ func TestFindClosestDumps(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(1), file: "file.ts", rootMustEnclosePath: true, graph: graph, anyOfIDs: []int{1}},
 		{commit: makeCommit(2), file: "file.ts", rootMustEnclosePath: true, graph: graph, anyOfIDs: []int{1}},
 		{commit: makeCommit(3), file: "file.ts", rootMustEnclosePath: true, graph: graph, anyOfIDs: []int{2}},
@@ -749,7 +749,7 @@ func TestFindClosestDumps(t *testing.T) {
 	})
 }
 
-func TestFindClosestDumpsAlternateCommitGraph(t *testing.T) {
+func TestFindClosestCompletedUploadsAlternateCommitGraph(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -798,7 +798,7 @@ func TestFindClosestDumpsAlternateCommitGraph(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(2), graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(3), graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(4), graph: graph},
@@ -809,7 +809,7 @@ func TestFindClosestDumpsAlternateCommitGraph(t *testing.T) {
 	})
 }
 
-func TestFindClosestDumpsAlternateCommitGraphWithOverwrittenVisibleUploads(t *testing.T) {
+func TestFindClosestCompletedUploadsAlternateCommitGraphWithOverwrittenVisibleUploads(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -854,7 +854,7 @@ func TestFindClosestDumpsAlternateCommitGraphWithOverwrittenVisibleUploads(t *te
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(2), graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(3), graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(4), graph: graph, allOfIDs: []int{1}},
@@ -862,7 +862,7 @@ func TestFindClosestDumpsAlternateCommitGraphWithOverwrittenVisibleUploads(t *te
 	})
 }
 
-func TestFindClosestDumpsDistinctRoots(t *testing.T) {
+func TestFindClosestCompletedUploadsDistinctRoots(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -903,7 +903,7 @@ func TestFindClosestDumpsDistinctRoots(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(1), file: "blah", rootMustEnclosePath: true, graph: graph},
 		{commit: makeCommit(2), file: "root1/file.ts", rootMustEnclosePath: true, graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(1), file: "root2/file.ts", rootMustEnclosePath: true, graph: graph, allOfIDs: []int{2}},
@@ -912,7 +912,7 @@ func TestFindClosestDumpsDistinctRoots(t *testing.T) {
 	})
 }
 
-func TestFindClosestDumpsOverlappingRoots(t *testing.T) {
+func TestFindClosestCompletedUploadsOverlappingRoots(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -923,7 +923,7 @@ func TestFindClosestDumpsOverlappingRoots(t *testing.T) {
 	//          |       |
 	//          +-- 4 --+
 	//
-	// With the following LSIF dumps:
+	// With the following LSIF uploads:
 	//
 	// | UploadID | Commit | Root    | Indexer |
 	// | -------- + ------ + ------- + ------- |
@@ -983,7 +983,7 @@ func TestFindClosestDumpsOverlappingRoots(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(4), file: "root1/file.ts", rootMustEnclosePath: true, graph: graph, allOfIDs: []int{7, 3}},
 		{commit: makeCommit(5), file: "root2/file.ts", rootMustEnclosePath: true, graph: graph, allOfIDs: []int{8, 7}},
 		{commit: makeCommit(3), file: "root3/file.ts", rootMustEnclosePath: true, graph: graph, allOfIDs: []int{5, 1}},
@@ -992,7 +992,7 @@ func TestFindClosestDumpsOverlappingRoots(t *testing.T) {
 	})
 }
 
-func TestFindClosestDumpsIndexerName(t *testing.T) {
+func TestFindClosestCompletedUploadsIndexerName(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -1069,7 +1069,7 @@ func TestFindClosestDumpsIndexerName(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(5), file: "root1/file.ts", indexer: "idx1", graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(5), file: "root2/file.ts", indexer: "idx1", graph: graph, allOfIDs: []int{2}},
 		{commit: makeCommit(5), file: "root3/file.ts", indexer: "idx1", graph: graph, allOfIDs: []int{3}},
@@ -1081,7 +1081,7 @@ func TestFindClosestDumpsIndexerName(t *testing.T) {
 	})
 }
 
-func TestFindClosestDumpsIntersectingPath(t *testing.T) {
+func TestFindClosestCompletedUploadsIntersectingPath(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -1118,14 +1118,14 @@ func TestFindClosestDumpsIntersectingPath(t *testing.T) {
 	insertLinks(t, db, 50, links)
 
 	// Test
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		{commit: makeCommit(1), file: "", rootMustEnclosePath: false, graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(1), file: "web/", rootMustEnclosePath: false, graph: graph, allOfIDs: []int{1}},
 		{commit: makeCommit(1), file: "web/src/file.ts", rootMustEnclosePath: false, graph: graph, allOfIDs: []int{1}},
 	})
 }
 
-func TestFindClosestDumpsFromGraphFragment(t *testing.T) {
+func TestFindClosestCompletedUploadsFromGraphFragment(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := database.NewDB(logger, dbtest.NewDB(t))
 	store := New(&observation.TestContext, db)
@@ -1182,7 +1182,7 @@ func TestFindClosestDumpsFromGraphFragment(t *testing.T) {
 		strings.Join([]string{makeCommit(3)}, " "),
 	})
 
-	testFindClosestDumps(t, store, []FindClosestDumpsTestCase{
+	testFindClosestCompletedUploads(t, store, []FindClosestCompletedUploadsTestCase{
 		// Note: Can't query anything outside of the graph fragment
 		{commit: makeCommit(3), file: "file.ts", rootMustEnclosePath: true, graph: graphFragment, anyOfIDs: []int{1}},
 		{commit: makeCommit(6), file: "file.ts", rootMustEnclosePath: true, graph: graphFragment, anyOfIDs: []int{2}},
@@ -1272,7 +1272,7 @@ func TestCommitGraphMetadata(t *testing.T) {
 //
 //
 
-type FindClosestDumpsTestCase struct {
+type FindClosestCompletedUploadsTestCase struct {
 	commit              string
 	file                string
 	rootMustEnclosePath bool
@@ -1283,7 +1283,7 @@ type FindClosestDumpsTestCase struct {
 	allOfIDs            []int
 }
 
-func testFindClosestDumps(t *testing.T, store Store, testCases []FindClosestDumpsTestCase) {
+func testFindClosestCompletedUploads(t *testing.T, store Store, testCases []FindClosestCompletedUploadsTestCase) {
 	for _, testCase := range testCases {
 		name := fmt.Sprintf(
 			"commit=%s file=%s rootMustEnclosePath=%v indexer=%s",
@@ -1293,55 +1293,55 @@ func testFindClosestDumps(t *testing.T, store Store, testCases []FindClosestDump
 			testCase.indexer,
 		)
 
-		assertDumpIDs := func(t *testing.T, dumps []shared.Dump) {
+		assertUploadIDs := func(t *testing.T, uploads []shared.CompletedUpload) {
 			if len(testCase.anyOfIDs) > 0 {
-				testAnyOf(t, dumps, testCase.anyOfIDs)
+				testAnyOf(t, uploads, testCase.anyOfIDs)
 				return
 			}
 
 			if len(testCase.allOfIDs) > 0 {
-				testAllOf(t, dumps, testCase.allOfIDs)
+				testAllOf(t, uploads, testCase.allOfIDs)
 				return
 			}
 
-			if len(dumps) != 0 {
-				t.Errorf("unexpected nearest dump length. want=%d have=%d", 0, len(dumps))
+			if len(uploads) != 0 {
+				t.Errorf("unexpected nearest upload length. want=%d have=%d", 0, len(uploads))
 				return
 			}
 		}
 
 		if !testCase.graphFragmentOnly {
 			t.Run(name, func(t *testing.T) {
-				dumps, err := store.FindClosestDumps(context.Background(), 50, testCase.commit, testCase.file, testCase.rootMustEnclosePath, testCase.indexer)
+				uploads, err := store.FindClosestCompletedUploads(context.Background(), 50, testCase.commit, testCase.file, testCase.rootMustEnclosePath, testCase.indexer)
 				if err != nil {
-					t.Fatalf("unexpected error finding closest dumps: %s", err)
+					t.Fatalf("unexpected error finding closest uploads: %s", err)
 				}
 
-				assertDumpIDs(t, dumps)
+				assertUploadIDs(t, uploads)
 			})
 		}
 
 		if testCase.graph != nil {
 			t.Run(name+" [graph-fragment]", func(t *testing.T) {
-				dumps, err := store.FindClosestDumpsFromGraphFragment(context.Background(), 50, testCase.commit, testCase.file, testCase.rootMustEnclosePath, testCase.indexer, testCase.graph)
+				uploads, err := store.FindClosestCompletedUploadsFromGraphFragment(context.Background(), 50, testCase.commit, testCase.file, testCase.rootMustEnclosePath, testCase.indexer, testCase.graph)
 				if err != nil {
-					t.Fatalf("unexpected error finding closest dumps: %s", err)
+					t.Fatalf("unexpected error finding closest uploads: %s", err)
 				}
 
-				assertDumpIDs(t, dumps)
+				assertUploadIDs(t, uploads)
 			})
 		}
 	}
 }
 
-func testAnyOf(t *testing.T, dumps []shared.Dump, expectedIDs []int) {
-	if len(dumps) != 1 {
-		t.Errorf("unexpected nearest dump length. want=%d have=%d", 1, len(dumps))
+func testAnyOf(t *testing.T, uploads []shared.CompletedUpload, expectedIDs []int) {
+	if len(uploads) != 1 {
+		t.Errorf("unexpected nearest upload length. want=%d have=%d", 1, len(uploads))
 		return
 	}
 
-	if !testPresence(dumps[0].ID, expectedIDs) {
-		t.Errorf("unexpected nearest dump ids. want one of %v have=%v", expectedIDs, dumps[0].ID)
+	if !testPresence(uploads[0].ID, expectedIDs) {
+		t.Errorf("unexpected nearest dump ids. want one of %v have=%v", expectedIDs, uploads[0].ID)
 	}
 }
 
@@ -1355,19 +1355,19 @@ func testPresence(needle int, haystack []int) bool {
 	return false
 }
 
-func testAllOf(t *testing.T, dumps []shared.Dump, expectedIDs []int) {
-	if len(dumps) != len(expectedIDs) {
-		t.Errorf("unexpected nearest dump length. want=%d have=%d", 1, len(dumps))
+func testAllOf(t *testing.T, uploads []shared.CompletedUpload, expectedIDs []int) {
+	if len(uploads) != len(expectedIDs) {
+		t.Errorf("unexpected nearest upload length. want=%d have=%d", 1, len(uploads))
 	}
 
-	var dumpIDs []int
-	for _, dump := range dumps {
-		dumpIDs = append(dumpIDs, dump.ID)
+	var uploadIDs []int
+	for _, upload := range uploads {
+		uploadIDs = append(uploadIDs, upload.ID)
 	}
 
 	for _, expectedID := range expectedIDs {
-		if !testPresence(expectedID, dumpIDs) {
-			t.Errorf("unexpected nearest dump ids. want all of %v have=%v", expectedIDs, dumpIDs)
+		if !testPresence(expectedID, uploadIDs) {
+			t.Errorf("unexpected nearest dump ids. want all of %v have=%v", expectedIDs, uploadIDs)
 			return
 		}
 	}

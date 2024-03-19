@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
 	"github.com/grafana/regexp"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
@@ -49,7 +49,7 @@ func BenchmarkPrometheusFieldName(b *testing.B) {
 	for i, t := range tests {
 		typeName, fieldName, want := t[0], t[1], t[2]
 		b.Run(fmt.Sprintf("test-%v", i), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				got := prometheusFieldName(typeName, fieldName)
 				if got != want {
 					b.Fatalf("got %q want %q", got, want)
@@ -180,7 +180,7 @@ func TestResolverTo(t *testing.T) {
 	for _, r := range resolvers {
 		typ := reflect.TypeOf(r)
 		t.Run(typ.Name(), func(t *testing.T) {
-			for i := 0; i < typ.NumMethod(); i++ {
+			for i := range typ.NumMethod() {
 				if name := typ.Method(i).Name; re.MatchString(name) {
 					reflect.ValueOf(r).MethodByName(name).Call(nil)
 				}

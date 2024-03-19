@@ -384,7 +384,7 @@ func makeQuerySuffix(numColumns, maxNumParameters int) string {
 	qs := []byte{
 		',', // Start with trailing comma for processing uniformity
 	}
-	for i := 0; i < maxNumParameters; i++ {
+	for i := range maxNumParameters {
 		if i%numColumns == 0 {
 			// Replace previous `,` with `),(`
 			qs[len(qs)-1] = ')'

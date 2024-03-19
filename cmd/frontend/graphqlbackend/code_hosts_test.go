@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
+	"github.com/graph-gophers/graphql-go/errors"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSchemaResolver_CodeHosts(t *testing.T) {
@@ -172,6 +174,28 @@ func TestSchemaResolver_CodeHosts(t *testing.T) {
 }
 
 func TestCodeHostByID(t *testing.T) {
+	tests := []struct {
+		siteAdmin      bool
+		expectedResult string
+		expectedErrors []*errors.QueryError
+	}{{
+		siteAdmin: true,
+		expectedResult: `{
+			"node": {
+				"id": "Q29kZUhvc3Q6MQ==",
+				"__typename": "CodeHost",
+				"kind": "GITHUB",
+				"url": "github.com"
+			}
+		}`,
+	}, {
+		siteAdmin:      false,
+		expectedResult: `{"node": null}`,
+		expectedErrors: []*errors.QueryError{{
+			Path:    []any{string("node")},
+			Message: "must be site admin",
+		}},
+	}}
 
 	codeHost := newCodeHost(1, "github.com", extsvc.KindGitHub, 1)
 	store := dbmocks.NewMockCodeHostStore()
@@ -180,21 +204,23 @@ func TestCodeHostByID(t *testing.T) {
 		return codeHost, nil
 	})
 
-	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true}, nil)
+	for _, tc := range tests {
+		users := dbmocks.NewMockUserStore()
+		users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: tc.siteAdmin}, nil)
 
-	ctx := context.Background()
-	db := dbmocks.NewMockDB()
-	db.CodeHostsFunc.SetDefaultReturn(store)
-	db.UsersFunc.SetDefaultReturn(users)
+		ctx := context.Background()
+		db := dbmocks.NewMockDB()
+		db.CodeHostsFunc.SetDefaultReturn(store)
+		db.UsersFunc.SetDefaultReturn(users)
 
-	variables := map[string]any{}
+		variables := map[string]any{}
 
-	RunTest(t, &Test{
-		Context:   ctx,
-		Schema:    mustParseGraphQLSchema(t, db),
-		Variables: variables,
-		Query: `query CodeHostByID() {
+		RunTest(t, &Test{
+			Context:        ctx,
+			Schema:         mustParseGraphQLSchema(t, db),
+			Variables:      variables,
+			ExpectedErrors: tc.expectedErrors,
+			Query: `query CodeHostByID() {
 			node(id: "Q29kZUhvc3Q6MQ==") {
 				id
 				__typename
@@ -204,17 +230,11 @@ func TestCodeHostByID(t *testing.T) {
 				}
 			}
 		}`,
-		ExpectedResult: `{
-			"node": {
-				"id": "Q29kZUhvc3Q6MQ==",
-				"__typename": "CodeHost",
-				"kind": "GITHUB",
-				"url": "github.com"
-			}
-		}`,
-	})
+			ExpectedResult: tc.expectedResult,
+		})
 
-	mockassert.CalledOnce(t, store.GetByIDFunc)
+		mockassert.CalledOnce(t, store.GetByIDFunc)
+	}
 }
 
 func newCodeHost(id int32, url, kind string, quota int32) *types.CodeHost {

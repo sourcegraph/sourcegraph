@@ -3,7 +3,7 @@ import React, { type FC, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useMutation } from '@sourcegraph/http-client'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, H3, H4, Link, Text } from '@sourcegraph/wildcard'
 
 import {

@@ -620,7 +620,7 @@ func TestListOrganizations(t *testing.T) {
 
 		mockOrgs := make([]*Org, 200)
 
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			mockOrgs[i] = &Org{
 				ID:    i + 1,
 				Login: fmt.Sprint("foo-", i+1),

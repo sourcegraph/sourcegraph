@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
                       'process.platform': '"browser"',
                       'process.env.VITEST': 'null',
                       'process.env.NODE_ENV': `"${mode}"`,
+                      'process.env.SOURCEGRAPH_API_URL': JSON.stringify(process.env.SOURCEGRAPH_API_URL),
                       'process.env': '{}',
                   },
         css: {
@@ -71,12 +72,6 @@ export default defineConfig(({ mode }) => {
                 {
                     find: /^(.*)\.gql$/,
                     replacement: '$1.gql.ts',
-                },
-                // These are directories and cannot be imported from directly in
-                // production build.
-                {
-                    find: /^rxjs\/(operators|fetch)$/,
-                    replacement: 'rxjs/$1/index.js',
                 },
                 // Without aliasing lodash to lodash-es we get the following error:
                 // SyntaxError: Named export 'castArray' not found. The requested module 'lodash' is a CommonJS module, which may not support all module.exports as named exports.
@@ -141,8 +136,12 @@ export default defineConfig(({ mode }) => {
                 // and processes them as well.
                 // In a bazel sandbox however all @sourcegraph/* dependencies are built packages and thus not processed
                 // by vite without this additional setting.
-                // We have to process those files to apply certain "fixes", such as aliases defined in svelte.config.js.
+                // We have to process those files to apply certain "fixes", such as aliases defined in here
+                // and in svelte.config.js.
                 noExternal: [/@sourcegraph\/.*/],
+                // Exceptions to the above rule. These are packages that are not part of this monorepo and should
+                // not be processed by vite.
+                external: ['@sourcegraph/telemetry'],
             },
         } satisfies UserConfig)
     }

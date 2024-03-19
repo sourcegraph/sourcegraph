@@ -3,7 +3,7 @@ import React, { useCallback } from 'react'
 import { mdiSourceBranch, mdiFileDocument } from '@mdi/js'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Badge, Container, Icon, Tab, TabPanel, TabPanels } from '@sourcegraph/wildcard'
 

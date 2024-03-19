@@ -1,5 +1,5 @@
 import { noop } from 'lodash'
-import { from, type Observable, of, Subject, Subscription, NEVER } from 'rxjs'
+import { from, type Observable, of, Subject, Subscription, NEVER, lastValueFrom } from 'rxjs'
 import { bufferCount, map, switchMap, toArray } from 'rxjs/operators'
 import * as sinon from 'sinon'
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
@@ -40,9 +40,9 @@ describe('trackViews()', () => {
 
     test('detects all views on the page', async () => {
         const mutations: Observable<MutationRecordLike[]> = of([{ addedNodes: [document.body], removedNodes: [] }])
-        const views = await mutations
-            .pipe(trackViews([{ selector: '.view', resolveView: element => ({ element }) }]), toArray())
-            .toPromise()
+        const views = await lastValueFrom(
+            mutations.pipe(trackViews([{ selector: '.view', resolveView: element => ({ element }) }]), toArray())
+        )
         expect(views.map(({ element }) => element.id)).toEqual(['view1', 'view2', 'view3'])
     })
 
@@ -51,13 +51,13 @@ describe('trackViews()', () => {
             { addedNodes: [document.querySelector<HTMLElement>('#view1')!], removedNodes: [] },
         ])
         expect(
-            await mutations
-                .pipe(
+            await lastValueFrom(
+                mutations.pipe(
                     trackViews([{ selector: '.view', resolveView: element => ({ element }) }]),
                     map(({ element }) => element.id),
                     toArray()
                 )
-                .toPromise()
+            )
         ).toEqual(['view1'])
     })
 
@@ -66,13 +66,13 @@ describe('trackViews()', () => {
             { addedNodes: [document.querySelector<HTMLElement>('#view1')!], removedNodes: [] },
         ])
         expect(
-            await mutations
-                .pipe(
+            await lastValueFrom(
+                mutations.pipe(
                     trackViews([{ selector: '.view', resolveView: element => ({ element }) }]),
                     map(({ element }) => element.id),
                     toArray()
                 )
-                .toPromise()
+            )
         ).toEqual(['view1'])
     })
 
@@ -82,8 +82,8 @@ describe('trackViews()', () => {
         selectorTarget.className = 'selector-target'
         document.querySelector<HTMLElement>('#view1')!.append(selectorTarget)
         expect(
-            await mutations
-                .pipe(
+            await lastValueFrom(
+                mutations.pipe(
                     trackViews([
                         {
                             selector: '.selector-target',
@@ -93,15 +93,15 @@ describe('trackViews()', () => {
                     map(({ element }) => element.id),
                     toArray()
                 )
-                .toPromise()
+            )
         ).toEqual(['view1'])
     })
 
     test("doesn't emit duplicate views", async () => {
         const mutations: Observable<MutationRecordLike[]> = of([{ addedNodes: [document.body], removedNodes: [] }])
         expect(
-            await mutations
-                .pipe(
+            await lastValueFrom(
+                mutations.pipe(
                     trackViews([
                         {
                             selector: '.view',
@@ -113,7 +113,7 @@ describe('trackViews()', () => {
                     map(({ element }) => element.id),
                     toArray()
                 )
-                .toPromise()
+            )
         ).toEqual(['view1'])
     })
 
@@ -190,20 +190,20 @@ describe('trackViews()', () => {
             [{ addedNodes: [], removedNodes: [document.querySelector<HTMLElement>('#view1')!] }],
             [{ addedNodes: [], removedNodes: [document.querySelector<HTMLElement>('#view3')!] }],
         ])
-        await mutations
-            .pipe(
+        await lastValueFrom(
+            mutations.pipe(
                 trackViews([{ selector: '.view', resolveView: element => ({ element }) }]),
                 bufferCount(3),
                 switchMap(async ([view1, view2, view3]) => {
                     const v2Removed = sinon.spy(() => undefined)
                     view2.subscriptions.add(v2Removed)
-                    const v1Removed = new Promise(resolve => view1.subscriptions.add(resolve))
-                    const v3Removed = new Promise(resolve => view3.subscriptions.add(resolve))
+                    const v1Removed = new Promise<void>(resolve => view1.subscriptions.add(resolve))
+                    const v3Removed = new Promise<void>(resolve => view3.subscriptions.add(resolve))
                     await Promise.all([v1Removed, v3Removed])
                     sinon.assert.notCalled(v2Removed)
                 })
             )
-            .toPromise()
+        )
     })
 
     test('removes all nested views', async () => {
@@ -211,15 +211,15 @@ describe('trackViews()', () => {
             [{ addedNodes: [document.body], removedNodes: [] }],
             [{ addedNodes: [], removedNodes: [document.querySelector<HTMLElement>('#parent')!] }],
         ])
-        await mutations
-            .pipe(
+        await lastValueFrom(
+            mutations.pipe(
                 trackViews([{ selector: '.view', resolveView: element => ({ element }) }]),
                 bufferCount(3),
                 switchMap(views =>
-                    Promise.all(views.map(view => new Promise(resolve => view.subscriptions.add(resolve))))
+                    Promise.all(views.map(view => new Promise<void>(resolve => view.subscriptions.add(resolve))))
                 )
             )
-            .toPromise()
+        )
     })
 
     test('removes a view without depending on its resolver', async () => {
@@ -259,7 +259,7 @@ describe('trackViews()', () => {
         expect(resolver.resolveView(testElement)).toBe(null)
 
         // Verify that the code view still gets removed.
-        const unsubscribed = new Promise(resolve => view.subscriptions.add(resolve))
+        const unsubscribed = new Promise<void>(resolve => view.subscriptions.add(resolve))
         mutations.next([{ addedNodes: [], removedNodes: [testElement] }])
         await unsubscribed
     })

@@ -15,8 +15,8 @@ import (
 )
 
 func TestNewDBFromConfFunc(t *testing.T) {
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, true)
+
 	t.Run("default nil", func(t *testing.T) {
 		conf.Mock(&conf.Unified{
 			ServiceConnectionConfig: conftypes.ServiceConnections{

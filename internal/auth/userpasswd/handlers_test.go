@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -97,7 +97,7 @@ func TestCheckEmailFormat(t *testing.T) {
 		code  int
 	}{
 		"valid":   {email: "foo@bar.pl", err: nil},
-		"invalid": {email: "foo@", err: errors.Newf("mail: no angle-addr")},
+		"invalid": {email: "foo@", err: errors.Newf("mail: missing '@' or angle-addr")},
 		"toolong": {email: "a012345678901234567890123456789012345678901234567890123456789@0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789.comeeeeqwqwwe", err: errors.Newf("maximum email length is 320, got 326")},
 	} {
 		t.Run(name, func(t *testing.T) {

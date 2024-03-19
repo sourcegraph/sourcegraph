@@ -147,7 +147,6 @@ export const GlobalNavbar: React.FunctionComponent<React.PropsWithChildren<Globa
     const showSearchContext = searchContextsEnabled && !isSourcegraphDotCom && !disableCodeSearchFeatures
     const showCodeMonitoring = codeMonitoringEnabled && !isSourcegraphDotCom && !disableCodeSearchFeatures
     const showSearchNotebook = notebooksEnabled && !isSourcegraphDotCom && !disableCodeSearchFeatures
-    const showOwn = ownEnabled && !disableCodeSearchFeatures
     const showSearchJobs = isSearchJobsEnabled() && !disableCodeSearchFeatures
     const showBatchChanges =
         props.batchChangesEnabled && isLicensed && !isSourcegraphDotCom && !disableCodeSearchFeatures
@@ -190,7 +189,6 @@ export const GlobalNavbar: React.FunctionComponent<React.PropsWithChildren<Globa
                 <InlineNavigationPanel
                     authenticatedUser={props.authenticatedUser}
                     showSearchContext={showSearchContext}
-                    showOwn={showOwn}
                     showCodySearch={codySearchEnabled}
                     showSearchJobs={showSearchJobs}
                     showSearchNotebook={showSearchNotebook}
@@ -278,7 +276,6 @@ export const GlobalNavbar: React.FunctionComponent<React.PropsWithChildren<Globa
 
 export interface InlineNavigationPanelProps {
     showSearchContext: boolean
-    showOwn: boolean
     showCodySearch: boolean
     showSearchJobs: boolean
     showSearchNotebook: boolean
@@ -296,7 +293,6 @@ export interface InlineNavigationPanelProps {
 export const InlineNavigationPanel: FC<InlineNavigationPanelProps> = props => {
     const {
         showSearchContext,
-        showOwn,
         showCodySearch,
         showSearchJobs,
         showSearchNotebook,
@@ -320,7 +316,6 @@ export const InlineNavigationPanel: FC<InlineNavigationPanelProps> = props => {
             // We hardcode the code monitoring path here because PageRoutes.CodeMonitoring is a catch-all
             // path for all code monitoring sub links.
             showCodeMonitoring && { path: '/code-monitoring', content: 'Monitoring' },
-            showOwn && { path: PageRoutes.Own, content: 'Code ownership' },
             showCodySearch && {
                 path: PageRoutes.CodySearch,
                 content: (
@@ -339,7 +334,7 @@ export const InlineNavigationPanel: FC<InlineNavigationPanelProps> = props => {
             },
         ]
         return items.filter<NavDropdownItem>((item): item is NavDropdownItem => !!item)
-    }, [showOwn, showSearchContext, showCodySearch, showSearchJobs, showCodeMonitoring, showSearchNotebook])
+    }, [showSearchContext, showCodySearch, showSearchJobs, showCodeMonitoring, showSearchNotebook])
 
     const searchNavigation =
         searchNavBarItems.length > 0 ? (

@@ -35,7 +35,7 @@ func testStoreChangesetJobs(t *testing.T, ctx context.Context, s *Store, clock b
 	changesetWithDeletedRepo := bt.CreateChangeset(t, ctx, s, bt.TestChangesetOpts{Repo: deletedRepo.ID})
 
 	jobs := make([]*btypes.ChangesetJob, 0, 3)
-	for i := 0; i < cap(jobs); i++ {
+	for i := range cap(jobs) {
 		c := &btypes.ChangesetJob{
 			UserID:        int32(i + 1234),
 			BatchChangeID: int64(i + 910),

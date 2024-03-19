@@ -8,6 +8,7 @@ export PATH
 
 cd "${BUILD_WORKSPACE_DIRECTORY}"
 
+# This fails using rosetta binary, so we just use our normal bazelrc's
 bazel \
   --bazelrc=.bazelrc \
   --bazelrc=.aspect/bazelrc/ci.bazelrc \

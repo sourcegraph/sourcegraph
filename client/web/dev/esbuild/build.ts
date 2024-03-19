@@ -2,8 +2,6 @@ import { writeFileSync } from 'fs'
 
 import * as esbuild from 'esbuild'
 
-import { buildMonaco } from '@sourcegraph/build-config/src/esbuild/plugins'
-
 import { ENVIRONMENT_CONFIG } from '../utils'
 
 import { esbuildBuildOptions } from './config'
@@ -24,12 +22,6 @@ export async function build(): Promise<void> {
     if (metafile) {
         writeFileSync(metafile, JSON.stringify(result.metafile), 'utf-8')
     }
-    if (!ENVIRONMENT_CONFIG.DEV_WEB_BUILDER_OMIT_SLOW_DEPS) {
-        const ctx = await buildMonaco(buildOptions.outdir)
-        await ctx.rebuild()
-        await ctx.dispose()
-    }
-
     if (process.env.WATCH) {
         const ctx = await esbuild.context(options)
         await ctx.watch()

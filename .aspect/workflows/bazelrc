@@ -1,0 +1,13 @@
+# This flag is required because otherwise the integration tests fail with `fcmod` Operation not permitted
+# which is probably related to the launced containers writing to mapped in directories as root and then
+# when the container exits the files that are left over are root.
+# TODO(burmudar): launch containers with uid/guid mapped in
+common --noexperimental_reuse_sandbox_directories
+
+# build without the bytes
+common --remote_download_outputs=minimal
+common --nobuild_runfile_links
+
+# As per recommendation from https://analyzer.engflow.com/suggestions/829decb5-e3f4-4930-b60c-0494d154f8c1
+common --experimental_profile_include_target_label
+common --noslim_profile

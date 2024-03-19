@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect } from 'react'
 
 import classNames from 'classnames'
 import SourceCommitIcon from 'mdi-react/SourceCommitIcon'
-import type { NavigateFunction } from 'react-router-dom'
 import { BehaviorSubject } from 'rxjs'
 
 import { UserAvatar } from '@sourcegraph/shared/src/components/UserAvatar'
 import {
     createRectangle,
-    createLinkClickHandler,
     Icon,
     Link,
     Popover,
@@ -110,7 +108,6 @@ interface BlameDecorationProps {
     line: number // 1-based line number
     blameHunk?: BlameHunk
     externalURLs?: BlameHunkData['externalURLs']
-    navigate: NavigateFunction
     onSelect?: (line: number) => void
     onDeselect?: (line: number) => void
 }
@@ -121,7 +118,6 @@ export const BlameDecoration: React.FunctionComponent<BlameDecorationProps> = ({
     onSelect,
     onDeselect,
     externalURLs,
-    navigate,
 }) => {
     const hunkStartLine = blameHunk?.startLine ?? line
     const id = hunkStartLine?.toString() || ''
@@ -141,9 +137,6 @@ export const BlameDecoration: React.FunctionComponent<BlameDecorationProps> = ({
         (event: PopoverOpenEvent) => (event.isOpen ? close() : open()),
         [close, open]
     )
-
-    // Prevent hitting the backend (full page reloads) for links that stay inside the app.
-    const handleParentCommitLinkClick = useMemo(() => createLinkClickHandler(navigate), [navigate])
 
     if (!blameHunk) {
         return null
@@ -231,11 +224,7 @@ export const BlameDecoration: React.FunctionComponent<BlameDecorationProps> = ({
                                 <hr className={classNames(styles.separator, 'm-0')} />
                                 <div className={classNames('px-3', styles.block)}>
                                     <Link
-                                        to={
-                                            window.location.origin +
-                                            replaceRevisionInURL(window.location.href, blameHunk.commit.parents[0].oid)
-                                        }
-                                        onClick={handleParentCommitLinkClick}
+                                        to={replaceRevisionInURL(window.location.href, blameHunk.commit.parents[0].oid)}
                                         className={styles.footerLink}
                                     >
                                         View blame prior to this change

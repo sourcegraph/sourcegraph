@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
 
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )

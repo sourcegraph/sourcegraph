@@ -87,7 +87,7 @@ func mapToRecords(m map[string]int) (records [][]string) {
 	// Fill in the gaps
 	prev := records[0]
 	length := len(records)
-	for index := 0; index < length; index++ {
+	for index := range length {
 		record := records[index]
 		recordDate, _ := time.Parse(dateFormat, record[0])
 		prevDate, _ := time.Parse(dateFormat, prev[0])

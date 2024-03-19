@@ -6,7 +6,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 )
 
 type eventLogsArgs struct {
@@ -15,18 +14,10 @@ type eventLogsArgs struct {
 }
 
 func (r *UserResolver) EventLogs(ctx context.Context, args *eventLogsArgs) (*userEventLogsConnectionResolver, error) {
-	// 🚨 SECURITY: Only the authenticated user can view their event logs on
-	// Sourcegraph.com.
-	if dotcom.SourcegraphDotComMode() {
-		if err := auth.CheckSameUser(ctx, r.user.ID); err != nil {
-			return nil, err
-		}
-	} else {
-		// 🚨 SECURITY: Only the authenticated user and site admins can view users'
-		// event logs.
-		if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
-			return nil, err
-		}
+	// 🚨 SECURITY: Only the authenticated user and site admins can view users'
+	// event logs.
+	if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
+		return nil, err
 	}
 
 	var opt database.EventLogsListOptions

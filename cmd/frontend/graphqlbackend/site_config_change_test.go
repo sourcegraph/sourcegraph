@@ -88,7 +88,7 @@ func TestSiteConfigurationDiff(t *testing.T) {
 				t.Fatalf("mismatched number of nodes, expected %d, got: %d", totalExpectedNodes, totalNodes)
 			}
 
-			for i := 0; i < totalNodes; i++ {
+			for i := range totalNodes {
 				siteConfig, expectedNode := nodes[i].siteConfig, expectedNodes[i]
 
 				if siteConfig.ID != expectedNode.ID {

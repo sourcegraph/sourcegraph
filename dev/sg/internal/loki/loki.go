@@ -172,7 +172,7 @@ func splitIntoChunks(data []byte, chunkSize int) [][]byte {
 
 	chunks := make([][]byte, int(count))
 
-	for i := 0; i < int(count); i++ {
+	for i := range int(count) {
 		start := i * chunkSize
 		end := start + chunkSize
 

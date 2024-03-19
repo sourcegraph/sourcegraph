@@ -13,7 +13,7 @@ import (
 func getGitHubRepos(ctx context.Context, orgName string) []*github.Repository {
 	p := pool.NewWithResults[[]*github.Repository]().WithMaxGoroutines(250)
 	// 200k repos + some buffer space returning empty pages
-	for i := 0; i < 2050; i++ {
+	for i := range 2050 {
 		writeInfo(out, "Fetching repo page %d", i)
 		page := i
 		p.Go(func() []*github.Repository {

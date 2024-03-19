@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useRef, useState } from 'react'
+import { type FC, useCallback, useMemo, useRef, useState } from 'react'
 
 import { mdiChevronDoubleDown, mdiChevronDoubleUp, mdiOpenInNew, mdiThumbDown, mdiThumbUp } from '@mdi/js'
 import classNames from 'classnames'

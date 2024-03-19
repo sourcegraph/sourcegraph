@@ -19,7 +19,7 @@ fi
 # run semgrep scan on changeset using CI subcommand
 # || true is used to prevent build from failing if semgrep scan reports on blocking findings
 # reference: https://semgrep.dev/docs/semgrep-ci/configuring-blocking-and-errors-in-ci/#configuration-options-for-blocking-findings-and-errors
-semgrep ci -f security-semgrep-rules/semgrep-rules/ --metrics=off --oss-only --sarif -o results.sarif --exclude='semgrep-rules' --baseline-commit main || true
+semgrep ci -f 'security-semgrep-rules/semgrep-rules/' --metrics=off --oss-only --sarif -o results.sarif --exclude='semgrep-rules' --baseline-commit "$(git merge-base main HEAD)" || true
 
 echo -e "--- :rocket: reporting scan results to GitHub\n"
 

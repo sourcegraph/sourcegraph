@@ -5,7 +5,7 @@ import '../../config/background.entry'
 import '../../shared/polyfills'
 
 import type { Endpoint } from 'comlink'
-import { combineLatest, merge, type Observable, of, Subject, Subscription, timer } from 'rxjs'
+import { combineLatest, merge, type Observable, of, Subject, Subscription, timer, lastValueFrom } from 'rxjs'
 import {
     bufferCount,
     filter,
@@ -238,7 +238,7 @@ async function main(): Promise<void> {
             variables: V
             sourcegraphURL?: string
         }): Promise<GraphQLResult<T>> {
-            return requestGraphQL<T, V>({ request, variables, sourcegraphURL }).toPromise()
+            return lastValueFrom(requestGraphQL<T, V>({ request, variables, sourcegraphURL }))
         },
 
         async notifyRepoSyncError({ sourcegraphURL, hasRepoSyncError }, sender: browser.runtime.MessageSender) {

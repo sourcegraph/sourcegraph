@@ -35,6 +35,7 @@ go_test(
     srcs = ["iam_test.go"],
     embed = [":iam"],
     deps = [
+        "//dev/managedservicesplatform/spec",
         "//lib/pointers",
         "@com_github_hexops_autogold_v2//:autogold",
         "@com_github_stretchr_testify//assert",

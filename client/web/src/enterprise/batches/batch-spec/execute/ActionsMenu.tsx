@@ -5,7 +5,7 @@ import { noop } from 'lodash'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import { useMutation } from '@sourcegraph/http-client'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Button,
     Icon,

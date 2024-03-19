@@ -3,7 +3,7 @@ import React, { type FC, useCallback, useMemo } from 'react'
 import { mdiMapSearch } from '@mdi/js'
 import classNames from 'classnames'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, PageHeader, H3, H5, Icon } from '@sourcegraph/wildcard'
 
 import { FilteredConnection, type FilteredConnectionQueryArguments } from '../../components/FilteredConnection'

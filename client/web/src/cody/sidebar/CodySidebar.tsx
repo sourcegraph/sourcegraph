@@ -5,6 +5,7 @@ import classNames from 'classnames'
 
 import { CodyLogo } from '@sourcegraph/cody-ui/dist/icons/CodyLogo'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, Icon, Tooltip, Badge } from '@sourcegraph/wildcard'
 
 import { ChatUI, ScrollDownButton } from '../components/ChatUI'
@@ -16,12 +17,12 @@ import styles from './CodySidebar.module.scss'
 
 export const SCROLL_THRESHOLD = 100
 
-interface CodySidebarProps {
+interface CodySidebarProps extends TelemetryV2Props {
     onClose?: () => void
     authenticatedUser: AuthenticatedUser | null
 }
 
-export const CodySidebar: React.FC<CodySidebarProps> = ({ onClose, authenticatedUser }) => {
+export const CodySidebar: React.FC<CodySidebarProps> = ({ onClose, authenticatedUser, telemetryRecorder }) => {
     const codySidebarStore = useCodySidebar()
     const {
         initializeNewChat,
@@ -145,7 +146,11 @@ export const CodySidebar: React.FC<CodySidebarProps> = ({ onClose, authenticated
                         deleteHistoryItem={deleteHistoryItem}
                     />
                 ) : (
-                    <ChatUI codyChatStore={codySidebarStore} authenticatedUser={authenticatedUser} />
+                    <ChatUI
+                        codyChatStore={codySidebarStore}
+                        authenticatedUser={authenticatedUser}
+                        telemetryRecorder={telemetryRecorder}
+                    />
                 )}
             </div>
             {showScrollDownButton && <ScrollDownButton onClick={() => scrollToBottom('smooth')} />}

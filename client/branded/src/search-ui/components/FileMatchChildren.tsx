@@ -50,7 +50,7 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
     )
 
     const logEventOnCopy = useCallback(() => {
-        telemetryService.log(...codeCopiedEvent('file-match'))
+        telemetryService.log(...codeCopiedEvent('search-result'))
     }, [telemetryService])
 
     return (

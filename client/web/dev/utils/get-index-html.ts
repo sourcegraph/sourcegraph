@@ -2,7 +2,7 @@ import { readFileSync } from 'fs'
 import path from 'path'
 
 import type { SourcegraphContext } from '../../src/jscontext'
-import { assetPathPrefix, WEB_BUILD_MANIFEST_FILENAME, type WebBuildManifest } from '../esbuild/manifest'
+import { assetPathPrefix, WEB_BUILD_MANIFEST_FILENAME, type WebBuildManifest } from '../esbuild/webmanifest'
 
 import { createJsContext, ENVIRONMENT_CONFIG, HTTPS_WEB_SERVER_URL } from '.'
 

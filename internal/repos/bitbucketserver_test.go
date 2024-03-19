@@ -387,7 +387,6 @@ func TestBitbucketServerSource_ListByRepositoryQuery(t *testing.T) {
 			})
 		}
 	}
-
 }
 
 func TestBitbucketServerSource_ListByProjectKeyMock(t *testing.T) {
@@ -495,7 +494,7 @@ func TestBitbucketServerSource_ListByProjectKeyAuthentic(t *testing.T) {
 
 			var got []*types.Repo
 
-			for i := 0; i < wantNumRepos; i++ {
+			for range wantNumRepos {
 				select {
 				case res := <-results:
 					got = append(got, res.Repo)
@@ -508,7 +507,6 @@ func TestBitbucketServerSource_ListByProjectKeyAuthentic(t *testing.T) {
 			testutil.AssertGolden(t, path, Update(name), got)
 		})
 	}
-
 }
 
 func GetReposFromTestdata(t *testing.T, filename string) []*bitbucketserver.Repo {

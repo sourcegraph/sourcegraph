@@ -26,7 +26,6 @@ export const NewGlobalNavigationBarDemo: StoryFn = () => (
     <NewGlobalNavigationBar
         routes={[]}
         isSourcegraphDotCom={true}
-        ownEnabled={true}
         notebooksEnabled={true}
         searchContextsEnabled={true}
         codeMonitoringEnabled={true}

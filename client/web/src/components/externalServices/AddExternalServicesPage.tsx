@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom'
 
 import { ExternalServiceKind } from '@sourcegraph/shared/src/graphql-operations'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, Link, Alert, H3, Text, Container, PageHeader } from '@sourcegraph/wildcard'
 

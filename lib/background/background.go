@@ -82,7 +82,7 @@ var exiter = func() { os.Exit(0) }
 // exitAfterSignals waits for a number of signals on the given channel, then
 // calls os.Exit(0) to exit the program.
 func exitAfterSignals(signals <-chan os.Signal, numSignals int) {
-	for i := 0; i < numSignals; i++ {
+	for range numSignals {
 		<-signals
 	}
 
@@ -137,6 +137,7 @@ func (r CallbackRoutine) Start() {
 		r.StartFunc()
 	}
 }
+
 func (r CallbackRoutine) Stop() {
 	if r.StopFunc != nil {
 		r.StopFunc()

@@ -124,7 +124,7 @@ func (h *handler[T]) dequeue(ctx context.Context, queueName string, metadata exe
 	version2Supported := false
 	if metadata.version != "" {
 		var err error
-		version2Supported, err = api.CheckSourcegraphVersion(metadata.version, "4.3.0-0", "2022-11-24")
+		version2Supported, err = api.CheckSourcegraphVersion(metadata.version, ">= 4.3.0-0", "2022-11-24")
 		if err != nil {
 			return executortypes.Job{}, false, errors.Wrapf(err, "failed to check version %q", metadata.version)
 		}

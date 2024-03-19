@@ -12,7 +12,7 @@ func toSnakeCase(s string) string {
 	}
 	dist := strings.Builder{}
 	dist.Grow(len(s) + len(s)/3) // avoid reallocation memory
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		cur := s[i]
 		if cur == ' ' {
 			continue

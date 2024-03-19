@@ -1,8 +1,7 @@
-import { from } from 'rxjs'
 import { distinctUntilChanged, filter, switchMap } from 'rxjs/operators'
 import { describe, test } from 'vitest'
 
-import { isDefined, isTaggedUnionMember } from '@sourcegraph/common'
+import { fromSubscribable, isDefined, isTaggedUnionMember } from '@sourcegraph/common'
 
 import { assertToJSON, collectSubscribableValues, integrationTestContext } from '../../testing/testHelpers'
 
@@ -10,13 +9,13 @@ describe('Selections (integration)', () => {
     describe('editor.selectionsChanged', () => {
         test('reflects changes to the current selections', async () => {
             const { extensionAPI, extensionHostAPI } = await integrationTestContext()
-            const selectionChanges = from(extensionAPI.app.activeWindowChanges).pipe(
+            const selectionChanges = fromSubscribable(extensionAPI.app.activeWindowChanges).pipe(
                 filter(isDefined),
-                switchMap(window => window.activeViewComponentChanges),
+                switchMap(window => fromSubscribable(window.activeViewComponentChanges)),
                 filter(isDefined),
                 filter(isTaggedUnionMember('type', 'CodeEditor' as const)),
                 distinctUntilChanged(),
-                switchMap(editor => editor.selectionsChanges)
+                switchMap(editor => fromSubscribable(editor.selectionsChanges))
             )
             const selectionValues = collectSubscribableValues(selectionChanges)
             const testValues = [

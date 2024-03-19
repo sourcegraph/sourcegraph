@@ -157,7 +157,7 @@ interface BlobDataHandler extends Readable<CombinedBlobData> {
 
 /**
  * This store synchronizes the state of the blob data and the highlights. While new blob data is
- * loading, the old blob and highlighs data is still available. Once the blob data is loaded, the
+ * loading, the old blob and highlights data is still available. Once the blob data is loaded, the
  * highlights are updated.
  */
 export function createBlobDataHandler(): BlobDataHandler {

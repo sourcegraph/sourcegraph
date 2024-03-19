@@ -55,7 +55,6 @@ const defaultProps: StreamingSearchResultsProps = {
     searchAggregationEnabled: true,
     codeMonitoringEnabled: true,
     ownEnabled: true,
-    extensionsController: {} as any,
 }
 
 const decorator: Decorator = Story => {

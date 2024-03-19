@@ -1,5 +1,7 @@
 import { type FunctionComponent, useState, useCallback } from 'react'
 
+import { lastValueFrom } from 'rxjs'
+
 import { asError, type ErrorLike } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
 import { Badge, Button, screenReaderAnnounce } from '@sourcegraph/wildcard'
@@ -35,16 +37,18 @@ export const resendVerificationEmail = async (
 ): Promise<void> => {
     try {
         dataOrThrowErrors(
-            await requestGraphQL<ResendVerificationEmailResult, ResendVerificationEmailVariables>(
-                gql`
-                    mutation ResendVerificationEmail($userID: ID!, $email: String!) {
-                        resendVerificationEmail(user: $userID, email: $email) {
-                            alwaysNil
+            await lastValueFrom(
+                requestGraphQL<ResendVerificationEmailResult, ResendVerificationEmailVariables>(
+                    gql`
+                        mutation ResendVerificationEmail($userID: ID!, $email: String!) {
+                            resendVerificationEmail(user: $userID, email: $email) {
+                                alwaysNil
+                            }
                         }
-                    }
-                `,
-                { userID, email }
-            ).toPromise()
+                    `,
+                    { userID, email }
+                )
+            )
         )
 
         eventLogger.log('UserEmailAddressVerificationResent')
@@ -79,16 +83,18 @@ export const UserEmail: FunctionComponent<React.PropsWithChildren<Props>> = ({
 
         try {
             dataOrThrowErrors(
-                await requestGraphQL<RemoveUserEmailResult, RemoveUserEmailVariables>(
-                    gql`
-                        mutation RemoveUserEmail($user: ID!, $email: String!) {
-                            removeUserEmail(user: $user, email: $email) {
-                                alwaysNil
+                await lastValueFrom(
+                    requestGraphQL<RemoveUserEmailResult, RemoveUserEmailVariables>(
+                        gql`
+                            mutation RemoveUserEmail($user: ID!, $email: String!) {
+                                removeUserEmail(user: $user, email: $email) {
+                                    alwaysNil
+                                }
                             }
-                        }
-                    `,
-                    { user, email }
-                ).toPromise()
+                        `,
+                        { user, email }
+                    )
+                )
             )
 
             setIsLoading(false)
@@ -108,16 +114,18 @@ export const UserEmail: FunctionComponent<React.PropsWithChildren<Props>> = ({
 
         try {
             dataOrThrowErrors(
-                await requestGraphQL<SetUserEmailVerifiedResult, SetUserEmailVerifiedVariables>(
-                    gql`
-                        mutation SetUserEmailVerified($user: ID!, $email: String!, $verified: Boolean!) {
-                            setUserEmailVerified(user: $user, email: $email, verified: $verified) {
-                                alwaysNil
+                await lastValueFrom(
+                    requestGraphQL<SetUserEmailVerifiedResult, SetUserEmailVerifiedVariables>(
+                        gql`
+                            mutation SetUserEmailVerified($user: ID!, $email: String!, $verified: Boolean!) {
+                                setUserEmailVerified(user: $user, email: $email, verified: $verified) {
+                                    alwaysNil
+                                }
                             }
-                        }
-                    `,
-                    { user, email, verified }
-                ).toPromise()
+                        `,
+                        { user, email, verified }
+                    )
+                )
             )
 
             setIsLoading(false)

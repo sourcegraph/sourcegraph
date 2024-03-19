@@ -31,7 +31,7 @@ func (d *mapFSDirectory) ReadDir(count int) ([]fs.DirEntry, error) {
 	}
 
 	list := make([]fs.DirEntry, 0, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		name := d.entries[d.offset]
 		list = append(list, &mapFSDirectoryEntry{name: name})
 		d.offset++

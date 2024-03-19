@@ -103,7 +103,7 @@ func TestClient_ResolveRevision(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run("", func(t *testing.T) {
-			_, err := cli.RequestRepoUpdate(ctx, api.RepoName(remote), 0)
+			_, err := cli.RequestRepoUpdate(ctx, api.RepoName(remote))
 			require.NoError(t, err)
 
 			got, err := cli.ResolveRevision(ctx, api.RepoName(remote), test.input, gitserver.ResolveRevisionOptions{NoEnsureRevision: true})

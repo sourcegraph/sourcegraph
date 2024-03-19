@@ -1,13 +1,13 @@
 "Bazel rules"
 
-load("@aspect_rules_swc//swc:defs.bzl", "swc")
-load("@bazel_skylib//lib:partial.bzl", "partial")
-load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_library")
 load("@aspect_rules_js//npm:defs.bzl", _npm_package = "npm_package")
+load("@aspect_rules_swc//swc:defs.bzl", "swc")
 load("@aspect_rules_ts//ts:defs.bzl", _ts_project = "ts_project")
-load("//dev:eslint.bzl", "eslint_test_with_types", "get_client_package_path")
+load("@bazel_skylib//lib:partial.bzl", "partial")
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@npm//:vitest/package_json.bzl", vitest_bin = "bin")
+load("//dev:eslint.bzl", "eslint_test_with_types", "get_client_package_path")
 load(":sass.bzl", _sass = "sass")
 
 sass = _sass
@@ -91,8 +91,6 @@ def npm_package(name, srcs = [], **kwargs):
     """
     replace_prefixes = kwargs.pop("replace_prefixes", {})
 
-    package_type = kwargs.pop("type", "commonjs")
-
     # Modifications to package.json
     # TODO(bazel): remove when package.json can be updated in source
     srcs_no_pkg = [s for s in srcs if s != "package.json"]
@@ -126,28 +124,42 @@ def npm_package(name, srcs = [], **kwargs):
         **kwargs
     )
 
-def vitest_test(name, data = [], **kwargs):
+def vitest_test(name, data = [], with_vitest_config = True, bin = vitest_bin, **kwargs):
+    """Triggers a vitest test with the given name and some sensible defaults.
+
+    Args:
+        name: A unique name for this target
+
+        data: A list of sources available to the test
+
+        with_vitest_config: Whether to include a vitest.config.ts file in the test data or default to the vite config
+
+        bin: The vitest binary to use
+
+        **kwargs: Additional arguments to pass to npm_package
+    """
     vitest_config = "%s_vitest_config" % name
+    if with_vitest_config:
+        js_library(
+            name = vitest_config,
+            testonly = True,
+            srcs = ["vitest.config.ts"],
+            deps = ["//:vitest_config", "//:node_modules/vitest"],
+            data = data,
+        )
 
-    js_library(
-        name = vitest_config,
-        testonly = True,
-        srcs = ["vitest.config.ts"],
-        deps = ["//:vitest_config", "//:node_modules/vitest"],
-        data = data,
-    )
+        data.append(":%s" % vitest_config)
 
-    vitest_bin.vitest_test(
+    bin.vitest_test(
         name = name,
         args = [
             "run",
             "--reporter=default",
             "--color",
             "--update=false",
-            "--config=$(location :%s)" % vitest_config,
+            "--config=$(location :%s)" % vitest_config if with_vitest_config else "",
         ],
         data = data + native.glob(["**/__fixtures__/**/*"]) + [
-            ":%s" % vitest_config,
             "//:node_modules/happy-dom",
             "//:node_modules/jsdom",
         ],

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { mdiCog, mdiFileOutline, mdiGlasses, mdiInformationOutline } from '@mdi/js'
+import { mdiCog, mdiFileOutline, mdiSourceCommit, mdiGlasses, mdiInformationOutline } from '@mdi/js'
 import classNames from 'classnames'
 import { escapeRegExp } from 'lodash'
 
@@ -9,12 +9,11 @@ import { encodeURIPathComponent, numberWithCommas, pluralize } from '@sourcegrap
 import { gql, useQuery } from '@sourcegraph/http-client'
 import { TeamAvatar } from '@sourcegraph/shared/src/components/TeamAvatar'
 import { UserAvatar } from '@sourcegraph/shared/src/components/UserAvatar'
-import type { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { SearchPatternType, type TreeFields } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { buildSearchURLQuery } from '@sourcegraph/shared/src/util/url'
-import { Badge, ButtonLink, Card, CardHeader, Icon, Link, Text, Tooltip } from '@sourcegraph/wildcard'
+import { Badge, Button, ButtonLink, Card, CardHeader, Icon, Link, Text, Tooltip } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../auth'
 import {
@@ -45,6 +44,7 @@ import { getRefType } from '../utils'
 
 import { FilesCard, ReadmePreviewCard } from './TreePagePanels'
 
+import menuStyles from './TreePage.module.scss'
 import styles from './TreePageContent.module.scss'
 import contributorsStyles from './TreePageContentContributors.module.scss'
 import panelStyles from './TreePagePanels.module.scss'
@@ -145,7 +145,7 @@ const ExtraInfoSection: React.FC<{
     )
 }
 
-interface TreePageContentProps extends ExtensionsControllerProps, TelemetryProps, PlatformContextProps {
+interface TreePageContentProps extends TelemetryProps, PlatformContextProps {
     filePath: string
     tree: TreeFields
     treeWithHistory?: TreeHistoryFields[]
@@ -177,6 +177,25 @@ export const TreePageContent: React.FunctionComponent<React.PropsWithChildren<Tr
 
     return (
         <>
+            {!isRoot && (
+                <div className={menuStyles.menu}>
+                    <Tooltip content="Git commits">
+                        <Button
+                            className="flex-shrink-0"
+                            to={`/${encodeURIPathComponent(repo.name)}${
+                                revision && `@${encodeURIPathComponent(revision)}`
+                            }/-/commits/${encodeURIPathComponent(filePath)}`}
+                            variant="secondary"
+                            outline={true}
+                            as={Link}
+                        >
+                            <Icon aria-hidden={true} svgPath={mdiSourceCommit} />{' '}
+                            <span className={menuStyles.text}>Commits</span>
+                        </Button>
+                    </Tooltip>
+                </div>
+            )}
+
             {(readmeEntry || isRoot) && (
                 <section className={classNames('container mb-3 px-0', styles.section)}>
                     {readmeEntry && (
@@ -196,7 +215,14 @@ export const TreePageContent: React.FunctionComponent<React.PropsWithChildren<Tr
                     )}
                 </section>
             )}
-            <section className={classNames('test-tree-entries container mb-3 px-0', styles.section)}>
+
+            <section
+                className={classNames(
+                    'test-tree-entries container mb-3 px-0',
+                    styles.section,
+                    !readmeEntry ? 'mt-3' : undefined
+                )}
+            >
                 <FilesCard historyEntries={treeWithHistory} entries={tree.entries} className={styles.files} />
 
                 {!isPackage && (

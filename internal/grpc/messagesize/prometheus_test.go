@@ -78,7 +78,7 @@ func BenchmarkObserverArticle(b *testing.B) {
 func benchmarkObserver(b *testing.B, observer *messageSizeObserver, message proto.Message) {
 	b.ReportAllocs()
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		observer.Observe(message)
 	}
 
@@ -161,7 +161,6 @@ func TestUnaryServerInterceptor(t *testing.T) {
 }
 
 func TestStreamServerInterceptor(t *testing.T) {
-
 	response1 := &newspb.BinaryAttachment{
 		Name: "",
 		Data: []byte("response"),
@@ -666,7 +665,8 @@ func TestObserver(t *testing.T) {
 						"key2": "value2",
 					},
 				},
-			}},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -754,5 +754,7 @@ func (s *mockClientStream) CloseSend() error {
 	return errors.New("close send not implemented")
 }
 
-var _ grpc.ServerStream = &mockServerStream{}
-var _ grpc.ClientStream = &mockClientStream{}
+var (
+	_ grpc.ServerStream = &mockServerStream{}
+	_ grpc.ClientStream = &mockClientStream{}
+)

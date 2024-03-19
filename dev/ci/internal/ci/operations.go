@@ -1,11 +1,6 @@
 package ci
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/Masterminds/semver"
-
 	bk "github.com/sourcegraph/sourcegraph/dev/ci/internal/buildkite"
 	"github.com/sourcegraph/sourcegraph/dev/ci/internal/ci/changed"
 	"github.com/sourcegraph/sourcegraph/dev/ci/internal/ci/operations"
@@ -23,9 +18,6 @@ type CoreTestOperationsOptions struct {
 	CreateBundleSizeDiff bool // for addWebAppEnterpriseBuild
 
 	IsMainBranch bool
-
-	// AspectWorkflows is set to true when we generate steps as part of the Aspect Workflows pipeline
-	AspectWorkflows bool
 }
 
 // CoreTestOperations is a core set of tests that should be run in most CI cases. More
@@ -41,9 +33,11 @@ type CoreTestOperationsOptions struct {
 func CoreTestOperations(buildOpts bk.BuildOptions, diff changed.Diff, opts CoreTestOperationsOptions) *operations.Set {
 	// Base set
 	ops := operations.NewSet()
-
-	// Simple, fast-ish linter checks
-	ops.Append(BazelOperations(buildOpts, opts)...)
+	ops.Append(
+		bazelPrechecks(),
+		triggerBackCompatTest(buildOpts),
+		bazelGoModTidy(),
+	)
 	linterOps := operations.NewNamedSet("Linters and static analysis")
 	if targets := changed.GetLinterTargets(diff); len(targets) > 0 {
 		linterOps.Append(addSgLints(targets))
@@ -75,34 +69,4 @@ func addJetBrainsUnitTests(pipeline *bk.Pipeline) {
 // Adds a Buildkite pipeline "Wait".
 func wait(pipeline *bk.Pipeline) {
 	pipeline.AddWait()
-}
-
-func triggerReleaseBranchHealthchecks(minimumUpgradeableVersion string) operations.Operation {
-	return func(pipeline *bk.Pipeline) {
-		version := semver.MustParse(minimumUpgradeableVersion)
-
-		// HACK: we can't just subtract a single minor version once we roll over to 4.0,
-		// so hard-code the previous minor version.
-		previousMinorVersion := fmt.Sprintf("%d.%d", version.Major(), version.Minor()-1)
-		if version.Major() == 4 && version.Minor() == 0 {
-			previousMinorVersion = "3.43"
-		} else if version.Major() == 5 && version.Minor() == 0 {
-			previousMinorVersion = "4.5"
-		}
-
-		for _, branch := range []string{
-			// Most recent major.minor
-			fmt.Sprintf("%d.%d", version.Major(), version.Minor()),
-			previousMinorVersion,
-		} {
-			name := fmt.Sprintf(":stethoscope: Trigger %s release branch healthcheck build", branch)
-			pipeline.AddTrigger(name, "sourcegraph",
-				bk.Async(false),
-				bk.Build(bk.BuildOptions{
-					Branch:  branch,
-					Message: time.Now().Format(time.RFC1123) + " healthcheck build",
-				}),
-			)
-		}
-	}
 }

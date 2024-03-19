@@ -180,7 +180,7 @@ export function createValidationPipeline(
         combineLatest([
             // Validate immediately if the user has provided an initial input value
             concat(
-                initialValue !== undefined ? of<InputValidationEvent>({ value: initialValue, validate: true }) : EMPTY,
+                initialValue !== undefined ? of({ value: initialValue, validate: true }) : EMPTY,
                 inputValidationEvents
             ),
             inputReferences,

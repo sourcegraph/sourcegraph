@@ -1,6 +1,7 @@
 import React, { useState, type FunctionComponent, useCallback } from 'react'
 
 import classNames from 'classnames'
+import { lastValueFrom } from 'rxjs'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { gql, dataOrThrowErrors } from '@sourcegraph/http-client'
@@ -58,16 +59,18 @@ export const SetUserPrimaryEmailForm: FunctionComponent<React.PropsWithChildren<
 
             try {
                 dataOrThrowErrors(
-                    await requestGraphQL<SetUserEmailPrimaryResult, SetUserEmailPrimaryVariables>(
-                        gql`
-                            mutation SetUserEmailPrimary($user: ID!, $email: String!) {
-                                setUserEmailPrimary(user: $user, email: $email) {
-                                    alwaysNil
+                    await lastValueFrom(
+                        requestGraphQL<SetUserEmailPrimaryResult, SetUserEmailPrimaryVariables>(
+                            gql`
+                                mutation SetUserEmailPrimary($user: ID!, $email: String!) {
+                                    setUserEmailPrimary(user: $user, email: $email) {
+                                        alwaysNil
+                                    }
                                 }
-                            }
-                        `,
-                        { user: user.id, email: primaryEmail }
-                    ).toPromise()
+                            `,
+                            { user: user.id, email: primaryEmail }
+                        )
+                    )
                 )
 
                 eventLogger.log('UserEmailAddressSetAsPrimary')

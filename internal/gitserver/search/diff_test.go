@@ -86,7 +86,6 @@ func TestDiffSearch(t *testing.T) {
 
 	require.Equal(t, expectedFormatted, formatted)
 	require.Equal(t, expectedRanges, ranges)
-
 }
 
 func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
@@ -100,7 +99,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 			matchTree, err := ToMatchTree(query)
 			require.NoError(b, err)
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 				require.True(b, mergedResult.Satisfies())
 			}
@@ -111,7 +110,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 			matchTree, err := ToMatchTree(query)
 			require.NoError(b, err)
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 				require.True(b, mergedResult.Satisfies())
 			}
@@ -129,7 +128,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 				matchTree, err := ToMatchTree(query)
 				require.NoError(b, err)
 
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 					require.True(b, mergedResult.Satisfies())
 				}
@@ -140,7 +139,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 				matchTree, err := ToMatchTree(query)
 				require.NoError(b, err)
 
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 					require.True(b, mergedResult.Satisfies())
 				}
@@ -153,7 +152,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 				matchTree, err := ToMatchTree(query)
 				require.NoError(b, err)
 
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 					require.True(b, mergedResult.Satisfies())
 				}
@@ -164,7 +163,7 @@ func BenchmarkDiffSearchCaseInsensitiveOptimization(b *testing.B) {
 				matchTree, err := ToMatchTree(query)
 				require.NoError(b, err)
 
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					mergedResult, _, _ := matchTree.Match(&LazyCommit{diff: fileDiffs})
 					require.True(b, mergedResult.Satisfies())
 				}

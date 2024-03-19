@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/browser'
 import classNames from 'classnames'
-import { fromEvent } from 'rxjs'
+import { fromEvent, lastValueFrom } from 'rxjs'
 import { filter, map, mapTo, tap } from 'rxjs/operators'
 import type { Omit } from 'utility-types'
 
@@ -286,25 +286,25 @@ export const gitlabCodeHost = subtypeOf<CodeHost>()({
     ),
 
     prepareCodeHost: async requestGraphQL =>
-        requestGraphQL<ResolveRepoNameResult, ResolveRepoNameVariables>({
-            request: gql`
-                query ResolveRepoName($cloneURL: String!) {
-                    repository(cloneURL: $cloneURL) {
-                        name
+        lastValueFrom(
+            requestGraphQL<ResolveRepoNameResult, ResolveRepoNameVariables>({
+                request: gql`
+                    query ResolveRepoName($cloneURL: String!) {
+                        repository(cloneURL: $cloneURL) {
+                            name
+                        }
                     }
-                }
-            `,
-            variables: {
-                cloneURL: getGitlabRepoURL(),
-            },
-            mightContainPrivateInfo: true,
-        })
-            .pipe(
+                `,
+                variables: {
+                    cloneURL: getGitlabRepoURL(),
+                },
+                mightContainPrivateInfo: true,
+            }).pipe(
                 map(dataOrThrowErrors),
                 tap(({ repository }) => {
                     repoNameOnSourcegraph.next(repository?.name ?? '')
                 }),
                 mapTo(true)
             )
-            .toPromise(),
+        ),
 })

@@ -63,7 +63,7 @@ go_test(
         "//lib/errors",
         "//schema",
         "@com_github_coreos_go_oidc//:go-oidc",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_hexops_autogold_v2//:autogold",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",

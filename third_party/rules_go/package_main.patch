@@ -1,101 +1,13 @@
-diff --git a/go/private/actions/archive.bzl b/go/private/actions/archive.bzl
-index a4e737ee..16d545e0 100644
---- a/go/private/actions/archive.bzl
-+++ b/go/private/actions/archive.bzl
-@@ -102,6 +102,7 @@ def emit_archive(go, source = None, _recompile_suffix = "", recompile_internal_d
-             embedsrcs = source.embedsrcs,
-             importpath = importpath,
-             importmap = importmap,
-+            realimportmap = source.library.importmap,
-             archives = direct,
-             out_lib = out_lib,
-             out_export = out_export,
-@@ -126,6 +127,7 @@ def emit_archive(go, source = None, _recompile_suffix = "", recompile_internal_d
-             embedsrcs = source.embedsrcs,
-             importpath = importpath,
-             importmap = importmap,
-+            realimportmap = source.library.importmap,
-             archives = direct,
-             out_lib = out_lib,
-             out_export = out_export,
-diff --git a/go/private/actions/compilepkg.bzl b/go/private/actions/compilepkg.bzl
-index 48adb910..016a6a66 100644
---- a/go/private/actions/compilepkg.bzl
-+++ b/go/private/actions/compilepkg.bzl
-@@ -44,6 +44,7 @@ def emit_compilepkg(
-         embedsrcs = [],
-         importpath = "",
-         importmap = "",
-+        realimportmap = "",
-         archives = [],
-         cgo = False,
-         cgo_inputs = depset(),
-@@ -106,6 +107,7 @@ def emit_compilepkg(
-         args.add("-importpath", go.label.name)
-     if importmap:
-         args.add("-p", importmap)
-+        args.add("-rp", realimportmap)
-     args.add("-package_list", go.package_list)
-
-     args.add("-o", out_lib)
 diff --git a/go/tools/builders/compilepkg.go b/go/tools/builders/compilepkg.go
-index bcbdb642..f57062e8 100644
+index b909fa86..4a1fc5ba 100644
 --- a/go/tools/builders/compilepkg.go
 +++ b/go/tools/builders/compilepkg.go
-@@ -51,7 +51,7 @@ func compilePkg(args []string) error {
- 	goenv := envFlags(fs)
- 	var unfilteredSrcs, coverSrcs, embedSrcs, embedLookupDirs, embedRoots, recompileInternalDeps multiFlag
- 	var deps archiveMultiFlag
--	var importPath, packagePath, nogoPath, packageListPath, coverMode string
-+	var importPath, packagePath, realPackagePath, nogoPath, packageListPath, coverMode string
- 	var outPath, outFactsPath, cgoExportHPath string
- 	var testFilter string
- 	var gcFlags, asmFlags, cppFlags, cFlags, cxxFlags, objcFlags, objcxxFlags, ldFlags quoteMultiFlag
-@@ -65,6 +65,7 @@ func compilePkg(args []string) error {
- 	fs.Var(&deps, "arc", "Import path, package path, and file name of a direct dependency, separated by '='")
- 	fs.StringVar(&importPath, "importpath", "", "The import path of the package being compiled. Not passed to the compiler, but may be displayed in debug data.")
- 	fs.StringVar(&packagePath, "p", "", "The package path (importmap) of the package being compiled")
-+	fs.StringVar(&realPackagePath, "rp", "", "The REAL package path (importmap) of the package being compiled")
- 	fs.Var(&gcFlags, "gcflags", "Go compiler flags")
- 	fs.Var(&asmFlags, "asmflags", "Go assembler flags")
- 	fs.Var(&cppFlags, "cppflags", "C preprocessor flags")
-@@ -140,6 +141,7 @@ func compilePkg(args []string) error {
- 		goenv,
- 		importPath,
- 		packagePath,
-+		realPackagePath,
- 		srcs,
- 		deps,
- 		coverMode,
-@@ -171,6 +173,7 @@ func compileArchive(
- 	goenv *env,
- 	importPath string,
- 	packagePath string,
-+	realPackagePath string,
- 	srcs archiveSrcs,
- 	deps []archive,
- 	coverMode string,
-@@ -441,7 +444,7 @@ func compileArchive(
+@@ -453,7 +453,7 @@ func compileArchive(
  		ctx, cancel := context.WithCancel(context.Background())
  		nogoChan = make(chan error)
  		go func() {
--			nogoChan <- runNogo(ctx, workDir, nogoPath, goSrcsNogo, deps, packagePath, importcfgPath, outFactsPath)
-+			nogoChan <- runNogo(ctx, workDir, nogoPath, goSrcsNogo, deps, realPackagePath, importcfgPath, outFactsPath)
+-			nogoChan <- runNogo(ctx, workDir, nogoPath, goSrcsNogo, facts, packagePath, importcfgPath, outFactsPath)
++			nogoChan <- runNogo(ctx, workDir, nogoPath, goSrcsNogo, facts, importPath, importcfgPath, outFactsPath)
  		}()
  		defer func() {
  			if nogoChan != nil {
-diff --git a/go/tools/builders/nogo_main.go b/go/tools/builders/nogo_main.go
-index 17ff5314..2a6c98b2 100644
---- a/go/tools/builders/nogo_main.go
-+++ b/go/tools/builders/nogo_main.go
-@@ -78,6 +78,10 @@ func run(args []string) error {
- 	flags.Parse(args)
- 	srcs := flags.Args()
-
-+	if *packagePath == "main" {
-+		panic("packagePath='main' is invalid, expected full qualified package path")
-+	}
-+
- 	packageFile, importMap, err := readImportCfg(*importcfg)
- 	if err != nil {
- 		return fmt.Errorf("error parsing importcfg: %v", err)

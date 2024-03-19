@@ -8,17 +8,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/ci/internal/ci/operations"
 )
 
-// Run a Sonarcloud scanning step in Buildkite
-func sonarcloudScan() operations.Operation {
-	return func(pipeline *bk.Pipeline) {
-		pipeline.AddStep(
-			"Sonarcloud Scan",
-			bk.Cmd("dev/ci/sonarcloud-scan.sh"),
-		)
-	}
-
-}
-
 func semgrepScan() operations.Operation {
 	return func(pipeline *bk.Pipeline) {
 		pipeline.AddStep(
@@ -63,8 +52,6 @@ func trivyScanCandidateImage(app, tag string) operations.Operation {
 	return func(pipeline *bk.Pipeline) {
 		pipeline.AddStep(fmt.Sprintf(":trivy: :docker: :mag: Scan %s", app),
 			// These are the first images in the arrays we use to build images
-			bk.DependsOn(candidateImageStepKey("alpine-3.14")),
-			bk.DependsOn(candidateImageStepKey("batcheshelper")),
 			bk.DependsOn(dependsOnImage),
 			bk.Cmd(fmt.Sprintf("docker pull %s", image)),
 

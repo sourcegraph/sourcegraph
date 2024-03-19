@@ -11,7 +11,7 @@ import {
     MetaSelectorKind,
     type MetaPredicate,
 } from './decoratedToken'
-import { Pattern } from './token'
+import type { Pattern } from './token'
 
 const toRegexpHover = (token: MetaRegexp): string => {
     switch (token.kind) {

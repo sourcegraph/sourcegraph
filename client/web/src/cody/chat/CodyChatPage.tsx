@@ -16,6 +16,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { CodyLogo } from '@sourcegraph/cody-ui/dist/icons/CodyLogo'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Badge,
     Button,
@@ -51,10 +52,10 @@ import { CodyColorIcon } from './CodyPageIcon'
 
 import styles from './CodyChatPage.module.scss'
 
-interface CodyChatPageProps {
+interface CodyChatPageProps extends TelemetryV2Props {
     isSourcegraphDotCom: boolean
     authenticatedUser: AuthenticatedUser | null
-    context: Pick<SourcegraphContext, 'authProviders'>
+    context: Pick<SourcegraphContext, 'externalURL'>
 }
 
 const transcriptIdFromUrl = (pathname: string): string | undefined => {
@@ -92,6 +93,7 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
     authenticatedUser,
     context,
     isSourcegraphDotCom,
+    telemetryRecorder,
 }) => {
     const { pathname } = useLocation()
     const navigate = useNavigate()
@@ -103,6 +105,7 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
         userID: authenticatedUser?.id,
         onTranscriptHistoryLoad,
         autoLoadTranscriptFromHistory: false,
+        telemetryRecorder,
     })
     const {
         initializeNewChat,
@@ -118,7 +121,7 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
     const onCTADismiss = (): void => setIsCTADismissed(true)
 
     useEffect(() => {
-        logTranscriptEvent(EventName.CODY_CHAT_PAGE_VIEWED)
+        logTranscriptEvent(EventName.CODY_CHAT_PAGE_VIEWED, 'cody.chat', 'view')
     }, [logTranscriptEvent])
 
     const transcriptId = transcript?.id
@@ -152,6 +155,7 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
                 isSourcegraphDotCom={isSourcegraphDotCom}
                 authenticatedUser={authenticatedUser}
                 context={context}
+                telemetryRecorder={telemetryRecorder}
             />
         )
     }
@@ -288,7 +292,13 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
                                         'd-inline-flex align-items-center text-merged',
                                         styles.ctaLink
                                     )}
-                                    onClick={() => logTranscriptEvent(EventName.CODY_CHAT_GET_EDITOR_EXTENSION)}
+                                    onClick={() =>
+                                        logTranscriptEvent(
+                                            EventName.CODY_CHAT_GET_EDITOR_EXTENSION,
+                                            'cody.chat.getEditorExtensionCTA',
+                                            'click'
+                                        )
+                                    }
                                 >
                                     Get Cody in your editor
                                     <Icon svgPath={mdiChevronRight} aria-hidden={true} />
@@ -365,6 +375,7 @@ export const CodyChatPage: React.FunctionComponent<CodyChatPageProps> = ({
                             codyChatStore={codyChatStore}
                             isCodyChatPage={true}
                             authenticatedUser={authenticatedUser}
+                            telemetryRecorder={telemetryRecorder}
                         />
                     )}
                 </div>

@@ -18,35 +18,10 @@ const config: Meta = {
 
 export default config
 
-const context: Pick<SourcegraphContext, 'authProviders' | 'experimentalFeatures' | 'authMinPasswordLength'> = {
-    authProviders: [
-        {
-            clientID: '000',
-            serviceType: 'github',
-            displayName: 'GitHub.com',
-            isBuiltin: false,
-            authenticationURL: '/.auth/github/login?pc=https%3A%2F%2Fgithub.com%2F',
-            serviceID: 'https://github.com',
-        },
-        {
-            clientID: '001',
-            serviceType: 'gitlab',
-            displayName: 'GitLab.com',
-            isBuiltin: false,
-            authenticationURL: '/.auth/gitlab/login?pc=https%3A%2F%2Fgitlab.com%2F',
-            serviceID: 'https://gitlab.com',
-        },
-        {
-            clientID: '002',
-            serviceType: 'openidconnect',
-            displayName: 'Google',
-            isBuiltin: false,
-            authenticationURL: '/.auth/openidconnect/login?pc=google',
-            serviceID: 'https://gitlab.com',
-        },
-    ],
+const context: Pick<SourcegraphContext, 'externalURL' | 'experimentalFeatures' | 'authMinPasswordLength'> = {
     experimentalFeatures: {},
     authMinPasswordLength: 0,
+    externalURL: 'https://sourcegraph.test:3443',
 }
 
 export const Default: StoryFn = () => (

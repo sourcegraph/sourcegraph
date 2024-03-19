@@ -7,6 +7,17 @@ export interface ExampleQuery {
     patternType: SearchPatternType
 }
 
+export type CommunitySearchContextSpecs =
+    | 'backstage'
+    | 'chakraui'
+    | 'cncf'
+    | 'temporalio'
+    | 'o3de'
+    | 'stackstorm'
+    | 'kubernetes'
+    | 'stanford'
+    | 'julia'
+
 export interface CommunitySearchContextMetadata {
     /**
      * The title of the community search context. This is displayed on the search homepage, and is typically prose. E.g. Refactor python 2 to 3.
@@ -15,7 +26,7 @@ export interface CommunitySearchContextMetadata {
     /**
      * The name of the community search context, must match the community search context name as configured in settings. E.g. python2-to-3.
      */
-    spec: string
+    spec: CommunitySearchContextSpecs
     /**
      * The URL pathname for the community search context page.
      */

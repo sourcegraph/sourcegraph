@@ -11,8 +11,8 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@v2
       # Install the `buf` CLI
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-setup-action@517ee23296d5caf38df31c21945e6a54bbc8a89f # SECURITY: pin third-party action hashes
       # Run breaking change detection against the `main` branch
-      - uses: bufbuild/buf-breaking-action@v1
+      - uses: bufbuild/buf-breaking-action@a074e988ee34efcd4927079e79c611f428354c01 # SECURITY: pin third-party action hashes
         with:
           against: 'https://github.com/sourcegraph/sourcegraph.git#branch=main'

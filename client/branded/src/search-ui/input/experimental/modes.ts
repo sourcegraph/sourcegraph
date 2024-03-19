@@ -182,6 +182,21 @@ export function modeScope(extension: Extension, modes: (string | null)[]): Exten
 }
 
 /**
+ * Extension to listen to mode changes.
+ */
+export function onModeChange(
+    callback: (view: EditorView, mode: string | null, prevMode: string | null) => void
+): Extension {
+    return EditorView.updateListener.of(update => {
+        const selectedMode = getSelectedMode(update.state)
+        const prevSelectedMode = getSelectedMode(update.startState)
+        if (selectedMode !== prevSelectedMode) {
+            return callback(update.view, selectedMode?.name ?? null, prevSelectedMode?.name ?? null)
+        }
+    })
+}
+
+/**
  * React hook to integrate with the input mode extension. The returned extension has to be passed
  * to the CodeMirror instance when initialized. The hook works like `useState`: The first value
  * is the currently enabled mode (or `null` if no mode is enabled), the second value is a setter
@@ -194,16 +209,7 @@ export function useInputMode(): [
 ] {
     const [mode, set] = useState<string | null>(null)
 
-    const extension: Extension = useMemo(
-        () =>
-            EditorView.updateListener.of(update => {
-                const selectedMode = update.state.field(selectedModeField, false)?.selectedMode
-                if (selectedMode !== update.startState.field(selectedModeField, false)?.selectedMode) {
-                    set(selectedMode?.name ?? null)
-                }
-            }),
-        [set]
-    )
+    const extension: Extension = useMemo(() => onModeChange((_, mode) => set(mode)), [set])
 
     return [mode, setMode, extension]
 }

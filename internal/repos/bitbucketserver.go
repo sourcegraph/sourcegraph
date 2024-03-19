@@ -279,7 +279,7 @@ func (s *BitbucketServerSource) listAllRepos(ctx context.Context, results chan S
 		}
 
 		wg.Add(1)
-		go func(q string) {
+		go func() {
 			defer wg.Done()
 
 			next := &bitbucketserver.PageToken{Limit: 1000}
@@ -293,7 +293,7 @@ func (s *BitbucketServerSource) listAllRepos(ctx context.Context, results chan S
 				ch <- batch{repos: repos}
 				next = page
 			}
-		}(q)
+		}()
 	}
 
 	for _, q := range s.config.ProjectKeys {

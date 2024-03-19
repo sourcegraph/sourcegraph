@@ -4,15 +4,15 @@ import { mdiCodeBrackets, mdiFormatLetterCase, mdiRegex } from '@mdi/js'
 import classNames from 'classnames'
 
 import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
-import {
-    type CaseSensitivityProps,
-    type SearchPatternTypeMutationProps,
-    type SubmitSearchProps,
-    type SearchModeProps,
-    type SearchPatternTypeProps,
+import type {
+    CaseSensitivityProps,
+    SearchPatternTypeMutationProps,
+    SubmitSearchProps,
+    SearchModeProps,
+    SearchPatternTypeProps,
 } from '@sourcegraph/shared/src/search'
 import { findFilter, FilterKind } from '@sourcegraph/shared/src/search/query/query'
-import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
+import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { QueryInputToggle } from './QueryInputToggle'
 

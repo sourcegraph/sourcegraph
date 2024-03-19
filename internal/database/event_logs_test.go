@@ -141,7 +141,7 @@ func TestEventLogs_CountUsersWithSetting(t *testing.T) {
 	settingsStore := db.TemporarySettings()
 	eventLogsStore := &eventLogStore{Store: basestore.NewWithHandle(db.Handle())}
 
-	for i := 0; i < 24; i++ {
+	for i := range 24 {
 		user, err := usersStore.Create(ctx, NewUser{Username: fmt.Sprintf("u%d", i)})
 		if err != nil {
 			t.Fatal(err)
@@ -302,7 +302,7 @@ func TestEventLogs_UsersUsageCounts(t *testing.T) {
 	for _, day := range days {
 		for _, user := range users {
 			for _, name := range names {
-				for i := 0; i < 25; i++ {
+				for range 25 {
 					e := &Event{
 						UserID:    user,
 						Name:      name,
@@ -400,7 +400,7 @@ func TestEventLogs_SiteUsage(t *testing.T) {
 		for _, user := range data.users {
 			for _, name := range data.names {
 				for _, source := range data.sources {
-					for i := 0; i < 5; i++ {
+					for range 5 {
 						e := &Event{
 							UserID: user,
 							Name:   name,
@@ -528,7 +528,7 @@ func TestEventLogs_SiteUsage_ExcludeSourcegraphAdmins(t *testing.T) {
 		for _, userID := range data.userIDs {
 			for _, name := range data.names {
 				for _, source := range data.sources {
-					for i := 0; i < 5; i++ {
+					for range 5 {
 						e := &Event{
 							UserID: userID,
 							Name:   name,
@@ -844,7 +844,7 @@ func TestEventLogs_CodeIntelligenceSettingsPageViewCounts(t *testing.T) {
 
 	for _, name := range names {
 		for _, day := range days {
-			for i := 0; i < 25; i++ {
+			for i := range 25 {
 				e := &Event{
 					UserID:   1,
 					Name:     name,
@@ -909,7 +909,7 @@ func TestEventLogs_AggregatedCodeIntelEvents(t *testing.T) {
 	for _, user := range users {
 		for _, name := range names {
 			for _, day := range days {
-				for i := 0; i < 25; i++ {
+				for i := range 25 {
 					e := &Event{
 						UserID:   user,
 						Name:     name,
@@ -973,7 +973,7 @@ func TestEventLogs_AggregatedSparseCodeIntelEvents(t *testing.T) {
 	// time that falls too near the edge of a week.
 	now := time.Unix(1589581800, 0).UTC()
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		e := &Event{
 			UserID:    1,
 			Name:      "codeintel.searchReferences.xrepo",
@@ -1049,7 +1049,7 @@ func TestEventLogs_AggregatedCodeIntelInvestigationEvents(t *testing.T) {
 	for _, user := range users {
 		for _, name := range names {
 			for _, day := range days {
-				for i := 0; i < 25; i++ {
+				for range 25 {
 					e := &Event{
 						UserID: user,
 						Name:   name,
@@ -1105,7 +1105,7 @@ func TestEventLogs_AggregatedSparseSearchEvents(t *testing.T) {
 	// time that falls too near the edge of a week.
 	now := time.Unix(1589581800, 0).UTC()
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		e := &Event{
 			UserID: 1,
 			Name:   "search.latencies.structural",
@@ -1187,7 +1187,7 @@ func TestEventLogs_AggregatedSearchEvents(t *testing.T) {
 		for _, name := range names {
 			for _, duration := range durations {
 				for _, day := range days {
-					for i := 0; i < 25; i++ {
+					for range 25 {
 						durationOffset++
 
 						e := &Event{
@@ -1362,7 +1362,7 @@ func TestEventLogs_AggregatedCodyUsage(t *testing.T) {
 	// add some Cody events
 	for _, day := range days {
 		for _, name := range codyNonProductEventNames {
-			for i := 0; i < 15; i++ {
+			for range 15 {
 				e := &Event{
 					UserID: users[0],
 					Name:   name,
@@ -1380,7 +1380,7 @@ func TestEventLogs_AggregatedCodyUsage(t *testing.T) {
 			}
 		}
 		for _, name := range codyProductEventNames {
-			for i := 0; i < 15; i++ {
+			for range 15 {
 				e := &Event{
 					UserID: users[1],
 					Name:   name,

@@ -16,7 +16,7 @@
 </script>
 
 <script lang="ts">
-    import { addMinutes, format, formatDistance, formatDistanceStrict } from 'date-fns/esm'
+    import { addMinutes, format, formatDistance, formatDistanceStrict } from 'date-fns'
     import { currentDate } from './stores'
     import Tooltip from './Tooltip.svelte'
 

@@ -86,9 +86,7 @@ func regexSearch(
 	}
 	defer cancel()
 
-	var (
-		files = zf.Files
-	)
+	files := zf.Files
 
 	var (
 		lastFileIdx   = atomic.NewInt32(-1)
@@ -108,7 +106,7 @@ func regexSearch(
 	defer func() { cancel(); <-done }()
 
 	// Start workers. They read from files and write to matches.
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		l := fileLoader{zf: zf, isCaseSensitive: isCaseSensitive}
 		var f *srcFile
 

@@ -1,112 +1,90 @@
 <script lang="ts">
+    import { mdiClose } from '@mdi/js'
+
     import { page } from '$app/stores'
     import Icon from '$lib/Icon.svelte'
-    import type { SidebarFilter } from '$lib/search/utils'
-    import { updateFilter } from '$lib/shared'
-    import Tooltip from '$lib/Tooltip.svelte'
-    import { Badge, Button } from '$lib/wildcard'
-    import { mdiClose } from '@mdi/js'
-    import { pluralize } from '$lib/common'
-    import { USE_CLIENT_CACHE_QUERY_PARAMETER } from '$lib/search/constants'
+    import { Button } from '$lib/wildcard'
 
-    export let items: SidebarFilter[]
+    import CountBadge from './CountBadge.svelte'
+    import { updateFilterInURL, type SectionItem } from './index'
+
+    export let items: SectionItem[]
     export let title: string
-    export let queryFilters: string
-    export let showFilter: boolean = false
     export let filterPlaceholder: string = ''
     export let showAll: boolean = false
-    export let preprocessLabel: (label: string) => string = label => label
-
-    function generateURL(filter: SidebarFilter, remove: boolean) {
-        const url = new URL($page.url)
-        let filters = queryFilters
-        if (remove) {
-            filters = filters.replace(filter.value, '').trim()
-        } else {
-            try {
-                const separator = filter.value.indexOf(':')
-                const key = filter.value.slice(0, separator)
-                const value = filter.value.slice(separator + 1)
-                filters = updateFilter(queryFilters, key, value)
-            } catch {
-                filters = filter.value
-            }
-        }
-        if (filters) {
-            url.searchParams.set('filters', filters)
-        } else {
-            url.searchParams.delete('filters')
-        }
-        url.searchParams.set(USE_CLIENT_CACHE_QUERY_PARAMETER, '') // Enforce use of client-side caching
-        return url.toString()
-    }
 
     let filterText = ''
     $: processedFilterText = filterText.trim().toLowerCase()
-    $: filteredItems =
-        showFilter && processedFilterText
-            ? items.filter(item => preprocessLabel(item.label).toLowerCase().includes(processedFilterText))
-            : items
-    $: limitedItems = showAll ? filteredItems : filteredItems.slice(0, 5)
+    $: filteredItems = processedFilterText
+        ? items.filter(item => item.label.toLowerCase().includes(processedFilterText))
+        : items
+    let filterInputRef: HTMLInputElement
+
+    let showMore = false
+    $: showCount = showAll ? items.length : showMore ? 10 : 5
+    $: limitedItems = filteredItems.slice(0, showCount)
 </script>
 
-<article>
-    <header><h4>{title}</h4></header>
-    {#if showFilter && items.length > 5}
-        <input bind:value={filterText} placeholder={filterPlaceholder} />
-    {/if}
-    <ul>
-        {#each limitedItems as item}
-            {@const selected = queryFilters.includes(item.value)}
-            <li>
-                <a href={generateURL(item, selected)} class:selected>
-                    <span class="label">
-                        <slot name="label" label={item.label} value={item.value}>
-                            {item.label}
-                        </slot>
-                    </span>
-                    {#if item.count !== undefined}
-                        <span class="count">
-                            {#if item.exhaustive}
-                                <Badge variant="secondary">{item.count}</Badge>
-                            {:else}
-                                <Tooltip
-                                    tooltip="At least {item.count} {pluralize('result', item.count)} match this filter."
-                                >
-                                    <Badge variant="secondary">{item.count}+</Badge>
-                                </Tooltip>
-                            {/if}
+{#if items.length > 0}
+    <article>
+        <header><h4>{title}</h4></header>
+        {#if items.length > showCount}
+            <input bind:this={filterInputRef} bind:value={filterText} placeholder={filterPlaceholder} />
+        {/if}
+        <ul>
+            {#each limitedItems as item}
+                <li>
+                    <a
+                        href={updateFilterInURL($page.url, item, item.selected).toString()}
+                        class:selected={item.selected}
+                    >
+                        <span class="label">
+                            <slot name="label" label={item.label} value={item.value}>
+                                {item.label}
+                            </slot>
                         </span>
-                    {/if}
-                    {#if selected}
-                        <span class="close">
-                            <Icon svgPath={mdiClose} inline />
-                        </span>
-                    {/if}
-                </a>
-            </li>
-        {/each}
-    </ul>
-    {#if limitedItems.length < filteredItems.length}
-        <footer>
-            <Button variant="link" on:click={() => (showAll = true)}>
-                Show all ({filteredItems.length})
-            </Button>
-        </footer>
-    {:else if limitedItems.length > 5}
-        <footer>
-            <Button variant="link" on:click={() => (showAll = false)}>Show less</Button>
-        </footer>
-    {/if}
-</article>
+                        <CountBadge count={item.count} exhaustive={item.exhaustive} />
+                        {#if item.selected}
+                            <span class="close">
+                                <Icon svgPath={mdiClose} inline />
+                            </span>
+                        {/if}
+                    </a>
+                </li>
+            {/each}
+        </ul>
+        {#if filteredItems.length === 0}
+            <small class="filter-message">
+                <div class="header"><strong>No matches in search results.</strong></div>
+                Try expanding your search using the
+                <Button variant="link" display="inline" on:click={() => filterInputRef.focus()}>search bar</Button>
+                above.
+            </small>
+        {:else if showMore}
+            {#if filteredItems.length > limitedItems.length}
+                <small class="filter-message">
+                    {filteredItems.length - limitedItems.length} not shown. Use
+                    <Button variant="link" display="inline" on:click={() => filterInputRef.focus()}>search</Button>
+                    to see more.
+                </small>
+            {/if}
+            <footer class="show-more">
+                <Button variant="link" on:click={() => (showMore = false)}>Show less</Button>
+            </footer>
+        {:else if filteredItems.length > limitedItems.length}
+            <footer class="show-more">
+                <Button variant="link" on:click={() => (showMore = true)}>Show more</Button>
+            </footer>
+        {/if}
+    </article>
+{/if}
 
 <style lang="scss">
     article {
-        padding-bottom: 1rem;
-    }
-
-    h4 {
-        white-space: nowrap;
+        padding: 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     input {
@@ -122,16 +100,34 @@
         background-clip: padding-box;
         border: var(--input-border-width) solid var(--input-border-color);
         border-radius: var(--border-radius);
-        margin-bottom: 0.5rem;
     }
 
     ul {
         margin: 0;
-        padding: 0.125rem;
+        padding: 0;
         list-style: none;
     }
 
-    footer {
+    .filter-message {
+        background-color: var(--secondary-2);
+        color: var(--text-muted);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+
+        .header {
+            margin-bottom: 0.25rem;
+        }
+        :global(button) {
+            padding: 0;
+            text-align: inherit;
+            line-height: inherit;
+            font-size: inherit;
+            font-style: inherit;
+            vertical-align: inherit;
+        }
+    }
+
+    .show-more {
         text-align: center;
     }
 
@@ -147,7 +143,7 @@
         white-space: nowrap;
         gap: 0.25rem;
 
-        padding: 0.25rem 0.5rem;
+        padding: 0.25rem 0.25rem 0.25rem 0.5rem;
         margin: 0;
         font-weight: 400;
 
@@ -158,7 +154,7 @@
         }
 
         &:hover {
-            background-color: var(--secondary-4);
+            background-color: var(--secondary-2);
         }
 
         &.selected {
@@ -168,7 +164,6 @@
         }
 
         .close {
-            margin-left: 0.25rem;
             flex-shrink: 0;
         }
     }

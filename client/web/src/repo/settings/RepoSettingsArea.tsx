@@ -7,7 +7,7 @@ import { Routes, Route } from 'react-router-dom'
 import { of } from 'rxjs'
 import { catchError } from 'rxjs/operators'
 
-import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
+import { asError, isErrorLike } from '@sourcegraph/common'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useObservable, ErrorMessage } from '@sourcegraph/wildcard'
@@ -46,10 +46,7 @@ export const RepoSettingsArea: React.FunctionComponent<React.PropsWithChildren<P
 }) => {
     const repoName = props.repoName
     const repoOrError = useObservable(
-        useMemo(
-            () => fetchSettingsAreaRepository(repoName).pipe(catchError(error => of<ErrorLike>(asError(error)))),
-            [repoName]
-        )
+        useMemo(() => fetchSettingsAreaRepository(repoName).pipe(catchError(error => of(asError(error)))), [repoName])
     )
 
     useBreadcrumb(useMemo(() => ({ key: 'settings', element: 'Settings' }), []))

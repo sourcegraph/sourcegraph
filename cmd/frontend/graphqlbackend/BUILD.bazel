@@ -465,6 +465,7 @@ go_test(
     # graphqlbackend_test.go opens itself during its test, so we need to make it available.
     data = ["graphqlbackend_test.go"],
     embed = [":graphqlbackend"],
+    shard_count = 2,
     tags = [
         # Test requires localhost database
         "requires-network",
@@ -486,6 +487,7 @@ go_test(
         "//internal/binary",
         "//internal/codeintel",
         "//internal/conf",
+        "//internal/conf/conftypes",
         "//internal/database",
         "//internal/database/basestore",
         "//internal/database/dbmocks",
@@ -537,8 +539,8 @@ go_test(
         "//lib/pointers",
         "//schema",
         "@com_github_davecgh_go_spew//spew",
-        "@com_github_derision_test_go_mockgen//testutil/assert",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/assert",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_go_enry_go_enry_v2//:go-enry",
         "@com_github_gofrs_uuid//:uuid",
         "@com_github_golang_jwt_jwt_v4//:jwt",

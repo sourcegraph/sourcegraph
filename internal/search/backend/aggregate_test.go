@@ -32,17 +32,19 @@ func TestFlushCollectSender(t *testing.T) {
 			repoList := make([]*zoekt.RepoListEntry, 3)
 			results := make([]*zoekt.SearchResult, 3)
 
-			for i := 0; i < len(results); i++ {
+			for i := range len(results) {
 				repoID := 100*endpointID + i
 				repoName := strconv.Itoa(repoID)
 
 				results[i] = &zoekt.SearchResult{
-					Files: []zoekt.FileMatch{{
-						Score:              float64(repoID),
-						RepositoryPriority: float64(repoID),
-						Repository:         repoName,
+					Files: []zoekt.FileMatch{
+						{
+							Score:              float64(repoID),
+							RepositoryPriority: float64(repoID),
+							Repository:         repoName,
+						},
 					},
-					}}
+				}
 
 				repoList[i] = &zoekt.RepoListEntry{
 					Repository: zoekt.Repository{
@@ -62,7 +64,7 @@ func TestFlushCollectSender(t *testing.T) {
 
 	// Start up background goroutines which continuously hit the searcher
 	// methods to ensure we are safe under concurrency.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		cleanup := backgroundSearch(searcher)
 		defer cleanup(t)
 	}
@@ -126,14 +128,17 @@ func TestFlushCollectSenderMaxSize(t *testing.T) {
 				Repository: zoekt.Repository{
 					Name: repoName,
 					ID:   uint32(repoID),
-				}}}
-			results := []*zoekt.SearchResult{{
-				Files: []zoekt.FileMatch{{
-					Score:              float64(repoID),
-					RepositoryPriority: float64(repoID),
-					Repository:         repoName,
 				},
-				}}}
+			}}
+			results := []*zoekt.SearchResult{{
+				Files: []zoekt.FileMatch{
+					{
+						Score:              float64(repoID),
+						RepositoryPriority: float64(repoID),
+						Repository:         repoName,
+					},
+				},
+			}}
 
 			return &FakeStreamer{
 				Results: results,

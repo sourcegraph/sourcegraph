@@ -81,7 +81,7 @@ func testMigrations(t *testing.T, name string, schema *schemas.Schema) {
 		// to re-run them on the way back up.
 
 		var target int
-		for offset := 0; offset < len(all); offset++ {
+		for offset := range len(all) {
 			// This is the last definition _or_ the next migration is idempotent
 			if offset+1 >= len(all) || !all[offset+1].NonIdempotent {
 				target = all[offset].ID

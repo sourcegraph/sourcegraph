@@ -24,7 +24,7 @@ func testStoreSiteCredentials(t *testing.T, ctx context.Context, s *Store, clock
 	}
 
 	t.Run("Create", func(t *testing.T) {
-		for i := 0; i < cap(credentials); i++ {
+		for i := range cap(credentials) {
 			cred := &btypes.SiteCredential{
 				ExternalServiceType: externalServiceTypes[i],
 				ExternalServiceID:   "https://someurl.test",

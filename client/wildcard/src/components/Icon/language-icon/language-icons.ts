@@ -1,4 +1,4 @@
-import { ComponentType } from 'react'
+import type { ComponentType } from 'react'
 
 // TODO(id: md-icons-and-react-icons)
 //

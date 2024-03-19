@@ -406,7 +406,7 @@ type IndexSteps {
     index: IndexStep!
 
     """
-    Execution log entry related to uploading the dump produced by the indexing step.
+    Execution log entry related to uploading the index produced by the indexing step.
     This field be missing if the upload step had not been executed.
     """
     upload: ExecutionLogEntry

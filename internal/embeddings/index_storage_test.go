@@ -243,7 +243,7 @@ func BenchmarkRepoEmbeddingIndexUpload(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		err := UploadIndex(ctx, uploadStore, "index", index)
 		if err != nil {
 			b.Fatal(err)
@@ -265,7 +265,7 @@ func BenchmarkCustomRepoEmbeddingIndexUpload(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		err := UploadRepoEmbeddingIndex(ctx, uploadStore, "index", index)
 		if err != nil {
 			b.Fatal(err)
@@ -291,7 +291,7 @@ func BenchmarkCustomRepoEmbeddingIndexDownload(b *testing.B) {
 
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := downloadRepoEmbeddingIndex(ctx, uploadStore, "index")
 		if err != nil {
 			b.Fatal(err)

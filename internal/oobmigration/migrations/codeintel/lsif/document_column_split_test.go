@@ -72,7 +72,7 @@ func TestDocumentColumnSplitMigrator(t *testing.T) {
 	hovers := make(map[ID]string, n)
 	diagnostics := make([]DiagnosticData, 0, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		expectedCounts = append(expectedCounts, i+1)
 		hovers[ID(strconv.Itoa(i))] = fmt.Sprintf("h%d", i)
 		diagnostics = append(diagnostics, DiagnosticData{Code: fmt.Sprintf("c%d", i)})

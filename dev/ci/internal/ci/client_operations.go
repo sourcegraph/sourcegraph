@@ -65,33 +65,33 @@ func recordBrowserExtensionIntegrationTests(pipeline *bk.Pipeline) {
 
 func clientChromaticTests(opts CoreTestOperationsOptions) operations.Operation {
 	return func(pipeline *bk.Pipeline) {
-		// stepOpts := []bk.StepOpt{
-		// 	withPnpmCache(),
-		// 	bk.AutomaticRetry(3),
-		// 	bk.Cmd("./dev/ci/pnpm-install-with-retry.sh"),
-		// 	bk.Cmd("pnpm run generate"),
-		// 	bk.Env("MINIFY", "1"),
-		// }
+		stepOpts := []bk.StepOpt{
+			withPnpmCache(),
+			bk.AutomaticRetry(3),
+			bk.Cmd("./dev/ci/pnpm-install-with-retry.sh"),
+			bk.Cmd("pnpm run generate"),
+			bk.Env("MINIFY", "1"),
+		}
+
+		// Upload storybook to Chromatic
 		//
-		// // Upload storybook to Chromatic
-		// //
-		// // We run chromatic through `run-chromatic` because the script detects whether a build is being retried
-		// // and then adds the flag `--force-rebuild`. We need to do this because Chromatic fails when running on
-		// // the same commit.
-		// chromaticCommand := "./dev/ci/run-chromatic.sh --exit-zero-on-changes --exit-once-uploaded"
-		// if opts.ChromaticShouldAutoAccept {
-		// 	// have to specify a value. Value can either be a branch glob or a boolean
-		// 	// see https://www.chromatic.com/docs/cli/
-		// 	chromaticCommand += " --auto-accept-changes true"
-		// } else {
-		// 	// Unless we plan on automatically accepting these changes, we only run this
-		// 	// step on ready-for-review pull requests.
-		// 	stepOpts = append(stepOpts, bk.IfReadyForReview(opts.ForceReadyForReview))
-		// 	chromaticCommand += " | ./dev/ci/post-chromatic.sh"
-		// }
-		//
-		// pipeline.AddStep(":chromatic: Upload Storybook to Chromatic",
-		// 	append(stepOpts, bk.Cmd(chromaticCommand))...)
+		// We run chromatic through `run-chromatic` because the script detects whether a build is being retried
+		// and then adds the flag `--force-rebuild`. We need to do this because Chromatic fails when running on
+		// the same commit.
+		chromaticCommand := "./dev/ci/run-chromatic.sh --exit-zero-on-changes --exit-once-uploaded"
+		if opts.ChromaticShouldAutoAccept {
+			// have to specify a value. Value can either be a branch glob or a boolean
+			// see https://www.chromatic.com/docs/cli/
+			chromaticCommand += " --auto-accept-changes true"
+		} else {
+			// Unless we plan on automatically accepting these changes, we only run this
+			// step on ready-for-review pull requests.
+			stepOpts = append(stepOpts, bk.IfReadyForReview(opts.ForceReadyForReview))
+			chromaticCommand += " | ./dev/ci/post-chromatic.sh"
+		}
+
+		pipeline.AddStep(":chromatic: Upload Storybook to Chromatic",
+			append(stepOpts, bk.Cmd(chromaticCommand))...)
 	}
 }
 

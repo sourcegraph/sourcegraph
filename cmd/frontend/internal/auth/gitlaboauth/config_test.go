@@ -331,11 +331,7 @@ func TestParseConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			old := dotcom.SourcegraphDotComMode()
-			dotcom.MockSourcegraphDotComMode(tt.dotcom)
-			t.Cleanup(func() {
-				dotcom.MockSourcegraphDotComMode(old)
-			})
+			dotcom.MockSourcegraphDotComMode(t, tt.dotcom)
 
 			gotProviders, gotProblems := parseConfig(logtest.Scoped(t), tt.args.cfg, db)
 			gotConfigs := make([]oauth2.Config, len(gotProviders))

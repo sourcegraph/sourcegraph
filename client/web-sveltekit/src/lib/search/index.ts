@@ -1,21 +1,23 @@
 import { KeywordKind, scanSearchQuery } from '$lib/shared'
 import { parseSearchURL, type ParsedSearchURL } from '$lib/web'
 
+import { filtersFromParams, type URLQueryFilter } from './dynamicFilters'
+
 export interface ExtendedParsedSearchURL extends ParsedSearchURL {
-    filters: string
+    filters: URLQueryFilter[]
     /**
      * Original query + filters.
      */
     filteredQuery: string | undefined
 }
 
-export function parseExtendedSearchURL(search: string): ExtendedParsedSearchURL {
-    const parsedQuery = parseSearchURL(search)
-    const filters = parseSearchFilters(search)
+export function parseExtendedSearchURL(url: URL): ExtendedParsedSearchURL {
+    const parsedQuery = parseSearchURL(url.search)
+    const filters = filtersFromParams(url.searchParams)
 
     let filteredQuery = parsedQuery.query
 
-    if (filteredQuery && filters) {
+    if (filteredQuery && filters.length > 0) {
         // We need to wrap the query in parenthesis if it contains AND or OR operators to avoid
         // precedence issues.
         const result = scanSearchQuery(filteredQuery)
@@ -29,14 +31,9 @@ export function parseExtendedSearchURL(search: string): ExtendedParsedSearchURL 
             ) {
                 filteredQuery = `(${filteredQuery})`
             }
-            filteredQuery += ' ' + filters
+            filteredQuery += ' ' + filters.map(filter => filter.value).join(' ')
         }
     }
 
     return { ...parsedQuery, filters, filteredQuery }
-}
-
-function parseSearchFilters(search: string): string {
-    const params = new URLSearchParams(search)
-    return params.get('filters') ?? ''
 }

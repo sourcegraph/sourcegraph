@@ -36,13 +36,13 @@ func TestDependencyIndexingSchedulerHandler(t *testing.T) {
 	mockUploadsSvc.GetUploadByIDFunc.SetDefaultReturn(shared.Upload{ID: 42, RepositoryID: 50, Indexer: "lsif-go"}, true, nil)
 	mockUploadsSvc.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
 
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v2.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v3.2.2"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v2.2.1"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v1.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/banana/world", Version: "v0.0.1"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v2.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v3.2.2"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v2.2.1"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v1.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/banana/world", Version: "v0.0.1"}}, true, nil)
 	mockScanner.NextFunc.SetDefaultReturn(shared.PackageReference{}, false, nil)
 
 	mockGitserverReposStore := NewMockGitserverRepoStore()
@@ -60,7 +60,7 @@ func TestDependencyIndexingSchedulerHandler(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,
@@ -135,13 +135,13 @@ func TestDependencyIndexingSchedulerHandlerCustomer(t *testing.T) {
 	mockUploadsSvc.GetUploadByIDFunc.SetDefaultReturn(shared.Upload{ID: 42, RepositoryID: 50, Indexer: "lsif-go"}, true, nil)
 	mockUploadsSvc.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
 
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v2.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v3.2.2"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v2.2.1"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v1.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/banana/world", Version: "v1.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v2.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v3.2.2"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v2.2.1"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v1.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/banana/world", Version: "v1.2.0"}}, true, nil)
 	mockScanner.NextFunc.SetDefaultReturn(shared.PackageReference{}, false, nil)
 
 	// simulate github.com/banana/world not being known to the instance
@@ -161,7 +161,7 @@ func TestDependencyIndexingSchedulerHandlerCustomer(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(false)
+	dotcom.MockSourcegraphDotComMode(t, false)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,
@@ -239,8 +239,8 @@ func TestDependencyIndexingSchedulerHandlerRequeueNotCloned(t *testing.T) {
 	mockUploadsSvc.GetUploadByIDFunc.SetDefaultReturn(shared.Upload{ID: 42, RepositoryID: 50, Indexer: "lsif-go"}, true, nil)
 	mockUploadsSvc.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
 
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
 	mockScanner.NextFunc.SetDefaultReturn(shared.PackageReference{}, false, nil)
 
 	mockGitserverReposStore := NewMockGitserverRepoStore()
@@ -255,7 +255,7 @@ func TestDependencyIndexingSchedulerHandlerRequeueNotCloned(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,
@@ -301,8 +301,8 @@ func TestDependencyIndexingSchedulerHandlerSkipNonExistant(t *testing.T) {
 	mockUploadsSvc.GetUploadByIDFunc.SetDefaultReturn(shared.Upload{ID: 42, RepositoryID: 50, Indexer: "lsif-go"}, true, nil)
 	mockUploadsSvc.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
 
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
-	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{DumpID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/sample/text", Version: "v3.2.0"}}, true, nil)
+	mockScanner.NextFunc.PushReturn(shared.PackageReference{Package: shared.Package{UploadID: 42, Scheme: "gomod", Name: "https://github.com/cheese/burger", Version: "v4.2.3"}}, true, nil)
 	mockScanner.NextFunc.SetDefaultReturn(shared.PackageReference{}, false, nil)
 
 	mockGitserverReposStore := NewMockGitserverRepoStore()
@@ -317,7 +317,7 @@ func TestDependencyIndexingSchedulerHandlerSkipNonExistant(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,
@@ -364,7 +364,7 @@ func TestDependencyIndexingSchedulerHandlerShouldSkipRepository(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,
@@ -400,10 +400,10 @@ func TestDependencyIndexingSchedulerHandlerNoExtsvc(t *testing.T) {
 	mockUploadsSvc.ReferencesForUploadFunc.SetDefaultReturn(mockScanner, nil)
 	mockScanner.NextFunc.PushReturn(shared.PackageReference{
 		Package: shared.Package{
-			DumpID:  42,
-			Scheme:  dependencies.JVMPackagesScheme,
-			Name:    "banana",
-			Version: "v1.2.3",
+			UploadID: 42,
+			Scheme:   dependencies.JVMPackagesScheme,
+			Name:     "banana",
+			Version:  "v1.2.3",
 		},
 	}, true, nil)
 	mockGitserverReposStore.GetByNamesFunc.PushReturn(map[api.RepoName]*types.GitserverRepo{
@@ -412,7 +412,7 @@ func TestDependencyIndexingSchedulerHandlerNoExtsvc(t *testing.T) {
 
 	indexEnqueuer := NewMockIndexEnqueuer()
 
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	handler := &dependencyIndexingSchedulerHandler{
 		uploadsSvc:         mockUploadsSvc,

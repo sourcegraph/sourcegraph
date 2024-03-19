@@ -34,14 +34,20 @@ fragment BlobPage_Blob on GitBlob {
     languages
 }
 
-query BlobSyntaxHighlightQuery($repoName: String!, $revspec: String!, $path: String!, $disableTimeout: Boolean!) {
+query BlobSyntaxHighlightQuery(
+    $repoName: String!
+    $revspec: String!
+    $path: String!
+    $disableTimeout: Boolean!
+    $format: HighlightResponseFormat = JSON_SCIP
+) {
     repository(name: $repoName) {
         id
         commit(rev: $revspec) {
             id
             blob(path: $path) {
                 canonicalURL
-                highlight(disableTimeout: $disableTimeout) {
+                highlight(disableTimeout: $disableTimeout, format: $format) {
                     aborted
                     lsif
                 }

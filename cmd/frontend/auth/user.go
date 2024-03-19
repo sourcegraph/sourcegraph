@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
-	"github.com/sourcegraph/sourcegraph/internal/security"
 	"github.com/sourcegraph/sourcegraph/internal/telemetry"
 	"github.com/sourcegraph/sourcegraph/internal/telemetry/teestore"
 	"github.com/sourcegraph/sourcegraph/internal/telemetry/telemetryrecorder"
@@ -35,53 +33,9 @@ type GetAndSaveUserOp struct {
 	ExternalAccountData extsvc.AccountData
 	CreateIfNotExist    bool
 	LookUpByUsername    bool
-}
-
-// Checks if the user's email defined in the GetAndSaveUserOp is banned.
-// This is done by first checking a list of banned email domains.
-// If the domain is not banned, we then check if the email is a Google account
-// that's hosted on a non-gmail.com domain. Then, if too many signups have
-// happend recently, we prevent the signup.
-func checkIfEmailDomainIsBanned(ctx context.Context, recorder *telemetry.BestEffortEventRecorder, op GetAndSaveUserOp, acct *extsvc.Account) (string, error) {
-	domain, _ := security.ParseEmailDomain(op.UserProps.Email)
-
-	banned, err := security.IsEmailBanned(op.UserProps.Email)
-	if err != nil {
-		return "could not determine if email domain is banned", err
-	}
-
-	if banned {
-		recorder.Record(ctx, telemetry.FeaturesSignUpBlockedBannedDomain, telemetry.ActionFailed, &telemetry.EventParameters{
-			PrivateMetadata: map[string]any{
-				"serviceType": acct.AccountSpec.ServiceType,
-				"serviceId":   acct.AccountSpec.ServiceID,
-				"emailDomain": domain,
-			},
-		})
-
-		return "this email address is not allowed to register", errors.New("email domain banned")
-	}
-
-	if acct.AccountSpec.ServiceID == "https://accounts.google.com" && domain != "gmail.com" {
-		banned, err := security.IsEmailBlockedDueToTooManySignups(op.UserProps.Email)
-		if err != nil {
-			return "could not determine if email domain is banned", err
-		}
-
-		if banned {
-			recorder.Record(ctx, telemetry.FeaturesSignUpBlockedTooManySignups, telemetry.ActionFailed, &telemetry.EventParameters{
-				PrivateMetadata: map[string]any{
-					"serviceType": acct.AccountSpec.ServiceType,
-					"serviceId":   acct.AccountSpec.ServiceID,
-					"emailDomain": domain,
-				},
-			})
-
-			return "There seem to be too many signups occurring today. Please try again at a later time.", errors.New("Email not allowed to register due to too many signups")
-		}
-	}
-
-	return "", nil
+	// SingleIdentityPerUser indicates that the provider should only allow to
+	// connect a single external identity per user.
+	SingleIdentityPerUser bool
 }
 
 // GetAndSaveUser accepts authentication information associated with a given user, validates and applies
@@ -176,13 +130,6 @@ func GetAndSaveUser(ctx context.Context, db database.DB, op GetAndSaveUserOp) (n
 
 		act := &sgactor.Actor{
 			SourcegraphOperator: acct.AccountSpec.ServiceType == auth.SourcegraphOperatorProviderType,
-		}
-
-		if dotcom.SourcegraphDotComMode() {
-			reason, err := checkIfEmailDomainIsBanned(ctx, recorder, op, acct)
-			if err != nil {
-				return 0, false, false, reason, err
-			}
 		}
 
 		// Fourth and finally, create a new user account and return it.
@@ -306,6 +253,42 @@ func GetAndSaveUser(ctx context.Context, db database.DB, op GetAndSaveUserOp) (n
 			)
 		}
 		return newUserSaved, 0, safeErrMsg, err
+	}
+
+	if op.SingleIdentityPerUser && !extAcctSaved {
+		// If we're here, the user has already signed up before this request,
+		// but has no entry for this exact accountID in the user external accounts
+		// table yet.
+		// In single identity mode, we want to attach a new external account
+		// only if no other identity of the same provider for the same user already
+		// exists.
+		other, err := externalAccountsStore.List(ctx, database.ExternalAccountsListOptions{
+			UserID:      userID,
+			ServiceType: acct.ServiceType,
+			ServiceID:   acct.ServiceID,
+			ClientID:    acct.ClientID,
+		})
+		if err != nil {
+			return newUserSaved, 0, "Failed to list user identities. Ask a site admin for help.", err
+		}
+
+		// Confirm that the user already has a different identity from the same
+		// provider. In cases where the user is already logged in (on an existing
+		// browser session) extAcctSaved would be false, even though they logged in with
+		// the same external identity. So as long as is the same identity, we are OK.
+		found := false
+		for _, eac := range other {
+			if eac.ServiceType == acct.ServiceType &&
+				eac.ServiceID == acct.ServiceID &&
+				eac.AccountID == acct.AccountID &&
+				eac.ClientID == acct.ClientID {
+				found = true
+				break
+			}
+		}
+		if !found && len(other) >= 1 {
+			return newUserSaved, 0, "Another identity for this user from this provider already exists. Remove the link to the other identity from your account.", errors.New("duplicate identity for single identity provider")
+		}
 	}
 
 	// There is a legacy event instrumented earlier in this function that covers

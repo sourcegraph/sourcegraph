@@ -218,6 +218,7 @@ var siteConfigSecrets = []struct {
 	{readPath: `auth\.unlockAccountLinkSigningKey`, editPaths: []string{"auth.unlockAccountLinkSigningKey"}},
 	{readPath: `dotcom.srcCliVersionCache.github.token`, editPaths: []string{"dotcom", "srcCliVersionCache", "github", "token"}},
 	{readPath: `dotcom.srcCliVersionCache.github.webhookSecret`, editPaths: []string{"dotcom", "srcCliVersionCache", "github", "webhookSecret"}},
+	{readPath: `dotcom.sams\.clientSecret`, editPaths: []string{"dotcom", "sams.clientSecret"}},
 	{readPath: `embeddings.accessToken`, editPaths: []string{"embeddings", "accessToken"}},
 	{readPath: `completions.accessToken`, editPaths: []string{"completions", "accessToken"}},
 	{readPath: `app.dotcomAuthToken`, editPaths: []string{"app", "dotcomAuthToken"}},

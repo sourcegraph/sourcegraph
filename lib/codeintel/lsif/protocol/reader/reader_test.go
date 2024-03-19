@@ -11,7 +11,7 @@ import (
 
 func TestReadLines(t *testing.T) {
 	var content []byte
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		content = append(content, strconv.Itoa(i)...)
 		content = append(content, '\n')
 	}
@@ -37,7 +37,7 @@ func TestReadLines(t *testing.T) {
 	}
 
 	var expectedIDs []int
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		expectedIDs = append(expectedIDs, i)
 	}
 

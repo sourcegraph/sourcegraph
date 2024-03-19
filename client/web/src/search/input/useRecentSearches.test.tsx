@@ -12,16 +12,8 @@ import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 
 import type { SearchHistoryEventLogsQueryResult } from '../../graphql-operations'
 
+import { buildMockRecentSearches } from './recentSearches.test'
 import { SEARCH_HISTORY_EVENT_LOGS_QUERY, useRecentSearches } from './useRecentSearches'
-
-export function buildMockTempSettings(items: number): RecentSearch[] {
-    return Array.from({ length: items }, (_item, index) => ({
-        query: `test${index}`,
-        resultCount: 555,
-        limitHit: false,
-        timestamp: '2021-01-01T00:00:00Z',
-    }))
-}
 
 function buildMockEventLogs(items: number): SearchHistoryEventLogsQueryResult {
     return {
@@ -88,7 +80,7 @@ describe('recentSearches', () => {
     describe('useRecentSearches().recentSearches', () => {
         test('recent searches is empty array if no data in temp settings or event logs', async () => {
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(0)} eventLogs={buildMockEventLogs(0)} />
+                <Wrapper tempSettings={buildMockRecentSearches(0)} eventLogs={buildMockEventLogs(0)} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))
@@ -110,7 +102,7 @@ describe('recentSearches', () => {
             }
 
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(0)} eventLogs={mockedEventLogsWithDuplicates} />
+                <Wrapper tempSettings={buildMockRecentSearches(0)} eventLogs={mockedEventLogsWithDuplicates} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))
@@ -126,7 +118,7 @@ describe('recentSearches', () => {
 
         test('recent searches is populated from temp settings', async () => {
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(4)} eventLogs={buildMockEventLogs(0)} />
+                <Wrapper tempSettings={buildMockRecentSearches(4)} eventLogs={buildMockEventLogs(0)} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))
@@ -146,7 +138,7 @@ describe('recentSearches', () => {
     describe('useRecentSearches().addRecentSearch', () => {
         test('adding item to recent searches puts it at the top', async () => {
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(4)} eventLogs={buildMockEventLogs(0)} />
+                <Wrapper tempSettings={buildMockRecentSearches(4)} eventLogs={buildMockEventLogs(0)} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))
@@ -168,7 +160,7 @@ describe('recentSearches', () => {
 
         test('adding an existing item to recent searches deduplicates it and puts it at the top', async () => {
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(4)} eventLogs={buildMockEventLogs(0)} />
+                <Wrapper tempSettings={buildMockRecentSearches(4)} eventLogs={buildMockEventLogs(0)} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))
@@ -189,7 +181,7 @@ describe('recentSearches', () => {
 
         test('adding an item beyond the limit of the list removes the last item', async () => {
             const { queryAllByRole, getByTestId } = render(
-                <Wrapper tempSettings={buildMockTempSettings(20)} eventLogs={buildMockEventLogs(0)} />
+                <Wrapper tempSettings={buildMockRecentSearches(20)} eventLogs={buildMockEventLogs(0)} />
             )
 
             await waitFor(() => expect(getByTestId('state')).toHaveTextContent('success'))

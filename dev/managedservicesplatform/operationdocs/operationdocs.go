@@ -66,6 +66,9 @@ This service is operated on the %s.`,
 		s.Service.GetName(),
 		markdown.Link("Managed Services Platform (MSP)", mspURL))
 
+	md.Admonitionf(markdown.AdmonitionImportant, "If this is your first time here, you should follow the %s as well to set up the prerequisite tooling.",
+		markdown.Link("sourcegraph/managed-services README", "https://github.com/sourcegraph/managed-services/blob/main/README.md"))
+
 	md.Paragraphf("If you need assistance with MSP infrastructure, reach out to the %s team in #discuss-core-services.",
 		markdown.Link("Core Services", coreServicesURL))
 

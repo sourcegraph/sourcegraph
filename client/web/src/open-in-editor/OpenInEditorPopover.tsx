@@ -4,7 +4,7 @@ import { mdiClose } from '@mdi/js'
 import { VisuallyHidden } from '@reach/visually-hidden'
 import classNames from 'classnames'
 
-import { Button, H3, Icon, Input, Link, Select, Text, Form } from '@sourcegraph/wildcard'
+import { Button, H3, Icon, Input, Link, Select, Text, Form, Code } from '@sourcegraph/wildcard'
 
 import { isProjectPathValid } from './build-url'
 import type { EditorSettings } from './editor-settings'
@@ -75,15 +75,15 @@ export const OpenInEditorPopover: React.FunctionComponent<
             <>
                 <H3>Set your preferred editor</H3>
                 <Text>
-                    Open this and other files directly in your editor. Set your project path and editor to get started.
-                    Update anytime in your user settings.
+                    Open this and other files directly in your editor. Set your path and editor to get started. Update
+                    any time in your user settings.
                 </Text>
 
                 <Form onSubmit={onSubmit} noValidate={true}>
                     <Input
                         id="OpenInEditorForm-projectPath"
                         type="text"
-                        label="Project path"
+                        label="Default projects path"
                         name="projectPath"
                         placeholder="/Users/username/projects"
                         required={true}
@@ -95,6 +95,11 @@ export const OpenInEditorPopover: React.FunctionComponent<
                         onChange={onProjectPathChange}
                         className={classNames('mr-sm-2')}
                     />
+                    <aside className="small text-muted">
+                        The directory that contains your repository checkouts. For example, if this repository is
+                        checked out to <Code>/Users/username/projects/cody</Code>, then set your default projects path
+                        to <Code>/Users/username/projects</Code>.
+                    </aside>
                     <Select
                         id="OpenInEditorForm-editor"
                         label="Editor"

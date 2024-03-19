@@ -90,13 +90,13 @@ var (
 
 func (m *scipMigrator) Up(ctx context.Context) error {
 	ch := make(chan struct{}, scipMigratorUploadReaderBatchSize)
-	for i := 0; i < scipMigratorUploadReaderBatchSize; i++ {
+	for range scipMigratorUploadReaderBatchSize {
 		ch <- struct{}{}
 	}
 	close(ch)
 
 	p := pool.New().WithContext(ctx)
-	for i := 0; i < scipMigratorConcurrencyLevel; i++ {
+	for range scipMigratorConcurrencyLevel {
 		p.Go(func(ctx context.Context) error {
 			for range ch {
 				if ok, err := m.upSingle(ctx); err != nil {
@@ -222,7 +222,7 @@ func migrateUpload(
 	// Warm result chunk cache if it will all fit in the cache
 	if numResultChunks <= resultChunkCacheSize {
 		ids := make([]ID, 0, numResultChunks)
-		for i := 0; i < numResultChunks; i++ {
+		for i := range numResultChunks {
 			ids = append(ids, ID(strconv.Itoa(i)))
 		}
 

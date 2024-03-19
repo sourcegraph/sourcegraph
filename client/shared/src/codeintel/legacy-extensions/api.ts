@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Observable, Unsubscribable } from 'rxjs'
+import { lastValueFrom, type Observable, type Unsubscribable } from 'rxjs'
 
 import type { GraphQLResult } from '@sourcegraph/http-client'
 
@@ -361,10 +361,9 @@ export function requestGraphQL<T>(query: string, vars?: { [name: string]: unknow
             )
         )
     }
-    return context
-
-        .requestGraphQL<T, any>({ request: query, variables: vars as any, mightContainPrivateInfo: true })
-        .toPromise()
+    return lastValueFrom(
+        context.requestGraphQL<T, any>({ request: query, variables: vars as any, mightContainPrivateInfo: true })
+    )
 }
 
 export function getSetting<T>(key: string): T | undefined {

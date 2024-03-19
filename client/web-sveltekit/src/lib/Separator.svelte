@@ -93,8 +93,14 @@
         }
 
         &.dragging {
+            z-index: 1;
+            outline: 1px solid var(--oc-blue-3);
             background-color: var(--oc-blue-3);
-            width: 3px;
+        }
+
+        &:hover:not(.dragging) {
+            z-index: 1;
+            outline: 1px solid var(--border-color);
         }
     }
 </style>

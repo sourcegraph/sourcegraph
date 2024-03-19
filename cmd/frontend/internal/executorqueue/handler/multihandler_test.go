@@ -932,7 +932,7 @@ func TestMultiHandler_SelectQueueForDequeueing(t *testing.T) {
 				selectCounts[q] = 0
 			}
 
-			for i := 0; i < tt.amountOfruns; i++ {
+			for range tt.amountOfruns {
 				selectedQueue, err := m.SelectQueueForDequeueing(tt.candidateQueues)
 				if err != nil && err != tt.expectedErr {
 					t.Fatalf("expected err %s, got err %s", tt.expectedErr, err)
@@ -1023,7 +1023,7 @@ func TestMultiHandler_SelectEligibleQueues(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rcache.SetupForTest(t)
 			for key, value := range tt.mockCacheEntries {
-				for i := 0; i < value; i++ {
+				for i := range value {
 					// mock dequeues
 					if err := m.DequeueCache.SetHashItem(key, strconv.Itoa(i), "job-id"); err != nil {
 						t.Fatalf("unexpected error while setting hash item: %s", err)

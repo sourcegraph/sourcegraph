@@ -33,7 +33,7 @@ export class ToggleHistoryPanel extends React.PureComponent<
         navigate: NavigateFunction
     } & RepoHeaderContext
 > {
-    private toggles = new Subject<boolean>()
+    private toggles = new Subject<void>()
     private subscriptions = new Subscription()
 
     /**

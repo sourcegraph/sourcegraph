@@ -34,13 +34,13 @@ func TestTopRepositoriesToConfigure(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		insertRepo(t, db, 50+i, fmt.Sprintf("test%d", i))
 	}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		insertEvent("codeintel.searchHover", 60+i%3, 1)
 	}
-	for j := 0; j < 10; j++ {
+	for j := range 10 {
 		insertEvent("codeintel.searchHover", 70+j, 1)
 	}
 
@@ -84,7 +84,7 @@ func TestRepositoryIDsWithConfiguration(t *testing.T) {
 		},
 	}
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		insertRepo(t, db, 50+i, fmt.Sprintf("test%d", i))
 
 		if err := store.SetConfigurationSummary(ctx, 50+i, i*300, testIndexerList); err != nil {

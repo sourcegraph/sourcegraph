@@ -438,7 +438,7 @@ func TestBackfillV2Migrator(t *testing.T) {
 	}
 	done := float64(2) // there are 2 series that already have backfill records
 	assertProgress(done/float64(len(cases)), false)
-	for i := 0; i < len(cases); i++ {
+	for range len(cases) {
 		err := migrator.Up(ctx)
 		assert.NoError(t, err, "unexpected error migrating up")
 	}

@@ -10,13 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/log/logtest"
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
+
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/types"
+	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 func TestScopedRepoIteratorForEach(t *testing.T) {
@@ -84,7 +86,17 @@ func TestScopedRepoIterator_PrivateRepos(t *testing.T) {
 	userNoAccess, err := db.Users().Create(ctx, database.NewUser{Username: "user-no-access"})
 	require.NoError(t, err)
 
-	globals.PermissionsUserMapping().Enabled = true // this is required otherwise setting the permissions won't do anything
+	// this is required otherwise setting the permissions won't do anything
+	conf.Mock(&conf.Unified{
+		SiteConfiguration: schema.SiteConfiguration{
+			PermissionsUserMapping: &schema.PermissionsUserMapping{
+				Enabled: true,
+				BindID:  "email",
+			},
+		},
+	})
+	t.Cleanup(func() { conf.Mock(nil) })
+
 	_, err = db.Perms().SetRepoPerms(ctx, 1, []authz.UserIDWithExternalAccountID{{UserID: userWithAccess.ID}}, authz.SourceAPI)
 	require.NoError(t, err)
 

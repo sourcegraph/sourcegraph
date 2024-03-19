@@ -163,7 +163,7 @@ func BenchmarkGetLang(b *testing.B) {
 	buf := make([]byte, fileReadBufferSize)
 	b.Logf("Calling Get on %d files.", len(files))
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		for _, file := range files {
 			_, err = getLang(context.Background(), file, buf, fr)
 			if err != nil {
@@ -181,7 +181,7 @@ func BenchmarkIsVendor(b *testing.B) {
 	b.Logf("Calling IsVendor on %d files.", len(files))
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		for _, f := range files {
 			_ = enry.IsVendor(f.Name())
 		}

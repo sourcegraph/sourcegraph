@@ -189,6 +189,9 @@ func (s *SearchFilters) Update(event SearchEvent) {
 	}
 
 	addTypeFilter := func(value, label string, count int32) {
+		if count == 0 {
+			return
+		}
 		s.filters.Add(value, label, count, FilterKindType)
 		s.filters.MarkImportant(value)
 	}

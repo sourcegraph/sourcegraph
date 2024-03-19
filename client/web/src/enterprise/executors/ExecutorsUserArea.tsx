@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
 import type { UserExecutorSecretsListPageProps } from './secrets/ExecutorSecretsListPage'

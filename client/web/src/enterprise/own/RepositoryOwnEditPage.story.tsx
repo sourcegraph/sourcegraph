@@ -3,8 +3,9 @@ import type { Meta, StoryFn } from '@storybook/react'
 import { subDays } from 'date-fns'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 
-import { AuthenticatedUser } from '../../auth'
+import type { AuthenticatedUser } from '../../auth'
 import { WebStory } from '../../components/WebStory'
 import {
     ExternalServiceKind,
@@ -79,6 +80,7 @@ export const EmptyNonAdmin: StoryFn = () => (
                 repo={repo}
                 authenticatedUser={{ siteAdmin: false, permissions: emptyPermissions }}
                 useBreadcrumb={useBreadcrumb}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         )}
     </WebStory>
@@ -92,6 +94,7 @@ export const EmptyAdmin: StoryFn = () => (
                 repo={repo}
                 authenticatedUser={{ siteAdmin: true, permissions: emptyPermissions }}
                 useBreadcrumb={useBreadcrumb}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         )}
     </WebStory>
@@ -127,6 +130,7 @@ export const PopulatedNonAdmin: StoryFn = () => (
                 repo={repo}
                 authenticatedUser={{ siteAdmin: false, permissions: emptyPermissions }}
                 useBreadcrumb={useBreadcrumb}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         )}
     </WebStory>
@@ -140,6 +144,7 @@ export const PopulatedAdmin: StoryFn = () => (
                 repo={repo}
                 authenticatedUser={{ siteAdmin: true, permissions: ownershipAssignPermissions }}
                 useBreadcrumb={useBreadcrumb}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         )}
     </WebStory>

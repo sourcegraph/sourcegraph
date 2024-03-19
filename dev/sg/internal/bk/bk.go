@@ -149,9 +149,6 @@ func (c *Client) GetBuildByCommit(ctx context.Context, pipeline string, commit s
 func (c *Client) ListArtifactsByBuildNumber(ctx context.Context, pipeline string, number string) ([]buildkite.Artifact, error) {
 	artifacts, _, err := c.bk.Artifacts.ListByBuild(BuildkiteOrg, pipeline, number, nil)
 	if err != nil {
-		return nil, err
-	}
-	if err != nil {
 		if strings.Contains(err.Error(), "404 Not Found") {
 			return nil, errors.New("no artifacts because no build found")
 		}
@@ -216,11 +213,17 @@ func (c *Client) GetJobAnnotationsByBuildNumber(ctx context.Context, pipeline st
 }
 
 // TriggerBuild request a build on Buildkite API and returns that build.
-func (c *Client) TriggerBuild(ctx context.Context, pipeline, branch, commit string) (*buildkite.Build, error) {
-	build, _, err := c.bk.Builds.Create(BuildkiteOrg, pipeline, &buildkite.CreateBuild{
-		Commit: commit,
+func (c *Client) TriggerBuild(ctx context.Context, pipeline, branch, commit string, opts ...CreateBuildOpt) (*buildkite.Build, error) {
+	newBuild := &buildkite.CreateBuild{
 		Branch: branch,
-	})
+		Commit: commit,
+	}
+
+	for _, opt := range opts {
+		opt(newBuild)
+	}
+	build, _, err := c.bk.Builds.Create(BuildkiteOrg, pipeline, newBuild)
+
 	return build, err
 }
 

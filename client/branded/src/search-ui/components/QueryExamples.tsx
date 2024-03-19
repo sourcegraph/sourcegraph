@@ -12,7 +12,7 @@ import {
     Icon,
     Link,
     ProductStatusBadge,
-    ProductStatusType,
+    type ProductStatusType,
     Tab,
     TabList,
     TabPanel,

@@ -37,9 +37,9 @@ func TestExtractDefinitionLocationsFromPosition(t *testing.T) {
 
 	scipDefinitionLocations := []shared.Location{
 		{
-			DumpID: testSCIPUploadID,
-			Path:   "template/src/lsif/util.ts",
-			Range:  newRange(7, 10, 7, 13),
+			UploadID: testSCIPUploadID,
+			Path:     "template/src/lsif/util.ts",
+			Range:    newRange(7, 10, 7, 13),
 		},
 	}
 
@@ -84,9 +84,9 @@ func TestExtractReferenceLocationsFromPosition(t *testing.T) {
 	//         ^^^
 
 	scipExpected := []shared.Location{
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(10, 12, 10, 15)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(12, 19, 12, 22)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(15, 8, 15, 11)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(10, 12, 10, 15)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(12, 19, 12, 22)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(15, 8, 15, 11)},
 	}
 
 	testCases := []struct {
@@ -141,15 +141,15 @@ func TestGetMinimalBulkMonikerLocations(t *testing.T) {
 
 	expectedLocations := []shared.Location{
 		// SCIP results
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(10, 9, 10, 16)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(186, 43, 186, 50)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(296, 34, 296, 41)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(324, 38, 324, 45)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(384, 30, 384, 37)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(415, 8, 415, 15)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(420, 27, 420, 34)},
-		{DumpID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(9, 9, 9, 16)},
-		{DumpID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(225, 20, 225, 27)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(10, 9, 10, 16)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(186, 43, 186, 50)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(296, 34, 296, 41)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(324, 38, 324, 45)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(384, 30, 384, 37)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(415, 8, 415, 15)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(420, 27, 420, 34)},
+		{UploadID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(9, 9, 9, 16)},
+		{UploadID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(225, 20, 225, 27)},
 	}
 	if diff := cmp.Diff(expectedLocations, locations); diff != "" {
 		t.Errorf("unexpected locations (-want +got):\n%s", diff)
@@ -170,9 +170,9 @@ func TestDatabaseDefinitions(t *testing.T) {
 
 	scipDefinitionLocations := []shared.Location{
 		{
-			DumpID: testSCIPUploadID,
-			Path:   "template/src/lsif/util.ts",
-			Range:  newRange(7, 10, 7, 13),
+			UploadID: testSCIPUploadID,
+			Path:     "template/src/lsif/util.ts",
+			Range:    newRange(7, 10, 7, 13),
 		},
 	}
 
@@ -183,9 +183,9 @@ func TestDatabaseDefinitions(t *testing.T) {
 
 	scipNonLocalDefinitionLocations := []shared.Location{
 		{
-			DumpID: testSCIPUploadID,
-			Path:   "template/src/lsif/definition-hover.ts",
-			Range:  newRange(21, 17, 21, 29),
+			UploadID: testSCIPUploadID,
+			Path:     "template/src/lsif/definition-hover.ts",
+			Range:    newRange(21, 17, 21, 29),
 		},
 	}
 
@@ -249,9 +249,9 @@ func TestDatabaseReferences(t *testing.T) {
 	//         ^^^
 
 	scipExpected := []shared.Location{
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(10, 12, 10, 15)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(12, 19, 12, 22)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(15, 8, 15, 11)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(10, 12, 10, 15)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(12, 19, 12, 22)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/util.ts", Range: newRange(15, 8, 15, 11)},
 	}
 
 	// Symbol name search for
@@ -260,11 +260,11 @@ func TestDatabaseReferences(t *testing.T) {
 	//                   ^^^^^^^^^^^^
 
 	scipNonLocalExpected := []shared.Location{
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(6, 9, 6, 21)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(38, 12, 38, 24)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(385, 12, 385, 24)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/definition-hover.ts", Range: newRange(18, 12, 18, 24)},
-		{DumpID: testSCIPUploadID, Path: "template/src/lsif/definition-hover.ts", Range: newRange(123, 45, 123, 57)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(6, 9, 6, 21)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(38, 12, 38, 24)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/ranges.ts", Range: newRange(385, 12, 385, 24)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/definition-hover.ts", Range: newRange(18, 12, 18, 24)},
+		{UploadID: testSCIPUploadID, Path: "template/src/lsif/definition-hover.ts", Range: newRange(123, 45, 123, 57)},
 	}
 
 	testCases := []struct {
@@ -700,15 +700,15 @@ func TestGetBulkMonikerLocations(t *testing.T) {
 
 	expectedLocations := []shared.Location{
 		// SCIP results
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(10, 9, 10, 16)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(186, 43, 186, 50)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(296, 34, 296, 41)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(324, 38, 324, 45)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(384, 30, 384, 37)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(415, 8, 415, 15)},
-		{DumpID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(420, 27, 420, 34)},
-		{DumpID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(9, 9, 9, 16)},
-		{DumpID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(225, 20, 225, 27)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(10, 9, 10, 16)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(186, 43, 186, 50)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(296, 34, 296, 41)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(324, 38, 324, 45)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(384, 30, 384, 37)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(415, 8, 415, 15)},
+		{UploadID: testSCIPUploadID, Path: "template/src/providers.ts", Range: newRange(420, 27, 420, 34)},
+		{UploadID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(9, 9, 9, 16)},
+		{UploadID: testSCIPUploadID, Path: "template/src/search/providers.ts", Range: newRange(225, 20, 225, 27)},
 	}
 	if diff := cmp.Diff(expectedLocations, locations); diff != "" {
 		t.Errorf("unexpected locations (-want +got):\n%s", diff)

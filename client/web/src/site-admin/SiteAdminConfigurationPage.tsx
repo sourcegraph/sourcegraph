@@ -4,12 +4,12 @@ import type { FC } from 'react'
 import { type ApolloClient, useApolloClient } from '@apollo/client'
 import classNames from 'classnames'
 import * as jsonc from 'jsonc-parser'
-import { Subject, Subscription } from 'rxjs'
+import { lastValueFrom, Subject, Subscription } from 'rxjs'
 import { delay, mergeMap, retryWhen, tap, timeout } from 'rxjs/operators'
 
 import { logger } from '@sourcegraph/common'
 import type { SiteConfiguration } from '@sourcegraph/shared/src/schema/site.schema'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import {
@@ -468,7 +468,7 @@ class SiteAdminConfigurationContent extends React.Component<Props, State> {
 
         let restartToApply = false
         try {
-            restartToApply = await updateSiteConfiguration(lastConfigurationID, newContents).toPromise<boolean>()
+            restartToApply = await lastValueFrom(updateSiteConfiguration(lastConfigurationID, newContents))
         } catch (error) {
             logger.error(error)
             this.setState({
@@ -512,7 +512,7 @@ class SiteAdminConfigurationContent extends React.Component<Props, State> {
         this.setState({ restartToApply })
 
         try {
-            const site = await fetchSite().toPromise()
+            const site = await lastValueFrom(fetchSite())
 
             this.setState({
                 site,

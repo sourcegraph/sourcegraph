@@ -1,5 +1,4 @@
 import type { ApolloClient } from '@apollo/client'
-import type { FuzzyFinderSymbolsResult, FuzzyFinderSymbolsVariables } from 'src/graphql-operations'
 import gql from 'tagged-template-noop'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
@@ -8,6 +7,7 @@ import { SymbolKind } from '@sourcegraph/shared/src/symbols/SymbolKind'
 
 import { getWebGraphQLClient } from '../../backend/graphql'
 import type { SearchValue } from '../../fuzzyFinder/SearchValue'
+import type { FuzzyFinderSymbolsResult, FuzzyFinderSymbolsVariables } from '../../graphql-operations'
 import type { UserHistory } from '../useUserHistory'
 
 import { emptyFuzzyCache, type PersistableQueryResult } from './FuzzyLocalCache'

@@ -34,7 +34,7 @@ func Combine(checks ...CheckFunc) CheckFunc {
 
 func Retry(check CheckFunc, retries int, sleep time.Duration) CheckFunc {
 	return func(ctx context.Context) (err error) {
-		for i := 0; i < retries; i++ {
+		for range retries {
 			err = check(ctx)
 			if err == nil {
 				return nil

@@ -2,6 +2,9 @@ import { type EditorState, type Extension, StateField, type Transaction } from '
 import { type Tooltip, showTooltip } from '@codemirror/view'
 import ReactDOM from 'react-dom/client'
 
+import type { BillingCategory, BillingProduct } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryRecorder } from '@sourcegraph/telemetry'
+
 import type { CodeMirrorEditor } from '../../../../cody/components/CodeMirrorEditor'
 import { CodyRecipesWidget } from '../../../../cody/widgets/CodyRecipesWidget'
 
@@ -32,7 +35,10 @@ function shouldShowCodyWidget(transaction: Transaction): boolean {
  * Add a extension to CodeMirror extensions to display the Cody widget
  * when some code is selected in the editor.
  */
-export function codyWidgetExtension(editor?: CodeMirrorEditor): Extension {
+export function codyWidgetExtension(
+    telemetryRecorder: TelemetryRecorder<BillingCategory, BillingProduct>,
+    editor?: CodeMirrorEditor
+): Extension {
     return StateField.define<Tooltip | null>({
         create() {
             return null
@@ -46,7 +52,7 @@ export function codyWidgetExtension(editor?: CodeMirrorEditor): Extension {
 
             if (transaction.selection) {
                 if (shouldShowCodyWidget(transaction)) {
-                    const tooltip = createCodyWidget(transaction.state, editor)
+                    const tooltip = createCodyWidget(transaction.state, telemetryRecorder, editor)
                     // Only create a new tooltip if the position changes, to avoid flickering
                     return tooltip?.pos !== value?.pos ? tooltip : value
                 }
@@ -59,7 +65,11 @@ export function codyWidgetExtension(editor?: CodeMirrorEditor): Extension {
     })
 }
 
-function createCodyWidget(state: EditorState, editor?: CodeMirrorEditor): Tooltip {
+function createCodyWidget(
+    state: EditorState,
+    telemetryRecorder: TelemetryRecorder<BillingCategory, BillingProduct>,
+    editor?: CodeMirrorEditor
+): Tooltip {
     const { selection } = state
 
     // Find a position that is always the left most position of the selection bounding box
@@ -79,7 +89,7 @@ function createCodyWidget(state: EditorState, editor?: CodeMirrorEditor): Toolti
         create: () => {
             const dom = document.createElement('div')
             dom.style.background = 'transparent'
-            ReactDOM.createRoot(dom).render(<CodyRecipesWidget editor={editor} />)
+            ReactDOM.createRoot(dom).render(<CodyRecipesWidget editor={editor} telemetryRecorder={telemetryRecorder} />)
             return { dom }
         },
     }

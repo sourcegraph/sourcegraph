@@ -22,7 +22,7 @@ func Init(
 	observationCtx *observation.Context,
 	db database.DB,
 	_ codeintel.Services,
-	_ conftypes.UnifiedWatchable,
+	conf conftypes.UnifiedWatchable,
 	enterpriseServices *enterprise.Services,
 ) error {
 	logger := log.Scoped("completions")
@@ -32,7 +32,7 @@ func Init(
 		return requireVerifiedEmailMiddleware(db, observationCtx.Logger, completionsHandler)
 	}
 	enterpriseServices.NewCodeCompletionsHandler = func() http.Handler {
-		codeCompletionsHandler := httpapi.NewCodeCompletionsHandler(logger, db, guardrails.NewAttributionTest(observationCtx))
+		codeCompletionsHandler := httpapi.NewCodeCompletionsHandler(logger, db, guardrails.NewAttributionTest(observationCtx, conf))
 		return requireVerifiedEmailMiddleware(db, observationCtx.Logger, codeCompletionsHandler)
 	}
 	enterpriseServices.CompletionsResolver = resolvers.NewCompletionsResolver(db, observationCtx.Logger)

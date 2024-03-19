@@ -43,7 +43,7 @@ go_test(
         "//internal/license",
         "//internal/licensing",
         "//internal/types",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_inconshreveable_log15//:log15",
         "@com_github_stretchr_testify//assert",
     ],

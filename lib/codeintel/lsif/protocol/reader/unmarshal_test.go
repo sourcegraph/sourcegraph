@@ -201,7 +201,7 @@ func TestUnmarshalRangeWithTag(t *testing.T) {
 var result any
 
 func BenchmarkUnmarshalHover(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var err error
 		result, err = unmarshalHover([]byte(`{"id": "16", "type": "vertex", "label": "hoverResult", "result": {"contents": [{"language": "go", "value": "text"}, {"language": "python", "value": "pext"}]}}`))
 		if err != nil {

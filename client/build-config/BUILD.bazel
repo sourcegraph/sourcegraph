@@ -55,5 +55,4 @@ npm_package(
         "package.json",
         ":build-config_lib",
     ],
-    type = "commonjs",
 )

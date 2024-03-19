@@ -2828,7 +2828,7 @@ func TestListBatchSpecs(t *testing.T) {
 
 	batchSpecs := make([]*btypes.BatchSpec, 0, 10)
 
-	for i := 0; i < cap(batchSpecs); i++ {
+	for i := range cap(batchSpecs) {
 		batchSpec := &btypes.BatchSpec{
 			RawSpec:         bt.TestRawBatchSpec,
 			UserID:          userID,

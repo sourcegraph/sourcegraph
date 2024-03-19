@@ -141,7 +141,7 @@ func TestProvider_NewAuthzProviders(t *testing.T) {
 				return
 			}
 
-			for i := 0; i < tc.expectedTotalProviders; i++ {
+			for range tc.expectedTotalProviders {
 				p := result.Providers[0]
 				gotAzureProvider, ok := p.(*Provider)
 				if !ok {
@@ -670,7 +670,6 @@ func TestProvider_FetchUserPerms(t *testing.T) {
 				tc.account,
 				authz.FetchPermsOptions{},
 			)
-
 			if err != nil {
 				if diff := cmp.Diff(tc.error, err.Error()); diff != "" {
 					t.Fatalf("Mismatched error, (-want, +got)\n%s", diff)
@@ -852,7 +851,6 @@ func TestProvider_FetchUserPerms(t *testing.T) {
 			account,
 			authz.FetchPermsOptions{},
 		)
-
 		if err != nil {
 			t.Fatalf("Unexpected error, (-want, +got)\n%s", err)
 		}

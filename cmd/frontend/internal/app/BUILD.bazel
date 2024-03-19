@@ -99,7 +99,7 @@ go_test(
         "//internal/types",
         "//lib/errors",
         "//schema",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_gorilla_mux//:mux",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_temoto_robotstxt//:robotstxt",

@@ -7,78 +7,49 @@ import (
 	"strings"
 
 	"github.com/rjeczalik/notify"
-
-	"github.com/sourcegraph/sourcegraph/dev/sg/internal/secrets"
 )
 
 // A BazelCommand is a command definition for sg run/start that uses
 // bazel under the hood. It will handle restarting itself autonomously,
 // as long as iBazel is running and watch that specific target.
 type BazelCommand struct {
-	Name                string
-	Description         string            `yaml:"description"`
-	Target              string            `yaml:"target"`
-	Args                string            `yaml:"args"`
-	PreCmd              string            `yaml:"precmd"`
-	Env                 map[string]string `yaml:"env"`
-	IgnoreStdout        bool              `yaml:"ignoreStdout"`
-	IgnoreStderr        bool              `yaml:"ignoreStderr"`
-	ContinueWatchOnExit bool              `yaml:"continueWatchOnExit"`
-	// Preamble is a short and visible message, displayed when the command is launched.
-	Preamble        string                            `yaml:"preamble"`
-	ExternalSecrets map[string]secrets.ExternalSecret `yaml:"external_secrets"`
-
+	Config SGConfigCommandOptions
+	Target string `yaml:"target"`
 	// RunTarget specifies a target that should be run via `bazel run $RunTarget` instead of directly executing the binary.
 	RunTarget string `yaml:"runTarget"`
 }
 
-func (bc BazelCommand) GetName() string {
-	return bc.Name
-}
+// UnmarshalYAML implements the Unmarshaler interface for BazelCommand.
+// This allows us to parse the flat YAML configuration into nested struct.
+func (bc *BazelCommand) UnmarshalYAML(unmarshal func(any) error) error {
+	// In order to not recurse infinitely (calling UnmarshalYAML over and over) we create a
+	// temporary type alias.
+	// First parse the BazelCommand specific options
+	type rawBazel BazelCommand
+	if err := unmarshal((*rawBazel)(bc)); err != nil {
+		return err
+	}
 
-func (bc BazelCommand) GetContinueWatchOnExit() bool {
-	return bc.ContinueWatchOnExit
-}
-
-func (bc BazelCommand) GetEnv() map[string]string {
-	return bc.Env
-}
-
-func (bc BazelCommand) GetIgnoreStdout() bool {
-	return bc.IgnoreStdout
-}
-
-func (bc BazelCommand) GetIgnoreStderr() bool {
-	return bc.IgnoreStderr
-}
-
-func (bc BazelCommand) GetPreamble() string {
-	return bc.Preamble
+	// Then parse the common options from the same list into a nested struct
+	return unmarshal(&bc.Config)
 }
 
 func (bc BazelCommand) GetBinaryLocation() (string, error) {
-	baseOutput, err := outputPath()
-	if err != nil {
-		return "", err
-	}
-	// Trim "bazel-out" because the next bazel query will include it.
-	outputPath := strings.TrimSuffix(strings.TrimSpace(string(baseOutput)), "bazel-out")
-
-	// Get the binary from the specific target.
-	cmd := exec.Command("bazel", "cquery", bc.Target, "--output=files")
-	baseOutput, err = cmd.Output()
-	if err != nil {
-		return "", err
-	}
-	binPath := strings.TrimSpace(string(baseOutput))
-
-	return fmt.Sprintf("%s%s", outputPath, binPath), nil
+	return binaryLocation(bc.Target)
 }
 
-func (bc BazelCommand) GetExternalSecrets() map[string]secrets.ExternalSecret {
-	return bc.ExternalSecrets
+func (bc BazelCommand) GetConfig() SGConfigCommandOptions {
+	return bc.Config
 }
 
+func (bc BazelCommand) UpdateConfig(f func(*SGConfigCommandOptions)) SGConfigCommand {
+	f(&bc.Config)
+	return bc
+}
+
+func (bc BazelCommand) GetBazelTarget() string {
+	return bc.Target
+}
 func (bc BazelCommand) watchPaths() ([]string, error) {
 	// If no target is defined, there is nothing to be built and watched
 	if bc.Target == "" {
@@ -114,12 +85,25 @@ func (bc BazelCommand) GetExecCmd(ctx context.Context) (*exec.Cmd, error) {
 		}
 	}
 
-	return exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("%s\n%s", bc.PreCmd, cmd)), nil
+	return exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("%s\n%s", bc.Config.PreCmd, cmd)), nil
 }
 
-func outputPath() ([]byte, error) {
+func binaryLocation(target string) (string, error) {
 	// Get the output directory from Bazel, which varies depending on which OS
 	// we're running against.
-	cmd := exec.Command("bazel", "info", "output_path")
-	return cmd.Output()
+	baseOutput, err := exec.Command("bazel", "info", "output_path").Output()
+	if err != nil {
+		return "", err
+	}
+	// Trim "bazel-out" because the next bazel query will include it.
+	outputPath := strings.TrimSuffix(strings.TrimSpace(string(baseOutput)), "bazel-out")
+
+	// Get the binary from the specific target.
+	bin, err := exec.Command("bazel", "cquery", target, "--output=files").Output()
+	if err != nil {
+		return "", err
+	}
+	binPath := strings.TrimSpace(string(bin))
+
+	return fmt.Sprintf("%s%s", outputPath, binPath), nil
 }

@@ -1,7 +1,18 @@
 import type { Remote } from 'comlink'
 import * as H from 'history'
 import { isEqual, uniqWith } from 'lodash'
-import { combineLatest, merge, type Observable, of, Subscription, type Unsubscribable, concat, from, EMPTY } from 'rxjs'
+import {
+    combineLatest,
+    merge,
+    type Observable,
+    of,
+    Subscription,
+    type Unsubscribable,
+    concat,
+    from,
+    EMPTY,
+    lastValueFrom,
+} from 'rxjs'
 import {
     catchError,
     delay,
@@ -246,7 +257,7 @@ export const getDefinitionURL =
                     Partial<MaybeLoadingResult<UIDefinitionURL | null>>
                 > => {
                     if (definitions.length === 0) {
-                        return of<MaybeLoadingResult<UIDefinitionURL | null>>({ isLoading, result: null })
+                        return of({ isLoading, result: null })
                     }
 
                     // Get unique definitions.
@@ -258,7 +269,7 @@ export const getDefinitionURL =
                             workspaceRoots || [],
                             parseRepoURI(parameters.textDocument.uri)
                         )
-                        return of<MaybeLoadingResult<UIDefinitionURL | null>>({
+                        return of({
                             isLoading,
                             result: {
                                 url: urlToFile(
@@ -409,8 +420,8 @@ export function registerHoverContributions({
                         const parameters: TextDocumentPositionParameters & URLToFileContext =
                             JSON.parse(parametersString)
 
-                        const { result } = await wrapRemoteObservable(extensionHostAPI.getDefinition(parameters))
-                            .pipe(
+                        const { result } = await lastValueFrom(
+                            wrapRemoteObservable(extensionHostAPI.getDefinition(parameters)).pipe(
                                 getDefinitionURL(
                                     { urlToFile, requestGraphQL },
                                     {
@@ -425,7 +436,7 @@ export function registerHoverContributions({
                                 ),
                                 first(({ isLoading, result }) => !isLoading || result !== null)
                             )
-                            .toPromise()
+                        )
 
                         if (!result) {
                             throw new Error('No definition found.')

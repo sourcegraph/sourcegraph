@@ -230,12 +230,12 @@ const businessGroup: SiteAdminSideBarGroup = {
     header: { label: 'Business', icon: BriefcaseIcon },
     items: [
         {
-            label: 'Customers',
+            label: 'Enterprise customers',
             to: '/site-admin/dotcom/customers',
             condition: () => SHOW_BUSINESS_FEATURES,
         },
         {
-            label: 'Subscriptions',
+            label: 'Enterprise subscriptions',
             to: '/site-admin/dotcom/product/subscriptions',
             condition: () => SHOW_BUSINESS_FEATURES,
         },

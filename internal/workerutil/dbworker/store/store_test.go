@@ -476,7 +476,7 @@ func TestStoreAddExecutionLogEntry(t *testing.T) {
 
 	numEntries := 5
 
-	for i := 0; i < numEntries; i++ {
+	for i := range numEntries {
 		command := []string{"ls", "-a", fmt.Sprintf("%d", i+1)}
 		payload := fmt.Sprintf("<load payload %d>", i+1)
 
@@ -503,7 +503,7 @@ func TestStoreAddExecutionLogEntry(t *testing.T) {
 		t.Fatalf("unexpected number of payloads. want=%d have=%d", numEntries, len(contents))
 	}
 
-	for i := 0; i < numEntries; i++ {
+	for i := range numEntries {
 		var entry executor.ExecutionLogEntry
 		if err := json.Unmarshal([]byte(contents[i]), &entry); err != nil {
 			t.Fatalf("unexpected error decoding entry: %s", err)
@@ -545,7 +545,7 @@ func TestStoreUpdateExecutionLogEntry(t *testing.T) {
 	}
 
 	numEntries := 5
-	for i := 0; i < numEntries; i++ {
+	for i := range numEntries {
 		command := []string{"ls", "-a", fmt.Sprintf("%d", i+1)}
 		payload := fmt.Sprintf("<load payload %d>", i+1)
 
@@ -577,7 +577,7 @@ func TestStoreUpdateExecutionLogEntry(t *testing.T) {
 		t.Fatalf("unexpected number of payloads. want=%d have=%d", numEntries, len(contents))
 	}
 
-	for i := 0; i < numEntries; i++ {
+	for i := range numEntries {
 		var entry executor.ExecutionLogEntry
 		if err := json.Unmarshal([]byte(contents[i]), &entry); err != nil {
 			t.Fatalf("unexpected error decoding entry: %s", err)
@@ -609,7 +609,7 @@ func TestStoreUpdateExecutionLogEntryUnknownEntry(t *testing.T) {
 		Out:     "<load payload>",
 	}
 
-	for unknownEntryID := 0; unknownEntryID < 2; unknownEntryID++ {
+	for unknownEntryID := range 2 {
 		err := testStore(db, defaultTestStoreOptions(nil, testScanRecord)).UpdateExecutionLogEntry(context.Background(), 1, unknownEntryID, entry, ExecutionLogEntryOptions{})
 		if err == nil {
 			t.Fatal("expected error but got none")

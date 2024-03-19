@@ -24,7 +24,9 @@ func (h *ResourceHandler) Get(r *http.Request, idStr string) (scim.Resource, err
 // Page.Resources. Otherwise, if an empty slice is assigned, an empty list will be represented as `[]`.
 func (h *ResourceHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
 	var totalCount int
-	var resources []scim.Resource
+	// We don't use `nil` for resources here, because Microsoft Entra fails the
+	// connection check if for an empty set of resources we return `null`.
+	resources := []scim.Resource{}
 	var err error
 
 	if params.Filter == nil {

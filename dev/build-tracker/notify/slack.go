@@ -230,7 +230,7 @@ func createStepsSection(status string, items []JobLine, showLimit int) string {
 	if len(items) > StepShowLimit {
 		section = fmt.Sprintf("* %d %s jobs (showing %d):*\n\n", len(items), status, showLimit)
 	}
-	for i := 0; i < showLimit && i < len(items); i++ {
+	for i := range min(showLimit, len(items)) {
 		item := items[i]
 
 		line := fmt.Sprintf("● %s", item.Title())

@@ -1,35 +1,29 @@
-import { FC } from 'react'
+import type { FC } from 'react'
 
 import classNames from 'classnames'
 
-import { Position } from '@sourcegraph/extension-api-classes'
+import type { Position } from '@sourcegraph/extension-api-classes'
 import { useQuery } from '@sourcegraph/http-client'
-import { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
-import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
-import { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
+import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
+import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Code, LoadingSpinner, Text } from '@sourcegraph/wildcard'
 
 import {
     HighlightResponseFormat,
-    ReferencesPanelHighlightedBlobResult,
-    ReferencesPanelHighlightedBlobVariables,
+    type ReferencesPanelHighlightedBlobResult,
+    type ReferencesPanelHighlightedBlobVariables,
 } from '../graphql-operations'
-import { SearchPanelConfig } from '../repo/blob/codemirror/search'
-import { Range } from '../repo/blob/codemirror/static-highlights'
+import type { SearchPanelConfig } from '../repo/blob/codemirror/search'
+import type { Range } from '../repo/blob/codemirror/static-highlights'
 import { CodeMirrorBlob } from '../repo/blob/CodeMirrorBlob'
 
 import { FETCH_HIGHLIGHTED_BLOB } from './ReferencesPanelQueries'
 
 import styles from './ReferencesPanel.module.scss'
 
-export interface SideBlobProps
-    extends TelemetryProps,
-        TelemetryV2Props,
-        SettingsCascadeProps,
-        PlatformContextProps,
-        ExtensionsControllerProps {
+export interface SideBlobProps extends TelemetryProps, TelemetryV2Props, SettingsCascadeProps, PlatformContextProps {
     repository: string
     commitID: string
     file: string
@@ -53,7 +47,6 @@ export const SideBlob: FC<SideBlobProps> = props => {
         wrapLines = true,
         navigateToLineOnAnyClick = true,
         searchPanelConfig,
-        extensionsController,
         settingsCascade,
         telemetryService,
         telemetryRecorder,
@@ -131,7 +124,6 @@ export const SideBlob: FC<SideBlobProps> = props => {
             searchPanelConfig={searchPanelConfig}
             className={classNames(className, styles.sideBlobCode)}
             platformContext={platformContext}
-            extensionsController={extensionsController}
             settingsCascade={settingsCascade}
             telemetryService={telemetryService}
             telemetryRecorder={telemetryRecorder}

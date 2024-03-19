@@ -1,8 +1,10 @@
 import { pick } from 'lodash'
-import { from, of } from 'rxjs'
+import { lastValueFrom, of } from 'rxjs'
 import { switchMap, take, toArray } from 'rxjs/operators'
 import type { ViewComponent, Window } from 'sourcegraph'
 import { describe, expect, test } from 'vitest'
+
+import { fromSubscribable } from '@sourcegraph/common'
 
 import { assertToJSON, integrationTestContext } from '../../testing/testHelpers'
 import type { TextDocumentData } from '../viewerTypes'
@@ -159,13 +161,15 @@ describe('Windows (integration)', () => {
                     viewers: [],
                 })
 
-                const viewers = from(extensionAPI.app.activeWindowChanges)
-                    .pipe(
-                        switchMap(activeWindow => (activeWindow ? activeWindow.activeViewComponentChanges : of(null))),
+                const viewers = lastValueFrom(
+                    fromSubscribable(extensionAPI.app.activeWindowChanges).pipe(
+                        switchMap(activeWindow =>
+                            activeWindow ? fromSubscribable(activeWindow.activeViewComponentChanges) : of(null)
+                        ),
                         take(4),
                         toArray()
                     )
-                    .toPromise()
+                )
 
                 await extensionHostAPI.addTextDocumentIfNotExists({ uri: 'foo', languageId: 'l1', text: 't1' })
                 await extensionHostAPI.addTextDocumentIfNotExists({ uri: 'bar', languageId: 'l2', text: 't2' })

@@ -1,8 +1,7 @@
 import { type FunctionComponent, useState } from 'react'
 
 import classNames from 'classnames'
-import { intervalToDuration } from 'date-fns'
-import formatDuration from 'date-fns/formatDuration'
+import { intervalToDuration, formatDuration } from 'date-fns'
 
 import { Select, Input } from '@sourcegraph/wildcard'
 

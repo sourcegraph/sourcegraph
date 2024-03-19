@@ -240,12 +240,11 @@ func (s *RetrySuite) TestParallel_NoRace() {
 	// such as the issue in https://github.com/sourcegraph/sourcegraph/pull/59487
 
 	s.Run("Unary", func() {
-
 		s.Run("no call options", func() {
 			s.srv.resetUnaryOrStreamEstablishmentFailingConfiguration(failExceptModulo(2), codes.DataLoss, noSleep) // fail every other request
 
 			var wg sync.WaitGroup
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				wg.Add(1)
 
 				go func() {
@@ -265,7 +264,7 @@ func (s *RetrySuite) TestParallel_NoRace() {
 			s.srv.resetUnaryOrStreamEstablishmentFailingConfiguration(failExceptModulo(2), codes.DataLoss, noSleep) // fail every other request
 
 			var wg sync.WaitGroup
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				wg.Add(1)
 
 				go func() {
@@ -283,12 +282,11 @@ func (s *RetrySuite) TestParallel_NoRace() {
 	})
 
 	s.Run("streaming", func() {
-
 		s.Run("no call options", func() {
 			s.srv.resetUnaryOrStreamEstablishmentFailingConfiguration(failExceptModulo(2), codes.DataLoss, noSleep) // fail every other request
 
 			var wg sync.WaitGroup
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				wg.Add(1)
 
 				go func() {
@@ -308,7 +306,7 @@ func (s *RetrySuite) TestParallel_NoRace() {
 			s.srv.resetUnaryOrStreamEstablishmentFailingConfiguration(failExceptModulo(2), codes.DataLoss, noSleep) // fail every other request
 
 			var wg sync.WaitGroup
-			for i := 0; i < 2; i++ {
+			for range 2 {
 				wg.Add(1)
 
 				go func() {
@@ -390,7 +388,6 @@ func (s *RetrySuite) TestServerStream_StreamSucceeds_SucceedsOnRetriableError_On
 }
 
 func (s *RetrySuite) TestServerStream_StreamDoesntAutomaticallyRetry_IfAMessageHasBeenDelivered() {
-
 	count := 0
 	failSecondStreamMessage := func() bool {
 		count++
@@ -579,7 +576,6 @@ func (s *RetrySuite) TestServerStream_OnRetryCallbackCalled_Only_On_RetriableCod
 			require.Equal(s.T(), codes.OutOfRange, status.Code(lastErr))
 			require.Nil(s.T(), lastRetriedErr)
 		})
-
 	})
 }
 
@@ -748,7 +744,7 @@ func TestJitterUp(t *testing.T) {
 	highCount := 0
 	lowCount := 0
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		out := jitterUp(duration, variance)
 		assert.True(t, out <= max, "value %s must be <= %s", out, max)
 		assert.True(t, out >= min, "value %s must be >= %s", out, min)
@@ -766,7 +762,6 @@ func TestJitterUp(t *testing.T) {
 }
 
 func TestRetryObserver(t *testing.T) {
-
 	t.Run("OnRetry", func(t *testing.T) {
 		observer := &retryObserver{}
 

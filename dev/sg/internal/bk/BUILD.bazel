@@ -4,6 +4,7 @@ go_library(
     name = "bk",
     srcs = [
         "bk.go",
+        "create_build_opts.go",
         "logs.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/dev/sg/internal/bk",

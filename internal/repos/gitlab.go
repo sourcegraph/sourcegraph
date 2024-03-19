@@ -274,7 +274,7 @@ func (s *GitLabSource) listAllProjects(ctx context.Context, results chan SourceR
 	var wg sync.WaitGroup
 
 	projch := make(chan *schema.GitLabProject)
-	for i := 0; i < 5; i++ { // 5 concurrent requests
+	for range 5 { // 5 concurrent requests
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -327,7 +327,7 @@ func (s *GitLabSource) listAllProjects(ctx context.Context, results chan SourceR
 
 		const perPage = 100
 		wg.Add(1)
-		go func(projectQuery string) {
+		go func() {
 			defer wg.Done()
 
 			urlStr, err := projectQueryToURL(projectQuery, perPage) // first page URL
@@ -352,7 +352,7 @@ func (s *GitLabSource) listAllProjects(ctx context.Context, results chan SourceR
 				}
 				urlStr = *nextPageURL
 			}
-		}(projectQuery)
+		}()
 	}
 
 	go func() {

@@ -17,10 +17,6 @@ const (
 	SubscriptionStatusCanceled SubscriptionStatus = "CANCELED"
 	SubscriptionStatusTrialing SubscriptionStatus = "TRIALING"
 	SubscriptionStatusOther    SubscriptionStatus = "OTHER"
-	// NOTE: The "pending" status is only temporary, and will be removed after Feb 15 2024.
-	// This is to support the pre-release state where a user has opted for a free Pro trial
-	// but has not put in their cc in SSC yet.
-	SubscriptionStatusPending SubscriptionStatus = "PENDING"
 )
 
 type Subscription struct {

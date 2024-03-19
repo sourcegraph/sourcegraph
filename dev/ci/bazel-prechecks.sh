@@ -3,7 +3,12 @@
 set -eu
 EXIT_CODE=0
 
-bazelrc=(--bazelrc=.bazelrc --bazelrc=.aspect/bazelrc/ci.bazelrc --bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc)
+echo "~~~ :aspect: :stethoscope: Agent Health check"
+/etc/aspect/workflows/bin/agent_health_check
+
+aspectRC="/tmp/aspect-generated.bazelrc"
+rosetta bazelrc > "$aspectRC"
+bazelrc=(--bazelrc="$aspectRC")
 
 #shellcheck disable=SC2317
 # generates and uploads all bazel diffs checked by this script

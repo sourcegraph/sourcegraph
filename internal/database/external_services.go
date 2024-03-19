@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcegraph/log"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
@@ -951,7 +950,7 @@ func (e *externalServiceStore) Update(ctx context.Context, ps []schema.AuthProvi
 	}
 
 	if update.Config != nil {
-		unrestricted := calcUnrestricted(string(normalized), dotcom.SourcegraphDotComMode(), globals.PermissionsUserMapping().Enabled)
+		unrestricted := calcUnrestricted(string(normalized), dotcom.SourcegraphDotComMode(), conf.PermissionsUserMapping().Enabled)
 
 		updates = append(updates,
 			sqlf.Sprintf(
@@ -1738,7 +1737,7 @@ func calcUnrestricted(config string, isDotComMode bool, permissionsUserMappingEn
 // calculated depending on the external service configuration, namely
 // `Unrestricted` and `HasWebhooks`.
 func (e *externalServiceStore) recalculateFields(es *types.ExternalService, rawConfig string) {
-	es.Unrestricted = calcUnrestricted(rawConfig, dotcom.SourcegraphDotComMode(), globals.PermissionsUserMapping().Enabled)
+	es.Unrestricted = calcUnrestricted(rawConfig, dotcom.SourcegraphDotComMode(), conf.PermissionsUserMapping().Enabled)
 
 	hasWebhooks := false
 	cfg, err := extsvc.ParseConfig(es.Kind, rawConfig)

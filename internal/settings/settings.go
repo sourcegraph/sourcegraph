@@ -203,7 +203,7 @@ func mergeLeft(left, right reflect.Value, depth int) reflect.Value {
 			return right
 		}
 		leftType := left.Type()
-		for i := 0; i < left.NumField(); i++ {
+		for i := range left.NumField() {
 			fieldName := leftType.Field(i).Name
 			leftField := left.Field(i)
 			rightField := right.Field(i)

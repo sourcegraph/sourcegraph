@@ -387,7 +387,7 @@ func NewMockClient() *MockClient {
 			},
 		},
 		RequestRepoUpdateFunc: &ClientRequestRepoUpdateFunc{
-			defaultHook: func(context.Context, api.RepoName, time.Duration) (r0 *protocol.RepoUpdateResponse, r1 error) {
+			defaultHook: func(context.Context, api.RepoName) (r0 *protocol.RepoUpdateResponse, r1 error) {
 				return
 			},
 		},
@@ -644,7 +644,7 @@ func NewStrictMockClient() *MockClient {
 			},
 		},
 		RequestRepoUpdateFunc: &ClientRequestRepoUpdateFunc{
-			defaultHook: func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error) {
+			defaultHook: func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error) {
 				panic("unexpected invocation of MockClient.RequestRepoUpdate")
 			},
 		},
@@ -5401,24 +5401,24 @@ func (c ClientRequestRepoCloneFuncCall) Results() []interface{} {
 // ClientRequestRepoUpdateFunc describes the behavior when the
 // RequestRepoUpdate method of the parent MockClient instance is invoked.
 type ClientRequestRepoUpdateFunc struct {
-	defaultHook func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error)
-	hooks       []func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error)
+	defaultHook func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)
+	hooks       []func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)
 	history     []ClientRequestRepoUpdateFuncCall
 	mutex       sync.Mutex
 }
 
 // RequestRepoUpdate delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockClient) RequestRepoUpdate(v0 context.Context, v1 api.RepoName, v2 time.Duration) (*protocol.RepoUpdateResponse, error) {
-	r0, r1 := m.RequestRepoUpdateFunc.nextHook()(v0, v1, v2)
-	m.RequestRepoUpdateFunc.appendCall(ClientRequestRepoUpdateFuncCall{v0, v1, v2, r0, r1})
+func (m *MockClient) RequestRepoUpdate(v0 context.Context, v1 api.RepoName) (*protocol.RepoUpdateResponse, error) {
+	r0, r1 := m.RequestRepoUpdateFunc.nextHook()(v0, v1)
+	m.RequestRepoUpdateFunc.appendCall(ClientRequestRepoUpdateFuncCall{v0, v1, r0, r1})
 	return r0, r1
 }
 
 // SetDefaultHook sets function that is called when the RequestRepoUpdate
 // method of the parent MockClient instance is invoked and the hook queue is
 // empty.
-func (f *ClientRequestRepoUpdateFunc) SetDefaultHook(hook func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error)) {
+func (f *ClientRequestRepoUpdateFunc) SetDefaultHook(hook func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)) {
 	f.defaultHook = hook
 }
 
@@ -5426,7 +5426,7 @@ func (f *ClientRequestRepoUpdateFunc) SetDefaultHook(hook func(context.Context, 
 // RequestRepoUpdate method of the parent MockClient instance invokes the
 // hook at the front of the queue and discards it. After the queue is empty,
 // the default hook function is invoked for any future action.
-func (f *ClientRequestRepoUpdateFunc) PushHook(hook func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error)) {
+func (f *ClientRequestRepoUpdateFunc) PushHook(hook func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -5435,19 +5435,19 @@ func (f *ClientRequestRepoUpdateFunc) PushHook(hook func(context.Context, api.Re
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *ClientRequestRepoUpdateFunc) SetDefaultReturn(r0 *protocol.RepoUpdateResponse, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *ClientRequestRepoUpdateFunc) PushReturn(r0 *protocol.RepoUpdateResponse, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error) {
+	f.PushHook(func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error) {
 		return r0, r1
 	})
 }
 
-func (f *ClientRequestRepoUpdateFunc) nextHook() func(context.Context, api.RepoName, time.Duration) (*protocol.RepoUpdateResponse, error) {
+func (f *ClientRequestRepoUpdateFunc) nextHook() func(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -5486,9 +5486,6 @@ type ClientRequestRepoUpdateFuncCall struct {
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
 	Arg1 api.RepoName
-	// Arg2 is the value of the 3rd argument passed to this method
-	// invocation.
-	Arg2 time.Duration
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 *protocol.RepoUpdateResponse
@@ -5500,7 +5497,7 @@ type ClientRequestRepoUpdateFuncCall struct {
 // Args returns an interface slice containing the arguments of this
 // invocation.
 func (c ClientRequestRepoUpdateFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+	return []interface{}{c.Arg0, c.Arg1}
 }
 
 // Results returns an interface slice containing the results of this

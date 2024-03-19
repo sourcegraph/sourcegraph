@@ -74,7 +74,7 @@ func TestConcurrentTransactions(t *testing.T) {
 
 	t.Run("creating transactions concurrently does not fail", func(t *testing.T) {
 		var g errgroup.Group
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			g.Go(func() (err error) {
 				tx, err := store.Transact(ctx)
 				if err != nil {
@@ -103,7 +103,7 @@ func TestConcurrentTransactions(t *testing.T) {
 		tx.handle.(*txHandle).logger = capturingLogger
 
 		var g errgroup.Group
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			routine := i
 			g.Go(func() (err error) {
 				if err := tx.Exec(ctx, sqlf.Sprintf(`SELECT pg_sleep(0.1);`)); err != nil {
@@ -128,7 +128,7 @@ func TestSavepoints(t *testing.T) {
 
 	NumSavepointTests := 10
 
-	for i := 0; i < NumSavepointTests; i++ {
+	for i := range NumSavepointTests {
 		t.Run(fmt.Sprintf("i=%d", i), func(t *testing.T) {
 			if _, err := db.Exec(`TRUNCATE store_counts_test`); err != nil {
 				t.Fatalf("unexpected error truncating table: %s", err)

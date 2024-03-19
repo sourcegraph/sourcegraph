@@ -54,5 +54,5 @@ func (r Types) String() string {
 		names = append(names, name)
 	}
 	sort.Strings(names)
-	return strings.Join(names, "|")
+	return strings.Join(names, ", ")
 }

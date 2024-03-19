@@ -1,8 +1,8 @@
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
 import { RedirectRoute } from '../../components/RedirectRoute'
-import { type RepoSettingsLogsPageProps } from '../../enterprise/repo/settings/RepoSettingsLogsPage'
-import { type RepoSettingsPermissionsPageProps } from '../../enterprise/repo/settings/RepoSettingsPermissionsPage'
+import type { RepoSettingsLogsPageProps } from '../../enterprise/repo/settings/RepoSettingsLogsPage'
+import type { RepoSettingsPermissionsPageProps } from '../../enterprise/repo/settings/RepoSettingsPermissionsPage'
 
 import type { RepoSettingsAreaRoute } from './RepoSettingsArea'
 

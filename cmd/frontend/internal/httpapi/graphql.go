@@ -162,11 +162,6 @@ func serveGraphQL(logger log.Logger, schema *graphql.Schema, rlw graphqlbackend.
 			}
 		}
 
-		validationErrs := schema.ValidateWithVariables(params.Query, params.Variables)
-		if len(validationErrs) > 0 {
-			return errors.Wrap(err, "failed to validate the GraphQL query")
-		}
-
 		traceData.execStart = time.Now()
 		response := schema.Exec(r.Context(), params.Query, params.OperationName, params.Variables)
 		traceData.queryErrors = response.Errors

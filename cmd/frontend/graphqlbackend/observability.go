@@ -43,10 +43,10 @@ func (r *schemaResolver) TriggerObservabilityTestAlert(ctx context.Context, args
 	metric.With(nil).Set(1)
 
 	// reset the metric after some amount of time
-	go func(m *prometheus.GaugeVec) {
+	go func() {
 		time.Sleep(1 * time.Minute)
-		m.With(nil).Set(0)
-	}(metric)
+		metric.With(nil).Set(0)
+	}()
 
 	return &EmptyResponse{}, nil
 }

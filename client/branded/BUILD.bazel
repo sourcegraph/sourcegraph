@@ -167,6 +167,7 @@ ts_project(
         "//:node_modules/@codemirror/lint",
         "//:node_modules/@codemirror/state",
         "//:node_modules/@codemirror/view",
+        "//:node_modules/@date-fns/utc",
         "//:node_modules/@mdi/js",
         "//:node_modules/@reach/visually-hidden",
         "//:node_modules/@types/classnames",

@@ -70,7 +70,7 @@ func writeSep(b *bytes.Buffer, sep, indent string, depth int) {
 	if indent == "" {
 		return
 	}
-	for i := 0; i < depth; i++ {
+	for range depth {
 		b.WriteString(indent)
 	}
 }

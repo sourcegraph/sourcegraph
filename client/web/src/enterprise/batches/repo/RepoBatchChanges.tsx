@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 
 import { map } from 'rxjs/operators'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, H3, H5 } from '@sourcegraph/wildcard'
 
 import { FilteredConnection, type FilteredConnectionQueryArguments } from '../../../components/FilteredConnection'

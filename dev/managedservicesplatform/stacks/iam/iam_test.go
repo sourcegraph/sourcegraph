@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/spec"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
@@ -48,6 +49,7 @@ func TestExtractExternalSecrets(t *testing.T) {
 	for _, tc := range []struct {
 		name                string
 		secretEnv           map[string]string
+		secretVolumes       map[string]spec.EnvironmentSecretVolume
 		wantExternalSecrets []externalSecret
 		wantError           autogold.Value
 	}{
@@ -84,9 +86,38 @@ func TestExtractExternalSecrets(t *testing.T) {
 				secretID:  "BAR",
 			}},
 		},
+		{
+			name: "volumes has external secret",
+			secretVolumes: map[string]spec.EnvironmentSecretVolume{
+				"secret":  {Secret: "projects/foo/secrets/VOLUME"},
+				"secret2": {Secret: "SEKRET_VOLUME"},
+			},
+			wantExternalSecrets: []externalSecret{{
+				key:       "volume_secret",
+				projectID: "foo",
+				secretID:  "VOLUME",
+			}},
+		},
+		{
+			name:      "external secrets from volumes and env",
+			secretEnv: map[string]string{"SEKRET": "projects/foo/secrets/BAR", "NOT_EXTERNAL": "SEKRET"},
+			secretVolumes: map[string]spec.EnvironmentSecretVolume{
+				"secret":  {Secret: "projects/foo/secrets/VOLUME"},
+				"secret2": {Secret: "SEKRET_VOLUME"},
+			},
+			wantExternalSecrets: []externalSecret{{
+				key:       "sekret",
+				projectID: "foo",
+				secretID:  "BAR",
+			}, {
+				key:       "volume_secret",
+				projectID: "foo",
+				secretID:  "VOLUME",
+			}},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := extractExternalSecrets(tc.secretEnv)
+			got, err := extractExternalSecrets(tc.secretEnv, tc.secretVolumes)
 			if tc.wantError != nil {
 				require.Error(t, err)
 				tc.wantError.Equal(t, err.Error())

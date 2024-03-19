@@ -1,5 +1,7 @@
 import type { Meta, StoryFn } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
+
 import type { AuthenticatedUser } from '../../../auth'
 import { WebStory } from '../../../components/WebStory'
 import type { SourcegraphContext } from '../../../jscontext'
@@ -12,35 +14,32 @@ const config: Meta = {
 
 export default config
 
-const context: Pick<SourcegraphContext, 'authProviders'> = {
-    authProviders: [
-        {
-            clientID: '000',
-            serviceType: 'github',
-            displayName: 'GitHub.com',
-            isBuiltin: false,
-            authenticationURL: '/.auth/github/login?pc=https%3A%2F%2Fgithub.com%2F',
-            serviceID: 'https://github.com',
-        },
-        {
-            clientID: '001',
-            serviceType: 'gitlab',
-            displayName: 'GitLab.com',
-            isBuiltin: false,
-            authenticationURL: '/.auth/gitlab/login?pc=https%3A%2F%2Fgitlab.com%2F',
-            serviceID: 'https://gitlab.com',
-        },
-    ],
+const context: Pick<SourcegraphContext, 'externalURL'> = {
+    externalURL: 'https://sourcegraph.test:3443',
 }
 
 export const SourcegraphDotCom: StoryFn = () => (
     <WebStory>
-        {() => <CodyMarketingPage context={context} isSourcegraphDotCom={true} authenticatedUser={null} />}
+        {() => (
+            <CodyMarketingPage
+                context={context}
+                isSourcegraphDotCom={true}
+                authenticatedUser={null}
+                telemetryRecorder={noOpTelemetryRecorder}
+            />
+        )}
     </WebStory>
 )
 export const Enterprise: StoryFn = () => (
     <WebStory>
-        {() => <CodyMarketingPage context={context} isSourcegraphDotCom={false} authenticatedUser={null} />}
+        {() => (
+            <CodyMarketingPage
+                context={context}
+                isSourcegraphDotCom={false}
+                authenticatedUser={null}
+                telemetryRecorder={noOpTelemetryRecorder}
+            />
+        )}
     </WebStory>
 )
 
@@ -51,6 +50,7 @@ export const EnterpriseSiteAdmin: StoryFn = () => (
                 context={context}
                 isSourcegraphDotCom={false}
                 authenticatedUser={{ siteAdmin: true } as AuthenticatedUser}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         )}
     </WebStory>

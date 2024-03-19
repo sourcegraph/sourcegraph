@@ -330,7 +330,7 @@ func runMigratorWrapped(store storeIface, migrator Migrator, logger log.Logger, 
 
 // tickN advances the given ticker by one second n times with a guaranteed reader.
 func tickN(ticker *glock.MockTicker, n int) {
-	for i := 0; i < n; i++ {
+	for range n {
 		ticker.BlockingAdvance(time.Second)
 	}
 }

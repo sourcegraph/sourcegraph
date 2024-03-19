@@ -177,7 +177,7 @@ func main() {
 
 	var wkrs []*worker
 
-	for i := 0; i < *numWorkers; i++ {
+	for i := range *numWorkers {
 		name := fmt.Sprintf("worker-%d", i)
 		wkrScratchDir := filepath.Join(*scratchDir, name)
 		err := os.MkdirAll(wkrScratchDir, 0777)

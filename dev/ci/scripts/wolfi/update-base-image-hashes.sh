@@ -4,12 +4,13 @@ set -eu -o pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
 
+echo "~~~ :aspect: :stethoscope: Agent Health check"
+/etc/aspect/workflows/bin/agent_health_check
+
 # Update hashes for all base images
-bazel \
-  --bazelrc=.bazelrc \
-  --bazelrc=.aspect/bazelrc/ci.bazelrc \
-  --bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc \
-  run //dev/sg -- wolfi update-hashes
+aspectRC="/tmp/aspect-generated.bazelrc"
+rosetta bazelrc > "$aspectRC"
+bazel --bazelrc="$aspectRC" run //dev/sg -- wolfi update-hashes
 # Print diff
 git diff dev/oci_deps.bzl
 

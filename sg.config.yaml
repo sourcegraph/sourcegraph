@@ -265,6 +265,7 @@ commands:
       - internal
       - cmd/embeddings
       - internal/embeddings
+
   qdrant:
     cmd: |
       docker run -p 6333:6333 -p 6334:6334 \
@@ -333,6 +334,11 @@ commands:
       TELEMETRY_GATEWAY_EVENTS_PUBSUB_ENABLED: false
       SRC_LOG_LEVEL: info
       GRPC_WEB_UI_ENABLED: true
+      # Set for convenience - use real values in sg.config.overwrite.yaml if you
+      # are interacting with RPCs that enforce SAMS M2M auth. See
+      # https://github.com/sourcegraph/accounts.sourcegraph.com/wiki/Operators-Cheat-Sheet#create-a-new-idp-client
+      TELEMETRY_GATEWAY_SAMS_CLIENT_ID: "foo"
+      TELEMETRY_GATEWAY_SAMS_CLIENT_SECRET: "bar"
     watch:
       - lib
       - internal
@@ -637,8 +643,7 @@ commands:
         sleep 1
       done
     install: |
-      bazel build //cmd/executor-kubernetes:image_tarball
-      docker load --input $(bazel cquery //cmd/executor-kubernetes:image_tarball --output=files)
+      bazel run //cmd/executor-kubernetes:image_tarball
 
     env:
       IMAGE: executor-kubernetes:candidate
@@ -987,6 +992,20 @@ commands:
 bazelCommands:
   blobstore:
     target: //cmd/blobstore
+    env:
+      BLOBSTORE_DATA_DIR: $HOME/.sourcegraph-dev/data/blobstore-go
+  cody-gateway:
+    target: //cmd/cody-gateway
+    env:
+      CODY_GATEWAY_ANTHROPIC_ACCESS_TOKEN: foobar
+      # Set in override if you want to test local Cody Gateway: https://sourcegraph.com/docs/dev/how-to/cody_gateway
+      CODY_GATEWAY_DOTCOM_ACCESS_TOKEN: ''
+      CODY_GATEWAY_DOTCOM_API_URL: https://sourcegraph.test:3443/.api/graphql
+      CODY_GATEWAY_ALLOW_ANONYMOUS: true
+      CODY_GATEWAY_DIAGNOSTICS_SECRET: sekret
+      SRC_LOG_LEVEL: info
+      # Enables metrics in dev via debugserver
+      SRC_PROF_HTTP: '127.0.0.1:6098'
   docsite:
     runTarget: //doc:serve
   searcher:
@@ -1079,6 +1098,185 @@ bazelCommands:
     env:
       EXECUTOR_QUEUE_NAME: codeintel
       TMPDIR: $HOME/.sourcegraph/indexer-temp
+
+dockerCommands:
+  batcheshelper-builder:
+    # Nothing to run for this, we just want to re-run the install script every time.
+    cmd: exit 0
+    target: //cmd/batcheshelper:image_tarball
+    image: batcheshelper:candidate
+    env:
+      # TODO: This is required but should only be set on M1 Macs.
+      PLATFORM: linux/arm64
+    continueWatchOnExit: true
+
+  grafana:
+    target: //docker-images/grafana:image_tarball
+    docker:
+      image: grafana:candidate
+      ports:
+        - 3370
+      flags:
+        cpus: 1
+        memory: 1g
+      volumes:
+        - from: $HOME/.sourcegraph-dev/data/grafana
+          to: /var/lib/grafana
+        - from: $(pwd)/dev/grafana/all
+          to: /sg_config_grafana/provisioning/datasources
+
+      linux:
+        flags:
+          # Linux needs an extra arg to support host.internal.docker, which is how grafana connects
+          # to the prometheus backend.
+          add-host: host.docker.internal:host-gateway
+
+          # Docker users on Linux will generally be using direct user mapping, which
+          # means that they'll want the data in the volume mount to be owned by the
+          # same user as is running this script. Fortunately, the Grafana container
+          # doesn't really care what user it runs as, so long as it can write to
+          # /var/lib/grafana.
+          user: $UID
+    # Log file location: since we log outside of the Docker container, we should
+    # log somewhere that's _not_ ~/.sourcegraph-dev/data/grafana, since that gets
+    # volume mounted into the container and therefore has its own ownership
+    # semantics.
+    # Now for the actual logging. Grafana's output gets sent to stdout and stderr.
+    # We want to capture that output, but because it's fairly noisy, don't want to
+    # display it in the normal case.
+    logfile: $HOME/.sourcegraph-dev/logs/grafana/grafana.log
+
+    env:
+      # docker containers must access things via docker host on non-linux platforms
+      CACHE: false
+
+  loki:
+    logfile: $HOME/.sourcegraph-dev/logs/loki/loki.log
+    docker:
+      image: index.docker.io/grafana/loki:2.3.0
+      pull: true
+      ports:
+        - 3100
+      volumes:
+        - from: $HOME/.sourcegraph-dev/data/loki
+          to: /loki
+
+  otel-collector:
+    target: //docker-images/opentelemetry-collector:image_tarball
+    description: OpenTelemetry collector
+    args: '--config "/etc/otel-collector/$CONFIGURATION_FILE"'
+    docker:
+      image: opentelemetry-collector:candidate
+      ports:
+        - 4317
+        - 4318
+        - 55679
+        - 55670
+        - 8888
+      linux:
+        flags:
+          # Jaeger generally runs outside of Docker, so to access it we need to be
+          # able to access ports on the host, because the Docker host only exists on
+          # MacOS. --net=host is a very dirty way of enabling this.
+          net: host
+        env:
+          JAEGER_HOST: localhost
+    env:
+      JAEGER_HOST: host.docker.internal
+      # Overwrite the following in sg.config.overwrite.yaml, based on which collector
+      # config you are using - see docker-images/opentelemetry-collector for more details.
+      CONFIGURATION_FILE: 'configs/jaeger.yaml'
+
+  postgres_exporter:
+    target: //docker-images/postgres_exporter:image_tarball
+    docker:
+      image: postgres-exporter:candidate
+      flags:
+        cpus: 1
+        memory: 1g
+      ports:
+        - 9187
+      linux:
+        flags:
+          # Linux needs an extra arg to support host.internal.docker, which is how
+          # postgres_exporter connects to the prometheus backend.
+          add-host: host.docker.internal:host-gateway
+          net: host
+    precmd: |
+      # Use psql to read the effective values for PG* env vars (instead of, e.g., hardcoding the default
+      # values).
+      get_pg_env() { psql -c '\set' | grep "$1" | cut -f 2 -d "'"; }
+      PGHOST=${PGHOST-$(get_pg_env HOST)}
+      PGUSER=${PGUSER-$(get_pg_env USER)}
+      PGPORT=${PGPORT-$(get_pg_env PORT)}
+      # we need to be able to query migration_logs table
+      PGDATABASE=${PGDATABASE-$(get_pg_env DBNAME)}
+
+      ADJUSTED_HOST=${PGHOST:-127.0.0.1}
+      if [[ ("$ADJUSTED_HOST" == "localhost" || "$ADJUSTED_HOST" == "127.0.0.1" || -f "$ADJUSTED_HOST") && "$OSTYPE" != "linux-gnu" ]]; then
+        ADJUSTED_HOST="host.docker.internal"
+      fi
+    env:
+      DATA_SOURCE_NAME: postgresql://${PGUSER}:${PGPASSWORD}@${ADJUSTED_HOST}:${PGPORT}/${PGDATABASE}?sslmode=${PGSSLMODE:-disable}
+
+  prometheus:
+    target: //docker-images/prometheus:image_tarball
+    logfile: $HOME/.sourcegraph-dev/logs/prometheus/prometheus.log
+    docker:
+      image: prometheus:candidate
+      volumes:
+        - from: $HOME/.sourcegraph-dev/data/prometheus
+          to: /prometheus
+        - from: $(pwd)/$CONFIG_DIR
+          to: /sg_prometheus_add_ons
+      flags:
+        cpus: 1
+        memory: 4g
+      ports:
+        - 9090
+      linux:
+        flags:
+          net: host
+          user: $UID
+        env:
+          PROM_TARGETS: dev/prometheus/linux/prometheus_targets.yml
+          SRC_FRONTEND_INTERNAL: localhost:3090
+    precmd: cp ${PROM_TARGETS} "${CONFIG_DIR}"/prometheus_targets.yml
+    env:
+      CONFIG_DIR: docker-images/prometheus/config
+      PROM_TARGETS: dev/prometheus/all/prometheus_targets.yml
+      SRC_FRONTEND_INTERNAL: host.docker.internal:3090
+      DISABLE_SOURCEGRAPH_CONFIG: false
+      DISABLE_ALERTMANAGER: false
+      PROMETHEUS_ADDITIONAL_FLAGS: '--web.enable-lifecycle --web.enable-admin-api'
+
+  syntax-highlighter:
+    ignoreStdout: true
+    ignoreStderr: true
+    docker:
+      image: sourcegraph/syntax-highlighter:insiders
+      pull: true
+      ports:
+        - 9238
+      env:
+        WORKERS: 1
+        ROCKET_ADDRESS: 0.0.0.0
+
+  qdrant:
+    docker:
+      image: sourcegraph/qdrant:insiders
+      ports:
+        - 6333
+        - 6334
+      volumes:
+        - from: $HOME/.sourcegraph-dev/data/qdrant_data
+          to: /data
+      env:
+        QDRANT__SERVICE__GRPC_PORT: 6334
+        QDRANT__LOG_LEVEL: INFO
+        QDRANT__STORAGE__STORAGE_PATH: /data
+        QDRANT__STORAGE__SNAPSHOTS_PATH: /data
+        QDRANT_INIT_FILE_PATH: /data/.qdrant-initialized
 
 #
 # CommandSets ################################################################
@@ -1176,9 +1374,10 @@ commandsets:
       - zoekt-web-0
       - zoekt-web-1
       - blobstore
-      - cody-gateway
       - embeddings
       - telemetry-gateway
+    bazelCommands:
+      - cody-gateway
     env:
       SOURCEGRAPHDOTCOM_MODE: true
 
@@ -1482,6 +1681,17 @@ commandsets:
       - docker
     commands:
       - jaeger
+    dockerCommands:
+      - otel-collector
+      - prometheus
+      - grafana
+      - postgres_exporter
+
+  monitoring-og:
+    checks:
+      - docker
+    commands:
+      - jaeger
       - otel-collector
       - prometheus
       - grafana
@@ -1545,6 +1755,12 @@ commandsets:
     checks:
       - redis
     commands:
+      - cody-gateway
+
+  cody-gateway-bazel:
+    checks:
+      - redis
+    bazelCommands:
       - cody-gateway
 
   qdrant:

@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/grafana/regexp"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -71,6 +72,29 @@ func (node Pattern) String() string {
 		return fmt.Sprintf("(not %s)", strconv.Quote(node.Value))
 	}
 	return strconv.Quote(node.Value)
+}
+
+// IsRegExp returns true if the Pattern.Value should be interpreted as a Regex
+// otherwise returns false for a Literal.
+//
+// Note: This checks that the relevant annotation is set, which occasionally
+// we regress on setting. In such situations it will return that the Pattern
+// is Regex. Use this method so we have consistent behaviour across our
+// backends rather than directly checking annotations when building queries
+// for your backend.
+func (node Pattern) IsRegExp() bool {
+	// NOTE: Structural tech debt. We want the patterns to be treated like
+	// literals and not passed down as regex to searcher.
+	return !node.Annotation.Labels.IsSet(Literal | Structural)
+}
+
+// RegExpPattern returns the pattern value as a regex string. If node.IsRegExp
+// this is just node.Value, otherwise we escape the literal.
+func (node Pattern) RegExpPattern() string {
+	if node.IsRegExp() {
+		return node.Value
+	}
+	return regexp.QuoteMeta(node.Value)
 }
 
 func (node Parameter) String() string {
@@ -205,7 +229,7 @@ func (p *parser) peek(n int) (string, error) {
 	}()
 
 	var result []rune
-	for i := 0; i < n; i++ {
+	for range n {
 		if p.done() {
 			return "", io.ErrShortBuffer
 		}
@@ -882,7 +906,6 @@ func (p *parser) ParsePattern(label labels) Pattern {
 	}
 	p.pos += advance
 	return newPattern(value, label, newRange(start, p.pos))
-
 }
 
 // ParseParameter returns a leaf node corresponding to the syntax

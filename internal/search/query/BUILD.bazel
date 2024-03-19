@@ -32,7 +32,6 @@ go_library(
         "@com_github_go_enry_go_enry_v2//data",
         "@com_github_grafana_regexp//:regexp",
         "@com_github_grafana_regexp//syntax",
-        "@com_github_sourcegraph_log//:log",
         "@com_github_tj_go_naturaldate//:go-naturaldate",
     ],
 )
@@ -63,7 +62,6 @@ go_test(
         "@com_github_grafana_regexp//:regexp",
         "@com_github_grafana_regexp//syntax",
         "@com_github_hexops_autogold_v2//:autogold",
-        "@com_github_sourcegraph_log//:log",
         "@com_github_stretchr_testify//require",
     ],
 )

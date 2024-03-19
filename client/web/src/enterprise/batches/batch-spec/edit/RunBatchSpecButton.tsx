@@ -4,7 +4,7 @@ import { mdiInformationOutline, mdiChevronDown } from '@mdi/js'
 import { VisuallyHidden } from '@reach/visually-hidden'
 import { animated } from 'react-spring'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Button,
     Checkbox,

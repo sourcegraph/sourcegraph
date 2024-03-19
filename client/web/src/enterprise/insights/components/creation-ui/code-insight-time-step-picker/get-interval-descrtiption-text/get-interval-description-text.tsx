@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import type { Duration } from 'date-fns'
+
 import type { InsightStep } from '../../../../pages/insights/creation/search-insight'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

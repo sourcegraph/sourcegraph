@@ -19,14 +19,13 @@ import { NEVER, of } from 'rxjs'
 import { catchError, switchMap } from 'rxjs/operators'
 
 import type { StreamingSearchResultsListProps } from '@sourcegraph/branded'
-import { asError, type ErrorLike, isErrorLike, logger, repeatUntil } from '@sourcegraph/common'
+import { asError, type ErrorLike, isErrorLike, repeatUntil } from '@sourcegraph/common'
 import {
     isCloneInProgressErrorLike,
     isRepoSeeOtherErrorLike,
     isRevisionNotFoundErrorLike,
 } from '@sourcegraph/shared/src/backend/errors'
 import { RepoQuestionIcon } from '@sourcegraph/shared/src/components/icons'
-import type { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import { useKeyboardShortcut } from '@sourcegraph/shared/src/keyboardShortcuts/useKeyboardShortcut'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import { Shortcut } from '@sourcegraph/shared/src/react-shortcuts'
@@ -36,7 +35,6 @@ import { escapeSpaces } from '@sourcegraph/shared/src/search/query/filters'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
-import { makeRepoURI } from '@sourcegraph/shared/src/util/url'
 import { LoadingSpinner, Panel, useObservable } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
@@ -86,7 +84,6 @@ const RepoSettingsArea = lazyComponent(() => import('./settings/RepoSettingsArea
 export interface RepoContainerContext
     extends RepoHeaderContributionsLifecycleProps,
         SettingsCascadeProps,
-        ExtensionsControllerProps,
         PlatformContextProps,
         HoverThresholdProps,
         TelemetryProps,
@@ -123,7 +120,6 @@ interface RepoContainerProps
     extends SettingsCascadeProps<Settings>,
         PlatformContextProps,
         TelemetryProps,
-        ExtensionsControllerProps,
         Pick<SearchContextProps, 'selectedSearchContextSpec' | 'searchContextsEnabled'>,
         BreadcrumbSetters,
         BreadcrumbsProps,
@@ -179,7 +175,7 @@ export const RepoContainer: FC<RepoContainerProps> = props => {
                                     }
 
                                     if (isCloneInProgressErrorLike(error)) {
-                                        return of<ErrorLike>(asError(error))
+                                        return of(asError(error))
                                     }
 
                                     throw error
@@ -189,7 +185,7 @@ export const RepoContainer: FC<RepoContainerProps> = props => {
                     )
                     .pipe(
                         repeatUntil(value => !isCloneInProgressErrorLike(value), { delay: 1000 }),
-                        catchError(error => of<ErrorLike>(asError(error)))
+                        catchError(error => of(asError(error)))
                     ),
             [repoName, revision]
         )
@@ -330,7 +326,7 @@ const RepoUserContainer: FC<RepoUserContainerProps> = ({
     repoHeaderContributionsLifecycleProps,
     ...props
 }) => {
-    const { extensionsController, repoContainerRoutes, authenticatedUser, selectedSearchContextSpec } = props
+    const { repoContainerRoutes, authenticatedUser, selectedSearchContextSpec } = props
 
     const location = useLocation()
 
@@ -364,41 +360,6 @@ const RepoUserContainer: FC<RepoUserContainerProps> = ({
 
     // The external links to show in the repository header, if any.
     const [externalLinks, setExternalLinks] = useState<ExternalLinkFields[] | undefined>()
-
-    // Update the workspace roots service to reflect the current repo / resolved revision
-    useEffect(() => {
-        const workspaceRootUri =
-            resolvedRevisionOrError &&
-            !isErrorLike(resolvedRevisionOrError) &&
-            makeRepoURI({
-                repoName,
-                revision: resolvedRevisionOrError.commitID,
-            })
-
-        if (workspaceRootUri && extensionsController !== null) {
-            extensionsController.extHostAPI
-                .then(extensionHostAPI =>
-                    extensionHostAPI.addWorkspaceRoot({
-                        uri: workspaceRootUri,
-                        inputRevision: revision || '',
-                    })
-                )
-                .catch(error => {
-                    logger.error('Error adding workspace root', error)
-                })
-        }
-
-        // Clear the Sourcegraph extensions model's roots when navigating away.
-        return () => {
-            if (workspaceRootUri && extensionsController !== null) {
-                extensionsController.extHostAPI
-                    .then(extensionHostAPI => extensionHostAPI.removeWorkspaceRoot(workspaceRootUri))
-                    .catch(error => {
-                        logger.error('Error removing workspace root', error)
-                    })
-            }
-        }
-    }, [extensionsController, repoName, resolvedRevisionOrError, revision])
 
     // Update the navbar query to reflect the current repo / revision
     const [enableV2QueryInput] = useV2QueryInput()
@@ -496,7 +457,10 @@ const RepoUserContainer: FC<RepoUserContainerProps> = ({
                     {() => (
                         <AskCodyButton
                             onClick={() => {
-                                logTranscriptEvent(EventName.CODY_SIDEBAR_CHAT_OPENED, { repo, path: filePath })
+                                logTranscriptEvent(EventName.CODY_SIDEBAR_CHAT_OPENED, 'repo.askCody', 'click', {
+                                    repo,
+                                    path: filePath,
+                                })
                                 setIsCodySidebarOpen(true)
                             }}
                         />
@@ -606,6 +570,7 @@ const RepoUserContainer: FC<RepoUserContainerProps> = ({
                         <CodySidebar
                             onClose={() => setIsCodySidebarOpen(false)}
                             authenticatedUser={props.authenticatedUser}
+                            telemetryRecorder={props.platformContext.telemetryRecorder}
                         />
                     </Panel>
                 </RepoContainerRootPortal>

@@ -34,7 +34,7 @@
     } = createDropdownMenu({
         open,
     })
-    setContext({ item, trigger, separator, builders, open })
+    setContext({ item, trigger, separator, builders, $open })
 </script>
 
 <button {...$trigger} use:trigger class={triggerButtonClass} {...$$restProps}>

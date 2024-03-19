@@ -117,7 +117,7 @@ func (r *Runner) forEachSchema(ctx context.Context, schemaNames []string, visito
 	for _, schemaName := range schemaNames {
 		wg.Add(1)
 
-		go func(schemaName string) {
+		go func() {
 			defer wg.Done()
 
 			errorCh <- visitor(ctx, schemaContext{
@@ -126,7 +126,7 @@ func (r *Runner) forEachSchema(ctx context.Context, schemaNames []string, visito
 				store:                storeMap[schemaName],
 				initialSchemaVersion: versionMap[schemaName],
 			})
-		}(schemaName)
+		}()
 	}
 
 	wg.Wait()

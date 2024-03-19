@@ -62,4 +62,6 @@ var (
 	StyleGrey   = Fg256Color(8)
 	StyleYellow = Fg256Color(220)
 	StyleOrange = Fg256Color(202)
+	StyleRed    = Fg256Color(196)
+	StyleGreen  = Fg256Color(2)
 )

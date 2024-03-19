@@ -7,11 +7,10 @@ import { type Panel, useBuiltinTabbedPanelViews } from '@sourcegraph/branded/src
 import { PanelContent } from '@sourcegraph/branded/src/components/panel/views/PanelContent'
 import { isDefined, isErrorLike } from '@sourcegraph/common'
 import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
-import type { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
 import type { Scalars } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { Settings, SettingsCascadeOrError, SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { type AbsoluteRepoFile, type ModeSpec, parseQueryAndHash } from '@sourcegraph/shared/src/util/url'
 import { Text } from '@sourcegraph/wildcard'
@@ -27,7 +26,6 @@ interface Props
     extends AbsoluteRepoFile,
         ModeSpec,
         SettingsCascadeProps,
-        ExtensionsControllerProps,
         PlatformContextProps,
         Pick<CodeIntelligenceProps, 'useCodeIntel'>,
         OwnConfigProps,
@@ -47,7 +45,6 @@ export type BlobPanelTabID = 'info' | 'def' | 'references' | 'impl' | 'typedef' 
  * A React hook that registers panel views for the blob.
  */
 function useBlobPanelViews({
-    extensionsController,
     revision,
     filePath,
     repoID,
@@ -90,7 +87,6 @@ function useBlobPanelViews({
                               <ReferencesPanel
                                   settingsCascade={settingsCascade}
                                   platformContext={platformContext}
-                                  extensionsController={extensionsController}
                                   telemetryService={telemetryService}
                                   telemetryRecorder={telemetryRecorder}
                                   key="references"
@@ -154,7 +150,6 @@ function useBlobPanelViews({
             position,
             settingsCascade,
             platformContext,
-            extensionsController,
             telemetryService,
             telemetryRecorder,
             fetchHighlightedFileLineRanges,

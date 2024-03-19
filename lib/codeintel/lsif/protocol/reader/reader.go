@@ -86,7 +86,7 @@ func readLines(ctx context.Context, r io.Reader, unmarshal func(line []byte) (El
 		// The result slice
 		pairs := make([]Pair, NumUnmarshalGoRoutines)
 
-		for i := 0; i < NumUnmarshalGoRoutines; i++ {
+		for range NumUnmarshalGoRoutines {
 			go func() {
 				for idx := range work {
 					element, err := unmarshal(lines[idx].Bytes())
@@ -117,12 +117,12 @@ func readLines(ctx context.Context, r io.Reader, unmarshal func(line []byte) (El
 			}
 
 			// Wait until the current batch has been completely unmarshalled
-			for j := 0; j < i; j++ {
+			for range i {
 				<-signal
 			}
 
 			// Return each buffer to the pool for reuse
-			for j := 0; j < i; j++ {
+			for j := range i {
 				lines[j].Reset()
 				pool.Put(lines[j])
 			}
@@ -130,7 +130,7 @@ func readLines(ctx context.Context, r io.Reader, unmarshal func(line []byte) (El
 			// Read the result array in order. If the caller context has completed,
 			// we'll abandon any additional values we were going to send on this
 			// channel (as well as any additional errors from the scanner).
-			for j := 0; j < i; j++ {
+			for j := range i {
 				select {
 				case pairCh <- pairs[j]:
 				case <-ctx.Done():

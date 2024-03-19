@@ -1151,7 +1151,7 @@ func TestSyncerMultipleServices(t *testing.T) {
 		t.Fatalf("expected %d sync jobs, got %d", len(services), jobCount)
 	}
 
-	for i := 0; i < len(services)*10; i++ {
+	for range len(services) * 10 {
 		diff := <-syncer.Synced
 
 		if len(diff.Added) != 1 {
@@ -1348,15 +1348,10 @@ func TestCloudDefaultExternalServicesDontSync(t *testing.T) {
 }
 
 func TestDotComPrivateReposDontSync(t *testing.T) {
-	orig := dotcom.SourcegraphDotComMode()
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
-	t.Cleanup(func() {
-		dotcom.MockSourcegraphDotComMode(orig)
-		cancel()
-	})
+	defer cancel()
 
 	store := getTestRepoStore(t)
 

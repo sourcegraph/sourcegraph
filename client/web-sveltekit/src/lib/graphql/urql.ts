@@ -206,7 +206,7 @@ export function infinityQuery<TData = any, TVariables extends AnyVariables = Any
                                 'query',
                                 createRequest(args.query, { ...initialVariables, ...variables })
                             )
-                            return concat<Partial<OperationResultState<TData, TVariables>>>(
+                            return concat(
                                 of({ fetching: true, stale: false, restoring: false }),
                                 from(args.client.executeRequestOperation(operation).toPromise()).pipe(
                                     map(({ data, stale, operation, error, extensions }) => ({

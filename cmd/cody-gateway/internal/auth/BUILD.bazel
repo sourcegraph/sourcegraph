@@ -36,7 +36,7 @@ go_test(
         "//internal/licensing",
         "//internal/productsubscription",
         "//lib/errors",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_khan_genqlient//graphql",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",

@@ -9,6 +9,7 @@ go_library(
     deps = [
         "//cmd/gitserver/internal/cacert",
         "//internal/conf",
+        "//internal/vcs",
         "//internal/wrexec",
         "//lib/errors",
         "//lib/process",
@@ -23,8 +24,10 @@ go_test(
     embed = [":executil"],
     deps = [
         "//internal/conf",
+        "//internal/vcs",
         "//schema",
         "@com_github_google_go_cmp//cmp",
         "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

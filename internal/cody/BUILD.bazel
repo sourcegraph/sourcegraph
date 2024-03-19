@@ -16,6 +16,7 @@ go_library(
         "//internal/accesstoken",
         "//internal/actor",
         "//internal/auth",
+        "//internal/codygateway",
         "//internal/conf",
         "//internal/conf/conftypes",
         "//internal/database",

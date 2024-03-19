@@ -35,7 +35,7 @@ func TestDirectoryContents(t *testing.T) {
 		"web/shared/quux.ts",
 		"web/shared/quux.generated.ts",
 	}
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		// Should skip all of these directories
 		paths = append(paths, fmt.Sprintf("web/node_modules/%d/deeply/nested/lib/file.ts", i))
 	}

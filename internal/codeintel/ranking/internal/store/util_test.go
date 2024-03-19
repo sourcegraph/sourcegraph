@@ -8,7 +8,7 @@ import (
 
 func TestBatchChannel(t *testing.T) {
 	ch := make(chan int, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		ch <- i
 	}
 	close(ch)

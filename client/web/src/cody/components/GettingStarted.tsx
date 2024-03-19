@@ -8,7 +8,7 @@ import { H4, H5, RadioButton, Text, Button, Icon, Link } from '@sourcegraph/wild
 import { CodyColorIcon, CodySpeechBubbleIcon } from '../chat/CodyPageIcon'
 
 import { ScopeSelector } from './ScopeSelector'
-import { ScopeSelectorProps } from './ScopeSelector/ScopeSelector'
+import type { ScopeSelectorProps } from './ScopeSelector/ScopeSelector'
 
 import styles from './GettingStarted.module.scss'
 

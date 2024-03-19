@@ -31,6 +31,8 @@
     }
 
     .icon {
+        display: flex;
+        align-items: center;
         flex-shrink: 0;
         --color: var(--text-muted);
     }
@@ -51,9 +53,11 @@
         flex-wrap: wrap;
         color: var(--text-muted);
         flex-shrink: 0;
+        gap: 0.5rem;
+        align-items: center;
     }
 
-    .body {
+    .body:not(:empty) {
         background-color: var(--code-bg);
         border-bottom: 1px solid var(--border-color);
     }

@@ -1,6 +1,6 @@
 import { type FunctionComponent, useState, useEffect } from 'react'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { ErrorAlert, Link, LoadingSpinner, PageHeader } from '@sourcegraph/wildcard'
 

@@ -51,7 +51,7 @@ func TestBatchInserterThin(t *testing.T) {
 
 	tableSizeFactor := 2
 	var expectedValues [][]any
-	for i := 0; i < MaxNumPostgresParameters*tableSizeFactor; i++ {
+	for i := range MaxNumPostgresParameters * tableSizeFactor {
 		expectedValues = append(expectedValues, []any{i})
 	}
 	testInsertThin(t, db, expectedValues)
@@ -86,7 +86,7 @@ func TestBatchInserterWithReturn(t *testing.T) {
 	expectedValues := makeTestValues(tableSizeFactor, 0)
 
 	var expectedIDs []int
-	for i := 0; i < numRows; i++ {
+	for i := range numRows {
 		expectedIDs = append(expectedIDs, i+1)
 	}
 
@@ -105,7 +105,7 @@ func TestBatchInserterWithReturnWithConflicts(t *testing.T) {
 	expectedValues := makeTestValues(tableSizeFactor, 0)
 
 	var expectedIDs []int
-	for i := 0; i < numRows; i++ {
+	for i := range numRows {
 		expectedIDs = append(expectedIDs, i+1)
 	}
 
@@ -153,7 +153,7 @@ func BenchmarkBatchInserter(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		testInsert(b, db, expectedValues)
 	}
 }
@@ -166,7 +166,7 @@ func BenchmarkBatchInserterLargePayload(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		testInsert(b, db, expectedValues)
 	}
 }
@@ -201,7 +201,7 @@ func setupTestTableThin(t testing.TB, db *sql.DB) {
 
 func makeTestValues(tableSizeFactor, payloadSize int) [][]any {
 	var expectedValues [][]any
-	for i := 0; i < MaxNumPostgresParameters*tableSizeFactor; i++ {
+	for i := range MaxNumPostgresParameters * tableSizeFactor {
 		expectedValues = append(expectedValues, []any{
 			i,
 			i + 1,
@@ -216,7 +216,7 @@ func makeTestValues(tableSizeFactor, payloadSize int) [][]any {
 
 func makePayload(size int) string {
 	s := make([]byte, 0, size)
-	for i := 0; i < size; i++ {
+	for range size {
 		s = append(s, '!')
 	}
 
@@ -310,7 +310,7 @@ func testInsertWithReturnWithConflicts(t testing.TB, db *sql.DB, n int, expected
 		},
 	)
 
-	for i := 0; i < n; i++ {
+	for range n {
 		for j, values := range expectedValues {
 			if err := inserter.Insert(ctx, append([]any{j + 1}, values...)...); err != nil {
 				t.Fatalf("unexpected error inserting values: %s", err)
@@ -337,7 +337,7 @@ func testInsertWithConflicts(t testing.TB, db *sql.DB, n int, expectedValues [][
 		"id", "col1", "col2", "col3", "col4", "col5",
 	)
 
-	for i := 0; i < n; i++ {
+	for range n {
 		for j, values := range expectedValues {
 			if err := inserter.Insert(ctx, append([]any{j + 1}, values...)...); err != nil {
 				t.Fatalf("unexpected error inserting values: %s", err)

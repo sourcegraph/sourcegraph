@@ -2,7 +2,7 @@
  * Provides convenience functions for interacting with the Sourcegraph API from tests.
  */
 
-import { zip, timer, concat, throwError, defer, type Observable } from 'rxjs'
+import { zip, timer, concat, throwError, defer, type Observable, lastValueFrom } from 'rxjs'
 import { map, tap, retryWhen, delayWhen, take, mergeMap } from 'rxjs/operators'
 
 import { isErrorLike, createAggregateError, logger } from '@sourcegraph/common'
@@ -261,40 +261,41 @@ export function getExternalServices(
         uniqueDisplayName?: string
     } = {}
 ): Promise<ExternalServiceNodeFields[]> {
-    return gqlClient
-        .queryGraphQL<ExternalServicesRegressionResult, ExternalServicesRegressionVariables>(
-            gql`
-                query ExternalServicesRegression($first: Int) {
-                    externalServices(first: $first) {
-                        nodes {
-                            ...ExternalServiceNodeFields
+    return lastValueFrom(
+        gqlClient
+            .queryGraphQL<ExternalServicesRegressionResult, ExternalServicesRegressionVariables>(
+                gql`
+                    query ExternalServicesRegression($first: Int) {
+                        externalServices(first: $first) {
+                            nodes {
+                                ...ExternalServiceNodeFields
+                            }
                         }
                     }
-                }
 
-                fragment ExternalServiceNodeFields on ExternalService {
-                    id
-                    kind
-                    displayName
-                    config
-                    createdAt
-                    updatedAt
-                    warning
-                }
-            `,
-            { first: 100 }
-        )
-        .pipe(
-            map(dataOrThrowErrors),
-            map(({ externalServices }) =>
-                externalServices.nodes.filter(
-                    ({ displayName, kind }) =>
-                        (options.uniqueDisplayName === undefined || options.uniqueDisplayName === displayName) &&
-                        (options.kind === undefined || options.kind === kind)
+                    fragment ExternalServiceNodeFields on ExternalService {
+                        id
+                        kind
+                        displayName
+                        config
+                        createdAt
+                        updatedAt
+                        warning
+                    }
+                `,
+                { first: 100 }
+            )
+            .pipe(
+                map(dataOrThrowErrors),
+                map(({ externalServices }) =>
+                    externalServices.nodes.filter(
+                        ({ displayName, kind }) =>
+                            (options.uniqueDisplayName === undefined || options.uniqueDisplayName === displayName) &&
+                            (options.kind === undefined || options.kind === kind)
+                    )
                 )
             )
-        )
-        .toPromise()
+    )
 }
 
 export async function updateExternalService(
@@ -448,22 +449,23 @@ export async function setTosAccepted(gqlClient: GraphQLClient, userID: Scalars['
  * dependency-injected `requestGraphQL`.
  */
 export function currentProductVersion(gqlClient: GraphQLClient): Promise<string> {
-    return gqlClient
-        .queryGraphQL<SiteProductVersionResult, SiteProductVersionVariables>(
-            gql`
-                query SiteProductVersion {
-                    site {
-                        productVersion
+    return lastValueFrom(
+        gqlClient
+            .queryGraphQL<SiteProductVersionResult, SiteProductVersionVariables>(
+                gql`
+                    query SiteProductVersion {
+                        site {
+                            productVersion
+                        }
                     }
-                }
-            `,
-            {}
-        )
-        .pipe(
-            map(dataOrThrowErrors),
-            map(({ site }) => site.productVersion)
-        )
-        .toPromise()
+                `,
+                {}
+            )
+            .pipe(
+                map(dataOrThrowErrors),
+                map(({ site }) => site.productVersion)
+            )
+    )
 }
 
 /**
@@ -473,16 +475,16 @@ export function currentProductVersion(gqlClient: GraphQLClient): Promise<string>
 export function getViewerSettings({
     requestGraphQL,
 }: Pick<PlatformContext, 'requestGraphQL'>): Promise<ViewerSettingsResult['viewerSettings']> {
-    return requestGraphQL<ViewerSettingsResult, ViewerSettingsVariables>({
-        request: viewerSettingsQuery,
-        variables: {},
-        mightContainPrivateInfo: true,
-    })
-        .pipe(
+    return lastValueFrom(
+        requestGraphQL<ViewerSettingsResult, ViewerSettingsVariables>({
+            request: viewerSettingsQuery,
+            variables: {},
+            mightContainPrivateInfo: true,
+        }).pipe(
             map(dataOrThrowErrors),
             map(data => data.viewerSettings)
         )
-        .toPromise()
+    )
 }
 
 /**
@@ -631,55 +633,54 @@ export function createUser(
  * TODO(beyang): remove this after the corresponding API in the main code has been updated to use a
  * dependency-injected `requestGraphQL`.
  */
-export async function getUser(
+export function getUser(
     { requestGraphQL }: Pick<PlatformContext, 'requestGraphQL'>,
     username: string
 ): Promise<UserResult['user']> {
-    const user = await requestGraphQL<UserResult, UserVariables>({
-        request: gql`
-            query User($username: String!) {
-                user(username: $username) {
-                    __typename
-                    id
-                    username
-                    displayName
-                    url
-                    settingsURL
-                    avatarURL
-                    viewerCanAdminister
-                    siteAdmin
-                    createdAt
-                    emails {
-                        email
-                        verified
-                    }
-                    organizations {
-                        nodes {
-                            id
-                            displayName
-                            name
+    return lastValueFrom(
+        requestGraphQL<UserResult, UserVariables>({
+            request: gql`
+                query User($username: String!) {
+                    user(username: $username) {
+                        __typename
+                        id
+                        username
+                        displayName
+                        url
+                        settingsURL
+                        avatarURL
+                        viewerCanAdminister
+                        siteAdmin
+                        createdAt
+                        emails {
+                            email
+                            verified
                         }
-                    }
-                    settingsCascade {
-                        subjects {
-                            latestSettings {
+                        organizations {
+                            nodes {
                                 id
-                                contents
+                                displayName
+                                name
+                            }
+                        }
+                        settingsCascade {
+                            subjects {
+                                latestSettings {
+                                    id
+                                    contents
+                                }
                             }
                         }
                     }
                 }
-            }
-        `,
-        variables: { username },
-        mightContainPrivateInfo: true,
-    })
-        .pipe(
+            `,
+            variables: { username },
+            mightContainPrivateInfo: true,
+        }).pipe(
             map(dataOrThrowErrors),
             map(({ user }) => user)
         )
-        .toPromise()
-    return user
+    )
 }
 
 /**
@@ -748,86 +749,86 @@ export function search(
     version: SearchVersion,
     patternType: SearchPatternType
 ): Promise<SearchResult['search']> {
-    return requestGraphQL<SearchResult, SearchVariables>({
-        request: gql`
-            query Search($query: String!, $version: SearchVersion!, $patternType: SearchPatternType!) {
-                search(query: $query, version: $version, patternType: $patternType) {
-                    results {
-                        __typename
-                        limitHit
-                        matchCount
-                        approximateResultCount
-                        missing {
-                            name
-                        }
-                        cloning {
-                            name
-                        }
-                        timedout {
-                            name
-                        }
-                        indexUnavailable
-                        dynamicFilters {
-                            value
-                            label
-                            count
-                            limitHit
-                            kind
-                        }
+    return lastValueFrom(
+        requestGraphQL<SearchResult, SearchVariables>({
+            request: gql`
+                query Search($query: String!, $version: SearchVersion!, $patternType: SearchPatternType!) {
+                    search(query: $query, version: $version, patternType: $patternType) {
                         results {
                             __typename
-                            ... on Repository {
-                                id
+                            limitHit
+                            matchCount
+                            approximateResultCount
+                            missing {
                                 name
-                                ...GenericSearchResultFields
                             }
-                            ... on FileMatch {
-                                file {
-                                    path
-                                    url
-                                    commit {
-                                        oid
+                            cloning {
+                                name
+                            }
+                            timedout {
+                                name
+                            }
+                            indexUnavailable
+                            dynamicFilters {
+                                value
+                                label
+                                count
+                                limitHit
+                                kind
+                            }
+                            results {
+                                __typename
+                                ... on Repository {
+                                    id
+                                    name
+                                    ...GenericSearchResultFields
+                                }
+                                ... on FileMatch {
+                                    file {
+                                        path
+                                        url
+                                        commit {
+                                            oid
+                                        }
+                                    }
+                                    repository {
+                                        name
+                                        url
+                                    }
+                                    limitHit
+                                    symbols {
+                                        name
+                                        containerName
+                                        url
+                                        kind
+                                    }
+                                    lineMatches {
+                                        preview
+                                        lineNumber
+                                        offsetAndLengths
                                     }
                                 }
-                                repository {
-                                    name
-                                    url
-                                }
-                                limitHit
-                                symbols {
-                                    name
-                                    containerName
-                                    url
-                                    kind
-                                }
-                                lineMatches {
-                                    preview
-                                    lineNumber
-                                    offsetAndLengths
+                                ... on CommitSearchResult {
+                                    ...GenericSearchResultFields
                                 }
                             }
-                            ... on CommitSearchResult {
-                                ...GenericSearchResultFields
-                            }
-                        }
-                        alert {
-                            title
-                            description
-                            proposedQueries {
+                            alert {
+                                title
                                 description
-                                query
+                                proposedQueries {
+                                    description
+                                    query
+                                }
                             }
+                            elapsedMilliseconds
                         }
-                        elapsedMilliseconds
                     }
                 }
-            }
-            ${GenericSearchResultInterfaceFragment}
-        `,
-        variables: { query, version, patternType },
-        mightContainPrivateInfo: false,
-    })
-        .pipe(
+                ${GenericSearchResultInterfaceFragment}
+            `,
+            variables: { query, version, patternType },
+            mightContainPrivateInfo: false,
+        }).pipe(
             map(dataOrThrowErrors),
             map(data => {
                 if (!data.search) {
@@ -836,7 +837,7 @@ export function search(
                 return data.search
             })
         )
-        .toPromise()
+    )
 }
 
 /**

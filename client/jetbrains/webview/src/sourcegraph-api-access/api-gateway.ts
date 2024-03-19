@@ -1,3 +1,5 @@
+import { lastValueFrom } from 'rxjs'
+
 import { gql, requestGraphQLCommon } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import type { CurrentAuthStateResult, CurrentAuthStateVariables } from '@sourcegraph/shared/src/graphql-operations'
@@ -57,18 +59,20 @@ export async function getSiteVersionAndAuthenticatedUser(
         return { site: null, currentUser: null }
     }
 
-    const result = await requestGraphQLCommon<SiteVersionAndCurrentAuthStateResult, CurrentAuthStateVariables>({
-        request: siteVersionAndUserQuery,
-        variables: {},
-        baseUrl: instanceURL,
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'X-Sourcegraph-Should-Trace': new URLSearchParams(window.location.search).get('trace') || 'false',
-            ...(accessToken && { Authorization: `token ${accessToken}` }),
-            ...customRequestHeaders,
-        },
-    }).toPromise()
+    const result = await lastValueFrom(
+        requestGraphQLCommon<SiteVersionAndCurrentAuthStateResult, CurrentAuthStateVariables>({
+            request: siteVersionAndUserQuery,
+            variables: {},
+            baseUrl: instanceURL,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-Sourcegraph-Should-Trace': new URLSearchParams(window.location.search).get('trace') || 'false',
+                ...(accessToken && { Authorization: `token ${accessToken}` }),
+                ...customRequestHeaders,
+            },
+        })
+    )
 
     return result.data ?? { site: null, currentUser: null }
 }

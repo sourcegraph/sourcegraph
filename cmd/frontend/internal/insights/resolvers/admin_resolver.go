@@ -325,7 +325,7 @@ func (r *insightViewDebugResolver) Raw(ctx context.Context) ([]string, error) {
 	}
 
 	ids := make([]string, 0, len(r.viewSeries))
-	for i := 0; i < len(r.viewSeries); i++ {
+	for i := range len(r.viewSeries) {
 		ids = append(ids, r.viewSeries[i].SeriesID)
 	}
 

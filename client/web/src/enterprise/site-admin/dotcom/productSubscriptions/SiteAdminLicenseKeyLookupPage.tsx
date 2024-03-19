@@ -47,11 +47,11 @@ export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsW
 
     return (
         <div className="site-admin-product-subscriptions-page">
-            <PageTitle title="Product subscriptions" />
+            <PageTitle title="Enterprise subscriptions" />
             <PageHeader
                 path={[{ text: 'License key lookup' }]}
                 headingElement="h2"
-                description="Find matching licenses and their associated product subscriptions"
+                description="Find matching licenses and their associated enterprise subscriptions"
                 className="mb-3"
             />
             <ConnectionContainer>

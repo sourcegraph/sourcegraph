@@ -1,4 +1,4 @@
-import { FC, ReactNode, useMemo, useRef, useState } from 'react'
+import { type FC, type ReactNode, useMemo, useRef, useState } from 'react'
 
 import { mdiClose, mdiSourceRepository } from '@mdi/js'
 import classNames from 'classnames'
@@ -12,7 +12,7 @@ import { Button, Icon, H2, H4, Input, LanguageIcon, Code, Tooltip } from '@sourc
 
 import { codeHostIcon } from '../../../../components'
 import { SyntaxHighlightedSearchQuery } from '../../../../components/SyntaxHighlightedSearchQuery'
-import { URLQueryFilter } from '../../hooks'
+import type { URLQueryFilter } from '../../hooks'
 import { DynamicFilterBadge } from '../DynamicFilterBadge'
 
 import styles from './SearchDynamicFilter.module.scss'

@@ -160,7 +160,7 @@ func (c *sourcegraphEmbeddingsClient) do(ctx context.Context, request codygatewa
 }
 
 func (c *sourcegraphEmbeddingsClient) requestSingleEmbeddingWithRetryOnNull(ctx context.Context, model string, input string, retries int) (resp []float32, err error) {
-	for i := 0; i < retries; i++ {
+	for range retries {
 		resp, err := c.do(ctx, codygateway.EmbeddingsRequest{
 			Model: model,
 			Input: []string{input},

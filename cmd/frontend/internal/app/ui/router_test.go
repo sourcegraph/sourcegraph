@@ -22,8 +22,12 @@ import (
 
 func init() {
 	// Enable SourcegraphDotComMode for all tests in this package.
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(fakeTB{}, true)
 }
+
+type fakeTB struct{}
+
+func (fakeTB) Cleanup(func()) {}
 
 func TestRouter(t *testing.T) {
 	InitRouter(dbmocks.NewMockDB())

@@ -45,73 +45,51 @@ func TestWithSelect(t *testing.T) {
 	}
 
 	autogold.Expect(`[
-  {
-    "Path": "pokeman/",
-    "PreciseLanguage": "",
-    "ChunkMatches": null,
-    "PathMatches": null,
-    "LimitHit": false
-  },
-  {
-    "Path": "digiman/",
-    "PreciseLanguage": "",
-    "ChunkMatches": null,
-    "PathMatches": null,
-    "LimitHit": false
-  }
-]`).Equal(t, test("file.directory"))
+	  {
+	    "Path": "pokeman/",
+	    "PreciseLanguage": "",
+	    "ChunkMatches": null,
+	    "PathMatches": null,
+	    "LimitHit": false
+	  },
+	  {
+	    "Path": "digiman/",
+	    "PreciseLanguage": "",
+	    "ChunkMatches": null,
+	    "PathMatches": null,
+	    "LimitHit": false
+	  }
+	]`).Equal(t, test("file.directory"))
 
 	autogold.Expect(`[
-  {
-    "Path": "pokeman/charmandar",
-    "PreciseLanguage": "",
-    "ChunkMatches": null,
-    "PathMatches": null,
-    "LimitHit": false
-  },
-  {
-    "Path": "pokeman/bulbosaur",
-    "PreciseLanguage": "",
-    "ChunkMatches": null,
-    "PathMatches": null,
-    "LimitHit": false
-  },
-  {
-    "Path": "digiman/ummm",
-    "PreciseLanguage": "",
-    "ChunkMatches": null,
-    "PathMatches": null,
-    "LimitHit": false
-  }
-]`).Equal(t, test("file"))
+	  {
+	    "Path": "pokeman/charmandar",
+	    "PreciseLanguage": "",
+	    "ChunkMatches": null,
+	    "PathMatches": null,
+	    "LimitHit": false
+	  },
+	  {
+	    "Path": "pokeman/bulbosaur",
+	    "PreciseLanguage": "",
+	    "ChunkMatches": null,
+	    "PathMatches": null,
+	    "LimitHit": false
+	  },
+	  {
+	    "Path": "digiman/ummm",
+	    "PreciseLanguage": "",
+	    "ChunkMatches": null,
+	    "PathMatches": null,
+	    "LimitHit": false
+	  }
+	]`).Equal(t, test("file"))
 
 	autogold.Expect(`[
   {
     "Path": "pokeman/charmandar",
     "PreciseLanguage": "",
     "ChunkMatches": [
-      {
-        "Content": "",
-        "ContentStart": [
-          0,
-          0,
-          0
-        ],
-        "Ranges": [
-          {
-            "start": [
-              0,
-              0,
-              0
-            ],
-            "end": [
-              0,
-              0,
-              0
-            ]
-          }
-        ]
-      },
       {
         "Content": "",
         "ContentStart": [

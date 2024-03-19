@@ -89,7 +89,7 @@ func (bs *Breadcrumbs) pretty(w *strings.Builder, readFile readFileFunc) {
 
 			fmt.Fprint(w, grey(gutter))
 			lineWithSpaces := strings.ReplaceAll(line, "\t", "    ")
-			for c := 0; c < len(lineWithSpaces); c++ {
+			for c := range len(lineWithSpaces) {
 				if _, ok := columnToMessage[c]; ok {
 					fmt.Fprint(w, color.HiMagentaString(string(lineWithSpaces[c])))
 				} else {

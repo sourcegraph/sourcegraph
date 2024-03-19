@@ -171,7 +171,6 @@ func NewPatternReplacer(query BasicQuery, searchType searchquery.SearchType) (Pa
 			Negated:    negated,
 			Annotation: annotation,
 		})
-
 	})
 	if len(patterns) > 1 {
 		return nil, MultiplePatternErr

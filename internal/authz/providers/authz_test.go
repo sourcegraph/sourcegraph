@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/auth/providers"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/authz/providers/gitlab"
@@ -788,11 +787,15 @@ func (p *mockProvider) FetchRepoPerms(context.Context, *extsvc.Repository, authz
 }
 
 func mockExplicitPermissions(enabled bool) func() {
-	orig := globals.PermissionsUserMapping()
-	globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: enabled})
-	return func() {
-		globals.SetPermissionsUserMapping(orig)
-	}
+	conf.Mock(&conf.Unified{
+		SiteConfiguration: schema.SiteConfiguration{
+			PermissionsUserMapping: &schema.PermissionsUserMapping{
+				Enabled: enabled,
+				BindID:  "email",
+			},
+		},
+	})
+	return func() { conf.Mock(nil) }
 }
 
 func TestPermissionSyncingDisabled(t *testing.T) {

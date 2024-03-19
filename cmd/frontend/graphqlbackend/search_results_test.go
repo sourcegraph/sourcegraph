@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sourcegraph/log/logtest"
 	"github.com/sourcegraph/zoekt"
@@ -122,7 +122,6 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 	}
 
 	tests := []testCase{
-
 		{
 			descr:         "single repo match",
 			searchResults: []result.Match{repoMatch},
@@ -137,9 +136,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$`: 1,
 				`lang:markdown`:   1,
-				`type:file`:       0,
 				`type:path`:       1,
-				`type:symbol`:     0,
 			},
 		},
 
@@ -149,9 +146,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$@develop3.0`: 1,
 				`lang:markdown`:              1,
-				`type:file`:                  0,
 				`type:path`:                  1,
-				`type:symbol`:                0,
 			},
 		},
 		{
@@ -160,9 +155,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$`: 1,
 				`lang:yaml`:       1,
-				`type:file`:       0,
 				`type:path`:       1,
-				`type:symbol`:     0,
 			},
 		},
 		{
@@ -171,9 +164,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$`: 1,
 				`lang:yaml`:       1,
-				`type:file`:       0,
 				`type:path`:       1,
-				`type:symbol`:     0,
 			},
 		},
 		{
@@ -183,9 +174,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 				`repo:^testRepo$`:          1,
 				`-file:(^|/)node_modules/`: 1,
 				`lang:markdown`:            1,
-				`type:file`:                0,
 				`type:path`:                1,
-				`type:symbol`:              0,
 			},
 		},
 		{
@@ -195,9 +184,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 				`repo:^testRepo$`:          1,
 				`-file:(^|/)node_modules/`: 1,
 				`lang:markdown`:            1,
-				`type:file`:                0,
 				`type:path`:                1,
-				`type:symbol`:              0,
 			},
 		},
 		{
@@ -210,9 +197,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 				`repo:^testRepo$`:  2,
 				`-file:_test\.go$`: 1,
 				`lang:go`:          2,
-				`type:file`:        0,
 				`type:path`:        2,
-				`type:symbol`:      0,
 			},
 		},
 
@@ -224,9 +209,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$`: 1,
 				`lang:rust`:       1,
-				`type:file`:       0,
 				`type:path`:       1,
-				`type:symbol`:     0,
 			},
 		},
 
@@ -242,9 +225,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 				`-file:\.min\.js$`: 1,
 				`-file:\.js\.map$`: 2,
 				`lang:javascript`:  1,
-				`type:file`:        0,
 				`type:path`:        3,
-				`type:symbol`:      0,
 			},
 		},
 
@@ -260,9 +241,7 @@ func TestSearchResolver_DynamicFilters(t *testing.T) {
 			expectedDynamicFilterStrsRegexp: map[string]int{
 				`repo:^testRepo$`:    1,
 				`lang:"ignore list"`: 1,
-				`type:file`:          0,
 				`type:path`:          1,
-				`type:symbol`:        0,
 			},
 		},
 	}

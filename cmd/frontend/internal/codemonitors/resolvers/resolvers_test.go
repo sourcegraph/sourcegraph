@@ -126,7 +126,7 @@ func TestListCodeMonitors(t *testing.T) {
 	require.False(t, r1.PageInfo().HasNextPage())
 
 	// Create enough monitors to necessitate paging
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		_, err := r.insertTestMonitorWithOpts(ctx, t)
 		require.NoError(t, err)
 	}

@@ -27,12 +27,14 @@ type Config struct {
 	DependsOn []cdktf.ITerraformDependable
 }
 
-type Output struct{}
+type Output struct {
+	PipelineID string
+}
 
 // New provisions resources for a google_clouddeploy_delivery_pipeline:
 // https://cloud.google.com/deploy/docs/overview
 func New(scope constructs.Construct, id resourceid.ID, config Config) (*Output, error) {
-	_ = clouddeploydeliverypipeline.NewClouddeployDeliveryPipeline(scope,
+	pipeline := clouddeploydeliverypipeline.NewClouddeployDeliveryPipeline(scope,
 		id.TerraformID("pipeline"),
 		&clouddeploydeliverypipeline.ClouddeployDeliveryPipelineConfig{
 			Location: &config.Location,
@@ -48,7 +50,9 @@ func New(scope constructs.Construct, id resourceid.ID, config Config) (*Output, 
 			DependsOn: &config.DependsOn,
 		})
 
-	return &Output{}, nil
+	return &Output{
+		PipelineID: *pipeline.Uid(),
+	}, nil
 }
 
 func newStages(config Config) []*clouddeploydeliverypipeline.ClouddeployDeliveryPipelineSerialPipelineStages {

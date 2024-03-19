@@ -18,9 +18,10 @@ func TestLocalCodeIntel(t *testing.T) {
 		contents string
 	}
 
-	tests := []pathContents{{
-		path: "test.java",
-		contents: `
+	tests := []pathContents{
+		{
+			path: "test.java",
+			contents: `
 class Foo {
 
     //             v f1.p def
@@ -43,9 +44,10 @@ class Foo {
         String x = p;
     }
 }
-`}, {
-		path: "test.go",
-		contents: `
+`,
+		}, {
+			path: "test.go",
+			contents: `
 var x = 5
 
 //      v f1.p def
@@ -88,9 +90,10 @@ func f1(p int) {
 	case x := <-ch:
 	}
 }
-`}, {
-		path: "test.cs",
-		contents: `
+`,
+		}, {
+			path: "test.cs",
+			contents: `
 namespace Foo {
     class Bar {
 
@@ -125,9 +128,10 @@ namespace Foo {
         }
     }
 }
-`}, {
-		path: "exception.py",
-		contents: `
+`,
+		}, {
+			path: "exception.py",
+			contents: `
 def f():
 	try:
 		pass
@@ -136,9 +140,10 @@ def f():
 	except Exception as e:
 		#     v f.e ref
 		print(e)
-`}, {
-		path: "test.py",
-		contents: `
+`,
+		}, {
+			path: "test.py",
+			contents: `
 #     vv f.p1 def
 #     vv f.p1 ref
 #         vv f.p2 def
@@ -182,9 +187,10 @@ def f(p1, p2: bool, p3 = False, p4: bool = False):
 	#            v f.k def
 	#            v f.k ref
 	print([k for k in range(10)])
-`}, {
-		path: "test.js",
-		contents: `
+`,
+		}, {
+			path: "test.js",
+			contents: `
 //         vv f.p1 def
 //         vv f.p1 ref
 //             vv f.p2 def
@@ -226,9 +232,10 @@ const f = (p1, p2 = 3, ...p3) => {
 		console.log(e)
 	}
 }
-`}, {
-		path: "test.ts",
-		contents: `
+`,
+		}, {
+			path: "test.ts",
+			contents: `
 //         vv f.p1 def
 //         vv f.p1 ref
 //                      vv f.p2 def
@@ -270,9 +277,10 @@ const f = (p1?: number, p2 = 3, ...p3) => {
 		console.log(e)
 	}
 }
-`}, {
-		path: "test.cpp",
-		contents: `
+`,
+		}, {
+			path: "test.cpp",
+			contents: `
 //         vv f.p1 def
 //         vv f.p1 ref
 //                 vv f.p2 def
@@ -309,9 +317,10 @@ void f(int p1, int p2 = 3, int& p3, int* p4)
 	//                                   v f.e ref
     try { } catch (const std::exception& e) { }
 }
-`}, {
-		path: "test.rb",
-		contents: `
+`,
+		}, {
+			path: "test.rb",
+			contents: `
 //    vv f.p1 def
 //    vv f.p1 ref
 //        vv f.p2 def
@@ -344,7 +353,8 @@ def f(p1, p2 = 3, *p3, **p4)
 		puts e
 	end
 end
-`},
+`,
+		},
 	}
 
 	for _, test := range tests {
@@ -514,7 +524,7 @@ func sortAnnotations(annotations []annotation) {
 		} else if coli != colj {
 			return coli < colj
 		} else {
-			for i := 0; i < len(tagsi) && i < len(tagsj); i++ {
+			for i := range min(len(tagsi), len(tagsj)) {
 				if tagsi[i] != tagsj[i] {
 					return tagsi[i] < tagsj[i]
 				}

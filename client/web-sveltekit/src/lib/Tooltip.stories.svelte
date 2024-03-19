@@ -8,14 +8,14 @@
 </script>
 
 <script lang="ts">
-    const placements: Placement[] = ['auto', 'top', 'left', 'bottom', 'right']
+    const placements: Placement[] = ['top', 'left', 'bottom', 'right']
     let count = 0
 </script>
 
 <Story name="Default">
     <h2>Static Tooltip</h2>
     <p>
-        <Tooltip tooltip="Some static tooltip text" placement="auto">
+        <Tooltip tooltip="Some static tooltip text">
             <span>Hover over me</span>
         </Tooltip>
     </p>

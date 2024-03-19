@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
+	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 func TestReadAuthnResponse(t *testing.T) {
@@ -44,6 +45,42 @@ func TestReadAuthnResponse(t *testing.T) {
 		},
 		email:                "bob@example.com",
 		unnormalizedUsername: "bob@example.com",
+		displayName:          "Bob Yang",
+	}); !reflect.DeepEqual(info, want) {
+		t.Errorf("got != want\n got %+v\nwant %+v", info, want)
+	}
+}
+
+func TestReadAuthnResponseWithUsernameKey(t *testing.T) {
+	p := &provider{
+		config: schema.SAMLAuthProvider{
+			UsernameAttributeNames: []string{"givenName"},
+		},
+		samlSP: &saml2.SAMLServiceProvider{
+			IdentityProviderSSOURL:      "http://localhost:3220/auth/realms/master",
+			IdentityProviderIssuer:      "http://localhost:3220/auth/realms/master",
+			Clock:                       dsig.NewFakeClockAt(time.Date(2018, time.May, 20, 17, 12, 6, 0, time.UTC)),
+			IDPCertificateStore:         &dsig.MemoryX509CertificateStore{Roots: []*x509.Certificate{idpCert2}},
+			SPKeyStore:                  dsig.RandomKeyStoreForTest(),
+			AssertionConsumerServiceURL: "http://localhost:3080/.auth/saml/acs",
+			ServiceProviderIssuer:       "http://localhost:3080/.auth/saml/metadata",
+			AudienceURI:                 "http://localhost:3080/.auth/saml/metadata",
+		},
+	}
+	info, err := readAuthnResponse(p, base64.StdEncoding.EncodeToString([]byte(testAuthnResponse)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	info.accountData = nil // skip checking this field
+	if want := (&authnResponseInfo{
+		spec: extsvc.AccountSpec{
+			ServiceType: "saml",
+			ServiceID:   "http://localhost:3220/auth/realms/master",
+			ClientID:    "http://localhost:3080/.auth/saml/metadata",
+			AccountID:   "G-58956f28-7bf5-448d-923a-bd39438c2a9e",
+		},
+		email:                "bob@example.com",
+		unnormalizedUsername: "Bob",
 		displayName:          "Bob Yang",
 	}); !reflect.DeepEqual(info, want) {
 		t.Errorf("got != want\n got %+v\nwant %+v", info, want)

@@ -13,31 +13,25 @@ import (
 	"github.com/sourcegraph/conc/pool"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
-	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/output"
 )
 
 type cmdRunner struct {
 	*std.Output
-	cmds           []SGConfigCommand
-	repositoryRoot string
-	parentEnv      map[string]string
-	verbose        bool
+	cmds      []SGConfigCommand
+	parentEnv map[string]string
+	verbose   bool
 }
 
-func Commands(ctx context.Context, parentEnv map[string]string, verbose bool, cmds ...SGConfigCommand) (err error) {
+func Commands(ctx context.Context, parentEnv map[string]string, verbose bool, cmds []SGConfigCommand) (err error) {
 	if len(cmds) == 0 {
 		// Exit early if there are no commands to run.
 		return nil
 	}
 	std.Out.WriteLine(output.Styled(output.StylePending, fmt.Sprintf("Starting %d cmds", len(cmds))))
 
-	repoRoot, err := root.RepositoryRoot()
-	if err != nil {
-		return err
-	}
-
+	repoRoot := cmds[0].GetConfig().RepositoryRoot
 	// binaries get installed to <repository-root>/.bin. If the binary is installed with go build, then go
 	// will create .bin directory. Some binaries (like docsite) get downloaded instead of built and therefore
 	// need the directory to exist before hand.
@@ -53,7 +47,6 @@ func Commands(ctx context.Context, parentEnv map[string]string, verbose bool, cm
 	runner := cmdRunner{
 		std.Out,
 		cmds,
-		repoRoot,
 		parentEnv,
 		verbose,
 	}
@@ -67,7 +60,8 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 	for _, cmd := range runner.cmds {
 		cmd := cmd
 		p.Go(func(ctx context.Context) error {
-			std.Out.WriteLine(output.Styledf(output.StylePending, "Running %s...", cmd.GetName()))
+			config := cmd.GetConfig()
+			std.Out.WriteLine(output.Styledf(output.StylePending, "Running %s...", config.Name))
 
 			// Start watching the commands dependencies
 			wantRestart, err := cmd.StartWatch(ctx)
@@ -80,7 +74,7 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 			proc, err := runner.start(ctx, cmd)
 			if err != nil {
 				runner.printError(cmd, err)
-				return errors.Wrapf(err, "failed to start command %q", cmd.GetName())
+				return errors.Wrapf(err, "failed to start command %q", config.Name)
 			}
 			defer proc.cancel()
 
@@ -98,17 +92,17 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 						return err
 					}
 
-					runner.WriteLine(output.Styledf(output.StyleSuccess, "%s%s exited without error%s", output.StyleBold, cmd.GetName(), output.StyleReset))
+					runner.WriteLine(output.Styledf(output.StyleSuccess, "%s%s exited without error%s", output.StyleBold, config.Name, output.StyleReset))
 
 					// If we shouldn't restart when the process exits, return
-					if !cmd.GetContinueWatchOnExit() {
+					if !config.ContinueWatchOnExit {
 						return nil
 					}
 
 				// handle file watcher triggered
 				case <-wantRestart:
 					// If the command has an installer, re-run the install and determine if we should restart
-					runner.WriteLine(output.Styledf(output.StylePending, "Change detected. Reloading %s...", cmd.GetName()))
+					runner.WriteLine(output.Styledf(output.StylePending, "Change detected. Reloading %s...", config.Name))
 					shouldRestart, err := runner.reinstall(ctx, cmd)
 					if err != nil {
 						runner.printError(cmd, err)
@@ -116,7 +110,7 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 					}
 
 					if shouldRestart {
-						runner.WriteLine(output.Styledf(output.StylePending, "Restarting %s...", cmd.GetName()))
+						runner.WriteLine(output.Styledf(output.StylePending, "Restarting %s...", config.Name))
 						proc.cancel()
 						proc, err = runner.start(ctx, cmd)
 						if err != nil {
@@ -124,7 +118,7 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 						}
 						defer proc.cancel()
 					} else {
-						runner.WriteLine(output.Styledf(output.StylePending, "Binary for %s did not change. Not restarting.", cmd.GetName()))
+						runner.WriteLine(output.Styledf(output.StylePending, "Binary for %s did not change. Not restarting.", config.Name))
 					}
 				}
 			}
@@ -135,7 +129,7 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 }
 
 func (runner *cmdRunner) printError(cmd SGConfigCommand, err error) {
-	printCmdError(runner.Output.Output, cmd.GetName(), err)
+	printCmdError(runner.Output.Output, cmd.GetConfig().Name, err)
 }
 
 func (runner *cmdRunner) debug(msg string, args ...any) { //nolint currently unused but a handy tool for debugginlg
@@ -146,7 +140,7 @@ func (runner *cmdRunner) debug(msg string, args ...any) { //nolint currently unu
 }
 
 func (runner *cmdRunner) start(ctx context.Context, cmd SGConfigCommand) (*startedCmd, error) {
-	return startSgCmd(ctx, cmd, runner.repositoryRoot, runner.parentEnv)
+	return startSgCmd(ctx, cmd, runner.parentEnv)
 }
 
 func (runner *cmdRunner) reinstall(ctx context.Context, cmd SGConfigCommand) (bool, error) {
@@ -349,15 +343,12 @@ func md5HashFile(filename string) (string, error) {
 }
 
 func Test(ctx context.Context, cmd SGConfigCommand, parentEnv map[string]string) error {
-	repoRoot, err := root.RepositoryRoot()
-	if err != nil {
-		return err
-	}
+	name := cmd.GetConfig().Name
 
-	std.Out.WriteLine(output.Styledf(output.StylePending, "Starting testsuite %q.", cmd.GetName()))
-	proc, err := startSgCmd(ctx, cmd, repoRoot, parentEnv)
+	std.Out.WriteLine(output.Styledf(output.StylePending, "Starting testsuite %q.", name))
+	proc, err := startSgCmd(ctx, cmd, parentEnv)
 	if err != nil {
-		printCmdError(std.Out.Output, cmd.GetName(), err)
+		printCmdError(std.Out.Output, name, err)
 	}
 	return proc.Wait()
 }

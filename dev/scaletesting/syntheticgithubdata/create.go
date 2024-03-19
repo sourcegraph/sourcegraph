@@ -516,13 +516,13 @@ func categorizeTeamRepos(cfg config, mainOrgRepos []*repo, teams []*team) map[*t
 
 	teamCategories := make(map[*team][]*repo)
 
-	for i := 0; i < teamsSmall; i++ {
+	for i := range teamsSmall {
 		currentTeam := teams[i]
 		teamRepos := mainOrgRepos[i*reposSmall : (i+1)*reposSmall]
 		teamCategories[currentTeam] = teamRepos
 	}
 
-	for i := 0; i < teamsMedium; i++ {
+	for i := range teamsMedium {
 		currentTeam := teams[teamsSmall+i]
 		startIndex := (teamsSmall * reposSmall) + (i * reposMedium)
 		endIndex := (teamsSmall * reposSmall) + ((i + 1) * reposMedium)
@@ -530,7 +530,7 @@ func categorizeTeamRepos(cfg config, mainOrgRepos []*repo, teams []*team) map[*t
 		teamCategories[currentTeam] = teamRepos
 	}
 
-	for i := 0; i < teamsLarge; i++ {
+	for i := range teamsLarge {
 		currentTeam := teams[teamsSmall+teamsMedium+i]
 		startIndex := (teamsSmall * reposSmall) + (teamsMedium * reposMedium) + (i * reposLarge)
 		endIndex := (teamsSmall * reposSmall) + (teamsMedium * reposMedium) + ((i + 1) * reposLarge)

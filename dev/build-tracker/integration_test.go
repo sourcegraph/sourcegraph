@@ -345,7 +345,7 @@ func TestSlackNotification(t *testing.T) {
 		}
 
 		// now add a bunch
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			b.AddJob(newJob(t, fmt.Sprintf(":alarm_clock: delayed job %d", i), exit))
 		}
 		info = determineBuildStatusNotification(logtest.NoOp(t), b)

@@ -18,7 +18,7 @@ func TestRepos_NamesSummary(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		rps = append(rps, &Repo{Name: "bar", ExternalRepo: eid(i)})
 	}
 
@@ -30,7 +30,7 @@ func TestRepos_NamesSummary(t *testing.T) {
 
 	rps = nil
 
-	for i := 0; i < 22; i++ {
+	for i := range 22 {
 		rps = append(rps, &Repo{Name: "b", ExternalRepo: eid(i)})
 	}
 

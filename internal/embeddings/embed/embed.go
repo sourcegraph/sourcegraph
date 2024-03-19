@@ -270,7 +270,7 @@ func embedFiles(
 				// are better than no embeddings.
 				logger.Warn("error while getting embeddings", log.Error(err))
 				failed := make([]int, len(batchChunks))
-				for i := 0; i < len(batchChunks); i++ {
+				for i := range len(batchChunks) {
 					failed[i] = i
 				}
 				batchEmbeddings = &client.EmbeddingsResults{

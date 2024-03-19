@@ -8,8 +8,8 @@ import (
 
 	"github.com/keegancsmith/sqlf"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration"
 )
@@ -76,7 +76,7 @@ func (m *unifiedPermissionsMigrator) Up(ctx context.Context) (err error) {
 	defer func() { err = tx.Done(err) }()
 
 	source := authz.SourceUserSync
-	if globals.PermissionsUserMapping().Enabled {
+	if conf.PermissionsUserMapping().Enabled {
 		source = authz.SourceAPI
 	}
 

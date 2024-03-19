@@ -36,7 +36,7 @@ go_test(
         "//internal/database/dbmocks",
         "//internal/dotcom",
         "//internal/types",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_google_go_cmp//cmp",
         "@com_github_graph_gophers_graphql_go//:graphql-go",
     ],

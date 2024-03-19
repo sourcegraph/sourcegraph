@@ -8,6 +8,7 @@ import (
 	"github.com/hexops/autogold/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/internal/search/filter"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -190,5 +191,91 @@ func TestKeyEquality(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			require.Equal(t, tc.areEqual, tc.match1.Key() == tc.match2.Key())
 		})
+	}
+}
+
+func TestDeduper(t *testing.T) {
+	commit := func(repo, id string) *CommitMatch {
+		return &CommitMatch{
+			Repo: types.MinimalRepo{
+				Name: api.RepoName(repo),
+			},
+			Commit: gitdomain.Commit{
+				ID: api.CommitID(id),
+			},
+		}
+	}
+
+	diff := func(repo, id string) *CommitMatch {
+		return &CommitMatch{
+			Repo: types.MinimalRepo{
+				Name: api.RepoName(repo),
+			},
+			Commit: gitdomain.Commit{
+				ID: api.CommitID(id),
+			},
+			DiffPreview: &MatchedString{},
+		}
+	}
+
+	repo := func(name, rev string) *RepoMatch {
+		return &RepoMatch{
+			Name: api.RepoName(name),
+			Rev:  rev,
+		}
+	}
+
+	file := func(repo, commit, path string, hms ChunkMatches) *FileMatch {
+		return &FileMatch{
+			File: File{
+				Repo: types.MinimalRepo{
+					Name: api.RepoName(repo),
+				},
+				CommitID: api.CommitID(commit),
+				Path:     path,
+			},
+			ChunkMatches: hms,
+		}
+	}
+
+	cases := []struct {
+		name  string
+		input Matches
+		seen  bool
+	}{
+		{
+			name: "no dups",
+			input: []Match{
+				commit("a", "b"),
+				diff("c", "d"),
+				repo("e", "f"),
+				file("g", "h", "i", nil),
+			},
+			seen: false,
+		},
+		{
+			name: "diff and commit are not equal",
+			input: []Match{
+				commit("a", "b"),
+				diff("a", "b"),
+			},
+			seen: false,
+		},
+		{
+			name: "different revs not deduped",
+			input: []Match{
+				repo("a", "b"),
+				repo("a", "c"),
+			},
+			seen: false,
+		},
+	}
+
+	for _, tc := range cases {
+		dedup := NewDeduper()
+		for _, match := range tc.input {
+			require.Equal(t, tc.seen, dedup.Seen(match))
+			dedup.Add(match)
+		}
 	}
 }

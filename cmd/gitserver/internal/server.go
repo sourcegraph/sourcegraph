@@ -57,25 +57,6 @@ import (
 // logs to stderr
 var traceLogs bool
 
-var (
-	lastCheckAt    = make(map[api.RepoName]time.Time)
-	lastCheckMutex sync.Mutex
-)
-
-// debounce() provides some filtering to prevent spammy requests for the same
-// repository. If the last fetch of the repository was within the given
-// duration, returns false, otherwise returns true and updates the last
-// fetch stamp.
-func debounce(name api.RepoName, since time.Duration) bool {
-	lastCheckMutex.Lock()
-	defer lastCheckMutex.Unlock()
-	if t, ok := lastCheckAt[name]; ok && time.Now().Before(t.Add(since)) {
-		return false
-	}
-	lastCheckAt[name] = time.Now()
-	return true
-}
-
 func init() {
 	traceLogs, _ = strconv.ParseBool(env.Get("SRC_GITSERVER_TRACE", "false", "Toggles trace logging to stderr"))
 }
@@ -394,7 +375,7 @@ func (p *clonePipelineRoutine) cloneJobConsumer(ctx context.Context, tasks <-cha
 			continue
 		}
 
-		go func(task *cloneTask) {
+		go func() {
 			defer cancel()
 
 			err := p.s.doClone(ctx, task.repo, task.dir, task.syncer, task.lock, task.remoteURL, task.options)
@@ -404,7 +385,7 @@ func (p *clonePipelineRoutine) cloneJobConsumer(ctx context.Context, tasks <-cha
 			// Use a different context in case we failed because the original context failed.
 			p.s.setLastErrorNonFatal(p.s.ctx, task.repo, err)
 			_ = task.done()
-		}(task)
+		}()
 	}
 }
 
@@ -539,14 +520,11 @@ func (s *Server) RepoUpdate(ctx context.Context, req *protocol.RepoUpdateRequest
 		return resp
 	}
 
-	var statusErr, updateErr error
-
-	if debounce(req.Repo, req.Since) {
-		updateErr = s.doRepoUpdate(ctx, req.Repo, "")
-	}
+	updateErr := s.doRepoUpdate(ctx, req.Repo, "")
 
 	// attempts to acquire these values are not contingent on the success of
 	// the update.
+	var statusErr error
 	lastFetched, err := repoLastFetched(dir)
 	if err != nil {
 		statusErr = err
@@ -610,6 +588,7 @@ func (s *Server) setLastErrorNonFatal(ctx context.Context, name api.RepoName, er
 func (s *Server) LogIfCorrupt(ctx context.Context, repo api.RepoName, err error) {
 	var corruptErr common.ErrRepoCorrupted
 	if errors.As(err, &corruptErr) {
+		repoCorruptedCounter.Inc()
 		if err := s.db.GitserverRepos().LogCorruption(ctx, repo, corruptErr.Reason, s.hostname); err != nil {
 			s.logger.Warn("failed to log repo corruption", log.String("repo", string(repo)), log.Error(err))
 		}
@@ -1109,6 +1088,10 @@ var (
 		Name: "src_gitserver_repo_cloned_failed",
 		Help: "number of failed git clones",
 	})
+	repoCorruptedCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "src_gitserver_repo_corrupted",
+		Help: "number of corruption events",
+	})
 )
 
 func (s *Server) doRepoUpdate(ctx context.Context, repo api.RepoName, revspec string) (err error) {
@@ -1282,7 +1265,7 @@ func setHEAD(ctx context.Context, logger log.Logger, rcf *wrexec.RecordingComman
 	r := urlredactor.New(remoteURL)
 
 	// Configure the command to be able to talk to a remote.
-	executil.ConfigureRemoteGitCommand(cmd)
+	executil.ConfigureRemoteGitCommand(cmd, remoteURL)
 
 	output, err := rcf.WrapWithRepoName(ctx, logger, repoName, cmd).WithRedactorFunc(r.Redact).CombinedOutput()
 	if err != nil {

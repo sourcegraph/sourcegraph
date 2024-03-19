@@ -1,8 +1,16 @@
 <script lang="ts">
-    export let variant: 'info' | 'danger'
+    export let size: 'normal' | 'slim' = 'normal'
+    export let variant: 'info' | 'warning' | 'danger' | 'success'
 </script>
 
-<div class:danger={variant === 'danger'} class:info={variant === 'info'}>
+<div
+    role="alert"
+    class:info={variant === 'info'}
+    class:warning={variant === 'warning'}
+    class:danger={variant === 'danger'}
+    class:success={variant === 'success'}
+    class:slim={size === 'slim'}
+>
     <slot />
 </div>
 
@@ -13,6 +21,8 @@
         --alert-content-padding: 0.5rem;
         --alert-background-color: var(--color-bg-1);
 
+        display: flex;
+        align-items: center;
         overflow: hidden;
         position: relative;
         margin-bottom: 1rem;
@@ -82,9 +92,59 @@
         :global(.theme-dark) & {
             --alert-icon-color: var(--primary);
         }
+
         &::after {
             // Icon: mdi/Information
             mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13 9h-2V7h2m0 10h-2v-6h2m-1-9A10 10 0 002 12a10 10 0 0010 10 10 10 0 0010-10A10 10 0 0012 2z'/></svg>");
+        }
+    }
+
+    .warning {
+        --alert-border-color: var(--warning);
+        --alert-icon-background-color: var(--warning-4);
+
+        :global(.theme-light) & {
+            --alert-icon-color: var(--warning-3);
+        }
+
+        :global(.theme-dark) & {
+            --alert-icon-color: var(--warning);
+        }
+
+        &::after {
+            mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2 1 21z'/></svg>");
+        }
+    }
+
+    .success {
+        --alert-border-color: var(--success);
+        --alert-icon-background-color: var(--success-4);
+
+        :global(.theme-light) & {
+            --alert-icon-color: var(--success-3);
+        }
+
+        :global(.theme-dark) & {
+            --alert-icon-color: var(--success);
+        }
+
+        &::after {
+            /* Icon: mdi-react/CheckCircle */
+            mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2m-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/></svg>");
+        }
+    }
+
+    .slim {
+        margin-bottom: 0;
+        border-radius: 0;
+        border-width: 0 0 1px 0;
+        background: var(--alert-icon-background-color);
+        padding-left: var(--alert-content-padding);
+        border-color: var(--border-color-2);
+
+        &::before,
+        &::after {
+            display: none;
         }
     }
 </style>

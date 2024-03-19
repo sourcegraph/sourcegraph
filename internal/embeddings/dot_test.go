@@ -10,7 +10,7 @@ func TestDot(t *testing.T) {
 	t.Run("edge cases", func(t *testing.T) {
 		repeat := func(n int8, size int) []int8 {
 			res := make([]int8, size)
-			for i := 0; i < size; i++ {
+			for i := range size {
 				res[i] = n
 			}
 			return res
@@ -93,7 +93,7 @@ func TestDot(t *testing.T) {
 	})
 
 	t.Run("random", func(t *testing.T) {
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			size := rand.Int() % 1000
 			a, b := make([]int8, size), make([]int8, size)
 
@@ -119,7 +119,7 @@ func TestDot(t *testing.T) {
 
 func dotNaive(a, b []int8) int32 {
 	sum := int32(0)
-	for i := 0; i < len(a); i++ {
+	for i := range len(a) {
 		sum += int32(a[i]) * int32(b[i])
 	}
 	return sum

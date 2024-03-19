@@ -178,9 +178,10 @@ func (c AutoIndexingServiceQueueRepoRevFuncCall) Results() []interface{} {
 // github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/transport/graphql)
 // used for unit testing.
 type MockCodeNavService struct {
-	// GetClosestDumpsForBlobFunc is an instance of a mock function object
-	// controlling the behavior of the method GetClosestDumpsForBlob.
-	GetClosestDumpsForBlobFunc *CodeNavServiceGetClosestDumpsForBlobFunc
+	// GetClosestCompletedUploadsForBlobFunc is an instance of a mock
+	// function object controlling the behavior of the method
+	// GetClosestCompletedUploadsForBlob.
+	GetClosestCompletedUploadsForBlobFunc *CodeNavServiceGetClosestCompletedUploadsForBlobFunc
 	// GetDefinitionsFunc is an instance of a mock function object
 	// controlling the behavior of the method GetDefinitions.
 	GetDefinitionsFunc *CodeNavServiceGetDefinitionsFunc
@@ -217,8 +218,8 @@ type MockCodeNavService struct {
 // All methods return zero values for all results, unless overwritten.
 func NewMockCodeNavService() *MockCodeNavService {
 	return &MockCodeNavService{
-		GetClosestDumpsForBlobFunc: &CodeNavServiceGetClosestDumpsForBlobFunc{
-			defaultHook: func(context.Context, int, string, string, bool, string) (r0 []shared.Dump, r1 error) {
+		GetClosestCompletedUploadsForBlobFunc: &CodeNavServiceGetClosestCompletedUploadsForBlobFunc{
+			defaultHook: func(context.Context, int, string, string, bool, string) (r0 []shared.CompletedUpload, r1 error) {
 				return
 			},
 		},
@@ -268,7 +269,7 @@ func NewMockCodeNavService() *MockCodeNavService {
 			},
 		},
 		VisibleUploadsForPathFunc: &CodeNavServiceVisibleUploadsForPathFunc{
-			defaultHook: func(context.Context, codenav.RequestState) (r0 []shared.Dump, r1 error) {
+			defaultHook: func(context.Context, codenav.RequestState) (r0 []shared.CompletedUpload, r1 error) {
 				return
 			},
 		},
@@ -279,9 +280,9 @@ func NewMockCodeNavService() *MockCodeNavService {
 // interface. All methods panic on invocation, unless overwritten.
 func NewStrictMockCodeNavService() *MockCodeNavService {
 	return &MockCodeNavService{
-		GetClosestDumpsForBlobFunc: &CodeNavServiceGetClosestDumpsForBlobFunc{
-			defaultHook: func(context.Context, int, string, string, bool, string) ([]shared.Dump, error) {
-				panic("unexpected invocation of MockCodeNavService.GetClosestDumpsForBlob")
+		GetClosestCompletedUploadsForBlobFunc: &CodeNavServiceGetClosestCompletedUploadsForBlobFunc{
+			defaultHook: func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error) {
+				panic("unexpected invocation of MockCodeNavService.GetClosestCompletedUploadsForBlob")
 			},
 		},
 		GetDefinitionsFunc: &CodeNavServiceGetDefinitionsFunc{
@@ -330,7 +331,7 @@ func NewStrictMockCodeNavService() *MockCodeNavService {
 			},
 		},
 		VisibleUploadsForPathFunc: &CodeNavServiceVisibleUploadsForPathFunc{
-			defaultHook: func(context.Context, codenav.RequestState) ([]shared.Dump, error) {
+			defaultHook: func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error) {
 				panic("unexpected invocation of MockCodeNavService.VisibleUploadsForPath")
 			},
 		},
@@ -342,8 +343,8 @@ func NewStrictMockCodeNavService() *MockCodeNavService {
 // overwritten.
 func NewMockCodeNavServiceFrom(i CodeNavService) *MockCodeNavService {
 	return &MockCodeNavService{
-		GetClosestDumpsForBlobFunc: &CodeNavServiceGetClosestDumpsForBlobFunc{
-			defaultHook: i.GetClosestDumpsForBlob,
+		GetClosestCompletedUploadsForBlobFunc: &CodeNavServiceGetClosestCompletedUploadsForBlobFunc{
+			defaultHook: i.GetClosestCompletedUploadsForBlob,
 		},
 		GetDefinitionsFunc: &CodeNavServiceGetDefinitionsFunc{
 			defaultHook: i.GetDefinitions,
@@ -378,37 +379,37 @@ func NewMockCodeNavServiceFrom(i CodeNavService) *MockCodeNavService {
 	}
 }
 
-// CodeNavServiceGetClosestDumpsForBlobFunc describes the behavior when the
-// GetClosestDumpsForBlob method of the parent MockCodeNavService instance
-// is invoked.
-type CodeNavServiceGetClosestDumpsForBlobFunc struct {
-	defaultHook func(context.Context, int, string, string, bool, string) ([]shared.Dump, error)
-	hooks       []func(context.Context, int, string, string, bool, string) ([]shared.Dump, error)
-	history     []CodeNavServiceGetClosestDumpsForBlobFuncCall
+// CodeNavServiceGetClosestCompletedUploadsForBlobFunc describes the
+// behavior when the GetClosestCompletedUploadsForBlob method of the parent
+// MockCodeNavService instance is invoked.
+type CodeNavServiceGetClosestCompletedUploadsForBlobFunc struct {
+	defaultHook func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error)
+	hooks       []func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error)
+	history     []CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall
 	mutex       sync.Mutex
 }
 
-// GetClosestDumpsForBlob delegates to the next hook function in the queue
-// and stores the parameter and result values of this invocation.
-func (m *MockCodeNavService) GetClosestDumpsForBlob(v0 context.Context, v1 int, v2 string, v3 string, v4 bool, v5 string) ([]shared.Dump, error) {
-	r0, r1 := m.GetClosestDumpsForBlobFunc.nextHook()(v0, v1, v2, v3, v4, v5)
-	m.GetClosestDumpsForBlobFunc.appendCall(CodeNavServiceGetClosestDumpsForBlobFuncCall{v0, v1, v2, v3, v4, v5, r0, r1})
+// GetClosestCompletedUploadsForBlob delegates to the next hook function in
+// the queue and stores the parameter and result values of this invocation.
+func (m *MockCodeNavService) GetClosestCompletedUploadsForBlob(v0 context.Context, v1 int, v2 string, v3 string, v4 bool, v5 string) ([]shared.CompletedUpload, error) {
+	r0, r1 := m.GetClosestCompletedUploadsForBlobFunc.nextHook()(v0, v1, v2, v3, v4, v5)
+	m.GetClosestCompletedUploadsForBlobFunc.appendCall(CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall{v0, v1, v2, v3, v4, v5, r0, r1})
 	return r0, r1
 }
 
 // SetDefaultHook sets function that is called when the
-// GetClosestDumpsForBlob method of the parent MockCodeNavService instance
-// is invoked and the hook queue is empty.
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) SetDefaultHook(hook func(context.Context, int, string, string, bool, string) ([]shared.Dump, error)) {
+// GetClosestCompletedUploadsForBlob method of the parent MockCodeNavService
+// instance is invoked and the hook queue is empty.
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) SetDefaultHook(hook func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error)) {
 	f.defaultHook = hook
 }
 
 // PushHook adds a function to the end of hook queue. Each invocation of the
-// GetClosestDumpsForBlob method of the parent MockCodeNavService instance
-// invokes the hook at the front of the queue and discards it. After the
-// queue is empty, the default hook function is invoked for any future
-// action.
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) PushHook(hook func(context.Context, int, string, string, bool, string) ([]shared.Dump, error)) {
+// GetClosestCompletedUploadsForBlob method of the parent MockCodeNavService
+// instance invokes the hook at the front of the queue and discards it.
+// After the queue is empty, the default hook function is invoked for any
+// future action.
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) PushHook(hook func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -416,20 +417,20 @@ func (f *CodeNavServiceGetClosestDumpsForBlobFunc) PushHook(hook func(context.Co
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) SetDefaultReturn(r0 []shared.Dump, r1 error) {
-	f.SetDefaultHook(func(context.Context, int, string, string, bool, string) ([]shared.Dump, error) {
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) SetDefaultReturn(r0 []shared.CompletedUpload, r1 error) {
+	f.SetDefaultHook(func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) PushReturn(r0 []shared.Dump, r1 error) {
-	f.PushHook(func(context.Context, int, string, string, bool, string) ([]shared.Dump, error) {
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) PushReturn(r0 []shared.CompletedUpload, r1 error) {
+	f.PushHook(func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error) {
 		return r0, r1
 	})
 }
 
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) nextHook() func(context.Context, int, string, string, bool, string) ([]shared.Dump, error) {
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) nextHook() func(context.Context, int, string, string, bool, string) ([]shared.CompletedUpload, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -442,28 +443,28 @@ func (f *CodeNavServiceGetClosestDumpsForBlobFunc) nextHook() func(context.Conte
 	return hook
 }
 
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) appendCall(r0 CodeNavServiceGetClosestDumpsForBlobFuncCall) {
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) appendCall(r0 CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall) {
 	f.mutex.Lock()
 	f.history = append(f.history, r0)
 	f.mutex.Unlock()
 }
 
 // History returns a sequence of
-// CodeNavServiceGetClosestDumpsForBlobFuncCall objects describing the
-// invocations of this function.
-func (f *CodeNavServiceGetClosestDumpsForBlobFunc) History() []CodeNavServiceGetClosestDumpsForBlobFuncCall {
+// CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall objects
+// describing the invocations of this function.
+func (f *CodeNavServiceGetClosestCompletedUploadsForBlobFunc) History() []CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall {
 	f.mutex.Lock()
-	history := make([]CodeNavServiceGetClosestDumpsForBlobFuncCall, len(f.history))
+	history := make([]CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall, len(f.history))
 	copy(history, f.history)
 	f.mutex.Unlock()
 
 	return history
 }
 
-// CodeNavServiceGetClosestDumpsForBlobFuncCall is an object that describes
-// an invocation of method GetClosestDumpsForBlob on an instance of
-// MockCodeNavService.
-type CodeNavServiceGetClosestDumpsForBlobFuncCall struct {
+// CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall is an object that
+// describes an invocation of method GetClosestCompletedUploadsForBlob on an
+// instance of MockCodeNavService.
+type CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
 	Arg0 context.Context
@@ -484,7 +485,7 @@ type CodeNavServiceGetClosestDumpsForBlobFuncCall struct {
 	Arg5 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 []shared.Dump
+	Result0 []shared.CompletedUpload
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error
@@ -492,13 +493,13 @@ type CodeNavServiceGetClosestDumpsForBlobFuncCall struct {
 
 // Args returns an interface slice containing the arguments of this
 // invocation.
-func (c CodeNavServiceGetClosestDumpsForBlobFuncCall) Args() []interface{} {
+func (c CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall) Args() []interface{} {
 	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4, c.Arg5}
 }
 
 // Results returns an interface slice containing the results of this
 // invocation.
-func (c CodeNavServiceGetClosestDumpsForBlobFuncCall) Results() []interface{} {
+func (c CodeNavServiceGetClosestCompletedUploadsForBlobFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
@@ -1554,15 +1555,15 @@ func (c CodeNavServiceSnapshotForDocumentFuncCall) Results() []interface{} {
 // VisibleUploadsForPath method of the parent MockCodeNavService instance is
 // invoked.
 type CodeNavServiceVisibleUploadsForPathFunc struct {
-	defaultHook func(context.Context, codenav.RequestState) ([]shared.Dump, error)
-	hooks       []func(context.Context, codenav.RequestState) ([]shared.Dump, error)
+	defaultHook func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error)
+	hooks       []func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error)
 	history     []CodeNavServiceVisibleUploadsForPathFuncCall
 	mutex       sync.Mutex
 }
 
 // VisibleUploadsForPath delegates to the next hook function in the queue
 // and stores the parameter and result values of this invocation.
-func (m *MockCodeNavService) VisibleUploadsForPath(v0 context.Context, v1 codenav.RequestState) ([]shared.Dump, error) {
+func (m *MockCodeNavService) VisibleUploadsForPath(v0 context.Context, v1 codenav.RequestState) ([]shared.CompletedUpload, error) {
 	r0, r1 := m.VisibleUploadsForPathFunc.nextHook()(v0, v1)
 	m.VisibleUploadsForPathFunc.appendCall(CodeNavServiceVisibleUploadsForPathFuncCall{v0, v1, r0, r1})
 	return r0, r1
@@ -1571,7 +1572,7 @@ func (m *MockCodeNavService) VisibleUploadsForPath(v0 context.Context, v1 codena
 // SetDefaultHook sets function that is called when the
 // VisibleUploadsForPath method of the parent MockCodeNavService instance is
 // invoked and the hook queue is empty.
-func (f *CodeNavServiceVisibleUploadsForPathFunc) SetDefaultHook(hook func(context.Context, codenav.RequestState) ([]shared.Dump, error)) {
+func (f *CodeNavServiceVisibleUploadsForPathFunc) SetDefaultHook(hook func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error)) {
 	f.defaultHook = hook
 }
 
@@ -1580,7 +1581,7 @@ func (f *CodeNavServiceVisibleUploadsForPathFunc) SetDefaultHook(hook func(conte
 // invokes the hook at the front of the queue and discards it. After the
 // queue is empty, the default hook function is invoked for any future
 // action.
-func (f *CodeNavServiceVisibleUploadsForPathFunc) PushHook(hook func(context.Context, codenav.RequestState) ([]shared.Dump, error)) {
+func (f *CodeNavServiceVisibleUploadsForPathFunc) PushHook(hook func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1588,20 +1589,20 @@ func (f *CodeNavServiceVisibleUploadsForPathFunc) PushHook(hook func(context.Con
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *CodeNavServiceVisibleUploadsForPathFunc) SetDefaultReturn(r0 []shared.Dump, r1 error) {
-	f.SetDefaultHook(func(context.Context, codenav.RequestState) ([]shared.Dump, error) {
+func (f *CodeNavServiceVisibleUploadsForPathFunc) SetDefaultReturn(r0 []shared.CompletedUpload, r1 error) {
+	f.SetDefaultHook(func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *CodeNavServiceVisibleUploadsForPathFunc) PushReturn(r0 []shared.Dump, r1 error) {
-	f.PushHook(func(context.Context, codenav.RequestState) ([]shared.Dump, error) {
+func (f *CodeNavServiceVisibleUploadsForPathFunc) PushReturn(r0 []shared.CompletedUpload, r1 error) {
+	f.PushHook(func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error) {
 		return r0, r1
 	})
 }
 
-func (f *CodeNavServiceVisibleUploadsForPathFunc) nextHook() func(context.Context, codenav.RequestState) ([]shared.Dump, error) {
+func (f *CodeNavServiceVisibleUploadsForPathFunc) nextHook() func(context.Context, codenav.RequestState) ([]shared.CompletedUpload, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1643,7 +1644,7 @@ type CodeNavServiceVisibleUploadsForPathFuncCall struct {
 	Arg1 codenav.RequestState
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 []shared.Dump
+	Result0 []shared.CompletedUpload
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error

@@ -6,8 +6,8 @@ import (
 
 	"github.com/sourcegraph/log"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -125,7 +125,7 @@ func (s *authzStore) GrantPendingPermissions(ctx context.Context, args *GrantPen
 	}
 
 	// Gather username or verified email based on site configuration.
-	cfg := globals.PermissionsUserMapping()
+	cfg := conf.PermissionsUserMapping()
 	switch cfg.BindID {
 	case "email":
 		// 🚨 SECURITY: It is critical to ensure only grant emails that are verified.

@@ -48,6 +48,8 @@ func allowedCustomModel(model string) string {
 	case "fireworks/starcoder",
 		"fireworks/starcoder-16b",
 		"fireworks/starcoder-7b",
+		"fireworks/starcoder2-15b",
+		"fireworks/starcoder2-7b",
 		"fireworks/" + fireworks.Starcoder16b,
 		"fireworks/" + fireworks.Starcoder7b,
 		"fireworks/" + fireworks.Llama27bCode,

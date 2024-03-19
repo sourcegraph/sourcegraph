@@ -12,7 +12,6 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/cmd/worker/internal/permissions",
     visibility = ["//cmd/worker:__subpackages__"],
     deps = [
-        "//cmd/frontend/globals",
         "//cmd/worker/job",
         "//cmd/worker/shared/init/db",
         "//internal/actor",

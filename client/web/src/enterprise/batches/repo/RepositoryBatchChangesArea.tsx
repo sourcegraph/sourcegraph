@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 
 import type { AuthenticatedUser } from '../../../auth'
 import type { BreadcrumbSetters } from '../../../components/Breadcrumbs'

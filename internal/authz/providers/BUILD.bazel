@@ -36,7 +36,6 @@ go_test(
     ],
     embed = [":providers"],
     deps = [
-        "//cmd/frontend/globals",
         "//internal/auth/providers",
         "//internal/authz",
         "//internal/authz/providers/gitlab",

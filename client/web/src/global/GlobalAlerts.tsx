@@ -1,8 +1,7 @@
 import React from 'react'
 
 import classNames from 'classnames'
-import { parseISO } from 'date-fns'
-import differenceInDays from 'date-fns/differenceInDays'
+import { parseISO, differenceInDays } from 'date-fns'
 
 import { renderMarkdown } from '@sourcegraph/common'
 import { gql, useQuery } from '@sourcegraph/http-client'
@@ -52,8 +51,10 @@ export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser
     const { data } = useQuery<GlobalAlertsSiteFlagsResult, GlobalAlertsSiteFlagsVariables>(QUERY, {
         fetchPolicy: 'cache-and-network',
     })
+
     const siteFlagsValue = data?.site
     let alerts = siteFlagsValue?.alerts ?? []
+
     if (isAdminOnboardingEnabled) {
         alerts =
             siteFlagsValue?.alerts.filter(

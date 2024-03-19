@@ -29,11 +29,11 @@ func TestReferencesForUpload(t *testing.T) {
 	)
 
 	insertPackageReferences(t, store, []shared.PackageReference{
-		{Package: shared.Package{DumpID: 1, Scheme: "gomod", Name: "leftpad", Version: "1.1.0"}},
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "2.1.0"}},
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "3.1.0"}},
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "4.1.0"}},
-		{Package: shared.Package{DumpID: 3, Scheme: "gomod", Name: "leftpad", Version: "5.1.0"}},
+		{Package: shared.Package{UploadID: 1, Scheme: "gomod", Name: "leftpad", Version: "1.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "2.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "3.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "4.1.0"}},
+		{Package: shared.Package{UploadID: 3, Scheme: "gomod", Name: "leftpad", Version: "5.1.0"}},
 	})
 
 	scanner, err := store.ReferencesForUpload(context.Background(), 2)
@@ -47,9 +47,9 @@ func TestReferencesForUpload(t *testing.T) {
 	}
 
 	expected := []shared.PackageReference{
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "2.1.0"}},
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "3.1.0"}},
-		{Package: shared.Package{DumpID: 2, Scheme: "gomod", Name: "leftpad", Version: "4.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "2.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "3.1.0"}},
+		{Package: shared.Package{UploadID: 2, Scheme: "gomod", Name: "leftpad", Version: "4.1.0"}},
 	}
 	if diff := cmp.Diff(expected, filters); diff != "" {
 		t.Errorf("unexpected filters (-want +got):\n%s", diff)

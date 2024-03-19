@@ -6,6 +6,7 @@ import (
 	"testing/quick"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/sourcegraph/log/logtest"
 	"github.com/sourcegraph/zoekt"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -259,11 +260,11 @@ func TestGetIndexOptions(t *testing.T) {
 	{
 		// Generate case for no more than than 64 branches
 		var branches []string
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			branches = append(branches, fmt.Sprintf("%.2d", i))
 		}
 		want := []zoekt.RepositoryBranch{{Name: "HEAD", Version: "!HEAD"}}
-		for i := 0; i < 63; i++ {
+		for i := range 63 {
 			want = append(want, zoekt.RepositoryBranch{
 				Name:    fmt.Sprintf("%.2d", i),
 				Version: fmt.Sprintf("!%.2d", i),
@@ -311,7 +312,7 @@ func TestGetIndexOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			getSearchContextRevisions := func(api.RepoID) ([]string, error) { return tc.searchContextRevs, nil }
 
-			got := GetIndexOptions(&tc.conf, getRepoIndexOptions, getSearchContextRevisions, tc.repo)
+			got := GetIndexOptions(logtest.Scoped(t), &tc.conf, getRepoIndexOptions, getSearchContextRevisions, tc.repo)
 
 			want := []ZoektIndexOptions{tc.want}
 			if diff := cmp.Diff(want, got); diff != "" {
@@ -379,7 +380,7 @@ func TestGetIndexOptions_getVersion(t *testing.T) {
 				}, nil
 			}
 
-			resp := GetIndexOptions(&conf, getRepoIndexOptions, getSearchContextRevs, 1)
+			resp := GetIndexOptions(logtest.Scoped(t), &conf, getRepoIndexOptions, getSearchContextRevs, 1)
 			if len(resp) != 1 {
 				t.Fatalf("expected 1 index options returned, got %d", len(resp))
 			}
@@ -434,7 +435,7 @@ func TestGetIndexOptions_batch(t *testing.T) {
 
 	getSearchContextRevs := func(api.RepoID) ([]string, error) { return nil, nil }
 
-	got := GetIndexOptions(&schema.SiteConfiguration{}, getRepoIndexOptions, getSearchContextRevs, repos...)
+	got := GetIndexOptions(logtest.Scoped(t), &schema.SiteConfiguration{}, getRepoIndexOptions, getSearchContextRevs, repos...)
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatal("mismatch (-want, +got):\n", diff)
@@ -453,7 +454,7 @@ func TestGetIndexOptions_concurrency(t *testing.T) {
 
 	wantConcurrency := 27
 	config := &schema.SiteConfiguration{SearchIndexShardConcurrency: wantConcurrency}
-	options := GetIndexOptions(config, getRepoIndexOptions, getSearchContextRevs, repos...)
+	options := GetIndexOptions(logtest.Scoped(t), config, getRepoIndexOptions, getSearchContextRevs, repos...)
 
 	for _, got := range options {
 		if wantConcurrency != int(got.ShardConcurrency) {

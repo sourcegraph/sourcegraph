@@ -66,10 +66,9 @@ func TestClient_IsRepoCloneale_ProtoRoundTrip(t *testing.T) {
 func TestClient_RepoUpdateRequest_ProtoRoundTrip(t *testing.T) {
 	var diff string
 	t.Run("request", func(t *testing.T) {
-		fn := func(repo api.RepoName, since int64) bool {
+		fn := func(repo api.RepoName) bool {
 			original := protocol.RepoUpdateRequest{
-				Repo:  repo,
-				Since: time.Duration(since),
+				Repo: repo,
 			}
 
 			var converted protocol.RepoUpdateRequest

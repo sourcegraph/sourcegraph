@@ -1,4 +1,4 @@
-import { AlertKind, SmartSearchAlertKind } from '@sourcegraph/shared/src/search/stream'
+import type { AlertKind, SmartSearchAlertKind } from '@sourcegraph/shared/src/search/stream'
 
 export function isSmartSearchAlert(kind: AlertKind): kind is SmartSearchAlertKind {
     switch (kind) {

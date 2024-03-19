@@ -23,6 +23,7 @@ import {
 } from '@sourcegraph/cody-ui/dist/Chat'
 import type { FileLinkProps } from '@sourcegraph/cody-ui/dist/chat/ContextFiles'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, Icon, TextArea, Link, Tooltip, Alert, Text, H2 } from '@sourcegraph/wildcard'
 
 import { eventLogger } from '../../../tracking/eventLogger'
@@ -40,15 +41,29 @@ import styles from './ChatUi.module.scss'
 
 export const SCROLL_THRESHOLD = 100
 
-const onFeedbackSubmit = (feedback: string): void => eventLogger.log(`web:cody:feedbackSubmit:${feedback}`)
-
-interface IChatUIProps {
+interface IChatUIProps extends TelemetryV2Props {
     codyChatStore: CodyChatStore
     isCodyChatPage?: boolean
     authenticatedUser: AuthenticatedUser | null
 }
 
-export const ChatUI: React.FC<IChatUIProps> = ({ codyChatStore, isCodyChatPage, authenticatedUser }): JSX.Element => {
+export const ChatUI: React.FC<IChatUIProps> = ({
+    codyChatStore,
+    isCodyChatPage,
+    authenticatedUser,
+    telemetryRecorder,
+}): JSX.Element => {
+    const onFeedbackSubmit = (feedback: string): void => {
+        eventLogger.log(`web:cody:feedbackSubmit:${feedback}`)
+        // TODO (dadlerj): update @sourcegraph/cody-ui/dist/Chat package to enforce a limited set of feedback strings.
+        // Until then, this is a hack to avoid arbitrary event features.
+        if (feedback === 'positive' || feedback === 'negative') {
+            telemetryRecorder.recordEvent(`cody.feedback.${feedback}`, 'submit')
+        } else {
+            telemetryRecorder.recordEvent('cody.feedback.other', 'submit')
+        }
+    }
+
     const {
         submitMessage,
         editMessage,

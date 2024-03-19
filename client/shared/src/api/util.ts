@@ -6,14 +6,8 @@ import {
     type Remote,
     proxyMarker,
 } from 'comlink'
-import {
-    type Unsubscribable,
-    type Subscribable,
-    Observable,
-    type Observer,
-    type PartialObserver,
-    Subscription,
-} from 'rxjs'
+import { type Unsubscribable, Observable, type Observer, type PartialObserver, Subscription } from 'rxjs'
+import { Subscribable } from 'sourcegraph'
 
 import { hasProperty, AbortError } from '@sourcegraph/common'
 

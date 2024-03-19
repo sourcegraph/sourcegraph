@@ -22,7 +22,7 @@ func legacyBuildCandidateDockerImages(apps []string, version string, tag string,
 			bk.Env("DOCKER_BAZEL", "true"),
 			bk.Env("DOCKER_BUILDKIT", "1"),
 			bk.Env("VERSION", version),
-			bk.Agent("queue", "bazel"),
+			bk.Agent("queue", AspectWorkflows.QueueDefault),
 		)
 
 		// Allow all build scripts to emit info annotations
@@ -40,7 +40,7 @@ func legacyBuildCandidateDockerImages(apps []string, version string, tag string,
 
 			// Add Sentry environment variables if we are building off main branch
 			// to enable building the webapp with source maps enabled
-			if rt.Is(runtype.MainDryRun) && app == "frontend" {
+			if rt.Is(runtype.MainDryRun, runtype.CloudEphemeral) && app == "frontend" {
 				cmds = append(cmds,
 					bk.Env("SENTRY_UPLOAD_SOURCE_MAPS", "1"),
 					bk.Env("SENTRY_ORGANIZATION", "sourcegraph"),
@@ -105,7 +105,7 @@ func legacyBuildCandidateDockerImage(app string, version string, tag string, rt 
 		cmds = append(cmds,
 			bk.Key(candidateImageStepKey(app)),
 			bk.Env("VERSION", version),
-			bk.Agent("queue", "bazel"),
+			bk.Agent("queue", AspectWorkflows.QueueDefault),
 		)
 
 		// Allow all build scripts to emit info annotations
@@ -122,7 +122,7 @@ func legacyBuildCandidateDockerImage(app string, version string, tag string, rt 
 
 		// Add Sentry environment variables if we are building off main branch
 		// to enable building the webapp with source maps enabled
-		if rt.Is(runtype.MainDryRun) && app == "frontend" {
+		if rt.Is(runtype.MainDryRun, runtype.CloudEphemeral) && app == "frontend" {
 			cmds = append(cmds,
 				bk.Env("SENTRY_UPLOAD_SOURCE_MAPS", "1"),
 				bk.Env("SENTRY_ORGANIZATION", "sourcegraph"),

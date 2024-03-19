@@ -57,7 +57,7 @@ func testStoreChangesetSpecs(t *testing.T, ctx context.Context, s *Store, clock 
 	testDiff := []byte("git diff here\\x20")
 
 	changesetSpecs := make(btypes.ChangesetSpecs, 0, 3)
-	for i := 0; i < cap(changesetSpecs); i++ {
+	for i := range cap(changesetSpecs) {
 		c := &btypes.ChangesetSpec{
 			UserID:      int32(i + 1234),
 			BatchSpecID: int64(i + 910),
@@ -403,7 +403,7 @@ func testStoreChangesetSpecs(t *testing.T, ctx context.Context, s *Store, clock 
 	t.Run("DeleteChangesetSpecs", func(t *testing.T) {
 		t.Run("ByBatchSpecID", func(t *testing.T) {
 
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				spec := &btypes.ChangesetSpec{
 					BatchSpecID: int64(i + 1),
 					BaseRepoID:  repo.ID,
@@ -433,7 +433,7 @@ func testStoreChangesetSpecs(t *testing.T, ctx context.Context, s *Store, clock 
 		})
 
 		t.Run("ByID", func(t *testing.T) {
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				spec := &btypes.ChangesetSpec{
 					BatchSpecID: int64(i + 1),
 					BaseRepoID:  repo.ID,
@@ -644,7 +644,7 @@ func testStoreChangesetSpecs(t *testing.T, ctx context.Context, s *Store, clock 
 		batchSpec := bt.CreateBatchSpec(t, ctx, s, "get-rewirer-mappings", user.ID, 0)
 		var mappings = make(btypes.RewirerMappings, 3)
 		changesetSpecIDs := make([]int64, 0, cap(mappings))
-		for i := 0; i < cap(mappings); i++ {
+		for i := range cap(mappings) {
 			spec := bt.CreateChangesetSpec(t, ctx, s, bt.TestSpecOpts{
 				HeadRef:   fmt.Sprintf("refs/heads/test-get-rewirer-mappings-%d", i),
 				Typ:       btypes.ChangesetSpecTypeBranch,

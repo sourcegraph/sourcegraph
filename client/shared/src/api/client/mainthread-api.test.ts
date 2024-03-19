@@ -19,7 +19,7 @@ describe('MainThreadAPI', () => {
 
     describe('graphQL', () => {
         test('PlatformContext#requestGraphQL is called with the correct arguments', async () => {
-            const requestGraphQL = sinon.spy(_options => EMPTY)
+            const requestGraphQL = sinon.spy(_options => of({ data: null, errors: [] }))
 
             const platformContext: Pick<
                 PlatformContext,

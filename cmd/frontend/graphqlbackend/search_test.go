@@ -351,7 +351,7 @@ func BenchmarkSearchResults(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		plan, err := query.Pipeline(query.InitLiteral(`print repo:foo index:only count:1000`))
 		if err != nil {
 			b.Fatal(err)

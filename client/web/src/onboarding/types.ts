@@ -1,7 +1,8 @@
 import type { ApolloQueryResult } from '@apollo/client'
-import type { SiteConfigResult } from 'src/graphql-operations'
 
 import type { ErrorLike } from '@sourcegraph/common'
+
+import type { SiteConfigResult } from '../graphql-operations'
 
 export interface OnboardingChecklistResult {
     licenseKey: LicenseInfo

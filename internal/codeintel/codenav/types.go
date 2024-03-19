@@ -11,7 +11,7 @@ import (
 // visibleUpload pairs an upload visible from the current target commit with the
 // current target path and position matched to the data within the underlying index.
 type visibleUpload struct {
-	Upload                uploadsshared.Dump
+	Upload                uploadsshared.CompletedUpload
 	TargetPath            string
 	TargetPosition        shared.Position
 	TargetPathWithoutRoot string
@@ -65,7 +65,7 @@ type PositionalRequestArgs struct {
 // the target commit for which the location was adjusted (the originally requested commit).
 type DiagnosticAtUpload struct {
 	shared.Diagnostic
-	Dump           uploadsshared.Dump
+	Upload         uploadsshared.CompletedUpload
 	AdjustedCommit string
 	AdjustedRange  shared.Range
 }
@@ -111,7 +111,7 @@ type Cursor struct {
 }
 
 type CursorVisibleUpload struct {
-	DumpID                int             `json:"id"`
+	UploadID              int             `json:"id"`
 	TargetPath            string          `json:"path"`
 	TargetPathWithoutRoot string          `json:"path_no_root"` // TODO - can store these differently?
 	TargetPosition        shared.Position `json:"pos"`          // TODO - inline
@@ -179,7 +179,7 @@ type ImplementationsCursor struct {
 
 // cursorAdjustedUpload
 type CursorToVisibleUpload struct {
-	DumpID                int             `json:"dumpID"`
+	UploadID              int             `json:"uploadID"`
 	TargetPath            string          `json:"adjustedPath"`
 	TargetPosition        shared.Position `json:"adjustedPosition"`
 	TargetPathWithoutRoot string          `json:"adjustedPathInBundle"`

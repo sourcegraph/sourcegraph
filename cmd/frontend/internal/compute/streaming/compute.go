@@ -3,6 +3,7 @@ package streaming
 import (
 	"context"
 
+	"github.com/sourcegraph/conc/pool"
 	"github.com/sourcegraph/conc/stream"
 	"github.com/sourcegraph/log"
 
@@ -90,23 +91,24 @@ func NewComputeStream(ctx context.Context, logger log.Logger, db database.DB, se
 		alert *search.Alert
 		err   error
 	}
-	final := make(chan finalResult, 1)
-	go func() {
-		defer close(final)
+
+	pl := pool.NewWithResults[finalResult]()
+	pl.Go(func() finalResult {
 		defer close(eventsC)
 		defer close(errorC)
 		defer s.Wait()
 
 		alert, err := searchClient.Execute(ctx, stream, inputs)
-		final <- finalResult{alert: alert, err: err}
-	}()
+		return finalResult{alert: alert, err: err}
+	})
 
 	return eventsC, func() (*search.Alert, error) {
 		computeErr := <-errorC
 		if computeErr != nil {
 			return nil, computeErr
 		}
-		f := <-final
-		return f.alert, f.err
+		results := pl.Wait()
+		r := results[0]
+		return r.alert, r.err
 	}
 }

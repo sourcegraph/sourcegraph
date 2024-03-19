@@ -164,7 +164,7 @@ func TestS3GetReadNothingLoop(t *testing.T) {
 
 var fullContents = func() []byte {
 	var fullContents []byte
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		fullContents = append(fullContents, []byte(fmt.Sprintf("payload %d\n", i))...)
 	}
 

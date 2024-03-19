@@ -58,7 +58,6 @@ describe('StreamingSearchResults', () => {
         searchAggregationEnabled: false,
         codeMonitoringEnabled: true,
         ownEnabled: true,
-        extensionsController: {} as any,
     }
 
     const revisionsMockResponses = generateMockedResponses(GitRefType.GIT_BRANCH, 5, 'github.com/golang/oauth2')

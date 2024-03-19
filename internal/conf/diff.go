@@ -47,7 +47,7 @@ func diffStruct(before, after any, prefix string) (fields map[string]struct{}) {
 func getJSONFields(vv any, prefix string) (fields map[string]any) {
 	fields = make(map[string]any)
 	v := reflect.ValueOf(vv)
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		f := v.Field(i)
 		tag := v.Type().Field(i).Tag.Get("json")
 		if tag == "" {

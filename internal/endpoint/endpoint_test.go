@@ -86,7 +86,7 @@ func expectEndpoints(t *testing.T, m *Map, endpoints ...string) {
 	for _, e := range endpoints {
 		count[e] = 0
 	}
-	for i := 0; i < len(endpoints)*10; i++ {
+	for i := range len(endpoints) * 10 {
 		v, err := m.Get(fmt.Sprintf("test-%d", i))
 		if err != nil {
 			t.Fatalf("Get failed: %v", err)
@@ -105,7 +105,7 @@ func expectEndpoints(t *testing.T, m *Map, endpoints ...string) {
 
 	// Ensure GetMany matches Get
 	var keys, vals []string
-	for i := 0; i < len(endpoints)*10; i++ {
+	for i := range len(endpoints) * 10 {
 		keys = append(keys, fmt.Sprintf("test-%d", i))
 		v, err := m.Get(keys[i])
 		if err != nil {

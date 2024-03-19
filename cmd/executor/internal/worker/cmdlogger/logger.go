@@ -110,11 +110,10 @@ func (l *logger) writeEntries() {
 		)
 
 		wg.Add(1)
-		go func(handle *entryHandle, entryID int, initialLogEntry internalexecutor.ExecutionLogEntry) {
+		go func() {
 			defer wg.Done()
-
 			l.syncLogEntry(handle, entryID, initialLogEntry)
-		}(handle, entryID, initialLogEntry)
+		}()
 	}
 
 	wg.Wait()

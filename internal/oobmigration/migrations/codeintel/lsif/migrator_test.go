@@ -67,13 +67,13 @@ func TestMigratorRemovesBoundsWithoutData(t *testing.T) {
 
 	n := 600
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		// 33% id=42, 33% id=43, 33% id=44
-		dumpID := 42 + i/(n/3)
+		uploadID := 42 + i/(n/3)
 
 		if err := store.Exec(context.Background(), sqlf.Sprintf(
 			"INSERT INTO t_test (dump_id, a, b, c, schema_version) VALUES (%s, %s, %s, %s, 1)",
-			dumpID,
+			uploadID,
 			i,
 			i*10,
 			i*100,
@@ -83,10 +83,10 @@ func TestMigratorRemovesBoundsWithoutData(t *testing.T) {
 	}
 
 	// 42 is missing; 45 is extra
-	for _, dumpID := range []int{43, 44, 45} {
+	for _, uploadID := range []int{43, 44, 45} {
 		if err := store.Exec(context.Background(), sqlf.Sprintf(
 			"INSERT INTO t_test_schema_versions (dump_id, min_schema_version, max_schema_version) VALUES (%s, 1, 1)",
-			dumpID,
+			uploadID,
 		)); err != nil {
 			t.Fatalf("unexpected error inserting schema version row: %s", err)
 		}

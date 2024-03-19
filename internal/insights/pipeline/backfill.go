@@ -298,7 +298,7 @@ func makeRunSearchFunc(searchHandlers map[types.GenerationMethod]queryrunner.Ins
 		groupContext, groupCancel := context.WithCancel(ctx)
 		defer groupCancel()
 		p := pool.New().WithContext(groupContext).WithMaxGoroutines(searchWorkerLimit).WithCancelOnError()
-		for i := 0; i < len(jobs); i++ {
+		for i := range len(jobs) {
 			job := jobs[i]
 			p.Go(func(ctx context.Context) error {
 				h := searchHandlers[series.GenerationMethod]

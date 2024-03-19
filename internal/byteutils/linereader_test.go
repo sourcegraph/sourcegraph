@@ -133,7 +133,7 @@ func TestLineReaderConsecutiveScans(t *testing.T) {
 
 func BenchmarkNewLineReader(b *testing.B) {
 	data := []byte("hello\nworld\nhello\nworld\nhello\nworld\n")
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		reader := byteutils.NewLineReader(data)
 		for reader.Scan() {
 			l := reader.Line()
@@ -145,7 +145,7 @@ func BenchmarkNewLineReader(b *testing.B) {
 
 func BenchmarkBytesSplit(b *testing.B) {
 	data := []byte("hello\nworld\nhello\nworld\nhello\nworld\n")
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		b := bytes.Split(data, []byte("\n"))
 		_ = b
 	}
@@ -154,11 +154,11 @@ func BenchmarkBytesSplit(b *testing.B) {
 
 func BenchmarkNewLineReaderLongLine(b *testing.B) {
 	data := make([]byte, 0, 10000*12)
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		data = append(data, []byte("hello world")...)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		reader := byteutils.NewLineReader(data)
 		for reader.Scan() {
 			l := reader.Line()
@@ -170,11 +170,11 @@ func BenchmarkNewLineReaderLongLine(b *testing.B) {
 
 func BenchmarkBytesSplitLongLine(b *testing.B) {
 	data := make([]byte, 0, 10000*12)
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		data = append(data, []byte("hello world")...)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		b := bytes.Split(data, []byte("\n"))
 		_ = b
 	}
@@ -183,12 +183,12 @@ func BenchmarkBytesSplitLongLine(b *testing.B) {
 
 func BenchmarkNewLineReaderManyLines(b *testing.B) {
 	data := make([]byte, 0, 10000*12)
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		data = append(data, []byte("hello world")...)
 		data = append(data, []byte("\n")...)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		reader := byteutils.NewLineReader(data)
 		for reader.Scan() {
 			l := reader.Line()
@@ -200,12 +200,12 @@ func BenchmarkNewLineReaderManyLines(b *testing.B) {
 
 func BenchmarkBytesSplitManyLines(b *testing.B) {
 	data := make([]byte, 0, 10000*12)
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		data = append(data, []byte("hello world")...)
 		data = append(data, []byte("\n")...)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		b := bytes.Split(data, []byte("\n"))
 		_ = b
 	}

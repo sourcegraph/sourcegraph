@@ -1,6 +1,5 @@
 import { type Remote, proxyMarker, releaseProxy, type ProxyMethods, type ProxyOrClone } from 'comlink'
-import { noop } from 'lodash'
-import { from, type Observable, observable as symbolObservable, Subscription, type Subscribable } from 'rxjs'
+import { from, Observable, Subscription } from 'rxjs'
 import { mergeMap, finalize } from 'rxjs/operators'
 
 import { asError, logger } from '@sourcegraph/common'
@@ -59,37 +58,18 @@ export const wrapRemoteObservable = <T>(
     const observable = from(
         isPromiseLike(proxyOrProxyPromise) ? proxyOrProxyPromise : Promise.resolve(proxyOrProxyPromise)
     ).pipe(
-        mergeMap((proxySubscribable): Subscribable<ProxyOrClone<T>> => {
+        mergeMap((proxySubscribable): Observable<ProxyOrClone<T>> => {
             proxySubscription.add(new ProxySubscription(proxySubscribable))
-            return {
-                // Needed for Rx type check
-                [symbolObservable](): Subscribable<ProxyOrClone<T>> {
-                    return this
-                },
-                subscribe(...args: any[]): Subscription {
-                    // Always subscribe with an object because the other side
-                    // is unable to tell if a Proxy is a function or an observer object
-                    // (they always appear as functions)
-                    let proxyObserver: Parameters<typeof proxySubscribable['subscribe']>[0]
-                    if (typeof args[0] === 'function') {
-                        proxyObserver = {
-                            [proxyMarker]: true,
-                            next: args[0] || noop,
-                            error: args[1] ? error => args[1](asError(error)) : noop,
-                            complete: args[2] || noop,
-                        }
-                    } else {
-                        const partialObserver = args[0] || {}
-                        proxyObserver = {
-                            [proxyMarker]: true,
-                            next: partialObserver.next ? value => partialObserver.next(value) : noop,
-                            error: partialObserver.error ? error => partialObserver.error(asError(error)) : noop,
-                            complete: partialObserver.complete ? () => partialObserver.complete() : noop,
-                        }
-                    }
-                    return syncRemoteSubscription(proxySubscribable.subscribe(proxyObserver))
-                },
-            }
+            return new Observable(subscriber => {
+                const proxyObserver: Parameters<typeof proxySubscribable['subscribe']>[0] = {
+                    [proxyMarker]: true,
+                    // @ts-expect-error - this was previously typed as any
+                    next: value => subscriber.next(value),
+                    error: error => subscriber.error(asError(error)),
+                    complete: () => subscriber.complete(),
+                }
+                return syncRemoteSubscription(proxySubscribable.subscribe(proxyObserver))
+            })
         })
     )
     return Object.assign(observable, { proxySubscription })

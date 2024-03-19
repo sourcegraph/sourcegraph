@@ -299,7 +299,7 @@ func TestClient_Users(t *testing.T) {
 			name: "maximum 50 permission filters",
 			page: &PageToken{Limit: 1000},
 			filters: func() (fs UserFilters) {
-				for i := 0; i < 51; i++ {
+				for range 51 {
 					fs = append(fs, UserFilter{
 						Permission: PermissionFilter{
 							Root: PermSysAdmin,
@@ -1084,7 +1084,7 @@ func checkGolden(t *testing.T, name string, got any) {
 
 	path := "testdata/golden/" + name
 	if *update {
-		if err = os.WriteFile(path, data, 0640); err != nil {
+		if err = os.WriteFile(path, data, 0o640); err != nil {
 			t.Fatalf("failed to update golden file %q: %s", path, err)
 		}
 	}
@@ -1152,7 +1152,6 @@ func TestAuth(t *testing.T) {
 			}, nil); err == nil {
 				t.Error("unexpected nil error")
 			}
-
 		})
 
 		t.Run("OAuth 1", func(t *testing.T) {

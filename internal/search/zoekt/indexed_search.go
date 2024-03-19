@@ -532,28 +532,8 @@ func zoektFileMatchToSymbolResults(repoName types.MinimalRepo, inputRev string, 
 
 	// We deduplicate symbol matches. For example searching for "foo AND bar"
 	// will return the symbol "foobar" twice. However, sourcegraph's result
-	// type for symbol is modeled as a result per symbol. Additionally we use
-	// a heuristic to determine duplicate matches. We regard a match as the
-	// same if they have the same symbol info and appear on the same line. I
-	// am unaware of a language where you can break that assumption.
-	if len(symbols) <= 1 {
-		return symbols
-	}
-	dedup := symbols[:1]
-	for _, sym := range symbols[1:] {
-		last := dedup[len(dedup)-1]
-		if (sym.Symbol.Line == last.Symbol.Line) &&
-			(sym.Symbol.Name == last.Symbol.Name) &&
-			(sym.Symbol.Kind == last.Symbol.Kind) &&
-			(sym.Symbol.Parent == last.Symbol.Parent) &&
-			(sym.Symbol.ParentKind == last.Symbol.ParentKind) {
-			continue
-		}
-		dedup = append(dedup, sym)
-	}
-	symbols = dedup
-
-	return symbols
+	// type for symbol is modeled as a result per symbol.
+	return result.DedupSymbols(symbols)
 }
 
 // contextWithoutDeadline returns a context which will cancel if the cOld is

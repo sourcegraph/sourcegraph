@@ -1,4 +1,4 @@
-import { EMPTY, type Observable, Subject } from 'rxjs'
+import { EMPTY, type Observable, Subject, lastValueFrom } from 'rxjs'
 import { bufferTime, catchError, concatMap, map } from 'rxjs/operators'
 
 import { createAggregateError } from '@sourcegraph/common'
@@ -126,10 +126,11 @@ export const logEventsMutation = gql`
 `
 
 function sendEvents(events: Event[]): Promise<void> {
-    return requestGraphQL<LogEventsResult, LogEventsVariables>(logEventsMutation, {
-        events,
-    })
-        .toPromise()
+    return lastValueFrom(
+        requestGraphQL<LogEventsResult, LogEventsVariables>(logEventsMutation, {
+            events,
+        })
+    )
         .then(dataOrThrowErrors)
         .then(() => {})
 }

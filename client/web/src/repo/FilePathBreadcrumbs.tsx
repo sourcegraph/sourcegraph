@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { CopyPathAction } from '@sourcegraph/branded'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { type RepoRevision, toPrettyBlobURL } from '@sourcegraph/shared/src/util/url'
 import { Breadcrumbs } from '@sourcegraph/wildcard'

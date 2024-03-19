@@ -251,7 +251,7 @@ func TestTeams_GetListCount(t *testing.T) {
 
 		// Test cursor pagination.
 		var lastCursor int32
-		for i := 0; i < len(allTeams); i++ {
+		for i := range len(allTeams) {
 			t.Run(fmt.Sprintf("List 1 %s", allTeams[i].Name), func(t *testing.T) {
 				opts := ListTeamsOpts{LimitOffset: &LimitOffset{Limit: 1}, Cursor: lastCursor}
 				teams, c, err := store.ListTeams(internalCtx, opts)
@@ -460,7 +460,7 @@ func TestTeams_GetListCount(t *testing.T) {
 
 			// Test cursor pagination.
 			var lastCursor TeamMemberListCursor
-			for i := 0; i < len(wantMembers); i++ {
+			for i := range len(wantMembers) {
 				t.Run(fmt.Sprintf("List 1 %s", team.Name), func(t *testing.T) {
 					opts := ListTeamMembersOpts{LimitOffset: &LimitOffset{Limit: 1}, Cursor: lastCursor, TeamID: team.ID}
 					members, c, err := store.ListTeamMembers(internalCtx, opts)

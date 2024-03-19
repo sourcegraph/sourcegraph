@@ -3,11 +3,30 @@
 # shellcheck disable=SC1090,SC1091
 source "$HOME/.profile"
 
-# Fetch the latest origin/main to accurately determine the set of changed
-# files on this branch.
-echo "Running git fetch..."
-git fetch
-echo "Running git fetch... done"
+function fetch_tags() {
+    # ref relevant terraform: https://github.com/sourcegraph/infra-aspect-dev/blob/main/aspect/workflows.tf#L71
+    # ref docs about above terraform: https://pro.aspect.build/workflows/terraform/workflows#input_bk_runner_groups
+    # due to how the repostiory is cloned with --depth=100 (see aspect terraform docs), we need to fetch the tags manually
+    # we don't want to fetch all the tags, so here:
+    # 1. Get a list of tags from the remote
+    # 2. Sort them
+    # 3. Get the last $COUNT tags
+    # 4. Parse them so that we only get the tag
+    # 5. Then loop through every tag and fetch it
+    COUNT=10
+    echo "~~~ :git: Fetching last $COUNT tags"
+    git ls-remote --tags origin | sort -t '/' -k 3 -V | tail -n $COUNT | awk -F'/' '{gsub(/\^\{\}$/, "", $3); print $3}' | uniq | while read -r tag; do
+    # we don't use deepen here since during testing it caused more history to be fetched than just the history for the tag which incured a ~40s cost over 5s with just fetch tag
+    git fetch -v origin tag "$tag"
+    done
+}
+
+steps_with_tags=(":pipeline: Generate pipeline" ":bazel: Test" ":bazel: Integration/E2E (Test)")
+for step in "${steps_with_tags[@]}"; do
+    if [[ "$BUILDKITE_LABEL" == "$step" ]]; then
+        fetch_tags
+    fi
+done
 
 # Link command wrapper scripts so we can have more readable steps in the buildkite UI
 ln -s "$(pwd)/dev/ci/scripts/annotated-command.sh" an 2>/dev/null || true

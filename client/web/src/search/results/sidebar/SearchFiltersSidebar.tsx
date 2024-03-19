@@ -5,9 +5,9 @@ import {
     useCallback,
     useMemo,
     forwardRef,
-    HTMLAttributes,
-    ComponentType,
-    PropsWithChildren,
+    type HTMLAttributes,
+    type ComponentType,
+    type PropsWithChildren,
 } from 'react'
 
 import { mdiInformationOutline } from '@mdi/js'

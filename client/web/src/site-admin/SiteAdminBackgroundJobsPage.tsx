@@ -11,7 +11,7 @@ import {
     mdiNumeric,
     mdiShape,
 } from '@mdi/js'
-import format from 'date-fns/format'
+import { format } from 'date-fns'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { pluralize } from '@sourcegraph/common'

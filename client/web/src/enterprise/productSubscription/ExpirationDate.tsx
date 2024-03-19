@@ -1,6 +1,7 @@
 import React from 'react'
 
-import format from 'date-fns/format'
+import { UTCDate } from '@date-fns/utc'
+import { format } from 'date-fns'
 
 import { formatRelativeExpirationDate, isProductLicenseExpired } from '../../productSubscription/helpers'
 
@@ -22,15 +23,21 @@ export const ExpirationDate: React.FunctionComponent<
         lowercase?: boolean
     }>
 > = ({ date, showTime, showRelative, showPrefix, lowercase }) => {
+    const dateInUTC = new UTCDate(date)
+
     let text: string | undefined
     if (showPrefix) {
-        text = isProductLicenseExpired(date) ? 'Expired on ' : 'Valid until '
+        text = isProductLicenseExpired(dateInUTC) ? 'Expired on ' : 'Valid until '
     }
     return (
         <span>
             {text && lowercase ? text.toLowerCase() : text}
-            {showTime ? format(date, 'PPpp') : <span title={format(date, 'PPpp')}>{format(date, 'yyyy-MM-dd')}</span>}
-            {showRelative && ` (${formatRelativeExpirationDate(date)})`}
+            {showTime ? (
+                format(dateInUTC, 'PPpp zzz')
+            ) : (
+                <span title={format(dateInUTC, 'PPpp zzz')}>{format(dateInUTC, 'yyyy-MM-dd zzz')}</span>
+            )}
+            {showRelative && ` (${formatRelativeExpirationDate(dateInUTC)})`}
         </span>
     )
 }

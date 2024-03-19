@@ -32,7 +32,7 @@ func TestNew_unique(t *testing.T) {
 }
 
 func TestNewLen(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		u := NewLen(i)
 		if len(u) != i {
 			t.Fatalf("request length %d, got %d", i, len(u))

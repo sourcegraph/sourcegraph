@@ -1,6 +1,7 @@
 package result
 
 import (
+	"cmp"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -140,6 +141,45 @@ func (s *SymbolMatch) URL() *url.URL {
 	base := s.File.URL()
 	base.RawQuery = urlFragmentFromRange(s.Symbol.Range())
 	return base
+}
+
+func compareSymbolMatches(a, b *SymbolMatch) int {
+	if v := cmp.Compare(a.Symbol.Line, b.Symbol.Line); v != 0 {
+		return v
+	}
+
+	if v := cmp.Compare(a.Symbol.Name, b.Symbol.Name); v != 0 {
+		return v
+	}
+
+	if v := cmp.Compare(a.Symbol.Kind, b.Symbol.Kind); v != 0 {
+		return v
+	}
+
+	if v := cmp.Compare(a.Symbol.Parent, b.Symbol.Parent); v != 0 {
+		return v
+	}
+
+	return cmp.Compare(a.Symbol.ParentKind, b.Symbol.ParentKind)
+}
+
+// DedupSymbols removes duplicate symbols from the list. We use a heuristic to
+// determine duplicate matches. We regard a match as the same if they have the
+// same symbol info and appear on the same line. I am unaware of a language
+// where you can break that assumption.
+func DedupSymbols(symbols []*SymbolMatch) []*SymbolMatch {
+	if len(symbols) <= 1 {
+		return symbols
+	}
+	dedup := symbols[:1]
+	for _, sym := range symbols[1:] {
+		last := dedup[len(dedup)-1]
+		if compareSymbolMatches(sym, last) == 0 {
+			continue
+		}
+		dedup = append(dedup, sym)
+	}
+	return dedup
 }
 
 func urlFragmentFromRange(lspRange lsp.Range) string {

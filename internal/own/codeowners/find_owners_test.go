@@ -276,7 +276,7 @@ func BenchmarkOwnersMatchLiteral(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -302,7 +302,7 @@ func BenchmarkOwnersMatchRelativeGlob(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -328,7 +328,7 @@ func BenchmarkOwnersMatchAbsoluteGlob(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -354,7 +354,7 @@ func BenchmarkOwnersMismatchLiteral(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -380,7 +380,7 @@ func BenchmarkOwnersMismatchRelativeGlob(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -406,7 +406,7 @@ func BenchmarkOwnersMismatchAbsoluteGlob(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -432,7 +432,7 @@ func BenchmarkOwnersMatchMultiHole(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -458,7 +458,7 @@ func BenchmarkOwnersMismatchMultiHole(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }
@@ -476,7 +476,7 @@ func BenchmarkOwnersMatchLiteralLargeRuleset(b *testing.B) {
 			{Pattern: pattern, Owner: owner},
 		},
 	}
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		f.Rule = append(f.Rule, &codeownerspb.Rule{Pattern: fmt.Sprintf("%s-%d", pattern, i), Owner: owner})
 	}
 	rs := codeowners.NewRuleset(codeowners.IngestedRulesetSource{}, f)
@@ -485,7 +485,7 @@ func BenchmarkOwnersMatchLiteralLargeRuleset(b *testing.B) {
 		rs.Match(path)
 	}
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		rs.Match(pattern)
 	}
 }

@@ -3,6 +3,7 @@ import { type FC, useContext, useMemo } from 'react'
 import classNames from 'classnames'
 import MapSearchIcon from 'mdi-react/MapSearchIcon'
 import { useParams, useNavigate } from 'react-router-dom'
+import { lastValueFrom } from 'rxjs'
 
 import {
     Button,
@@ -70,13 +71,15 @@ export const EditDashboardPage: FC = props => {
             throw new Error('You have to specify a dashboard visibility')
         }
 
-        const updatedDashboard = await updateDashboard({
-            id: dashboard.id,
-            nextDashboardInput: {
-                name,
-                owners: [owner],
-            },
-        }).toPromise()
+        const updatedDashboard = await lastValueFrom(
+            updateDashboard({
+                id: dashboard.id,
+                nextDashboardInput: {
+                    name,
+                    owners: [owner],
+                },
+            })
+        )
 
         navigate(`/insights/dashboards/${updatedDashboard.id}`)
     }

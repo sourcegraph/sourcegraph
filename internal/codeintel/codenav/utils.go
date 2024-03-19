@@ -29,7 +29,7 @@ func sliceContains(slice []string, str string) bool {
 	return false
 }
 
-func uploadIDsToString(vs []uploadsshared.Dump) string {
+func uploadIDsToString(vs []uploadsshared.CompletedUpload) string {
 	ids := make([]string, 0, len(vs))
 	for _, v := range vs {
 		ids = append(ids, strconv.Itoa(v.ID))

@@ -7,6 +7,9 @@ Generated from: unknown revision of https://github.com/sourcegraph/managed-servi
 This document describes operational guidance for msp-testbed infrastructure.
 This service is operated on the [Managed Services Platform (MSP)](https://handbook.sourcegraph.com/departments/engineering/teams/core-services/managed-services/platform/).
 
+> [!IMPORTANT]
+> If this is your first time here, you should follow the [sourcegraph/managed-services README](https://github.com/sourcegraph/managed-services/blob/main/README.md) as well to set up the prerequisite tooling.
+
 If you need assistance with MSP infrastructure, reach out to the [Core Services](https://handbook.sourcegraph.com/departments/engineering/teams/core-services/) team in #discuss-core-services.
 
 ## Service overview

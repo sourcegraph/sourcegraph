@@ -449,7 +449,7 @@ func TestBulkAssignPermissionsToRole(t *testing.T) {
 
 	numberOfPerms := 4
 	var perms []int32
-	for i := 0; i < numberOfPerms; i++ {
+	for i := range numberOfPerms {
 		action := rtypes.NamespaceAction(fmt.Sprintf("%s-%d", rtypes.BatchChangesReadAction, i))
 		perm := createTestPermissionForRolePermission(ctx, action, t, db)
 		perms = append(perms, perm.ID)

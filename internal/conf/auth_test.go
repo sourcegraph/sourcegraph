@@ -8,11 +8,8 @@ import (
 )
 
 func TestAuthPublic(t *testing.T) {
-	orig := dotcom.SourcegraphDotComMode()
-	dotcom.MockSourcegraphDotComMode(false)
-	defer dotcom.MockSourcegraphDotComMode(orig) // reset
-
 	t.Run("Default, self-hosted instance non-public auth", func(t *testing.T) {
+		dotcom.MockSourcegraphDotComMode(t, false)
 		got := AuthPublic()
 		want := false
 		if !reflect.DeepEqual(got, want) {
@@ -20,9 +17,8 @@ func TestAuthPublic(t *testing.T) {
 		}
 	})
 
-	dotcom.MockSourcegraphDotComMode(true)
-
 	t.Run("Sourcegraph.com public auth", func(t *testing.T) {
+		dotcom.MockSourcegraphDotComMode(t, true)
 		got := AuthPublic()
 		want := true
 		if !reflect.DeepEqual(got, want) {

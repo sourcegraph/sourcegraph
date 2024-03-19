@@ -31,9 +31,9 @@
     <SearchResults
         bind:this={searchResults}
         stream={data.searchStream}
-        queryFromURL={data.queryOptions.query}
+        queryFromURL={data.queryFromURL}
         {queryState}
-        queryFilters={data.queryFilters}
+        selectedFilters={data.queryFilters}
     />
 {:else}
     <SearchHome {queryState} />

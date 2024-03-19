@@ -96,7 +96,7 @@ func delete(ctx context.Context, cfg config) {
 
 	// delete users from instance
 	usersToDelete := len(localUsers) - cfg.userCount
-	for i := 0; i < usersToDelete; i++ {
+	for i := range usersToDelete {
 		currentUser := localUsers[i]
 		if i%100 == 0 {
 			writeInfo(out, "Deleted %d out of %d users", i, usersToDelete)
@@ -107,7 +107,7 @@ func delete(ctx context.Context, cfg config) {
 	}
 
 	teamsToDelete := len(localTeams) - cfg.teamCount
-	for i := 0; i < teamsToDelete; i++ {
+	for i := range teamsToDelete {
 		currentTeam := localTeams[i]
 		if i%100 == 0 {
 			writeInfo(out, "Deleted %d out of %d teams", i, teamsToDelete)

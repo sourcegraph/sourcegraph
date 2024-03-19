@@ -23,7 +23,7 @@ func initializeData(ctx context.Context, store *Store, repos, times int, withCap
 	var cv []*string
 
 	if withCapture > 0 {
-		for i := 0; i < withCapture; i++ {
+		for i := range withCapture {
 			cv = append(cv, pointers.Ptr(fmt.Sprintf("%d", i)))
 		}
 	} else {
@@ -33,8 +33,8 @@ func initializeData(ctx context.Context, store *Store, repos, times int, withCap
 	seriesID := rand.String(8)
 	currentTime := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 	var records []RecordSeriesPointArgs
-	for i := 0; i < times; i++ {
-		for j := 0; j < repos; j++ {
+	for range times {
+		for j := range repos {
 			repoName := fmt.Sprintf("repo-%d", j)
 			id := api.RepoID(j)
 			for _, val := range cv {
@@ -66,7 +66,7 @@ func generateRepoRestrictions(numberRestricted, totalNumber int) []api.RepoID {
 	seen := map[int]struct{}{}
 	restrictions := []api.RepoID{}
 	upperBound := totalNumber
-	for i := 0; i < numberRestricted; i++ {
+	for range numberRestricted {
 		randomID := rand.Intn(upperBound - 1)
 		if _, ok := seen[randomID]; ok {
 			restrictions = append(restrictions, api.RepoID(upperBound))
@@ -220,7 +220,7 @@ func BenchmarkLoadTimes(b *testing.B) {
 		b.ResetTimer()
 
 		b.Run("in-db-aggregate-"+bm.name, func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				_, err := store.SeriesPoints(ctx, opts)
 				if err != nil {
 					b.Fatal(err)
@@ -229,7 +229,7 @@ func BenchmarkLoadTimes(b *testing.B) {
 		})
 
 		b.Run("in-mem-aggregate-"+bm.name, func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				_, err := store.LoadSeriesInMem(ctx, opts)
 				if err != nil {
 					b.Fatal(err)

@@ -25,6 +25,7 @@ func TestExtractPubSubAttributes(t *testing.T) {
 			expect: autogold.Expect(map[string]string{
 				"event.action": "chat", "event.feature": "cody.feature",
 				"event.hasPrivateMetadata": "false",
+				"publisher.source":         "licensed_instance",
 			}),
 		},
 		{
@@ -41,6 +42,7 @@ func TestExtractPubSubAttributes(t *testing.T) {
 			expect: autogold.Expect(map[string]string{
 				"event.action": "chat", "event.feature": "cody.feature",
 				"event.hasPrivateMetadata": "true",
+				"publisher.source":         "licensed_instance",
 			}),
 		},
 		{
@@ -63,6 +65,7 @@ func TestExtractPubSubAttributes(t *testing.T) {
 				"event.action": "chat", "event.feature": "cody.feature",
 				"event.hasPrivateMetadata":               "true",
 				"event.recordsPrivateMetadataTranscript": "true",
+				"publisher.source":                       "licensed_instance",
 			}),
 		},
 		{
@@ -80,11 +83,12 @@ func TestExtractPubSubAttributes(t *testing.T) {
 			expect: autogold.Expect(map[string]string{
 				"event.action": "chat", "event.feature": "cody.feature",
 				"event.hasPrivateMetadata": "false",
+				"publisher.source":         "licensed_instance",
 			}),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.expect.Equal(t, extractPubSubAttributes(tc.event))
+			tc.expect.Equal(t, extractPubSubAttributes("licensed_instance", tc.event))
 		})
 	}
 }

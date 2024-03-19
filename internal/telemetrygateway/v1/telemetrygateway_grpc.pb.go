@@ -28,6 +28,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	TelemeteryGatewayService_RecordEvents_FullMethodName = "/telemetrygateway.v1.TelemeteryGatewayService/RecordEvents"
+	TelemeteryGatewayService_RecordEvent_FullMethodName  = "/telemetrygateway.v1.TelemeteryGatewayService/RecordEvent"
 )
 
 // TelemeteryGatewayServiceClient is the client API for TelemeteryGatewayService service.
@@ -38,10 +39,25 @@ type TelemeteryGatewayServiceClient interface {
 	// service. Events should only be considered delivered if recording is
 	// acknowledged in RecordEventsResponse.
 	//
-	// 🚨 SECURITY: Callers should check the attributes of the Event type to ensure
-	// that only the appropriate fields are exported, as some fields should only
-	// be exported on an allowlist basis.
+	// This is the preferred mechanism for exporting large volumes of events in
+	// bulk.
+	//
+	// 🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check
+	// the attributes of the Event type to ensure that only the appropriate fields
+	// are exported, as some fields should only be exported on an allowlist basis.
 	RecordEvents(ctx context.Context, opts ...grpc.CallOption) (TelemeteryGatewayService_RecordEventsClient, error)
+	// RecordEvent records a single telemetry event to the Telemetry Gateway service.
+	// If the RPC succeeds, then the event was successfully published.
+	//
+	// This RPC currently ONLY accepts events published by ManagedServiceIdentifier,
+	// as this mechanism is intended for low-volume managed services. Higher-volume
+	// use cases should implement a batching mechanism and use the RecordEvents
+	// RPC instead.
+	//
+	// 🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check
+	// the attributes of the Event type to ensure that only the appropriate fields
+	// are exported, as some fields should only be exported on an allowlist basis.
+	RecordEvent(ctx context.Context, in *RecordEventRequest, opts ...grpc.CallOption) (*RecordEventResponse, error)
 }
 
 type telemeteryGatewayServiceClient struct {
@@ -83,6 +99,15 @@ func (x *telemeteryGatewayServiceRecordEventsClient) Recv() (*RecordEventsRespon
 	return m, nil
 }
 
+func (c *telemeteryGatewayServiceClient) RecordEvent(ctx context.Context, in *RecordEventRequest, opts ...grpc.CallOption) (*RecordEventResponse, error) {
+	out := new(RecordEventResponse)
+	err := c.cc.Invoke(ctx, TelemeteryGatewayService_RecordEvent_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TelemeteryGatewayServiceServer is the server API for TelemeteryGatewayService service.
 // All implementations must embed UnimplementedTelemeteryGatewayServiceServer
 // for forward compatibility
@@ -91,10 +116,25 @@ type TelemeteryGatewayServiceServer interface {
 	// service. Events should only be considered delivered if recording is
 	// acknowledged in RecordEventsResponse.
 	//
-	// 🚨 SECURITY: Callers should check the attributes of the Event type to ensure
-	// that only the appropriate fields are exported, as some fields should only
-	// be exported on an allowlist basis.
+	// This is the preferred mechanism for exporting large volumes of events in
+	// bulk.
+	//
+	// 🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check
+	// the attributes of the Event type to ensure that only the appropriate fields
+	// are exported, as some fields should only be exported on an allowlist basis.
 	RecordEvents(TelemeteryGatewayService_RecordEventsServer) error
+	// RecordEvent records a single telemetry event to the Telemetry Gateway service.
+	// If the RPC succeeds, then the event was successfully published.
+	//
+	// This RPC currently ONLY accepts events published by ManagedServiceIdentifier,
+	// as this mechanism is intended for low-volume managed services. Higher-volume
+	// use cases should implement a batching mechanism and use the RecordEvents
+	// RPC instead.
+	//
+	// 🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check
+	// the attributes of the Event type to ensure that only the appropriate fields
+	// are exported, as some fields should only be exported on an allowlist basis.
+	RecordEvent(context.Context, *RecordEventRequest) (*RecordEventResponse, error)
 	mustEmbedUnimplementedTelemeteryGatewayServiceServer()
 }
 
@@ -104,6 +144,9 @@ type UnimplementedTelemeteryGatewayServiceServer struct {
 
 func (UnimplementedTelemeteryGatewayServiceServer) RecordEvents(TelemeteryGatewayService_RecordEventsServer) error {
 	return status.Errorf(codes.Unimplemented, "method RecordEvents not implemented")
+}
+func (UnimplementedTelemeteryGatewayServiceServer) RecordEvent(context.Context, *RecordEventRequest) (*RecordEventResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecordEvent not implemented")
 }
 func (UnimplementedTelemeteryGatewayServiceServer) mustEmbedUnimplementedTelemeteryGatewayServiceServer() {
 }
@@ -145,13 +188,36 @@ func (x *telemeteryGatewayServiceRecordEventsServer) Recv() (*RecordEventsReques
 	return m, nil
 }
 
+func _TelemeteryGatewayService_RecordEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RecordEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TelemeteryGatewayServiceServer).RecordEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TelemeteryGatewayService_RecordEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TelemeteryGatewayServiceServer).RecordEvent(ctx, req.(*RecordEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TelemeteryGatewayService_ServiceDesc is the grpc.ServiceDesc for TelemeteryGatewayService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TelemeteryGatewayService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "telemetrygateway.v1.TelemeteryGatewayService",
 	HandlerType: (*TelemeteryGatewayServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RecordEvent",
+			Handler:    _TelemeteryGatewayService_RecordEvent_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "RecordEvents",

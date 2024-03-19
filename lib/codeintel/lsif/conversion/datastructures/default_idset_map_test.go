@@ -18,7 +18,7 @@ func TestDefaultIDSetMapAdd(t *testing.T) {
 
 			t.Run(name, func(t *testing.T) {
 				m := NewDefaultIDSetMap()
-				for i := 0; i < numUnrelatedKeys; i++ {
+				for i := range numUnrelatedKeys {
 					m.AddID(1000+i, 42)
 				}
 
@@ -48,7 +48,7 @@ func TestDefaultIDSetMapUnion(t *testing.T) {
 
 			t.Run(name, func(t *testing.T) {
 				m := NewDefaultIDSetMap()
-				for i := 0; i < numUnrelatedKeys; i++ {
+				for i := range numUnrelatedKeys {
 					m.AddID(1000+i, 42)
 				}
 
@@ -82,7 +82,7 @@ func TestDefaultIDSetMapUnion(t *testing.T) {
 func TestDefaultIDSetMapDelete(t *testing.T) {
 	for _, unrelatedKey := range []int{0, 1, 16} {
 		m := NewDefaultIDSetMap()
-		for i := 0; i < unrelatedKey; i++ {
+		for i := range unrelatedKey {
 			m.AddID(1000+i, 42)
 		}
 

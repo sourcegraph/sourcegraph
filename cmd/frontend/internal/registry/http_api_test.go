@@ -11,8 +11,7 @@ import (
 )
 
 func TestHandleRegistry(t *testing.T) {
-	defer dotcom.MockSourcegraphDotComMode(dotcom.SourcegraphDotComMode())
-	dotcom.MockSourcegraphDotComMode(true)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	t.Run("list", func(t *testing.T) {
 		rr := httptest.NewRecorder()

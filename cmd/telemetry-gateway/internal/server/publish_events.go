@@ -36,13 +36,14 @@ func handlePublishEvents(
 
 	// Record the result on the trace and metrics
 	resultAttribute := attribute.String("result", summary.result)
-	tr.SetAttributes(resultAttribute)
+	sourceAttribute := attribute.String("source", publisher.GetSourceName())
+	tr.SetAttributes(resultAttribute, sourceAttribute)
 	payloadMetrics.length.Record(ctx, int64(len(events)),
-		metric.WithAttributes(resultAttribute))
+		metric.WithAttributes(resultAttribute, sourceAttribute))
 	payloadMetrics.processedEvents.Add(ctx, int64(len(summary.succeededEvents)),
-		metric.WithAttributes(attribute.Bool("succeeded", true), resultAttribute))
+		metric.WithAttributes(attribute.Bool("succeeded", true), resultAttribute, sourceAttribute))
 	payloadMetrics.processedEvents.Add(ctx, int64(len(summary.failedEvents)),
-		metric.WithAttributes(attribute.Bool("succeeded", false), resultAttribute))
+		metric.WithAttributes(attribute.Bool("succeeded", false), resultAttribute, sourceAttribute))
 
 	// Generate a log message for convenience
 	summaryFields := []log.Field{

@@ -62,7 +62,6 @@ go_test(
         "//internal/database",
         "//internal/database/dbmocks",
         "//internal/database/dbtest",
-        "//internal/dotcom",
         "//internal/extsvc",
         "//internal/extsvc/bitbucketcloud",
         "//internal/httpcli",

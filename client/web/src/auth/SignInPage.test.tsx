@@ -143,35 +143,6 @@ describe('SignInPage', () => {
         expect(rendered.asFragment()).toMatchSnapshot()
     })
 
-    describe('with Sourcegraph accounts (dev) auth provider', () => {
-        const samsProviderName = 'Sourcegraph Accounts (dev) [Testing Only]'
-        const withSourcegraphAccountsDev: SourcegraphContext['authProviders'] = [
-            ...authProviders,
-            {
-                displayName: samsProviderName,
-                isBuiltin: false,
-                serviceType: 'openidconnect',
-                authenticationURL: 'https://accounts.sgdev.org/.auth/openidconnect/',
-                serviceID: 'https://accounts.sgdev.org',
-                clientID: 'sams-dev_cid_xxxx',
-            },
-        ]
-
-        it('renders page with 2 providers', () => {
-            const rendered = render('/sign-in', { authProviders: withSourcegraphAccountsDev })
-            expect(
-                within(rendered.baseElement).queryByText(txt => txt.includes(samsProviderName))
-            ).not.toBeInTheDocument()
-            expect(rendered.asFragment()).toMatchSnapshot()
-        })
-
-        it('renders page with 3 providers (url-param present)', () => {
-            const rendered = render('/sign-in?sourcegraph-accounts-dev', { authProviders: withSourcegraphAccountsDev })
-            expect(within(rendered.baseElement).queryByText(txt => txt.includes(samsProviderName))).toBeInTheDocument()
-            expect(rendered.asFragment()).toMatchSnapshot()
-        })
-    })
-
     describe('with Sourcegraph operator auth provider', () => {
         const withSourcegraphOperator: SourcegraphContext['authProviders'] = [
             ...authProviders,

@@ -55,13 +55,13 @@ func TestSimilaritySearch(t *testing.T) {
 		RowMetadata:     []RepoEmbeddingRowMetadata{},
 	}
 
-	for i := 0; i < numRows; i++ {
+	for i := range numRows {
 		index.RowMetadata = append(index.RowMetadata, RepoEmbeddingRowMetadata{FileName: strconv.Itoa(i)})
 	}
 
 	for _, numWorkers := range []int{0, 1, 2, 3, 5, 8, 9, 16, 20, 33} {
 		for _, numResults := range []int{32} {
-			for q := 0; q < numQueries; q++ {
+			for q := range numQueries {
 				t.Run(fmt.Sprintf("find nearest neighbors query=%d numResults=%d numWorkers=%d", q, numResults, numWorkers), func(t *testing.T) {
 					query := queries[q*columnDimension : (q+1)*columnDimension]
 					results := index.SimilaritySearch(query, numResults, WorkerOptions{NumWorkers: numWorkers, MinRowsToSplit: 0}, SearchOptions{}, "", "")
@@ -151,7 +151,7 @@ func BenchmarkSimilaritySearch(b *testing.B) {
 	for _, numWorkers := range []int{1, 2, 4, 8, 16} {
 		b.Run(fmt.Sprintf("numWorkers=%d", numWorkers), func(b *testing.B) {
 			start := time.Now()
-			for n := 0; n < b.N; n++ {
+			for range b.N {
 				_ = index.SimilaritySearch(query, numResults, WorkerOptions{NumWorkers: numWorkers}, SearchOptions{}, "", "")
 			}
 			m := float64(numRows) * float64(b.N) / time.Since(start).Seconds()

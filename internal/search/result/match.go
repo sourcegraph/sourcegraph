@@ -146,3 +146,19 @@ func (m Matches) ResultCount() int {
 	}
 	return count
 }
+
+// Deduper is a convenience type to deduplicate matches
+type Deduper map[Key]struct{}
+
+func NewDeduper() Deduper {
+	return make(map[Key]struct{})
+}
+
+func (d Deduper) Add(m Match) {
+	d[m.Key()] = struct{}{}
+}
+
+func (d Deduper) Seen(m Match) bool {
+	_, ok := d[m.Key()]
+	return ok
+}

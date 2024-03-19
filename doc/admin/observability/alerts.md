@@ -1369,19 +1369,54 @@ Generated query for critical alert: `max((histogram_quantile(0.9, sum by (le) (l
 
 <br />
 
-## gitserver: disk_space_remaining
+## gitserver: cpu_throttling_time
 
-<p class="subtitle">disk space remaining by instance</p>
+<p class="subtitle">container CPU throttling time %</p>
 
 **Descriptions**
 
-- <span class="badge badge-warning">warning</span> gitserver: less than 15% disk space remaining by instance
-- <span class="badge badge-critical">critical</span> gitserver: less than 10% disk space remaining by instance for 10m0s
+- <span class="badge badge-warning">warning</span> gitserver: 75%+ container CPU throttling time % for 2m0s
+- <span class="badge badge-critical">critical</span> gitserver: 90%+ container CPU throttling time % for 5m0s
 
 **Next steps**
 
-- On a warning alert, you may want to provision more disk space: Sourcegraph may be about to start evicting repositories due to disk pressure, which may result in decreased performance, users having to wait for repositories to clone, etc.
-- On a critical alert, you need to provision more disk space: Sourcegraph should be evicting repositories from disk, but is either filling up faster than it can evict, or there is an issue with the janitor job.
+- 	- Consider increasing the CPU limit for the container.
+- More help interpreting this metric is available in the [dashboards reference](./dashboards.md#gitserver-cpu-throttling-time).
+- **Silence this alert:** If you are aware of this alert and want to silence notifications for it, add the following to your site configuration and set a reminder to re-evaluate the alert:
+
+```json
+"observability.silenceAlerts": [
+  "warning_gitserver_cpu_throttling_time",
+  "critical_gitserver_cpu_throttling_time"
+]
+```
+
+<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
+
+<details>
+<summary>Technical details</summary>
+
+Generated query for warning alert: `max((sum by (container_label_io_kubernetes_pod_name) ((rate(container_cpu_cfs_throttled_periods_total{container_label_io_kubernetes_container_name="gitserver"}[5m]) / rate(container_cpu_cfs_periods_total{container_label_io_kubernetes_container_name="gitserver"}[5m])) * 100)) >= 75)`
+
+Generated query for critical alert: `max((sum by (container_label_io_kubernetes_pod_name) ((rate(container_cpu_cfs_throttled_periods_total{container_label_io_kubernetes_container_name="gitserver"}[5m]) / rate(container_cpu_cfs_periods_total{container_label_io_kubernetes_container_name="gitserver"}[5m])) * 100)) >= 90)`
+
+</details>
+
+<br />
+
+## gitserver: disk_space_remaining
+
+<p class="subtitle">disk space remaining</p>
+
+**Descriptions**
+
+- <span class="badge badge-warning">warning</span> gitserver: less than 15% disk space remaining
+- <span class="badge badge-critical">critical</span> gitserver: less than 10% disk space remaining for 10m0s
+
+**Next steps**
+
+- On a warning alert, you may want to provision more disk space: Disk pressure may result in decreased performance, users having to wait for repositories to clone, etc.
+- On a critical alert, you need to provision more disk space. Running out of disk space will result in decreased performance, or complete service outage.
 - More help interpreting this metric is available in the [dashboards reference](./dashboards.md#gitserver-disk-space-remaining).
 - **Silence this alert:** If you are aware of this alert and want to silence notifications for it, add the following to your site configuration and set a reminder to re-evaluate the alert:
 
@@ -1437,6 +1472,74 @@ Generated query for critical alert: `min(((src_gitserver_disk_space_available / 
 Generated query for warning alert: `max((sum by (instance, cmd) (src_gitserver_exec_running)) >= 50)`
 
 Generated query for critical alert: `max((sum by (instance, cmd) (src_gitserver_exec_running)) >= 100)`
+
+</details>
+
+<br />
+
+## gitserver: echo_command_duration_test
+
+<p class="subtitle">echo test command duration</p>
+
+**Descriptions**
+
+- <span class="badge badge-warning">warning</span> gitserver: 0.02s+ echo test command duration for 30s
+- <span class="badge badge-critical">critical</span> gitserver: 1s+ echo test command duration
+
+**Next steps**
+
+- **Single container deployments:** Upgrade to a [Docker Compose deployment](../deploy/docker-compose/migrate.md) which offers better scalability and resource isolation.
+- **Kubernetes and Docker Compose:** Check that you are running a similar number of git server replicas and that their CPU/memory limits are allocated according to what is shown in the [Sourcegraph resource estimator](../deploy/resource_estimator.md).
+- If your persistent volume is slow, you may want to provision more IOPS, usually by increasing the volume size.
+- More help interpreting this metric is available in the [dashboards reference](./dashboards.md#gitserver-echo-command-duration-test).
+- **Silence this alert:** If you are aware of this alert and want to silence notifications for it, add the following to your site configuration and set a reminder to re-evaluate the alert:
+
+```json
+"observability.silenceAlerts": [
+  "warning_gitserver_echo_command_duration_test",
+  "critical_gitserver_echo_command_duration_test"
+]
+```
+
+<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
+
+<details>
+<summary>Technical details</summary>
+
+Generated query for warning alert: `max((max(src_gitserver_echo_duration_seconds)) >= 0.02)`
+
+Generated query for critical alert: `max((max(src_gitserver_echo_duration_seconds)) >= 1)`
+
+</details>
+
+<br />
+
+## gitserver: repo_corrupted
+
+<p class="subtitle">number of times a repo corruption has been identified</p>
+
+**Descriptions**
+
+- <span class="badge badge-critical">critical</span> gitserver: 0+ number of times a repo corruption has been identified
+
+**Next steps**
+
+- Check the corruption logs for details. gitserver_repos.corruption_logs contains more information.
+- More help interpreting this metric is available in the [dashboards reference](./dashboards.md#gitserver-repo-corrupted).
+- **Silence this alert:** If you are aware of this alert and want to silence notifications for it, add the following to your site configuration and set a reminder to re-evaluate the alert:
+
+```json
+"observability.silenceAlerts": [
+  "critical_gitserver_repo_corrupted"
+]
+```
+
+<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
+
+<details>
+<summary>Technical details</summary>
+
+Generated query for critical alert: `max((sum(rate(src_gitserver_repo_corrupted[5m]))) > 0)`
 
 </details>
 

@@ -1,5 +1,5 @@
 import { type Remote, proxy } from 'comlink'
-import { type Unsubscribable, Subscription, from, of } from 'rxjs'
+import { type Unsubscribable, Subscription, from, of, lastValueFrom } from 'rxjs'
 import { publishReplay, refCount, switchMap } from 'rxjs/operators'
 
 import { logger } from '@sourcegraph/common'
@@ -101,13 +101,13 @@ export const initMainThreadAPI = (
     const api: MainThreadAPI = {
         applySettingsEdit: edit => updateSettings(platformContext, edit),
         requestGraphQL: (request, variables) =>
-            platformContext
-                .requestGraphQL({
+            lastValueFrom(
+                platformContext.requestGraphQL({
                     request,
                     variables,
                     mightContainPrivateInfo: true,
                 })
-                .toPromise(),
+            ),
         // Commands
         executeCommand: (command, args) => executeCommand({ command, args }),
         registerCommand: (command, run) => {

@@ -296,11 +296,17 @@ func classFileEntryMajorVersion(byteCodeJarPath string, zipEntry *zip.File) (str
 	var minor uint16
 	var major uint16
 	buf := bytes.NewReader(magicBytes)
-	binary.Read(buf, binary.BigEndian, &cafebabe)
+	if err := binary.Read(buf, binary.BigEndian, &cafebabe); err != nil {
+		return "", errors.Wrap(err, "failed to read classfile header")
+	}
 	if cafebabe != 0xcafebabe {
 		return "", nil // Not a classfile
 	}
-	binary.Read(buf, binary.BigEndian, &minor)
-	binary.Read(buf, binary.BigEndian, &major)
+	if err := binary.Read(buf, binary.BigEndian, &minor); err != nil {
+		return "", errors.Wrap(err, "failed to read classfile header")
+	}
+	if err := binary.Read(buf, binary.BigEndian, &major); err != nil {
+		return "", errors.Wrap(err, "failed to read classfile header")
+	}
 	return strconv.Itoa(int(major)), nil
 }

@@ -29,24 +29,24 @@ func TestSoftDeleteExpiredUploads(t *testing.T) {
 		shared.Upload{ID: 56, RepositoryID: 103, State: "completed"}, // referenced by 52, 53
 	)
 	insertPackages(t, store, []shared.Package{
-		{DumpID: 53, Scheme: "test", Name: "p1", Version: "1.2.3"},
-		{DumpID: 54, Scheme: "test", Name: "p2", Version: "1.2.3"},
-		{DumpID: 55, Scheme: "test", Name: "p3", Version: "1.2.3"},
-		{DumpID: 56, Scheme: "test", Name: "p4", Version: "1.2.3"},
+		{UploadID: 53, Scheme: "test", Name: "p1", Version: "1.2.3"},
+		{UploadID: 54, Scheme: "test", Name: "p2", Version: "1.2.3"},
+		{UploadID: 55, Scheme: "test", Name: "p3", Version: "1.2.3"},
+		{UploadID: 56, Scheme: "test", Name: "p4", Version: "1.2.3"},
 	})
 	insertPackageReferences(t, store, []shared.PackageReference{
 		// References removed
-		{Package: shared.Package{DumpID: 51, Scheme: "test", Name: "p1", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 51, Scheme: "test", Name: "p2", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 51, Scheme: "test", Name: "p3", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 52, Scheme: "test", Name: "p1", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 52, Scheme: "test", Name: "p4", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 51, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 51, Scheme: "test", Name: "p2", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 51, Scheme: "test", Name: "p3", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 52, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 52, Scheme: "test", Name: "p4", Version: "1.2.3"}},
 
 		// Remaining references
-		{Package: shared.Package{DumpID: 53, Scheme: "test", Name: "p4", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 54, Scheme: "test", Name: "p1", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 55, Scheme: "test", Name: "p1", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 56, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 53, Scheme: "test", Name: "p4", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 54, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 55, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 56, Scheme: "test", Name: "p1", Version: "1.2.3"}},
 	})
 
 	// expire uploads 51-54
@@ -129,32 +129,32 @@ func TestSoftDeleteExpiredUploadsViaTraversal(t *testing.T) {
 		shared.Upload{ID: 108, RepositoryID: 58, State: "completed"}, // Referenced by 107
 	)
 	insertPackages(t, store, []shared.Package{
-		{DumpID: 100, Scheme: "test", Name: "p1", Version: "1.2.3"},
-		{DumpID: 101, Scheme: "test", Name: "p2", Version: "1.2.3"},
-		{DumpID: 102, Scheme: "test", Name: "p3", Version: "1.2.3"},
-		{DumpID: 103, Scheme: "test", Name: "p4", Version: "1.2.3"},
-		{DumpID: 104, Scheme: "test", Name: "p5", Version: "1.2.3"},
-		{DumpID: 105, Scheme: "test", Name: "p6", Version: "1.2.3"},
-		{DumpID: 106, Scheme: "test", Name: "p7", Version: "1.2.3"},
+		{UploadID: 100, Scheme: "test", Name: "p1", Version: "1.2.3"},
+		{UploadID: 101, Scheme: "test", Name: "p2", Version: "1.2.3"},
+		{UploadID: 102, Scheme: "test", Name: "p3", Version: "1.2.3"},
+		{UploadID: 103, Scheme: "test", Name: "p4", Version: "1.2.3"},
+		{UploadID: 104, Scheme: "test", Name: "p5", Version: "1.2.3"},
+		{UploadID: 105, Scheme: "test", Name: "p6", Version: "1.2.3"},
+		{UploadID: 106, Scheme: "test", Name: "p7", Version: "1.2.3"},
 
 		// Another component
-		{DumpID: 107, Scheme: "test", Name: "p8", Version: "1.2.3"},
-		{DumpID: 108, Scheme: "test", Name: "p9", Version: "1.2.3"},
+		{UploadID: 107, Scheme: "test", Name: "p8", Version: "1.2.3"},
+		{UploadID: 108, Scheme: "test", Name: "p9", Version: "1.2.3"},
 	})
 	insertPackageReferences(t, store, []shared.PackageReference{
-		{Package: shared.Package{DumpID: 100, Scheme: "test", Name: "p2", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 101, Scheme: "test", Name: "p3", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 102, Scheme: "test", Name: "p4", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 103, Scheme: "test", Name: "p5", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 104, Scheme: "test", Name: "p1", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 104, Scheme: "test", Name: "p2", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 105, Scheme: "test", Name: "p5", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 106, Scheme: "test", Name: "p6", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 105, Scheme: "test", Name: "p7", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 100, Scheme: "test", Name: "p2", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 101, Scheme: "test", Name: "p3", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 102, Scheme: "test", Name: "p4", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 103, Scheme: "test", Name: "p5", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 104, Scheme: "test", Name: "p1", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 104, Scheme: "test", Name: "p2", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 105, Scheme: "test", Name: "p5", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 106, Scheme: "test", Name: "p6", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 105, Scheme: "test", Name: "p7", Version: "1.2.3"}},
 
 		// Another component
-		{Package: shared.Package{DumpID: 107, Scheme: "test", Name: "p9", Version: "1.2.3"}},
-		{Package: shared.Package{DumpID: 108, Scheme: "test", Name: "p8", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 107, Scheme: "test", Name: "p9", Version: "1.2.3"}},
+		{Package: shared.Package{UploadID: 108, Scheme: "test", Name: "p8", Version: "1.2.3"}},
 	})
 
 	// We'll first confirm that none of the uploads can be deleted by either of the soft delete mechanisms;
@@ -170,7 +170,7 @@ func TestSoftDeleteExpiredUploadsViaTraversal(t *testing.T) {
 	} else if count != 0 {
 		t.Fatalf("unexpected number of uploads deleted via refcount: want=%d have=%d", 0, count)
 	}
-	for i := 0; i < 9; i++ {
+	for range 9 {
 		// Initially null last_traversal_scan_at values; run once for each upload (overkill)
 		if _, count, err := store.SoftDeleteExpiredUploadsViaTraversal(context.Background(), 100); err != nil {
 			t.Fatalf("unexpected error soft deleting uploads: %s", err)

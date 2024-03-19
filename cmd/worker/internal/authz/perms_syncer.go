@@ -175,7 +175,6 @@ func (s *permsSyncerImpl) syncRepoPerms(ctx context.Context, repoID api.RepoID, 
 			ServiceID:   provider.ServiceID(),
 			AccountIDs:  accountIDs,
 		})
-
 		if err != nil {
 			return result, providerStates, errors.Wrapf(err, "get user IDs by external accounts for repository %q (id: %d)", repo.Name, repo.ID)
 		}

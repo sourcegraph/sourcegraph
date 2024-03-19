@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/stretchr/testify/require"
 
@@ -564,7 +564,7 @@ func TestSavedSearchesConnectionStore(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		_, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
 			Description: "Test Search",
 			Query:       "r:src-cli",

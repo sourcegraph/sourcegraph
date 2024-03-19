@@ -57,7 +57,7 @@ func TestCloseGRPCConnectionCallback(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	go func(ctx context.Context) {
+	go func() {
 		for {
 			select {
 			case <-ctx.Done():
@@ -70,7 +70,7 @@ func TestCloseGRPCConnectionCallback(t *testing.T) {
 				}
 			}
 		}
-	}(ctx)
+	}()
 
 	select {
 	case <-ctx.Done():

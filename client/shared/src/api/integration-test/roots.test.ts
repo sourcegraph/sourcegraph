@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { fromSubscribable } from '@sourcegraph/common'
+
 import type { WorkspaceRoot } from '../../codeintel/legacy-extensions/api'
 import { collectSubscribableValues, integrationTestContext } from '../../testing/testHelpers'
 
@@ -34,7 +36,7 @@ describe('Workspace roots (integration)', () => {
         test('fires when a root is added or removed', async () => {
             const { extensionAPI, extensionHostAPI } = await integrationTestContext()
 
-            const values = collectSubscribableValues(extensionAPI.workspace.rootChanges)
+            const values = collectSubscribableValues(fromSubscribable(extensionAPI.workspace.rootChanges))
             expect(values).toEqual([] as void[])
 
             await extensionHostAPI.addWorkspaceRoot({

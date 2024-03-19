@@ -1,5 +1,4 @@
-import { from } from 'rxjs'
-import { take } from 'rxjs/operators'
+import { firstValueFrom } from 'rxjs'
 
 import { type ErrorLike, isErrorLike, isDefined, isNot } from '@sourcegraph/common'
 import type { Settings } from '@sourcegraph/shared/src/settings/settings'
@@ -22,7 +21,7 @@ export class SearchCommand {
     private prev: { query: string; suggestions: browser.omnibox.SuggestResult[] } = { query: '', suggestions: [] }
 
     public getSuggestions = async (query: string): Promise<browser.omnibox.SuggestResult[]> => {
-        const sourcegraphURL = await observeSourcegraphURL(IS_EXTENSION).pipe(take(1)).toPromise()
+        const sourcegraphURL = await firstValueFrom(observeSourcegraphURL(IS_EXTENSION))
         return new Promise(resolve => {
             if (this.prev.query === query) {
                 resolve(this.prev.suggestions)
@@ -54,7 +53,7 @@ export class SearchCommand {
         disposition?: 'newForegroundTab' | 'newBackgroundTab' | 'currentTab',
         currentTabId?: number
     ): Promise<void> => {
-        const sourcegraphURL = await observeSourcegraphURL(IS_EXTENSION).pipe(take(1)).toPromise()
+        const sourcegraphURL = await firstValueFrom(observeSourcegraphURL(IS_EXTENSION))
 
         const [patternType, caseSensitive] = await this.getDefaultSearchSettings(sourcegraphURL)
 
@@ -121,7 +120,7 @@ export class SearchCommand {
                 )
 
                 await platformContext.refreshSettings()
-                const settings = (await from(platformContext.settings).pipe(take(1)).toPromise()).final
+                const settings = (await firstValueFrom(platformContext.settings)).final
 
                 if (isDefined(settings) && isNot<ErrorLike | Settings, ErrorLike>(isErrorLike)(settings)) {
                     this.defaultPatternType =

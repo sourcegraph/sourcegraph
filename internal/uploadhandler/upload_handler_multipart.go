@@ -98,7 +98,7 @@ func (h *UploadHandler[T]) handleEnqueueMultipartFinalize(ctx context.Context, u
 	}
 
 	sources := make([]string, 0, uploadState.numParts)
-	for partNumber := 0; partNumber < uploadState.numParts; partNumber++ {
+	for partNumber := range uploadState.numParts {
 		sources = append(sources, fmt.Sprintf("upload-%d.%d.lsif.gz", uploadState.uploadID, partNumber))
 	}
 	trace.AddEvent("TODO Domain Owner",

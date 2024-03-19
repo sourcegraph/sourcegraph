@@ -6,7 +6,6 @@ import { createProxyMiddleware } from 'http-proxy-middleware'
 import signale from 'signale'
 
 import { STATIC_ASSETS_PATH } from '@sourcegraph/build-config'
-import { buildMonaco } from '@sourcegraph/build-config/src/esbuild/monacoPlugin'
 
 import {
     DEV_SERVER_LISTEN_ADDR,
@@ -17,21 +16,13 @@ import {
 } from '../utils'
 
 import { esbuildBuildOptions } from './config'
-import { assetPathPrefix } from './manifest'
+import { assetPathPrefix } from './webmanifest'
 
 export const esbuildDevelopmentServer = async (
     listenAddress: { host: string; port: number },
     configureProxy: (app: express.Application) => void
 ): Promise<void> => {
     const start = performance.now()
-
-    // One-time build (these files only change when the monaco-editor npm package is changed, which
-    // is rare enough to ignore here).
-    if (!ENVIRONMENT_CONFIG.DEV_WEB_BUILDER_OMIT_SLOW_DEPS) {
-        const ctx = await buildMonaco(STATIC_ASSETS_PATH)
-        await ctx.rebuild()
-        await ctx.dispose()
-    }
 
     const ctx = await esbuildContext(esbuildBuildOptions(ENVIRONMENT_CONFIG))
 
@@ -97,7 +88,13 @@ function pingUntilReady({
                     throw new Error(`${url} produced ${response.status} ${response.statusText}`)
                 }
             })
-            .catch(console.error)
+            .catch(error => {
+                if (backoff === maxBackoffMillis) {
+                    // Only log errors if we have reached the maximum backoff
+                    // to avoid spamming the console with transient errors.
+                    console.log(error)
+                }
+            })
             .then(sleep(backoff))
             .then(() => ping(Math.min(backoff * factor, maxBackoffMillis))(resolve))
     }

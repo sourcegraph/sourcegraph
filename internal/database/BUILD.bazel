@@ -91,7 +91,6 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/internal/database",
     visibility = ["//:__subpackages__"],
     deps = [
-        "//cmd/frontend/globals",
         "//internal/accesstoken",
         "//internal/actor",
         "//internal/api",
@@ -269,7 +268,6 @@ go_test(
         "requires-network",
     ],
     deps = [
-        "//cmd/frontend/globals",
         "//internal/actor",
         "//internal/api",
         "//internal/authz",

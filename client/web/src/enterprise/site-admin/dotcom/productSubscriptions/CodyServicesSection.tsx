@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 
 import { mdiPencil, mdiTrashCan } from '@mdi/js'
 import { parseISO } from 'date-fns'
-import { GraphQLError } from 'graphql'
+import type { GraphQLError } from 'graphql'
 
 import { Toggle } from '@sourcegraph/branded/src/components/Toggle'
 import { logger } from '@sourcegraph/common'

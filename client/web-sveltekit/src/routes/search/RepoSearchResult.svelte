@@ -75,8 +75,9 @@
                 {limitDescription(description)}
             </p>
         {/key}
-    {/if}
-    {#if badges.length > 0}
+    {/if}<!--
+        Intentional weird comment to avoid adding an empty line to the body
+    -->{#if badges.length > 0}
         <ul class="p-2">
             {#each badges as badge}
                 <li>

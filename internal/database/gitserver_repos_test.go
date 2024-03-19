@@ -498,14 +498,14 @@ func TestGitserverReposGetByNames(t *testing.T) {
 	// Creating a few repos
 	repoNames := make([]api.RepoName, 5)
 	gitserverRepos := make([]*types.GitserverRepo, 5)
-	for i := 0; i < len(repoNames); i++ {
+	for i := range len(repoNames) {
 		repoName := fmt.Sprintf("github.com/sourcegraph/repo%d", i)
 		repo, gitserverRepo := createTestRepo(ctx, t, db, api.RepoName(repoName))
 		repoNames[i] = repo.Name
 		gitserverRepos[i] = gitserverRepo
 	}
 
-	for i := 0; i < len(repoNames); i++ {
+	for i := range len(repoNames) {
 		have, err := gitserverRepoStore.GetByNames(ctx, repoNames[:i+1]...)
 		if err != nil {
 			t.Fatal(err)
@@ -700,7 +700,7 @@ func TestLogCorruption(t *testing.T) {
 	})
 	t.Run("consecutive corruption logs appends", func(t *testing.T) {
 		repo, gitserverRepo := createTestRepo(ctx, t, db, "github.com/sourcegraph/repo5")
-		for i := 0; i < 12; i++ {
+		for i := range 12 {
 			logRepoCorruption(t, db, repo.Name, fmt.Sprintf("test %d", i))
 			// We set the Clone status so that the 'corrupted_at' time gets cleared
 			// otherwise we cannot log corruption for a repo that is already corrupt
@@ -737,7 +737,7 @@ func TestLogCorruption(t *testing.T) {
 		repo, _ := createTestRepo(ctx, t, db, "github.com/sourcegraph/repo6")
 
 		largeReason := make([]byte, MaxReasonSizeInMB*2)
-		for i := 0; i < len(largeReason); i++ {
+		for i := range len(largeReason) {
 			largeReason[i] = 'a'
 		}
 
@@ -1144,7 +1144,7 @@ func BenchmarkGitserverUpdateRepoSizes_LargeAmountOfRepos(b *testing.B) {
 	namesToSize := make(map[api.RepoName]int64, count)
 
 	reposBatch := make([]*types.Repo, 0, 1000)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		name := fmt.Sprintf("github.com/sourcegraph/repo-%d", i)
 		r := &types.Repo{Name: api.RepoName(name)}
 		namesToSize[r.Name] = int64(i + 1)

@@ -28,7 +28,7 @@ func withCurrentTimeMock(ctx context.Context, t time.Time) context.Context {
 // from Cody Gateway usage cache ttl for free users to show usage reset at timestamp.
 // The period end date is only used to show the usage limit reset timestamp in the UI,
 // when free users hit their limits.
-func preSSCReleaseCurrentPeriodDateRange(ctx context.Context, user types.User, subscription *ssc.Subscription) (*time.Time, *time.Time, error) {
+func freeUserCurrentPeriodDateRange(ctx context.Context, user types.User, subscription *ssc.Subscription) (*time.Time, *time.Time, error) {
 	// to allow mocking current time during tests
 	currentDate := currentTimeFromCtx(ctx)
 
@@ -41,11 +41,6 @@ func preSSCReleaseCurrentPeriodDateRange(ctx context.Context, user types.User, s
 			return nil, nil, err
 		}
 		subscriptionStartDate = cancelledPeriodEndDate
-	}
-
-	codyProEnabledAt := user.CodyProEnabledAt
-	if codyProEnabledAt != nil {
-		subscriptionStartDate = *codyProEnabledAt
 	}
 
 	targetDay := subscriptionStartDate.Day()

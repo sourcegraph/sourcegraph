@@ -29,7 +29,7 @@ func walk(node *sitter.Node, f func(node *sitter.Node)) {
 // children if it returns true.
 func walkFilter(node *sitter.Node, f func(node *sitter.Node) bool) {
 	if f(node) {
-		for i := 0; i < int(node.ChildCount()); i++ {
+		for i := range int(node.ChildCount()) {
 			walkFilter(node.Child(i), f)
 		}
 	}
@@ -67,7 +67,7 @@ const tabSize = 4
 // lengthInSpaces returns the length of the string in spaces (using tabSize).
 func lengthInSpaces(s string) int {
 	total := 0
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		if s[i] == '\t' {
 			total += tabSize
 		} else {
@@ -80,7 +80,7 @@ func lengthInSpaces(s string) int {
 // spacesToColumn measures the length in spaces from the start of the string to the given column.
 func spacesToColumn(s string, column int) int {
 	total := 0
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		if total >= column {
 			return i
 		}
@@ -329,7 +329,7 @@ func children(node *sitter.Node) []*sitter.Node {
 		return nil
 	}
 	var children []*sitter.Node
-	for i := 0; i < int(node.NamedChildCount()); i++ {
+	for i := range int(node.NamedChildCount()) {
 		children = append(children, node.NamedChild(i))
 	}
 	return children

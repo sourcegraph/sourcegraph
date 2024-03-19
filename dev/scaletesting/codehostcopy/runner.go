@@ -265,7 +265,7 @@ func pushRepo(ctx context.Context, repo *store.Repo, srcOpts []GitOpt, destOpts 
 
 func gitPushWithRetry(ctx context.Context, dir string, retry int, destOpts ...GitOpt) error {
 	var err error
-	for i := 0; i < retry; i++ {
+	for range retry {
 		// --force, with mirror we want the remote to look exactly as we have it
 		cmd := run.Bash(ctx, "git push --mirror --force origin").Dir(dir)
 		for _, opt := range destOpts {

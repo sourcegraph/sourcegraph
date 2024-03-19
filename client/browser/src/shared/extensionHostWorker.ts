@@ -1,7 +1,6 @@
 import '@sourcegraph/shared/src/polyfills'
 
-import { fromEvent } from 'rxjs'
-import { take } from 'rxjs/operators'
+import { firstValueFrom, fromEvent } from 'rxjs'
 
 import { hasProperty, logger } from '@sourcegraph/common'
 import { startExtensionHost } from '@sourcegraph/shared/src/api/extension/extensionHost'
@@ -24,7 +23,7 @@ const isInitMessage = (value: unknown): value is InitMessage =>
  */
 async function extensionHostMain(): Promise<void> {
     try {
-        const event = await fromEvent<MessageEvent>(self, 'message').pipe(take(1)).toPromise()
+        const event = await firstValueFrom(fromEvent<MessageEvent>(self, 'message'))
         if (!isInitMessage(event.data)) {
             throw new Error('First message event in extension host worker was not a well-formed InitMessage')
         }

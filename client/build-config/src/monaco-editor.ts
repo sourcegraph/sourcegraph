@@ -24,6 +24,7 @@ export const MONACO_LANGUAGES_AND_FEATURES: Required<
         'cursorUndo',
         'find',
         'format',
+        'gotoError', // needed for warning and error squiggles
         'hover',
         'inPlaceReplace',
         'iPadShowKeyboard',

@@ -32,7 +32,7 @@ func TestCalculateVisibleUploads(t *testing.T) {
 	//                         +--- g
 	//
 	// NOTE: The input to ParseCommitGraph must match the order and format
-	// of `git log --topo-sort`.
+	// of `git log --pretty="%H %P" --topo-order`.
 	testGraph := gitdomain.ParseCommitGraph([]string{
 		"n l",
 		"m k",

@@ -53,14 +53,14 @@ func init() {
 					if err == nil {
 						mu.RLock()
 						for _, out := range chans {
-							go func(out chan capabilities, caps capabilities) {
+							go func() {
 								select {
 								case out <- caps:
 									// success
 								default:
 									// welp
 								}
-							}(out, caps)
+							}()
 						}
 						mu.RUnlock()
 					}

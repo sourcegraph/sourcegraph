@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import type { FC } from 'react'
 
 import {
     mdiSourceFork,
@@ -14,7 +14,7 @@ import classNames from 'classnames'
 import type { Filter } from '@sourcegraph/shared/src/search/stream'
 import { Button, Icon, H4, H2 } from '@sourcegraph/wildcard'
 
-import { URLQueryFilter } from '../../hooks'
+import type { URLQueryFilter } from '../../hooks'
 import { FilterKind } from '../../types'
 import { DynamicFilterBadge } from '../DynamicFilterBadge'
 

@@ -7,6 +7,8 @@
     import type { SearchPageContext } from '$lib/search/utils'
     import { isLightTheme } from '$lib/stores'
 
+    import SearchHomeNotifications from './SearchHomeNotifications.svelte'
+
     export let queryState: QueryStateStore
 
     setContext<SearchPageContext>('search-context', {
@@ -20,7 +22,8 @@
     <div class="content">
         <img class="logo" src={$isLightTheme ? logoLight : logoDark} alt="Sourcegraph Logo" />
         <div class="search">
-            <SearchInput {queryState} />
+            <SearchInput {queryState} autoFocus />
+            <SearchHomeNotifications/>
         </div>
     </div>
 </section>
@@ -50,6 +53,9 @@
 
     .search {
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
     }
 
     img.logo {

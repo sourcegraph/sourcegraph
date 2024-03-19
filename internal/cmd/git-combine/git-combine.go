@@ -110,7 +110,7 @@ func Combine(path string, opt Options) error {
 			continue
 		}
 
-		for depth := 0; depth < opt.LimitRemote; depth++ {
+		for depth := range opt.LimitRemote {
 			if time.Since(lastLog) > time.Second {
 				logger.Printf("Collecting new commits... (remotes %s, commit depth %d)", remote, depth)
 				lastLog = time.Now()

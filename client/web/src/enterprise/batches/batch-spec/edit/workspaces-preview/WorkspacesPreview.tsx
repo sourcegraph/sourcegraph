@@ -6,7 +6,7 @@ import classNames from 'classnames'
 import { animated, useSpring } from 'react-spring'
 
 import { CodeSnippet } from '@sourcegraph/branded/src/components/CodeSnippet'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Alert, Button, H4, Icon, Tooltip, useAccordion, useStopwatch, ErrorAlert } from '@sourcegraph/wildcard'
 
 import type { Connection } from '../../../../../components/FilteredConnection'

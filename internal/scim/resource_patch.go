@@ -95,7 +95,7 @@ func (h *ResourceHandler) applyOperation(op scim.PatchOperation, resource *scim.
 			}
 			remainingItems := []interface{}{} // keep track of the items that should remain
 			validator, _ := sgfilter.NewValidator(buildFilterString(valueExpr, attrName), h.coreSchema, getExtensionSchemas(h.schemaExtensions)...)
-			for i := 0; i < len(v); i++ {
+			for i := range len(v) {
 				item, ok := v[i].(map[string]interface{})
 				if !ok {
 					continue // if this isn't a map of properties it can't match or be replaced
@@ -146,7 +146,7 @@ func (h *ResourceHandler) applyOperation(op scim.PatchOperation, resource *scim.
 				attributeToSet = subAttrName
 			}
 			matchedItems := []interface{}{}
-			for i := 0; i < len(attributeItems); i++ {
+			for i := range len(attributeItems) {
 				item, ok := attributeItems[i].(map[string]interface{})
 				if !ok {
 					continue // if this isn't a map of properties it can't match or be replaced

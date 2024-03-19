@@ -14,7 +14,7 @@ func BenchmarkInferCountryCode(b *testing.B) {
 		"93.184.216.34",
 		"2606:2800:220:1:248:1893:25c8:1946",
 	}
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		_, err := InferCountryCode(exampleIPs[b.N%len(exampleIPs)])
 		if err != nil {
 			b.Log(err.Error())
@@ -68,5 +68,4 @@ func TestInferCountryCode(t *testing.T) {
 			}
 		})
 	}
-
 }

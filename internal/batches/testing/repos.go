@@ -110,7 +110,7 @@ func CreateTestRepos(t *testing.T, ctx context.Context, db database.DB, count in
 	}
 
 	var rs []*types.Repo
-	for i := 0; i < count; i++ {
+	for i := range count {
 		r := TestRepoWithService(t, esStore, fmt.Sprintf("repo-%d-%d", ext.ID, i+1), ext)
 		r.Metadata = &github.Repository{
 			NameWithOwner: string(r.Name),
@@ -150,7 +150,7 @@ func CreateGitlabTestRepos(t *testing.T, ctx context.Context, db database.DB, co
 	}
 
 	var rs []*types.Repo
-	for i := 0; i < count; i++ {
+	for i := range count {
 		r := TestRepoWithService(t, esStore, fmt.Sprintf("repo-%d-%d", ext.ID, i+1), ext)
 		r.Metadata = &gitlab.Project{
 			ProjectCommon: gitlab.ProjectCommon{
@@ -206,7 +206,7 @@ func CreateGitHubSSHTestRepos(t *testing.T, ctx context.Context, db database.DB,
 	}
 
 	var rs []*types.Repo
-	for i := 0; i < count; i++ {
+	for range count {
 		r := TestRepo(t, esStore, extsvc.KindGitHub)
 		r.Sources = map[string]*types.SourceInfo{ext.URN(): {
 			ID:       ext.URN(),
@@ -251,7 +251,7 @@ func createBbsRepos(t *testing.T, ctx context.Context, db database.DB, ext *type
 	}
 
 	var rs []*types.Repo
-	for i := 0; i < count; i++ {
+	for i := range count {
 		r := TestRepoWithService(t, esStore, fmt.Sprintf("repo-%d-%d", ext.ID, i+1), ext)
 		var metadata bitbucketserver.Repo
 		urlType := "http"
@@ -301,7 +301,7 @@ func CreateAWSCodeCommitTestRepos(t *testing.T, ctx context.Context, db database
 	}
 
 	var rs []*types.Repo
-	for i := 0; i < count; i++ {
+	for i := range count {
 		r := TestRepoWithService(t, esStore, fmt.Sprintf("repo-%d-%d", ext.ID, i+1), ext)
 		r.Metadata = &awscodecommit.Repository{
 			ARN:          fmt.Sprintf("arn:aws:codecommit:us-west-1:%d:%s", i, r.Name),

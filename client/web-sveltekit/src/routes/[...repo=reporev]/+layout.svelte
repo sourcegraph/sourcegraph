@@ -23,19 +23,19 @@
     export let data: LayoutData
 
     const menuOpen = writable(false)
-    const navEntries: { path: string; icon: string; title: string; external?: true }[] = [
+    const navEntries: { path: string; icon: string; title: string }[] = [
         { path: '', icon: mdiCodeTags, title: 'Code' },
         { path: '/-/commits', icon: mdiSourceCommit, title: 'Commits' },
         { path: '/-/branches', icon: mdiSourceBranch, title: 'Branches' },
         { path: '/-/tags', icon: mdiTag, title: 'Tags' },
         { path: '/-/stats/contributors', icon: mdiAccount, title: 'Contributors' },
     ]
-    const menuEntries: { path: string; icon: string; title: string; external?: true }[] = [
-        { path: '/-/compare', icon: mdiHistory, title: 'Compare', external: true },
-        { path: '/-/own', icon: mdiAccount, title: 'Ownership', external: true },
-        { path: '/-/embeddings', icon: '', title: 'Embeddings', external: true },
-        { path: '/-/batch-changes', icon: '', title: 'Batch changes', external: true },
-        { path: '/-/settings', icon: mdiCog, title: 'Settings', external: true },
+    const menuEntries: { path: string; icon: string; title: string }[] = [
+        { path: '/-/compare', icon: mdiHistory, title: 'Compare' },
+        { path: '/-/own', icon: mdiAccount, title: 'Ownership' },
+        { path: '/-/embeddings', icon: '', title: 'Embeddings' },
+        { path: '/-/batch-changes', icon: '', title: 'Batch changes' },
+        { path: '/-/settings', icon: mdiCog, title: 'Settings' },
     ]
 
     let visibleNavEntries = navEntries.length
@@ -72,11 +72,7 @@
         {#each navEntriesToShow as entry}
             {@const href = data.repoURL + entry.path}
             <li>
-                <a
-                    {href}
-                    aria-current={isActive(href, $page.url) ? 'page' : undefined}
-                    data-sveltekit-reload={entry.external}
-                >
+                <a {href} aria-current={isActive(href, $page.url) ? 'page' : undefined}>
                     {#if entry.icon}
                         <Icon svgPath={entry.icon} inline />
                     {/if}
@@ -93,7 +89,7 @@
         <svelte:fragment slot="trigger">&hellip;</svelte:fragment>
         {#each allMenuEntries as entry}
             {@const href = data.repoURL + entry.path}
-            <MenuLink {href} data-sveltekit-reload={entry.external}>
+            <MenuLink {href}>
                 <span class="overflow-entry" class:active={isActive(href, $page.url)}>
                     {#if entry.icon}
                         <Icon svgPath={entry.icon} inline />

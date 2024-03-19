@@ -29,7 +29,10 @@ This page contains generated documentation for telemetry event data that gets ex
     - [EventUser](#telemetrygateway-v1-EventUser)
     - [Identifier](#telemetrygateway-v1-Identifier)
     - [Identifier.LicensedInstanceIdentifier](#telemetrygateway-v1-Identifier-LicensedInstanceIdentifier)
+    - [Identifier.ManagedServiceIdentifier](#telemetrygateway-v1-Identifier-ManagedServiceIdentifier)
     - [Identifier.UnlicensedInstanceIdentifier](#telemetrygateway-v1-Identifier-UnlicensedInstanceIdentifier)
+    - [RecordEventRequest](#telemetrygateway-v1-RecordEventRequest)
+    - [RecordEventResponse](#telemetrygateway-v1-RecordEventResponse)
     - [RecordEventsRequest](#telemetrygateway-v1-RecordEventsRequest)
     - [RecordEventsRequest.EventsPayload](#telemetrygateway-v1-RecordEventsRequest-EventsPayload)
     - [RecordEventsRequestMetadata](#telemetrygateway-v1-RecordEventsRequestMetadata)
@@ -64,7 +67,7 @@ This page contains generated documentation for telemetry event data that gets ex
 | parameters | [EventParameters](#telemetrygateway-v1-EventParameters) |  | <p>Parameters of the event.</p> |
 | user | [EventUser](#telemetrygateway-v1-EventUser) | optional | <p>Optional user associated with the event.</p><p>This field should be hydrated by the Sourcegraph server, and not provided</p><p>by clients.</p> |
 | feature_flags | [EventFeatureFlags](#telemetrygateway-v1-EventFeatureFlags) | optional | <p>Optional feature flags configured in the context of the event.</p> |
-| marketing_tracking | [EventMarketingTracking](#telemetrygateway-v1-EventMarketingTracking) | optional | <p>Optional marketing campaign tracking parameters.</p><p>🚨 SECURITY: This metadata is NEVER exported from an instance, and is only</p><p>exported for events tracked in the public Sourcegraph.com instance.</p> |
+| marketing_tracking | [EventMarketingTracking](#telemetrygateway-v1-EventMarketingTracking) | optional | <p>Optional marketing campaign tracking parameters.</p><p>🚨 SECURITY: This metadata is NEVER exported from single-tenant Sourcegraph</p><p>instances, and is only exported for events tracked in the public</p><p>Sourcegraph.com instance and managed services.</p> |
 | interaction | [EventInteraction](#telemetrygateway-v1-EventInteraction) | optional | <p>Optional metadata identifying the interaction that generated the event.</p> |
 
 
@@ -156,9 +159,9 @@ This page contains generated documentation for telemetry event data that gets ex
 ### EventMarketingTracking
 Marketing campaign tracking metadata.
 
-🚨 SECURITY: This metadata is NEVER exported from private Sourcegraph
+🚨 SECURITY: This metadata is NEVER exported from single-tenant Sourcegraph
 instances, and is only exported for events tracked in the public
-Sourcegraph.com instance.
+Sourcegraph.com instance and managed services.
 
 
 | Field | Type | Label | Description |
@@ -186,7 +189,7 @@ Sourcegraph.com instance.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | version | [int32](#int32) |  | <p>Version of the event parameters, used for indicating the "shape" of this</p><p>event's metadata, beginning at 0. Useful for denoting if the shape of</p><p>metadata has changed in any way.</p> |
-| legacy_metadata | [EventParameters.LegacyMetadataEntry](#telemetrygateway-v1-EventParameters-LegacyMetadataEntry) | repeated | <p>Legacy metadata format that only accepted int64 - use the new metadata</p><p>field instead, which accepts float values. Values sent through this proto</p><p>field will be merged into the new metadata attributes.</p><p>We don't use a [deprecated = true] tag because we use this field to handle</p><p>accepting exporters sending metadata in this format.</p> |
+| legacy_metadata | [EventParameters.LegacyMetadataEntry](#telemetrygateway-v1-EventParameters-LegacyMetadataEntry) | repeated | <p>DEPRECATED, legacy metadata format that only accepted int64 - use the new</p><p>'metadata' field instead, which accepts float values. Values sent through</p><p>this proto field will be merged into the new metadata attributes.</p><p>We don't use a [deprecated = true] tag because we use this field to handle</p><p>accepting exporters sending metadata in this format.</p> |
 | metadata | [EventParameters.MetadataEntry](#telemetrygateway-v1-EventParameters-MetadataEntry) | repeated | <p>Strictly typed metadata, restricted to integer values to avoid accidentally</p><p>exporting sensitive or private data.</p> |
 | private_metadata | [google.protobuf.Struct](#google-protobuf-Struct) | optional | <p>Additional potentially sensitive metadata - i.e. not restricted to integer</p><p>values.</p><p>🚨 SECURITY: This metadata is NOT exported from instances by default, as it</p><p>can contain arbitrarily-shaped data that may accidentally contain sensitive</p><p>or private contents.</p><p>This metadata is only exported on an allowlist basis based on terms of</p><p>use agreements and combinations of event feature and action, alongside</p><p>careful audit of callsites.</p> |
 | billing_metadata | [EventBillingMetadata](#telemetrygateway-v1-EventBillingMetadata) | optional | <p>Optional billing-related metadata.</p> |
@@ -236,7 +239,7 @@ Sourcegraph.com instance.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| server | [EventSource.Server](#telemetrygateway-v1-EventSource-Server) |  | <p>Information about the Sourcegraph instance that received the event.</p> |
+| server | [EventSource.Server](#telemetrygateway-v1-EventSource-Server) |  | <p>Information about the server that is publishing the event, based on</p><p>RecordEventsRequestMetadata.Identifier.</p> |
 | client | [EventSource.Client](#telemetrygateway-v1-EventSource-Client) | optional | <p>Information about the client that generated the event.</p> |
 
 
@@ -253,7 +256,7 @@ Sourcegraph.com instance.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | <p>Source client of the event.</p> |
-| version | [string](#string) | optional | <p>Version of the cleint.</p> |
+| version | [string](#string) | optional | <p>Version of the client.</p> |
 
 
 
@@ -268,7 +271,7 @@ Sourcegraph.com instance.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| version | [string](#string) |  | <p>Version of the Sourcegraph server.</p> |
+| version | [string](#string) |  | <p>Version of the server emitting the event, corresponding to</p><p>RecordEventsRequestMetadata.Identifier. For example, if the Identifier</p><p>indicates the publisher is a Sourcegraph instance, the version represents</p><p>the version of the Sourcegraph server.</p> |
 
 
 
@@ -283,8 +286,9 @@ Sourcegraph.com instance.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| user_id | [int64](#int64) | optional | <p>Database user ID of signed in user. User IDs are specific to a Sourcegraph</p><p>instance, and not universal.</p><p>We use an int64 as an ID because in Sourcegraph, database user IDs are</p><p>always integers.</p> |
-| anonymous_user_id | [string](#string) | optional | <p>Randomized unique identifier for an actor (e.g. stored in localstorage in</p><p>web client).</p> |
+| user_id | [int64](#int64) | optional | <p>Sourcegraph instance database user ID of the user. User IDs are specific to</p><p>a Sourcegraph instance, and are not universal across Sourcegraph instances.</p><p>We use an int64 as an ID because in Sourcegraph, database user IDs are</p><p>always integers.</p> |
+| anonymous_user_id | [string](#string) | optional | <p>Randomized unique identifier representing the user (typically stored in</p><p>localstorage in web clients, or similar mechanisms elsewhere). This is</p><p>often used for unauthenticated users, but can persist to authenticated</p><p>users as well.</p> |
+| sams_external_id | [string](#string) | optional | <p>Sourcegraph Accounts Management System (SAMS) account associated with the</p><p>user, represented by a SAMS external user ID in a UUID format. This is only</p><p>valid for services leveraging SAMS as an identity provider - in other words,</p><p>traditional Sourcegraph instances will not provide this.</p><p>Learn more about SAMS: https://handbook.sourcegraph.com/departments/engineering/teams/core-services/sams</p> |
 
 
 
@@ -301,6 +305,7 @@ Sourcegraph.com instance.
 | ----- | ---- | ----- | ----------- |
 | licensed_instance | [Identifier.LicensedInstanceIdentifier](#telemetrygateway-v1-Identifier-LicensedInstanceIdentifier) |  | <p>A licensed Sourcegraph instance.</p> |
 | unlicensed_instance | [Identifier.UnlicensedInstanceIdentifier](#telemetrygateway-v1-Identifier-UnlicensedInstanceIdentifier) |  | <p>An unlicensed Sourcegraph instance.</p> |
+| managed_service | [Identifier.ManagedServiceIdentifier](#telemetrygateway-v1-Identifier-ManagedServiceIdentifier) |  | <p>A service operated and managed by the Sourcegraph team, for example</p><p>a service deployed by MSP: https://handbook.sourcegraph.com/departments/engineering/teams/core-services/managed-services/platform/</p><p>Valid SAMS client credentials are required to publish events under a</p><p>managed service identifier. The required scope is</p><p>'telemetry_gateway::events::publish'. See go/sams-client-credentials and</p><p>go/sams-token-scopes for more information.</p> |
 
 
 
@@ -324,6 +329,22 @@ Sourcegraph.com instance.
 
 
 
+<a name="telemetrygateway-v1-Identifier-ManagedServiceIdentifier"></a>
+
+### Identifier.ManagedServiceIdentifier
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| service_id | [string](#string) |  | <p>Self-reported service identifier, for example 'my-service'.</p> |
+| service_environment | [string](#string) | optional | <p>Self-reported service environment, for example 'prod' or 'dev'.</p> |
+
+
+
+
+
+
 <a name="telemetrygateway-v1-Identifier-UnlicensedInstanceIdentifier"></a>
 
 ### Identifier.UnlicensedInstanceIdentifier
@@ -334,6 +355,32 @@ Sourcegraph.com instance.
 | ----- | ---- | ----- | ----------- |
 | instance_id | [string](#string) |  | <p>Self-reported Sourcegraph instance identifier.</p> |
 | external_url | [string](#string) |  | <p>Instance external URL defined in the instance site configuration.</p> |
+
+
+
+
+
+
+<a name="telemetrygateway-v1-RecordEventRequest"></a>
+
+### RecordEventRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [RecordEventsRequestMetadata](#telemetrygateway-v1-RecordEventsRequestMetadata) |  | <p>Metadata about the events being recorded.</p> |
+| event | [Event](#telemetrygateway-v1-Event) |  | <p>Event to record.</p> |
+
+
+
+
+
+
+<a name="telemetrygateway-v1-RecordEventResponse"></a>
+
+### RecordEventResponse
+
 
 
 
@@ -380,7 +427,7 @@ Sourcegraph.com instance.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | request_id | [string](#string) |  | <p>Client-provided request identifier for diagnostics purposes.</p> |
-| identifier | [Identifier](#telemetrygateway-v1-Identifier) |  | <p>Telemetry source self-identification.</p> |
+| identifier | [Identifier](#telemetrygateway-v1-Identifier) |  | <p>Telemetry publisher self-identification - for example, a Sourcegraph</p><p>instance of some other kind of service.</p> |
 
 
 
@@ -415,7 +462,8 @@ Sourcegraph.com instance.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| RecordEvents | [RecordEventsRequest](#telemetrygateway-v1-RecordEventsRequest) stream | [RecordEventsResponse](#telemetrygateway-v1-RecordEventsResponse) stream | <p>RecordEvents streams telemetry events in batches to the Telemetry Gateway</p><p>service. Events should only be considered delivered if recording is</p><p>acknowledged in RecordEventsResponse.</p><p>🚨 SECURITY: Callers should check the attributes of the Event type to ensure</p><p>that only the appropriate fields are exported, as some fields should only</p><p>be exported on an allowlist basis.</p> |
+| RecordEvents | [RecordEventsRequest](#telemetrygateway-v1-RecordEventsRequest) stream | [RecordEventsResponse](#telemetrygateway-v1-RecordEventsResponse) stream | <p>RecordEvents streams telemetry events in batches to the Telemetry Gateway</p><p>service. Events should only be considered delivered if recording is</p><p>acknowledged in RecordEventsResponse.</p><p>This is the preferred mechanism for exporting large volumes of events in</p><p>bulk.</p><p>🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check</p><p>the attributes of the Event type to ensure that only the appropriate fields</p><p>are exported, as some fields should only be exported on an allowlist basis.</p> |
+| RecordEvent | [RecordEventRequest](#telemetrygateway-v1-RecordEventRequest) | [RecordEventResponse](#telemetrygateway-v1-RecordEventResponse) | <p>RecordEvent records a single telemetry event to the Telemetry Gateway service.</p><p>If the RPC succeeds, then the event was successfully published.</p><p>This RPC currently ONLY accepts events published by ManagedServiceIdentifier,</p><p>as this mechanism is intended for low-volume managed services. Higher-volume</p><p>use cases should implement a batching mechanism and use the RecordEvents</p><p>RPC instead.</p><p>🚨 SECURITY: Callers exporting for single-tenant Sourcegraph should check</p><p>the attributes of the Event type to ensure that only the appropriate fields</p><p>are exported, as some fields should only be exported on an allowlist basis.</p> |
 
  <!-- end services -->
 

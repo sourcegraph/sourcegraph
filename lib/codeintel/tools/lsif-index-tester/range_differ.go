@@ -79,7 +79,7 @@ func DrawLocations(contents string, expected, actual Location, context int) (str
 			fmtLine(-1, prefixWidth, lineCarets(actual.Range, "actual")),
 		)
 
-		for offset := 0; offset < context; offset++ {
+		for offset := range context {
 			newLine := line + offset + 1
 			if newLine < len(splitLines) {
 				text += fmtLine(newLine, prefixWidth, splitLines[newLine]) + "\n"

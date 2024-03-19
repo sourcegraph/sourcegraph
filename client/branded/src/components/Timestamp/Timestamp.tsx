@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { format, addMinutes, parseISO } from 'date-fns'
-import formatDistance from 'date-fns/formatDistance'
-import formatDistanceStrict from 'date-fns/formatDistanceStrict'
+import { UTCDate } from '@date-fns/utc'
+import { format, parseISO, formatDistance, formatDistanceStrict } from 'date-fns'
 
 import { Tooltip } from '@sourcegraph/wildcard'
 
@@ -71,7 +70,7 @@ export const Timestamp: React.FunctionComponent<React.PropsWithChildren<Timestam
     const tooltip = useMemo(() => {
         let parsedDate = typeof date === 'string' ? parseISO(date) : new Date(date)
         if (utc) {
-            parsedDate = addMinutes(parsedDate, parsedDate.getTimezoneOffset())
+            parsedDate = new UTCDate(date)
         }
         const dateHasTime = date.toString().includes('T')
         const defaultFormat = dateHasTime ? TimestampFormat.FULL_DATE_TIME : TimestampFormat.FULL_DATE

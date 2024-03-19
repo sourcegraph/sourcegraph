@@ -28,4 +28,3 @@ declare module '*.yml' {
     const ymlModule: string
     export default ymlModule
 }
-s

@@ -38,7 +38,7 @@ func testStoreBulkOperations(t *testing.T, ctx context.Context, s *Store, clock 
 	failureMessage := "bad error"
 	jobs := make([]*btypes.ChangesetJob, 0, 3)
 	bulkOperations := make([]*btypes.BulkOperation, 0, 2)
-	for i := 0; i < cap(jobs); i++ {
+	for i := range cap(jobs) {
 		groupID, err := RandomID()
 		if err != nil {
 			t.Fatal(err)
@@ -66,7 +66,7 @@ func testStoreBulkOperations(t *testing.T, ctx context.Context, s *Store, clock 
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < cap(bulkOperations); i++ {
+	for i := range cap(bulkOperations) {
 		j := &btypes.BulkOperation{
 			ID:             jobs[i].BulkGroup,
 			DBID:           jobs[i].ID,

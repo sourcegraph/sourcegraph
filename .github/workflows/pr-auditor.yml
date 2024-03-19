@@ -13,7 +13,7 @@ jobs:
         with:
           repository: 'sourcegraph/pr-auditor'
       - uses: actions/setup-go@v4
-        with: { go-version: '1.21' }
+        with: { go-version: '1.22' }
 
       - run: './check-pr.sh'
         env:

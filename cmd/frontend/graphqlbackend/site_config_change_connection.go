@@ -126,7 +126,7 @@ func generateResolversForFirst(history []*database.SiteConfig, db database.DB) [
 	resolvers := []*SiteConfigurationChangeResolver{}
 	totalFetched := len(history)
 
-	for i := 0; i < totalFetched; i++ {
+	for i := range totalFetched {
 		var previousSiteConfig *database.SiteConfig
 		if i < totalFetched-1 {
 			previousSiteConfig = history[i+1]
@@ -152,7 +152,7 @@ func generateResolversForLast(history []*database.SiteConfig, db database.DB) []
 	resolvers := []*SiteConfigurationChangeResolver{}
 	totalFetched := len(history)
 
-	for i := 0; i < totalFetched; i++ {
+	for i := range totalFetched {
 		var previousSiteConfig *database.SiteConfig
 		if i > 0 {
 			previousSiteConfig = history[i-1]

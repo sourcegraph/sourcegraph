@@ -99,7 +99,7 @@ If no categories are referenced, then 'builds' is assumed as the default.`,
 					categories = []bzlgenTarget{bzlgenTargets["builds"]}
 					categoryNames = []string{"builds"}
 				} else {
-					for i := 0; i < ctx.NArg(); i++ {
+					for i := range ctx.NArg() {
 						categories = append(categories, bzlgenTargets[ctx.Args().Get(i)])
 						categoryNames = append(categoryNames, ctx.Args().Get(i))
 					}

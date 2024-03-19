@@ -115,12 +115,12 @@ func testDefsRefsMultiRepoUseOfType() []queryFunc {
 		t(nacelleRepo, nacelleHash, "log_imports.go", 6, 20, false), // log.Logger
 	}
 
-	for p := 0; p < numProjects; p++ {
+	for p := range numProjects {
 		refs = append(refs, t(navRepo, navHash, fmt.Sprintf("proj%d/main.go", p+1), 7, 11, false))
 
 		line := (startingLine - 1)
 
-		for g := 0; g < numGroups; g++ {
+		for range numGroups {
 			refs = append(refs, t(navRepo, navHash, fmt.Sprintf("proj%d/main.go", p+1), line, 16, false))
 			line += numLinesPerGroup + numGapLines
 		}
@@ -154,11 +154,11 @@ func testDefsRefsMultiRepoUseOfMethod() []queryFunc {
 
 func testDefsRefsPagination() []queryFunc {
 	refs := []TaggedLocation{}
-	for p := 0; p < numProjects; p++ {
+	for p := range numProjects {
 		line := startingLine
 
-		for g := 0; g < numGroups; g++ {
-			for l := 0; l < numLinesPerGroup; l++ {
+		for range numGroups {
+			for range numLinesPerGroup {
 				refs = append(refs, t(navRepo, navHash, fmt.Sprintf("proj%d/main.go", p+1), line, 3, false))
 				line++
 			}
@@ -206,7 +206,7 @@ func testProtosPagination() (fns []queryFunc) {
 			l(processRepo, processHash, "types.go", 25, 5), // type Stopper interface {
 		}
 	)
-	for p := 0; p < numProjects; p++ {
+	for p := range numProjects {
 		impls = append(impls, l(navRepo, navHash, fmt.Sprintf("proj%d/util.go", p+1), 31, 7)) // func (*initializerRunnerAndStopper) Run(...)
 	}
 
@@ -224,7 +224,7 @@ func testImplsPagination() (fns []queryFunc) {
 		proto      = l(processRepo, processHash, "types.go", 25, 5)            // type Stopper interface { ... }
 		impls      = []Location{l(processRepo, processHash, "meta.go", 15, 5)} // type Meta struct { ... }
 	)
-	for p := 0; p < numProjects; p++ {
+	for p := range numProjects {
 		impls = append(impls,
 			l(navRepo, navHash, fmt.Sprintf("proj%d/util.go", p+1), 28, 5), // type initializerRunnerAndStopper struct {}
 			l(navRepo, navHash, fmt.Sprintf("proj%d/util.go", p+1), 41, 5), // type initializerRunnerStopperAndFinalizer struct {}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import { Navigate, useLocation, useParams } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Alert, Link, LoadingSpinner, ErrorAlert, Container } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'

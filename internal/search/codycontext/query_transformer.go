@@ -120,7 +120,9 @@ func queryStringToKeywordQuery(queryString string) (*keywordQuery, error) {
 
 	patternNodes := make([]query.Node, 0, len(transformedPatterns))
 	for _, p := range transformedPatterns {
-		patternNodes = append(patternNodes, query.Pattern{Value: p})
+		node := query.Pattern{Value: p}
+		node.Annotation.Labels.Set(query.Literal)
+		patternNodes = append(patternNodes, node)
 	}
 
 	if len(patternNodes) > 0 {

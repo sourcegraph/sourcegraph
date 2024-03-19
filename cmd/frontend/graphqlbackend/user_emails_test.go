@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/go-cmp/cmp"
 	"github.com/graph-gophers/graphql-go/relay"
 	"github.com/stretchr/testify/assert"
@@ -270,7 +270,7 @@ func TestSetUserEmailVerified(t *testing.T) {
 }
 
 func TestPrimaryEmail(t *testing.T) {
-	var primaryEmailQuery = `query hasPrimaryEmail($id: ID!){
+	primaryEmailQuery := `query hasPrimaryEmail($id: ID!){
 		node(id: $id) {
 			... on User {
 				primaryEmail {

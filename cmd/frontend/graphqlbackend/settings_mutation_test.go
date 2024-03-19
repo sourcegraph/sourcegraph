@@ -119,9 +119,7 @@ func TestSettingsMutation(t *testing.T) {
 		users := dbmocks.NewMockUserStore()
 		db.UsersFunc.SetDefaultReturn(users)
 
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig) // reset
+		dotcom.MockSourcegraphDotComMode(t, true)
 
 		tests := []struct {
 			name  string

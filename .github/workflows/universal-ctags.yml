@@ -20,7 +20,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: DeterminateSystems/nix-installer-action@v8
+      - uses: DeterminateSystems/nix-installer-action@07b8bcba1b22d847db7ee507180c33e115499665 # SECURITY: pin third-party action hashes # SECURITY: pin third-party action hashes
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: '🔓 Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
@@ -54,7 +54,7 @@ jobs:
     runs-on: macos-latest-xlarge
     steps:
       - uses: actions/checkout@v3
-      - uses: DeterminateSystems/nix-installer-action@v8
+      - uses: DeterminateSystems/nix-installer-action@07b8bcba1b22d847db7ee507180c33e115499665 # SECURITY: pin third-party action hashes # SECURITY: pin third-party action hashes
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: '🔓 Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: DeterminateSystems/nix-installer-action@v8
+      - uses: DeterminateSystems/nix-installer-action@07b8bcba1b22d847db7ee507180c33e115499665 # SECURITY: pin third-party action hashes # SECURITY: pin third-party action hashes
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: '🔓 Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v1'

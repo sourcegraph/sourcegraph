@@ -1145,11 +1145,6 @@
         }
       ]
     },
-    "auth.dailyEmailDomainSignupLimit": {
-      "type": "integer",
-      "default": 0,
-      "description": "The maximum number of users that can sign from Google using the same email domain in a 24 hour period."
-    },
     "auth.accessTokens": {
       "description": "Settings for access tokens, which enable external tools to access the Sourcegraph API with the privileges of the user.",
       "type": "object",
@@ -3118,6 +3113,11 @@
           "!go": {
             "pointer": true
           }
+        },
+        "singleIdentityPerUser": {
+          "description": "When true, any user can connect exactly one identity from the identity provider.",
+          "type": "boolean",
+          "default": false
         }
       }
     },
@@ -3233,6 +3233,14 @@
           "description": "Name of the SAML assertion attribute that holds group membership for allowGroups setting",
           "type": "string",
           "default": "groups"
+        },
+        "usernameAttributeNames": {
+          "description": "Names of the SAML assertions attributes to check for a user's username. Checked in the order the names are provided.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },

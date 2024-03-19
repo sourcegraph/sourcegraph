@@ -1,6 +1,8 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-load("@npm//:vite/package_json.bzl", vite_bin = "bin")
+load("@npm//client/web-sveltekit:vite/package_json.bzl", vite_bin = "bin")
+load("@npm//client/web-sveltekit:vitest/package_json.bzl", vitest_bin = "bin")
+load("//dev:defs.bzl", "vitest_test")
 
 # gazelle:ignore
 
@@ -33,6 +35,8 @@ SRCS = [
         "src/lib/graphql-type-mocks.ts",
         "src/**/*.gql.ts",
         "src/**/*.gql.d.ts",
+        "src/**/*.test.ts",
+        "src/**/*.spec.ts",
     ],
 ) + glob([
     "dev/**/*.cjs",
@@ -41,14 +45,14 @@ SRCS = [
 
 BUILD_DEPS = [
     ":node_modules/@faker-js/faker",
+    ":node_modules/@floating-ui/dom",
     ":node_modules/@graphql-codegen/cli",
-    ":node_modules/@graphql-codegen/typescript",
-    ":node_modules/@graphql-codegen/typescript-operations",
     ":node_modules/@graphql-codegen/near-operation-file-preset",
     ":node_modules/@graphql-codegen/typed-document-node",
+    ":node_modules/@graphql-codegen/typescript",
+    ":node_modules/@graphql-codegen/typescript-operations",
     ":node_modules/@graphql-tools/utils",
     ":node_modules/@melt-ui/svelte",
-    ":node_modules/@popperjs/core",
     ":node_modules/@sourcegraph/branded",
     ":node_modules/@sourcegraph/common",
     ":node_modules/@sourcegraph/http-client",
@@ -109,7 +113,6 @@ vite_bin.vite(
     srcs = SRCS + BUILD_DEPS + CONFIGS,
     args = [
         "build",
-        "--force",
         "-c vite.config.ts",
     ],
     chdir = package_name(),
@@ -125,4 +128,24 @@ vite_bin.vite(
 build_test(
     name = "vite_build_test",
     targets = [":web-sveltekit"],
+)
+
+TESTS = glob([
+    "src/**/*.test.ts",
+    "src/**/*.snap",
+])
+
+TEST_BUILD_DEPS = [
+    ":node_modules/vitest",
+    ":node_modules/signale",
+    ":node_modules/@testing-library/svelte",
+    ":node_modules/@testing-library/user-event",
+]
+
+vitest_test(
+    name = "unit_tests",
+    bin = vitest_bin,
+    chdir = package_name(),
+    data = SRCS + BUILD_DEPS + CONFIGS + TESTS + TEST_BUILD_DEPS,
+    with_vitest_config = False,
 )

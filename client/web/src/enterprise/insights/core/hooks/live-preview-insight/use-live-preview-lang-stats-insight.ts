@@ -122,7 +122,7 @@ async function getLangStats(inputs: GetInsightContentInputs): Promise<Categorica
         )
         .toPromise()
 
-    if (stats.languages.length === 0) {
+    if (!stats || stats.languages.length === 0) {
         throw new Error("We couldn't find the language statistics, try changing the repository.")
     }
 

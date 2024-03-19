@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
@@ -153,7 +153,7 @@ func TestUnifiedPermissionsMigrator(t *testing.T) {
 		})
 
 		// setup 100 users with 3 repos each
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			account := addUser(t, ctx, store, "user-"+strconv.Itoa(i), true)
 			addRepos(t, ctx, store, []*extsvc.Account{account}, 3)
 		}
@@ -166,7 +166,7 @@ func TestUnifiedPermissionsMigrator(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, float64(0), progress)
 
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			err = migrator.Up(ctx)
 			require.NoError(t, err)
 
@@ -186,7 +186,7 @@ func TestUnifiedPermissionsMigrator(t *testing.T) {
 		})
 
 		// setup 100 users with different combinations of repos and external accounts, deleted_at, etc
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			userName := "user-" + strconv.Itoa(i)
 			// Add 20 users with no external accounts
 			account := addUser(t, ctx, store, userName, i < 40 || i >= 60)
@@ -217,7 +217,7 @@ func TestUnifiedPermissionsMigrator(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, float64(0), progress)
 
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			err = migrator.Up(ctx)
 			require.NoError(t, err)
 
@@ -302,13 +302,19 @@ func TestUnifiedPermissionsMigrator(t *testing.T) {
 	})
 
 	t.Run("Migrates data correctly for explicit API perms", func(t *testing.T) {
-		before := globals.PermissionsUserMapping()
-		globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: true})
-
 		t.Cleanup(func() {
 			require.NoError(t, cleanUpTables(ctx, store))
-			globals.SetPermissionsUserMapping(before)
 		})
+
+		conf.Mock(&conf.Unified{
+			SiteConfiguration: schema.SiteConfiguration{
+				PermissionsUserMapping: &schema.PermissionsUserMapping{
+					Enabled: true,
+					BindID:  "email",
+				},
+			},
+		})
+		t.Cleanup(func() { conf.Mock(nil) })
 
 		runDataCheckTest(t, authz.SourceAPI)
 	})

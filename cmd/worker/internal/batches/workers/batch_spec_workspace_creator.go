@@ -165,7 +165,7 @@ func (r *batchSpecWorkspaceCreator) process(
 
 		stepCacheKeys := make([]stepCacheKey, 0, len(spec.Spec.Steps))
 		// Generate cache keys for all the steps.
-		for i := 0; i < len(spec.Spec.Steps); i++ {
+		for i := range len(spec.Spec.Steps) {
 			if _, ok := skippedSteps[i]; ok {
 				continue
 			}

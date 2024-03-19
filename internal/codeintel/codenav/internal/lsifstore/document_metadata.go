@@ -131,13 +131,13 @@ WHERE
 LIMIT 1
 `
 
-func convertSCIPRangesToLocations(ranges []*scip.Range, dumpID int, path string) []shared.Location {
+func convertSCIPRangesToLocations(ranges []*scip.Range, uploadID int, path string) []shared.Location {
 	locations := make([]shared.Location, 0, len(ranges))
 	for _, r := range ranges {
 		locations = append(locations, shared.Location{
-			DumpID: dumpID,
-			Path:   path,
-			Range:  translateRange(r),
+			UploadID: uploadID,
+			Path:     path,
+			Range:    translateRange(r),
 		})
 	}
 

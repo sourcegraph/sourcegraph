@@ -322,6 +322,6 @@ func testDecompressTgzNoOOBImpl(t *testing.T, entries []tar.Header) {
 	outDir := t.TempDir()
 
 	require.NotPanics(t, func() {
-		decompressTgz(reader, outDir)
+		_ = decompressTgz(reader, outDir)
 	})
 }

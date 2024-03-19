@@ -1,34 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
-
-import { type NavigateFunction, useLocation, useNavigate } from 'react-router-dom'
-import { Subscription } from 'rxjs'
-
-import type { ExtensionsControllerProps } from '@sourcegraph/shared/src/extensions/controller'
-import { registerHoverContributions } from '@sourcegraph/shared/src/hover/actions'
-import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
-
-interface Props extends ExtensionsControllerProps, PlatformContextProps {}
+import { useEffect, useState } from 'react'
 
 /**
  * A component that registers global contributions. It is implemented as a React component so that its
  * registrations use the React lifecycle.
  */
-export function GlobalContributions(props: Props): null {
-    const { extensionsController, platformContext } = props
-
-    const location = useLocation()
-    const navigate = useNavigate()
-
-    // Location and navigate may be used by the hover contributions after they
-    // are initialized and closed over. To avoid stale data, we keep them in
-    // refs.
-    const locationRef = useRef(location)
-    const navigateRef = useRef(navigate)
-    useEffect(() => {
-        locationRef.current = location
-        navigateRef.current = navigate
-    }, [location, navigate])
-
+export function GlobalContributions(): null {
     const [error, setError] = useState<null | Error>(null)
 
     useEffect(() => {
@@ -37,24 +13,6 @@ export function GlobalContributions(props: Props): null {
             .then(({ registerHighlightContributions }) => registerHighlightContributions()) // no way to unregister these
             .catch(setError)
     }, [])
-
-    useEffect(() => {
-        const subscriptions = new Subscription()
-        if (extensionsController !== null) {
-            const historyOrNavigate: NavigateFunction = ((to: any, options: any): void =>
-                navigateRef.current?.(to, options)) as any
-            subscriptions.add(
-                registerHoverContributions({
-                    platformContext,
-                    historyOrNavigate,
-                    getLocation: () => locationRef.current,
-                    extensionsController,
-                    locationAssign: globalThis.location.assign.bind(globalThis.location),
-                })
-            )
-        }
-        return () => subscriptions.unsubscribe()
-    }, [extensionsController, platformContext])
 
     // Throw error to the <ErrorBoundary />
     if (error) {

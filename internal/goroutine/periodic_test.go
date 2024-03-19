@@ -60,7 +60,7 @@ func TestPeriodicGoroutineReinvoke(t *testing.T) {
 	})
 
 	witnessHandler := func() {
-		for i := 0; i < maxConsecutiveReinvocations; i++ {
+		for range maxConsecutiveReinvocations {
 			<-called
 		}
 	}
@@ -185,17 +185,17 @@ func TestPeriodicGoroutineConcurrency(t *testing.T) {
 	)
 	go goroutine.Start()
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-called
 		clock.BlockingAdvance(time.Second)
 	}
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-called
 		clock.BlockingAdvance(time.Second)
 	}
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		<-called
 	}
 
@@ -250,7 +250,7 @@ func TestPeriodicGoroutineWithDynamicConcurrency(t *testing.T) {
 		// Ensure each of the handlers can be called independently.
 		// Adding an additional channel read would block as each of
 		// the monitor routines would be waiting on the clock tick.
-		for i := 0; i < poolSize; i++ {
+		for range poolSize {
 			<-called
 		}
 

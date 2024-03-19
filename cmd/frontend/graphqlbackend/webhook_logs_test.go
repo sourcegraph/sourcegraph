@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcegraph/sourcegraph/internal/actor"
@@ -139,7 +139,7 @@ func TestWebhookLogConnectionResolver(t *testing.T) {
 
 	// We'll set up a fake page of 20 logs.
 	var logs []*types.WebhookLog
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		logs = append(logs, &types.WebhookLog{})
 	}
 

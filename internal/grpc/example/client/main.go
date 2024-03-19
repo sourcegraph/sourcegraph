@@ -171,7 +171,7 @@ subscriptionDone:
 			logger.Fatal("Error on upload weather data", log.Error(err))
 		}
 
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			err := dataStream.Send(&pb.UploadWeatherDataRequest{
 				SensorId: "sensor-123",
 				Temperature: &pb.Temperature{
@@ -217,7 +217,6 @@ subscriptionDone:
 				},
 			},
 		})
-
 		if err != nil {
 			logger.Fatal("Error while sending image metadata", log.Error(err))
 		}
@@ -294,7 +293,7 @@ subscriptionDone:
 		}()
 
 		// send location information to the server
-		for i := 0; i < 5; i++ {
+		for i := range 5 {
 			err := biStream.Send(&pb.RealTimeWeatherRequest{
 				Location: "Location " + strconv.Itoa(i),
 			})

@@ -1,6 +1,3 @@
-// TODO: Consider making config thread-safe.
-//go:build !race
-
 package graphqlbackend_test
 
 import (
@@ -8,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sync"
+	"sync/atomic"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/stretchr/testify/require"
 
@@ -20,6 +16,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/guardrails"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
+	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
@@ -144,61 +141,35 @@ func TestGuardrailsFeatureCodyDisabled(t *testing.T) {
 	})
 }
 
-// syncConfMocking is a helper to allow mocking site config in a syncronous manner.
-// Specifically, observers that are watching config changes will have been updated
-// by the time `Update`	returns.
-type syncConfMocking struct {
-	// cond is used to synchronize between the watchers and the update method.
-	cond *sync.Cond
-	// watching is true iff this instance of mocking has observers notified of config changes.
-	watching bool
-	// lastConfig seen is memoized so that `Update` can ensure the value of the config
-	// reaches the parameter before it returns.
-	lastConfig schema.SiteConfiguration
+// syncConfMock is a helper to allow mocking site config in a syncronous
+// manner. Specifically, observers that are watching config changes will have
+// been updated by the time `Update` returns.
+type syncConfMock struct {
+	watcher func()
+	config  atomic.Pointer[schema.SiteConfiguration]
 }
 
-func newSyncConfMocking(t *testing.T) *syncConfMocking {
-	t.Helper()
-	m := &syncConfMocking{
-		cond: sync.NewCond(&sync.Mutex{}),
-	}
-	m.cond.L.Lock()
-	m.watching = true
-	m.cond.L.Unlock()
-	conf.Watch(m.onConfigChange)
-	t.Cleanup(m.Cleanup)
-	return m
-}
+var _ conftypes.UnifiedWatchable = &syncConfMock{}
 
-// Update the site config and await the new config to be propagated to the watchers.
-func (m *syncConfMocking) Update(c schema.SiteConfiguration) {
-	conf.MockAndNotifyWatchers(&conf.Unified{SiteConfiguration: c})
-	m.cond.L.Lock()
-	defer m.cond.L.Unlock()
-	diff := cmp.Diff(m.lastConfig, c)
-	for m.watching && diff != "" {
-		m.cond.Wait()
-		diff = cmp.Diff(m.lastConfig, c)
+func (m *syncConfMock) Update(c schema.SiteConfiguration) {
+	m.config.Store(&c)
+	if m.watcher != nil {
+		m.watcher()
 	}
 }
 
-// onConfigChange is used in `conf.Watch`, and wakes up `Update` which is waiting
-// on config change to propagate to watchers.
-func (m *syncConfMocking) onConfigChange() {
-	m.cond.L.Lock()
-	defer m.cond.L.Unlock()
-	if m.watching {
-		m.lastConfig = conf.Get().SiteConfiguration
-		m.cond.Broadcast()
+func (m *syncConfMock) Watch(cb func()) {
+	if m.watcher != nil {
+		panic("syncConfMocking only supports one watcher")
 	}
+	m.watcher = cb
+	cb() // Part of the Watch contract is calling cb before returning
 }
-
-// Cleanup invalidates the watcher.
-func (m *syncConfMocking) Cleanup() {
-	m.cond.L.Lock()
-	defer m.cond.L.Unlock()
-	m.watching = false
-	m.cond.Broadcast() // ensure to wake up every waiting goroutine
+func (m *syncConfMock) SiteConfig() schema.SiteConfiguration {
+	return *m.config.Load()
+}
+func (c *syncConfMock) ServiceConnections() conftypes.ServiceConnections {
+	panic("unimplemented")
 }
 
 // gatewayResponse that `makeGatewayEndpoint` responds with.
@@ -230,20 +201,20 @@ func TestSnippetAttributionReactsToSiteConfigChanges(t *testing.T) {
 		CodyEnabled:        pointers.Ptr(true),
 		AttributionEnabled: pointers.Ptr(true),
 	}
-	confMock := newSyncConfMocking(t)
+	confMock := &syncConfMock{}
 	confMock.Update(noAttributionConfigured)
-	t.Cleanup(func() { confMock.Update(schema.SiteConfiguration{}) })
+
 	// Initialize graphQL schema with snippetAttribution.
 	db := dbmocks.NewMockDB()
 	ctx := context.Background()
 	g := gitserver.NewClient("graphql.test")
 	var enterpriseServices enterprise.Services
-	require.NoError(t, guardrails.Init(ctx, &observation.TestContext, db, codeintel.Services{}, nil, &enterpriseServices))
+	require.NoError(t, guardrails.Init(ctx, &observation.TestContext, db, codeintel.Services{}, confMock, &enterpriseServices))
 	s, err := graphqlbackend.NewSchema(db, g, []graphqlbackend.OptionalResolver{{GuardrailsResolver: enterpriseServices.OptionalResolver.GuardrailsResolver}})
 	require.NoError(t, err)
 	// Same query runs in every test:
 	query := `query SnippetAttribution {
-		snippetAttribution(snippet: "sourcegraph.Location(new URL", first: 2) {
+		snippetAttribution(snippet: "sourcegraph.Location(new URL\n\n\n\n\n\n\n\n\n\n", first: 2) {
 			nodes {
 				repositoryName
 			}

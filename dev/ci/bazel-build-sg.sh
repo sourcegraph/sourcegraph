@@ -2,7 +2,12 @@
 
 set -o errexit -o nounset -o pipefail
 
-bazelrc=(--bazelrc=.bazelrc --bazelrc=.aspect/bazelrc/ci.bazelrc --bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc)
+echo "~~~ :aspect: :stethoscope: Agent Health check"
+/etc/aspect/workflows/bin/agent_health_check
+
+aspectRC="/tmp/aspect-generated.bazelrc"
+rosetta bazelrc > "$aspectRC"
+bazelrc=(--bazelrc="$aspectRC")
 
 echo "--- :bazel: Build sg cli"
 bazel "${bazelrc[@]}" build //dev/sg:sg

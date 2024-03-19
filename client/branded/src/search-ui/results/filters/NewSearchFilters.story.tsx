@@ -1,4 +1,4 @@
-import { Decorator, Meta } from '@storybook/react'
+import type { Decorator, Meta } from '@storybook/react'
 
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { BrandedStory } from '@sourcegraph/wildcard/src/stories'

@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from 'react'
+import { useEffect, type RefObject } from 'react'
 
 import { debounce } from 'lodash'
 import { useLocation, useNavigationType } from 'react-router-dom'

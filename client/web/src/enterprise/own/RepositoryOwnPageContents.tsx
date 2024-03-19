@@ -25,8 +25,8 @@ export interface CodeownersIngestedFile {
 }
 
 export const RepositoryOwnPageContents: React.FunctionComponent<
-    Pick<RepositoryOwnAreaPageProps, 'repo' | 'authenticatedUser'>
-> = ({ repo, authenticatedUser }) => {
+    Pick<RepositoryOwnAreaPageProps, 'repo' | 'authenticatedUser' | 'telemetryRecorder'>
+> = ({ repo, authenticatedUser, telemetryRecorder }) => {
     const isAdmin = authenticatedUser?.siteAdmin
 
     const { data, error, loading } = useQuery<GetIngestedCodeownersResult, GetIngestedCodeownersVariables>(
@@ -74,7 +74,10 @@ export const RepositoryOwnPageContents: React.FunctionComponent<
                     {isAdmin && (
                         <UploadFileButton
                             repo={repo}
-                            onComplete={setCodeownersIngestedFile}
+                            onComplete={file => {
+                                setCodeownersIngestedFile(file)
+                                telemetryRecorder.recordEvent('repo.ownership.edit.file', 'upload')
+                            }}
                             fileAlreadyExists={!!codeownersIngestedFile}
                         />
                     )}
@@ -111,7 +114,15 @@ export const RepositoryOwnPageContents: React.FunctionComponent<
                             The following CODEOWNERS file was uploaded to Sourcegraph{' '}
                             <Timestamp date={codeownersIngestedFile.updatedAt} />.
                         </Text>
-                        {isAdmin && <DeleteFileButton repo={repo} onComplete={() => setCodeownersIngestedFile(null)} />}
+                        {isAdmin && (
+                            <DeleteFileButton
+                                repo={repo}
+                                onComplete={() => {
+                                    setCodeownersIngestedFile(null)
+                                    telemetryRecorder.recordEvent('repo.ownership.edit.file', 'delete')
+                                }}
+                            />
+                        )}
                     </div>
                     <IngestedFileViewer contents={codeownersIngestedFile.contents} />
                 </div>

@@ -11,9 +11,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/sourcegraph/log/logtest"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
 	uploadsshared "github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/executor"
@@ -84,7 +84,7 @@ func TestGetIndexes(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		for lo := 0; lo < len(testCase.expectedIDs); lo++ {
+		for lo := range len(testCase.expectedIDs) {
 			hi := lo + 3
 			if hi > len(testCase.expectedIDs) {
 				hi = len(testCase.expectedIDs)
@@ -135,9 +135,15 @@ func TestGetIndexes(t *testing.T) {
 		// Enable permissions user mapping forces checking repository permissions
 		// against permissions tables in the database, which should effectively block
 		// all access because permissions tables are empty.
-		before := globals.PermissionsUserMapping()
-		globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: true})
-		defer globals.SetPermissionsUserMapping(before)
+		conf.Mock(&conf.Unified{
+			SiteConfiguration: schema.SiteConfiguration{
+				PermissionsUserMapping: &schema.PermissionsUserMapping{
+					Enabled: true,
+					BindID:  "email",
+				},
+			},
+		})
+		t.Cleanup(func() { conf.Mock(nil) })
 
 		indexes, totalCount, err := store.GetIndexes(ctx,
 			shared.GetIndexesOptions{
@@ -213,9 +219,15 @@ func TestGetIndexByID(t *testing.T) {
 		// Enable permissions user mapping forces checking repository permissions
 		// against permissions tables in the database, which should effectively block
 		// all access because permissions tables are empty.
-		before := globals.PermissionsUserMapping()
-		globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: true})
-		defer globals.SetPermissionsUserMapping(before)
+		conf.Mock(&conf.Unified{
+			SiteConfiguration: schema.SiteConfiguration{
+				PermissionsUserMapping: &schema.PermissionsUserMapping{
+					Enabled: true,
+					BindID:  "email",
+				},
+			},
+		})
+		t.Cleanup(func() { conf.Mock(nil) })
 
 		_, exists, err := store.GetIndexByID(ctx, 1)
 		if err != nil {
@@ -326,9 +338,15 @@ func TestGetIndexesByIDs(t *testing.T) {
 		// Enable permissions user mapping forces checking repository permissions
 		// against permissions tables in the database, which should effectively block
 		// all access because permissions tables are empty.
-		before := globals.PermissionsUserMapping()
-		globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: true})
-		defer globals.SetPermissionsUserMapping(before)
+		conf.Mock(&conf.Unified{
+			SiteConfiguration: schema.SiteConfiguration{
+				PermissionsUserMapping: &schema.PermissionsUserMapping{
+					Enabled: true,
+					BindID:  "email",
+				},
+			},
+		})
+		t.Cleanup(func() { conf.Mock(nil) })
 
 		indexes, err := store.GetIndexesByIDs(ctx, 1, 2, 3, 4)
 		if err != nil {

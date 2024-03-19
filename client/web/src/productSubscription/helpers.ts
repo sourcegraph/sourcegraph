@@ -1,6 +1,4 @@
-import { parseISO } from 'date-fns'
-import formatDistanceStrict from 'date-fns/formatDistanceStrict'
-import isAfter from 'date-fns/isAfter'
+import { parseISO, formatDistanceStrict, isAfter } from 'date-fns'
 
 import { numberWithCommas, pluralize } from '@sourcegraph/common'
 

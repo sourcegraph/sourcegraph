@@ -54,7 +54,7 @@ func TestLoggerAndReaderHappyPaths(t *testing.T) {
 	recorder.LogStart(routine3)
 	recorder.LogRun(routine1, 10*time.Millisecond, nil)
 	recorder.LogRun(routine1, 20*time.Millisecond, errors.New("test error"))
-	for i := 0; i < 100; i++ { // Make sure int32 overflow doesn't happen
+	for range 100 { // Make sure int32 overflow doesn't happen
 		recorder.LogRun(routine2, 10*time.Hour, nil)
 		recorder.LogRun(routine2, 20*time.Hour, nil)
 	}
@@ -72,7 +72,8 @@ func TestLoggerAndReaderHappyPaths(t *testing.T) {
 }
 
 func assertRoutineStats(t *testing.T, r RoutineInfo, name string,
-	started bool, stopped bool, rRuns int, sRuns int32, sErrors int32, sMin int32, sAvg int32, sMax int32) {
+	started bool, stopped bool, rRuns int, sRuns int32, sErrors int32, sMin int32, sAvg int32, sMax int32,
+) {
 	assert.Equal(t, name, r.Name)
 	if started {
 		assert.NotNil(t, r.Instances[0].LastStartedAt)
@@ -108,6 +109,7 @@ func newRoutineMock(name string, description string, interval time.Duration) *Ro
 		interval:    interval,
 	}
 }
+
 func (r *RoutineMock) Start() {
 	// Do nothing
 }

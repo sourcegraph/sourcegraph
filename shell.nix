@@ -83,7 +83,7 @@ mkShell.override { stdenv = if hostPlatform.isMacOS then pkgs.clang11Stdenv else
     universal-ctags
 
     # Build our backend. Sometimes newer :^)
-    go_1_21
+    go_1_22
 
     # Lots of our tooling and go tests rely on git et al.
     comby

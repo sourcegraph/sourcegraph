@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, afterAll } from 'vitest'
 
 import { SearchPatternType } from '../../graphql-operations'
 
@@ -608,6 +608,15 @@ describe('getDiagnostics()', () => {
     })
 
     describe('structural search and type: filter', () => {
+        const origContext = window.context
+        afterAll(() => {
+            window.context = origContext
+        })
+        window.context = {
+            experimentalFeatures: {
+                structuralSearch: 'enabled',
+            },
+        }
         test('detects type: filter in structural search', () => {
             expect(parseAndDiagnose('type:symbol test lang:go', SearchPatternType.structural)).toMatchInlineSnapshot(`
                 [
@@ -647,6 +656,15 @@ describe('getDiagnostics()', () => {
     })
 
     describe('structural search without lang: filter', () => {
+        const origContext = window.context
+        afterAll(() => {
+            window.context = origContext
+        })
+        window.context = {
+            experimentalFeatures: {
+                structuralSearch: 'enabled',
+            },
+        }
         test('detects structural search without lang filter', () => {
             expect(parseAndDiagnose('repo:foo bar', SearchPatternType.structural)).toMatchInlineSnapshot(`
                 [

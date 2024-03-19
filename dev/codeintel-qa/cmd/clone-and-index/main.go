@@ -29,7 +29,7 @@ const (
 )
 
 var navTestRoots = func() (roots []string) {
-	for p := 0; p < numNavTestRoots; p++ {
+	for p := range numNavTestRoots {
 		roots = append(roots, fmt.Sprintf("proj%d/", p+1))
 	}
 

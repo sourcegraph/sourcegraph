@@ -784,7 +784,7 @@ func replicaAddrs(deployType, countStr, serviceName, port string) (string, error
 	}
 
 	var addrs []string
-	for i := 0; i < count; i++ {
+	for i := range count {
 		addrs = append(addrs, strings.Join([]string{fmtStrHead, serviceName, "-", strconv.Itoa(i), fmtStrTail}, ""))
 	}
 	return strings.Join(addrs, " "), nil

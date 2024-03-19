@@ -67,7 +67,7 @@ export const ProductLicenseValidity: React.FunctionComponent<
     return (
         <div className={className}>
             {variant !== 'no-icon' && <ValidityIcon isExpired={isExpired} isRevoked={isRevoked} />}
-            {getText(isExpired, isRevoked)}, <Timestamp date={timestamp} noAbout={true} noAgo={true} />{' '}
+            {getText(isExpired, isRevoked)}, <Timestamp date={timestamp} noAbout={true} noAgo={true} utc={true} />{' '}
             {timestampSuffix}
             {!isExpired && isRevoked && revokeReason && (
                 <>

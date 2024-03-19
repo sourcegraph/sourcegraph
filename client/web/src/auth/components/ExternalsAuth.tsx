@@ -2,7 +2,7 @@ import React from 'react'
 
 import classNames from 'classnames'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Link } from '@sourcegraph/wildcard'
 
@@ -30,7 +30,7 @@ const v2Pages: { [p in AuthPages]: number } = {
 interface ExternalsAuthProps extends TelemetryProps, TelemetryV2Props {
     // page is the page on which external auth was initiated; used as metadata for telemetry.
     page: AuthPages
-    context: Pick<SourcegraphContext, 'authProviders'>
+    context: Pick<SourcegraphContext, 'externalURL'>
     githubLabel: string
     gitlabLabel: string
     googleLabel: string
@@ -143,6 +143,9 @@ const GoogleIcon: React.FunctionComponent<React.PropsWithChildren<{ className?: 
     </svg>
 )
 
+/**
+ * ExternalsAuth is ONLY intended for use in Sourcegraph.com components.
+ */
 export const ExternalsAuth: React.FunctionComponent<React.PropsWithChildren<ExternalsAuthProps>> = ({
     page,
     context,
@@ -158,19 +161,13 @@ export const ExternalsAuth: React.FunctionComponent<React.PropsWithChildren<Exte
     telemetryRecorder,
 }) => {
     // Since this component is only intended for use on Sourcegraph.com, it's OK to hardcode
-    // GitHub and GitLab auth providers here as they are the only ones used on Sourcegraph.com.
-    // In the future if this page is intended for use in Sourcegraph Sever, this would need to be generalized
-    // for other auth providers such SAML, OpenID, Okta, Azure AD, etc.
-
-    const githubProvider = context.authProviders.find(provider =>
-        provider.authenticationURL.startsWith('/.auth/github/login?pc=https%3A%2F%2Fgithub.com%2F')
-    )
-    const gitlabProvider = context.authProviders.find(provider =>
-        provider.authenticationURL.startsWith('/.auth/gitlab/login?pc=https%3A%2F%2Fgitlab.com%2F')
-    )
-    const googleProvider = context.authProviders.find(provider =>
-        provider.authenticationURL.startsWith('/.auth/openidconnect/login?pc=google')
-    )
+    // our providers.
+    const redirectQuery = redirect ? `&redirect=${redirect}` : ''
+    // Use absolute URL to force full-page reload (because the auth routes are
+    // handled by the backend router, not the frontend router).
+    const gitHubLoginUrl = `${context.externalURL}/.auth/openidconnect/login?prompt_auth=github&pc=sams${redirectQuery}`
+    const gitLabLoginUrl = `${context.externalURL}/.auth/openidconnect/login?prompt_auth=gitlab&pc=sams${redirectQuery}`
+    const googleLoginUrl = `${context.externalURL}/.auth/openidconnect/login?prompt_auth=google&pc=sams${redirectQuery}`
 
     const logAuthAndCallback = (
         type: AuthProvider['serviceType'],
@@ -185,69 +182,48 @@ export const ExternalsAuth: React.FunctionComponent<React.PropsWithChildren<Exte
 
     return (
         <>
-            {githubProvider && (
-                <Link
-                    // Use absolute URL to force full-page reload (because the auth routes are
-                    // handled by the backend router, not the frontend router).
-                    to={
-                        `${window.location.origin}${githubProvider.authenticationURL}` +
-                        (redirect ? `&redirect=${redirect}` : '')
-                    }
-                    className={classNames(
-                        'text-decoration-none',
-                        withCenteredText && 'd-flex justify-content-center',
-                        styles.signUpButton,
-                        styles.githubButton,
-                        ctaClassName
-                    )}
-                    onClick={() => logAuthAndCallback('github', onClick)}
-                >
-                    <GithubIcon className={classNames('mr-2', iconClassName)} />
-                    {githubLabel}
-                </Link>
-            )}
+            <Link
+                to={gitHubLoginUrl}
+                className={classNames(
+                    'text-decoration-none',
+                    withCenteredText && 'd-flex justify-content-center',
+                    styles.signUpButton,
+                    styles.githubButton,
+                    ctaClassName
+                )}
+                onClick={() => logAuthAndCallback('github', onClick)}
+            >
+                <GithubIcon className={classNames('mr-2', iconClassName)} />
+                {githubLabel}
+            </Link>
 
-            {gitlabProvider && (
-                <Link
-                    // Use absolute URL to force full-page reload (because the auth routes are
-                    // handled by the backend router, not the frontend router).
-                    to={
-                        `${window.location.origin}${gitlabProvider.authenticationURL}` +
-                        (redirect ? `&redirect=${redirect}` : '')
-                    }
-                    className={classNames(
-                        'text-decoration-none',
-                        withCenteredText && 'd-flex justify-content-center',
-                        styles.signUpButton,
-                        styles.gitlabButton,
-                        ctaClassName
-                    )}
-                    onClick={() => logAuthAndCallback('gitlab', onClick)}
-                >
-                    <GitlabColorIcon className={classNames('mr-2', iconClassName)} /> {gitlabLabel}
-                </Link>
-            )}
+            <Link
+                to={gitLabLoginUrl}
+                className={classNames(
+                    'text-decoration-none',
+                    withCenteredText && 'd-flex justify-content-center',
+                    styles.signUpButton,
+                    styles.gitlabButton,
+                    ctaClassName
+                )}
+                onClick={() => logAuthAndCallback('gitlab', onClick)}
+            >
+                <GitlabColorIcon className={classNames('mr-2', iconClassName)} /> {gitlabLabel}
+            </Link>
 
-            {googleProvider && (
-                <Link
-                    // Use absolute URL to force full-page reload (because the auth routes are
-                    // handled by the backend router, not the frontend router).
-                    to={
-                        `${window.location.origin}${googleProvider.authenticationURL}` +
-                        (redirect ? `&redirect=${redirect}` : '')
-                    }
-                    className={classNames(
-                        'text-decoration-none',
-                        withCenteredText && 'd-flex justify-content-center',
-                        styles.signUpButton,
-                        styles.googleButton,
-                        ctaClassName
-                    )}
-                    onClick={() => logAuthAndCallback('openidconnect', onClick)}
-                >
-                    <GoogleIcon className={classNames('mr-2', iconClassName)} /> {googleLabel}
-                </Link>
-            )}
+            <Link
+                to={googleLoginUrl}
+                className={classNames(
+                    'text-decoration-none',
+                    withCenteredText && 'd-flex justify-content-center',
+                    styles.signUpButton,
+                    styles.googleButton,
+                    ctaClassName
+                )}
+                onClick={() => logAuthAndCallback('openidconnect', onClick)}
+            >
+                <GoogleIcon className={classNames('mr-2', iconClassName)} /> {googleLabel}
+            </Link>
         </>
     )
 }

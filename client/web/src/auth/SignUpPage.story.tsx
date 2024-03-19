@@ -56,6 +56,7 @@ export const Default: StoryFn = () => (
                     authMinPasswordLength: 12,
                     authPasswordPolicy: {},
                     sourcegraphDotComMode: false,
+                    externalURL: 'https://sourcegraph.test:3443',
                 }}
                 authenticatedUser={null}
                 telemetryRecorder={noOpTelemetryRecorder}

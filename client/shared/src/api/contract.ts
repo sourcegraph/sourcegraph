@@ -1,6 +1,5 @@
 import type { Remote, ProxyMarked } from 'comlink'
 import type { Unsubscribable } from 'rxjs'
-import type { DocumentHighlight } from 'sourcegraph'
 
 import type {
     Contributions,
@@ -13,7 +12,7 @@ import type { MaybeLoadingResult } from '@sourcegraph/codeintellify'
 import type * as clientType from '@sourcegraph/extension-api-types'
 import type { GraphQLResult } from '@sourcegraph/http-client'
 
-import type { ReferenceContext } from '../codeintel/legacy-extensions/api'
+import type { DocumentHighlight, ReferenceContext } from '../codeintel/legacy-extensions/api'
 import type { Occurrence } from '../codeintel/scip'
 import type { ConfiguredExtension } from '../extensions/extension'
 import type { SettingsCascade } from '../settings/settings'

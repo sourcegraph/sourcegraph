@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
+
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	resolverstubs "github.com/sourcegraph/sourcegraph/internal/codeintel/resolvers"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -64,7 +65,7 @@ func TestCachedLocationResolver(t *testing.T) {
 
 	var wg sync.WaitGroup
 	errs := make(chan error, numRoutines)
-	for i := 0; i < numRoutines; i++ {
+	for range numRoutines {
 		wg.Add(1)
 
 		go func() {

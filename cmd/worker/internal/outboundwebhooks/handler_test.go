@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,7 +149,6 @@ func TestHandler_Handle(t *testing.T) {
 		mockassert.CalledN(t, store.ListFunc, 1)
 		mockassert.CalledN(t, logStore.CreateFunc, 1)
 	})
-
 }
 
 type badTransport struct {

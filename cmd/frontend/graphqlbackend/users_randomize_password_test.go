@@ -57,9 +57,7 @@ func TestRandomizeUserPassword(t *testing.T) {
 
 	t.Run("DotCom mode", func(t *testing.T) {
 		// Test dotcom mode
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig)
+		dotcom.MockSourcegraphDotComMode(t, true)
 
 		t.Run("Errors on DotCom when sending emails is not enabled", func(t *testing.T) {
 			conf.Mock(smtpDisabledConf)

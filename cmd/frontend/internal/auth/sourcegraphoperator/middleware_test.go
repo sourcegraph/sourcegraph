@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc"
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { dirname } from '@sourcegraph/common'
 import { gql } from '@sourcegraph/http-client'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryService } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Alert,

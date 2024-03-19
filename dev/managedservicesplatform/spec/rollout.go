@@ -11,6 +11,10 @@ type RolloutSpec struct {
 	// Deploy. Note that this does NOT prevent manual deploys from happening
 	// directly in Cloud Run.
 	Suspended *bool `yaml:"suspended,omitempty"`
+	// ServiceAccount is the email address of the service account to provision IAM access to create
+	// releases for. Can be used to give access to the Service Account used in your CI pipeline,
+	// instead of using the default releaser SA that MSP provisions.
+	ServiceAccount *string `yaml:"serviceAccount,omitempty"`
 }
 
 func (r *RolloutSpec) GetStageByEnvironment(id string) *RolloutStageSpec {

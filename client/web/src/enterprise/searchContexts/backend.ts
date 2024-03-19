@@ -1,5 +1,6 @@
+import { lastValueFrom } from 'rxjs'
+
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
-import type { GraphQLResult } from '@sourcegraph/http-client'
 
 import { requestGraphQL } from '../../backend/graphql'
 import type { InputMaybe, RepositoriesByNamesResult, RepositoriesByNamesVariables } from '../../graphql-operations'
@@ -27,14 +28,13 @@ export async function fetchRepositoriesByNames(
     let after: InputMaybe<string> = null
 
     while (true) {
-        const result: GraphQLResult<RepositoriesByNamesResult> = await requestGraphQL<
-            RepositoriesByNamesResult,
-            RepositoriesByNamesVariables
-        >(query, {
-            names,
-            first,
-            after,
-        }).toPromise()
+        const result = await lastValueFrom(
+            requestGraphQL<RepositoriesByNamesResult, RepositoriesByNamesVariables>(query, {
+                names,
+                first,
+                after,
+            })
+        )
 
         const data: RepositoriesByNamesResult = dataOrThrowErrors(result)
 

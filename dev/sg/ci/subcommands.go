@@ -145,6 +145,10 @@ var bazelCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
+		commit, err := run.TrimResult(run.GitCmd("rev-parse", "HEAD"))
+		if err != nil {
+			return err
+		}
 
 		if cmd.Bool("staged") {
 			// restore the changes we've commited so theyre back in the staging area
@@ -170,7 +174,7 @@ var bazelCommand = &cli.Command{
 		if err != nil {
 			return err
 		}
-		build, err := client.GetMostRecentBuild(cmd.Context, "sourcegraph", branch)
+		build, err := client.TriggerBuild(cmd.Context, "sourcegraph", branch, commit, bk.WithEnvVar("DISABLE_ASPECT_WORKFLOWS", "true"))
 		if err != nil {
 			return err
 		}
@@ -425,7 +429,7 @@ sg ci build docker-images-candidates-notest
 		if rt != runtype.PullRequest {
 			pollTicker := time.NewTicker(5 * time.Second)
 			std.Out.WriteLine(output.Styledf(output.StylePending, "Polling for build for branch %s at %s...", branch, commit))
-			for i := 0; i < 30; i++ {
+			for range 30 {
 				// attempt to fetch the new build - it might take some time for the hooks so we will
 				// retry up to 30 times (roughly 30 seconds)
 				if build != nil && build.Commit != nil && *build.Commit == commit {

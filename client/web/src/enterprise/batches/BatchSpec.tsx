@@ -4,7 +4,7 @@ import { mdiFileDownload } from '@mdi/js'
 import { kebabCase } from 'lodash'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Link, Icon, Text, Tooltip, Button, AnchorLink } from '@sourcegraph/wildcard'
 

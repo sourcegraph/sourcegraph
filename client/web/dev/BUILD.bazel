@@ -21,9 +21,9 @@ ts_project(
     srcs = [
         "esbuild/build.ts",
         "esbuild/config.ts",
-        "esbuild/manifest.ts",
         "esbuild/manifestPlugin.ts",
         "esbuild/server.ts",
+        "esbuild/webmanifest.ts",
         "server/development.server.ts",
         "server/production.server.ts",
         "utils/constants.ts",
@@ -75,6 +75,7 @@ js_library(
 esbuild(
     name = "esbuild-config-production_bundle",
     srcs = [
+        ":dev",
         ":esbuild-config-production",
     ],
     entry_point = "esbuild/bazel/esbuild.bazel.production.js",
@@ -88,10 +89,6 @@ esbuild(
         "path-browserify",
         "monaco-yaml/lib/esm/monaco.contribution",
         "monaco-yaml/lib/esm/yaml.worker",
-        "rxjs/_esm5/internal/OuterSubscriber",
-        "rxjs/_esm5/internal/util/subscribeToResult",
-        "rxjs/_esm5/internal/util/subscribeToArray",
-        "rxjs/_esm5/internal/Observable",
     ],
     format = "cjs",
     platform = "node",
@@ -107,7 +104,7 @@ esbuild(
 ts_project(
     name = "dev_tests",
     testonly = True,
-    srcs = ["esbuild/manifest.test.ts"],
+    srcs = ["esbuild/webmanifest.test.ts"],
     tsconfig = ":tsconfig",
     deps = [
         ":dev",

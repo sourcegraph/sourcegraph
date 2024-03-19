@@ -39,7 +39,7 @@ func repoRankFromConfig(siteConfig schema.SiteConfiguration, repoName string) fl
 	// try every "directory" in the repo name to assign it a value, so a repoName like
 	// "github.com/sourcegraph/zoekt" will have "github.com", "github.com/sourcegraph",
 	// and "github.com/sourcegraph/zoekt" tested.
-	for i := 0; i < len(repoName); i++ {
+	for i := range len(repoName) {
 		if repoName[i] == '/' {
 			val += scores[repoName[:i]]
 		}
@@ -288,6 +288,7 @@ func (h *searchIndexerServer) doSearchConfiguration(ctx context.Context, paramet
 	}
 
 	indexOptions := searchbackend.GetIndexOptions(
+		h.logger,
 		&siteConfig,
 		getRepoIndexOptions,
 		getSearchContextRevisions,

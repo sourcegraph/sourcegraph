@@ -201,7 +201,7 @@ func (glob GlobPattern) Match(filePath string) bool {
 		// Since `**` or `anySubPath` can match any number of times, we hold
 		// an invariant: If a bit vector has 1 at the state preceding `**`,
 		// then that bit vector also has 1 at the state following `**`.
-		for i := 0; i < glob.size; i++ {
+		for i := range glob.size {
 			if (currentState>>i)&1 == 0 {
 				continue
 			}

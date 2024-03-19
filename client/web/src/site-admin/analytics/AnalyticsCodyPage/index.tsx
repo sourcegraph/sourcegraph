@@ -16,7 +16,7 @@ export const AnalyticsCodyPage: React.FC = () => (
                 </Link>
                 .
             </Text>
-            <Text>To request access, please reach out to your technical advisor.</Text>
+            <Text>To request access, please contact your account team.</Text>
         </Card>
     </>
 )

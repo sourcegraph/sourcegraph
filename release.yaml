@@ -1,0 +1,118 @@
+meta:
+  productName: sourcegraph
+  repository: "github.com/sourcegraph/sourcegraph"
+  owners:
+    - "@sourcegraph/release"
+
+requirements:
+  - name: "curl"
+    cmd: "curl --help"
+  - name: "Buidkite access token"
+    env: BUILDKITE_ACCESS_TOKEN
+
+  # #announce-engineering slack webhook url:
+  # https://start.1password.com/open/i?a=HEDEDSLHPBFGRBTKAKJWE23XX4&v=dnrhbauihkhjs5ag6vszsme45a&i=pldpna5vivapxe4phewnqd42ji&h=team-sourcegraph.1password.com
+
+  # #bolaji-release-testing
+  # https://start.1password.com/open/i?a=HEDEDSLHPBFGRBTKAKJWE23XX4&v=isv4abynddpox72wwbhaamo76e&i=7zjax5rm5hlilbgrzeb257i62i&h=team-sourcegraph.1password.com
+  - name: "Slack Webhook URL"
+    env: SLACK_WEBHOOK_URL
+
+internal:
+  create:
+    steps:
+      patch:
+        - name: "buildkite"
+          cmd: |
+            echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
+            body=$(curl -s --fail-with-body -X POST "https://api.buildkite.com/v2/organizations/sourcegraph/pipelines/sourcegraph/builds" -H "Content-Type: application/json" -H "Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" -d '{
+                "commit": "HEAD",
+                "branch": "{{git.branch}}",
+                "message": "Internal release build for {{version}}",
+                "env": {
+                  "RELEASE_INTERNAL": "true",
+                  "VERSION": "{{tag}}"
+                }
+              }')
+            exit_code=$?
+
+            if [ $exit_code != 0 ]; then
+              echo "❌ Failed to create build on Buildkite, got:"
+              echo "--- raw body ---"
+              echo $body
+              echo "--- raw body ---"
+              exit $exit_code
+            else
+              echo "Build created, see:"
+              echo $body | jq .web_url
+            fi
+  finalize:
+    steps:
+      - name: "Register on release registry"
+        cmd: |
+          echo "pretending to call release registry api"
+
+test:
+  steps:
+    - name: "placeholder"
+      cmd: |
+        echo "-- pretending to test release ..."
+
+promoteToPublic:
+  create:
+    steps:
+      - name: "buildkite"
+        cmd: |
+          # We set DISABLE_ASPECT_WORKFLOWS to true, because the promotion is purely about retagging images
+          # and we don't rely on AW at all.
+          echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
+          body=$(curl -s --fail-with-body -X POST "https://api.buildkite.com/v2/organizations/sourcegraph/pipelines/sourcegraph/builds" -H "Content-Type: application/json" -H "Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" -d '{
+              "commit": "HEAD",
+              "branch": "{{git.branch}}",
+              "message": "Promoting internal release {{version}} to public",
+              "env": {
+                "DISABLE_ASPECT_WORKFLOWS": "true",
+                "RELEASE_PUBLIC": "true",
+                "VERSION": "{{tag}}"
+              }
+            }')
+          exit_code=$?
+
+          if [ $exit_code != 0 ]; then
+            echo "❌ Failed to create build on Buildkite, got:"
+            echo "--- raw body ---"
+            echo $body
+            echo "--- raw body ---"
+            exit $exit_code
+          else
+            echo "Build created, see:"
+            echo $body | jq .web_url
+          fi
+  finalize:
+    steps:
+      - name: "Promote on release registry"
+        cmd: |
+          echo "pretending to call release registry api"
+
+      # tag is usually in the format `5.3.2`
+      # while version is usually the tag prepended with a v, `v5.3.2`
+      - name: "Slack notification (#announce-engineering)"
+        cmd: |
+          echo "Posting slack notification for release"
+          tag="{{tag}}"
+          changelog_version="${tag//./}"
+          body=$(curl -s --fail-with-body -X POST "$SLACK_WEBHOOK_URL" -H "Content-Type: application/json" -d '{
+            "type": "mrkdwn"
+            "text": "*Sourcegraph {{tag}} has been published*\n\n• <https://sourcegraph.com/docs/CHANGELOG#${changelog_version} | Changelog>\n• <https://github.com/sourcegraph/sourcegraph/releases/tag/{{version}} | GitHub release>"
+          }')
+          exit_code=$?
+
+          if [ $exit_code != 0 ]; then
+            echo "❌ Unable to post message to slack, got:"
+            echo "--- raw body ---"
+            echo $body
+            echo "--- raw body ---"
+            exit $exit_code
+          else
+            echo "Posted to slack."
+          fi

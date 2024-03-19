@@ -47,7 +47,7 @@ func TestToSnakeCase(t *testing.T) {
 func BenchmarkAllInOne(b *testing.B) {
 	for _, item := range cases {
 		b.Run("ToSnakeCase", func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				arg := item.args
 				toSnakeCase(arg)
 			}

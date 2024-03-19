@@ -284,7 +284,7 @@ func (s *Service) getVisibleUploadsFromCursor(
 	if cursor.VisibleUploads != nil {
 		visibleUploads := make([]visibleUpload, 0, len(cursor.VisibleUploads))
 		for _, u := range cursor.VisibleUploads {
-			upload, ok := requestState.dataLoader.GetUploadFromCacheMap(u.DumpID)
+			upload, ok := requestState.dataLoader.GetUploadFromCacheMap(u.UploadID)
 			if !ok {
 				return nil, Cursor{}, ErrConcurrentModification
 			}
@@ -308,7 +308,7 @@ func (s *Service) getVisibleUploadsFromCursor(
 	cursorVisibleUpload := make([]CursorVisibleUpload, 0, len(visibleUploads))
 	for i := range visibleUploads {
 		cursorVisibleUpload = append(cursorVisibleUpload, CursorVisibleUpload{
-			DumpID:                visibleUploads[i].Upload.ID,
+			UploadID:              visibleUploads[i].Upload.ID,
 			TargetPath:            visibleUploads[i].TargetPath,
 			TargetPosition:        visibleUploads[i].TargetPosition,
 			TargetPathWithoutRoot: visibleUploads[i].TargetPathWithoutRoot,
@@ -580,7 +580,7 @@ func (s *Service) prepareCandidateUploads(
 		}
 		idMap := make(map[int]struct{}, len(uploads)+len(cursor.VisibleUploads))
 		for _, upload := range cursor.VisibleUploads {
-			idMap[upload.DumpID] = struct{}{}
+			idMap[upload.UploadID] = struct{}{}
 		}
 		for _, upload := range uploads {
 			idMap[upload.ID] = struct{}{}

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcegraph/sourcegraph/internal/actor"
@@ -142,11 +142,7 @@ func TestEnforcement_AfterCreateUser(t *testing.T) {
 		{
 			name: "dotcom mode should always do nothing",
 			setup: func(t *testing.T) {
-				orig := dotcom.SourcegraphDotComMode()
-				dotcom.MockSourcegraphDotComMode(true)
-				t.Cleanup(func() {
-					dotcom.MockSourcegraphDotComMode(orig)
-				})
+				dotcom.MockSourcegraphDotComMode(t, true)
 			},
 			setSiteAdmin: false,
 		},

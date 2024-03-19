@@ -1,5 +1,26 @@
-team/source:
-  - '@ryphil'
+team/source: 
   - '@pjlast'
   - '@eseliger'
   - '@ggilmore'
+
+team/search-platform: 
+  - '@jtibshirani'
+  - '@stefanhengl'
+  - '@keegancsmith'
+
+team/graph:
+  - '@varungandhi-src'
+  - '@kritzcreek'
+  - '@keynmol'
+
+team/product-platform:
+  - '@mmanela'
+  - '@pjlast'
+  - '@eseliger'
+  - '@ggilmore'
+  - '@varungandhi-src'
+  - '@kritzcreek'
+  - '@keynmol'
+  - '@jtibshirani'
+  - '@stefanhengl'
+  - '@keegancsmith'

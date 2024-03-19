@@ -221,6 +221,14 @@ func pickStarCoderModel(model string, config config.FireworksConfig) string {
 		model = pickModelBasedOnTrafficSplit(config.StarcoderCommunitySingleTenantPercent, fireworks.Starcoder16bSingleTenant, multiTenantModel)
 	}
 
+	// PLG virtual model strings
+	if model == "starcoder2-15b" {
+		model = fireworks.StarcoderTwo15b
+	}
+	if model == "starcoder2-7b" {
+		model = fireworks.StarcoderTwo7b
+	}
+
 	// Resolve to the legacy quantized versions if necessary.
 	// TODO: Remove this as soon as the migration to the unquantized models is complete.
 	if model == fireworks.Starcoder16b {

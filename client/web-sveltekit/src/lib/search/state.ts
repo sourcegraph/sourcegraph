@@ -1,6 +1,5 @@
 import { writable, type Readable } from 'svelte/store'
 
-import { goto } from '$app/navigation'
 import { SearchPatternType } from '$lib/graphql-operations'
 import { buildSearchURLQuery, type Settings } from '$lib/shared'
 import { defaultSearchModeFromSettings, defaultPatternTypeFromSettings } from '$lib/web'
@@ -151,24 +150,17 @@ export function queryStateStore(initial: Partial<Options> = {}, settings: QueryS
 export function getQueryURL(
     queryState: Pick<QueryState, 'searchMode' | 'query' | 'caseSensitive' | 'patternType' | 'searchContext'>,
     enforceCache = false
-): string {
-    const searchQueryParameter = buildSearchURLQuery(
+): URL {
+    let url = new URL('/search', location.href)
+    url.search = buildSearchURLQuery(
         queryState.query,
         queryState.patternType,
         queryState.caseSensitive,
         queryState.searchContext,
         queryState.searchMode
     )
-
-    let url = '/search?' + searchQueryParameter
     if (enforceCache) {
-        url += `&${USE_CLIENT_CACHE_QUERY_PARAMETER}`
+        url.searchParams.append(USE_CLIENT_CACHE_QUERY_PARAMETER, '')
     }
     return url
-}
-
-export function submitSearch(
-    queryState: Pick<QueryState, 'searchMode' | 'query' | 'caseSensitive' | 'patternType' | 'searchContext'>
-): void {
-    void goto(getQueryURL(queryState))
 }

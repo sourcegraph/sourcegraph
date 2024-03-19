@@ -287,7 +287,7 @@ func TestAccessRequestConnectionStore(t *testing.T) {
 	ctx := context.Background()
 
 	db := database.NewDB(logtest.Scoped(t), dbtest.NewDB(t))
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		_, err := db.AccessRequests().Create(ctx, &types.AccessRequest{
 			Name:   "test" + strconv.Itoa(i),
 			Email:  fmt.Sprintf("test%d@sourcegraph.com", i),

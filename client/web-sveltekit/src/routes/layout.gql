@@ -18,6 +18,12 @@ query EvaluatedFeatureFlagsQuery {
     }
 }
 
+query GlobalAlertsSiteFlags {
+    site {
+        ...GlobalNotifications
+    }
+}
+
 fragment FeatureFlag on EvaluatedFeatureFlag {
     name
     value

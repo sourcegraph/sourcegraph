@@ -101,7 +101,7 @@ func TestCache_deleteAllKeysWithPrefix(t *testing.T) {
 	c := New("some_prefix")
 	var aKeys, bKeys []string
 	var key string
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		if i%2 == 0 {
 			key = "a:" + strconv.Itoa(i)
 			aKeys = append(aKeys, key)

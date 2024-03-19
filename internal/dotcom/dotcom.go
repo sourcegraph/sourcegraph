@@ -15,7 +15,13 @@ func SourcegraphDotComMode() bool {
 	return sourcegraphDotComMode
 }
 
+type TB interface {
+	Cleanup(func())
+}
+
 // MockSourcegraphDotComMode is used by tests to mock the result of SourcegraphDotComMode.
-func MockSourcegraphDotComMode(value bool) {
+func MockSourcegraphDotComMode(t TB, value bool) {
+	orig := sourcegraphDotComMode
 	sourcegraphDotComMode = value
+	t.Cleanup(func() { sourcegraphDotComMode = orig })
 }

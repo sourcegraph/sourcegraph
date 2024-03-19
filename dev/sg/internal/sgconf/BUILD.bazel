@@ -1,5 +1,5 @@
-load("//dev:go_defs.bzl", "go_test")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
 
 go_library(
     name = "sgconf",
@@ -22,6 +22,12 @@ go_test(
     timeout = "short",
     srcs = ["config_test.go"],
     embed = [":sgconf"],
+    env = {
+        # This allows calls to root.RepositoryRoot() to return a fake root.
+        # Otherwise it will fail because it is being run not within the repository
+        # but within the bazel tree
+        "SG_FORCE_REPO_ROOT": "./fake_root",
+    },
     deps = [
         "//dev/sg/internal/run",
         "@com_github_google_go_cmp//cmp",

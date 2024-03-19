@@ -98,9 +98,8 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.21.4
+        uses: actions/setup-go@v4
+        with: { go-version: '1.22' }
 
       - name: Build and upload macOS
         if: startsWith(matrix.os, 'macos-') == true
@@ -116,12 +115,27 @@ jobs:
           GOARCH=${{ matrix.arch }} go build -o "sg_$(go env GOOS)_${{ matrix.arch }}" -trimpath -ldflags "-s -w -X main.BuildCommit=$(git rev-list -1 HEAD .)" .
           GOARCH=${{ matrix.arch }} go build -o "sg-msp_$(go env GOOS)_${{ matrix.arch }}" -tags=msp -trimpath -ldflags "-s -w -X main.BuildCommit=$(git rev-list -1 HEAD .)" .
 
+          # On certain CI agents, the glibc might not be the right one, so we build a static variant
+          CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -o "sg_$(go env GOOS)_${{ matrix.arch }}_static" -trimpath -ldflags "-s -w -X main.BuildCommit=$(git rev-list -1 HEAD .)" .
+          CGO_ENABLED=0 GOARCH=${{ matrix.arch }} go build -o "sg-msp_$(go env GOOS)_${{ matrix.arch }}_static" -tags=msp -trimpath -ldflags "-s -w -X main.BuildCommit=$(git rev-list -1 HEAD .)" .
+
       - name: Upload release asset
         run: |
           cd dev/sg
           release_name="${{ needs.create_release.outputs.release_name }}"
           gh release upload -R="${repo}" ${release_name} "sg_$(go env GOOS)_${{ matrix.arch }}"
           gh release upload -R="${repo}" ${release_name} "sg-msp_$(go env GOOS)_${{ matrix.arch }}"
+        env:
+          repo: sourcegraph/sg
+          GITHUB_TOKEN: ${{ secrets.SG_RELEASE_TOKEN }}
+
+      - name: Upload release asset (linux-amd64-static)
+        if: startswith(matrix.os, 'ubuntu-') == true
+        run: |
+          cd dev/sg
+          release_name="${{ needs.create_release.outputs.release_name }}"
+          gh release upload -R="${repo}" ${release_name} "sg_$(go env GOOS)_${{ matrix.arch }}_static"
+          gh release upload -R="${repo}" ${release_name} "sg-msp_$(go env GOOS)_${{ matrix.arch }}_static"
         env:
           repo: sourcegraph/sg
           GITHUB_TOKEN: ${{ secrets.SG_RELEASE_TOKEN }}

@@ -127,16 +127,18 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 
 	// Temporary logging command wrapper
 	prefix := fmt.Sprintf("%d %s ", atomic.AddUint64(&patchID, 1), repo)
-	run := func(cmd *exec.Cmd, reason string) ([]byte, error) {
+	run := func(cmd *exec.Cmd, reason string, isRemote bool) ([]byte, error) {
 		if !gitcli.IsAllowedGitCmd(logger, cmd.Args[1:], common.GitDir(tmpRepoDir)) {
 			return nil, errors.New("command not on allow list")
 		}
 
 		t := time.Now()
 
-		// Configure the command to be able to talk to a remote since one of our
-		// commands could be git push
-		executil.ConfigureRemoteGitCommand(cmd)
+		if isRemote {
+			// Configure the command to be able to talk to a remote since one of our
+			// commands could be git push
+			executil.ConfigureRemoteGitCommand(cmd, remoteURL)
+		}
 
 		out, err := s.recordingCommandFactory.Wrap(ctx, s.logger, cmd).CombinedOutput()
 		logger := logger.With(
@@ -166,7 +168,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 	cmd.Dir = tmpRepoDir
 	cmd.Env = append(os.Environ(), tmpGitPathEnv)
 
-	if _, err := run(cmd, "init tmp repo"); err != nil {
+	if _, err := run(cmd, "init tmp repo", false); err != nil {
 		return resp
 	}
 
@@ -174,7 +176,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 	cmd.Dir = tmpRepoDir
 	cmd.Env = append(os.Environ(), tmpGitPathEnv, altObjectsEnv)
 
-	if out, err := run(cmd, "basing staging on base rev"); err != nil {
+	if out, err := run(cmd, "basing staging on base rev", false); err != nil {
 		logger.Error("Failed to base the temporary repo on the base revision",
 			log.String("output", string(out)),
 		)
@@ -188,7 +190,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 	cmd.Env = append(os.Environ(), tmpGitPathEnv, altObjectsEnv)
 	cmd.Stdin = patchReader
 
-	if out, err := run(cmd, "applying patch"); err != nil {
+	if out, err := run(cmd, "applying patch", false); err != nil {
 		logger.Error("Failed to apply patch", log.String("output", string(out)))
 		return resp
 	}
@@ -235,7 +237,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 		fmt.Sprintf("GIT_AUTHOR_DATE=%v", req.CommitInfo.Date),
 	}...)
 
-	if out, err := run(cmd, "committing patch"); err != nil {
+	if out, err := run(cmd, "committing patch", false); err != nil {
 		logger.Error("Failed to commit patch.", log.String("output", string(out)))
 		return resp
 	}
@@ -320,7 +322,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 				)
 			}
 
-			if out, err = run(cmd, "pushing ref"); err != nil {
+			if out, err = run(cmd, "pushing ref", true); err != nil {
 				logger.Error("Failed to push", log.String("commit", cmtHash), log.String("output", string(out)))
 				return resp
 			}
@@ -332,7 +334,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 		cmd = exec.CommandContext(ctx, "git", "update-ref", "--", ref, cmtHash)
 		cmd.Dir = repoGitDir
 
-		if out, err = run(cmd, "creating ref"); err != nil {
+		if out, err = run(cmd, "creating ref", false); err != nil {
 			logger.Error("Failed to create ref for commit.", log.String("commit", cmtHash), log.String("output", string(out)))
 			return resp
 		}
@@ -699,7 +701,7 @@ func (p p4Command) cloneAndEditFiles(fileList []string, baseChangelistId string)
 	// want to specify the file at the base changelist revision
 	// build a slice of file names with the changelist id appended
 	filesWithCid := append([]string(nil), fileList...)
-	for i := 0; i < len(filesWithCid); i++ {
+	for i := range len(filesWithCid) {
 		filesWithCid[i] = filesWithCid[i] + "@" + baseChangelistId
 	}
 	if err := p.cloneFiles(filesWithCid); err != nil {

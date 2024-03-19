@@ -50,10 +50,10 @@ func runParallel(fns []func()) {
 	wg.Add(len(fns))
 
 	for _, fn := range fns {
-		go func(fn func()) {
+		go func() {
 			defer wg.Done()
 			fn()
-		}(fn)
+		}()
 	}
 
 	wg.Wait()

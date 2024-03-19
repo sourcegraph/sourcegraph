@@ -18,7 +18,7 @@ import (
 
 func testStoreBatchSpecWorkspaceExecutionJobs(t *testing.T, ctx context.Context, s *Store, clock bt.Clock) {
 	jobs := make([]*btypes.BatchSpecWorkspaceExecutionJob, 0, 3)
-	for i := 0; i < cap(jobs); i++ {
+	for i := range cap(jobs) {
 		job := &btypes.BatchSpecWorkspaceExecutionJob{
 			BatchSpecWorkspaceID: int64(i + 456),
 			UserID:               int32(i + 1),
@@ -246,7 +246,7 @@ func testStoreBatchSpecWorkspaceExecutionJobs(t *testing.T, ctx context.Context,
 
 		t.Run("BatchSpecID", func(t *testing.T) {
 			workspaceIDByBatchSpecID := map[int64]int64{}
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				batchSpec := &btypes.BatchSpec{UserID: 500, NamespaceUserID: 500}
 				if err := s.CreateBatchSpec(ctx, batchSpec); err != nil {
 					t.Fatal(err)
@@ -280,7 +280,6 @@ func testStoreBatchSpecWorkspaceExecutionJobs(t *testing.T, ctx context.Context,
 					t.Fatalf("wrong job returned. want=%d, have=%d", workspaceID, have[0].BatchSpecWorkspaceID)
 				}
 			}
-
 		})
 	})
 
@@ -370,7 +369,7 @@ func testStoreBatchSpecWorkspaceExecutionJobs(t *testing.T, ctx context.Context,
 			}
 
 			var specJobIDs []int64
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				ws := &btypes.BatchSpecWorkspace{BatchSpecID: spec.ID, RepoID: api.RepoID(i)}
 				if err := s.CreateBatchSpecWorkspace(ctx, ws); err != nil {
 					t.Fatal(err)

@@ -48,7 +48,6 @@ describe('TreePage', () => {
             subjects: null,
             final: null,
         },
-        extensionsController: null,
         platformContext: {
             settings: NEVER,
             updateSettings: () => Promise.reject(new Error('updateSettings not implemented')),
@@ -70,7 +69,7 @@ describe('TreePage', () => {
         useBreadcrumb: sinon.spy(),
         ownEnabled: false,
         authenticatedUser: null,
-        context: { authProviders: [] },
+        context: { externalURL: '' },
     })
 
     describe('repo page', () => {

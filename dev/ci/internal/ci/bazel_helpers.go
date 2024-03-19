@@ -13,7 +13,7 @@ import (
 func bazelBuild(targets ...string) func(*bk.Pipeline) {
 	cmds := []bk.StepOpt{
 		bk.Key("bazel_build"),
-		bk.Agent("queue", "bazel"),
+		bk.Agent("queue", AspectWorkflows.QueueDefault),
 	}
 	cmd := bazelStampedCmd(fmt.Sprintf("build %s", strings.Join(targets, " ")))
 	cmds = append(
@@ -29,72 +29,24 @@ func bazelBuild(targets ...string) func(*bk.Pipeline) {
 	}
 }
 
-func bazelTest(targets ...string) func(*bk.Pipeline) {
-	cmds := []bk.StepOpt{
-		bk.DependsOn("bazel-prechecks"),
-		bk.AllowDependencyFailure(),
-		bk.Agent("queue", "bazel"),
-		bk.Key("bazel-tests"),
-		bk.ArtifactPaths("./bazel-testlogs/cmd/embeddings/shared/shared_test/*.log", "./command.profile.gz"),
-		bk.AutomaticRetry(1), // TODO @jhchabran flaky stuff are breaking builds
-	}
-
-	// Test commands
-	bazelTestCmds := []bk.StepOpt{}
-
-	cmds = append(cmds, bazelApplyPrecheckChanges())
-
-	for _, target := range targets {
-		cmd := bazelCmd(fmt.Sprintf("test %s", target))
-		bazelTestCmds = append(bazelTestCmds,
-			bazelAnnouncef("bazel test %s", target),
-			bk.Cmd(cmd))
-	}
-	cmds = append(cmds, bazelTestCmds...)
-
-	return func(pipeline *bk.Pipeline) {
-		pipeline.AddStep(":bazel: Tests",
-			cmds...,
-		)
-	}
-}
-
-func bazelTestWithDepends(optional bool, dependsOn string, targets ...string) func(*bk.Pipeline) {
-	cmds := []bk.StepOpt{
-		bk.Agent("queue", "bazel"),
-	}
-
-	bazelCmd := bazelCmd(fmt.Sprintf("test %s", strings.Join(targets, " ")))
-	cmds = append(cmds, bk.Cmd(bazelCmd))
-	cmds = append(cmds, bk.DependsOn(dependsOn))
-
-	return func(pipeline *bk.Pipeline) {
-		if optional {
-			cmds = append(cmds, bk.SoftFail())
-		}
-		pipeline.AddStep(":bazel: Tests",
-			cmds...,
-		)
-	}
-}
-
 func bazelCmd(args ...string) string {
+	genBazelRC, bazelrc := aspectBazelRC()
 	pre := []string{
+		genBazelRC,
 		"bazel",
-		"--bazelrc=.bazelrc",
-		"--bazelrc=.aspect/bazelrc/ci.bazelrc",
-		"--bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc",
+		fmt.Sprintf("--bazelrc=%s", bazelrc),
 	}
 	Cmd := append(pre, args...)
 	return strings.Join(Cmd, " ")
 }
 
 func bazelStampedCmd(args ...string) string {
+	genBazelRC, bazelrc := aspectBazelRC()
 	pre := []string{
+		genBazelRC,
 		"bazel",
-		"--bazelrc=.bazelrc",
-		"--bazelrc=.aspect/bazelrc/ci.bazelrc",
-		"--bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc",
+		fmt.Sprintf("--bazelrc=%s", bazelrc),
+		fmt.Sprintf("--bazelrc=%s", ".aspect/bazelrc/ci.sourcegraph.bazelrc"),
 	}
 	post := []string{
 		"--stamp",
@@ -106,12 +58,13 @@ func bazelStampedCmd(args ...string) string {
 	return strings.Join(cmd, " ")
 }
 
+// TODO(burmudar): do we remove this?
 func bazelPrechecks() func(*bk.Pipeline) {
 	cmds := []bk.StepOpt{
 		bk.Key("bazel-prechecks"),
 		bk.SoftFail(100),
-		bk.Agent("queue", "bazel"),
-		bk.ArtifactPaths("./bazel-configure.diff", "./sg"),
+		bk.Agent("queue", AspectWorkflows.QueueDefault),
+		bk.ArtifactPaths("./sg"),
 		bk.AnnotatedCmd("dev/ci/bazel-prechecks.sh", bk.AnnotatedCmdOpts{
 			Annotations: &bk.AnnotationOpts{
 				Type:         bk.AnnotationTypeError,
@@ -122,6 +75,8 @@ func bazelPrechecks() func(*bk.Pipeline) {
 		// of its own pipeline step. After pre-checks have passed seems
 		// the most natural, as we then know that the bazel files are
 		// up-to-date for building sg.
+
+		// TODO(burmudar): maybe move this to be part of gen pipeline?
 		bk.Cmd("dev/ci/bazel-build-sg.sh"),
 	}
 
@@ -135,10 +90,6 @@ func bazelPrechecks() func(*bk.Pipeline) {
 func bazelAnnouncef(format string, args ...any) bk.StepOpt {
 	msg := fmt.Sprintf(format, args...)
 	return bk.Cmd(fmt.Sprintf(`echo "--- :bazel: %s"`, msg))
-}
-
-func bazelApplyPrecheckChanges() bk.StepOpt {
-	return bk.Cmd("dev/ci/bazel-prechecks-apply.sh")
 }
 
 var allowedBazelFlags = map[string]struct{}{
@@ -158,29 +109,11 @@ var bazelFlagsRe = regexp.MustCompile(`--\w+`)
 
 func verifyBazelCommand(command string) error {
 	// check for shell escape mechanisms.
-	if strings.Contains(command, ";") {
-		return errors.New("unauthorized input for bazel command: ';'")
-	}
-	if strings.Contains(command, "&") {
-		return errors.New("unauthorized input for bazel command: '&'")
-	}
-	if strings.Contains(command, "|") {
-		return errors.New("unauthorized input for bazel command: '|'")
-	}
-	if strings.Contains(command, "$") {
-		return errors.New("unauthorized input for bazel command: '$'")
-	}
-	if strings.Contains(command, "`") {
-		return errors.New("unauthorized input for bazel command: '`'")
-	}
-	if strings.Contains(command, ">") {
-		return errors.New("unauthorized input for bazel command: '>'")
-	}
-	if strings.Contains(command, "<") {
-		return errors.New("unauthorized input for bazel command: '<'")
-	}
-	if strings.Contains(command, "(") {
-		return errors.New("unauthorized input for bazel command: '('")
+	bannedChars := []string{"`", "$", "(", ")", ";", "&", "|", "<", ">"}
+	for _, c := range bannedChars {
+		if strings.Contains(command, c) {
+			return errors.Newf("unauthorized input for bazel command: %q", c)
+		}
 	}
 
 	// check for command and targets

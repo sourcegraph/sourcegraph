@@ -184,7 +184,7 @@ func (p *PersistentRepoIterator) NextPageWithFinish(pageSize int, config Iterati
 	}
 	itrStart := p.glock.Now()
 	repoIds := make([]api.RepoID, 0, len(currentRepos))
-	for i := 0; i < len(currentRepos); i++ {
+	for i := range len(currentRepos) {
 		repoIds = append(repoIds, api.RepoID(currentRepos[i]))
 	}
 	return repoIds, true, func(ctx context.Context, store *basestore.Store, maybeErrs map[int32]error) error {

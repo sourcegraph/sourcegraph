@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/regexp"
+	"github.com/urfave/cli/v2"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/bk"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
@@ -16,6 +17,20 @@ import (
 )
 
 var cvePattern = regexp.MustCompile(`<\w+>(CVE-\d+-\d+)<\/\w+>`)
+
+var buildNumberFlag = cli.StringFlag{
+	Name:     "buildNumber",
+	Usage:    "The buildkite build number to check for CVEs",
+	Required: true,
+	Aliases:  []string{"b"},
+}
+
+var referenceUriFlag = cli.StringFlag{
+	Name:     "uri",
+	Usage:    "A reference url that contains approved CVEs. Often a link to a handbook page eg: https://handbook.sourcegraph.com/departments/security/tooling/trivy/4-2-0/.",
+	Required: true,
+	Aliases:  []string{"u"},
+}
 
 func findUnapprovedCVEs(all []string, referenceDocument string) []string {
 	var unapproved []string
@@ -50,6 +65,14 @@ func downloadUrl(uri string, w io.Writer) (err error) {
 		return err
 	}
 	return nil
+}
+func cveCheck(cmd *cli.Context) error {
+	std.Out.WriteLine(output.Styledf(output.StylePending, "Checking release for approved CVEs..."))
+
+	referenceUrl := referenceUriFlag.Get(cmd)
+	buildNumber := buildNumberFlag.Get(cmd)
+
+	return CveCheck(cmd.Context, buildNumber, referenceUrl, false) // TODO(@jhchabran)
 }
 
 func CveCheck(ctx context.Context, buildNumber, referenceUrl string, verbose bool) error {

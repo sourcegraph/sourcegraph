@@ -382,7 +382,6 @@ func newUnclonedReposManager(ctx context.Context, logger log.Logger, isSourcegra
 // TODO: This might clash with what osscmd.Main does.
 // watchAuthzProviders updates authz providers if config changes.
 func watchAuthzProviders(ctx context.Context, db database.DB) {
-	globals.WatchPermissionsUserMapping()
 	go func() {
 		t := time.NewTicker(providers.RefreshInterval())
 		for range t.C {

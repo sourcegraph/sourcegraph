@@ -4,7 +4,7 @@ import { mdiInformationOutline } from '@mdi/js'
 import { of } from 'rxjs'
 
 import { pluralize } from '@sourcegraph/common'
-import { TelemetryRecorder, TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryRecorder, TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, useObservable, Icon } from '@sourcegraph/wildcard'
 
 import { type AllChangesetIDsVariables, type Scalars, BulkOperationType } from '../../../../graphql-operations'

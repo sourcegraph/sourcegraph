@@ -1,0 +1,16 @@
+fragment GlobalNotifications on Site {
+    id
+    freeUsersExceeded
+    needsRepositoryConfiguration
+    alerts {
+        type
+        message
+        isDismissibleWithKey
+    }
+    productSubscription {
+        license {
+            expiresAt
+        }
+        noLicenseWarningUserCount
+    }
+}

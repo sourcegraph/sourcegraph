@@ -3,7 +3,7 @@ import React from 'react'
 import { mdiArrowRight } from '@mdi/js'
 import classNames from 'classnames'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Link, Icon, H3 } from '@sourcegraph/wildcard'
 

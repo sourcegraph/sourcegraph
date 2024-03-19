@@ -10,18 +10,17 @@ import (
 	"github.com/sourcegraph/log"
 	"golang.org/x/exp/maps"
 
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
-	"github.com/sourcegraph/sourcegraph/internal/collections"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
-
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/authz/permssync"
+	"github.com/sourcegraph/sourcegraph/internal/collections"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/licensing"
@@ -87,7 +86,7 @@ func (r *Resolver) SetRepositoryPermissionsForUsers(ctx context.Context, args *g
 		bindIDs = append(bindIDs, up.BindID)
 	}
 
-	mapping, err := r.db.Perms().MapUsers(ctx, bindIDs, globals.PermissionsUserMapping())
+	mapping, err := r.db.Perms().MapUsers(ctx, bindIDs, conf.PermissionsUserMapping())
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +239,7 @@ func (r *Resolver) SetSubRepositoryPermissionsForUsers(ctx context.Context, args
 			bindIDs = append(bindIDs, up.BindID)
 		}
 
-		mapping, err := r.db.Perms().MapUsers(ctx, bindIDs, globals.PermissionsUserMapping())
+		mapping, err := r.db.Perms().MapUsers(ctx, bindIDs, conf.PermissionsUserMapping())
 		if err != nil {
 			return err
 		}

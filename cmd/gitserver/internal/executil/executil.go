@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/cacert"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/process"
@@ -121,16 +122,16 @@ func getTlsExternalDoNotInvoke() *tlsConfig {
 	}
 }
 
-func ConfigureRemoteGitCommand(cmd *exec.Cmd) {
+func ConfigureRemoteGitCommand(cmd *exec.Cmd, remoteURL *vcs.URL) {
 	// Inherit process environment. This allows admins to configure
 	// variables like http_proxy/etc.
 	if cmd.Env == nil {
 		cmd.Env = os.Environ()
 	}
-	configureRemoteGitCommand(cmd, tlsExternal())
+	configureRemoteGitCommand(cmd, remoteURL, tlsExternal())
 }
 
-func configureRemoteGitCommand(cmd *exec.Cmd, tlsConf *tlsConfig) {
+func configureRemoteGitCommand(cmd *exec.Cmd, remoteURL *vcs.URL, tlsConf *tlsConfig) {
 	// We split here in case the first command is an absolute path to the executable
 	// which allows us to safely match lower down
 	_, executable := path.Split(cmd.Args[0])
@@ -159,9 +160,34 @@ func configureRemoteGitCommand(cmd *exec.Cmd, tlsConf *tlsConfig) {
 		cmd.Env = append(cmd.Env, "GIT_SSL_CAINFO="+tlsConf.SSLCAInfo)
 	}
 
+	// Unset credential helper because the command is non-interactive.
+	// Even when we pass a second credential helper for HTTP credentials below,
+	// we will need this. Otherwise, the original credential helper will be used
+	// as well.
 	extraArgs := []string{
-		// Unset credential helper because the command is non-interactive.
 		"-c", "credential.helper=",
+	}
+
+	// If we have creds in the URL, pass it in via the credHelper.
+	password, ok := remoteURL.User.Password()
+	if ok && executable == "git" && !remoteURL.IsSSH() {
+		// If the remote URL is one of the args, remove the user section from it.
+		hasCreds := false
+		for i, arg := range cmd.Args {
+			if arg == remoteURL.String() {
+				ru := *remoteURL
+				ru.User = nil
+				cmd.Args[i] = ru.String()
+				hasCreds = true
+			}
+		}
+		if hasCreds {
+			// Next up, add out credential helper.
+			// Note: We add an ADDITIONAL credential helper here, the previous
+			// one is just unsetting any existing ones.
+			extraArgs = append(extraArgs, "-c", "credential.helper=!f() { echo \"username=$GIT_SG_USERNAME\npassword=$GIT_SG_PASSWORD\"; }; f")
+			cmd.Env = append(cmd.Env, "GIT_SG_USERNAME="+remoteURL.User.Username(), "GIT_SG_PASSWORD="+password)
+		}
 	}
 
 	if len(cmd.Args) > 1 && cmd.Args[1] != "ls-remote" {

@@ -156,22 +156,22 @@ func TestGetRanges(t *testing.T) {
 	)
 
 	var (
-		nonEmptyDefinitionLocations = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 16, 15, 24)}}
-		tDefinitionLocations        = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 25, 15, 26)}}
-		valueDefinitionLocations    = []shared.Location{{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 28, 15, 33)}}
+		nonEmptyDefinitionLocations = []shared.Location{{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 16, 15, 24)}}
+		tDefinitionLocations        = []shared.Location{{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 25, 15, 26)}}
+		valueDefinitionLocations    = []shared.Location{{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 28, 15, 33)}}
 
 		nonEmptyReferenceLocations = []shared.Location{}
 		tReferenceLocations        = []shared.Location{
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 35, 15, 36)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 39, 15, 40)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 73, 15, 74)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 77, 15, 78)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 35, 15, 36)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 39, 15, 40)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 73, 15, 74)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 77, 15, 78)},
 		}
 		valueReferenceLocations = []shared.Location{
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(15, 64, 15, 69)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 13, 16, 18)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 38, 16, 43)},
-			{DumpID: testSCIPUploadID, Path: path, Range: newRange(16, 48, 16, 53)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(15, 64, 15, 69)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(16, 13, 16, 18)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(16, 38, 16, 43)},
+			{UploadID: testSCIPUploadID, Path: path, Range: newRange(16, 48, 16, 53)},
 		}
 
 		nonEmptyImplementationLocations = []shared.Location(nil)

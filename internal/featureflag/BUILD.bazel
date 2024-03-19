@@ -34,7 +34,7 @@ go_test(
         "//internal/actor",
         "//internal/redispool",
         "//lib/errors",
-        "@com_github_derision_test_go_mockgen//testutil/require",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
         "@com_github_gomodule_redigo//redis",
         "@com_github_google_go_cmp//cmp",
         "@com_github_rafaeljusto_redigomock_v3//:redigomock",

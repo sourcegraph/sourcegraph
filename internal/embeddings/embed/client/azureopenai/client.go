@@ -71,7 +71,6 @@ func GetAPIClient(endpoint, accessToken string) (EmbeddingsClient, error) {
 		apiClient.client, err = azopenai.NewClient(endpoint, credential, nil)
 	}
 	return apiClient.client, err
-
 }
 
 func getCredentialOptions() (*azidentity.DefaultAzureCredentialOptions, error) {
@@ -90,7 +89,6 @@ func getCredentialOptions() (*azidentity.DefaultAzureCredentialOptions, error) {
 			Transport: proxiedClient,
 		},
 	}, nil
-
 }
 
 func NewClient(getClient GetEmbeddingsAPIClientFunc, config *conftypes.EmbeddingsConfig) (*azureOpenaiEmbeddingsClient, error) {
@@ -172,12 +170,11 @@ func (c *azureOpenaiEmbeddingsClient) getEmbeddings(ctx context.Context, texts [
 }
 
 func (c *azureOpenaiEmbeddingsClient) requestSingleEmbeddingWithRetryOnNull(ctx context.Context, input string, retries int) (*azopenai.GetEmbeddingsResponse, error) {
-	for i := 0; i < retries; i++ {
+	for range retries {
 		response, err := c.client.GetEmbeddings(ctx, azopenai.EmbeddingsOptions{
 			Input:          []string{input},
 			DeploymentName: &c.model,
 		}, nil)
-
 		if err != nil {
 			return nil, err
 		}

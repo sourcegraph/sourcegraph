@@ -290,8 +290,8 @@ func (h *handler) HandleRawUpload(ctx context.Context, logger log.Logger, upload
 			// Before we mark the upload as complete, we need to delete any existing completed uploads
 			// that have the same repository_id, commit, root, and indexer values. Otherwise, the transaction
 			// will fail as these values form a unique constraint.
-			if err := tx.DeleteOverlappingDumps(ctx, upload.RepositoryID, upload.Commit, upload.Root, upload.Indexer); err != nil {
-				return errors.Wrap(err, "store.DeleteOverlappingDumps")
+			if err := tx.DeleteOverlappingCompletedUploads(ctx, upload.RepositoryID, upload.Commit, upload.Root, upload.Indexer); err != nil {
+				return errors.Wrap(err, "store.DeleteOverlappingCompletedUploads")
 			}
 
 			trace.AddEvent("TODO Domain Owner", attribute.Int("packages", len(pkgData.Packages)))

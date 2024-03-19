@@ -26,10 +26,8 @@ type authnResponseInfo struct {
 }
 
 func readAuthnResponse(p *provider, encodedResp string) (*authnResponseInfo, error) {
-	{
-		if raw, err := base64.StdEncoding.DecodeString(encodedResp); err == nil {
-			traceLog(fmt.Sprintf("AuthnResponse: %s", p.ConfigID().ID), string(raw))
-		}
+	if raw, err := base64.StdEncoding.DecodeString(encodedResp); err == nil {
+		traceLog(fmt.Sprintf("AuthnResponse: %s", p.ConfigID().ID), string(raw))
 	}
 
 	assertions, err := p.samlSP.RetrieveAssertionInfo(encodedResp)
@@ -40,32 +38,30 @@ func readAuthnResponse(p *provider, encodedResp string) (*authnResponseInfo, err
 		return nil, errors.Errorf("invalid SAML AuthnResponse: %+v", wi)
 	}
 
+	if assertions.NameID == "" {
+		return nil, errors.New("the SAML response did not contain a valid NameID")
+	}
+
+	attr := samlAssertionValues(assertions.Values)
+	email := attr.getEmail(assertions)
+
+	if email == "" {
+		return nil, errors.New("the SAML response did not contain an email attribute")
+	}
+
+	unnormalizedUsername := attr.getUnnormalizedUsername(email, p.config.UsernameAttributeNames)
+	if unnormalizedUsername == "" {
+		return nil, errors.New("the SAML response did not contain a username attribute")
+	}
+
 	pi, err := p.getCachedInfoAndError()
 	if err != nil {
 		return nil, err
 	}
 
-	firstNonempty := func(ss ...string) string {
-		for _, s := range ss {
-			if s := strings.TrimSpace(s); s != "" {
-				return s
-			}
-		}
-		return ""
-	}
-	attr := samlAssertionValues(assertions.Values)
-	email := firstNonempty(attr.Get("email"), attr.Get("emailaddress"), attr.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"), attr.Get("http://schemas.xmlsoap.org/claims/EmailAddress"))
-	if email == "" && mightBeEmail(assertions.NameID) {
-		email = assertions.NameID
-	}
-	if pn := attr.Get("eduPersonPrincipalName"); email == "" && mightBeEmail(pn) {
-		email = pn
-	}
-	groupsAttr := "groups"
-	if p.config.GroupsAttributeName != "" {
-		groupsAttr = p.config.GroupsAttributeName
-	}
-	info := authnResponseInfo{
+	groupsAttr := firstNonEmpty(p.config.GroupsAttributeName, "groups")
+
+	info := &authnResponseInfo{
 		spec: extsvc.AccountSpec{
 			ServiceType: providerType,
 			ServiceID:   pi.ServiceID,
@@ -73,21 +69,12 @@ func readAuthnResponse(p *provider, encodedResp string) (*authnResponseInfo, err
 			AccountID:   assertions.NameID,
 		},
 		email:                email,
-		unnormalizedUsername: firstNonempty(attr.Get("login"), attr.Get("uid"), attr.Get("username"), attr.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"), email),
-		displayName:          firstNonempty(attr.Get("displayName"), attr.Get("givenName")+" "+attr.Get("surname"), attr.Get("http://schemas.xmlsoap.org/claims/CommonName"), attr.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname")),
+		unnormalizedUsername: unnormalizedUsername,
+		displayName:          attr.getDisplayName(),
 		groups:               attr.GetMap(groupsAttr),
 		accountData:          assertions,
 	}
-	if assertions.NameID == "" {
-		return nil, errors.New("the SAML response did not contain a valid NameID")
-	}
-	if info.email == "" {
-		return nil, errors.New("the SAML response did not contain an email attribute")
-	}
-	if info.unnormalizedUsername == "" {
-		return nil, errors.New("the SAML response did not contain a username attribute")
-	}
-	return &info, nil
+	return info, nil
 }
 
 // getOrCreateUser gets or creates a user account based on the SAML claims. It returns the
@@ -126,6 +113,19 @@ func mightBeEmail(s string) bool {
 	return strings.Count(s, "@") == 1
 }
 
+// firstNonEmpty returns the first string in the list that's not
+// empty or entirely whitespace.
+//
+// If no non-empty string is found, an empty string is returned.
+func firstNonEmpty(ss ...string) string {
+	for _, s := range ss {
+		if s := strings.TrimSpace(s); s != "" {
+			return s
+		}
+	}
+	return ""
+}
+
 type samlAssertionValues saml2.Values
 
 func (v samlAssertionValues) Get(key string) string {
@@ -134,6 +134,16 @@ func (v samlAssertionValues) Get(key string) string {
 			return a.Values[0].Value
 		}
 	}
+	return ""
+}
+
+func (v samlAssertionValues) getFirstNonEmpty(keys []string) string {
+	for _, key := range keys {
+		if s := v.Get(key); s != "" {
+			return s
+		}
+	}
+
 	return ""
 }
 
@@ -148,6 +158,75 @@ func (v samlAssertionValues) GetMap(key string) map[string]bool {
 		}
 	}
 	return nil
+}
+
+// getEmail returns an email address from samlAssertionValues and
+// saml2.AssertionInfo in the following order of preference:
+// 1. "email"
+// 2. "emailaddress"
+// 3. "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+// 4. "http://schemas.xmlsoap.org/claims/EmailAddress"
+// 5. "eduPersonPrincipalName"
+// 6. assertions.NameID
+func (v samlAssertionValues) getEmail(assertions *saml2.AssertionInfo) string {
+	email := firstNonEmpty(
+		v.Get("email"),
+		v.Get("emailaddress"),
+		v.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"),
+		v.Get("http://schemas.xmlsoap.org/claims/EmailAddress"),
+	)
+
+	if email != "" {
+		return email
+	}
+
+	principalName := v.Get("eduPersonPrincipalName")
+	if mightBeEmail(principalName) {
+		return principalName
+	}
+
+	if mightBeEmail(assertions.NameID) {
+		return assertions.NameID
+	}
+
+	return email
+}
+
+// getUnnormalizedUsername returns a username from samlAssertionValues.
+// If usernameKeys is provided, that list of keys will be checked in order.
+// Otherwise, a username is selected in the following order of preference:
+// 1. "login"
+// 2. "uid"
+// 3. "username"
+// 4. "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+// 5. email
+func (v samlAssertionValues) getUnnormalizedUsername(email string, usernameKeys []string) string {
+	if len(usernameKeys) > 0 {
+		return v.getFirstNonEmpty(usernameKeys)
+	}
+
+	return firstNonEmpty(
+		v.Get("login"),
+		v.Get("uid"),
+		v.Get("username"),
+		v.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"),
+		email,
+	)
+}
+
+// getDisplayName returns a username from samlAssertionValues in the following
+// order of preference:
+// 1. "displayName"
+// 2. "givenName" + " " + "surname"
+// 3. "http://schemas.xmlsoap.org/claims/CommonName"
+// 4. "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+func (v samlAssertionValues) getDisplayName() string {
+	return firstNonEmpty(
+		v.Get("displayName"),
+		v.Get("givenName")+" "+v.Get("surname"),
+		v.Get("http://schemas.xmlsoap.org/claims/CommonName"),
+		v.Get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"),
+	)
 }
 
 type SAMLValues struct {

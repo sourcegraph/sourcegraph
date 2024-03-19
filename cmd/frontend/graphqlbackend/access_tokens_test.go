@@ -360,9 +360,7 @@ func TestMutation_CreateAccessToken(t *testing.T) {
 		db := dbmocks.NewMockDB()
 		db.UsersFunc.SetDefaultReturn(users)
 
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig)
+		dotcom.MockSourcegraphDotComMode(t, true)
 
 		ctx := actor.WithActor(context.Background(), &actor.Actor{UID: 1})
 		_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).CreateAccessToken(ctx,
@@ -383,9 +381,7 @@ func TestMutation_CreateAccessToken(t *testing.T) {
 		conf.Get().AuthAccessTokens = &schema.AuthAccessTokens{Allow: string(conf.AccessTokensAdmin)}
 		defer func() { conf.Get().AuthAccessTokens = nil }()
 
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig)
+		dotcom.MockSourcegraphDotComMode(t, true)
 
 		ctx := actor.WithActor(context.Background(), &actor.Actor{UID: 1})
 		_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).CreateAccessToken(ctx,

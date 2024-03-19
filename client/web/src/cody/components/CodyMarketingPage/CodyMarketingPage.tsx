@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
+
 import { mdiChevronRight, mdiCodeBracesBox, mdiGit } from '@mdi/js'
 import classNames from 'classnames'
 
-import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Theme, useTheme } from '@sourcegraph/shared/src/theme'
 import { Badge, H1, H2, H3, H4, Icon, Link, PageHeader, Text } from '@sourcegraph/wildcard'
 
@@ -105,9 +107,9 @@ const codyPlatformCardItems = (
           ]),
 ]
 
-export interface CodyMarketingPageProps {
+export interface CodyMarketingPageProps extends TelemetryV2Props {
     isSourcegraphDotCom: boolean
-    context: Pick<SourcegraphContext, 'authProviders'>
+    context: Pick<SourcegraphContext, 'externalURL'>
     authenticatedUser: AuthenticatedUser | null
 }
 
@@ -115,9 +117,12 @@ export const CodyMarketingPage: React.FunctionComponent<CodyMarketingPageProps> 
     context,
     isSourcegraphDotCom,
     authenticatedUser,
+    telemetryRecorder,
 }) => {
     const { theme } = useTheme()
     const isDarkTheme = theme === Theme.Dark
+
+    useEffect(() => telemetryRecorder.recordEvent('cody.marketing', 'view'), [telemetryRecorder])
 
     return (
         <Page>
@@ -176,8 +181,7 @@ export const CodyMarketingPage: React.FunctionComponent<CodyMarketingPageProps> 
                                 onClick={() => {}}
                                 ctaClassName={styles.authButton}
                                 iconClassName={styles.buttonIcon}
-                                // TODO (dadlerj): update with a real telemetry recorder
-                                telemetryRecorder={noOpTelemetryRecorder}
+                                telemetryRecorder={telemetryRecorder}
                                 telemetryService={eventLogger}
                             />
                         </div>

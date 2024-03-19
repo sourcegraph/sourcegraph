@@ -1135,12 +1135,11 @@ func TestGetEmbeddingsConfig(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			defaultDeploy := deploy.Type()
-			dotcom.MockSourcegraphDotComMode(tc.dotcom)
+			dotcom.MockSourcegraphDotComMode(t, tc.dotcom)
 			if tc.deployType != "" {
 				deploy.Mock(tc.deployType)
 			}
 			t.Cleanup(func() {
-				dotcom.MockSourcegraphDotComMode(false)
 				deploy.Mock(defaultDeploy)
 			})
 			conf := GetEmbeddingsConfig(tc.siteConfig)

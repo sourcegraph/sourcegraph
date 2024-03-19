@@ -445,7 +445,7 @@ func (r *Resolver) CreateLineChartSearchInsight(ctx context.Context, args *graph
 	}
 
 	// Use view level Repo & Time scope if provided and ensure input is valid
-	for i := 0; i < len(args.Input.DataSeries); i++ {
+	for i := range len(args.Input.DataSeries) {
 		if args.Input.DataSeries[i].RepositoryScope == nil {
 			args.Input.DataSeries[i].RepositoryScope = args.Input.RepositoryScope
 		}
@@ -541,7 +541,7 @@ func (r *Resolver) UpdateLineChartSearchInsight(ctx context.Context, args *graph
 	}
 
 	// Ensure Repo Scope is valid for each scope
-	for i := 0; i < len(args.Input.DataSeries); i++ {
+	for i := range len(args.Input.DataSeries) {
 		if args.Input.DataSeries[i].RepositoryScope == nil {
 			args.Input.DataSeries[i].RepositoryScope = args.Input.RepositoryScope
 		}
@@ -759,7 +759,7 @@ func existingSeriesHasChanged(new graphqlbackend.LineChartSearchInsightDataSerie
 	sort.Slice(existing.Repositories, func(i, j int) bool {
 		return existing.Repositories[i] < existing.Repositories[j]
 	})
-	for i := 0; i < len(existing.Repositories); i++ {
+	for i := range len(existing.Repositories) {
 		if new.RepositoryScope.Repositories[i] != existing.Repositories[i] {
 			return true
 		}

@@ -987,7 +987,7 @@ func TestPermissionSyncJobs_CountReposWithFailingSyncJob(t *testing.T) {
 func createSyncJobs(t *testing.T, ctx context.Context, userID int32, store PermissionSyncJobStore) {
 	t.Helper()
 	clock := timeutil.NewFakeClock(time.Now(), 0)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		processAfter := clock.Now().Add(5 * time.Minute)
 		reason := ReasonManualUserSync
 		if i%2 == 0 {
@@ -1065,7 +1065,7 @@ func cleanupSyncJobs(t *testing.T, db DB, ctx context.Context) {
 
 func reverse(jobs []*PermissionSyncJob) []*PermissionSyncJob {
 	reversed := make([]*PermissionSyncJob, 0, len(jobs))
-	for i := 0; i < len(jobs); i++ {
+	for i := range len(jobs) {
 		reversed = append(reversed, jobs[len(jobs)-i-1])
 	}
 	return reversed

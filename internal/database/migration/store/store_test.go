@@ -572,7 +572,7 @@ func TestIndexStatus(t *testing.T) {
 	// so we can examine what this method returns while an index is being created.
 
 	conns := make([]*sql.Conn, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		conn, err := db.Conn(ctx)
 		if err != nil {
 			t.Fatalf("failed to open new connection: %s", err)

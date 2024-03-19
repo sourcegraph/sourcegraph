@@ -83,7 +83,7 @@ export const SymbolSearchResult: React.FunctionComponent<SymbolSearchResultProps
     )
 
     const logEventOnCopy = useCallback(() => {
-        telemetryService.log(...codeCopiedEvent('file-match'))
+        telemetryService.log(...codeCopiedEvent('search-result'))
     }, [telemetryService])
 
     const [hasBeenVisible, setHasBeenVisible] = useState(false)

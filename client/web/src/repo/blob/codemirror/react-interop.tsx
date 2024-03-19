@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 
+import { type ApolloClient, ApolloProvider } from '@apollo/client'
 import { BrowserRouter, type NavigateFunction, useLocation } from 'react-router-dom'
 
 import { WildcardThemeContext } from '@sourcegraph/wildcard'
 
 interface CodeMirrorContainerProps {
+    graphQLClient: ApolloClient<any>
     navigate: NavigateFunction
     onMount?: () => void
     onRender?: () => void
@@ -15,6 +17,7 @@ interface CodeMirrorContainerProps {
  * CodeMirror.
  */
 export const CodeMirrorContainer: React.FunctionComponent<React.PropsWithChildren<CodeMirrorContainerProps>> = ({
+    graphQLClient,
     navigate,
     onMount,
     onRender,
@@ -26,12 +29,14 @@ export const CodeMirrorContainer: React.FunctionComponent<React.PropsWithChildre
     useEffect(() => onMount?.(), [])
 
     return (
-        <WildcardThemeContext.Provider value={{ isBranded: true }}>
-            <BrowserRouter>
-                {children}
-                <SyncInnerRouterWithParent navigate={navigate} />
-            </BrowserRouter>
-        </WildcardThemeContext.Provider>
+        <ApolloProvider client={graphQLClient}>
+            <WildcardThemeContext.Provider value={{ isBranded: true }}>
+                <BrowserRouter>
+                    {children}
+                    <SyncInnerRouterWithParent navigate={navigate} />
+                </BrowserRouter>
+            </WildcardThemeContext.Provider>
+        </ApolloProvider>
     )
 }
 

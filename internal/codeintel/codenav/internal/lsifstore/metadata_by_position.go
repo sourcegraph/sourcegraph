@@ -234,8 +234,8 @@ func (s *store) GetDiagnostics(ctx context.Context, bundleID int, prefix string,
 
 				if offset < 0 && len(diagnostics) < limit {
 					diagnostics = append(diagnostics, shared.Diagnostic{
-						DumpID: bundleID,
-						Path:   documentData.Path,
+						UploadID: bundleID,
+						Path:     documentData.Path,
 						DiagnosticData: precise.DiagnosticData{
 							Severity:       int(diagnostic.Severity),
 							Code:           diagnostic.Code,

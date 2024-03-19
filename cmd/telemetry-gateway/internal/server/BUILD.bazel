@@ -13,8 +13,10 @@ go_library(
     visibility = ["//cmd/telemetry-gateway:__subpackages__"],
     deps = [
         "//cmd/telemetry-gateway/internal/events",
+        "//cmd/telemetry-gateway/internal/server/samsm2m",
         "//internal/licensing",
         "//internal/pubsub",
+        "//internal/sams",
         "//internal/telemetrygateway/v1:telemetrygateway",
         "//internal/trace",
         "//lib/errors",

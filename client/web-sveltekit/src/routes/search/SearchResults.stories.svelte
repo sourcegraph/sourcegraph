@@ -1,30 +1,32 @@
 <script lang="ts">
     import { Story } from '@storybook/addon-svelte-csf'
-    import SearchResults from './SearchResults.svelte'
+    import { graphql } from 'msw'
+    import { SvelteComponent, setContext } from 'svelte'
+    import { readable } from 'svelte/store'
+
+    import type { HighlightedFileResult, HighlightedFileVariables } from '$lib/graphql-operations'
+    import { queryStateStore } from '$lib/search/state'
+    import type { ContentMatch, PathMatch, SearchMatch, SymbolMatch } from '$lib/shared'
+    import { KEY, type SourcegraphContext } from '$lib/stores'
+    import { createTemporarySettingsStorage } from '$lib/temporarySettings'
     import {
         createCommitMatch,
         createContentMatch,
-        createHighlightedFileResult,
         createPathMatch,
         createPersonMatch,
         createSymbolMatch,
         createTeamMatch,
-    } from '$testing/testdata'
-    import FileContentSearchResult from './FileContentSearchResult.svelte'
-    import { SvelteComponent, setContext } from 'svelte'
-    import { KEY, type SourcegraphContext } from '$lib/stores'
-    import { readable } from 'svelte/store'
+    } from '$testing/search-testdata'
+    import { createHighlightedFileResult } from '$testing/testdata'
+
     import CommitSearchResult from './CommitSearchResult.svelte'
-    import PersonSearchResult from './PersonSearchResult.svelte'
-    import TeamSearchResult from './TeamSearchResult.svelte'
-    import { queryStateStore } from '$lib/search/state'
-    import { graphql } from 'msw'
-    import type { HighlightedFileResult, HighlightedFileVariables } from '$lib/graphql-operations'
-    import type { SearchMatch } from '$lib/shared'
+    import FileContentSearchResult from './FileContentSearchResult.svelte'
     import FilePathSearchResult from './FilePathSearchResult.svelte'
-    import SymbolSearchResult from './SymbolSearchResult.svelte'
-    import { createTemporarySettingsStorage } from '$lib/temporarySettings'
+    import PersonSearchResult from './PersonSearchResult.svelte'
+    import SearchResults from './SearchResults.svelte'
     import { setSearchResultsContext } from './searchResultsContext'
+    import SymbolSearchResult from './SymbolSearchResult.svelte'
+    import TeamSearchResult from './TeamSearchResult.svelte'
 
     export const meta = {
         title: 'search/SearchResults',
@@ -54,6 +56,7 @@
         },
         setExpanded(_match, _expanded) {},
         queryState: queryStateStore(undefined, {}),
+        setPreview(_props: PathMatch | ContentMatch | SymbolMatch | null): void {},
     })
     // TS complains about up MockSuitFunctions which is not relevant here
     // @ts-ignore

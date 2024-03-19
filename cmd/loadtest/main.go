@@ -61,13 +61,13 @@ func run(logger log.Logger) error {
 	for {
 		for _, v := range searchQueries {
 			<-ticker.C
-			go func(v GQLSearchVars) {
+			go func() {
 				if count, err := search(v); err != nil {
 					logger.Error("Error issuing search query", log.String("query", v.Query), log.Error(err))
 				} else {
 					logger.Info("Search results", log.String("query", v.Query), log.Int("matchCount", count))
 				}
-			}(v)
+			}()
 		}
 	}
 }

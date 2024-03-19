@@ -1,7 +1,7 @@
 import React from 'react'
 
 import classNames from 'classnames'
-import formatDistanceStrict from 'date-fns/formatDistanceStrict'
+import { formatDistanceStrict } from 'date-fns'
 
 import { Link } from '@sourcegraph/wildcard'
 

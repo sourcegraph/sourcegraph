@@ -11,7 +11,7 @@ import { isErrorLike } from '@sourcegraph/common'
 import { gql, useQuery } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import { RepoLink } from '@sourcegraph/shared/src/components/RepoLink'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Button,
@@ -170,7 +170,7 @@ export const CodeIntelPreciseIndexesPage: FunctionComponent<CodeIntelPreciseInde
     }, [indexerData?.indexerKeys])
 
     // Poke filtered connection to refresh
-    const refresh = useMemo(() => new Subject<undefined>(), [])
+    const refresh = useMemo(() => new Subject<void>(), [])
     const querySubject = useMemo(() => new Subject<string>(), [])
 
     // State used to control bulk index selection

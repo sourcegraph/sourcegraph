@@ -1,3 +1,4 @@
+import type { ApolloClient } from '@apollo/client'
 import { type EditorView, repositionTooltips, type TooltipView, type ViewUpdate } from '@codemirror/view'
 import classNames from 'classnames'
 import { createRoot, type Root } from 'react-dom/client'
@@ -18,7 +19,11 @@ type Unwrap<T> = T extends Observable<infer U> ? U : never
 
 // WebHoverOverlay expects to be passed the overlay position. Since CodeMirror
 // positions the element we always use the same value.
-const dummyOverlayPosition = { left: 0, bottom: 0 }
+const NOOP_OVERLAY_POSITION = { left: 0, bottom: 0 }
+
+// WebHoverOverlay is shared witht the browser extension and expects to be passed
+// an extension controller. This is a dummy value that is never used.
+const NOOP_EXTENSION_CONTROLLER = { executeCommand: () => Promise.resolve(undefined) }
 
 /**
  * This class is responsible for rendering a WebHoverOverlay component as a
@@ -39,7 +44,8 @@ export class HovercardView implements TooltipView {
     constructor(
         private readonly view: EditorView,
         private readonly tokenRange: TooltipViewOptions['token'],
-        hovercardData: TooltipViewOptions['hovercardData']
+        hovercardData: TooltipViewOptions['hovercardData'],
+        private readonly client: ApolloClient<any>
     ) {
         this.dom = document.createElement('div')
         this.dom.className = 'sg-code-intel-hovercard'
@@ -106,7 +112,11 @@ export class HovercardView implements TooltipView {
         }
 
         root.render(
-            <CodeMirrorContainer navigate={props.navigate} onRender={() => repositionTooltips(this.view)}>
+            <CodeMirrorContainer
+                navigate={props.navigate}
+                graphQLClient={this.client}
+                onRender={() => repositionTooltips(this.view)}
+            >
                 <div
                     className={classNames({
                         'cm-code-intel-hovercard': true,
@@ -120,14 +130,14 @@ export class HovercardView implements TooltipView {
                         platformContext={props.platformContext}
                         settingsCascade={props.settingsCascade}
                         telemetryService={props.telemetryService}
-                        extensionsController={props.extensionsController}
+                        extensionsController={NOOP_EXTENSION_CONTROLLER}
                         // Hover props
                         actionsOrError={actionsOrError}
                         hoverOrError={hoverOrError}
                         // CodeMirror handles the positioning but a
                         // non-nullable value must be passed for the
                         // hovercard to render
-                        overlayPosition={dummyOverlayPosition}
+                        overlayPosition={NOOP_OVERLAY_POSITION}
                         hoveredToken={hoveredToken}
                         pinOptions={{
                             showCloseButton: pinned,

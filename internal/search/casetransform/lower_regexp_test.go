@@ -13,8 +13,8 @@ func TestLowerRegexpASCII(t *testing.T) {
 	cases := map[string]string{
 		"foo":       "foo",
 		"FoO":       "foo",
-		"(?m:^foo)": "(?m:^)foo", // regex parse simplifies to this
-		"(?m:^FoO)": "(?m:^)foo",
+		"(?m:^foo)": "(?m:^foo)",
+		"(?m:^FoO)": "(?m:^foo)",
 
 		// Ranges for the characters can be tricky. So we include many
 		// cases. Importantly user intention when they write [^A-Z] is would
@@ -46,10 +46,10 @@ func TestLowerRegexpASCII(t *testing.T) {
 		// full unicode range should just be a .
 		"[\\x00-\\x{10ffff}]": "(?s:.)",
 
-		"[abB-Z]":       "[b-za-b]",
-		"([abB-Z]|FoO)": "([b-za-b]|foo)",
-		`[@-\[]`:        `[@-\[a-z]`,      // original range includes A-Z but excludes a-z
-		`\S`:            `[^\t-\n\f-\r ]`, // \S is shorthand for the expected
+		"[abB-Z]":       "[b-zab]",
+		"([abB-Z]|FoO)": "([b-zab]|foo)",
+		`[@-\[]`:        `[@-\[a-z]`,    // original range includes A-Z but excludes a-z
+		`\S`:            `[^\t\n\f\r ]`, // \S is shorthand for the expected
 	}
 
 	for expr, want := range cases {

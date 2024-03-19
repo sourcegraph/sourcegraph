@@ -48,7 +48,7 @@ go_test(
         "//internal/types",
         "//internal/webhooks/outbound",
         "//lib/errors",
-        "@com_github_derision_test_go_mockgen//testutil/assert",
+        "@com_github_derision_test_go_mockgen_v2//testutil/assert",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

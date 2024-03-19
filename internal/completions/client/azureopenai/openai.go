@@ -2,15 +2,19 @@ package azureopenai
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"golang.org/x/net/http2"
 
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -52,10 +56,17 @@ func GetAPIClient(endpoint, accessToken string) (CompletionsClient, error) {
 	apiClient.mu.RUnlock()
 	apiClient.mu.Lock()
 	defer apiClient.mu.Unlock()
+
+	// API Versions and docs https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions
+	clientOpts := &azopenai.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Transport: apiVersionClient("2023-05-15"),
+		},
+	}
 	var err error
 	if accessToken != "" {
 		credential := azcore.NewKeyCredential(accessToken)
-		apiClient.client, err = azopenai.NewClientWithKeyCredential(endpoint, credential, nil)
+		apiClient.client, err = azopenai.NewClientWithKeyCredential(endpoint, credential, clientOpts)
 	} else {
 		var opts *azidentity.DefaultAzureCredentialOptions
 		opts, err = getCredentialOptions()
@@ -67,7 +78,8 @@ func GetAPIClient(endpoint, accessToken string) (CompletionsClient, error) {
 			return nil, credErr
 		}
 		apiClient.endpoint = endpoint
-		apiClient.client, err = azopenai.NewClient(endpoint, credential, nil)
+
+		apiClient.client, err = azopenai.NewClient(endpoint, credential, clientOpts)
 	}
 	return apiClient.client, err
 
@@ -372,4 +384,50 @@ func toStatusCodeError(err error) error {
 		}
 	}
 	return err
+}
+
+type apiVersionRoundTripper struct {
+	rt         http.RoundTripper
+	apiVersion string
+}
+
+func (rt *apiVersionRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	newReq := req.Clone(req.Context())
+	values := newReq.URL.Query()
+	values.Set("api-version", rt.apiVersion)
+	newReq.URL.RawQuery = values.Encode()
+	return rt.rt.RoundTrip(newReq)
+}
+
+func apiVersionClient(apiVersion string) *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+	azureClientDefaultTransport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			MinVersion:    tls.VersionTLS12,
+			Renegotiation: tls.RenegotiateFreelyAsClient,
+		},
+	}
+
+	if http2Transport, err := http2.ConfigureTransports(azureClientDefaultTransport); err == nil {
+		http2Transport.ReadIdleTimeout = 10 * time.Second
+		http2Transport.PingTimeout = 5 * time.Second
+	}
+
+	return &http.Client{
+		Transport: &apiVersionRoundTripper{
+			rt:         azureClientDefaultTransport,
+			apiVersion: apiVersion,
+		},
+	}
 }

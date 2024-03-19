@@ -22,7 +22,6 @@ import (
 
 	"github.com/sourcegraph/log/logtest"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
@@ -429,7 +428,7 @@ func TestPermsStore_SetUserExternalAccountPerms(t *testing.T) {
 			}(),
 			expectedStats: func() []*SetPermissionsResult {
 				result := make([]*SetPermissionsResult, countToExceedParameterLimit)
-				for i := 0; i < countToExceedParameterLimit; i++ {
+				for i := range countToExceedParameterLimit {
 					result[i] = &SetPermissionsResult{
 						Added:   1,
 						Removed: 0,
@@ -1055,7 +1054,7 @@ func TestPermsStore_SetRepoPermissionsUnrestricted(t *testing.T) {
 		// Add a couple of repos and a user
 		executeQuery(t, ctx, s, sqlf.Sprintf(`INSERT INTO users (username) VALUES ('alice')`))
 		executeQuery(t, ctx, s, sqlf.Sprintf(`INSERT INTO users (username) VALUES ('bob')`))
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			createRepo(t, i+1)
 			if _, err := s.SetRepoPerms(context.Background(), int32(i+1), []authz.UserIDWithExternalAccountID{{UserID: 2}}, authz.SourceRepoSync); err != nil {
 				t.Fatal(err)
@@ -1931,7 +1930,7 @@ func TestPermsStore_SetRepoPendingPermissions(t *testing.T) {
 			for _, update := range test.updates {
 				const numOps = 30
 				g, ctx := errgroup.WithContext(ctx)
-				for i := 0; i < numOps; i++ {
+				for range numOps {
 					// Make local copy to prevent race conditions
 					accounts := *update.accounts
 					perm := &authz.RepoPermissions{
@@ -3024,25 +3023,25 @@ func TestPermsStore_DatabaseDeadlocks(t *testing.T) {
 	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < numOps; i++ {
+		for range numOps {
 			setUserPermissions(ctx, t)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < numOps; i++ {
+		for range numOps {
 			setRepoPermissions(ctx, t)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < numOps; i++ {
+		for range numOps {
 			setRepoPendingPermissions(ctx, t)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < numOps; i++ {
+		for range numOps {
 			grantPendingPermissions(ctx, t)
 		}
 	}()
@@ -3388,6 +3387,8 @@ func TestPermsStore_UserIDsWithOldestPerms(t *testing.T) {
 		sqlf.Sprintf(`INSERT INTO users(id, username) VALUES(1, 'alice')`),
 		sqlf.Sprintf(`INSERT INTO users(id, username) VALUES(2, 'bob')`),
 		sqlf.Sprintf(`INSERT INTO users(id, username, deleted_at) VALUES(3, 'cindy', NOW())`),
+		sqlf.Sprintf(`INSERT INTO users(id, username) VALUES(4, 'david')`),
+		sqlf.Sprintf(`INSERT INTO users(id, username) VALUES(5, 'erica')`),
 	}
 	for _, q := range qs {
 		executeQuery(t, ctx, s, q)
@@ -3397,15 +3398,20 @@ func TestPermsStore_UserIDsWithOldestPerms(t *testing.T) {
 	user1UpdatedAt := clock().Add(-15 * time.Minute)
 	user2UpdatedAt := clock().Add(-5 * time.Minute)
 	user3UpdatedAt := clock().Add(-11 * time.Minute)
-	q := sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, finished_at, reason) VALUES(%d, %s, %s)`, 1, user1UpdatedAt, ReasonUserOutdatedPermissions)
+	q := sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 1, user1UpdatedAt, ReasonUserOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
-	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, finished_at, reason) VALUES(%d, %s, %s)`, 2, user2UpdatedAt, ReasonUserOutdatedPermissions)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 2, user2UpdatedAt, ReasonUserOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
-	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, finished_at, reason) VALUES(%d, %s, %s)`, 3, user3UpdatedAt, ReasonUserOutdatedPermissions)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 3, user3UpdatedAt, ReasonUserOutdatedPermissions)
+	executeQuery(t, ctx, s, q)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, state, reason) VALUES(%d, 'queued', %s)`, 4, ReasonUserOutdatedPermissions)
+	executeQuery(t, ctx, s, q)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(user_id, state, reason) VALUES(%d, 'processing', %s)`, 5, ReasonUserOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
 
-	t.Run("One result when limit is 1", func(t *testing.T) {
+	t.Run("One result when limit is 1. Queued user ignored", func(t *testing.T) {
 		// Should only get user 1 back, because limit is 1
+		// Users with queued and processing permissions syncs are ignored
 		results, err := s.UserIDsWithOldestPerms(ctx, 1, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -3559,6 +3565,8 @@ func TestPermsStore_ReposIDsWithOldestPerms(t *testing.T) {
 		sqlf.Sprintf(`INSERT INTO repo(id, name, private) VALUES(1, 'private_repo_1', TRUE)`),                    // id=1
 		sqlf.Sprintf(`INSERT INTO repo(id, name, private) VALUES(2, 'private_repo_2', TRUE)`),                    // id=2
 		sqlf.Sprintf(`INSERT INTO repo(id, name, private, deleted_at) VALUES(3, 'private_repo_3', TRUE, NOW())`), // id=3
+		sqlf.Sprintf(`INSERT INTO repo(id, name, private) VALUES(4, 'private_repo_4', TRUE)`),                    // id=2
+		sqlf.Sprintf(`INSERT INTO repo(id, name, private) VALUES(5, 'private_repo_5', TRUE)`),                    // id=2
 	}
 	for _, q := range qs {
 		executeQuery(t, ctx, s, q)
@@ -3568,15 +3576,20 @@ func TestPermsStore_ReposIDsWithOldestPerms(t *testing.T) {
 	repo1UpdatedAt := clock().Add(-15 * time.Minute)
 	repo2UpdatedAt := clock().Add(-5 * time.Minute)
 	repo3UpdatedAt := clock().Add(-10 * time.Minute)
-	q := sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, finished_at, reason) VALUES(%d, %s, %s)`, 1, repo1UpdatedAt, ReasonRepoOutdatedPermissions)
+	q := sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 1, repo1UpdatedAt, ReasonRepoOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
-	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, finished_at, reason) VALUES(%d, %s, %s)`, 2, repo2UpdatedAt, ReasonRepoOutdatedPermissions)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 2, repo2UpdatedAt, ReasonRepoOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
-	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, finished_at, reason) VALUES(%d, %s, %s)`, 3, repo3UpdatedAt, ReasonRepoOutdatedPermissions)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, state, finished_at, reason) VALUES(%d, 'completed', %s, %s)`, 3, repo3UpdatedAt, ReasonRepoOutdatedPermissions)
+	executeQuery(t, ctx, s, q)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, state, reason) VALUES(%d, 'queued', %s)`, 4, ReasonRepoOutdatedPermissions)
+	executeQuery(t, ctx, s, q)
+	q = sqlf.Sprintf(`INSERT INTO permission_sync_jobs(repository_id, state, reason) VALUES(%d, 'processing', %s)`, 5, ReasonRepoOutdatedPermissions)
 	executeQuery(t, ctx, s, q)
 
 	t.Run("One result when limit is 1", func(t *testing.T) {
 		// Should only get private_repo_1 back, because limit is 1
+		// Repos with jobs queued or in progress are ignored
 		results, err := s.ReposIDsWithOldestPerms(ctx, 1, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -4318,17 +4331,18 @@ func TestPermsStore_ListRepoPermissions(t *testing.T) {
 				defer authz.SetProviders(true, nil)
 			}
 
-			before := globals.PermissionsUserMapping()
-			globals.SetPermissionsUserMapping(&schema.PermissionsUserMapping{Enabled: test.UsePermissionsUserMapping})
 			conf.Mock(
 				&conf.Unified{
 					SiteConfiguration: schema.SiteConfiguration{
+						PermissionsUserMapping: &schema.PermissionsUserMapping{
+							Enabled: test.UsePermissionsUserMapping,
+							BindID:  "email",
+						},
 						AuthzEnforceForSiteAdmins: test.AuthzEnforceForSiteAdmins,
 					},
 				},
 			)
 			t.Cleanup(func() {
-				globals.SetPermissionsUserMapping(before)
 				conf.Mock(nil)
 			})
 

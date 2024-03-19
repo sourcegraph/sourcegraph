@@ -1,4 +1,4 @@
-import { FC, ReactNode, useEffect, useCallback, useMemo } from 'react'
+import { type FC, type ReactNode, useEffect, useCallback, useMemo } from 'react'
 
 import { shortcutDisplayName } from '@sourcegraph/shared/src/keyboardShortcuts'
 import { Shortcut } from '@sourcegraph/shared/src/react-shortcuts'
@@ -8,7 +8,7 @@ import { scanSearchQuery, succeedScan } from '@sourcegraph/shared/src/search/que
 import type { Filter as QueryFilter } from '@sourcegraph/shared/src/search/query/token'
 import { omitFilter } from '@sourcegraph/shared/src/search/query/transformer'
 import type { Filter } from '@sourcegraph/shared/src/search/stream'
-import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
+import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, H1, H3, Icon, Tooltip } from '@sourcegraph/wildcard'
 
 import {
@@ -24,8 +24,8 @@ import { SearchFilterSkeleton } from './components/filter-skeleton/SearchFilterS
 import { FilterTypeList } from './components/filter-type-list/FilterTypeList'
 import { FiltersDocFooter } from './components/filters-doc-footer/FiltersDocFooter'
 import { ArrowBendIcon } from './components/Icons'
-import { mergeQueryAndFilters, URLQueryFilter, useUrlFilters } from './hooks'
-import { FilterKind, SearchTypeFilter, SEARCH_TYPES_TO_FILTER_TYPES, DYNAMIC_FILTER_KINDS } from './types'
+import { mergeQueryAndFilters, type URLQueryFilter, useUrlFilters } from './hooks'
+import { FilterKind, type SearchTypeFilter, SEARCH_TYPES_TO_FILTER_TYPES, DYNAMIC_FILTER_KINDS } from './types'
 
 import styles from './NewSearchFilters.module.scss'
 

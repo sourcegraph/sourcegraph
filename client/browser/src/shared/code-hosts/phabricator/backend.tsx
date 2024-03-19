@@ -1,4 +1,4 @@
-import { from, type Observable, of, throwError } from 'rxjs'
+import { from, type Observable, of, throwError, lastValueFrom } from 'rxjs'
 import { fromFetch } from 'rxjs/fetch'
 import { map, mapTo, switchMap, catchError } from 'rxjs/operators'
 
@@ -275,9 +275,9 @@ export function getRepoDetailsFromCallsign(
  * case it fails we query the conduit API.
  */
 export function getSourcegraphURLFromConduit(): Promise<string> {
-    return queryConduitHelper<{ url: string }>('/api/sourcegraph.configuration', {})
-        .pipe(map(({ url }) => url))
-        .toPromise()
+    return lastValueFrom(
+        queryConduitHelper<{ url: string }>('/api/sourcegraph.configuration', {}).pipe(map(({ url }) => url))
+    )
 }
 
 const getRepoDetailsFromRepoPHID = memoizeObservable(

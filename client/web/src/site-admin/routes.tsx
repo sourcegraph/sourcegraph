@@ -459,7 +459,7 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     {
         exact: true,
         path: '/own-signal-page',
-        render: () => <OwnStatusPage />,
+        render: props => <OwnStatusPage telemetryRecorder={props.platformContext.telemetryRecorder} />,
     },
 
     // Code intelligence redirect
@@ -522,7 +522,7 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     {
         exact: true,
         path: '/analytics/own',
-        render: () => <OwnAnalyticsPage />,
+        render: props => <OwnAnalyticsPage telemetryRecorder={props.platformContext.telemetryRecorder} />,
     },
 ]
 

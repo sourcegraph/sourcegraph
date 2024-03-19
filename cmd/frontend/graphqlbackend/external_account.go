@@ -2,15 +2,20 @@ package graphqlbackend
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
 
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
+	"github.com/sourcegraph/sourcegraph/internal/cody"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/gqlutil"
+	"github.com/sourcegraph/sourcegraph/internal/ssc"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 type externalAccountResolver struct {
@@ -51,6 +56,30 @@ func (r *externalAccountResolver) ServiceType() string { return r.account.Servic
 func (r *externalAccountResolver) ServiceID() string   { return r.account.ServiceID }
 func (r *externalAccountResolver) ClientID() string    { return r.account.ClientID }
 func (r *externalAccountResolver) AccountID() string   { return r.account.AccountID }
+
+// TEMPORARY: This resolver is temporary to help us debug the #inc-284-plg-users-paying-for-and-being-billed-for-pro-without-being-upgrade.
+func (r *externalAccountResolver) CodySubscription(ctx context.Context) (*CodySubscriptionResolver, error) {
+	if !dotcom.SourcegraphDotComMode() {
+		return nil, errors.New("this feature is only available on sourcegraph.com")
+	}
+
+	if r.account.ServiceType != "openidconnect" || r.account.ServiceID != fmt.Sprintf("https://%s", ssc.GetSAMSHostName()) {
+		return nil, nil
+	}
+
+	userResolver, err := r.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	subscription, err := cody.SubscriptionForSAMSAccountID(ctx, r.db, *userResolver.user, r.account.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CodySubscriptionResolver{subscription: subscription}, nil
+}
+
 func (r *externalAccountResolver) CreatedAt() gqlutil.DateTime {
 	return gqlutil.DateTime{Time: r.account.CreatedAt}
 }

@@ -7,8 +7,10 @@ import (
 	"testing"
 )
 
-const testMetaDataVertex = `{"label": "metaData", "toolInfo": {"name": "test"}}`
-const testVertex = `{"id": "a", "type": "edge", "label": "textDocument/references", "outV": "b", "inV": "c"}`
+const (
+	testMetaDataVertex = `{"label": "metaData", "toolInfo": {"name": "test"}}`
+	testVertex         = `{"id": "a", "type": "edge", "label": "textDocument/references", "outV": "b", "inV": "c"}`
+)
 
 func TestReadIndexerName(t *testing.T) {
 	name, err := ReadIndexerName(generateTestIndex(testMetaDataVertex))
@@ -30,7 +32,7 @@ func TestReadIndexerNameMalformed(t *testing.T) {
 
 func generateTestIndex(metaDataVertex string) io.Reader {
 	lines := []string{metaDataVertex}
-	for i := 0; i < 20000; i++ {
+	for range 20000 {
 		lines = append(lines, testVertex)
 	}
 

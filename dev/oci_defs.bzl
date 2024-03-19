@@ -1,10 +1,12 @@
 """OCI bazel defs"""
 
 load("@rules_oci//oci:defs.bzl", _oci_image = "oci_image", _oci_push = "oci_push", _oci_tarball = "oci_tarball")
-load("@with_cfg.bzl", "with_cfg")
 
 REGISTRY_REPOSITORY_PREFIX = "europe-west1-docker.pkg.dev/sourcegraph-security-logging/rules-oci-test/{}"
 # REGISTRY_REPOSITORY_PREFIX = "us.gcr.io/sourcegraph-dev/{}"
+
+# Passthrough the @rules_oci oci_push, so users only have to import this file and not @rules_oci//oci:defs.bzl
+oci_push = _oci_push
 
 def image_repository(image):
     return REGISTRY_REPOSITORY_PREFIX.format(image)
@@ -21,21 +23,37 @@ def oci_tarball(name, **kwargs):
 
 # Apply a transition on oci_image targets and their deps to apply a transition on platforms
 # to build binaries for Linux when building on MacOS.
-#
-# Note: internally, this does some magic with wrapper rules and aliases that will be visible
-# in bazel (c)query outputs, and will make {,a,c}query output be non-obvious. For a given
-# oci_image target e.g. //cmd/server:image, the following targets will be created:
-#   - //cmd/server:image, which is an alias to //cmd/server:image_with_cfg
-#   - //cmd/server:image_with_cfg, uses an internal rule to apply the transition
-#   - //cmd/server:image_/image, the actual oci_image target
-#
-# When querying oci_image rules, you should query the final one noted above. The others will
-# not surface the information you're actually looking for for things like aquery etc.
-_oci_image_builder = with_cfg(_oci_image)
-_oci_image_builder.set("platforms", select({
-    "@platforms//os:macos": [Label("@zig_sdk//platform:linux_amd64")],
-    "//conditions:default": [],
-}))
+def oci_image(name, **kwargs):
+    _oci_image(
+        name = name + "_underlying",
+        **kwargs
+    )
 
-oci_image, _oci_image_internal = _oci_image_builder.build()
-oci_push = _oci_push
+    oci_image_cross(
+        name = name,
+        image = ":" + name + "_underlying",
+        platforms = select({
+            "@platforms//os:macos": [Label("@zig_sdk//platform:linux_amd64")],
+            "//conditions:default": [],
+        }),
+        visibility = kwargs.pop("visibility", ["//visibility:public"]),
+    )
+
+# rule that allows transitioning in order to transition an oci_image target and its deps
+oci_image_cross = rule(
+    implementation = lambda ctx: DefaultInfo(files = depset(ctx.files.image)),
+    attrs = {
+        "image": attr.label(cfg = transition(
+            implementation = lambda settings, attr: [
+                {"//command_line_option:platforms": str(platform)}
+                for platform in attr.platforms
+            ],
+            inputs = [],
+            outputs = ["//command_line_option:platforms"],
+        )),
+        "platforms": attr.label_list(),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+    },
+)

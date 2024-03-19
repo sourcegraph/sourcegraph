@@ -270,10 +270,7 @@ func patternNodesToPredicates(nodes []query.Node, caseSensitive, diff bool) []gi
 }
 
 func patternAtomToPredicate(pattern query.Pattern, caseSensitive, diff bool) gitprotocol.Node {
-	patString := pattern.Value
-	if pattern.Annotation.Labels.IsSet(query.Literal) {
-		patString = regexp.QuoteMeta(pattern.Value)
-	}
+	patString := pattern.RegExpPattern()
 
 	var newPred gitprotocol.Node
 	if diff {

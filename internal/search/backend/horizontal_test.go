@@ -47,7 +47,7 @@ func TestHorizontalSearcher(t *testing.T) {
 
 	// Start up background goroutines which continuously hit the searcher
 	// methods to ensure we are safe under concurrency.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		cleanup := backgroundSearch(searcher)
 		defer cleanup(t)
 	}
@@ -150,7 +150,7 @@ func TestHorizontalSearcherWithFileRanks(t *testing.T) {
 
 	// Start up background goroutines which continuously hit the searcher
 	// methods to ensure we are safe under concurrency.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		cleanup := backgroundSearch(searcher)
 		defer cleanup(t)
 	}
@@ -259,7 +259,7 @@ func TestSyncSearchers(t *testing.T) {
 
 	// First call initializes the list, second should use the fast-path so
 	// should have the same dialNum.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		t.Log("gen", i)
 		m, err := searcher.syncSearchers()
 		if err != nil {
@@ -496,7 +496,7 @@ func BenchmarkDedup(b *testing.B) {
 		shard := []zoekt.FileMatch{}
 		for i := stride; i <= nRepos; i += stride {
 			repo := fmt.Sprintf("repo-%d", i)
-			for j := 0; j < nMatchPerRepo; j++ {
+			for j := range nMatchPerRepo {
 				path := fmt.Sprintf("%d.go", j)
 				shard = append(shard, zoekt.FileMatch{
 					Repository: repo,
@@ -508,7 +508,7 @@ func BenchmarkDedup(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		// Create copy since we mutate the input in Deddup
 		b.StopTimer()
 		shards := make([][]zoekt.FileMatch, 0, len(shardsOrig))

@@ -1,12 +1,3 @@
-# Speed up all builds by not checking if output files have been modified. Lets you make changes to
-# the output tree without triggering a build for local debugging. For example, you can modify
-# [rules_js](https://github.com/aspect-build/rules_js) 3rd party npm packages in the output tree
-# when local debugging.
-# Docs: https://github.com/bazelbuild/bazel/blob/1af61b21df99edc2fc66939cdf14449c2661f873/src/main/java/com/google/devtools/build/lib/pkgcache/PackageOptions.java#L185
-build --noexperimental_check_output_files
-fetch --noexperimental_check_output_files
-query --noexperimental_check_output_files
-
 # Don't apply `--noremote_upload_local_results` and `--noremote_accept_cached` to the disk cache.
 # If you have both `--noremote_upload_local_results` and `--disk_cache`, then this fixes a bug where
 # Bazel doesn't write to the local disk cache as it treats as a remote cache.

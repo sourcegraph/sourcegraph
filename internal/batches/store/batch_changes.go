@@ -630,7 +630,7 @@ func listBatchChangesQuery(opts *ListBatchChangesOpts, repoAuthzConds *sqlf.Quer
 
 	if len(opts.States) > 0 {
 		stateConds := []*sqlf.Query{}
-		for i := 0; i < len(opts.States); i++ {
+		for i := range len(opts.States) {
 			switch opts.States[i] {
 			case btypes.BatchChangeStateOpen:
 				stateConds = append(stateConds, sqlf.Sprintf("batch_changes.closed_at IS NULL AND batch_changes.last_applied_at IS NOT NULL"))

@@ -14,6 +14,12 @@ type Config struct {
 
 		StreamPublishConcurrency int
 	}
+
+	SAMS struct {
+		ServerURL    string
+		ClientID     string
+		ClientSecret string
+	}
 }
 
 func (c *Config) Load(env *runtime.Env) {
@@ -25,4 +31,11 @@ func (c *Config) Load(env *runtime.Env) {
 		"The topic ID for the Pub/Sub.")
 	c.Events.StreamPublishConcurrency = env.GetInt("TELEMETRY_GATEWAY_EVENTS_STREAM_PUBLISH_CONCURRENCY", "250",
 		"Per-stream concurrent publishing limit.")
+
+	c.SAMS.ServerURL = env.Get("TELEMETRY_GATEWAY_SAMS_SERVER_URL", "https://accounts.sourcegraph.com",
+		"Sourcegraph Accounts Management System URL")
+	c.SAMS.ClientID = env.Get("TELEMETRY_GATEWAY_SAMS_CLIENT_ID", "",
+		"Sourcegraph Accounts Management System client ID")
+	c.SAMS.ClientSecret = env.Get("TELEMETRY_GATEWAY_SAMS_CLIENT_SECRET", "",
+		"Sourcegraph Accounts Management System client secret")
 }

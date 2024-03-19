@@ -44,7 +44,7 @@ func uploadAll(ctx context.Context, extensionAndCommitsByRepo map[string][]inter
 
 			wg.Add(1)
 
-			go func(repoName, commit, file string) {
+			go func(file string) {
 				defer wg.Done()
 
 				if err := limiter.Acquire(ctx); err != nil {
@@ -70,7 +70,7 @@ func uploadAll(ctx context.Context, extensionAndCommitsByRepo map[string][]inter
 					commit:   commit,
 					root:     cleanedRoot,
 				}
-			}(repoName, commit, fmt.Sprintf("%s.%s.%s.%s", strings.Replace(repoName, "/", ".", 1), commit, root, extension))
+			}(fmt.Sprintf("%s.%s.%s.%s", strings.Replace(repoName, "/", ".", 1), commit, root, extension))
 		}
 	}
 

@@ -125,7 +125,7 @@ func (h *dependencySyncSchedulerHandler) Handle(ctx context.Context, logger log.
 				log.Error(err),
 				log.String("name", packageReference.Name),
 				log.String("version", packageReference.Version),
-				log.Int("dumpId", packageReference.DumpID))
+				log.Int("uploadID", packageReference.UploadID))
 			continue
 		}
 		pkg := *pkgRef

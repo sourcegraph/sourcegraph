@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"

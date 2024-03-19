@@ -260,7 +260,7 @@ func (teams *Teams) DeleteTeamMember(_ context.Context, members ...*types.TeamMe
 	for _, m := range members {
 		var index int
 		var found bool
-		for i := 0; i < len(teams.members); i++ {
+		for i := range len(teams.members) {
 			if n := teams.members[i]; m.UserID == n.UserID && m.TeamID == n.TeamID {
 				found = true
 				index = i

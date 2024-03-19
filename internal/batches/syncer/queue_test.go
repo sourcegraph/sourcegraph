@@ -81,7 +81,7 @@ func TestChangesetPriorityQueue(t *testing.T) {
 
 	assertOrder(t, q, []int64{4, 2, 3, 1, 5})
 
-	for i := 0; i < len(items); i++ {
+	for range len(items) {
 		peeked, ok := q.Peek()
 		if !ok {
 			t.Fatalf("Queue should not be empty")

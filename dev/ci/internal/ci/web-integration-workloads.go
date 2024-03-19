@@ -36,7 +36,7 @@ func chunkItems(items []string, size int) [][]string {
 	lenChunks := int(math.Ceil(float64(lenItems) / float64(size)))
 	chunks := make([][]string, lenChunks)
 
-	for i := 0; i < lenChunks; i++ {
+	for i := range lenChunks {
 		start := i * size
 		end := min(start+size, lenItems)
 		chunks[i] = items[start:end]

@@ -73,7 +73,7 @@ func testExec(ctx *cli.Context) error {
 		return flag.ErrHelp
 	}
 
-	return run.Test(ctx.Context, newSGTestCommand(cmd, args[1:]), config.Env)
+	return run.Test(ctx.Context, newSGTestCommand(*cmd, args[1:]), config.Env)
 }
 
 func constructTestCmdLongHelp() string {

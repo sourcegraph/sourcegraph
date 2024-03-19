@@ -121,6 +121,11 @@ func UnmarshalCodeHostID(gqlID graphql.ID) (id int32, err error) {
 }
 
 func CodeHostByID(ctx context.Context, db database.DB, id graphql.ID) (*codeHostResolver, error) {
+	// Security 🚨: Code Hosts may only be viewed by site admins for now.
+	if err := auth.CheckCurrentUserIsSiteAdmin(ctx, db); err != nil {
+		return nil, err
+	}
+
 	intID, err := UnmarshalCodeHostID(id)
 	if err != nil {
 		return nil, err

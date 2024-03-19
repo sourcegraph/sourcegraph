@@ -8,7 +8,7 @@ import { encodeURIPathComponent } from '@sourcegraph/common'
 import {
     RepositoryType,
     type SharedGraphQlOperations,
-    TreeEntriesResult,
+    type TreeEntriesResult,
 } from '@sourcegraph/shared/src/graphql-operations'
 import { accessibilityAudit } from '@sourcegraph/shared/src/testing/accessibility'
 import { createDriverForTest, type Driver } from '@sourcegraph/shared/src/testing/driver'

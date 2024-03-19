@@ -74,11 +74,7 @@ func TestCodeownersIngestionGuarding(t *testing.T) {
 	}
 	for path, query := range pathToQueries {
 		t.Run("dotcom guarding is respected for "+path, func(t *testing.T) {
-			orig := dotcom.SourcegraphDotComMode()
-			dotcom.MockSourcegraphDotComMode(true)
-			t.Cleanup(func() {
-				dotcom.MockSourcegraphDotComMode(orig)
-			})
+			dotcom.MockSourcegraphDotComMode(t, true)
 			graphqlbackend.RunTest(t, &graphqlbackend.Test{
 				Schema:         schema,
 				Context:        ctx,
@@ -90,10 +86,7 @@ func TestCodeownersIngestionGuarding(t *testing.T) {
 			})
 		})
 		t.Run("site admin guarding is respected for "+path, func(t *testing.T) {
-			ctx = userCtx(adminUser)
-			t.Cleanup(func() {
-				ctx = context.TODO()
-			})
+			ctx := userCtx(adminUser)
 			graphqlbackend.RunTest(t, &graphqlbackend.Test{
 				Schema:         schema,
 				Context:        ctx,

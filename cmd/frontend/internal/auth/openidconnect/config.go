@@ -85,11 +85,11 @@ func Init() {
 			}
 
 			for _, p := range ps {
-				go func(p providers.Provider) {
+				go func() {
 					if err := p.Refresh(context.Background()); err != nil {
 						logger.Error("Error prefetching OpenID Connect service provider metadata.", log.Error(err))
 					}
-				}(p)
+				}()
 			}
 			providers.Update(pkgName, ps)
 		})

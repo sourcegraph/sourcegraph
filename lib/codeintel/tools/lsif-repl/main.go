@@ -41,7 +41,7 @@ func main() {
 				fmt.Println("wrong number of args to q")
 				break
 			}
-			dumpID, err := strconv.Atoi(fields[1])
+			uploadID, err := strconv.Atoi(fields[1])
 			if err != nil {
 				fmt.Println("first arg should be an integer")
 				break
@@ -58,7 +58,7 @@ func main() {
 				break
 			}
 
-			err = queryBundle(bundles[dumpID], path, line, column)
+			err = queryBundle(bundles[uploadID], path, line, column)
 			if err != nil {
 				fmt.Printf("%s\n", helpMsg)
 				break

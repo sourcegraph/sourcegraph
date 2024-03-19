@@ -8,7 +8,8 @@ plugins:
     from: github.com/aspect-build/plugin-fix-visibility
     version: v0.1.0
   - name: buildkite
-    version: v0.0.9
+    version: v0.0.10-alpha
     from: github.com/sourcegraph/aspect-cli-plugin-buildkite
     properties:
       buildkite_analytics_env_name: BUILDKITE_ANALYTICS_TOKEN_SOURCEGRAPH_BAZEL
+      enable_annotations: false

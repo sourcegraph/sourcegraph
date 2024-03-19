@@ -61,6 +61,7 @@ describe('getDocumentHighlights from ExtensionHost API, it aims to have more e2e
                 position: { line: 1, character: 2 },
                 textDocument: { uri: typescriptFileUri },
             })
+            // @ts-expect-error - Unclear how to consolidate the different versions of the DocumentHighlight types
             .subscribe(observe(value => results.push(value)))
 
         // first provider results

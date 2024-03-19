@@ -11,6 +11,7 @@ fi
 
 # asdf setup
 # ----------
+# TODO(burmudar): Once the bazel agents are deprecated we need to remove this
 if [[ "$BUILDKITE_AGENT_META_DATA_QUEUE" != "bazel" ]]; then
     echo "~~~ Preparing asdf dependencies"
 

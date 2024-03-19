@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/regexp"
 	"github.com/sourcegraph/zoekt"
@@ -258,7 +258,7 @@ func BenchmarkGetRevsForMatchedRepo(b *testing.B) {
 	b.Run("2 conflicting", func(b *testing.B) {
 		repoRevs := toParsedRepoFilters(".*o@123456", "foo@234567")
 		_, pats := findPatternRevs(repoRevs)
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = getRevsForMatchedRepo("foo", pats)
 		}
 	})
@@ -266,7 +266,7 @@ func BenchmarkGetRevsForMatchedRepo(b *testing.B) {
 	b.Run("multiple overlapping", func(b *testing.B) {
 		repoRevs := toParsedRepoFilters(".*o@a:b:c:d", "foo@b:c:d:e", "foo@c:d:e:f")
 		_, pats := findPatternRevs(repoRevs)
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, _ = getRevsForMatchedRepo("foo", pats)
 		}
 	})

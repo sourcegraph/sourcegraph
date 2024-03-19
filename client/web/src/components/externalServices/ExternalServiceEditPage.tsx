@@ -2,7 +2,7 @@ import React, { type FC, useEffect, useState, useCallback, useMemo } from 'react
 
 import { useNavigate, useParams } from 'react-router-dom'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Container, ErrorAlert, PageHeader, ButtonLink } from '@sourcegraph/wildcard'
 

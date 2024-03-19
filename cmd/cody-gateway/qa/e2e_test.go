@@ -56,30 +56,39 @@ func Test_Completions(t *testing.T) {
 	}
 }
 
-func Test_Embeddings(t *testing.T) {
+func Test_Embeddings_OpenAI(t *testing.T) {
 	t.Parallel()
 	gatewayURL, gatewayToken := parseBackendData(t)
 	gatewayURL.Path = "/v1/embeddings"
-	req, err := http.NewRequest("POST", gatewayURL.String(), strings.NewReader(`{"input": ["Pls embed"],"model": "openai/text-embedding-ada-002"}`))
-	if err != nil {
-		t.Fail()
+	for _, model := range []struct {
+		name       string
+		dimensions int
+		// first float of a vector representing the input "Pls embed"
+		firstValue float32
+	}{
+		{"openai/text-embedding-ada-002", 1536, -0.03610423},
+		{"sourcegraph/triton", 768, -0.009880066},
+	} {
+		req, err := http.NewRequest("POST", gatewayURL.String(), strings.NewReader(fmt.Sprintf(`{"input": ["Pls embed"],"model": "%s"}`, model.name)))
+		assert.NoError(t, err)
+		req.Header.Set("X-Sourcegraph-Feature", string(codygateway.FeatureEmbeddings))
+		req.Header.Set("Authorization", "Bearer "+gatewayToken)
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, resp.StatusCode, http.StatusOK, string(body))
+		var response struct {
+			Embeddings []struct {
+				Data []float32 `json:"data"`
+			} `json:"embeddings"`
+		}
+		err = json.Unmarshal(body, &response)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(response.Embeddings))
+		assert.Equal(t, model.dimensions, len(response.Embeddings[0].Data))
+		assert.Equal(t, model.firstValue, response.Embeddings[0].Data[0])
 	}
-	req.Header.Set("X-Sourcegraph-Feature", string(codygateway.FeatureEmbeddings))
-	req.Header.Set("Authorization", "Bearer "+gatewayToken)
-	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	body, err := io.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	assert.Equal(t, resp.StatusCode, http.StatusOK, string(body))
-	var response struct {
-		Embeddings []struct {
-			Data []float32 `json:"data"`
-		} `json:"embeddings"`
-	}
-	err = json.Unmarshal(body, &response)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, len(response.Embeddings))
-	assert.Equal(t, 1536, len(response.Embeddings[0].Data))
 }
 
 type GatewayFeatureClient interface {

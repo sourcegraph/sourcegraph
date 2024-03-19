@@ -294,7 +294,7 @@ func TestUpdateQueue_enqueue(t *testing.T) {
 
 			// Verify notifications.
 			expectedRecording := &recording{}
-			for i := 0; i < test.expectedNotifications; i++ {
+			for range test.expectedNotifications {
 				expectedRecording.notifications = append(expectedRecording.notifications, s.updateQueue.notifyEnqueue)
 			}
 			if !reflect.DeepEqual(expectedRecording, r) {
@@ -1428,7 +1428,7 @@ func TestUpdateScheduler_runUpdateLoop(t *testing.T) {
 			contexts := make(chan context.Context, expectedRequestCount)
 			db := dbmocks.NewMockDB()
 			gs := gitserver.NewMockClient()
-			gs.RequestRepoUpdateFunc.SetDefaultHook(func(ctx context.Context, repo api.RepoName, d time.Duration) (*gitserverprotocol.RepoUpdateResponse, error) {
+			gs.RequestRepoUpdateFunc.SetDefaultHook(func(ctx context.Context, repo api.RepoName) (*gitserverprotocol.RepoUpdateResponse, error) {
 				select {
 				case mock := <-mockRequestRepoUpdates:
 					if !reflect.DeepEqual(mock.repo.Name, repo) {
@@ -1465,7 +1465,7 @@ func TestUpdateScheduler_runUpdateLoop(t *testing.T) {
 			// Wait for all goroutines that have a mock request to finish.
 			// There may be additional goroutines which don't have a mock request
 			// and will block until the context is canceled.
-			for i := 0; i < expectedRequestCount; i++ {
+			for range expectedRequestCount {
 				ctx := <-contexts
 				<-ctx.Done()
 			}
@@ -1543,7 +1543,6 @@ func Test_updateQueue_Less(t *testing.T) {
 }
 
 func TestGetCustomInterval(t *testing.T) {
-
 	for _, tc := range []struct {
 		name     string
 		c        *conf.Unified

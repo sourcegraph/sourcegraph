@@ -56,7 +56,7 @@ func TestHandleEnqueueSinglePayload(t *testing.T) {
 	}).Encode()
 
 	var expectedContents []byte
-	for i := 0; i < 20000; i++ {
+	for i := range 20000 {
 		expectedContents = append(expectedContents, byte(i))
 	}
 
@@ -137,7 +137,7 @@ func TestHandleEnqueueSinglePayloadNoIndexerName(t *testing.T) {
 
 	var lines []string
 	lines = append(lines, `{"label": "metaData", "toolInfo": {"name": "lsif-go"}}`)
-	for i := 0; i < 20000; i++ {
+	for range 20000 {
 		lines = append(lines, `{"id": "a", "type": "edge", "label": "textDocument/references", "outV": "b", "inV": "c"}`)
 	}
 
@@ -263,7 +263,7 @@ func TestHandleEnqueueMultipartUpload(t *testing.T) {
 	}).Encode()
 
 	var expectedContents []byte
-	for i := 0; i < 20000; i++ {
+	for i := range 20000 {
 		expectedContents = append(expectedContents, byte(i))
 	}
 

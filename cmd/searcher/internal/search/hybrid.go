@@ -87,7 +87,7 @@ func (s *Service) hybrid(ctx context.Context, rootLogger log.Logger, p *protocol
 	// actually searching since the index may update. If the index changes,
 	// which files we search need to change. As such we keep retrying until we
 	// know we have had a consistent list and search on zoekt.
-	for try := 0; try < 5; try++ {
+	for try := range 5 {
 		logger := rootLogger.With(log.Int("try", try))
 
 		indexed, ok, err := zoektIndexedCommit(ctx, client, p.Repo)

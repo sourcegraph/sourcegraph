@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { logger } from '@sourcegraph/common'
 import { gql, useLazyQuery } from '@sourcegraph/http-client'
-import { getGlobalSearchContextFilter } from '@sourcegraph/shared/src/search/query/query'
-import { omitFilter } from '@sourcegraph/shared/src/search/query/transformer'
 import type { RecentSearch } from '@sourcegraph/shared/src/settings/temporary/recentSearches'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
 
 import type { SearchHistoryEventLogsQueryResult, SearchHistoryEventLogsQueryVariables } from '../../graphql-operations'
+
+import { RecentSearchesManager } from './recentSearches'
 
 const MAX_RECENT_SEARCHES = 20
 
@@ -35,6 +35,7 @@ export function useRecentSearches(): {
 } {
     const [recentSearches, setRecentSearches] = useTemporarySetting('search.input.recentSearches', [])
     const [state, setState] = useState<'loading' | 'success'>('loading')
+    const recentSearchesManager = useRef(new RecentSearchesManager({ persist: setRecentSearches }))
 
     // If recentSearches from temporary settings is empty, fetch recent searches from the event log
     // and populate temporary settings with that instead.
@@ -53,12 +54,14 @@ export function useRecentSearches(): {
     useEffect(() => {
         if (state !== 'success' && recentSearches) {
             if (recentSearches && recentSearches.length > 0) {
+                recentSearchesManager.current.setRecentSearches(recentSearches)
                 setState('success')
             } else {
                 loadFromEventLog()
                     .then(result => {
                         if (result.data) {
                             const processedLogs = processEventLogs(result.data)
+                            recentSearchesManager.current.setRecentSearches(processedLogs)
                             setRecentSearches(processedLogs)
                         }
                         setState('success')
@@ -69,27 +72,7 @@ export function useRecentSearches(): {
                     })
             }
         }
-    }, [recentSearches, loadFromEventLog, setRecentSearches, state])
-
-    // Adds a new search to the top of the recent searches list.
-    // If the search is already in the recent searches list, it moves it to the top.
-    // If the list is full, the oldest search is removed.
-    const addOrMoveRecentSearchToTop = useCallback(
-        (recentSearch: RecentSearch) => {
-            setRecentSearches(recentSearches => {
-                const newRecentSearches = recentSearches?.filter(search => search.query !== recentSearch.query) || []
-                newRecentSearches.unshift(recentSearch)
-                // Truncate array if it's too long
-                if (newRecentSearches.length > MAX_RECENT_SEARCHES) {
-                    newRecentSearches.splice(MAX_RECENT_SEARCHES)
-                }
-                return newRecentSearches
-            })
-        },
-        [setRecentSearches]
-    )
-
-    const [pendingAdditions, setPendingAdditions] = useState<RecentSearch[]>([])
+    }, [recentSearches, loadFromEventLog, recentSearchesManager, state, setRecentSearches])
 
     // Adds non-empty queries. A query is considered empty if it's an empty
     // string or only contains a context: filter.
@@ -99,29 +82,10 @@ export function useRecentSearches(): {
     // queue it to be added after loading is complete.
     const addRecentSearch = useCallback(
         (query: string, resultCount: number, limitHit: boolean) => {
-            const searchContext = getGlobalSearchContextFilter(query)
-            if (!searchContext || omitFilter(query, searchContext.filter).trim() !== '') {
-                const recentSearch = { query, resultCount, limitHit, timestamp: new Date().toISOString() }
-
-                if (state === 'success') {
-                    addOrMoveRecentSearchToTop(recentSearch)
-                } else {
-                    setPendingAdditions(pendingAdditions => pendingAdditions.concat(recentSearch))
-                }
-            }
+            recentSearchesManager.current.addRecentSearch({ query, resultCount, limitHit })
         },
-        [addOrMoveRecentSearchToTop, state]
+        [recentSearchesManager]
     )
-
-    // Process the queue of pending additions after the list is finished loading.
-    useEffect(() => {
-        if (state === 'success' && pendingAdditions.length > 0) {
-            for (const pendingAddition of pendingAdditions) {
-                addOrMoveRecentSearchToTop(pendingAddition)
-            }
-            setPendingAdditions([])
-        }
-    }, [addOrMoveRecentSearchToTop, pendingAdditions, state])
 
     return { recentSearches, addRecentSearch, state }
 }

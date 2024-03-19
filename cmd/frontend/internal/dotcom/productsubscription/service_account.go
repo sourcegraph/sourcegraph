@@ -3,90 +3,61 @@ package productsubscription
 import (
 	"context"
 
-	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-)
-
-const (
-	// featureFlagProductSubscriptionsServiceAccount is a feature flag that should be
-	// set on service accounts that can read AND write product subscriptions.
-	featureFlagProductSubscriptionsServiceAccount = "product-subscriptions-service-account"
-
-	// featureFlagProductSubscriptionsReaderServiceAccount is a feature flag that should be
-	// set on service accounts that can only read product subscriptions.
-	featureFlagProductSubscriptionsReaderServiceAccount = "product-subscriptions-reader-service-account"
+	"github.com/sourcegraph/sourcegraph/internal/rbac"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // 🚨 SECURITY: Use this to check if access to a subscription query or mutation
-// is authorized for service accounts and site admins.
-func serviceAccountOrSiteAdmin(
+// is authorized for users with the correct RBAC permissions and site admins.
+func hasRBACPermsOrSiteAdmin(
 	ctx context.Context,
 	db database.DB,
-	// requiresWriterServiceAccount, if true, requires "product-subscriptions-service-account",
-	// otherwise just "product-subscriptions-reader-service-account" is sufficient.
-	requiresWriterServiceAccount bool,
+	requiresSubscriptionsWriter bool,
 ) (string, error) {
-	return serviceAccountOrOwnerOrSiteAdmin(ctx, db, nil, requiresWriterServiceAccount)
+	return hasRBACPermsOrOwnerOrSiteAdmin(ctx, db, nil, requiresSubscriptionsWriter)
 }
 
 // 🚨 SECURITY: Use this to check if access to a subscription query or mutation
 // is authorized for service accounts, the owning user, and site admins. Callers
 // should record the returned grant reason in an audit log tracking the access.
-func serviceAccountOrOwnerOrSiteAdmin(
+func hasRBACPermsOrOwnerOrSiteAdmin(
 	ctx context.Context,
 	db database.DB,
 	ownerUserID *int32,
-	// requiresWriterServiceAccount, if true, requires "product-subscriptions-service-account",
-	// otherwise just "product-subscriptions-reader-service-account" is sufficient.
-	requiresWriterServiceAccount bool,
+	requiresSubscriptionsWriter bool,
 ) (string, error) {
-	// Check if the user is has the prerequisite service account.
-	serviceAccountIsWriter := readFeatureFlagFromDB(ctx, db, featureFlagProductSubscriptionsServiceAccount, false)
-	if requiresWriterServiceAccount {
-		// 🚨 SECURITY: Require the more strict featureFlagProductSubscriptionsServiceAccount
-		// if requiresWriterServiceAccount=true
-		if serviceAccountIsWriter {
-			return "writer_service_account", nil
-		}
-		// Otherwise, fall through to check if actor is owner or site admin.
-	} else {
-		// If requiresWriterServiceAccount==false, then just
-		// featureFlagProductSubscriptionsReaderServiceAccount is sufficient.
-		if serviceAccountIsWriter {
-			return "writer_service_account", nil
-		}
-		if readFeatureFlagFromDB(ctx, db, featureFlagProductSubscriptionsReaderServiceAccount, false) {
-			return "reader_service_account", nil
+	// 🚨 SECURITY: In all cases, being a subscription writer is sufficient.
+	if rbac.CheckCurrentUserHasPermission(ctx, db,
+		rbac.ProductSubscriptionsWritePermission) == nil {
+		return rbac.ProductSubscriptionsWritePermission, nil
+	}
+
+	// 🚨 SECURITY: If we don't need write access, simply being a reader is sufficient.
+	if !requiresSubscriptionsWriter {
+		if rbac.CheckCurrentUserHasPermission(ctx, db,
+			rbac.ProductSubscriptionsReadPermission) == nil {
+			return rbac.ProductSubscriptionsReadPermission, nil
 		}
 	}
 
-	// If ownerUserID is specified, the user must be the owner, or a site admin.
+	// 🚨 SECURITY: The user does not have subscriptions permissions - but,
+	// if ownerUserID is specified, we can grant access if the actor is the owner.
 	if ownerUserID != nil {
-		return "same_user_or_site_admin", auth.CheckSiteAdminOrSameUser(ctx, db, *ownerUserID)
+		if auth.CheckSameUser(ctx, *ownerUserID) == nil {
+			return "is_owner", nil
+		}
 	}
 
-	// Otherwise, the user must be a site admin.
-	return "site_admin", auth.CheckCurrentUserIsSiteAdmin(ctx, db)
-}
+	// HACK: rbac.CheckCurrentUserHasPermission _should_ return true for site
+	// admins, but this currently doesn't work in integration tests - for now,
+	// we retain our legacy direct check on whether the user is a site admin
+	// or not as a fallback, just in case.
+	if auth.CheckCurrentUserIsSiteAdmin(ctx, db) == nil {
+		return "site_admin", nil
+	}
 
-// readFeatureFlagFromDB explicitly reads the feature flag values from the database,
-// instead of from the feature flag store in the context.
-//
-// 🚨 SECURITY: This makes it so that we solely look at the database as authority here,
-// and not allow HTTP headers to override the feature flags for service accounts.
-func readFeatureFlagFromDB(ctx context.Context, db database.DB, flag string, defaultValue bool) bool {
-	a := actor.FromContext(ctx)
-	if !a.IsAuthenticated() {
-		return defaultValue
-	}
-	ffs, err := db.FeatureFlags().GetUserFlags(ctx, a.UID)
-	if err != nil {
-		return defaultValue
-	}
-	v, ok := ffs[flag]
-	if !ok {
-		return defaultValue
-	}
-	return v
+	// Otherwise, we are done - this user does not have access.
+	return "unauthorized", errors.New("unauthorized")
 }

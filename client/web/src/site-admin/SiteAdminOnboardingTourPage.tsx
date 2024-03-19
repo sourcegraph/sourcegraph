@@ -2,12 +2,6 @@ import { type FC, type PropsWithChildren, useState, useMemo } from 'react'
 
 import AJV from 'ajv'
 import addFormats from 'ajv-formats'
-import type {
-    OnboardingTourConfigMutationResult,
-    OnboardingTourConfigMutationVariables,
-    OnboardingTourConfigResult,
-    OnboardingTourConfigVariables,
-} from 'src/graphql-operations'
 
 import { useMutation, useQuery } from '@sourcegraph/http-client'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
@@ -26,6 +20,12 @@ import {
 import onboardingSchemaJSON from '../../../../schema/onboardingtour.schema.json'
 import { PageTitle } from '../components/PageTitle'
 import { SaveToolbar } from '../components/SaveToolbar'
+import type {
+    OnboardingTourConfigMutationResult,
+    OnboardingTourConfigMutationVariables,
+    OnboardingTourConfigResult,
+    OnboardingTourConfigVariables,
+} from '../graphql-operations'
 import { MonacoSettingsEditor } from '../settings/MonacoSettingsEditor'
 import {
     ONBOARDING_TOUR_MUTATION,

@@ -63,7 +63,7 @@ func splitRows(numRows int, numWorkers int, minRowsToSplit int) []partialRows {
 	nRowsPerWorker := int(math.Ceil(float64(numRows) / float64(numWorkers)))
 
 	rowsPerWorker := make([]partialRows, numWorkers)
-	for i := 0; i < numWorkers; i++ {
+	for i := range numWorkers {
 		rowsPerWorker[i] = partialRows{
 			start: min(i*nRowsPerWorker, numRows),
 			end:   min((i+1)*nRowsPerWorker, numRows),
@@ -106,7 +106,7 @@ func (index *EmbeddingIndex) SimilaritySearch(
 
 	if len(rowsPerWorker) > 1 {
 		var wg conc.WaitGroup
-		for workerIdx := 0; workerIdx < len(rowsPerWorker); workerIdx++ {
+		for workerIdx := range len(rowsPerWorker) {
 			// Capture the loop variable value so we can use it in the closure below.
 			workerIdx := workerIdx
 			wg.Go(func() {
@@ -132,7 +132,7 @@ func (index *EmbeddingIndex) SimilaritySearch(
 	// Take top neighbors and return them as results.
 	results := make([]EmbeddingSearchResult, numResults)
 
-	for idx := 0; idx < min(numResults, len(neighbors)); idx++ {
+	for idx := range min(numResults, len(neighbors)) {
 		metadata := index.RowMetadata[neighbors[idx].index]
 		results[idx] = EmbeddingSearchResult{
 			RepoName:     repoName,

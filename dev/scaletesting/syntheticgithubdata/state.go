@@ -197,7 +197,7 @@ func (s *state) loadRepos() ([]*repo, error) {
 
 func generateNames(prefix string, count int) []string {
 	names := make([]string, count)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		names[i] = fmt.Sprintf("%s-%09d", prefix, i)
 	}
 	return names

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav"
@@ -374,10 +374,10 @@ func TestResolveLocations(t *testing.T) {
 	r4 := shared.Range{Start: shared.Position{Line: 41, Character: 42}, End: shared.Position{Line: 43, Character: 44}}
 
 	locations, err := resolveLocations(context.Background(), locationResolver, []shared.UploadLocation{
-		{Dump: uploadsshared.Dump{RepositoryID: 50}, TargetCommit: "deadbeef1", TargetRange: r1, Path: "p1"},
-		{Dump: uploadsshared.Dump{RepositoryID: 51}, TargetCommit: "deadbeef2", TargetRange: r2, Path: "p2"},
-		{Dump: uploadsshared.Dump{RepositoryID: 52}, TargetCommit: "deadbeef3", TargetRange: r3, Path: "p3"},
-		{Dump: uploadsshared.Dump{RepositoryID: 53}, TargetCommit: "deadbeef4", TargetRange: r4, Path: "p4"},
+		{Upload: uploadsshared.CompletedUpload{RepositoryID: 50}, TargetCommit: "deadbeef1", TargetRange: r1, Path: "p1"},
+		{Upload: uploadsshared.CompletedUpload{RepositoryID: 51}, TargetCommit: "deadbeef2", TargetRange: r2, Path: "p2"},
+		{Upload: uploadsshared.CompletedUpload{RepositoryID: 52}, TargetCommit: "deadbeef3", TargetRange: r3, Path: "p3"},
+		{Upload: uploadsshared.CompletedUpload{RepositoryID: 53}, TargetCommit: "deadbeef4", TargetRange: r4, Path: "p4"},
 	})
 	if err != nil {
 		t.Fatalf("Unexpected error: %s", err)

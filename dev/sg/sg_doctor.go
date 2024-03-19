@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
-	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -16,7 +18,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/category"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/run"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
-	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/output"
 )
@@ -32,6 +33,9 @@ var doctorCommand = &cli.Command{
 	Category: category.Util,
 	Action:   runDoctorDiagnostics,
 }
+
+//go:embed sg.doctor.yaml
+var doctorYaml []byte
 
 type Diagnostic struct {
 	Name string `yaml:"name"`
@@ -63,14 +67,9 @@ func (r DiagnosticReport) Add(group string, result *DiagnosticResult) {
 }
 
 func runDoctorDiagnostics(cmd *cli.Context) error {
-	repoRoot, err := root.RepositoryRoot()
+	diagnostics, err := readDiagnosticDefinitions(doctorYaml)
 	if err != nil {
-		return err
-	}
-	diagnosticsPath := filepath.Join(repoRoot, "sg.doctor.yaml")
-	diagnostics, err := readDiagnosticDefinitions(diagnosticsPath)
-	if err != nil {
-		return errors.Newf("failed to load diagnostics from %q: %v", diagnosticsPath, err)
+		return errors.Newf("failed to load diagnostics from embedded yaml:", err)
 	}
 
 	// We do not want our progress messages to land on std out so we set output to os.Stderr
@@ -125,10 +124,19 @@ func buildMarkdownReport(report DiagnosticReport) string {
 	// General information
 	fmt.Fprintf(&sb, "sg commit: `%s`\n\n", BuildCommit)
 	fmt.Fprintf(&sb, "generated on: `%s`\n\n", time.Now())
-	// Write out the report
 	titleCaser := cases.Title(language.English)
-	for group, result := range report {
+
+	// map key order isn't stable so we extract them and sort them
+	groupKeys := []string{}
+	for k := range report {
+		groupKeys = append(groupKeys, k)
+	}
+	slices.Sort(groupKeys)
+
+	// Write out the report
+	for _, group := range groupKeys {
 		fmt.Fprintf(&sb, "## %s diagnostics\n\n", titleCaser.String(group))
+		result := report[group]
 		for _, item := range result {
 			cmdLine := fmt.Sprintf("Command: `%s`", item.Diagnostic.Cmd)
 			outputSection := fmt.Sprintf("Output: \n```\n%s\n```\n", item.Output)
@@ -140,16 +148,11 @@ func buildMarkdownReport(report DiagnosticReport) string {
 	return sb.String()
 }
 
-func readDiagnosticDefinitions(path string) (*Diagnostics, error) {
-	fd, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
+func readDiagnosticDefinitions(content []byte) (*Diagnostics, error) {
 	var diags Diagnostics
-	dec := yaml.NewDecoder(fd)
+	dec := yaml.NewDecoder(bytes.NewReader(content))
 
-	err = dec.Decode(&diags)
+	err := dec.Decode(&diags)
 	if err != nil {
 		return nil, err
 	}

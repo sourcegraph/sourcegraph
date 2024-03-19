@@ -12,11 +12,8 @@ import (
 
 func TestServeHelp(t *testing.T) {
 	t.Run("unreleased dev version", func(t *testing.T) {
-		{
-			orig := dotcom.SourcegraphDotComMode()
-			dotcom.MockSourcegraphDotComMode(false)
-			defer dotcom.MockSourcegraphDotComMode(orig) // reset
-		}
+		dotcom.MockSourcegraphDotComMode(t, false)
+
 		{
 			orig := version.Version()
 			version.Mock("0.0.0+dev")
@@ -37,11 +34,8 @@ func TestServeHelp(t *testing.T) {
 	})
 
 	t.Run("released version", func(t *testing.T) {
-		{
-			orig := dotcom.SourcegraphDotComMode()
-			dotcom.MockSourcegraphDotComMode(false)
-			defer dotcom.MockSourcegraphDotComMode(orig) // reset
-		}
+		dotcom.MockSourcegraphDotComMode(t, false)
+
 		{
 			orig := version.Version()
 			version.Mock("3.39.1")
@@ -61,9 +55,7 @@ func TestServeHelp(t *testing.T) {
 	})
 
 	t.Run("Sourcegraph.com", func(t *testing.T) {
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig) // reset
+		dotcom.MockSourcegraphDotComMode(t, true)
 
 		rw := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/help/foo/bar", nil)

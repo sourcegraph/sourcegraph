@@ -1,5 +1,5 @@
 import type { Remote } from 'comlink'
-import { throwError, of, Subscription, type Unsubscribable, type Subscribable } from 'rxjs'
+import { throwError, of, Subscription, type Unsubscribable, type Observable } from 'rxjs'
 import type * as sourcegraph from 'sourcegraph'
 import { expect } from 'vitest'
 
@@ -107,8 +107,9 @@ export async function integrationTestContext(
     }
 }
 
-export function collectSubscribableValues<T>(subscribable: Subscribable<T>): T[] {
+export function collectSubscribableValues<T>(observable: Observable<T>): T[] {
     const values: T[] = []
-    subscribable.subscribe(value => values.push(value))
+    // eslint-disable-next-line rxjs/no-ignored-subscription
+    observable.subscribe(value => values.push(value))
     return values
 }

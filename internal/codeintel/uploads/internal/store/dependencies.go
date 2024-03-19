@@ -37,7 +37,7 @@ ORDER BY r.scheme, r.manager, r.name, r.version
 `
 
 // UpdatePackages upserts package data tied to the given upload.
-func (s *store) UpdatePackages(ctx context.Context, dumpID int, packages []precise.Package) (err error) {
+func (s *store) UpdatePackages(ctx context.Context, uploadID int, packages []precise.Package) (err error) {
 	ctx, _, endObservation := s.operations.updatePackages.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("numPackages", len(packages)),
 	}})
@@ -67,7 +67,7 @@ func (s *store) UpdatePackages(ctx context.Context, dumpID int, packages []preci
 
 		// Insert the values from the temporary table into the target table. We select a
 		// parameterized dump id here since it is the same for all rows in this operation.
-		return tx.db.Exec(ctx, sqlf.Sprintf(updatePackagesInsertQuery, dumpID))
+		return tx.db.Exec(ctx, sqlf.Sprintf(updatePackagesInsertQuery, uploadID))
 	})
 }
 
@@ -101,7 +101,7 @@ func loadPackagesChannel(packages []precise.Package) <-chan []any {
 }
 
 // UpdatePackageReferences inserts reference data tied to the given upload.
-func (s *store) UpdatePackageReferences(ctx context.Context, dumpID int, references []precise.PackageReference) (err error) {
+func (s *store) UpdatePackageReferences(ctx context.Context, uploadID int, references []precise.PackageReference) (err error) {
 	ctx, _, endObservation := s.operations.updatePackageReferences.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("numReferences", len(references)),
 	}})
@@ -131,7 +131,7 @@ func (s *store) UpdatePackageReferences(ctx context.Context, dumpID int, referen
 
 		// Insert the values from the temporary table into the target table. We select a
 		// parameterized dump id here since it is the same for all rows in this operation.
-		return tx.db.Exec(ctx, sqlf.Sprintf(updateReferencesInsertQuery, dumpID))
+		return tx.db.Exec(ctx, sqlf.Sprintf(updateReferencesInsertQuery, uploadID))
 	})
 }
 
@@ -185,7 +185,7 @@ func (s *rowScanner) Next() (reference shared.PackageReference, _ bool, _ error)
 	}
 
 	if err := s.rows.Scan(
-		&reference.DumpID,
+		&reference.UploadID,
 		&reference.Scheme,
 		&reference.Manager,
 		&reference.Name,

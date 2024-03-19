@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "backport",
+    srcs = [
+        "backport.go",
+        "exec.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/sg/internal/backport",
+    visibility = ["//dev/sg:__subpackages__"],
+    deps = [
+        "//dev/sg/internal/std",
+        "//lib/errors",
+        "//lib/output",
+        "@com_github_urfave_cli_v2//:cli",
+    ],
+)

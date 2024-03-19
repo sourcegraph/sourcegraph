@@ -45,7 +45,7 @@ func Benchmark_JsonParsing_Response(b *testing.B) {
 
 		b.Run(strconv.Itoa(inputSize), func(b *testing.B) {
 			b.Run("std", func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					var resp openaiEmbeddingsResponse
 					err := json.NewDecoder(bytes.NewReader(dat)).Decode(&resp)
 					if err != nil {
@@ -54,7 +54,7 @@ func Benchmark_JsonParsing_Response(b *testing.B) {
 				}
 			})
 			b.Run("jsoniter", func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					var resp openaiEmbeddingsResponse
 					err := jsoniter.NewDecoder(bytes.NewReader(dat)).Decode(&resp)
 					if err != nil {
@@ -63,7 +63,7 @@ func Benchmark_JsonParsing_Response(b *testing.B) {
 				}
 			})
 			b.Run("v2", func(b *testing.B) {
-				for i := 0; i < b.N; i++ {
+				for range b.N {
 					var resp openaiEmbeddingsResponse
 					err := jsonv2.UnmarshalRead(bytes.NewReader(dat), &resp)
 					if err != nil {
@@ -99,9 +99,9 @@ func generateEmbeddingResponse(batchSize int) ([]byte, error) {
 			TotalTokens:  42,
 		},
 	}
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		data := make([]float32, 1536)
-		for f := 0; f < 1536; f++ {
+		for f := range 1536 {
 			data[f] = rand.Float32()*2.0 - 1.0
 		}
 		res.Data[i] = openaiEmbeddingsData{

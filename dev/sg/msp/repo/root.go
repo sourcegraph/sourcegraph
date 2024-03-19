@@ -13,7 +13,7 @@ var once sync.Once
 var repositoryRootValue string
 var repositoryRootError error
 
-var ErrNotInsideManagedServices = errors.New("not running inside sourcegraph/managed-services")
+var ErrNotInsideManagedServices = errors.New("this command must be run in the github.com/sourcegraph/managed-services repository")
 
 // RepositoryRoot caches and returns the value of findRoot.
 func repositoryRoot(cwd string) (string, error) {

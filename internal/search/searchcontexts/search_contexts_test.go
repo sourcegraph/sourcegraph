@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -108,9 +108,7 @@ func TestResolvingInvalidSearchContextSpecs(t *testing.T) {
 }
 
 func TestResolvingInvalidSearchContextSpecs_Cloud(t *testing.T) {
-	orig := dotcom.SourcegraphDotComMode()
-	dotcom.MockSourcegraphDotComMode(true)
-	defer dotcom.MockSourcegraphDotComMode(orig)
+	dotcom.MockSourcegraphDotComMode(t, true)
 
 	tests := []struct {
 		name              string
@@ -506,7 +504,7 @@ func TestUpdatingSearchContexts(t *testing.T) {
 	require.NoError(t, err)
 
 	var scs []*types.SearchContext
-	for i := 0; i < 6; i++ {
+	for i := range 6 {
 		sc, err := db.SearchContexts().CreateSearchContextWithRepositoryRevisions(
 			internalCtx,
 			&types.SearchContext{Name: strconv.Itoa(i)},

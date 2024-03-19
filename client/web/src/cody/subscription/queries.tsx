@@ -35,19 +35,3 @@ export const USER_CODY_USAGE = gql`
         }
     }
 `
-
-export const CHANGE_CODY_PLAN = gql`
-    mutation ChangeCodyPlan($id: ID!, $pro: Boolean!) {
-        changeCodyPlan(user: $id, pro: $pro) {
-            id
-            codySubscription {
-                status
-                plan
-                applyProRateLimits
-                currentPeriodStartAt
-                currentPeriodEndAt
-                cancelAtPeriodEnd
-            }
-        }
-    }
-`

@@ -1,0 +1,10 @@
+diff --git a/oci/private/tarball.sh.tpl b/oci/private/tarball.sh.tpl
+index 2b5052f..d22fef3 100644
+--- a/oci/private/tarball.sh.tpl
++++ b/oci/private/tarball.sh.tpl
+@@ -137,4 +137,4 @@ layers="${LAYERS}" \
+         --output-format json > "${STAGING_DIR}/manifest.json"
+
+ # TODO: https://github.com/bazel-contrib/rules_oci/issues/217
+-tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs
++tar --no-xattrs -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs

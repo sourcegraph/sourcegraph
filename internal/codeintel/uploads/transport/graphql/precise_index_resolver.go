@@ -243,30 +243,32 @@ func (r *preciseIndexResolver) ShouldReindex(ctx context.Context) bool {
 	return r.index != nil && r.index.ShouldReindex
 }
 
+// State returns values matching up with PreciseIndexState
+// in the GraphQL API.
 func (r *preciseIndexResolver) State() string {
 	if r.upload != nil {
-		switch strings.ToUpper(r.upload.State) {
-		case "UPLOADING":
+		switch shared.UploadState(strings.ToLower(r.upload.State)) {
+		case shared.StateUploading:
 			return "UPLOADING_INDEX"
 
-		case "QUEUED":
+		case shared.StateQueued:
 			return "QUEUED_FOR_PROCESSING"
 
-		case "PROCESSING":
+		case shared.StateProcessing:
 			return "PROCESSING"
 
-		case "FAILED":
+		case shared.StateFailed:
 			fallthrough
-		case "ERRORED":
+		case shared.StateErrored:
 			return "PROCESSING_ERRORED"
 
-		case "COMPLETED":
+		case shared.StateCompleted:
 			return "COMPLETED"
 
-		case "DELETING":
+		case shared.StateDeleting:
 			return "DELETING"
 
-		case "DELETED":
+		case shared.StateDeleted:
 			return "DELETED"
 
 		default:
@@ -274,19 +276,19 @@ func (r *preciseIndexResolver) State() string {
 		}
 	}
 
-	switch strings.ToUpper(r.index.State) {
-	case "QUEUED":
+	switch shared.IndexState(strings.ToLower(r.index.State)) {
+	case shared.IndexStateQueued:
 		return "QUEUED_FOR_INDEXING"
 
-	case "PROCESSING":
+	case shared.IndexStateProcessing:
 		return "INDEXING"
 
-	case "FAILED":
+	case shared.IndexStateFailed:
 		fallthrough
-	case "ERRORED":
+	case shared.IndexStateErrored:
 		return "INDEXING_ERRORED"
 
-	case "COMPLETED":
+	case shared.IndexStateCompleted:
 		// Should not actually occur in practice (where did upload go?)
 		return "INDEXING_COMPLETED"
 

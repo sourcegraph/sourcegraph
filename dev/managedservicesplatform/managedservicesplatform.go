@@ -108,6 +108,7 @@ func (r *Renderer) RenderEnvironment(
 		Image:           svc.Build.Image,
 		Service:         svc.Service,
 		SecretEnv:       env.SecretEnv,
+		SecretVolumes:   env.SecretVolumes,
 		PreventDestroys: preventDestroys,
 
 		IsFinalStageOfRollout: rolloutPipeline != nil,

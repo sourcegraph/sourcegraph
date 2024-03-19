@@ -4,7 +4,7 @@ import VisuallyHidden from '@reach/visually-hidden'
 
 import { pluralize } from '@sourcegraph/common'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { PageHeader, H2, useObservable, Text, H4 } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../auth'

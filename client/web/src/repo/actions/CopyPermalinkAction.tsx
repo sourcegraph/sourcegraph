@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { fromEvent } from 'rxjs'
 import { filter } from 'rxjs/operators'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { isInputElement } from '@sourcegraph/shared/src/util/dom'
 import {

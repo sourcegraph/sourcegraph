@@ -138,7 +138,7 @@ type searchInsightLivePreviewSeriesResolver struct {
 
 func (s *searchInsightLivePreviewSeriesResolver) Points(ctx context.Context) ([]graphqlbackend.InsightsDataPointResolver, error) {
 	var resolvers []graphqlbackend.InsightsDataPointResolver
-	for i := 0; i < len(s.series.Points); i++ {
+	for i := range len(s.series.Points) {
 		point := store.SeriesPoint{
 			SeriesID: s.series.SeriesId,
 			Time:     s.series.Points[i].Time,
@@ -184,7 +184,7 @@ func getPreviewRepos(ctx context.Context, repoScope graphqlbackend.RepositorySco
 		if err != nil {
 			return nil, err
 		}
-		for i := 0; i < len(repoList); i++ {
+		for i := range len(repoList) {
 			repos = append(repos, string(repoList[i].Name))
 		}
 	} else {
@@ -204,7 +204,7 @@ func isValidPreviewArgs(args graphqlbackend.SearchInsightPreviewArgs) error {
 	}
 
 	if hasRepoCriteria {
-		for i := 0; i < len(args.Input.Series); i++ {
+		for i := range len(args.Input.Series) {
 			if args.Input.Series[i].GroupBy != nil {
 				return &livePreviewError{Code: invalidArgsErrorCode, Message: "group by insights do not support selecting repositories using a search"}
 			}

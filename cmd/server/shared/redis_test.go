@@ -29,13 +29,13 @@ func TestRedisFixAOF(t *testing.T) {
 	bad := b.Bytes()
 	bad = bad[:len(bad)-4]
 	aofPath := filepath.Join(dataDir, "appendonly.aof")
-	if err := os.WriteFile(aofPath, bad, 0600); err != nil {
+	if err := os.WriteFile(aofPath, bad, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	// We run redisFixAOF twice. First time it will repair, second time should
 	// be a noop since the file will be fine.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		redisFixAOF(filepath.Dir(dataDir), redisProcfileConfig{
 			name:    "redis-test",
 			dataDir: filepath.Base(dataDir),

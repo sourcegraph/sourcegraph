@@ -61,10 +61,12 @@ services:
       # Note: Must match right-hand side of scratch volume mount
       - TMPDIR=/scratch
       # Run as root (required for docker daemon control)
-      - UID=1000
-      - GID=1000
+      - UID=${EXECUTOR_UID}
+      - GID=${EXECUTOR_GID}
       # Use the dind container to run docker commands within the executor
       - DOCKER_HOST=${DOCKER_HOST}
+      # We need to be able to change the registry
+      - REGISTRY=${REGISTRY}
     volumes:
       # Mount docker socket
       - '/var/run/docker.sock:/var/run/docker.sock'

@@ -1,18 +1,4 @@
-/* eslint rxjs/no-internal: warn */
-import {
-    asapScheduler,
-    type ObservableInput,
-    of,
-    type Operator,
-    type PartialObserver,
-    type Subscriber,
-    type TeardownLogic,
-    zip,
-} from 'rxjs'
-import { Observable } from 'rxjs/internal/Observable'
-import { OuterSubscriber } from 'rxjs/internal/OuterSubscriber'
-import { subscribeToArray } from 'rxjs/internal/util/subscribeToArray'
-import { subscribeToResult } from 'rxjs/internal/util/subscribeToResult'
+import { asapScheduler, type ObservableInput, Observable, of, zip, from, Subscription } from 'rxjs'
 
 /**
  * Like {@link combineLatest}, except that it does not wait for all Observables to emit before emitting an initial
@@ -51,74 +37,68 @@ export function combineLatestOrDefault<T>(observables: ObservableInput<T>[], def
             return zip(...observables)
         }
         default: {
-            return new Observable<T[]>(subscribeToArray(observables)).lift(new CombineLatestOperator(defaultValue))
-        }
-    }
-}
+            return new Observable<T[]>(subscriber => {
+                // The array of the most recent values from each input Observable.
+                // If a source Observable has not yet emitted a value, it will be represented by the
+                // defaultValue (if provided) or not at all (if not provided).
+                const values: T[] = defaultValue !== undefined ? observables.map(() => defaultValue) : []
 
-class CombineLatestOperator<T> implements Operator<T, T[]> {
-    constructor(private defaultValue?: T) {}
+                // Whether the emission of the values array has been scheduled
+                let scheduled = false
+                let scheduledWork: Subscription | undefined
+                // The number of source Observables that have not yet completed
+                // (so that we know when to complete the output Observable)
+                let activeObservables = observables.length
 
-    public call(subscriber: Subscriber<T[]>, source: any): TeardownLogic {
-        return source.subscribe(new CombineLatestSubscriber(subscriber, this.defaultValue))
-    }
-}
+                // When everything is done, clean up the values array
+                subscriber.add(() => {
+                    values.length = 0
+                })
 
-class CombineLatestSubscriber<T> extends OuterSubscriber<T, T[]> {
-    private activeObservables = 0
-    private values: any[] = []
-    private observables: Observable<any>[] = []
-    private scheduled = false
-
-    constructor(observer: PartialObserver<T[]>, private defaultValue?: T) {
-        super(observer)
-    }
-
-    protected _next(observable: any): void {
-        if (this.defaultValue !== undefined) {
-            this.values.push(this.defaultValue)
-        }
-        this.observables.push(observable)
-    }
-
-    protected _complete(): void {
-        this.activeObservables = this.observables.length
-        for (let index = 0; index < this.observables.length; index++) {
-            this.add(subscribeToResult(this, this.observables[index], this.observables[index], index))
-        }
-    }
-
-    public notifyComplete(): void {
-        this.activeObservables--
-        if (this.activeObservables === 0 && this.destination.complete) {
-            this.destination.complete()
-        }
-    }
-
-    public notifyNext(_outerValue: T, innerValue: T[], outerIndex: number): void {
-        const values = this.values
-        values[outerIndex] = innerValue
-
-        if (this.activeObservables === 1) {
-            // Only 1 observable is active, so no need to buffer.
-            //
-            // This makes it possible to use RxJS's `of` in tests without specifying an explicit scheduler.
-            if (this.destination.next) {
-                this.destination.next(this.values.slice())
-            }
-            return
-        }
-
-        // Buffer all next values that are emitted at the same time into one emission.
-        //
-        // This makes tests (using expectObservable) easier to write.
-        if (!this.scheduled) {
-            this.scheduled = true
-            asapScheduler.schedule(() => {
-                if (this.scheduled && this.destination.next) {
-                    this.destination.next(this.values.slice())
+                // Subscribe to each source Observable. The index of the source Observable is used to
+                // keep track of the most recent value from that Observable in the values array.
+                for (let index = 0; index < observables.length; index++) {
+                    subscriber.add(
+                        from(observables[index]).subscribe({
+                            next: value => {
+                                values[index] = value
+                                if (activeObservables === 1) {
+                                    // If only one source Observable is active, emit the values array immediately
+                                    // Abort any scheduled emission
+                                    scheduledWork?.unsubscribe()
+                                    scheduled = false
+                                    subscriber.next(values.slice())
+                                } else if (!scheduled) {
+                                    scheduled = true
+                                    // Use asapScheduler to emit the values array, so that all
+                                    // next values that are emitted at the same time are emitted together.
+                                    // This makes tests (using expectObservable) easier to write.
+                                    scheduledWork = asapScheduler.schedule(() => {
+                                        if (!subscriber.closed) {
+                                            subscriber.next(values.slice())
+                                            scheduled = false
+                                            if (activeObservables === 0) {
+                                                subscriber.complete()
+                                            }
+                                        }
+                                    })
+                                }
+                            },
+                            error: error => subscriber.error(error),
+                            complete: () => {
+                                activeObservables--
+                                if (activeObservables === 0 && !scheduled) {
+                                    subscriber.complete()
+                                }
+                            },
+                        })
+                    )
                 }
-                this.scheduled = false
+
+                // When everything is done, clean up the values array
+                return () => {
+                    values.length = 0
+                }
             })
         }
     }

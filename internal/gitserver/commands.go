@@ -1686,7 +1686,7 @@ func (c *clientImplementor) getMoreCommits(ctx context.Context, repo api.RepoNam
 	const maxIterations = 5
 
 	totalCommits := make([]*gitdomain.Commit, 0, opt.N)
-	for i := 0; i < maxIterations; i++ {
+	for range maxIterations {
 		if uint(len(totalCommits)) == opt.N {
 			break
 		}

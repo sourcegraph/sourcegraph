@@ -16,8 +16,10 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-type getIntervalFunc func() time.Duration
-type getConcurrencyFunc func() int
+type (
+	getIntervalFunc    func() time.Duration
+	getConcurrencyFunc func() int
+)
 
 // PeriodicGoroutine represents a goroutine whose main behavior is reinvoked periodically.
 //
@@ -239,7 +241,7 @@ func (r *PeriodicGoroutine) startPool(concurrency int) func() {
 	g := conc.NewWaitGroup()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		g.Go(func() { r.runHandlerPeriodically(ctx) })
 	}
 

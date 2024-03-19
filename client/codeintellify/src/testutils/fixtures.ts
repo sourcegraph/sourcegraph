@@ -2,7 +2,6 @@ import { of } from 'rxjs'
 import { delay } from 'rxjs/operators'
 
 import type { ActionsProvider, HoverProvider, DocumentHighlightProvider } from '../hoverifier'
-import type { MaybeLoadingResult } from '../loading'
 import type { HoverAttachment, DocumentHighlight } from '../types'
 
 /**
@@ -41,10 +40,7 @@ export function createStubHoverProvider(
     hover: Partial<HoverAttachment> = {},
     delayTime?: number
 ): HoverProvider<{}, {}> {
-    return () =>
-        of<MaybeLoadingResult<{}>>({ isLoading: false, result: createHoverAttachment(hover) }).pipe(
-            delay(delayTime ?? 0)
-        )
+    return () => of({ isLoading: false, result: createHoverAttachment(hover) }).pipe(delay(delayTime ?? 0))
 }
 
 /**
@@ -57,7 +53,7 @@ export function createStubDocumentHighlightProvider(
     documentHighlights: Partial<DocumentHighlight>[] = [],
     delayTime?: number
 ): DocumentHighlightProvider<{}> {
-    return () => of<DocumentHighlight[]>(documentHighlights.map(createDocumentHighlight)).pipe(delay(delayTime ?? 0))
+    return () => of(documentHighlights.map(createDocumentHighlight)).pipe(delay(delayTime ?? 0))
 }
 
 /**

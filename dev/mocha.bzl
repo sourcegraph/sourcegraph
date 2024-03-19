@@ -135,6 +135,5 @@ def mocha_test(name, tests, deps = [], args = [], data = [], env = {}, is_percy_
             args = args,
             data = data,
             env = env,
-            use_default_shell_env = True,
             **kwargs
         )

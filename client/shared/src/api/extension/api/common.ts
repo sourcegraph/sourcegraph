@@ -1,8 +1,10 @@
 import { type Remote, type ProxyMarked, proxy, proxyMarker, type UnproxyOrClone } from 'comlink'
 import { identity } from 'lodash'
-import { from, isObservable, type Observable, type Observer, of, type Subscribable, type Unsubscribable } from 'rxjs'
+import { from, isObservable, type Observable, type Observer, of, type Unsubscribable, ObservableInput } from 'rxjs'
 import { map } from 'rxjs/operators'
-import type { ProviderResult } from 'sourcegraph'
+import type { ProviderResult, Subscribable } from 'sourcegraph'
+
+import { fromSubscribable } from '@sourcegraph/common'
 
 import { isAsyncIterable, isPromiseLike, isSubscribable, observableFromAsyncIterable } from '../../util'
 
@@ -50,8 +52,10 @@ export function providerResultToObservable<T, R = T>(
     mapFunc: (value: T | undefined | null) => R = identity
 ): Observable<R> {
     let observable: Observable<R>
-    if (result && (isPromiseLike(result) || isObservable<T>(result) || isSubscribable(result))) {
-        observable = from(result).pipe(map(mapFunc))
+    if (result && (isPromiseLike(result) || isObservable(result))) {
+        observable = from(result as ObservableInput<T>).pipe(map(mapFunc))
+    } else if (isSubscribable(result)) {
+        observable = fromSubscribable(result as Subscribable<T>).pipe(map(mapFunc))
     } else if (isAsyncIterable(result)) {
         observable = observableFromAsyncIterable(result).pipe(map(mapFunc))
     } else {

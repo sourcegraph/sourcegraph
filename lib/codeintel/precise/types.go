@@ -204,7 +204,7 @@ type DocumentationMapping struct {
 type DocumentationSearchResult struct {
 	ID        int64
 	RepoID    int32
-	DumpID    int32
+	UploadID  int32
 	DumpRoot  string
 	PathID    string
 	Detail    string

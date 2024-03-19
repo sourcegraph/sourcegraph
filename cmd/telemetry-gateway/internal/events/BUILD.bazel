@@ -12,9 +12,11 @@ go_library(
     deps = [
         "//internal/pubsub",
         "//internal/telemetrygateway/v1:telemetrygateway",
+        "//internal/trace",
         "//lib/errors",
         "@com_github_cockroachdb_redact//:redact",
         "@com_github_sourcegraph_conc//pool",
+        "@com_github_sourcegraph_log//:log",
         "@com_google_cloud_go_pubsub//:pubsub",
         "@io_opentelemetry_go_otel_metric//:metric",
         "@org_golang_google_protobuf//encoding/protojson",
@@ -32,8 +34,10 @@ go_test(
         "//internal/pubsub/pubsubtest",
         "//internal/telemetrygateway/v1:telemetrygateway",
         "@com_github_hexops_autogold_v2//:autogold",
+        "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
         "@org_golang_google_protobuf//types/known/structpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
     ],
 )

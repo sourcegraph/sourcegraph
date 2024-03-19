@@ -273,7 +273,7 @@ func loadRecentRuns(c *rcache.Cache, jobName string, routineName string, hostNam
 func loadRunStats(c *rcache.Cache, jobName string, routineName string, now time.Time, dayCount int) (RoutineRunStats, error) {
 	// Get all stats
 	var stats RoutineRunStats
-	for i := 0; i < dayCount; i++ {
+	for i := range dayCount {
 		date := now.AddDate(0, 0, -i).Truncate(24 * time.Hour)
 		statsRaw, found := c.Get(jobName + ":" + routineName + ":runStats:" + date.Format("2006-01-02"))
 		if found {

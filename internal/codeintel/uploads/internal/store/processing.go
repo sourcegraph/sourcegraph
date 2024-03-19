@@ -125,11 +125,11 @@ WHERE
 	id = %s
 `
 
-// DeleteOverlapapingDumps deletes all completed uploads for the given repository with the same
+// DeleteOverlapapingCompletedUploads deletes all completed uploads for the given repository with the same
 // commit, root, and indexer. This is necessary to perform during conversions before changing
 // the state of a processing upload to completed as there is a unique index on these four columns.
-func (s *store) DeleteOverlappingDumps(ctx context.Context, repositoryID int, commit, root, indexer string) (err error) {
-	ctx, trace, endObservation := s.operations.deleteOverlappingDumps.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
+func (s *store) DeleteOverlappingCompletedUploads(ctx context.Context, repositoryID int, commit, root, indexer string) (err error) {
+	ctx, trace, endObservation := s.operations.deleteOverlappingCompletedUploads.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		attribute.Int("repositoryID", repositoryID),
 		attribute.String("commit", commit),
 		attribute.String("root", root),
@@ -139,7 +139,7 @@ func (s *store) DeleteOverlappingDumps(ctx context.Context, repositoryID int, co
 
 	unset, _ := s.db.SetLocal(ctx, "codeintel.lsif_uploads_audit.reason", "upload overlapping with a newer upload")
 	defer unset(ctx)
-	count, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(deleteOverlappingDumpsQuery, repositoryID, commit, root, indexer)))
+	count, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(deleteOverlappingCompletedUploadsQuery, repositoryID, commit, root, indexer)))
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (s *store) DeleteOverlappingDumps(ctx context.Context, repositoryID int, co
 	return nil
 }
 
-const deleteOverlappingDumpsQuery = `
+const deleteOverlappingCompletedUploadsQuery = `
 WITH
 candidates AS (
 	SELECT u.id

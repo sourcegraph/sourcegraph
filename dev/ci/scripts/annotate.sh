@@ -7,6 +7,9 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
 set -e
 
+# TODO(burmudar: remove me this should be created by other scripts
+mkdir -p ./annotations
+
 print_usage() {
   printf "Usage:"
   printf "  echo \"your annotation\" | annotate.sh -s my-section"

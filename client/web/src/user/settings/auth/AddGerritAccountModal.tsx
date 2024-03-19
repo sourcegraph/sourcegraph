@@ -1,9 +1,9 @@
 import React from 'react'
 
-import type { AddExternalAccountResult, AddExternalAccountVariables } from 'src/graphql-operations'
-
 import { gql, useMutation } from '@sourcegraph/http-client'
 import { Alert, Button, Form, H3, Input, Modal, Text } from '@sourcegraph/wildcard'
+
+import type { AddExternalAccountResult, AddExternalAccountVariables } from '../../../graphql-operations'
 
 export const ADD_EXTERNAL_ACCOUNT = gql`
     mutation AddExternalAccount($serviceType: String!, $serviceID: String!, $accountDetails: String!) {

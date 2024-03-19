@@ -365,7 +365,7 @@ func mkRepos(n int, base ...*types.Repo) types.Repos {
 	}
 
 	rs := make(types.Repos, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := strconv.Itoa(i)
 		r := base[i%len(base)].Clone()
 		r.Name += api.RepoName(id)
@@ -380,7 +380,7 @@ func generateExternalServices(n int, base ...*types.ExternalService) types.Exter
 		return nil
 	}
 	es := make(types.ExternalServices, 0, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		id := strconv.Itoa(i)
 		r := base[i%len(base)].Clone()
 		r.DisplayName += id

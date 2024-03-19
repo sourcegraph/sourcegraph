@@ -4,7 +4,7 @@ import type { FetchResult } from '@apollo/client'
 import { useNavigate } from 'react-router-dom'
 
 import { logger, renderMarkdown } from '@sourcegraph/common'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Alert, Container, H3, H4, Markdown, PageHeader } from '@sourcegraph/wildcard'
 

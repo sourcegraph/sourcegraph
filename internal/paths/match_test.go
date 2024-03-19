@@ -265,7 +265,7 @@ func BenchmarkMatch(b *testing.B) {
 			b.ResetTimer()
 			start := time.Now()
 
-			for n := 0; n < b.N; n++ {
+			for range b.N {
 				count := 0
 				for _, p := range paths {
 					if pattern.Match(p) {

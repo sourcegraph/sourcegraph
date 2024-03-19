@@ -5,7 +5,6 @@ import (
 
 	"github.com/keegancsmith/sqlf"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -32,7 +31,7 @@ func (p *AuthzQueryParameters) ToAuthzQuery() *sqlf.Query {
 func GetAuthzQueryParameters(ctx context.Context, db DB) (params *AuthzQueryParameters, err error) {
 	params = &AuthzQueryParameters{}
 	authzAllowByDefault, authzProviders := authz.GetProviders()
-	params.UsePermissionsUserMapping = globals.PermissionsUserMapping().Enabled
+	params.UsePermissionsUserMapping = conf.PermissionsUserMapping().Enabled
 	params.AuthzEnforceForSiteAdmins = conf.Get().AuthzEnforceForSiteAdmins
 
 	a := actor.FromContext(ctx)

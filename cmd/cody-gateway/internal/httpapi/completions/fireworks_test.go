@@ -73,4 +73,9 @@ func TestFireworksStarCoderModelPicking(t *testing.T) {
 		assert.Equal(t, fireworks.Starcoder16b, pickStarCoderModel("starcoder-16b", config.FireworksConfig{StarcoderCommunitySingleTenantPercent: 0, StarcoderQuantizedPercent: 0}))
 		assert.Equal(t, fireworks.Starcoder7b, pickStarCoderModel("starcoder-7b", config.FireworksConfig{StarcoderCommunitySingleTenantPercent: 0, StarcoderQuantizedPercent: 0}))
 	})
+
+	t.Run("returns starcoder2 instances when starcoder2 virtual model string is used", func(t *testing.T) {
+		assert.Equal(t, fireworks.StarcoderTwo7b, pickStarCoderModel("starcoder2-7b", config.FireworksConfig{StarcoderCommunitySingleTenantPercent: 0, StarcoderQuantizedPercent: 0}))
+		assert.Equal(t, fireworks.StarcoderTwo15b, pickStarCoderModel("starcoder2-15b", config.FireworksConfig{StarcoderCommunitySingleTenantPercent: 0, StarcoderQuantizedPercent: 0}))
+	})
 }

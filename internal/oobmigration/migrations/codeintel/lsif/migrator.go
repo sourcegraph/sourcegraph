@@ -196,7 +196,7 @@ SELECT CASE c2.count WHEN 0 THEN 1 ELSE cast(c1.count as float) / cast(c2.count 
 // enclosing transaction.
 func (m *migrator) Up(ctx context.Context) (err error) {
 	p := pool.New().WithErrors()
-	for i := 0; i < m.options.numRoutines; i++ {
+	for range m.options.numRoutines {
 		p.Go(func() error { return m.up(ctx) })
 	}
 
@@ -212,7 +212,7 @@ func (m *migrator) up(ctx context.Context) (err error) {
 // For notes on parallelism, see the symmetric `Up` method on this migrator.
 func (m *migrator) Down(ctx context.Context) error {
 	p := pool.New().WithErrors()
-	for i := 0; i < m.options.numRoutines; i++ {
+	for range m.options.numRoutines {
 		p.Go(func() error { return m.down(ctx) })
 	}
 
@@ -232,7 +232,7 @@ func (m *migrator) run(ctx context.Context, sourceVersion, targetVersion int, dr
 	}
 	defer func() { err = tx.Done(err) }()
 
-	dumpID, ok, err := m.selectAndLockDump(ctx, tx, sourceVersion)
+	uploadID, ok, err := m.selectAndLockDump(ctx, tx, sourceVersion)
 	if err != nil {
 		return err
 	}
@@ -240,12 +240,12 @@ func (m *migrator) run(ctx context.Context, sourceVersion, targetVersion int, dr
 		return nil
 	}
 
-	rowValues, err := m.processRows(ctx, tx, dumpID, sourceVersion, driverFunc)
+	rowValues, err := m.processRows(ctx, tx, uploadID, sourceVersion, driverFunc)
 	if err != nil {
 		return err
 	}
 
-	if err := m.updateBatch(ctx, tx, dumpID, targetVersion, rowValues); err != nil {
+	if err := m.updateBatch(ctx, tx, uploadID, targetVersion, rowValues); err != nil {
 		return err
 	}
 
@@ -255,12 +255,12 @@ func (m *migrator) run(ctx context.Context, sourceVersion, targetVersion int, dr
 
 	rows, err := tx.Query(ctx, sqlf.Sprintf(
 		runUpdateBoundsQuery,
-		dumpID,
+		uploadID,
 		sqlf.Sprintf(m.options.tableName),
-		dumpID,
+		uploadID,
 		sqlf.Sprintf(m.options.tableName),
 		sqlf.Sprintf(m.options.tableName),
-		dumpID,
+		uploadID,
 	))
 	if err != nil {
 		return err
@@ -360,12 +360,12 @@ FOR UPDATE SKIP LOCKED
 // processRows selects a batch of rows from the target table associated with the given dump identifier
 // to  update and calls the given driver func over each row. The driver func returns the set of values
 // that should be used to update that row. These values are fed into a channel usable for batch insert.
-func (m *migrator) processRows(ctx context.Context, tx *basestore.Store, dumpID, version int, driverFunc driverFunc) (_ <-chan []any, err error) {
+func (m *migrator) processRows(ctx context.Context, tx *basestore.Store, uploadID, version int, driverFunc driverFunc) (_ <-chan []any, err error) {
 	rows, err := tx.Query(ctx, sqlf.Sprintf(
 		processRowsQuery,
 		sqlf.Join(m.selectionExpressions, ", "),
 		sqlf.Sprintf(m.options.tableName),
-		dumpID,
+		uploadID,
 		version,
 		m.options.batchSize,
 	))
@@ -401,7 +401,7 @@ var (
 // updateBatch creates a temporary table symmetric to the target table but without any of the read-only
 // fields. Then, the given row values are bulk inserted into the temporary table. Finally, the rows in
 // the temporary table are used to update the target table.
-func (m *migrator) updateBatch(ctx context.Context, tx *basestore.Store, dumpID, targetVersion int, rowValues <-chan []any) error {
+func (m *migrator) updateBatch(ctx context.Context, tx *basestore.Store, uploadID, targetVersion int, rowValues <-chan []any) error {
 	if err := tx.Exec(ctx, sqlf.Sprintf(
 		updateBatchTemporaryTableQuery,
 		temporaryTableExpression,
@@ -429,7 +429,7 @@ func (m *migrator) updateBatch(ctx context.Context, tx *basestore.Store, dumpID,
 		sqlf.Join(m.updateAssignments, ", "),
 		targetVersion,
 		temporaryTableExpression,
-		dumpID,
+		uploadID,
 		sqlf.Join(m.updateConditions, " AND "),
 	)); err != nil {
 		return err

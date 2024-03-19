@@ -44,7 +44,7 @@ func TestRecordingTimesMigrator(t *testing.T) {
 	}
 
 	numSeries := 1000
-	for i := 0; i < numSeries; i++ {
+	for i := range numSeries {
 		if err := migrator.store.Exec(context.Background(), sqlf.Sprintf(
 			`INSERT INTO insight_series (series_id, query, generation_method, supports_augmentation, created_at, last_recorded_at, sample_interval_unit, sample_interval_value)
              VALUES (%s, 'query', 'search', FALSE, %s, %s, %s, %s)`,

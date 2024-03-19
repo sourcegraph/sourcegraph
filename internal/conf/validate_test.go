@@ -27,6 +27,7 @@ const (
 	authUnlockAccountLinkSigningKey             = "authUnlockAccountLinkSigningKey"
 	dotcomSrcCliVersionCacheGitHubToken         = "dotcomSrcCliVersionCacheGitHubToken"
 	dotcomSrcCliVersionCacheGitHubWebhookSecret = "dotcomSrcCliVersionCacheGitHubWebhookSecret"
+	dotcomSAMSClientSecret                      = "dotcomSAMSClientSecret"
 )
 
 func TestValidate(t *testing.T) {
@@ -230,6 +231,7 @@ func TestRedactSecrets(t *testing.T) {
 					dotcomGitHubAppCloudPrivateKey:              dotcomGitHubAppCloudPrivateKey,
 					dotcomSrcCliVersionCacheGitHubToken:         dotcomSrcCliVersionCacheGitHubToken,
 					dotcomSrcCliVersionCacheGitHubWebhookSecret: dotcomSrcCliVersionCacheGitHubWebhookSecret,
+					dotcomSAMSClientSecret:                      dotcomSAMSClientSecret,
 					authUnlockAccountLinkSigningKey:             authUnlockAccountLinkSigningKey,
 				},
 			),
@@ -490,6 +492,7 @@ func getTestSiteWithRedactedSecrets() string {
 			dotcomGitHubAppCloudPrivateKey:              redactedSecret,
 			dotcomSrcCliVersionCacheGitHubToken:         redactedSecret,
 			dotcomSrcCliVersionCacheGitHubWebhookSecret: redactedSecret,
+			dotcomSAMSClientSecret:                      redactedSecret,
 			authUnlockAccountLinkSigningKey:             redactedSecret,
 		},
 	)
@@ -508,6 +511,7 @@ type testSecrets struct {
 	dotcomGitHubAppCloudPrivateKey              string
 	dotcomSrcCliVersionCacheGitHubToken         string
 	dotcomSrcCliVersionCacheGitHubWebhookSecret string
+	dotcomSAMSClientSecret                      string
 	authUnlockAccountLinkSigningKey             string
 }
 
@@ -577,7 +581,8 @@ func getTestSiteWithSecrets(testSecrets testSecrets, optionalEdit ...string) str
         "token": "%s",
         "webhookSecret": "%s"
       }
-    }
+    },
+    "sams.clientSecret": "%s"
   },
   "auth.unlockAccountLinkSigningKey": "%s",
 }`,
@@ -595,6 +600,7 @@ func getTestSiteWithSecrets(testSecrets testSecrets, optionalEdit ...string) str
 		testSecrets.dotcomGitHubAppCloudPrivateKey,
 		testSecrets.dotcomSrcCliVersionCacheGitHubToken,
 		testSecrets.dotcomSrcCliVersionCacheGitHubWebhookSecret,
+		testSecrets.dotcomSAMSClientSecret,
 		testSecrets.authUnlockAccountLinkSigningKey,
 	)
 }

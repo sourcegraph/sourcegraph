@@ -44,7 +44,7 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
         </td>
         <td className="text-nowrap">
             {node.activeLicense?.info ? (
-                <Timestamp date={node.activeLicense.info.expiresAt} />
+                <Timestamp date={node.activeLicense.info.expiresAt} utc={true} />
             ) : (
                 <span className="text-muted font-italic">None</span>
             )}

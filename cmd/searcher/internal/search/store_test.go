@@ -45,7 +45,7 @@ func TestPrepareZip(t *testing.T) {
 	// Fetch same commit in parallel to ensure single-flighting works
 	startPrepareZip := make(chan struct{})
 	prepareZipErr := make(chan error)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
 			<-startPrepareZip
 			_, err := s.PrepareZip(context.Background(), wantRepo, wantCommit, nil)
@@ -54,7 +54,7 @@ func TestPrepareZip(t *testing.T) {
 	}
 	close(startPrepareZip)
 	close(returnFetch)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		err := <-prepareZipErr
 		if err != nil {
 			t.Fatal("expected PrepareZip to succeed:", err)
@@ -71,7 +71,7 @@ func TestPrepareZip(t *testing.T) {
 	// Wait for item to appear on disk cache, then test again to ensure we
 	// use the disk cache.
 	onDisk := false
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		files, _ := os.ReadDir(s.Path)
 		if len(files) != 0 {
 			onDisk = true

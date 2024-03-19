@@ -36,7 +36,7 @@ func testStoreChangesetEvents(t *testing.T, ctx context.Context, s *Store, clock
 	}
 
 	t.Run("Upsert", func(t *testing.T) {
-		for i := 0; i < cap(events); i++ {
+		for i := range cap(events) {
 			e := &btypes.ChangesetEvent{
 				ChangesetID: int64(i + 1),
 				Kind:        kinds[i],
@@ -49,7 +49,7 @@ func testStoreChangesetEvents(t *testing.T, ctx context.Context, s *Store, clock
 		}
 
 		// Verify that no duplicates are introduced and no error is returned.
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			err := s.UpsertChangesetEvents(ctx, events...)
 			if err != nil {
 				t.Fatal(err)

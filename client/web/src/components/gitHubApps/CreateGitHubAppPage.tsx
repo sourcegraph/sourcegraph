@@ -2,7 +2,7 @@ import React, { type FC, useState, useCallback, useRef, useEffect } from 'react'
 
 import { noop } from 'lodash'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Alert,
     Container,

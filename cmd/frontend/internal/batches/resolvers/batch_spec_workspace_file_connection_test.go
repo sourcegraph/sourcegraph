@@ -173,7 +173,7 @@ func createBatchSpec(t *testing.T, db database.DB, ctx context.Context, bstore *
 }
 
 func createBatchSpecWorkspaceFiles(ctx context.Context, bstore *store.Store, specID int64, count int) error {
-	for i := 0; i < count; i++ {
+	for i := range count {
 		file := &btypes.BatchSpecWorkspaceFile{
 			BatchSpecID: specID,
 			FileName:    fmt.Sprintf("hello-%d.txt", i),

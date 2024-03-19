@@ -1,89 +1,15 @@
 import { type FC, Fragment, type MouseEventHandler, useCallback, useState } from 'react'
 
-import { mdiClose, mdiPlus } from '@mdi/js'
-import classNames from 'classnames'
+import { mdiPlus } from '@mdi/js'
 
-import { SyntaxHighlightedSearchQuery } from '@sourcegraph/branded'
-import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
-import { Alert, Button, ErrorAlert, H3, H4, Icon, Link, PageHeader, Text } from '@sourcegraph/wildcard'
+import { Alert, Button, ErrorAlert, H4, Icon, PageHeader, Text } from '@sourcegraph/wildcard'
 
-import { MarketingBlock } from '../../../components/MarketingBlock'
 import { AddOwnerModal } from '../../../components/own/AddOwnerModal'
-import { type OwnerFields, type OwnershipConnectionFields, SearchPatternType } from '../../../graphql-operations'
+import type { OwnershipConnectionFields } from '../../../graphql-operations'
 
 import { FileOwnershipEntry } from './FileOwnershipEntry'
 
 import styles from './OwnerList.module.scss'
-
-interface OwnExplanationProps {
-    owners?: OwnerFields[]
-}
-
-const OwnExplanation: FC<OwnExplanationProps> = ({ owners }) => {
-    const [dismissed, setDismissed] = useTemporarySetting('own.panelExplanationHidden')
-
-    const onDismiss = useCallback(() => {
-        setDismissed(true)
-    }, [setDismissed])
-
-    if (dismissed) {
-        return null
-    }
-
-    const ownerSearchPredicate = resolveOwnerSearchPredicate(owners)
-
-    return (
-        <MarketingBlock contentClassName={styles.ownExplanationContainer} wrapperClassName="mb-3">
-            <div className="d-flex align-items-start">
-                <div className="flex-1">
-                    <H3 as={H4} className={styles.ownExplanationTitle}>
-                        Code ownership Preview
-                    </H3>
-                    <Text className={classNames(styles.ownExplanationContent, 'mb-2')}>
-                        Find code owners from a CODEOWNERS file in this repository, or from your external ownership
-                        tracking system here. <Link to="/help/own">Code ownership documentation</Link> contains more
-                        information.
-                    </Text>
-                    <Text className={classNames(styles.ownExplanationContent, 'mb-1')}>
-                        Code ownership also works in search:
-                    </Text>
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        outline={true}
-                        as={Link}
-                        to={`/search?q=file:has.owner(${ownerSearchPredicate})`}
-                        className="mr-2"
-                    >
-                        <SyntaxHighlightedSearchQuery
-                            query={`file:has.owner(${ownerSearchPredicate})`}
-                            searchPatternType={SearchPatternType.standard}
-                        />
-                    </Button>
-                    <Button variant="secondary" size="sm" as={Link} to="/search?q=select:file.owners" outline={true}>
-                        <SyntaxHighlightedSearchQuery
-                            query="select:file.owners"
-                            searchPatternType={SearchPatternType.standard}
-                        />
-                    </Button>
-                </div>
-                <Button aria-label="Dismiss alert" variant="icon" onClick={onDismiss}>
-                    <Icon aria-hidden={true} svgPath={mdiClose} />
-                </Button>
-            </div>
-        </MarketingBlock>
-    )
-}
-const resolveOwnerSearchPredicate = (owners?: OwnerFields[]): string => {
-    if (owners) {
-        for (const owner of owners) {
-            if (owner.__typename === 'Person' && owner.user?.username) {
-                return `@${owner.user.username}`
-            }
-        }
-    }
-    return 'johndoe'
-}
 
 interface OwnerListProps {
     data?: OwnershipConnectionFields
@@ -129,7 +55,6 @@ export const OwnerList: FC<OwnerListProps> = ({
         const totalCount = data.totalOwners
         return (
             <div className={styles.contents}>
-                <OwnExplanation owners={nodes.map(ownership => ownership.owner)} />
                 {makeOwnerError && (
                     <div className={styles.contents}>
                         <ErrorAlert error={makeOwnerError} prefix="Error promoting an owner" className="mt-2" />
@@ -239,7 +164,6 @@ export const OwnerList: FC<OwnerListProps> = ({
 
     return (
         <div className={styles.contents}>
-            <OwnExplanation />
             <PageHeader className="mb-3" actions={addOwnerButton()}>
                 <PageHeader.Heading className={styles.heading} as="h4">
                     Owners

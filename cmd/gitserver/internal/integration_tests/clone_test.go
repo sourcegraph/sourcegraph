@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	mockassert "github.com/derision-test/go-mockgen/testutil/assert"
-	mockrequire "github.com/derision-test/go-mockgen/testutil/require"
+	mockassert "github.com/derision-test/go-mockgen/v2/testutil/assert"
+	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
@@ -88,7 +88,7 @@ func TestClone(t *testing.T) {
 
 	// Requesting a repo update should figure out that the repo is not yet
 	// cloned and call clone. We expect that clone to succeed.
-	_, err := cli.RequestRepoUpdate(ctx, repo, 0)
+	_, err := cli.RequestRepoUpdate(ctx, repo)
 	require.NoError(t, err)
 
 	// Should have acquired a lock.
@@ -185,7 +185,7 @@ func TestClone_Fail(t *testing.T) {
 	// Requesting a repo update should figure out that the repo is not yet
 	// cloned and call clone. We expect that clone to fail, because vcssyncer.IsCloneable
 	// fails here.
-	resp, err := cli.RequestRepoUpdate(ctx, repo, 0)
+	resp, err := cli.RequestRepoUpdate(ctx, repo)
 	require.NoError(t, err)
 	// Note that this error is from IsCloneable(), not from Clone().
 	require.Contains(t, resp.Error, "error cloning repo: repo github.com/test/repo not cloneable:")
@@ -223,7 +223,7 @@ func TestClone_Fail(t *testing.T) {
 	// Requesting another repo update should figure out that the repo is not yet
 	// cloned and call clone. We expect that clone to fail, but in the vcssyncer.Clone
 	// stage this time, not vcssyncer.IsCloneable.
-	resp, err = cli.RequestRepoUpdate(ctx, repo, 0)
+	resp, err = cli.RequestRepoUpdate(ctx, repo)
 	require.NoError(t, err)
 	require.Contains(t, resp.Error, "failed to clone github.com/test/repo: clone failed. Output: Creating bare repo\nCreated bare repo at")
 

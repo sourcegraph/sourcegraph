@@ -393,7 +393,7 @@ func (c *CommitFilterResult) Invert(lc *LazyCommit) {
 	if err != nil {
 		panic("unexpected error: " + err.Error())
 	}
-	for i := 0; i < len(diff); i++ {
+	for i := range len(diff) {
 		if _, ok := c.MatchedFileDiffs[i]; ok {
 			delete(c.MatchedFileDiffs, i)
 		} else {

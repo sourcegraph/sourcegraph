@@ -2,6 +2,7 @@ import type { MockedResponse } from '@apollo/client/testing'
 import type { Meta, StoryFn } from '@storybook/react'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 
 import { WebStory } from '../../../components/WebStory'
 import type {
@@ -43,7 +44,9 @@ const ownAnalyticsDisabled: MockedResponse<GetOwnSignalConfigurationsResult, Get
 }
 
 export const AnalyticsDisabled: StoryFn = () => (
-    <WebStory mocks={[ownAnalyticsDisabled]}>{() => <OwnAnalyticsPage />}</WebStory>
+    <WebStory mocks={[ownAnalyticsDisabled]}>
+        {() => <OwnAnalyticsPage telemetryRecorder={noOpTelemetryRecorder} />}
+    </WebStory>
 )
 AnalyticsDisabled.storyName = 'AnalyticsDisabled - need to enable own analytics in site admin'
 
@@ -85,7 +88,9 @@ const presentStats: MockedResponse<GetInstanceOwnStatsResult, GetInstanceOwnStat
 }
 
 export const PresentStats: StoryFn = () => (
-    <WebStory mocks={[ownAnalyticsEnabled, presentStats]}>{() => <OwnAnalyticsPage />}</WebStory>
+    <WebStory mocks={[ownAnalyticsEnabled, presentStats]}>
+        {() => <OwnAnalyticsPage telemetryRecorder={noOpTelemetryRecorder} />}
+    </WebStory>
 )
 PresentStats.storyName = 'PresentStats - statistics available'
 
@@ -108,6 +113,8 @@ const zeroStats: MockedResponse<GetInstanceOwnStatsResult, GetInstanceOwnStatsVa
 }
 
 export const ZeroStats: StoryFn = () => (
-    <WebStory mocks={[ownAnalyticsEnabled, zeroStats]}>{() => <OwnAnalyticsPage />}</WebStory>
+    <WebStory mocks={[ownAnalyticsEnabled, zeroStats]}>
+        {() => <OwnAnalyticsPage telemetryRecorder={noOpTelemetryRecorder} />}
+    </WebStory>
 )
 ZeroStats.storyName = 'ZeroStats - no statistics computed yet'

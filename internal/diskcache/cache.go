@@ -169,7 +169,7 @@ func (s *store) OpenWithPath(ctx context.Context, key []string, fetcher FetcherW
 		err error
 	}
 	ch := make(chan result, 1)
-	go func(ctx context.Context) {
+	go func() {
 		var err error
 		var f *File
 		ctx, trace, endObservation := s.observe.backgroundFetch.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
@@ -184,7 +184,7 @@ func (s *store) OpenWithPath(ctx context.Context, key []string, fetcher FetcherW
 		}
 		f, err = doFetch(ctx, path, fetcher, trace)
 		ch <- result{f, err}
-	}(ctx)
+	}()
 
 	select {
 	case <-ctx.Done():

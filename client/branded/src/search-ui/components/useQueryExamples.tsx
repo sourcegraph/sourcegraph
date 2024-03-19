@@ -4,7 +4,7 @@ import { differenceInHours, formatISO, parseISO } from 'date-fns'
 
 import { streamComputeQuery } from '@sourcegraph/shared/src/search/stream'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
-import { ProductStatusType } from '@sourcegraph/wildcard'
+import type { ProductStatusType } from '@sourcegraph/wildcard'
 
 import { basicSyntaxColumns } from './QueryExamples.constants'
 

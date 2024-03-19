@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sourcegraph/log/logtest"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/apitest"
@@ -163,16 +164,25 @@ func TestUserRoleListing(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("on sourcegraph.com", func(t *testing.T) {
-		orig := dotcom.SourcegraphDotComMode()
-		dotcom.MockSourcegraphDotComMode(true)
-		defer dotcom.MockSourcegraphDotComMode(orig)
+		dotcom.MockSourcegraphDotComMode(t, true)
 
-		userAPIID := string(MarshalUserID(userID))
-		input := map[string]any{"node": userAPIID}
+		t.Run("non-admin", func(t *testing.T) {
+			userAPIID := string(MarshalUserID(userID))
+			input := map[string]any{"node": userAPIID}
 
-		var response struct{ Node apitest.User }
-		errs := apitest.Exec(actorCtx, t, s, input, &response, listUserRoles)
-		require.ErrorContains(t, errs[0], "roles are not available on sourcegraph.com")
+			var response struct{ Node apitest.User }
+			errs := apitest.Exec(actorCtx, t, s, input, &response, listUserRoles)
+			require.ErrorContains(t, errs[0], "unauthorized")
+		})
+
+		t.Run("admin", func(t *testing.T) {
+			userAPIID := string(MarshalUserID(adminUserID))
+			input := map[string]any{"node": userAPIID}
+
+			var response struct{ Node apitest.User }
+			errs := apitest.Exec(adminActorCtx, t, s, input, &response, listUserRoles)
+			assert.Len(t, errs, 0)
+		})
 	})
 
 	t.Run("listing a user's roles (same user)", func(t *testing.T) {

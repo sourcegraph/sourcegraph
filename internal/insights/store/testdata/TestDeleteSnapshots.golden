@@ -1,5 +1,12 @@
 []store.SeriesPoint{{
 	SeriesID: "one",
-	Time:     time.Time{ext: 63766868400},
-	Value:    1.1,
+	Time: time.Date(2021,
+		9,
+		10,
+		11,
+		0,
+		0,
+		0,
+		time.UTC),
+	Value: 1.1,
 }}

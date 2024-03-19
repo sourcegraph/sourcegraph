@@ -3,8 +3,7 @@ import React, { type ChangeEvent, type FC, useCallback, useEffect, useRef, useSt
 import type { ApolloError } from '@apollo/client/errors'
 import { mdiCancel, mdiClose, mdiDetails, mdiMapSearch, mdiReload, mdiSecurity } from '@mdi/js'
 import classNames from 'classnames'
-import { intervalToDuration } from 'date-fns'
-import formatDuration from 'date-fns/formatDuration'
+import { intervalToDuration, formatDuration } from 'date-fns'
 import { capitalize, noop } from 'lodash'
 import { animated, useSpring } from 'react-spring'
 

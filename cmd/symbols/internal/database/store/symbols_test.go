@@ -20,7 +20,7 @@ func TestChunksOf(t *testing.T) {
 	}
 
 	strings := []string{}
-	for i := 0; i < 1001; i++ {
+	for range 1001 {
 		strings = append(strings, "foo")
 	}
 	chunks := chunksOf1000(strings)

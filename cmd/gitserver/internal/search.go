@@ -116,7 +116,7 @@ func (s *Server) search(ctx context.Context, args *protocol.SearchRequest, onMat
 		}
 
 		sentCount.Add(int64(matchCount(match)))
-		onMatch(match)
+		_ = onMatch(match)
 	}
 
 	searcher := &search.CommitSearcher{

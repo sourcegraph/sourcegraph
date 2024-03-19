@@ -9,7 +9,7 @@ import (
 func benchBytesToLower(b *testing.B, src []byte) {
 	dst := make([]byte, len(src))
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		BytesToLowerASCII(dst, src)
 	}
 }
@@ -58,7 +58,7 @@ func TestBytesToLowerASCII(t *testing.T) {
 		// that don't belong to us.
 		b := make([]byte, 96)
 		c := make([]byte, 96)
-		for i := 0; i < len(b); i++ {
+		for i := range len(b) {
 			for j := i; j < len(b); j++ {
 				// fill b with Ms and c with xs
 				for k := range b {

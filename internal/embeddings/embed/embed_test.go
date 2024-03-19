@@ -761,7 +761,7 @@ func (c *partialFailureEmbeddingsClient) getEmbeddings(_ context.Context, texts 
 
 	failed := make([]int, 0, len(texts)*dimensions)
 	embeddings := make([]float32, len(texts)*dimensions)
-	for i := 0; i < len(texts); i++ {
+	for i := range len(texts) {
 		sign := 1
 
 		if _, ok := c.failedAttempts[c.counter]; ok {
@@ -769,7 +769,7 @@ func (c *partialFailureEmbeddingsClient) getEmbeddings(_ context.Context, texts 
 			failed = append(failed, i)
 		}
 
-		for j := 0; j < dimensions; j++ {
+		for j := range dimensions {
 			idx := (i * dimensions) + j
 			embeddings[idx] = float32(sign)
 		}

@@ -86,7 +86,7 @@ func (s *store) scanSingleDocumentDataObject(rows *sql.Rows) (qualifiedDocumentD
 }
 
 type qualifiedMonikerLocations struct {
-	DumpID int
+	UploadID int
 	precise.MonikerLocations
 }
 
@@ -114,7 +114,7 @@ func (s *store) scanSingleQualifiedMonikerLocationsObject(rows *sql.Rows) (quali
 	var scipPayload []byte
 	var record qualifiedMonikerLocations
 
-	if err := rows.Scan(&record.DumpID, &record.Scheme, &record.Identifier, &scipPayload, &uri); err != nil {
+	if err := rows.Scan(&record.UploadID, &record.Scheme, &record.Identifier, &scipPayload, &uri); err != nil {
 		return qualifiedMonikerLocations{}, err
 	}
 
@@ -154,7 +154,7 @@ func (s *store) scanDeduplicatedQualifiedMonikerLocations(rows *sql.Rows, queryE
 			return nil, err
 		}
 
-		if n := len(values) - 1; n >= 0 && values[n].DumpID == record.DumpID {
+		if n := len(values) - 1; n >= 0 && values[n].UploadID == record.UploadID {
 			values[n].Locations = append(values[n].Locations, record.Locations...)
 		} else {
 			values = append(values, record)
@@ -172,7 +172,7 @@ func (s *store) scanSingleMinimalQualifiedMonikerLocationsObject(rows *sql.Rows)
 	var scipPayload []byte
 	var record qualifiedMonikerLocations
 
-	if err := rows.Scan(&record.DumpID, &scipPayload, &uri); err != nil {
+	if err := rows.Scan(&record.UploadID, &scipPayload, &uri); err != nil {
 		return qualifiedMonikerLocations{}, err
 	}
 

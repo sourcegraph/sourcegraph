@@ -1,4 +1,4 @@
-import subYears from 'date-fns/subYears'
+import { subYears } from 'date-fns'
 
 // We use an exponential scale to get more diverse colors for more recent changes.
 //

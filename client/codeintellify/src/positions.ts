@@ -1,4 +1,4 @@
-import { from, fromEvent, merge, type Observable, type Subscribable } from 'rxjs'
+import { from, fromEvent, merge, type Observable } from 'rxjs'
 import { filter, map, switchMap, tap } from 'rxjs/operators'
 
 import { convertCodeElementIdempotent, type DOMFunctions, type HoveredToken, locateTarget } from './tokenPosition'
@@ -28,7 +28,7 @@ export interface PositionEvent {
 
 export const findPositionsFromEvents =
     ({ domFunctions, tokenize = true }: { domFunctions: DOMFunctions; tokenize?: boolean }) =>
-    (elements: Subscribable<HTMLElement>): Observable<PositionEvent> =>
+    (elements: Observable<HTMLElement>): Observable<PositionEvent> =>
         merge(
             from(elements).pipe(
                 switchMap(element =>

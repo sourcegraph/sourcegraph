@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Panel, useWindowSize, VIEWPORT_LG } from '@sourcegraph/wildcard'
 
 import { WorkspacesPreview } from './WorkspacesPreview'

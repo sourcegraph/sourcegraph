@@ -1904,7 +1904,9 @@ type OpenIDConnectAuthProvider struct {
 	Order  int    `json:"order,omitempty"`
 	// RequireEmailDomain description: Only allow users to authenticate if their email domain is equal to this value (example: mycompany.com). Do not include a leading "@". If not set, all users on this OpenID Connect provider can authenticate to Sourcegraph.
 	RequireEmailDomain string `json:"requireEmailDomain,omitempty"`
-	Type               string `json:"type"`
+	// SingleIdentityPerUser description: When true, any user can connect exactly one identity from the identity provider.
+	SingleIdentityPerUser bool   `json:"singleIdentityPerUser,omitempty"`
+	Type                  string `json:"type"`
 }
 
 // OpenTelemetry description: Configuration for the client OpenTelemetry exporter
@@ -2250,6 +2252,8 @@ type SAMLAuthProvider struct {
 	// SignRequests description: Sign AuthnRequests and LogoutRequests sent to the Identity Provider using the Service Provider's private key (`serviceProviderPrivateKey`). It defaults to true if the `serviceProviderPrivateKey` and `serviceProviderCertificate` are set, and false otherwise.
 	SignRequests *bool  `json:"signRequests,omitempty"`
 	Type         string `json:"type"`
+	// UsernameAttributeNames description: Names of the SAML assertions attributes to check for a user's username. Checked in the order the names are provided.
+	UsernameAttributeNames []string `json:"usernameAttributeNames,omitempty"`
 }
 
 // SMTPServerConfig description: The SMTP server used to send transactional emails.
@@ -2674,8 +2678,6 @@ type SiteConfiguration struct {
 	AuthAccessTokens *AuthAccessTokens `json:"auth.accessTokens,omitempty"`
 	// AuthAllowedIpAddress description: IP allowlist for access to the Sourcegraph instance. If set, only requests from these IP addresses will be allowed. By default client IP is infered connected client IP address, and you may configure to use a request header to determine the user IP.
 	AuthAllowedIpAddress *AuthAllowedIpAddress `json:"auth.allowedIpAddress,omitempty"`
-	// AuthDailyEmailDomainSignupLimit description: The maximum number of users that can sign from Google using the same email domain in a 24 hour period.
-	AuthDailyEmailDomainSignupLimit int `json:"auth.dailyEmailDomainSignupLimit,omitempty"`
 	// AuthEnableUsernameChanges description: Enables users to change their username after account creation. Warning: setting this to be true has security implications if you have enabled (or will at any point in the future enable) repository permissions with an option that relies on username equivalency between Sourcegraph and an external service or authentication provider. Do NOT set this to true if you are using non-built-in authentication OR rely on username equivalency for repository permissions.
 	AuthEnableUsernameChanges bool `json:"auth.enableUsernameChanges,omitempty"`
 	// AuthLockout description: The config options for account lockout
@@ -2991,7 +2993,6 @@ func (v *SiteConfiguration) UnmarshalJSON(data []byte) error {
 	delete(m, "auth.accessRequest")
 	delete(m, "auth.accessTokens")
 	delete(m, "auth.allowedIpAddress")
-	delete(m, "auth.dailyEmailDomainSignupLimit")
 	delete(m, "auth.enableUsernameChanges")
 	delete(m, "auth.lockout")
 	delete(m, "auth.minPasswordLength")

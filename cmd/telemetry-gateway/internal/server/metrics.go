@@ -44,3 +44,19 @@ func newRecordEventsMetrics() (m recordEventsMetrics, err error) {
 
 	return m, err
 }
+
+type recordEventMetrics struct {
+	// Count of processed events
+	processedEvents metric.Int64Counter
+}
+
+func newRecordEventMetrics() (m recordEventMetrics, err error) {
+	m.processedEvents, err = meter.Int64Counter(
+		"telemetry-gateway.record_event.processed_events",
+		metric.WithDescription("Number of events processed"))
+	if err != nil {
+		return m, err
+	}
+
+	return m, nil
+}

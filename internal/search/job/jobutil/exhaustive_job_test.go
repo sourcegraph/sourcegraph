@@ -206,6 +206,76 @@ func TestNewExhaustive(t *testing.T) {
   (indexed . false))
 `),
 		},
+		{
+			Name:  "type:diff author:alice",
+			Query: "index:no type:diff author:alice",
+			WantPager: autogold.Expect(`
+(REPOPAGER
+  (containsRefGlobs . false)
+  (repoOpts.useIndex . no)
+  (repoOpts.onlyCloned . true)
+  (PARTIALREPOS
+    (DIFFSEARCH
+      (includeModifiedFiles . false)
+      (query . *protocol.AuthorMatches(alice))
+      (diff . true)
+      (limit . 1000000))))
+`),
+			WantJob: autogold.Expect(`
+(DIFFSEARCH
+  (includeModifiedFiles . false)
+  (query . *protocol.AuthorMatches(alice))
+  (diff . true)
+  (limit . 1000000))
+`),
+		},
+		{
+			Name:  "type:commit author:alice",
+			Query: "index:no type:commit author:alice",
+			WantPager: autogold.Expect(`
+(REPOPAGER
+  (containsRefGlobs . false)
+  (repoOpts.useIndex . no)
+  (repoOpts.onlyCloned . true)
+  (PARTIALREPOS
+    (COMMITSEARCH
+      (includeModifiedFiles . false)
+      (query . *protocol.AuthorMatches(alice))
+      (diff . false)
+      (limit . 1000000))))
+`),
+			WantJob: autogold.Expect(`
+(COMMITSEARCH
+  (includeModifiedFiles . false)
+  (query . *protocol.AuthorMatches(alice))
+  (diff . false)
+  (limit . 1000000))
+`),
+		},
+		{
+			Name:  "type:path f:search.go",
+			Query: "index:no type:path f:search.go",
+			WantPager: autogold.Expect(`
+(REPOPAGER
+  (containsRefGlobs . false)
+  (repoOpts.useIndex . no)
+  (PARTIALREPOS
+    (SEARCHERTEXTSEARCH
+      (useFullDeadline . true)
+      (patternInfo . TextPatternInfo{//,nocontent,filematchlimit:1000000,f:"search.go"})
+      (numRepos . 0)
+      (pathRegexps . [(?i)search.go])
+      (indexed . false))))
+`),
+			WantJob: autogold.Expect(`
+(SEARCHERTEXTSEARCH
+  (useFullDeadline . true)
+  (patternInfo . TextPatternInfo{//,nocontent,filematchlimit:1000000,f:"search.go"})
+  (numRepos . 1)
+  (pathRegexps . [(?i)search.go])
+  (indexed . false))
+`),
+		},
 	}
 
 	for _, tc := range cases {
@@ -244,11 +314,6 @@ func TestNewExhaustive_negative(t *testing.T) {
 		query              string
 		isPatterntypeRegex bool
 	}{
-		// no pattern
-		{query: `type:file index:no`},
-		// >1 type filter.
-		{query: `type:file index:no type:diff content`},
-		{query: `type:file index:no type:path content`},
 		// multiple jobs needed
 		{query: `type:file index:no (repo:repo1 or repo:repo2) content`},
 		// catch-all regex
@@ -259,6 +324,10 @@ func TestNewExhaustive_negative(t *testing.T) {
 		{query: `type:file index:no file:has.owner(owner)`},
 		{query: `type:file index:no file:contains.content(content)`},
 		{query: `type:file index:no file:has.contributor(contributor)`},
+		// unsupported types
+		{query: `index:no type:repo`},
+		{query: `index:no type:symbol`},
+		{query: `index:no foo select:file.owners`},
 	}
 
 	for _, c := range tc {

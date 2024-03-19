@@ -39,7 +39,7 @@ func TestPermsInclude(t *testing.T) {
 
 func BenchmarkPermsInclude(b *testing.B) {
 	p := Read | Write
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = p.Include(Write)
 	}
 }
@@ -68,7 +68,7 @@ func TestPermsString(t *testing.T) {
 }
 
 func BenchmarkPermsString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = Read.String()
 	}
 }

@@ -13,9 +13,10 @@ type gitServer struct{}
 // src_gitserver_backend_total
 // src_gitserver_backend_duration_seconds_bucket
 // src_gitserver_backend_errors_total
-func (gitServer) NewBackendGroup(containerName string) monitoring.Group {
+func (gitServer) NewBackendGroup(containerName string, hidden bool) monitoring.Group {
 	g := Observation.NewGroup(containerName, monitoring.ObservableOwnerSource, ObservationGroupOptions{
 		GroupConstructorOptions: GroupConstructorOptions{
+			Hidden:          hidden,
 			Namespace:       "gitserver",
 			DescriptionRoot: "Gitserver Backend",
 

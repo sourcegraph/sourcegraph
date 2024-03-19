@@ -7,11 +7,12 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/gorilla/mux"
 	"github.com/sourcegraph/log"
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/httpapi/overhead"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+
+	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/httpapi/overhead"
 
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config"
 
@@ -37,6 +38,7 @@ type Config struct {
 	EmbeddingsAllowedModels     []string
 	AutoFlushStreamingResponses bool
 	EnableAttributionSearch     bool
+	Sourcegraph                 config.SourcegraphConfig
 }
 
 var meter = otel.GetMeterProvider().Meter("cody-gateway/internal/httpapi")
@@ -73,8 +75,49 @@ func NewHandler(
 
 	// V1 service routes
 	v1router := r.PathPrefix("/v1").Subrouter()
+	// registerStandardEndpoint registers an HTTP endpoint with all of the expected middleware
+	// for authentication, latency, instrumentationm, etc.
+	registerStandardEndpoint := func(name, route string, attributes attribute.Set, handler http.Handler) {
+		// Create an HTTP handler that will update the "concurrent_upstream_requests" metric.
+		gaugedHandler := gaugeHandler(
+			counter,
+			attributes,
+			authr.Middleware(
+				requestlogger.Middleware(
+					logger,
+					handler,
+				),
+			))
+		// Wrap that in our instrumentation middleware, adding more logging.
+		instrumentedHandler := instrumentation.HTTPMiddleware(
+			name,
+			gaugedHandler,
+			otelhttp.WithPublicEndpoint())
+		// Finally wrap that again in our overall middleware.
+		overheadMiddleware := overhead.HTTPMiddleware(latencyHistogram, instrumentedHandler)
 
-	if config.Anthropic.AccessToken != "" {
+		v1router.Path(route).Methods(http.MethodPost).Handler(overheadMiddleware)
+	}
+
+	// registerSimpleGETEndpoint registers a basic HTTP GET endpoint, without the
+	// latency and performance counter middle ware that we register for other endpoints.
+	registerSimpleGETEndpoint := func(name, route string, handler http.Handler) {
+		v1router.Path(route).Methods(http.MethodGet).Handler(
+			instrumentation.HTTPMiddleware(name,
+				authr.Middleware(
+					requestlogger.Middleware(
+						logger,
+						handler,
+					),
+				),
+				otelhttp.WithPublicEndpoint(),
+			),
+		)
+	}
+
+	if config.Anthropic.AccessToken == "" {
+		logger.Error("Anthropic access token not set. Not registering Anthropic-related endpoints.")
+	} else {
 		anthropicHandler, err := completions.NewAnthropicHandler(
 			logger,
 			eventLogger,
@@ -83,137 +126,108 @@ func NewHandler(
 			httpClient,
 			config.Anthropic,
 			promptRecorder,
-
-			config.AutoFlushStreamingResponses,
-		)
+			config.AutoFlushStreamingResponses)
 		if err != nil {
 			return nil, errors.Wrap(err, "init Anthropic handler")
 		}
+		registerStandardEndpoint(
+			"v1.completions.anthropic",
+			"/completions/anthropic",
+			attributesAnthropicCompletions,
+			anthropicHandler)
 
-		v1router.Path("/completions/anthropic").Methods(http.MethodPost).Handler(
-			overhead.HTTPMiddleware(latencyHistogram,
-				instrumentation.HTTPMiddleware("v1.completions.anthropic",
-					gaugeHandler(
-						counter,
-						attributesAnthropicCompletions,
-						authr.Middleware(
-							requestlogger.Middleware(
-								logger,
-								anthropicHandler,
-							),
-						),
-					),
-					otelhttp.WithPublicEndpoint(),
-				),
-			))
+		anthropicMessagesHandler, err := completions.NewAnthropicMessagesHandler(
+			logger,
+			eventLogger,
+			rs,
+			config.RateLimitNotifier,
+			httpClient,
+			config.Anthropic,
+			promptRecorder,
+			config.AutoFlushStreamingResponses)
+		if err != nil {
+			return nil, errors.Wrap(err, "init anthropicMessages handler")
+		}
+		registerStandardEndpoint(
+			"v1.completions.anthropicmessages",
+			"/completions/anthropic-messages",
+			attributesAnthropicCompletions,
+			anthropicMessagesHandler)
 	}
-	if config.OpenAI.AccessToken != "" {
-		v1router.Path("/completions/openai").Methods(http.MethodPost).Handler(
-			overhead.HTTPMiddleware(latencyHistogram,
-				instrumentation.HTTPMiddleware("v1.completions.openai",
-					gaugeHandler(
-						counter,
-						attributesOpenAICompletions,
-						authr.Middleware(
-							requestlogger.Middleware(
-								logger,
-								completions.NewOpenAIHandler(
-									logger,
-									eventLogger,
-									rs,
-									config.RateLimitNotifier,
-									httpClient,
-									config.OpenAI,
-									config.AutoFlushStreamingResponses,
-								),
-							),
-						),
-					),
-					otelhttp.WithPublicEndpoint(),
-				),
-			))
 
-		v1router.Path("/embeddings/models").Methods(http.MethodGet).Handler(
-			instrumentation.HTTPMiddleware("v1.embeddings.models",
-				authr.Middleware(
-					requestlogger.Middleware(
-						logger,
-						embeddings.NewListHandler(),
-					),
-				),
-				otelhttp.WithPublicEndpoint(),
-			),
-		)
+	if config.OpenAI.AccessToken == "" {
+		logger.Error("OpenAI access token not set. Not registering OpenAI-related endpoints.")
+	} else {
+		openAIHandler := completions.NewOpenAIHandler(
+			logger,
+			eventLogger,
+			rs,
+			config.RateLimitNotifier,
+			httpClient,
+			config.OpenAI,
+			config.AutoFlushStreamingResponses)
+		registerStandardEndpoint(
+			"v1.completions.openai",
+			"/completions/openai",
+			attributesOpenAICompletions,
+			openAIHandler)
 
-		v1router.Path("/embeddings").Methods(http.MethodPost).Handler(
-			overhead.HTTPMiddleware(latencyHistogram,
-				instrumentation.HTTPMiddleware("v1.embeddings",
-					gaugeHandler(
-						counter,
-						// TODO - if embeddings.ModelFactoryMap includes more than
-						// just OpenAI we might need to move how we count concurrent
-						// requests into the handler, instead of assuming we are
-						// counting OpenAI requests
-						attributesOpenAIEmbeddings,
-						authr.Middleware(
-							requestlogger.Middleware(
-								logger,
-								embeddings.NewHandler(
-									logger,
-									eventLogger,
-									rs,
-									config.RateLimitNotifier,
-									embeddings.ModelFactoryMap{
-										embeddings.ModelNameOpenAIAda: embeddings.NewOpenAIClient(httpClient, config.OpenAI.AccessToken),
-									},
-									config.EmbeddingsAllowedModels,
-								),
-							),
-						),
-					),
-					otelhttp.WithPublicEndpoint(),
-				),
-			))
+		registerSimpleGETEndpoint("v1.embeddings.models", "/embeddings/models", embeddings.NewListHandler())
+
+		factoryMap := embeddings.ModelFactoryMap{
+			embeddings.ModelNameOpenAIAda:         embeddings.NewOpenAIClient(httpClient, config.OpenAI.AccessToken),
+			embeddings.ModelNameSourcegraphTriton: embeddings.NewSourcegraphClient(httpClient, config.Sourcegraph.TritonURL),
+		}
+		embeddingsHandler := embeddings.NewHandler(
+			logger,
+			eventLogger,
+			rs,
+			config.RateLimitNotifier,
+			factoryMap,
+			config.EmbeddingsAllowedModels)
+		// TODO: If embeddings.ModelFactoryMap includes more than just OpenAI, we might want to
+		// revisit how we count concurrent requests into the handler. (Instead of assuming they are
+		// all OpenAI-related requests. (i.e. maybe we should use something other than
+		// attributesOpenAIEmbeddings here.)
+		registerStandardEndpoint(
+			"v1.embeddings",
+			"/embeddings",
+			attributesOpenAIEmbeddings,
+			embeddingsHandler)
+
+		if config.Sourcegraph.UnlimitedEmbeddings {
+			// Register an endpoint for Triton embeddings that does not implement rate limiting.
+			unlimitedHandler := embeddings.NewUnlimitedHandler(logger, eventLogger, factoryMap, []string{string(embeddings.ModelNameSourcegraphTriton)})
+			registerStandardEndpoint(
+				"v1.embeddings-unlimited",
+				"/embeddings-unlimited",
+				attributesOpenAIEmbeddings,
+				unlimitedHandler)
+		}
 	}
-	if config.Fireworks.AccessToken != "" {
-		v1router.Path("/completions/fireworks").Methods(http.MethodPost).Handler(
-			overhead.HTTPMiddleware(latencyHistogram,
-				instrumentation.HTTPMiddleware("v1.completions.fireworks",
-					gaugeHandler(
-						counter,
-						attributesFireworksCompletions,
-						authr.Middleware(
-							requestlogger.Middleware(
-								logger,
-								completions.NewFireworksHandler(
-									logger,
-									eventLogger,
-									rs,
-									config.RateLimitNotifier,
-									httpClient,
-									config.Fireworks,
-									config.AutoFlushStreamingResponses,
-								),
-							),
-						),
-					),
-					otelhttp.WithPublicEndpoint(),
-				),
-			))
+
+	if config.Fireworks.AccessToken == "" {
+		logger.Error("Fireworks access token not set. Not registering Fireworks-related endpoints.")
+	} else {
+		fireworksHandler := completions.NewFireworksHandler(
+			logger,
+			eventLogger,
+			rs,
+			config.RateLimitNotifier,
+			httpClient,
+			config.Fireworks,
+			config.AutoFlushStreamingResponses)
+		registerStandardEndpoint(
+			"v1.completions.fireworks",
+			"/completions/fireworks",
+			attributesFireworksCompletions,
+			fireworksHandler)
 	}
 
 	// Register a route where actors can retrieve their current rate limit state.
-	v1router.Path("/limits").Methods(http.MethodGet).Handler(
-		instrumentation.HTTPMiddleware("v1.limits",
-			authr.Middleware(
-				requestlogger.Middleware(
-					logger,
-					featurelimiter.ListLimitsHandler(logger, rs),
-				),
-			),
-			otelhttp.WithPublicEndpoint(),
-		),
-	)
+	limitsHandler := featurelimiter.ListLimitsHandler(logger, rs)
+	registerSimpleGETEndpoint("v1.limits", "/limits", limitsHandler)
+
 	// Register a route where actors can refresh their rate limit state.
 	v1router.Path("/limits/refresh").Methods(http.MethodPost).Handler(
 		instrumentation.HTTPMiddleware("v1.limits",

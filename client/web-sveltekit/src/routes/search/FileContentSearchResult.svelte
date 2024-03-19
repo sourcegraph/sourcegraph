@@ -25,6 +25,7 @@
     import { settings } from '$lib/stores'
 
     import FileSearchResultHeader from './FileSearchResultHeader.svelte'
+    import PreviewButton from './PreviewButton.svelte'
     import RepoStars from './RepoStars.svelte'
     import SearchResult from './SearchResult.svelte'
     import { getSearchResultsContext } from './searchResultsContext'
@@ -97,6 +98,7 @@
         {#if result.repoStars}
             <RepoStars repoStars={result.repoStars} />
         {/if}
+        <PreviewButton {result} />
     </svelte:fragment>
 
     <div bind:this={root} use:observeIntersection on:intersecting={event => (visible = event.detail)} class="matches">
@@ -112,6 +114,7 @@
                             startLine={group.startLine}
                             matches={group.matches}
                             plaintextLines={group.plaintextLines}
+                            --background-color="transparent"
                         />
                     {:then result}
                         <CodeExcerpt
@@ -119,6 +122,7 @@
                             matches={group.matches}
                             plaintextLines={group.plaintextLines}
                             highlightedHTMLRows={result?.[index]?.slice(0, group.plaintextLines.length)}
+                            --background-color="transparent"
                         />
                     {/await}
                 </a>
@@ -154,6 +158,10 @@
             position: sticky;
             bottom: 0;
         }
+
+        &:hover {
+            background-color: var(--subtle-bg-2);
+        }
     }
 
     .code {
@@ -161,6 +169,10 @@
 
         &:last-child {
             border-bottom: none;
+        }
+
+        &:hover {
+            background-color: var(--subtle-bg-2);
         }
 
         a {

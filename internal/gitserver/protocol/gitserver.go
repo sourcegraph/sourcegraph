@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -229,21 +228,17 @@ type ExecRequest struct {
 type RepoUpdateRequest struct {
 	// Repo identifies URL for repo.
 	Repo api.RepoName `json:"repo"`
-	// Since is a debounce interval for queries, used only with request-repo-update.
-	Since time.Duration `json:"since"`
 }
 
 func (r *RepoUpdateRequest) ToProto() *proto.RepoUpdateRequest {
 	return &proto.RepoUpdateRequest{
-		Repo:  string(r.Repo),
-		Since: durationpb.New(r.Since),
+		Repo: string(r.Repo),
 	}
 }
 
 func (r *RepoUpdateRequest) FromProto(p *proto.RepoUpdateRequest) {
 	*r = RepoUpdateRequest{
-		Repo:  api.RepoName(p.GetRepo()),
-		Since: p.GetSince().AsDuration(),
+		Repo: api.RepoName(p.GetRepo()),
 	}
 }
 

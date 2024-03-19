@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from 'react'
 import { useApolloClient } from '@apollo/client'
 import { mdiMapSearch } from '@mdi/js'
 
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, Link, PageHeader, Icon, H3, Text } from '@sourcegraph/wildcard'
 
 import {

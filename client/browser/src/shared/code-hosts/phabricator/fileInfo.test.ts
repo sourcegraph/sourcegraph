@@ -1,5 +1,5 @@
 import { readFile } from 'mz/fs'
-import { type Observable, throwError, of } from 'rxjs'
+import { type Observable, throwError, of, lastValueFrom } from 'rxjs'
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import { resetAllMemoizationCaches } from '@sourcegraph/common'
@@ -145,15 +145,17 @@ const resolveFileInfoFromFixture = async (
     if (!codeView) {
         throw new Error(`Code view matching selector ${codeViewSelector} not found`)
     }
-    return resolver(
-        codeView as HTMLElement,
-        mockRequestGraphQL({
-            ...DEFAULT_GRAPHQL_RESPONSES,
-            ...graphQLResponseMap,
-        }),
-        mockQueryConduit(conduitResponseMap),
-        new URL(url)
-    ).toPromise()
+    return lastValueFrom(
+        resolver(
+            codeView as HTMLElement,
+            mockRequestGraphQL({
+                ...DEFAULT_GRAPHQL_RESPONSES,
+                ...graphQLResponseMap,
+            }),
+            mockQueryConduit(conduitResponseMap),
+            new URL(url)
+        )
+    )
 }
 
 describe('Phabricator file info', () => {

@@ -18,7 +18,7 @@ import indicator from 'ordinal/indicator'
 
 import { dataOrThrowErrors } from '@sourcegraph/http-client'
 import type { Maybe } from '@sourcegraph/shared/src/graphql-operations'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Badge,
     LoadingSpinner,
