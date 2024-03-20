@@ -4,7 +4,7 @@ import { mdiChevronDown, mdiChevronUp, mdiArrowRight } from '@mdi/js'
 import classNames from 'classnames'
 
 import { smartSearchIconSvgPath, SyntaxHighlightedSearchQuery } from '@sourcegraph/branded'
-import { pluralize, formatSearchParameters } from '@sourcegraph/common'
+import { pluralize, SourcegraphURL } from '@sourcegraph/common'
 import type {
     AggregateStreamingSearchResults,
     AlertKind,
@@ -131,10 +131,12 @@ export const SmartSearch: React.FunctionComponent<React.PropsWithChildren<SmartS
                         {alert?.proposedQueries?.map(entry => (
                             <li key={entry.query} className={styles.listItem}>
                                 <Link
-                                    to={createLinkUrl({
-                                        pathname: '/search',
-                                        search: formatSearchParameters(new URLSearchParams({ q: entry.query })),
-                                    })}
+                                    to={createLinkUrl(
+                                        SourcegraphURL.from({
+                                            pathname: '/search',
+                                            search: new URLSearchParams({ q: entry.query }),
+                                        })
+                                    )}
                                     className={styles.link}
                                 >
                                     <Text className="mb-0">

@@ -2,12 +2,7 @@
 
 export type { AbsoluteRepoFile } from '@sourcegraph/shared/src/util/url'
 
-export {
-    parseRepoRevision,
-    parseQueryAndHash,
-    buildSearchURLQuery,
-    makeRepoURI,
-} from '@sourcegraph/shared/src/util/url'
+export { parseRepoRevision, buildSearchURLQuery, makeRepoGitURI } from '@sourcegraph/shared/src/util/url'
 
 export {
     isCloneInProgressErrorLike,

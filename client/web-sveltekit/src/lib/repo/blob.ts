@@ -5,7 +5,7 @@ import { get, type Readable, readable } from 'svelte/store'
 
 import { goto as svelteGoto } from '$app/navigation'
 import { page } from '$app/stores'
-import { addLineRangeQueryParameter, formatSearchParameters, toPositionOrRangeQueryParameter } from '$lib/common'
+import { SourcegraphURL } from '$lib/common'
 import {
     positionToOffset,
     type Definition,
@@ -31,27 +31,17 @@ import type { BlobPage_Blob } from '../../routes/[...repo=reporev]/(validrev)/(c
  */
 const MINIMUM_GO_TO_DEF_LATENCY_MILLIS = 20
 
+/**
+ * Update the URL search parameters with the given line information.
+ * Returns a string that starts with `?` and contains the updated search parameters.
+ */
 export function updateSearchParamsWithLineInformation(
     currentSearchParams: URLSearchParams,
     range: SelectedLineRange
 ): string {
-    const parameters = new URLSearchParams(currentSearchParams)
-    parameters.delete('popover')
-
-    let query: string | undefined
-
-    if (range?.line !== range?.endLine && range?.endLine) {
-        query = toPositionOrRangeQueryParameter({
-            range: {
-                start: { line: range.line },
-                end: { line: range.endLine },
-            },
-        })
-    } else if (range?.line) {
-        query = toPositionOrRangeQueryParameter({ position: { line: range.line } })
-    }
-
-    return formatSearchParameters(addLineRangeQueryParameter(parameters, query))
+    return SourcegraphURL.from(currentSearchParams)
+        .deleteSearchParameter('popover')
+        .setLineRange(range ? { line: range.line, endLine: range.endLine } : {}).search
 }
 
 export async function goToDefinition(

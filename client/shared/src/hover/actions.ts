@@ -51,7 +51,7 @@ import { languageSpecs } from '../codeintel/legacy-extensions/language-specs/lan
 import { getContributedActionItems } from '../contributions/contributions'
 import type { Controller, ExtensionsControllerProps } from '../extensions/controller'
 import type { PlatformContext, PlatformContextProps, URLToFileContext } from '../platform/context'
-import { makeRepoURI, parseRepoURI, withWorkspaceRootInputRevision } from '../util/url'
+import { makeRepoGitURI, parseRepoGitURI, withWorkspaceRootInputRevision } from '../util/url'
 
 import type { HoverContext } from './HoverOverlay'
 
@@ -147,7 +147,7 @@ export function getHoverActionsContext(
     hoverContext: HoveredToken & HoverContext
 ): Observable<Context<TextDocumentPositionParameters>> {
     const parameters: TextDocumentPositionParameters & URLToFileContext = {
-        textDocument: { uri: makeRepoURI(hoverContext) },
+        textDocument: { uri: makeRepoGitURI(hoverContext) },
         position: { line: hoverContext.line - 1, character: hoverContext.character - 1 },
         part: hoverContext.part,
     }
@@ -267,7 +267,7 @@ export const getDefinitionURL =
                         // Open the panel to show all definitions.
                         const uri = withWorkspaceRootInputRevision(
                             workspaceRoots || [],
-                            parseRepoURI(parameters.textDocument.uri)
+                            parseRepoGitURI(parameters.textDocument.uri)
                         )
                         return of({
                             isLoading,
@@ -294,7 +294,7 @@ export const getDefinitionURL =
                     // Preserve the input revision (e.g., a Git branch name instead of a Git commit SHA) if the result is
                     // inside one of the current roots. This avoids navigating the user from (e.g.) a URL with a nice Git
                     // branch name to a URL with a full Git commit SHA.
-                    const uri = withWorkspaceRootInputRevision(workspaceRoots || [], parseRepoURI(defer.uri))
+                    const uri = withWorkspaceRootInputRevision(workspaceRoots || [], parseRepoGitURI(defer.uri))
                     if (defer.range) {
                         uri.position = {
                             line: defer.range.start.line + 1,

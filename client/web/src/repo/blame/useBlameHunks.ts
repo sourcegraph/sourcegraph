@@ -8,7 +8,7 @@ import { catchError, map, throttleTime } from 'rxjs/operators'
 
 import { type ErrorLike, memoizeObservable } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
-import { makeRepoURI } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI } from '@sourcegraph/shared/src/util/url'
 import { useObservable } from '@sourcegraph/wildcard'
 
 import { requestGraphQL } from '../../backend/graphql'
@@ -188,7 +188,7 @@ const fetchBlameViaStreaming = memoizeObservable(
                 throttleTime(1000, undefined, { leading: true, trailing: true }),
                 catchError(error => of(error))
             ),
-    makeRepoURI
+    makeRepoGitURI
 )
 
 async function fetchRepositoryData(repoName: string): Promise<Omit<BlameHunkData, 'current'>> {

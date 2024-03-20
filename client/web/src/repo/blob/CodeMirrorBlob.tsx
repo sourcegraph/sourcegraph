@@ -15,11 +15,7 @@ import { createRoot } from 'react-dom/client'
 import { createPath, useLocation, useNavigate, type Location, type NavigateFunction } from 'react-router-dom'
 
 import { NoopEditor } from '@sourcegraph/cody-shared/dist/editor'
-import {
-    addLineRangeQueryParameter,
-    formatSearchParameters,
-    toPositionOrRangeQueryParameter,
-} from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import { createCodeIntelAPI } from '@sourcegraph/shared/src/codeintel/api'
 import { editorHeight, useCodeMirror, useCompartment } from '@sourcegraph/shared/src/components/CodeMirrorEditor'
 import { useKeyboardShortcut } from '@sourcegraph/shared/src/keyboardShortcuts/useKeyboardShortcut'
@@ -31,7 +27,6 @@ import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetry
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { codeCopiedEvent } from '@sourcegraph/shared/src/tracking/event-log-creators'
 import {
-    parseQueryAndHash,
     toPrettyBlobURL,
     type AbsoluteRepoFile,
     type BlobViewState,
@@ -241,12 +236,8 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
         // router location API.
         //
         // This is needed to support the reference panel
-        if (props.activeURL) {
-            const url = new URL(props.activeURL, window.location.href)
-            return parseQueryAndHash(url.search, url.hash)
-        }
-        return parseQueryAndHash(location.search, location.hash)
-    }, [props.activeURL, location.search, location.hash])
+        return SourcegraphURL.from(props.activeURL || location).getLineRange()
+    }, [props.activeURL, location])
     const hasPin = useMemo(() => urlIsPinned(location.search), [location.search])
 
     // Keep history and location in a ref so that we can use the latest value in
@@ -275,32 +266,19 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
     const customHistoryAction = props.nav
     const onSelection = useCallback(
         (range: SelectedLineRange) => {
-            const parameters = new URLSearchParams(locationRef.current.search)
-            parameters.delete('popover')
+            const url = SourcegraphURL.from(locationRef.current)
+                .deleteSearchParameter('popover')
+                .setLineRange(range ? { line: range.line, endLine: range.endLine } : {})
 
-            let query: string | undefined
-
-            if (range?.line !== range?.endLine && range?.endLine) {
-                query = toPositionOrRangeQueryParameter({
-                    range: {
-                        start: { line: range.line },
-                        end: { line: range.endLine },
-                    },
-                })
-            } else if (range?.line) {
-                query = toPositionOrRangeQueryParameter({ position: { line: range.line } })
-            }
-
-            const newSearchParameters = addLineRangeQueryParameter(parameters, query)
             if (customHistoryAction) {
                 customHistoryAction(
                     createPath({
                         ...locationRef.current,
-                        search: formatSearchParameters(newSearchParameters),
+                        search: url.search,
                     })
                 )
             } else {
-                updateBrowserHistoryIfChanged(navigate, locationRef.current, newSearchParameters)
+                updateBrowserHistoryIfChanged(navigate, locationRef.current, url)
             }
         },
         [customHistoryAction, locationRef, navigate]
@@ -685,14 +663,9 @@ function useCodeIntelExtension(
                               updateBrowserHistoryIfChanged(
                                   navigate,
                                   locationRef.current,
-                                  // It may seem strange to set start and end to the same value, but that what's the old blob view is doing as well
-                                  addLineRangeQueryParameter(
-                                      search,
-                                      toPositionOrRangeQueryParameter({
-                                          position,
-                                          range: { start: position, end: position },
-                                      })
-                                  )
+                                  SourcegraphURL.from(locationRef.current)
+                                      .setSearchParameter('popover', 'pinned')
+                                      .setLineRange(position)
                               )
                               void navigator.clipboard.writeText(window.location.href)
                           },
@@ -700,7 +673,11 @@ function useCodeIntelExtension(
                               const parameters = new URLSearchParams(locationRef.current.search)
                               parameters.delete('popover')
 
-                              updateBrowserHistoryIfChanged(navigate, locationRef.current, parameters)
+                              updateBrowserHistoryIfChanged(
+                                  navigate,
+                                  locationRef.current,
+                                  SourcegraphURL.from(locationRef.current).deleteSearchParameter('popover')
+                              )
                           },
                       },
                       navigate,
@@ -853,7 +830,7 @@ function useMutableValue<T>(value: T): Readonly<MutableRefObject<T>> {
 export function updateBrowserHistoryIfChanged(
     navigate: NavigateFunction,
     location: Location,
-    newSearchParameters: URLSearchParams,
+    newLocation: SourcegraphURL,
     /** If set to true replace the current history entry instead of adding a new one. */
     replace: boolean = false
 ): void {
@@ -865,15 +842,10 @@ export function updateBrowserHistoryIfChanged(
     // non-existing key in the new search parameters and thus return `null`
     // (whereas it returns an empty string in the current search parameters).
     const needsUpdate =
-        currentSearchParameters.length !== [...newSearchParameters.keys()].length ||
-        currentSearchParameters.some(([key, value]) => newSearchParameters.get(key) !== value)
+        currentSearchParameters.length !== [...newLocation.searchParams.keys()].length ||
+        currentSearchParameters.some(([key, value]) => newLocation.searchParams.get(key) !== value)
 
     if (needsUpdate) {
-        const entry = {
-            ...location,
-            search: formatSearchParameters(newSearchParameters),
-        }
-
-        navigate(entry, { replace })
+        navigate(newLocation, { replace })
     }
 }
