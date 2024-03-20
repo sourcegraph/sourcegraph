@@ -14,7 +14,7 @@ import {
     hasFindImplementationsSupport,
 } from '@sourcegraph/shared/src/codeintel/api'
 import type { Occurrence } from '@sourcegraph/shared/src/codeintel/scip'
-import { makeRepoGitURI, parseRepoGitURI, toURIWithPath } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI, parseRepoGitURI } from '@sourcegraph/shared/src/util/url'
 import type { UIRangeSpec } from '@sourcegraph/shared/src/util/url'
 
 import type { WebHoverOverlayProps } from '../../../../components/WebHoverOverlay'

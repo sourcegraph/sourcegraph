@@ -81,7 +81,6 @@ import {
     type RepoSpec,
     type ResolvedRevisionSpec,
     type RevisionSpec,
-    toURIWithPath,
     type ViewStateSpec,
     makeRepoGitURI,
 } from '@sourcegraph/shared/src/util/url'

@@ -4,7 +4,7 @@ import { first, switchMap } from 'rxjs/operators'
 import * as vscode from 'vscode'
 
 import { finallyReleaseProxy, wrapRemoteObservable } from '@sourcegraph/shared/src/api/client/api/common'
-import { makeRepoURI } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI } from '@sourcegraph/shared/src/util/url'
 
 import type { SearchSidebarAPI } from '../contract'
 import type { SourcegraphFileSystemProvider } from '../file-system/SourcegraphFileSystemProvider'
@@ -21,7 +21,7 @@ export class SourcegraphHoverProvider implements vscode.HoverProvider {
         token: vscode.CancellationToken
     ): Promise<vscode.Hover | undefined> {
         const uri = this.fs.sourcegraphUri(document.uri)
-        const extensionHostUri = makeRepoURI({
+        const extensionHostUri = makeRepoGitURI({
             repoName: uri.repositoryName,
             revision: uri.revision,
             filePath: uri.path,

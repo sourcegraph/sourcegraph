@@ -1,7 +1,7 @@
 import type * as Comlink from 'comlink'
 import vscode from 'vscode'
 
-import { makeRepoURI } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI } from '@sourcegraph/shared/src/util/url'
 
 import type { SearchSidebarAPI } from '../contract'
 import type { SourcegraphFileSystemProvider } from '../file-system/SourcegraphFileSystemProvider'
@@ -49,7 +49,7 @@ export function initializeCodeIntel({
                 const sourcegraphUri = fs.sourcegraphUri(editor.document.uri)
                 const languageId = toSourcegraphLanguage(editor.document.languageId)
 
-                const extensionHostUri = makeRepoURI({
+                const extensionHostUri = makeRepoGitURI({
                     repoName: sourcegraphUri.repositoryName,
                     revision: sourcegraphUri.revision,
                     filePath: sourcegraphUri.path,

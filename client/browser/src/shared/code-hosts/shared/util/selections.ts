@@ -2,9 +2,8 @@ import { isEqual } from 'lodash'
 import { fromEvent, type Observable } from 'rxjs'
 import { distinctUntilChanged, map } from 'rxjs/operators'
 
-import { LineOrPositionOrRange } from '@sourcegraph/common'
+import { LineOrPositionOrRange, SourcegraphURL } from '@sourcegraph/common'
 import type { Position, Selection, Range } from '@sourcegraph/extension-api-types'
-import { parseHash } from '@sourcegraph/shared/src/util/url'
 
 function lprToRange(lpr: LineOrPositionOrRange): Range | undefined {
     if (lpr.line === undefined) {
@@ -41,7 +40,7 @@ export function lprToSelectionsZeroIndexed(lpr: LineOrPositionOrRange): Selectio
 }
 
 export function getSelectionsFromHash(): Selection[] {
-    return lprToSelectionsZeroIndexed(parseHash(window.location.hash))
+    return lprToSelectionsZeroIndexed(SourcegraphURL.from({ pathname: '', hash: window.location.hash }).getLineRange())
 }
 
 export function observeSelectionsFromHash(): Observable<Selection[]> {
