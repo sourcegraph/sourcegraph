@@ -231,13 +231,14 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
     // This is used to avoid reinitializing the editor when new locations in the
     // same file are opened inside the reference panel.
     const blobInfo = useDistinctBlob(props.blobInfo)
-    const position = useMemo(() => {
+    const position = useMemo(
         // When an activeURL is passed, it takes presedence over the react
         // router location API.
         //
         // This is needed to support the reference panel
-        return SourcegraphURL.from(props.activeURL || location).getLineRange()
-    }, [props.activeURL, location])
+        () => SourcegraphURL.from(props.activeURL || location).getLineRange(),
+        [props.activeURL, location]
+    )
     const hasPin = useMemo(() => urlIsPinned(location.search), [location.search])
 
     // Keep history and location in a ref so that we can use the latest value in

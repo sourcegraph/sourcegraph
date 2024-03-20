@@ -6,6 +6,9 @@ import { tryCatch } from '../errors'
  * "L1-2:3" or "L1:2-3"), none of which would make much sense.
  *
  * 1-indexed.
+ *
+ * For backward compatibility, `character` and `endCharacter` are allowed to be 0,
+ * which is the same as not being set.
  */
 export type LineOrPositionOrRange =
     | { line?: undefined; character?: undefined; endLine?: undefined; endCharacter?: undefined }
@@ -18,6 +21,9 @@ export type LineOrPositionOrRange =
  * Examples of valid input:
  * L1          -  line:     line 1
  * L1:2        -  position: line 1, character 2
+ *
+ * If the line is invalid (e.g. L0), the return value will be an empty object.
+ * If the character is invalid (e.g. L1:0), the return value will be a line.
  *
  * @param lineOrPosition a string like that encodes a line or a position
  * @returns the parsed line or position, or an empty object if the input is invalid
@@ -36,7 +42,7 @@ function parseLineOrPosition(
         return {}
     }
     if (character === undefined || isNaN(character) || character <= 0) {
-        return { line, character: undefined }
+        return { line }
     }
     return { line, character }
 }
@@ -106,6 +112,10 @@ function parseLineOrPositionOrRange(range: string): LineOrPositionOrRange {
 function simplifyRange(range: LineOrPositionOrRange): LineOrPositionOrRange {
     if (range.line === undefined) {
         return {}
+    }
+    // Treat character 0 or endCharacter 0 as 'not set'
+    if (range.character === 0 || range.endCharacter === 0) {
+        return { line: range.line, endLine: range.endLine }
     }
     if (range.line === range.endLine && range.character === range.endCharacter) {
         return { line: range.line, character: range.character }

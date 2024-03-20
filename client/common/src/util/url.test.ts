@@ -67,16 +67,22 @@ describe('SourcegraphURL', () => {
 
     describe('setLineRange', () => {
         it.each`
-            input                     | lpr                            | expected
-            ${'/path'}                | ${{ line: 24, character: 24 }} | ${'/path?L24:24'}
-            ${'/path?test=test'}      | ${{ line: 24, character: 24 }} | ${'/path?L24:24&test=test'}
-            ${'/path?L1:1'}           | ${{ line: 24, character: 24 }} | ${'/path?L24:24'}
-            ${'/path?L1:1&test=test'} | ${{}}                          | ${'/path?test=test'}
-            ${'?'}                    | ${{ line: 24, character: 24 }} | ${'/?L24:24'}
-            ${'?test=test'}           | ${{ line: 24, character: 24 }} | ${'/?L24:24&test=test'}
-            ${'?L1:1'}                | ${{ line: 24, character: 24 }} | ${'/?L24:24'}
-            ${'?L1:1&test=test'}      | ${{}}                          | ${'/?test=test'}
-            ${'?L1:1'}                | ${{}}                          | ${'/'}
+            input                     | lpr                                                         | expected
+            ${'/path'}                | ${{ line: 24, character: 24 }}                              | ${'/path?L24:24'}
+            ${'/path'}                | ${{ line: 12, endLine: 56 }}                                | ${'/path?L12-56'}
+            ${'/path'}                | ${{ line: 12, character: 3, endLine: 56, endCharacter: 1 }} | ${'/path?L12:3-56:1'}
+            ${'/path'}                | ${{ line: 12, character: 0, endLine: 56, endCharacter: 0 }} | ${'/path?L12-56'}
+            ${'/path?test=test'}      | ${{ line: 24, character: 24 }}                              | ${'/path?L24:24&test=test'}
+            ${'/path?L1:1'}           | ${{ line: 24, character: 24 }}                              | ${'/path?L24:24'}
+            ${'/path?L1:1&test=test'} | ${{}}                                                       | ${'/path?test=test'}
+            ${'?'}                    | ${{ line: 24, character: 24 }}                              | ${'/?L24:24'}
+            ${'?'}                    | ${{ line: 24, endLine: 56 }}                                | ${'/?L24-56'}
+            ${'?'}                    | ${{ line: 12, character: 3, endLine: 56, endCharacter: 1 }} | ${'/?L12:3-56:1'}
+            ${'?'}                    | ${{ line: 12, character: 0, endLine: 56, endCharacter: 0 }} | ${'/?L12-56'}
+            ${'?test=test'}           | ${{ line: 24, character: 24 }}                              | ${'/?L24:24&test=test'}
+            ${'?L1:1'}                | ${{ line: 24, character: 24 }}                              | ${'/?L24:24'}
+            ${'?L1:1&test=test'}      | ${{}}                                                       | ${'/?test=test'}
+            ${'?L1:1'}                | ${{}}                                                       | ${'/'}
         `('$input => $expected', ({ input, lpr, expected }) => {
             expect(SourcegraphURL.from(input).setLineRange(lpr).toString()).toBe(expected)
         })
