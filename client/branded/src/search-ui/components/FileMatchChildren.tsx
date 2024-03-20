@@ -28,7 +28,7 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
 
     const createCodeExcerptLink = (group: MatchGroup): string => {
         const match = group.matches[0]
-        return SourcegraphURL.fromString(getFileMatchUrl(result))
+        return SourcegraphURL.from(getFileMatchUrl(result))
             .setLineRange({
                 line: match.startLine + 1,
                 character: match.startCharacter + 1,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { encodeURIPathComponent, LineOrPositionOrRange, parseHash, SourcegraphURL } from './url'
+import { encodeURIPathComponent, LineOrPositionOrRange, SourcegraphURL } from './url'
 
 describe('SourcegraphURL', () => {
     it('accepts a string URL', () => {

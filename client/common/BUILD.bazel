@@ -56,7 +56,6 @@ ts_project(
     ],
     tsconfig = ":tsconfig",
     deps = [
-        ":node_modules/@sourcegraph/extension-api-types",
         "//:node_modules/@types/dompurify",
         "//:node_modules/@types/highlight.js",
         "//:node_modules/@types/history",

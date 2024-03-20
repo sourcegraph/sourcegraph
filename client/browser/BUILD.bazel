@@ -282,6 +282,7 @@ ts_project(
         "src/shared/code-hosts/shared/ViewOnSourcegraphButton.test.tsx",
         "src/shared/code-hosts/shared/codeHost.test.tsx",
         "src/shared/code-hosts/shared/codeViews.test.ts",
+        "src/shared/code-hosts/shared/util/selections.test.ts",
         "src/shared/code-hosts/shared/views.test.ts",
         "src/shared/code-hosts/sourcegraph/inject.test.tsx",
         "src/testSetup.test.ts",
