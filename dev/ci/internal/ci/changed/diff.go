@@ -101,12 +101,6 @@ func ParseDiff(files []string) (diff Diff, changedFiles ChangedFiles) {
 			diff |= Pnpm
 		}
 
-		// dev/release contains a nodejs script that doesn't have tests but needs to be
-		// linted with Client linters. We skip the release config file to reduce friction editing during releases.
-		if strings.HasPrefix(p, "dev/release/") && !strings.Contains(p, "release-config") {
-			diff |= Client
-		}
-
 		// Affects GraphQL
 		if strings.HasSuffix(p, ".graphql") {
 			diff |= GraphQL

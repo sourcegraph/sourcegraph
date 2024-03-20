@@ -86,13 +86,6 @@
       "problemMatcher": ["$eslint-stylish"]
     },
     {
-      "label": "eslint:release",
-      "type": "npm",
-      "script": "eslint",
-      "path": "dev/release/",
-      "problemMatcher": ["$eslint-stylish"]
-    },
-    {
       "label": "eslint:extension-api",
       "type": "npm",
       "script": "eslint",

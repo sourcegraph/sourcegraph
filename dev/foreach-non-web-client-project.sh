@@ -17,7 +17,7 @@ DIRS=(
   client/build-config
   client/client-api
   client/codeintellify
-    client/common
+  client/common
   client/extension-api
   client/extension-api-types
   client/http-client
@@ -30,7 +30,6 @@ DIRS=(
   client/testing
   client/vscode
   client/wildcard
-  dev/release
 )
 # Keep the list of client workspaces in alphabetical order!
 

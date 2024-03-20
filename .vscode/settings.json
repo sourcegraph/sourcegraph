@@ -45,7 +45,6 @@
   "typescript.format.semicolons": "remove",
   "typescript.tsc.autoDetect": "off",
   "typescript.tsdk": "node_modules/typescript/lib",
-  "eslint.packageManager": "pnpm",
   "eslint.lintTask.enable": false,
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "editor.codeActionsOnSave": {},
@@ -53,7 +52,7 @@
   "eslint.options": {
     "cache": true
   },
-  "eslint.workingDirectories": ["./dev/release", "./client/*"],
+  "eslint.workingDirectories": ["./client/*"],
   "go.lintTool": "golangci-lint",
   "shellformat.flag": "-i 2 -ci",
   "vscode-graphql.useSchemaFileDefinitions": true,

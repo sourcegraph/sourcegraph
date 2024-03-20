@@ -44,7 +44,6 @@
     "storybook:web": "pnpm --filter @sourcegraph/web run storybook",
     "storybook:wildcard": "pnpm --filter @sourcegraph/wildcard run storybook",
     "storybook:build": "pnpm --filter @sourcegraph/storybook run build",
-    "release": "cd dev/release && pnpm run release",
     "docsite:serve": "./dev/docsite.sh -config doc/docsite.json serve -http=localhost:5080",
     "build-browser-extension": "pnpm --filter @sourcegraph/browser run build",
     "chromatic": "CHROMATIC=true pnpm run _chromatic --storybook-config-dir client/storybook/src --build-script-name=storybook:build",

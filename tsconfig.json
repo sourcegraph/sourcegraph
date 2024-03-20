@@ -19,7 +19,6 @@
     { "path": "client/extension-api-types" },
     { "path": "client/storybook" },
     { "path": "client/testing" },
-    { "path": "dev/release" },
     { "path": "schema" },
     { "path": "client/codeintellify" },
     { "path": "client/client-api" },
