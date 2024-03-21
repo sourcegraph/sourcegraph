@@ -1,6 +1,6 @@
 alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;
 
-CREATE TABLE  syntactic_scip_index_last_scan(
+CREATE TABLE IF NOT EXISTS syntactic_scip_index_last_scan(
     repository_id int NOT NULL,
     last_index_scan_at timestamp with time zone NOT NULL,
     PRIMARY KEY(repository_id)

@@ -11157,7 +11157,7 @@
 			{
 				"ID": 1709738515,
 				"Name": "Add syntactic indexing support to policies",
-				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nCREATE TABLE  syntactic_scip_index_last_scan(\n    repository_id int NOT NULL,\n    last_index_scan_at timestamp with time zone NOT NULL,\n    PRIMARY KEY(repository_id)\n);\n\nCOMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';\nCOMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';",
+				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nCREATE TABLE IF NOT EXISTS syntactic_scip_index_last_scan(\n    repository_id int NOT NULL,\n    last_index_scan_at timestamp with time zone NOT NULL,\n    PRIMARY KEY(repository_id)\n);\n\nCOMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';\nCOMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';",
 				"DownQuery": "alter table lsif_configuration_policies drop column if exists syntactic_indexing_enabled;\ndrop table if exists syntactic_scip_index_last_scan;",
 				"Privileged": false,
 				"NonIdempotent": false,
