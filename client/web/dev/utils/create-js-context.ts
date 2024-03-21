@@ -13,6 +13,7 @@ export const builtinAuthProvider = {
     displayName: 'Builtin username-password authentication',
     isBuiltin: true,
     authenticationURL: '',
+    noSignIn: false,
 }
 
 // Create dummy JS context that will be added to index.html when `WEB_BUILDER_SERVE_INDEX` is set to true.

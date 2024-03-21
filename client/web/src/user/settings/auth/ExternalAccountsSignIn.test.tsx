@@ -39,6 +39,7 @@ const mockAuthProviders: AuthProvider[] = [
         clientID: '123',
         isBuiltin: false,
         authenticationURL: 'https://example.com',
+        noSignIn: false,
     },
 ]
 

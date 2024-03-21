@@ -87,6 +87,7 @@ func bazelPublishExecutorDockerMirror(c Config) operations.Operation {
 			bk.Env("VERSION", c.Version),
 			bk.Env("IMAGE_FAMILY", imageFamily),
 			bk.Env("EXECUTOR_IS_TAGGED_RELEASE", strconv.FormatBool(c.RunType.Is(runtype.TaggedRelease, runtype.InternalRelease))),
+			bk.Env("RELEASE_INTERNAL", strconv.FormatBool(c.RunType.Is(runtype.InternalRelease))),
 			bk.Cmd(bazelStampedCmd("run //cmd/executor/docker-mirror:ami.push")),
 		}
 		pipeline.AddStep(":bazel::packer: :white_check_mark: Publish docker registry mirror image", stepOpts...)

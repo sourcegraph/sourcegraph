@@ -1,6 +1,6 @@
 <script lang="ts">
-    import {settings} from '$lib/stores'
-    import {Markdown} from '$lib/wildcard'
+    import { settings } from '$lib/stores'
+    import { Markdown } from '$lib/wildcard'
 
     $: notices = $settings?.notices?.filter(notice => notice.location === 'home')
 </script>
@@ -9,7 +9,7 @@
     <ul class="root">
         {#each notices as notice (notice.message)}
             <li class="item">
-                <Markdown content={notice.message}/>
+                <Markdown content={notice.message} />
             </li>
         {/each}
     </ul>

@@ -2,6 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//dev:msp_delivery.bzl", "msp_delivery")
 
 go_library(
     name = "msp-example_lib",
@@ -59,4 +60,11 @@ oci_push(
     name = "candidate_push",
     image = ":image",
     repository = image_repository("msp-example"),
+)
+
+msp_delivery(
+    name = "msp_deploy",
+    gcp_delivery_pipeline = "msp-testbed-us-central1-rollout",
+    gcp_project = "msp-testbed-robert-7be9",
+    repository = "us.gcr.io/sourcegraph-dev/msp-example",
 )

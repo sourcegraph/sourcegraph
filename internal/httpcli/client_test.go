@@ -1000,3 +1000,77 @@ func TestRetryAfter(t *testing.T) {
 		}
 	})
 }
+
+// TestRetryBasedOnStatusCode verifies we take the returned HTTP status code
+// into account with our retry behavior.
+func TestRetryBasedOnStatusCode(t *testing.T) {
+	verifyRetryBehavior := func(t *testing.T, statusCode int, expectedToRetry bool) {
+		// Fake webserver, always returning the same status code.
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(statusCode)
+		}))
+		t.Cleanup(srv.Close)
+
+		req, err := http.NewRequest("GET", srv.URL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var attempts int
+		policy := NewRetryPolicy(1 /* max retries */, time.Second)
+		wrappedPolicy := func(a rehttp.Attempt) bool {
+			attempts++
+			return policy(a)
+		}
+
+		cli, err := NewFactory(
+			NewMiddleware(
+				ContextErrorMiddleware,
+			),
+			NewErrorResilientTransportOpt(
+				wrappedPolicy,
+				rehttp.ExpJitterDelay(50*time.Millisecond, 5*time.Second),
+			),
+		).Doer()
+		require.NoError(t, err)
+
+		res, err := cli.Do(req)
+		require.NoError(t, err)
+
+		assert.Equal(t, statusCode, res.StatusCode)
+		if expectedToRetry {
+			assert.Equal(t, 2, attempts, "expected HTTP request to be retried, but was not")
+		} else {
+			assert.Equal(t, 1, attempts, "expected HTTP request to not be retired, but was")
+		}
+	}
+
+	tests := []struct {
+		statusCode    int
+		expectRetries bool
+	}{
+		// Retrying a successfull 200 response doesn't make sense.
+		{http.StatusOK, false},
+
+		// We shouldn't retry 400 requests, because by definition the problem is client-side.
+		{http.StatusBadRequest, false},
+
+		// The server is clear that we need to slow down, so we will retry after a delay.
+		{http.StatusTooManyRequests, true},
+
+		// Internal Server Error is hopefully transient, so retrying may be appropriate.
+		{http.StatusInternalServerError, true},
+
+		// No need to retry the status if the endpoint isn't implemented.
+		{http.StatusNotImplemented, false},
+
+		// Bad Gateway is in the 5xx rate, and can potentially be resolved automatically.
+		// So retrying may be appropriate.
+		{http.StatusBadGateway, true},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("StatusCode%d", test.statusCode), func(t *testing.T) {
+			verifyRetryBehavior(t, test.statusCode, test.expectRetries)
+		})
+	}
+}

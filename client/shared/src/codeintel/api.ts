@@ -18,8 +18,6 @@ import type { CodeIntelExtensionHostAPI, FlatExtensionHostAPI, ScipParameters } 
 import { proxySubscribable } from '../api/extension/api/common'
 import { toPosition } from '../api/extension/api/types'
 import { getModeFromPath } from '../languages'
-import type { PlatformContext } from '../platform/context'
-import { isSettingsValid, type Settings, type SettingsCascade } from '../settings/settings'
 import { parseRepoURI } from '../util/url'
 
 import type { DocumentSelector, TextDocument, DocumentHighlight } from './legacy-extensions/api'
@@ -49,29 +47,6 @@ export interface CodeIntelAPI {
 export function createCodeIntelAPI(context: sourcegraph.CodeIntelContext): CodeIntelAPI {
     sourcegraph.updateCodeIntelContext(context)
     return new DefaultCodeIntelAPI()
-}
-
-export let codeIntelAPI: null | CodeIntelAPI = null
-export async function getOrCreateCodeIntelAPI(context: PlatformContext): Promise<CodeIntelAPI> {
-    if (codeIntelAPI !== null) {
-        return codeIntelAPI
-    }
-
-    return lastValueFrom(
-        context.settings.pipe(
-            map(settingsCascade => {
-                if (!isSettingsValid(settingsCascade)) {
-                    throw new Error('Settings are not valid')
-                }
-                codeIntelAPI = createCodeIntelAPI({
-                    requestGraphQL: context.requestGraphQL,
-                    telemetryService: context.telemetryService,
-                    settings: newSettingsGetter(settingsCascade),
-                })
-                return codeIntelAPI
-            })
-        )
-    )
 }
 
 class DefaultCodeIntelAPI implements CodeIntelAPI {
@@ -211,11 +186,6 @@ function selectorForSpec(languageSpec: LanguageSpec): DocumentSelector {
         ...(languageSpec.verbatimFilenames || []).flatMap(filename => [{ pattern: filename }]),
         ...languageSpec.fileExts.flatMap(extension => [{ pattern: `*.${extension}` }]),
     ]
-}
-
-function newSettingsGetter(settingsCascade: SettingsCascade<Settings>): sourcegraph.SettingsGetter {
-    return <T>(setting: string): T | undefined =>
-        settingsCascade.final && (settingsCascade.final[setting] as T | undefined)
 }
 
 // Replaces codeintel functions from the "old" extension/webworker extension API

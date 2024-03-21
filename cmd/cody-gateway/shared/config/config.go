@@ -79,10 +79,7 @@ type AnthropicConfig struct {
 	AllowedPromptPatterns []string
 	// Phrases we look for in a flagged request to consider blocking the response.
 	// Each phrase is lower case. Can be empty (to disable blocking).
-	BlockedPromptPatterns []string
-	// Phrases we look for in a request to collect data.
-	// Each phrase is lower case. Can be empty (to disable data collection).
-	DetectedPromptPatterns         []string
+	BlockedPromptPatterns          []string
 	RequestBlockingEnabled         bool
 	PromptTokenFlaggingLimit       int
 	PromptTokenBlockingLimit       int
@@ -95,7 +92,6 @@ type FireworksConfig struct {
 	AccessToken                            string
 	StarcoderCommunitySingleTenantPercent  int
 	StarcoderEnterpriseSingleTenantPercent int
-	StarcoderQuantizedPercent              int
 }
 
 type OpenAIConfig struct {
@@ -160,7 +156,6 @@ func (c *Config) Load() {
 	c.Anthropic.MaxTokensToSample = c.GetInt("CODY_GATEWAY_ANTHROPIC_MAX_TOKENS_TO_SAMPLE", "10000", "Maximum permitted value of maxTokensToSample")
 	c.Anthropic.AllowedPromptPatterns = toLower(splitMaybe(c.GetOptional("CODY_GATEWAY_ANTHROPIC_ALLOWED_PROMPT_PATTERNS", "Prompt patterns to allow.")))
 	c.Anthropic.BlockedPromptPatterns = toLower(splitMaybe(c.GetOptional("CODY_GATEWAY_ANTHROPIC_BLOCKED_PROMPT_PATTERNS", "Patterns to block in prompt.")))
-	c.Anthropic.DetectedPromptPatterns = toLower(splitMaybe(c.GetOptional("CODY_GATEWAY_ANTHROPIC_DETECTED_PROMPT_PATTERNS", "Patterns to detect in prompt.")))
 	c.Anthropic.RequestBlockingEnabled = c.GetBool("CODY_GATEWAY_ANTHROPIC_REQUEST_BLOCKING_ENABLED", "false", "Whether we should block requests that match our blocking criteria.")
 
 	c.Anthropic.PromptTokenBlockingLimit = c.GetInt("CODY_GATEWAY_ANTHROPIC_PROMPT_TOKEN_BLOCKING_LIMIT", "20000", "Maximum number of prompt tokens to allow without blocking.")
@@ -171,7 +166,7 @@ func (c *Config) Load() {
 	c.OpenAI.AccessToken = c.GetOptional("CODY_GATEWAY_OPENAI_ACCESS_TOKEN", "The OpenAI access token to be used.")
 	c.OpenAI.OrgID = c.GetOptional("CODY_GATEWAY_OPENAI_ORG_ID", "The OpenAI organization to count billing towards. Setting this ensures we always use the correct negotiated terms.")
 	c.OpenAI.AllowedModels = splitMaybe(c.Get("CODY_GATEWAY_OPENAI_ALLOWED_MODELS",
-		strings.Join([]string{"gpt-4", "gpt-3.5-turbo", "gpt-4-1106-preview"}, ","),
+		strings.Join([]string{"gpt-4", "gpt-3.5-turbo", "gpt-4-1106-preview", "gpt-4-turbo-preview"}, ","),
 		"OpenAI models that can to be used."),
 	)
 	if c.OpenAI.AccessToken != "" && len(c.OpenAI.AllowedModels) == 0 {
@@ -208,7 +203,6 @@ func (c *Config) Load() {
 	}
 	c.Fireworks.StarcoderCommunitySingleTenantPercent = c.GetPercent("CODY_GATEWAY_FIREWORKS_STARCODER_COMMUNITY_SINGLE_TENANT_PERCENT", "0", "The percentage of community traffic for Starcoder to be redirected to the single-tenant deployment.")
 	c.Fireworks.StarcoderEnterpriseSingleTenantPercent = c.GetPercent("CODY_GATEWAY_FIREWORKS_STARCODER_ENTERPRISE_SINGLE_TENANT_PERCENT", "100", "The percentage of Enterprise traffic for Starcoder to be redirected to the single-tenant deployment.")
-	c.Fireworks.StarcoderQuantizedPercent = c.GetPercent("CODY_GATEWAY_FIREWORKS_STARCODER_QUANTIZED_PERCENT", "100", "The percentage of multi-tenant traffic to be redirected to the quantized model.")
 
 	c.AllowedEmbeddingsModels = splitMaybe(c.Get("CODY_GATEWAY_ALLOWED_EMBEDDINGS_MODELS", strings.Join([]string{string(embeddings.ModelNameOpenAIAda), string(embeddings.ModelNameSourcegraphTriton)}, ","), "The models allowed for embeddings generation."))
 	if len(c.AllowedEmbeddingsModels) == 0 {

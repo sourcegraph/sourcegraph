@@ -1,0 +1,141 @@
+.search-result-match {
+    text-decoration: none; /* don't use cascading link style */
+    display: flex;
+    align-items: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background-color: var(--code-bg);
+    position: relative;
+
+    &:hover {
+        text-decoration: none;
+    }
+
+    pre,
+    code {
+        width: 100%;
+        padding: 0;
+        margin-bottom: 0;
+    }
+
+    table,
+    tr,
+    td {
+        display: flex;
+        flex-grow: 1;
+        padding: 0;
+        margin-bottom: 0;
+        :global(.code) {
+            padding: 0;
+        }
+        span:last-child {
+            width: 100%;
+        }
+    }
+
+    tbody {
+        display: flex;
+        flex-grow: 1;
+        flex-direction: column;
+    }
+}
+
+.match-type {
+    white-space: nowrap;
+}
+
+.icon {
+    margin-right: 0.25rem;
+}
+
+.divider-vertical {
+    border-bottom: 1px solid var(--border-color-2);
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.divider {
+    border-right: 1px solid var(--border-color-2);
+    height: 1rem;
+    margin: 0 0.5rem;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.title-inner {
+    overflow-wrap: anywhere;
+}
+
+.commit-oid {
+    background: var(--code-bg);
+    display: inline-block;
+    padding: 0.25rem;
+}
+
+.header-description {
+    line-height: (14/11);
+}
+
+.toggle-matches-button {
+    width: 100%;
+    text-align: left;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--code-bg);
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    color: var(--text-disabled);
+
+    // When expanded, stick collapse button to the bottom of the
+    // screen if there are enough search results to cause scrolling.
+    &--expanded {
+        position: sticky;
+        bottom: 0;
+    }
+
+    &-text {
+        margin-left: 0.125rem;
+    }
+}
+
+.toggle-matches-button:hover {
+    color: var(--text-muted);
+}
+
+.copy-button {
+    visibility: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+
+    .copy-button-container:hover &,
+    .copy-button-container:focus-within & {
+        visibility: visible;
+    }
+}
+
+.gap-1 {
+    gap: 0.5rem;
+}
+
+.divider-between {
+    > *:not(:last-child)::after {
+        content: ' ';
+        height: 1rem;
+        margin: 0 0.75rem;
+        border-right: 1px solid var(--border-color-2);
+        display: block;
+    }
+}

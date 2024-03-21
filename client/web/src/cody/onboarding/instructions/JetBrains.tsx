@@ -34,7 +34,11 @@ export function JetBrainsInstructions({
                                 <div>
                                     <Text className="mb-1" weight="bold">
                                         Open the Plugins Page (or via the{' '}
-                                        <Link to="https://plugins.jetbrains.com/plugin/9682-sourcegraph-cody--code-search">
+                                        <Link
+                                            to="https://plugins.jetbrains.com/plugin/9682-sourcegraph-cody--code-search"
+                                            target="_blank"
+                                            rel="noopener"
+                                        >
                                             JetBrains Marketplace
                                         </Link>
                                         )
@@ -187,12 +191,16 @@ export function JetBrainsInstructions({
                                 <Link
                                     to="https://discord.gg/rDPqBejz93"
                                     className="d-flex w-100 justify-content-center "
+                                    target="_blank"
+                                    rel="noopener"
                                 >
                                     <strong>Discord chat</strong>
                                 </Link>
                                 <Link
                                     to="https://github.com/sourcegraph/cody/discussions/new?category=product-feedback"
                                     className="d-flex w-100 justify-content-center mt-4"
+                                    target="_blank"
+                                    rel="noopener"
                                 >
                                     <strong>GitHub Discussions</strong>
                                 </Link>

@@ -79,7 +79,7 @@ func (j *SearchJob) Run(ctx context.Context, clients job.RuntimeClients, stream 
 
 		doSearch := func(args *gitprotocol.SearchRequest) error {
 			limitHit, err := clients.Gitserver.Search(ctx, args, onMatches)
-			statusMap, limitHit, err := search.HandleRepoSearchResult(repoRev.Repo.ID, repoRev.Revs, limitHit, false, err)
+			statusMap, err := search.HandleRepoSearchResult(repoRev.Repo.ID, repoRev.Revs, limitHit, false, err)
 			stream.Send(streaming.SearchEvent{
 				Stats: streaming.Stats{
 					IsLimitHit: limitHit,

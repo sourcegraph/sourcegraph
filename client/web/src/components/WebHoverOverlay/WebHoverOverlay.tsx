@@ -6,7 +6,6 @@ import type { Observable } from 'rxjs'
 import { isErrorLike } from '@sourcegraph/common'
 import { urlForClientCommandOpen } from '@sourcegraph/shared/src/actions/ActionItem'
 import { HoverOverlay, type HoverOverlayProps } from '@sourcegraph/shared/src/hover/HoverOverlay'
-import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 
 import type { HoverThresholdProps } from '../../repo/RepoContainer'
 
@@ -17,8 +16,7 @@ export interface WebHoverOverlayProps
             HoverOverlayProps,
             'className' | 'closeButtonClassName' | 'actionItemClassName' | 'actionItemStyleProps'
         >,
-        HoverThresholdProps,
-        SettingsCascadeProps {
+        HoverThresholdProps {
     hoveredTokenElement?: HTMLElement
     /**
      * If the hovered token doesn't have a corresponding DOM element, this prop

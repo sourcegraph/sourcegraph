@@ -59,8 +59,9 @@
                 </p>
             {/if}
             <p>
-                You can temporarily switch back to the stable version of the web app by clicking <a href={reactURL}
-                    >here</a
+                You can temporarily switch back to the stable version of the web app by clicking <a
+                    href={reactURL}
+                    data-sveltekit-reload>here</a
                 >.
             </p>
         </div>

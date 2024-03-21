@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	proto "github.com/sourcegraph/sourcegraph/internal/symbols/v1"
 	internaltypes "github.com/sourcegraph/sourcegraph/internal/types"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 type grpcService struct {
@@ -27,18 +28,24 @@ func (s *grpcService) Search(ctx context.Context, r *proto.SearchRequest) (*prot
 	var response proto.SearchResponse
 
 	params := r.ToInternal()
-	symbols, err := s.searchFunc(ctx, params)
+	res, err := s.searchFunc(ctx, params)
 	if err != nil {
 		s.logger.Error("symbol search failed",
 			logger.String("arguments", fmt.Sprintf("%+v", params)),
 			logger.Error(err),
 		)
 
+		var limitErr *limitHitError
+		if errors.As(err, &limitErr) {
+			response.FromInternal(&search.SymbolsResponse{Symbols: res, LimitHit: true})
+			return &response, nil
+		}
+
 		response.FromInternal(&search.SymbolsResponse{Err: err.Error()})
-	} else {
-		response.FromInternal(&search.SymbolsResponse{Symbols: symbols})
+		return &response, nil
 	}
 
+	response.FromInternal(&search.SymbolsResponse{Symbols: res})
 	return &response, nil
 }
 

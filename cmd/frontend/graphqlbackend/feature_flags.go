@@ -5,6 +5,7 @@ import (
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
+	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/gqlutil"
 
 	sgactor "github.com/sourcegraph/sourcegraph/internal/actor"
@@ -290,10 +291,6 @@ func (r *schemaResolver) CreateFeatureFlagOverride(ctx context.Context, args str
 	FlagName  string
 	Value     bool
 }) (*FeatureFlagOverrideResolver, error) {
-	if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
-		return nil, err
-	}
-
 	fo := &featureflag.Override{
 		FlagName: args.FlagName,
 		Value:    args.Value,
@@ -301,6 +298,11 @@ func (r *schemaResolver) CreateFeatureFlagOverride(ctx context.Context, args str
 
 	var uid, oid int32
 	if err := UnmarshalNamespaceID(args.Namespace, &uid, &oid); err != nil {
+		return nil, err
+	}
+
+	// Allow users to add their own overrides
+	if err := auth.CheckSiteAdminOrSameUserFromActor(actor.FromContext(ctx), r.db, uid); err != nil {
 		return nil, err
 	}
 

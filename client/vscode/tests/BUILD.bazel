@@ -1,0 +1,6 @@
+# TODO(bazel): disabled for now
+# gazelle:js disabled
+
+# The library itself is a testing library so put all files into the main library
+# gazelle:js_files **/*.{ts,tsx}
+# gazelle:js_test_files does-not-exist-to-disable

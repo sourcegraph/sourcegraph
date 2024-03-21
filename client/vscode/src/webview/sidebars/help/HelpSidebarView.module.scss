@@ -1,0 +1,25 @@
+.sidebar-container {
+    padding: 0.125rem 0 0 0 !important;
+    color: var(--vscode-foreground);
+    font-size: var(--vscode-editor-font-size) !important;
+    display: flex;
+    flex-direction: column;
+
+    a {
+        color: var(--vscode-textLink-foreground);
+    }
+}
+
+.icon {
+    width: calc(var(--vscode-font-size) * 1.05);
+    height: auto;
+}
+
+.sidebar-view-button {
+    background-color: transparent;
+    color: inherit !important;
+
+    &::part(control) {
+        justify-content: flex-start;
+    }
+}

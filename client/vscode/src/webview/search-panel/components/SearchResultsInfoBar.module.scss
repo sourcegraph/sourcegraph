@@ -1,0 +1,51 @@
+.search-results-info-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-self: stretch;
+
+    :global(.alert) {
+        margin-bottom: 0.5rem;
+    }
+
+    :global(.mdi-icon) {
+        margin-right: 0.125rem;
+    }
+}
+
+.nav-item:last-child {
+    margin-right: 0 !important;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 0.5rem;
+    height: 100%;
+    flex: 1 0 auto;
+    text-align: left;
+}
+
+.notice {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+    padding: 0.375rem 0;
+}
+
+.divider {
+    height: 1rem;
+    border-right: 1px solid var(--border-color);
+    margin: 0 0.5rem 0 0;
+
+    &:first-child {
+        display: none;
+    }
+}
+
+.expander {
+    display: block;
+    flex-grow: 1;
+}

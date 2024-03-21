@@ -650,7 +650,7 @@ func NewRetryPolicy(max int, maxRetryAfterDuration time.Duration) rehttp.RetryFn
 			return false
 		default:
 			// Don't retry more than 3 times for no such host errors.
-			// This affords some resilience to dns unreliability while
+			// This affords some resilience to DNS unreliability while
 			// preventing 20 attempts with a non existing name.
 			var dnsErr *net.DNSError
 			if a.Index >= 3 && errors.As(a.Error, &dnsErr) && dnsErr.IsNotFound {

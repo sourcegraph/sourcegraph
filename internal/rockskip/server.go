@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 	"github.com/sourcegraph/go-ctags"
 	"github.com/sourcegraph/log"
 
@@ -97,7 +96,11 @@ func (s *Service) startIndexingLoop(indexRequestQueue chan indexRequest) {
 		err := s.Index(ctx, indexRequest.repo, indexRequest.commit)
 		close(indexRequest.done)
 		if err != nil {
-			log15.Error("indexing error", "repo", indexRequest.repo, "commit", indexRequest.commit, "err", err)
+			s.logger.Error("indexing error",
+				log.String("repo", indexRequest.repo),
+				log.String("commit", indexRequest.commit),
+				log.Error(err),
+			)
 		}
 	}
 }
@@ -108,7 +111,7 @@ func (s *Service) startCleanupLoop() {
 		err := DeleteOldRepos(context.Background(), s.db, s.maxRepos, threadStatus)
 		threadStatus.End()
 		if err != nil {
-			log15.Error("Failed to delete old repos", "error", err)
+			s.logger.Error("failed to delete old repos", log.Error(err))
 		}
 	}
 }

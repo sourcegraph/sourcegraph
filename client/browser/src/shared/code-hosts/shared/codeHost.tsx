@@ -473,7 +473,6 @@ function initCodeIntelligence({
                         telemetryService={telemetryService}
                         hoverRef={this.nextOverlayElement}
                         extensionsController={extensionsController}
-                        platformContext={platformContext}
                         location={H.createLocation(window.location)}
                         useBrandedLogo={true}
                     />

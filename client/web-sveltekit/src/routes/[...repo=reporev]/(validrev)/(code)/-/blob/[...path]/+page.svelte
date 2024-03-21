@@ -17,6 +17,7 @@
     import Permalink from '$lib/repo/Permalink.svelte'
     import { createCodeIntelAPI, parseQueryAndHash } from '$lib/shared'
     import { Alert } from '$lib/wildcard'
+    import markdownStyles from '$lib/wildcard/Markdown.module.scss'
 
     import type { PageData } from './$types'
     import FormatAction from './FormatAction.svelte'
@@ -92,7 +93,7 @@
         {/await}
     {:else if blob}
         {#if blob.richHTML && !showRaw}
-            <div class="rich">
+            <div class={`rich ${markdownStyles.markdown}`}>
                 {@html blob.richHTML}
             </div>
         {:else}
@@ -152,6 +153,7 @@
     .rich {
         padding: 1rem;
         overflow: auto;
+        max-width: 50rem;
     }
 
     .circle {

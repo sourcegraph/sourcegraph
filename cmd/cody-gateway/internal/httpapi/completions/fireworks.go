@@ -23,9 +23,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 )
 
-const fireworksAPIURL = "https://api.fireworks.ai/inference/v1/completions"
-const fireworksChatAPIURL = "https://api.fireworks.ai/inference/v1/chat/completions"
-
 func NewFireworksHandler(
 	baseLogger log.Logger,
 	eventLogger events.Logger,
@@ -42,13 +39,6 @@ func NewFireworksHandler(
 		rateLimitNotifier,
 		httpClient,
 		string(conftypes.CompletionsProviderNameFireworks),
-		func(feature codygateway.Feature) string {
-			if feature == codygateway.FeatureChatCompletions {
-				return fireworksChatAPIURL
-			} else {
-				return fireworksAPIURL
-			}
-		},
 		config.AllowedModels,
 		&FireworksHandlerMethods{
 			baseLogger:  baseLogger,
@@ -59,7 +49,6 @@ func NewFireworksHandler(
 		// do any retries
 		30, // seconds
 		autoFlushStreamingResponses,
-		nil,
 	)
 }
 
@@ -121,9 +110,24 @@ type FireworksHandlerMethods struct {
 	config      config.FireworksConfig
 }
 
-func (f *FireworksHandlerMethods) validateRequest(_ context.Context, _ log.Logger, _ codygateway.Feature, _ fireworksRequest) (int, *flaggingResult, error) {
-	return 0, nil, nil
+func (f *FireworksHandlerMethods) getAPIURLByFeature(feature codygateway.Feature) string {
+	if feature == codygateway.FeatureChatCompletions {
+		return "https://api.fireworks.ai/inference/v1/chat/completions"
+	} else {
+		return "https://api.fireworks.ai/inference/v1/completions"
+	}
 }
+
+func (f *FireworksHandlerMethods) validateRequest(_ context.Context, _ log.Logger, _ codygateway.Feature, _ fireworksRequest) error {
+	// TODO[#61278]: Add missing request validation for all LLM providers in Cody Gateway.
+	return nil
+}
+
+func (f *FireworksHandlerMethods) shouldFlagRequest(_ context.Context, _ log.Logger, _ fireworksRequest) (*flaggingResult, error) {
+	// TODO[#61278]: Add missing request validation for all LLM providers in Cody Gateway.
+	return nil, nil
+}
+
 func (f *FireworksHandlerMethods) transformBody(body *fireworksRequest, _ string) {
 	// We don't want to let users generate multiple responses, as this would
 	// mess with rate limit counting.
@@ -133,13 +137,16 @@ func (f *FireworksHandlerMethods) transformBody(body *fireworksRequest, _ string
 
 	body.Model = pickStarCoderModel(body.Model, f.config)
 }
+
 func (f *FireworksHandlerMethods) getRequestMetadata(body fireworksRequest) (model string, additionalMetadata map[string]any) {
 	return body.Model, map[string]any{"stream": body.Stream}
 }
+
 func (f *FireworksHandlerMethods) transformRequest(r *http.Request) {
 	r.Header.Set("Content-Type", "application/json")
 	r.Header.Set("Authorization", "Bearer "+f.config.AccessToken)
 }
+
 func (f *FireworksHandlerMethods) parseResponseAndUsage(logger log.Logger, reqBody fireworksRequest, r io.Reader) (promptUsage, completionUsage usageStats) {
 	// First, extract prompt usage details from the request.
 	promptUsage.characters = len(reqBody.Prompt)
@@ -227,14 +234,6 @@ func pickStarCoderModel(model string, config config.FireworksConfig) string {
 	}
 	if model == "starcoder2-7b" {
 		model = fireworks.StarcoderTwo7b
-	}
-
-	// Resolve to the legacy quantized versions if necessary.
-	// TODO: Remove this as soon as the migration to the unquantized models is complete.
-	if model == fireworks.Starcoder16b {
-		model = pickModelBasedOnTrafficSplit(config.StarcoderQuantizedPercent, fireworks.Starcoder16b8bit, fireworks.Starcoder16b)
-	} else if model == fireworks.Starcoder7b {
-		model = pickModelBasedOnTrafficSplit(config.StarcoderQuantizedPercent, fireworks.Starcoder7b8bit, fireworks.Starcoder7b)
 	}
 
 	return model

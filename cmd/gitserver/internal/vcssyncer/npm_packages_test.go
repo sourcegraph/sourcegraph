@@ -6,6 +6,8 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"io"
 	"io/fs"
 	"os"
@@ -104,17 +106,28 @@ func TestNpmCloneCommand(t *testing.T) {
 		},
 	}
 
+	var testGetRemoteURLSource = func(ctx context.Context, repoName api.RepoName) (RemoteURLSource, error) {
+		return RemoteURLSourceFunc(func(ctx context.Context) (*vcs.URL, error) {
+			u, err := vcs.ParseURL(exampleNpmPackageURL)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to parse example package URL %q", exampleNpmPackageURL)
+			}
+			return u, nil
+		}), nil
+	}
+
 	depsSvc := dependencies.TestService(database.NewDB(logger, dbtest.NewDB(t)))
 
 	s := NewNpmPackagesSyncer(
 		schema.NpmPackagesConnection{Dependencies: []string{}},
 		depsSvc,
 		&client,
+		testGetRemoteURLSource,
 		dir,
 	).(*vcsPackagesSyncer)
 
 	bareGitDirectory := path.Join(dir, "git")
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{exampleNpmVersionedPackage})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleNpmVersionedPackage})
 	checkSingleTag := func() {
 		assertCommandOutput(t,
 			exec.Command("git", "tag", "--list"),
@@ -128,7 +141,7 @@ func TestNpmCloneCommand(t *testing.T) {
 	}
 	checkSingleTag()
 
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{exampleNpmVersionedPackage, exampleNpmVersionedPackage2})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleNpmVersionedPackage, exampleNpmVersionedPackage2})
 	checkTagAdded := func() {
 		assertCommandOutput(t,
 			exec.Command("git", "tag", "--list"),
@@ -148,7 +161,7 @@ func TestNpmCloneCommand(t *testing.T) {
 	}
 	checkTagAdded()
 
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{exampleNpmVersionedPackage})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleNpmVersionedPackage})
 	assertCommandOutput(t,
 		exec.Command("git", "show", fmt.Sprintf("v%s:%s", exampleNpmVersion, exampleJSFilepath)),
 		bareGitDirectory,
@@ -170,7 +183,7 @@ func TestNpmCloneCommand(t *testing.T) {
 	}); err != nil {
 		t.Fatalf(err.Error())
 	}
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{})
+	s.runCloneCommand(t, bareGitDirectory, []string{})
 	checkSingleTag()
 
 	if _, _, err := depsSvc.InsertPackageRepoRefs(context.Background(), []dependencies.MinimalPackageRepoRef{
@@ -182,13 +195,13 @@ func TestNpmCloneCommand(t *testing.T) {
 	}); err != nil {
 		t.Fatalf(err.Error())
 	}
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{})
+	s.runCloneCommand(t, bareGitDirectory, []string{})
 	checkTagAdded()
 
 	if err := depsSvc.DeletePackageRepoRefVersionsByID(context.Background(), 2); err != nil {
 		t.Fatalf(err.Error())
 	}
-	s.runCloneCommand(t, exampleNpmPackageURL, bareGitDirectory, []string{})
+	s.runCloneCommand(t, bareGitDirectory, []string{})
 	assertCommandOutput(t,
 		exec.Command("git", "show", fmt.Sprintf("v%s:%s", exampleNpmVersion, exampleJSFilepath)),
 		bareGitDirectory,

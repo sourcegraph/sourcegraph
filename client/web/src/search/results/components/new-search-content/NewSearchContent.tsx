@@ -333,8 +333,6 @@ export const NewSearchContent: FC<NewSearchContentProps> = props => {
             {previewBlob && (
                 <FilePreviewPanel
                     blobInfo={previewBlob}
-                    platformContext={platformContext}
-                    settingsCascade={settingsCascade}
                     telemetryService={telemetryService}
                     onClose={handleFilterPanelClose}
                 />
@@ -377,13 +375,13 @@ const NewSearchSidebarWrapper: FC<PropsWithChildren<NewSearchSidebarWrapper>> = 
     )
 }
 
-interface FilePreviewPanelProps extends PlatformContextProps, SettingsCascadeProps, TelemetryProps {
+interface FilePreviewPanelProps extends TelemetryProps {
     blobInfo: SearchResultPreview
     onClose: () => void
 }
 
 const FilePreviewPanel: FC<FilePreviewPanelProps> = props => {
-    const { blobInfo, onClose, platformContext, settingsCascade, telemetryService } = props
+    const { blobInfo, onClose, telemetryService } = props
 
     const staticHighlights = useMemo(() => {
         if (blobInfo.type === 'path') {
@@ -427,8 +425,6 @@ const FilePreviewPanel: FC<FilePreviewPanelProps> = props => {
                     wrapLines={false}
                     navigateToLineOnAnyClick={false}
                     className={styles.previewContent}
-                    platformContext={platformContext}
-                    settingsCascade={settingsCascade}
                     telemetryService={NOOP_TELEMETRY_SERVICE}
                     // TODO (dadlerj): update to use a real telemetry recorder
                     telemetryRecorder={noOpTelemetryRecorder}

@@ -100,6 +100,9 @@ message SearchResponse {
 
   // error is the error message if the search failed
   optional string error = 2; // TODO@ggilmore: Custom error type?
+
+  // limit_hit is true if search ran into a limit set by the service
+  bool limit_hit = 3;
 }
 
 // LocalCodeIntelRequest is the request to the LocalCodeIntel method.

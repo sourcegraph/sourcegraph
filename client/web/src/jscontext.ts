@@ -29,6 +29,7 @@ export interface AuthProvider {
     authenticationURL: string
     serviceID: string
     clientID: string
+    noSignIn: boolean
 }
 
 /**

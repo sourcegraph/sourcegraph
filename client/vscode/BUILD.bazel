@@ -1,0 +1,247 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("//client/shared/dev:generate_graphql_operations.bzl", "generate_graphql_operations")
+load("//client/shared/dev:tools.bzl", "module_style_typings")
+load("//dev:defs.bzl", "sass", "ts_project")
+load("//dev:eslint.bzl", "eslint_config_and_lint_root")
+
+# TODO(bazel): webpack workers?
+# gazelle:js_ignore_imports **/*.worker.ts
+
+# gazelle:js_resolve **/*.module.scss :module_style_typings
+# gazelle:js_resolve vscode //:node_modules/@types/vscode
+
+npm_link_all_packages(name = "node_modules")
+
+eslint_config_and_lint_root()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//client:__subpackages__"],
+    deps = [
+        "//:tsconfig",
+        "//client/branded:tsconfig",
+        "//client/build-config:tsconfig",
+        "//client/client-api:tsconfig",
+        "//client/codeintellify:tsconfig",
+        "//client/common:tsconfig",
+        "//client/extension-api-types:tsconfig",
+        "//client/http-client:tsconfig",
+        "//client/shared:tsconfig",
+        "//client/wildcard:tsconfig",
+    ],
+)
+
+module_style_typings(
+    name = "module_style_typings",
+    deps = ["//client/wildcard:sass-breakpoints"],
+)
+
+sass(
+    name = "module_styles",
+    srcs = glob(["src/**/*.module.scss"]),
+    deps = ["//client/wildcard:sass-breakpoints"],
+)
+
+# TODO(bazel): sass - src/webview/index.scss
+
+sass(
+    name = "package_styles",
+    srcs = glob(
+        ["src/**/*.scss"],
+        exclude = [
+            "src/**/*.module.scss",
+            "src/webview/index.scss",
+        ],
+    ),
+    deps = [
+        "//:node_modules/@reach/tabs",
+        "//client/wildcard:global-styles",
+    ],
+)
+
+js_library(
+    name = "graphql_operations_files",
+    # Keep in sync with glob in client/shared/dev/generateGraphQlOperations.js
+    srcs = glob(
+        [
+            "src/**/*.ts",
+            "src/**/*.tsx",
+        ],
+        # TODO: Ignore legacy build generated file as it conflicts with the Bazel
+        # build. This can be removed after the migration.
+        [
+            "src/graphql-operations.ts",
+            "src/**/*.module.scss.d.ts",
+        ],
+    ),
+    visibility = ["//client/shared:__pkg__"],
+)
+
+generate_graphql_operations(
+    name = "graphql_operations_ts",
+    srcs = [
+        ":graphql_operations_files",
+    ],
+    out = "src/graphql-operations.ts",
+    interface_name = "VSCodeGraphQlOperations",
+    visibility = ["//client/shared:__pkg__"],
+)
+
+ts_project(
+    name = "graphql_operations",
+    srcs = ["src/graphql-operations.ts"],
+    tsconfig = ":tsconfig",
+    deps = [
+        ":node_modules/@sourcegraph/shared",
+    ],
+)
+
+ts_project(
+    name = "vscode",
+    srcs = [
+        "code-intel-extensions.json",
+        "globals.d.ts",
+        "package.json",
+        "src/backend/authenticatedUser.ts",
+        "src/backend/blobContent.ts",
+        "src/backend/eventLogger.ts",
+        "src/backend/fetch.ts",
+        "src/backend/files.ts",
+        "src/backend/instanceVersion.ts",
+        "src/backend/node-fetch-fake-for-browser.ts",
+        "src/backend/proxy-agent-fake-for-browser.ts",
+        "src/backend/repositoryMetadata.ts",
+        "src/backend/requestGraphQl.ts",
+        "src/backend/searchContexts.ts",
+        "src/backend/sourcegraphSettings.ts",
+        "src/backend/streamSearch.ts",
+        "src/code-intel/SourcegraphDefinitionProvider.ts",
+        "src/code-intel/SourcegraphHoverProvider.ts",
+        "src/code-intel/SourcegraphReferenceProvider.ts",
+        "src/code-intel/initialize.ts",
+        "src/code-intel/languages.ts",
+        "src/code-intel/location.ts",
+        "src/commands/browserActionsNode.ts",
+        "src/commands/browserActionsWeb.ts",
+        "src/commands/git-helpers.ts",
+        "src/commands/initialize.ts",
+        "src/common/links.ts",
+        "src/contract.ts",
+        "src/extension.ts",
+        "src/file-system/FileTree.ts",
+        "src/file-system/FilesTreeDataProvider.ts",
+        "src/file-system/SourcegraphFileSystemProvider.ts",
+        "src/file-system/SourcegraphUri.ts",
+        "src/file-system/commands.ts",
+        "src/file-system/initialize.ts",
+        "src/log.ts",
+        "src/settings/LocalStorageService.ts",
+        "src/settings/accessTokenSetting.ts",
+        "src/settings/displayWarnings.ts",
+        "src/settings/endpointSetting.ts",
+        "src/settings/invalidation.ts",
+        "src/settings/readConfiguration.ts",
+        "src/settings/recommendations.ts",
+        "src/settings/uninstall.ts",
+        "src/state.ts",
+        "src/vsCodeApi.ts",
+        "src/webview/comlink/extensionEndpoint.ts",
+        "src/webview/comlink/index.ts",
+        "src/webview/comlink/webviewEndpoint.ts",
+        "src/webview/commands.ts",
+        "src/webview/initialize.ts",
+        "src/webview/platform/AuthProvider.ts",
+        "src/webview/platform/EventLogger.ts",
+        "src/webview/platform/context.ts",
+        "src/webview/platform/polyfills/index.ts",
+        "src/webview/platform/polyfills/polyfill.ts",
+        "src/webview/platform/telemetryService.ts",
+        "src/webview/search-panel/MatchHandlersContext.ts",
+        "src/webview/search-panel/RepoView.tsx",
+        "src/webview/search-panel/SearchHomeView.tsx",
+        "src/webview/search-panel/SearchResultsView.tsx",
+        "src/webview/search-panel/alias/CommitSearchResult.tsx",
+        "src/webview/search-panel/alias/FileMatchChildren.tsx",
+        "src/webview/search-panel/alias/ModalVideo.tsx",
+        "src/webview/search-panel/alias/RepoFileLink.tsx",
+        "src/webview/search-panel/alias/RepoSearchResult.tsx",
+        "src/webview/search-panel/alias/SymbolSearchResult.tsx",
+        "src/webview/search-panel/alias/fetchSearchContext.ts",
+        "src/webview/search-panel/api.ts",
+        "src/webview/search-panel/components/BrandHeader.tsx",
+        "src/webview/search-panel/components/ButtonDropdownCta.tsx",
+        "src/webview/search-panel/components/CodeExcerpt.tsx",
+        "src/webview/search-panel/components/HomeFooter.tsx",
+        "src/webview/search-panel/components/SearchExamples.tsx",
+        "src/webview/search-panel/components/SearchResultsInfoBar.tsx",
+        "src/webview/search-panel/components/icons.tsx",
+        "src/webview/search-panel/index.tsx",
+        "src/webview/sidebars/auth/AuthSidebarView.tsx",
+        "src/webview/sidebars/help/HelpSidebarView.tsx",
+        "src/webview/sidebars/help/index.tsx",
+        "src/webview/sidebars/history/HistorySidebarView.tsx",
+        "src/webview/sidebars/history/components/RecentFilesSection.tsx",
+        "src/webview/sidebars/history/components/RecentRepositoriesSection.tsx",
+        "src/webview/sidebars/history/components/RecentSearchesSection.tsx",
+        "src/webview/sidebars/search/ContextInvalidatedSidebarView.tsx",
+        "src/webview/sidebars/search/SearchSidebarView.tsx",
+        "src/webview/sidebars/search/api.ts",
+        "src/webview/sidebars/search/extension-host/index.ts",
+        "src/webview/sidebars/search/extension-host/main.worker.ts",
+        "src/webview/sidebars/search/extension-host/worker.ts",
+        "src/webview/sidebars/search/index.tsx",
+        "src/webview/theming/sourcegraphTheme.ts",
+    ],
+    tsconfig = ":tsconfig",
+    deps = [
+        ":graphql_operations",
+        ":module_style_typings",
+        ":node_modules/@sourcegraph/branded",
+        ":node_modules/@sourcegraph/client-api",
+        ":node_modules/@sourcegraph/codeintellify",
+        ":node_modules/@sourcegraph/common",
+        ":node_modules/@sourcegraph/extension-api-types",
+        ":node_modules/@sourcegraph/http-client",
+        ":node_modules/@sourcegraph/shared",
+        ":node_modules/@sourcegraph/wildcard",
+        "//:node_modules/@mdi/js",
+        "//:node_modules/@reach/visually-hidden",
+        "//:node_modules/@types/classnames",
+        "//:node_modules/@types/history",
+        "//:node_modules/@types/lodash",
+        "//:node_modules/@types/node",
+        "//:node_modules/@types/node-fetch",
+        "//:node_modules/@types/react",
+        "//:node_modules/@types/react-dom",
+        "//:node_modules/@types/uuid",
+        "//:node_modules/@types/vscode",
+        "//:node_modules/@types/vscode-webview",  #keep
+        "//:node_modules/@vscode/webview-ui-toolkit",
+        "//:node_modules/agent-base",
+        "//:node_modules/classnames",
+        "//:node_modules/comlink",
+        "//:node_modules/core-js",
+        "//:node_modules/execa",
+        "//:node_modules/graphql",
+        "//:node_modules/history",
+        "//:node_modules/http-proxy-agent",
+        "//:node_modules/https-proxy-agent",
+        "//:node_modules/lodash",
+        "//:node_modules/mdi-react",
+        "//:node_modules/node-fetch",
+        "//:node_modules/react",
+        "//:node_modules/react-dom",
+        "//:node_modules/react-router-dom",
+        "//:node_modules/react-visibility-sensor",
+        "//:node_modules/rxjs",
+        "//:node_modules/use-deep-compare-effect",
+        "//:node_modules/utility-types",
+        "//:node_modules/uuid",
+        "//:node_modules/zustand",
+        "//client/common:common_lib",  #keep
+        "//client/shared:shared_lib",  #keep
+    ],
+)

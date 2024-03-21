@@ -1,0 +1,61 @@
+.result-container {
+    &:last-child {
+        border-bottom-width: 1px;
+    }
+
+    &:not(:last-of-type) {
+        // Prevents the sticky items below from affecting
+        // anything outside of the result container.
+        isolation: isolate;
+        margin-bottom: 1rem;
+    }
+}
+
+.header {
+    padding: 0.5rem 0.5rem 0.25rem 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 1; // Show on top of search result contents
+    background-color: var(--body-bg);
+
+    &-title {
+        flex: 1 1 auto;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    p {
+        margin-bottom: 0;
+    }
+
+    &:not(:only-of-type) {
+        border-bottom: none;
+    }
+
+    :global(.match-highlight) {
+        color: var(--text-muted-highlighted);
+    }
+}
+
+.result {
+    // The LastSyncedIcon is absolutely-positions inside the search results.
+    // This causes it to show over the sticky header when scrolling unless
+    // we isolate the search result contents.
+    isolation: isolate;
+
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    margin-top: 0.25rem;
+
+    &:hover {
+        border-color: var(--border-color-2);
+    }
+}
+
+.header:focus-within + .highlight-result.result,
+.highlight-result.result:focus-within {
+    box-shadow: 0 0 0 2px var(--border-color-2);
+}

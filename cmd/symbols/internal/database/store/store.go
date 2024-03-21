@@ -18,7 +18,7 @@ type Store interface {
 	Transact(ctx context.Context) (Store, error)
 	Done(err error) error
 
-	Search(ctx context.Context, args search.SymbolsParameters) ([]result.Symbol, error)
+	Search(ctx context.Context, args search.SymbolsParameters) ([]result.Symbol, bool, error)
 
 	CreateMetaTable(ctx context.Context) error
 	GetCommit(ctx context.Context) (string, bool, error)

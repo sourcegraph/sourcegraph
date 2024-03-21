@@ -24,17 +24,19 @@ func NewRubyPackagesSyncer(
 	connection *schema.RubyPackagesConnection,
 	svc *dependencies.Service,
 	client *rubygems.Client,
+	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error),
 	reposDir string,
 ) VCSSyncer {
 	return &vcsPackagesSyncer{
-		logger:      log.Scoped("RubyPackagesSyncer"),
-		typ:         "ruby_packages",
-		scheme:      dependencies.RubyPackagesScheme,
-		placeholder: reposource.NewRubyVersionedPackage("sourcegraph/placeholder", "0.0.0"),
-		svc:         svc,
-		configDeps:  connection.Dependencies,
-		reposDir:    reposDir,
-		source:      &rubyDependencySource{client: client},
+		logger:             log.Scoped("RubyPackagesSyncer"),
+		typ:                "ruby_packages",
+		scheme:             dependencies.RubyPackagesScheme,
+		placeholder:        reposource.NewRubyVersionedPackage("sourcegraph/placeholder", "0.0.0"),
+		svc:                svc,
+		configDeps:         connection.Dependencies,
+		reposDir:           reposDir,
+		source:             &rubyDependencySource{client: client},
+		getRemoteURLSource: getRemoteURLSource,
 	}
 }
 

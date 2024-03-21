@@ -39,7 +39,9 @@ func TestSearchWithFiltering(t *testing.T) {
 				Name: "foo2",
 				Path: "file2",
 			},
-		}}
+		},
+		LimitHit: true,
+	}
 
 	mockServer := &mockSymbolsServer{
 		mockSearchGRPC: func(_ context.Context, _ *proto.SearchRequest) (*proto.SearchResponse, error) {
@@ -63,13 +65,16 @@ func TestSearchWithFiltering(t *testing.T) {
 
 	DefaultClient.Endpoints = endpoint.Static(srv.URL)
 
-	results, err := DefaultClient.Search(ctx, search.SymbolsParameters{
+	results, limitHit, err := DefaultClient.Search(ctx, search.SymbolsParameters{
 		Repo:     "foo",
 		CommitID: "HEAD",
 		Query:    "abc",
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if limitHit != true {
+		t.Fatal("expected limitHit to be true")
 	}
 	if results == nil {
 		t.Fatal("nil result")
@@ -95,13 +100,16 @@ func TestSearchWithFiltering(t *testing.T) {
 	})
 	authz.DefaultSubRepoPermsChecker = checker
 
-	results, err = DefaultClient.Search(ctx, search.SymbolsParameters{
+	results, limitHit, err = DefaultClient.Search(ctx, search.SymbolsParameters{
 		Repo:     "foo",
 		CommitID: "HEAD",
 		Query:    "abc",
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if limitHit != true {
+		t.Fatal("expected limitHit to be true")
 	}
 	if results == nil {
 		t.Fatal("nil result")

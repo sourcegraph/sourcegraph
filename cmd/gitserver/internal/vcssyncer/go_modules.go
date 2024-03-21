@@ -27,6 +27,7 @@ func NewGoModulesSyncer(
 	connection *schema.GoModulesConnection,
 	svc *dependencies.Service,
 	client *gomodproxy.Client,
+	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error),
 	reposDir string,
 ) VCSSyncer {
 	placeholder, err := reposource.ParseGoVersionedPackage("sourcegraph.com/placeholder@v0.0.0")
@@ -35,14 +36,15 @@ func NewGoModulesSyncer(
 	}
 
 	return &vcsPackagesSyncer{
-		logger:      log.Scoped("GoModulesSyncer"),
-		typ:         "go_modules",
-		scheme:      dependencies.GoPackagesScheme,
-		placeholder: placeholder,
-		svc:         svc,
-		configDeps:  connection.Dependencies,
-		source:      &goModulesSyncer{client: client, reposDir: reposDir},
-		reposDir:    reposDir,
+		logger:             log.Scoped("GoModulesSyncer"),
+		typ:                "go_modules",
+		scheme:             dependencies.GoPackagesScheme,
+		placeholder:        placeholder,
+		svc:                svc,
+		configDeps:         connection.Dependencies,
+		source:             &goModulesSyncer{client: client, reposDir: reposDir},
+		reposDir:           reposDir,
+		getRemoteURLSource: getRemoteURLSource,
 	}
 }
 

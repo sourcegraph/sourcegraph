@@ -20,6 +20,19 @@
 </article>
 
 <style lang="scss">
+    article {
+        :global([data-visible-on-focus]) {
+            visibility: hidden;
+        }
+
+        &:hover,
+        &:focus-within {
+            :global([data-visible-on-focus]) {
+                visibility: visible;
+            }
+        }
+    }
+
     .header {
         display: flex;
         align-items: center;

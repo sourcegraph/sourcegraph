@@ -1,0 +1,28 @@
+.container {
+    width: 31rem;
+    padding: 0.75rem;
+}
+
+.toggle {
+    border-radius: var(--border-radius) !important;
+    padding: 0.375rem 0.5rem;
+}
+
+.title {
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.copy-text {
+    font-size: 0.875rem;
+}
+
+.icon {
+    /* stylelint-disable-next-line declaration-property-unit-allowed-list */
+    padding: 15px;
+    color: var(--merged-3);
+
+    svg {
+        margin-right: 0 !important;
+    }
+}

@@ -105,8 +105,10 @@ export const load: PageLoad = ({ url, depends }) => {
             featureOverrides: [],
             chunkMatches: true,
             searchMode,
-            displayLimit: 500,
-            maxLineLen: 1000,
+            displayLimit: 1500,
+            // 5kb is a conservative upper bound on a reasonable line to show
+            // to a user. In practice we can likely go much lower.
+            maxLineLen: 5 * 1024,
         }
 
         // We create a new stream only if

@@ -23,7 +23,7 @@
         <img class="logo" src={$isLightTheme ? logoLight : logoDark} alt="Sourcegraph Logo" />
         <div class="search">
             <SearchInput {queryState} autoFocus />
-            <SearchHomeNotifications/>
+            <SearchHomeNotifications />
         </div>
     </div>
 </section>

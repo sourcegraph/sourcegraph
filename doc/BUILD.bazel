@@ -30,3 +30,22 @@ sh_binary(
         ["test.sh"],
     ),
 )
+
+sh_binary(
+    name = "generated.push",
+    srcs = ["_generated.push.sh"],
+    args = [
+        "$(location //dev/tools:gh)",
+        "$(location //tools/md2mdx:md2mdx)",
+    ],
+    data = [
+        "//dev/tools:gh",
+        "//tools/md2mdx",
+        "//monitoring:generate_config",
+        # TODO: once we've put in place the redirections, we can instead
+        # use the //doc/cli/references:generate_doc target.
+        # https://github.com/sourcegraph/sourcegraph/issues/61230
+        "//doc/cli/references:doc_files",
+    ],
+    tags = ["docs-deliverable"],
+)

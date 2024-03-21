@@ -4,8 +4,6 @@ import classNames from 'classnames'
 
 import type { Position } from '@sourcegraph/extension-api-classes'
 import { useQuery } from '@sourcegraph/http-client'
-import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
-import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Code, LoadingSpinner, Text } from '@sourcegraph/wildcard'
@@ -23,7 +21,7 @@ import { FETCH_HIGHLIGHTED_BLOB } from './ReferencesPanelQueries'
 
 import styles from './ReferencesPanel.module.scss'
 
-export interface SideBlobProps extends TelemetryProps, TelemetryV2Props, SettingsCascadeProps, PlatformContextProps {
+export interface SideBlobProps extends TelemetryProps, TelemetryV2Props {
     repository: string
     commitID: string
     file: string
@@ -47,10 +45,8 @@ export const SideBlob: FC<SideBlobProps> = props => {
         wrapLines = true,
         navigateToLineOnAnyClick = true,
         searchPanelConfig,
-        settingsCascade,
         telemetryService,
         telemetryRecorder,
-        platformContext,
         className,
         staticHighlightRanges,
     } = props
@@ -123,8 +119,6 @@ export const SideBlob: FC<SideBlobProps> = props => {
             }}
             searchPanelConfig={searchPanelConfig}
             className={classNames(className, styles.sideBlobCode)}
-            platformContext={platformContext}
-            settingsCascade={settingsCascade}
             telemetryService={telemetryService}
             telemetryRecorder={telemetryRecorder}
             staticHighlightRanges={staticHighlightRanges}

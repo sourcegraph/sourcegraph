@@ -19,6 +19,7 @@ describe('SignInPage', () => {
             authenticationURL: '',
             serviceID: '',
             clientID: '1234',
+            noSignIn: false,
         },
         {
             serviceType: 'github',
@@ -27,6 +28,7 @@ describe('SignInPage', () => {
             authenticationURL: 'http://localhost/.auth/gitlab/login?pc=f00bar&returnTo=%2Fsearch',
             serviceID: 'https://github.com',
             clientID: '1234',
+            noSignIn: false,
         },
         {
             serviceType: 'gitlab',
@@ -35,6 +37,16 @@ describe('SignInPage', () => {
             authenticationURL: 'http://localhost/.auth/gitlab/login?pc=f00bar&returnTo=%2Fsearch',
             serviceID: 'https://gitlab.com',
             clientID: '1234',
+            noSignIn: false,
+        },
+        {
+            serviceType: 'gitlab',
+            displayName: 'GitLab 2',
+            isBuiltin: false,
+            authenticationURL: 'http://localhost/.auth/gitlab/login?pc=f00bar&returnTo=%2Fsearch',
+            serviceID: 'https://gitlab.com',
+            clientID: '1234',
+            noSignIn: true,
         },
     ]
 
@@ -153,6 +165,7 @@ describe('SignInPage', () => {
                 authenticationURL: '',
                 serviceID: '',
                 clientID: '',
+                noSignIn: false,
             },
         ]
 
@@ -183,6 +196,7 @@ describe('SignInPage', () => {
                 authenticationURL: '',
                 serviceID: '',
                 clientID: '',
+                noSignIn: false,
             },
         ]
         it('does not render the Gerrit provider', () => {

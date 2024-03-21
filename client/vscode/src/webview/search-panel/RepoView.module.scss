@@ -1,0 +1,51 @@
+.tree-entries-section {
+    // To avoid having empty columns (and thus the items appearing not flush with the left margin),
+    // the component only applies this class when there are >= 6 items. This number is chosen
+    // because it is greater than the maximum number of columns that will be shown and ensures that
+    // at least 1 column has more than 1 item.
+    // See also MIN_ENTRIES_FOR_COLUMN_LAYOUT.
+    &--columns {
+        column-gap: 1.5rem;
+        column-width: 13rem;
+        column-rule: 1px solid var(--border-color);
+        border-right: solid 1px var(--border-color);
+
+        @media (--sm-breakpoint-up) {
+            column-count: 1;
+        }
+        @media (--md-breakpoint-up) {
+            column-count: 3;
+        }
+        @media (--md-breakpoint-down) {
+            column-count: 4;
+        }
+    }
+}
+
+.tree-entry {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding: 0.125rem 0.25rem;
+
+    break-inside: avoid-column;
+
+    --focus-box-shadow: none;
+
+    &:hover {
+        background-color: var(--color-bg-1);
+    }
+
+    &--no-columns {
+        max-width: 18rem;
+    }
+}
+
+.section {
+    width: 100%;
+    max-width: var(--media-xl);
+}

@@ -1,0 +1,1142 @@
+// stylelint-disable
+
+// Default token colors from "Dark (Visual Studio)" and "Light (Visual Studio)".
+// It's conservative, meaning it doesn't highlght more specific token types that
+// may correspond to different CSS variables across themes.
+// We can manually override those for popular themes.
+// Some colors are lifted from Dark/Light+ because they have
+// corresponding CSS variables for classes that the defaults do not.
+.sourcegraph-extension.theme-light,
+.sourcegraph-extension.theme-dark {
+    td.line,
+    td.line::before {
+        color: var(--vscode-editorLineNumber-foreground);
+    }
+
+    .match-highlight,
+    .match-highlight-sticky,
+    .selection-highlight,
+    .selection-highlight-sticky {
+        background-color: var(--vscode-editor-findMatchHighlightBackground);
+    }
+
+    .hljs-comment,
+    .hljs-quote,
+    .hljs-variable {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-built_in,
+    .hljs-name,
+    .hljs-tag {
+        color: var(--vscode-debugTokenExpression-name);
+    }
+
+    .hljs-string,
+    .hljs-title,
+    .hljs-section,
+    .hljs-attribute,
+    .hljs-literal,
+    .hljs-template-tag,
+    .hljs-template-variable,
+    .hljs-type {
+        color: var(--vscode-debugTokenExpression-string);
+    }
+
+    .hljs-number {
+        color: var(--vscode-debugTokenExpression-number);
+    }
+
+    .hl-source,
+    .hl-text {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-punctuation.hl-definition {
+        color: var(--hl-gray-0);
+    }
+
+    .hl-keyword {
+        color: var(--vscode-debugTokenExpression-name);
+    }
+
+    .hl-variable {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Classes
+    .hl-support.hl-class,
+    .hl-entity.hl-name.hl-class,
+    .hl-meta.hl-class {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-entity.hl-other.hl-inherited-class {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Storage
+    .hl-storage {
+        color: var(--vscode-debugTokenExpression-name);
+    }
+
+    // Support
+    .hl-support.hl-function {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: var(--vscode-debugTokenExpression-string);
+    }
+
+    .hl-number {
+        color: var(--vscode-debugTokenExpression-number);
+    }
+
+    // regexp literals
+    .hl-string.hl-regexp {
+        color: var(--vscode-textPreformat-foreground);
+    }
+
+    // escape sequences
+    .hl-constant.hl-character.hl-escape {
+        color: var(--vscode-textPreformat-foreground);
+    }
+
+    // Constants
+    .hl-constant {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-constant.hl-numeric {
+        color: var(--vscode-debugTokenExpression-number);
+    }
+
+    .hl-constant.hl-other.hl-color {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Tags
+    .hl-entity.hl-name.hl-tag {
+        color: var(--vscode-debugView-valueChangedHighlight);
+    }
+
+    // Attributes
+    .hl-entity.hl-other.hl-attribute-name {
+        color: var(--vscode-debugTokenExpression-string);
+    }
+
+    // Attribute IDs
+    .hl-entity.hl-other.hl-attribute-name.hl-id,
+    .hl-punctuation.hl-definition.hl-entity {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // Selector
+    .hl-entity.hl-other.hl-attribute-name.hl-css,
+    .hl-entity.hl-other.hl-attribute-name.hl-sass,
+    .hl-entity.hl-other.hl-attribute-name.hl-less {
+        color: var(--vscode-textPreformat-foreground);
+    }
+
+    .hl-source.hl-scss,
+    .hl-source.hl-css,
+    .hl-source.hl-less {
+        .hl-entity.hl-other.hl-attribute-name {
+            color: var(--vscode-textPreformat-foreground);
+        }
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: var(--vscode-descriptionForeground);
+    }
+
+    // Operators
+    .hl-operator {
+        color: var(--vscode-editor-foreground);
+    }
+
+    // debt/v2: special case highlighting for specific languages.
+    // reference `client/branded/**/highlight.scss`
+}
+
+// Theme-specific overrides.
+// Includes top themes from VS Code's Marketplace:
+// - https://marketplace.visualstudio.com/search?target=VSCode&category=Themes&sortBy=Installs
+// and this blog post:
+// - https://about.sourcegraph.com/blog/workspaces-of-sourcegraph/
+
+// Vetted themes:
+// - Dark+ (overrides: ☑)
+// - Light+ (overrides: ☑)
+// - Dark (Visual Studio) (overrides: ☑)
+// - Light (Visual Studio) (overrides: ☑)
+// - Monokai (overrides: ☑)
+// - Solarized (overrides: partial)
+// - Solarized Dark (overrides: partial)
+// - High Contrast (overrides: ☑)
+// - One Dark Pro (overrides: ☑)
+// - Dracula (overrides: ☑)
+// - Dracula Soft(overrides: ☑)
+// - GitHub (overrides: no)
+// - Atom One Dark (overrides: ☑)
+// - Winter is Coming  (overrides: no)
+// - Monokai Pro (overrides: ☑, only for base filter)
+// - Night Owl (overrides: ☑, only for dark)
+// - One Monokai (overrides: partial)
+// - Cobalt2 (overrides: ☑)
+// - Material Theme (overrides: no)
+// - SynthWave '84 (overrides: ☑)
+// - Panda (overrides: ☑)
+// - Hack The Box (overrides: ☑)
+// - Hack The Box-Lite (overrides: ☑)
+
+// Debt: this technique isn't resilient to changes in themes.
+// Themes aren't likely to change that often, but it would
+// still be better to find a way to automate this.
+
+// FULLY SUPPORTED THEMES
+
+// Default Dark VS Code theme.
+body[data-vscode-theme-name^='Dark+ (default dark)'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #dcdcaa;
+    }
+
+    // Constants
+    .hl-variable.hl-constant {
+        color: #4fc1ff;
+    }
+
+    .hl-variable {
+        color: #9cdcfe;
+    }
+
+    // Entities
+    .hl-entity.hl-name.hl-type {
+        color: #4ec9b0;
+    }
+
+    .hl-keyword {
+        color: var(--vscode-debugTokenExpression-name);
+    }
+
+    .hl-type.hl-support,
+    .hl-type.hl-primitive {
+        color: #4ec9b0;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #6a9955;
+    }
+}
+
+// Dark Visual Studio (minimalistic) theme
+body[data-vscode-theme-name^='Dark (Visual Studio)'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        color: var(--vscode-debugView-valueChangedHighlight);
+    }
+
+    // Storage
+    .hl-storage {
+        color: var(--vscode-debugView-valueChangedHighlight);
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #6a9955;
+    }
+}
+
+// Default Light VS Code theme.
+body[data-vscode-theme-name^='Light+ (default light)'].sourcegraph-extension.theme-light {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #795e26;
+    }
+
+    // Constants
+    .hl-variable.hl-constant {
+        color: #0070c1;
+    }
+
+    .hl-variable {
+        color: #001080;
+    }
+
+    .hl-keyword {
+        color: var(--vscode-debugTokenExpression-boolean);
+    }
+
+    .hl-storage {
+        color: var(--vscode-debugTokenExpression-boolean);
+    }
+
+    // Property names
+    .hl-property .hl-name {
+        color: #001080;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #008000;
+    }
+
+    .hl-import .hl-string {
+        color: var(--vscode-textPreformat-foreground);
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-entity.hl-name.hl-type {
+        color: #267f99;
+    }
+}
+
+// Light Visual Studio (minimalistic) theme
+body[data-vscode-theme-name^='Light (Visual Studio)'].sourcegraph-extension.theme-light {
+    .hl-keyword {
+        color: var(--vscode-debugTokenExpression-boolean);
+    }
+
+    .hl-storage {
+        color: var(--vscode-debugTokenExpression-boolean);
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #008000;
+    }
+
+    // Operators
+    .hl-operator {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-import .hl-string {
+        color: var(--vscode-textPreformat-foreground);
+    }
+}
+
+// High contrast (default VS Code dark HC theme)
+body[data-vscode-theme-name='High Contrast'].sourcegraph-extension.theme-dark {
+    .match-highlight,
+    .match-highlight-sticky,
+    .selection-highlight,
+    .selection-highlight-sticky {
+        background-color: white;
+        color: black;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #dcdcaa;
+    }
+
+    .hl-keyword {
+        color: #c586c0;
+    }
+
+    .hl-storage {
+        color: #569cd6;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #569cd6;
+    }
+
+    .hl-type {
+        color: #569cd6;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #7ca668;
+    }
+}
+
+// Monokai
+body[data-vscode-theme-name='Monokai'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        color: #f92672;
+    }
+
+    .hl-import-export-all,
+    .hl-number {
+        color: #ae81ff;
+    }
+
+    .hl-storage {
+        color: #66d9ef;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #e6db74;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #a6e22e;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #88846f;
+    }
+
+    .hl-entity.hl-name.hl-type {
+        color: #a6e22e;
+        text-decoration: underline;
+        text-underline-position: under;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin {
+        color: #66d9ef;
+        font-style: italic;
+    }
+
+    .hl-variable.hl-parameter {
+        color: #fd971f;
+        font-style: italic;
+    }
+}
+
+// One Dark Pro
+body[data-vscode-theme-name='One Dark Pro'].sourcegraph-extension.theme-dark {
+    .hl-keyword,
+    .hl-storage {
+        color: #c678dd;
+    }
+
+    .hl-variable.hl-readwrite {
+        color: #e06c75;
+    }
+
+    .hl-variable.hl-parameter {
+        color: #e06c75;
+        font-style: italic;
+    }
+
+    .hl-variable.hl-constant,
+    .hl-variable.hl-object {
+        color: #e5c07b;
+    }
+
+    .hl-object-literal.hl-key {
+        color: #e06c75;
+
+        .hl-function {
+            color: #61afef;
+        }
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: var(--vscode-editor-wordHighlightBorder);
+        font-style: italic;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-type.hl-name {
+        color: #e5c07b;
+    }
+
+    .hl-number {
+        color: #d19a66;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #61afef;
+    }
+}
+
+// Dracula
+body[data-vscode-theme-name='Dracula'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function {
+        color: #50fa7b;
+    }
+
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: var(--vscode-terminal-ansiCyan);
+    }
+
+    .hl-number,
+    .hl-constant.hl-numeric,
+    .hl-constant.hl-other.hl-placeholder {
+        color: var(--vscode-terminal-ansiBlue);
+    }
+
+    .hl-keyword,
+    .hl-storage {
+        color: #ff79c6;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #f1fa8c;
+    }
+
+    .hl-variable.hl-parameter,
+    .hl-variable.hl-object,
+    .hl-entity.hl-type.hl-module {
+        color: #ffb86c;
+    }
+
+    .hl-variable.hl-object {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-variable.hl-constant {
+        color: #bd93f9;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-type.hl-name {
+        color: #8be9fd;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #6272a4;
+    }
+}
+
+// Dracula
+body[data-vscode-theme-name='Dracula Soft'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #62e884;
+    }
+
+    .hl-keyword,
+    .hl-storage {
+        color: #f286c4;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #e7ee98;
+    }
+
+    .hl-variable.hl-parameter,
+    .hl-variable.hl-object,
+    .hl-entity.hl-type.hl-module {
+        color: #ffb86c;
+    }
+
+    .hl-variable.hl-object {
+        color: var(--vscode-editor-foreground);
+    }
+
+    .hl-variable.hl-constant {
+        color: #bf9eee;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-type.hl-name {
+        color: #97e1f1;
+        font-style: italic;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #7b7f8b;
+    }
+}
+
+// Atom One Dark
+body[data-vscode-theme-name='Atom One Dark'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #61afef;
+    }
+
+    .hl-keyword,
+    .hl-storage {
+        color: #c678dd;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #98c379;
+    }
+
+    .hl-number {
+        color: #d19a66;
+    }
+
+    .hl-variable.hl-alias {
+        color: #e06c75;
+    }
+
+    .hl-object-literal.hl-key {
+        color: #e06c75;
+
+        .hl-function {
+            color: #61afef;
+        }
+    }
+
+    .hl-entity.hl-type.hl-name {
+        color: #e5c07b;
+    }
+
+    .hl-entity.hl-type.hl-module {
+        color: #98c379;
+    }
+
+    .hl-variable.hl-constant {
+        color: #d19a66;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #5c6370;
+    }
+}
+
+// Monokai Pro (add filters on requst)
+body[data-vscode-theme-name='Monokai Pro'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #a9dc76;
+    }
+
+    .hl-keyword {
+        color: #ff6188;
+    }
+
+    .hl-storage {
+        color: #78dce8;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #ffd866;
+    }
+
+    .hl-number {
+        color: #ab9df2;
+    }
+
+    .hl-type {
+        color: #78dce8;
+        // Pimitives/builtins are itliac
+        &.hl-primitive,
+        &.hl-builtin {
+            font-style: italic;
+        }
+    }
+
+    .hl-variable.hl-constant {
+        color: #ab9df2;
+    }
+
+    .hl-variable.hl-parameter {
+        color: #fc9867;
+        font-style: italic;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #727072;
+    }
+}
+
+// Cobalt2
+body[data-vscode-theme-name='Cobalt2'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #ffc600;
+    }
+
+    .hl-storage,
+    .hl-keyword {
+        color: #ffc600;
+    }
+
+    .hl-storage.hl-function {
+        color: #fb94ff;
+    }
+
+    .hl-keyword.hl-export {
+        color: #ff9d00;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #0088ff;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #a5ff90;
+    }
+
+    .hl-number {
+        color: #ff628c;
+    }
+
+    .hl-entity.hl-type.hl-name {
+        color: #ff68b8;
+        font-style: italic;
+    }
+
+    .hl-entity.hl-type.hl-module,
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin {
+        color: #80ffbb;
+    }
+}
+
+// Panda
+body[data-vscode-theme-name='Panda Syntax'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #6fc1ff;
+    }
+
+    .hl-keyword {
+        color: #ff75b5;
+    }
+
+    .hl-storage {
+        color: #ffb86c;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #676b79;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-new .hl-entity.hl-type {
+        color: #ffcc95;
+    }
+}
+
+// Night Owl TODO use starting match
+body[data-vscode-theme-name^='Night Owl'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        color: #c792ea;
+        font-style: italic;
+    }
+
+    .hl-storage {
+        color: #c792ea;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #ecc48d;
+    }
+
+    .hl-variable {
+        font-style: italic;
+
+        &.hl-constant {
+            color: #82aaff;
+        }
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-entity.hl-type {
+        color: #ffcb8b;
+        font-style: italic;
+    }
+
+    .hl-entity.hl-type.hl-module {
+        color: #c792ea;
+        font-style: italic;
+    }
+
+    .hl-number {
+        color: #f78c6c;
+    }
+
+    .hl-boolean {
+        font-style: italic;
+        color: #ff5874;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #637777;
+    }
+}
+
+// Night Owl (No Italics)
+body[data-vscode-theme-name='Night Owl (No Italics)'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        font-style: normal;
+    }
+
+    .hl-variable {
+        font-style: normal;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin,
+    .hl-entity.hl-type {
+        font-style: normal;
+    }
+
+    .hl-entity.hl-type.hl-module {
+        font-style: normal;
+    }
+
+    .hl-boolean {
+        font-style: normal;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: normal;
+    }
+}
+
+// Hack The Box(-Lite)
+body[data-vscode-theme-name^='Hack The Box'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        color: #cf8dfb;
+    }
+
+    .hl-storage {
+        color: #ff8484;
+    }
+
+    .hl-entity.hl-name.hl-type {
+        color: #ff8484;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #ffcc5c;
+    }
+
+    .hl-variable.hl-parameter {
+        color: #5cb2ff;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: rgba(215, 228, 255, 0.28);
+    }
+}
+
+// SynthWave '84
+body[data-vscode-theme-name="SynthWave '84"].sourcegraph-extension.theme-dark {
+    .hl-keyword,
+    .hl-storage,
+    .hl-type.hl-storage {
+        color: #fede5d;
+    }
+
+    .hl-number {
+        color: #f97e72;
+    }
+
+    .hl-variable {
+        color: #ff7edb;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #ff8b39;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #36f9f6;
+    }
+
+    .hl-parameter {
+        font-style: italic;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #848bbd;
+    }
+
+    .hl-type {
+        color: #fe4450;
+
+        &.hl-punctuation,
+        &.hl-meta {
+            color: #bbbbbb;
+        }
+    }
+
+    .hl-arrow {
+        color: #fede5d;
+    }
+}
+
+// PARTIALLY SUPPORTED THEMES
+
+// One Monokai
+body[data-vscode-theme-name='One Monokai'].sourcegraph-extension.theme-dark {
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-support.hl-function,
+    .hl-variable.hl-function {
+        color: #98c379;
+    }
+
+    .hl-keyword {
+        color: #e06c75;
+    }
+
+    .hl-storage {
+        color: #56b6c2;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #676f7d;
+    }
+
+    .hl-type.hl-name {
+        color: #61afef;
+    }
+}
+
+// Solarized Light
+body[data-vscode-theme-name='Solarized Light'].sourcegraph-extension.theme-light {
+    .hl-keyword {
+        color: #859900;
+    }
+
+    .hl-storage {
+        color: #073642;
+        font-weight: bold;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #93a1a1;
+    }
+
+    .hl-source,
+    .hl-text,
+    .hl-variable,
+    .hl-function {
+        color: #268bd2;
+    }
+
+    .hl-attribute-name {
+        color: #93a1a1;
+    }
+}
+
+// Solarized Dark
+body[data-vscode-theme-name='Solarized Dark'].sourcegraph-extension.theme-dark {
+    .hl-keyword {
+        color: #859900;
+    }
+
+    .hl-storage {
+        color: #93a1a1;
+        font-weight: bold;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        font-style: italic;
+        color: #657b83;
+    }
+
+    .hl-source,
+    .hl-text,
+    .hl-variable,
+    .hl-function {
+        color: #268bd2;
+    }
+
+    .hl-attribute-name {
+        color: #93a1a1;
+    }
+}
+
+// Material Theme Palenight High Contrast
+body[data-vscode-theme-name='Material Theme Palenight High Contrast'].sourcegraph-extension.theme-dark {
+    // Keyword
+    .hl-keyword {
+        color: #89ddff;
+    }
+
+    // Storage
+    .hl-storage {
+        color: #a6accd;
+    }
+
+    // Constants
+    .hl-constant {
+        color: #c3e88d;
+    }
+
+    .hl-import-export-all,
+    .hl-number,
+    .hl-constant.hl-numeric,
+    .hl-integer,
+    .hl-decimal {
+        color: #f78c6c;
+    }
+
+    // Strings
+    .hl-string,
+    .hl-constant.hl-other.hl-symbol {
+        color: #c3e88d;
+    }
+
+    // Functions
+    .hl-entity.hl-name.hl-function,
+    .hl-meta.hl-require,
+    .hl-support.hl-function.hl-any-method,
+    .hl-variable.hl-function {
+        color: #82aaff;
+    }
+
+    // Comments
+    .hl-comment,
+    .hl-punctuation.hl-definition.hl-comment {
+        color: #676e95;
+        font-style: italic;
+    }
+
+    .hl-type.hl-primitive,
+    .hl-type.hl-builtin {
+        color: #c792ea;
+    }
+
+    .hl-variable.hl-parameter {
+        color: #a6accd;
+    }
+
+    .hl-punctuation {
+        color: #89ddff;
+    }
+
+    .match-highlight,
+    .match-highlight-sticky,
+    .selection-highlight,
+    .selection-highlight-sticky {
+        background-color: var(--vscode-editor-findMatchHighlightBackground);
+        border-bottom: 1px solid var(--vscode-editor-findMatchBorder);
+    }
+}

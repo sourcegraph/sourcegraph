@@ -8,6 +8,7 @@ import { GraphQLError } from 'graphql'
 const ROOT_FOLDER = path.resolve(__dirname, '../../../')
 
 const WEB_FOLDER = path.resolve(ROOT_FOLDER, './client/web')
+const VSCODE_FOLDER = path.resolve(ROOT_FOLDER, './client/vscode')
 const BROWSER_FOLDER = path.resolve(ROOT_FOLDER, './client/browser')
 const SHARED_FOLDER = path.resolve(ROOT_FOLDER, './client/shared')
 const JETBRAINS_FOLDER = path.resolve(ROOT_FOLDER, './client/jetbrains')
@@ -19,6 +20,12 @@ const WEB_DOCUMENTS_GLOB = [
     `${WEB_FOLDER}/src/**/*.{ts,tsx}`,
     `${WEB_FOLDER}/src/regression/**/*.*`,
     `!${WEB_FOLDER}/src/end-to-end/**/*.*`, // TODO(bazel): can remove when non-bazel dropped
+]
+
+const VSCODE_DOCUMENTS_GLOB = [
+    `${VSCODE_FOLDER}/src/**/*.{ts,tsx}`,
+    `${VSCODE_FOLDER}/src/regression/**/*.*`,
+    `!${VSCODE_FOLDER}/src/end-to-end/**/*.*`, // TODO(bazel): can remove when non-bazel dropped
 ]
 
 const BROWSER_DOCUMENTS_GLOB = [
@@ -34,6 +41,7 @@ const GLOBS: Record<string, string[]> = {
     JetBrainsGraphQlOperations: JETBRAINS_DOCUMENTS_GLOB,
     SharedGraphQlOperations: SHARED_DOCUMENTS_GLOB,
     WebGraphQlOperations: WEB_DOCUMENTS_GLOB,
+    VSCodeGraphQlOperations: VSCODE_DOCUMENTS_GLOB,
 }
 
 const EXTRA_PLUGINS: Record<string, string[]> = {
@@ -67,6 +75,10 @@ export const ALL_INPUTS: Input[] = [
     {
         interfaceNameForOperations: 'JetBrainsGraphQlOperations',
         outputPath: path.join(JETBRAINS_FOLDER, './webview/src/graphql-operations.ts'),
+    },
+    {
+        interfaceNameForOperations: 'VSCodeGraphQlOperations',
+        outputPath: path.join(VSCODE_FOLDER, './src/graphql-operations.ts'),
     },
 ]
 

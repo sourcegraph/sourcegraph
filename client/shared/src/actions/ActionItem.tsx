@@ -21,7 +21,6 @@ import {
 import type { ExecuteCommandParameters } from '../api/client/mainthread-api'
 import { urlForOpenPanel } from '../commands/commands'
 import type { ExtensionsControllerProps } from '../extensions/controller'
-import type { PlatformContextProps } from '../platform/context'
 import type { TelemetryProps } from '../telemetry/telemetryService'
 
 import styles from './ActionItem.module.scss'
@@ -52,9 +51,7 @@ export interface ActionItemStyleProps {
     actionItemOutline?: ButtonLinkProps['outline']
 }
 
-export interface ActionItemComponentProps
-    extends ExtensionsControllerProps<'executeCommand'>,
-        PlatformContextProps<'settings'> {
+export interface ActionItemComponentProps extends ExtensionsControllerProps<'executeCommand'> {
     location: H.Location
 
     iconClassName?: string

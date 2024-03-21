@@ -1,0 +1,73 @@
+@import 'wildcard/src/global-styles/breakpoints';
+
+.wrapper {
+    &:hover button {
+        text-decoration: underline;
+    }
+
+    figure {
+        margin: 0;
+    }
+}
+
+.thumbnail-button {
+    width: 100%;
+    position: relative;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: transparent;
+    padding: 0;
+}
+
+.thumbnail-image {
+    width: 100%;
+    // Note: This is to reduce cumulative layout shift
+    // It should be as close as possible to the source image aspect ratio
+    aspect-ratio: 176/115;
+}
+
+.play-icon-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    width: 70vw;
+    @media (--lg-breakpoint-down) {
+        width: 90vw;
+    }
+}
+
+.modal-content {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    height: 100%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.iframe-video-wrapper {
+    position: relative;
+    // stylelint-disable-next-line declaration-property-unit-allowed-list
+    padding-top: 56.25%;
+}
+
+.iframe-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}

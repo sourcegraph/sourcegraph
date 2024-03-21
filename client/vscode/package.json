@@ -1,0 +1,291 @@
+{
+  "private": true,
+  "name": "@sourcegraph/vscode",
+  "displayName": "Search by Sourcegraph",
+  "version": "2.2.15",
+  "description": "Search all of your repositories across all branches and all code hosts",
+  "publisher": "sourcegraph",
+  "sideEffects": true,
+  "license": "Apache-2.0",
+  "icon": "images/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sourcegraph/sourcegraph.git",
+    "directory": "client/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/sourcegraph/sourcegraph/issues/new?labels=team/integrations,vscode-extension&title=VSCode+Bug+report:+&projects=Integrations%20Project%20Board"
+  },
+  "engines": {
+    "vscode": "^1.63.2"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/node/extension.js",
+  "browser": "./dist/webworker/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sourcegraph.search",
+        "category": "Sourcegraph",
+        "title": "Search with Sourcegraph",
+        "icon": {
+          "light": "images/logo.svg",
+          "dark": "images/logo.svg"
+        }
+      },
+      {
+        "command": "sourcegraph.openInBrowser",
+        "category": "Sourcegraph",
+        "title": "Open File in Sourcegraph Web",
+        "icon": {
+          "light": "images/logomark_dark.svg",
+          "dark": "images/logomark_light.svg"
+        }
+      },
+      {
+        "command": "sourcegraph.copyFileLink",
+        "category": "Sourcegraph",
+        "title": "Copy Sourcegraph File Link"
+      },
+      {
+        "command": "sourcegraph.selectionSearchWeb",
+        "category": "Sourcegraph",
+        "title": "Search Selection in Sourcegraph Web"
+      },
+      {
+        "command": "sourcegraph.removeRepoTree",
+        "category": "Sourcegraph",
+        "title": "Remove Repository from Sourcegraph File System",
+        "icon": "$(trash)"
+      }
+    ],
+    "authentication": [
+      {
+        "id": "sourcegraphauth",
+        "label": "Sourcegraph Auth"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sourcegraph-view",
+          "title": "Sourcegraph Search",
+          "icon": "images/logomark_dark.svg"
+        }
+      ]
+    },
+    "views": {
+      "sourcegraph-view": [
+        {
+          "type": "webview",
+          "id": "sourcegraph.searchSidebar",
+          "name": "Sourcegraph Search",
+          "visibility": "visible"
+        },
+        {
+          "id": "sourcegraph.files",
+          "name": "Files",
+          "visibility": "visible"
+        },
+        {
+          "type": "webview",
+          "id": "sourcegraph.helpSidebar",
+          "name": "Help and feedback",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sourcegraph.files",
+        "contents": "No open files."
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Sourcegraph extension configuration",
+      "properties": {
+        "sourcegraph.url": {
+          "type": [
+            "string"
+          ],
+          "default": "https://sourcegraph.com",
+          "description": "The base URL of the Sourcegraph instance to use."
+        },
+        "sourcegraph.accessToken": {
+          "type": [
+            null
+          ],
+          "description": "[Depreciated after v2.2.12] The access token to query the Sourcegraph API. Create a new access token at ${SOURCEGRAPH_URL}/users/<sourcegraph-username>/settings/tokens. Unless you are using a private instance of Sourcegraph, then ${SOURCEGRAPH_URL} is https://sourcegraph.com."
+        },
+        "sourcegraph.remoteUrlReplacements": {
+          "type": [
+            "object"
+          ],
+          "default": {},
+          "examples": [
+            {
+              "github": "gitlab",
+              "master": "main"
+            }
+          ],
+          "description": "For each item in this object, replace key with value in the remote url."
+        },
+        "sourcegraph.defaultBranch": {
+          "type": [
+            "string"
+          ],
+          "default": "",
+          "description": "Always open local files on Sourcegraph Web at this default branch."
+        },
+        "sourcegraph.requestHeaders": {
+          "type": [
+            "object"
+          ],
+          "default": {},
+          "examples": [
+            {
+              "Cache-Control": "no-cache",
+              "Proxy-Authenticate": "Basic"
+            }
+          ],
+          "description": "Each value pair will be added to the request headers made to your instance."
+        },
+        "sourcegraph.basePath": {
+          "description": "The file path on the machine to the folder that is expected to contain all repositories.",
+          "type": "string",
+          "default": null,
+          "examples": [
+            "/Users/USERNAME/Documents/"
+          ]
+        },
+        "sourcegraph.proxyProtocol": {
+          "description": "The protocol to use when proxying requests to the Sourcegraph instance.",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "http",
+            "https"
+          ]
+        },
+        "sourcegraph.proxyHost": {
+          "description": "The host to use when proxying requests to the Sourcegraph instance. It shouldn't include a protocol (like \"http://\") or a port (like \":7080\"). When this is set, port must be set as well.",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "localhost",
+            "1.2.3.4"
+          ]
+        },
+        "sourcegraph.proxyPort": {
+          "description": "The port to use when proxying requests to the Sourcegraph instance. When this is set, host must be set as well.",
+          "type": "number",
+          "default": 0,
+          "examples": [
+            80,
+            443,
+            7080,
+            9090
+          ]
+        },
+        "sourcegraph.proxyPath": {
+          "description": "The full path to a file when proxying requests to the Sourcegraph instance via a UNIX domain socket.",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "/home/user/path/unix.socket"
+          ]
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "sourcegraph.search",
+        "key": "ctrl+shift+8",
+        "mac": "cmd+shift+8"
+      },
+      {
+        "command": "sourcegraph.openInBrowser",
+        "key": "alt+a",
+        "mac": "option+a"
+      },
+      {
+        "command": "sourcegraph.selectionSearchWeb",
+        "key": "alt+s",
+        "mac": "option+s"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "sourcegraph.openInBrowser",
+          "group": "sourcegraph",
+          "label": "sourcegraph"
+        },
+        {
+          "command": "sourcegraph.copyFileLink",
+          "group": "sourcegraph",
+          "label": "sourcegraph"
+        },
+        {
+          "command": "sourcegraph.selectionSearchWeb",
+          "group": "sourcegraph",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "sourcegraph.search",
+          "group": "sourcegraph"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "sourcegraph.removeRepoTree",
+          "when": "view == sourcegraph.files && sourcegraph.removeRepository",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "sourcegraph.openInBrowser",
+          "when": "resourceScheme == sourcegraph && editorReadonly",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint:js": "eslint --cache '**/*.[jt]s?(x)'",
+    "package": "ts-node ./scripts/package.ts",
+    "prebuild": "pnpm -w run generate && pnpm build-inline-extensions",
+    "build-inline-extensions": "node scripts/build-inline-extensions",
+    "build": "pnpm run prebuild && NODE_ENV=development ts-node-transpile-only scripts/build.ts",
+    "build:test": "IS_TEST=1 pnpm run build",
+    "watch": "WATCH=1 pnpm run build",
+    "watch:test": "IS_TEST=1 pnpm run watch",
+    "test-integration": "TS_NODE_PROJECT=tests/tsconfig.json mocha --parallel=${CI:-\"false\"} --retries=2 ./tests/**/*.test.ts",
+    "release": "ts-node ./scripts/publish.ts",
+    "release:major": "VSCE_RELEASE_TYPE=major ts-node ./scripts/release.ts",
+    "release:minor": "VSCE_RELEASE_TYPE=minor ts-node ./scripts/release.ts",
+    "release:patch": "VSCE_RELEASE_TYPE=patch ts-node ./scripts/release.ts",
+    "release:pre": "VSCE_RELEASE_TYPE=prerelease ts-node ./scripts/release.ts"
+  },
+  "devDependencies": {
+    "vsce": "^2.7.0",
+    "@sourcegraph/build-config": "workspace:*",
+    "@sourcegraph/extension-api-types": "workspace:*"
+  },
+  "dependencies": {
+    "@sourcegraph/branded": "workspace:*",
+    "@sourcegraph/client-api": "workspace:*",
+    "@sourcegraph/codeintellify": "workspace:*",
+    "@sourcegraph/common": "workspace:*",
+    "@sourcegraph/http-client": "workspace:*",
+    "@sourcegraph/shared": "workspace:*",
+    "@sourcegraph/wildcard": "workspace:*"
+  }
+}

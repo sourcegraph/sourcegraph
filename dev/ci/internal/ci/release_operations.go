@@ -41,7 +41,7 @@ func releaseTestOperation(c Config) operations.Operation {
 			bk.Agent("queue", AspectWorkflows.QueueDefault),
 			bk.Env("VERSION", c.Version),
 			bk.AnnotatedCmd(
-				bazelCmd(`run --run_under="cd $$PWD &&" //dev/sg -- release run test --branch $$BUILDKITE_BRANCH`),
+				bazelCmd(`run --run_under="cd $$PWD &&" //dev/sg -- release run test --branch $$BUILDKITE_BRANCH --version $$VERSION`),
 				bk.AnnotatedCmdOpts{
 					Annotations: &bk.AnnotationOpts{
 						Type:         bk.AnnotationTypeInfo,
@@ -70,7 +70,7 @@ func releaseFinalizeOperation(c Config) operations.Operation {
 			bk.Agent("queue", AspectWorkflows.QueueDefault),
 			bk.Env("VERSION", c.Version),
 			bk.AnnotatedCmd(
-				bazelCmd(fmt.Sprintf(`run --run_under="cd $$PWD &&" //dev/sg -- release run %s finalize --branch $$BUILDKITE_BRANCH`, command)),
+				bazelCmd(fmt.Sprintf(`run --run_under="cd $$PWD &&" //dev/sg -- release run %s finalize --branch $$BUILDKITE_BRANCH --version $$VERSION`, command)),
 				bk.AnnotatedCmdOpts{
 					Annotations: &bk.AnnotationOpts{
 						Type:         bk.AnnotationTypeInfo,

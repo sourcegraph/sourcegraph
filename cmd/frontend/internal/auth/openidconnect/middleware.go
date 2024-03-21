@@ -121,7 +121,7 @@ func handleOpenIDConnectAuth(db database.DB, w http.ResponseWriter, r *http.Requ
 	// it's an app request, and the sign-out cookie is not present, redirect to sign-in immediately.
 	//
 	// For sign-out requests (sign-out cookie is  present), the user is redirected to the Sourcegraph login page.
-	ps := providers.Providers()
+	ps := providers.SignInProviders()
 	openIDConnectEnabled := len(ps) == 1 && ps[0].Config().Openidconnect != nil
 	if openIDConnectEnabled && !auth.HasSignOutCookie(r) && !isAPIRequest {
 		p, safeErrMsg, err := GetProviderAndRefresh(r.Context(), ps[0].ConfigID().ID, GetProvider)

@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "vite dev",
     "dev:dotcom": "vite dev --mode=dotcom",
+    "dev:enterprise": "DEPLOY_TYPE=dev vite build --watch",
     "build": "vite build",
     "build:watch": "vite build --watch",
     "preview": "vite preview",
@@ -78,7 +79,8 @@
     "highlight.js": "^10.0.0",
     "prismjs": "^1.29.0",
     "ts-key-enum": "^2.0.12",
-    "wonka": "^6.3.4"
+    "wonka": "^6.3.4",
+    "copy-to-clipboard": "^3.3.1"
   },
   "msw": {
     "workerDirectory": "static"

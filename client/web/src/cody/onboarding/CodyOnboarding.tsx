@@ -116,13 +116,6 @@ export const editorGroups: IEditor[][] = [
             docs: 'https://sourcegraph.com/docs/cody/clients/install-neovim',
             instructions: NeoVimInstructions,
         },
-        {
-            id: 10,
-            icon: 'Emacs',
-            name: 'Emacs',
-            publisher: 'GNU',
-            releaseStage: 'Coming Soon',
-        },
     ],
 ]
 

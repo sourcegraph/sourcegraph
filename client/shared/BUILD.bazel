@@ -524,6 +524,5 @@ ts_project(
         "//:node_modules/@storybook/react",
         "//:node_modules/@types/history",
         "//:node_modules/history",
-        "//:node_modules/rxjs",
     ],
 )

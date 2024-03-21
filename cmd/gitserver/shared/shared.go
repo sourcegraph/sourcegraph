@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"net/http"
 	"os/exec"
 	"path/filepath"
@@ -109,6 +110,26 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 				CoursierCacheDir:        config.CoursierCacheDir,
 				RecordingCommandFactory: recordingCommandFactory,
 				Logger:                  logger,
+				GetRemoteURLSource: func(ctx context.Context, repo api.RepoName) (vcssyncer.RemoteURLSource, error) {
+					return vcssyncer.RemoteURLSourceFunc(func(ctx context.Context) (*vcs.URL, error) {
+						rawURL, err := getRemoteURLFunc(ctx, logger, db, repo)
+						if err != nil {
+							return nil, errors.Wrapf(err, "getting remote URL for %q", repo)
+
+						}
+
+						u, err := vcs.ParseURL(rawURL)
+						if err != nil {
+							// TODO@ggilmore: Note that we can't redact the URL here because we can't
+							// parse it to know where the sensitive information is.
+							return nil, errors.Wrapf(err, "parsing remote URL %q", rawURL)
+						}
+
+						return u, nil
+
+					}), nil
+
+				},
 			})
 		},
 		Hostname:                hostname,

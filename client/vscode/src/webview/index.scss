@@ -1,0 +1,131 @@
+// Global styles provided by @reach packages. Should be imported once in the global scope.
+@import '@reach/tabs/styles';
+
+@import 'wildcard/src/global-styles/base';
+@import './theming/highlight';
+
+:root {
+    // v2/debt: redefine our CSS variables using VS Code's CSS variables
+    // instead of hackily overriding the necessary classes' properties.
+    .theme-light,
+    .theme-dark {
+        --body-color: var(--vscode-foreground);
+        --code-bg: var(--vscode-editor-background);
+        --color-bg-1: var(--vscode-editor-background);
+        --color-bg-2: var(--vscode-editorWidget-background);
+        --border-color: var(--vscode-editor-lineHighlightBorder);
+        --border-color-2: var(--vscode-editor-lineHighlightBorder);
+
+        // VS Code themes cannot change border radius, so we can safely hardcode it.
+        --border-radius: 0;
+        --popover-border-radius: 0;
+        --dropdown-bg: var(--vscode-dropdown-background);
+        --dropdown-border-color: var(--vscode-dropdown-border);
+        --dropdown-header-color: var(--vscode-panelTitle-activeForeground);
+
+        .dropdown-menu {
+            --body-color: var(--vscode-dropdown-foreground);
+            --primary: var(--vscode-textLink-foreground); // hover background
+            --color-bg-3: var(--color-bg-3); // active background
+
+            /* stylelint-disable-next-line scss/selector-no-redundant-nesting-selector */
+            & input {
+                background-color: var(--vscode-input-background) !important;
+            }
+        }
+
+        --input-bg: var(--vscode-editorWidget-background);
+        --input-border-color: var(--vscode-input-border);
+        --border-active-color: var(--vscode-focusBorder);
+        --link-color: var(--vscode-textLink-foreground);
+        --search-filter-keyword-color: var(--vscode-textLink-foreground);
+        --body-bg: var(--vscode-editor-background);
+        --text-muted: var(--vscode-descriptionForeground);
+        --primary: var(--vscode-button-background);
+
+        // Debt: alert overrides
+        --info-3: var(--vscode-inputValidation-infoBorder);
+        --danger: var(--vscode-inputValidation-errorBackground);
+    }
+
+    .theme-dark {
+        .sourcegraph-tooltip {
+            --tooltip-bg: var(--vscode-input-background);
+            --tooltip-color: var(--vscode-editorWidget-foreground);
+        }
+    }
+
+    .theme-light {
+        // Ensure tooltip always has a dark background with light text.
+        .sourcegraph-tooltip {
+            --tooltip-bg: var(--vscode-editorWidget-foreground);
+            --tooltip-color: var(--vscode-input-background);
+        }
+    }
+
+    --max-homepage-container-width: 65rem;
+
+    // Media breakpoints
+    --media-sm: 576px;
+    --media-md: 768px;
+    --media-lg: 992px;
+    --media-xl: 1200px;
+}
+
+body {
+    font-family: var(--vscode-font-family);
+    font-weight: var(--vscode-font-weight);
+    font-size: var(--vscode-editor-font-size);
+
+    --body-color: var(--vscode-dropdown-foreground);
+
+    &.search-sidebar {
+        background-color: transparent !important;
+    }
+}
+
+code {
+    font-family: var(--vscode-editor-font-family) !important;
+    font-weight: var(--vscode-editor-font-weight) !important;
+    font-size: var(--vscode-editor-font-size) !important;
+    color: var(--vscode-editor-foreground);
+}
+
+.btn-primary {
+    color: var(--vscode-button-foreground) !important;
+
+    &:hover {
+        background-color: var(--vscode-button-hoverBackground) !important;
+    }
+
+    &:disabled {
+        background-color: var(--vscode-button-secondaryBackground) !important;
+    }
+}
+
+.btn-text-link {
+    color: var(--vscode-textLink-foreground) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-weight: var(--vscode-editor-font-weight) !important;
+    font-size: var(--vscode-editor-font-size) !important;
+    background-color: transparent !important;
+    text-align: left;
+
+    &:hover,
+    &:focus {
+        color: var(--vscode-foreground) !important;
+    }
+}
+
+.input,
+.form-control {
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    padding: 0.5rem;
+
+    &:focus {
+        background-color: var(--vscode-input-background);
+        color: var(--vscode-input-foreground);
+    }
+}

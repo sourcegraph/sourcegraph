@@ -4,6 +4,8 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"os"
 	"os/exec"
 	"path"
@@ -201,12 +203,24 @@ func TestJVMCloneCommand(t *testing.T) {
 
 	coursier.CoursierBinary = coursierScript(t, dir)
 
+	var testGetRemoteURLSource = func(ctx context.Context, name api.RepoName) (RemoteURLSource, error) {
+		return RemoteURLSourceFunc(func(ctx context.Context) (*vcs.URL, error) {
+			u, err := vcs.ParseURL(examplePackageUrl)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to parse example package URL %q", examplePackageUrl)
+			}
+
+			return u, nil
+
+		}), nil
+	}
+
 	depsSvc := dependencies.TestService(database.NewDB(logger, dbtest.NewDB(t)))
 	cacheDir := filepath.Join(dir, "cache")
-	s := NewJVMPackagesSyncer(&schema.JVMPackagesConnection{Maven: schema.Maven{Dependencies: []string{}}}, depsSvc, cacheDir, dir).(*vcsPackagesSyncer)
+	s := NewJVMPackagesSyncer(&schema.JVMPackagesConnection{Maven: schema.Maven{Dependencies: []string{}}}, depsSvc, testGetRemoteURLSource, cacheDir, dir).(*vcsPackagesSyncer)
 	bareGitDirectory := path.Join(dir, "git")
 
-	s.runCloneCommand(t, examplePackageUrl, bareGitDirectory, []string{exampleVersionedPackage})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleVersionedPackage})
 	assertCommandOutput(t,
 		exec.Command("git", "tag", "--list"),
 		bareGitDirectory,
@@ -218,7 +232,7 @@ func TestJVMCloneCommand(t *testing.T) {
 		exampleFileContents,
 	)
 
-	s.runCloneCommand(t, examplePackageUrl, bareGitDirectory, []string{exampleVersionedPackage, exampleVersionedPackage2})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleVersionedPackage, exampleVersionedPackage2})
 	assertCommandOutput(t,
 		exec.Command("git", "tag", "--list"),
 		bareGitDirectory,
@@ -250,7 +264,7 @@ func TestJVMCloneCommand(t *testing.T) {
 		exampleFileContents2,
 	)
 
-	s.runCloneCommand(t, examplePackageUrl, bareGitDirectory, []string{exampleVersionedPackage})
+	s.runCloneCommand(t, bareGitDirectory, []string{exampleVersionedPackage})
 	assertCommandOutput(t,
 		exec.Command("git", "show", fmt.Sprintf("v%s:%s", exampleVersion, exampleFilePath)),
 		bareGitDirectory,

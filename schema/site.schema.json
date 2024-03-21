@@ -3079,6 +3079,9 @@
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
         },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
+        },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
         },
@@ -3151,6 +3154,9 @@
         },
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
+        },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
         },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
@@ -3306,6 +3312,9 @@
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
         },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
+        },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
         },
@@ -3387,6 +3396,9 @@
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
         },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
+        },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
         },
@@ -3463,6 +3475,9 @@
         },
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
+        },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
         },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
@@ -3542,6 +3557,9 @@
         "hidden": {
           "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
         },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
+        },
         "order": {
           "$ref": "#/definitions/AuthProviderCommon/properties/order"
         },
@@ -3576,6 +3594,11 @@
       "properties": {
         "hidden": {
           "description": "Hides the configured auth provider from regular use through our web interface by omitting it from the JSContext, useful for experimental auth setups.",
+          "type": "boolean",
+          "default": false
+        },
+        "noSignIn": {
+          "description": "Hides the configured auth provider from the sign in page, but still allows users to connect an external account using their Account Security page to enable permissions syncing.",
           "type": "boolean",
           "default": false
         },

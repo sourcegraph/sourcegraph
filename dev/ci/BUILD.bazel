@@ -2,6 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 
 exports_files([
     "bazel-configure.sh",
+    "msp_deploy.sh",
 ])
 
 go_library(

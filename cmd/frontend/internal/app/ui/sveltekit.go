@@ -1,11 +1,17 @@
 package ui
 
 import (
+	"bytes"
+	"html/template"
 	"io"
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/featureflag"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/ui/assets"
 )
 
@@ -57,13 +63,44 @@ func useSvelteKit(r *http.Request) bool {
 	return false
 }
 
+func loadSvelteKitTemplate() (*template.Template, error) {
+	fileName := "_sk/index.html"
+	file, err := assets.Provider.Assets().Open(fileName)
+	if err != nil {
+		return nil, errors.Errorf("failed to open %s: %w", fileName, err)
+	}
+	defer file.Close()
+	buf := new(strings.Builder)
+	io.Copy(buf, file)
+
+	tmpl, err := template.New(fileName).Parse(buf.String())
+	if err != nil {
+		return nil, errors.Errorf("failed to parse template %s: %w", fileName, err)
+	}
+	return tmpl, nil
+
+}
+
+var loadCachedSvelteKitTemplate = sync.OnceValues(loadSvelteKitTemplate)
+
 // renderSvelteKit writes SvelteKit's fallback page to the provided writer
-func renderSvelteKit(dst io.Writer) error {
-	file, err := assets.Provider.Assets().Open("_sk/index.html")
+func renderSvelteKit(dst io.Writer, data any) error {
+	tmpl, err := loadCachedSvelteKitTemplate()
+	if env.InsecureDev {
+		// Load "fresh" template in dev mode
+		tmpl, err = loadSvelteKitTemplate()
+	}
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	io.Copy(dst, file)
-	return nil
+
+	// Write to a buffer to avoid a partially written response going to w
+	// when an error would occur. Otherwise, our error page template rendering
+	// will be corrupted.
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return err
+	}
+	_, err = buf.WriteTo(dst)
+	return err
 }

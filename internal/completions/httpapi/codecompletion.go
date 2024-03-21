@@ -57,11 +57,11 @@ func allowedCustomModel(model string) string {
 		"fireworks/" + fireworks.Llama213bCodeInstruct,
 		"fireworks/" + fireworks.Llama234bCodeInstruct,
 		"fireworks/" + fireworks.Mistral7bInstruct,
-		"anthropic/claude-instant-1.2-cyan",
 		"anthropic/claude-instant-1.2",
+		// Deprecated model identifiers
 		"anthropic/claude-instant-v1",
 		"anthropic/claude-instant-1",
-		// Deprecated model identifiers
+		"anthropic/claude-instant-1.2-cyan",
 		"fireworks/accounts/sourcegraph/models/starcoder-7b",
 		"fireworks/accounts/sourcegraph/models/starcoder-16b",
 		"fireworks/accounts/fireworks/models/starcoder-3b-w8a16",

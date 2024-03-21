@@ -48,6 +48,7 @@ go_library(
         "//internal/requestinteraction",
         "//internal/service",
         "//internal/trace",
+        "//internal/vcs",
         "//internal/wrexec",
         "//lib/errors",
         "@com_github_sourcegraph_log//:log",

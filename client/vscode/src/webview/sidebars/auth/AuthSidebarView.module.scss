@@ -1,0 +1,57 @@
+.form-container {
+    margin-top: 2.5rem;
+}
+
+.cta-container {
+    letter-spacing: 0.5px;
+    font-size: var(--vscode-editor-font-size) !important;
+    color: var(--vscode-foreground);
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.cta-paragraph {
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+.cta-input {
+    font-size: var(--vscode-editor-font-size) !important;
+
+    &:active {
+        border-color: var(--vscode-inputOption-activeBorder);
+    }
+
+    &:focus {
+        border-color: var(--vscode-inputOption-activeBorder);
+    }
+}
+
+.cta-title {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.cta {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+}
+
+.cta-button {
+    justify-content: center;
+    width: 100%;
+}
+
+.cta-link {
+    &:hover {
+        background: var(--button-primary-hover-background);
+        text-decoration: none !important;
+    }
+}
+
+.cta-button-wrapper-with-context-below {
+    margin-bottom: 0.5rem;
+}

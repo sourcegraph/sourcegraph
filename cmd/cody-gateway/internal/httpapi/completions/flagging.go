@@ -36,9 +36,12 @@ type flaggingResult struct {
 	promptTokenCount  int
 }
 
+// isFlaggedRequest inspects the request and determines if it should be "flagged". This is how we
+// perform basic abuse-detection and filtering. The implementation should err on the side of efficency,
+// as the goal isn't for 100% accuracy. But to catch obvious abuse patterns, and let other backend
+// systems do a more through review async.
 func isFlaggedRequest(tk *tokenizer.Tokenizer, r flaggingRequest, cfg flaggingConfig) (*flaggingResult, error) {
 	var reasons []string
-
 	prompt := strings.ToLower(r.FlattenedPrompt)
 
 	if hasValidPattern, _ := containsAny(prompt, cfg.AllowedPromptPatterns); len(cfg.AllowedPromptPatterns) > 0 && !hasValidPattern {
@@ -61,31 +64,35 @@ func isFlaggedRequest(tk *tokenizer.Tokenizer, r flaggingRequest, cfg flaggingCo
 		reasons = append(reasons, "high_prompt_token_count")
 	}
 
-	if len(reasons) > 0 { // request is flagged
-		blocked := false
-		hasBlockedPhrase, phrase := containsAny(prompt, cfg.BlockedPromptPatterns)
-		if tokenCount > cfg.PromptTokenBlockingLimit || r.MaxTokens > cfg.ResponseTokenBlockingLimit || hasBlockedPhrase {
-			blocked = true
-		}
-
-		promptPrefix := r.FlattenedPrompt
-		if len(promptPrefix) > logPromptPrefixLength {
-			promptPrefix = promptPrefix[0:logPromptPrefixLength]
-		}
-		res := &flaggingResult{
-			reasons:           reasons,
-			maxTokensToSample: r.MaxTokens,
-			promptPrefix:      promptPrefix,
-			promptTokenCount:  tokenCount,
-			shouldBlock:       blocked,
-		}
-		if hasBlockedPhrase {
-			res.blockedPhrase = &phrase
-		}
-		return res, nil
+	if len(reasons) == 0 {
+		return nil, nil
 	}
 
-	return nil, nil
+	// The request has been flagged. Now we determine if it is serious enough to outright block the request.
+	var blocked bool
+	hasBlockedPhrase, phrase := containsAny(prompt, cfg.BlockedPromptPatterns)
+	if tokenCount > cfg.PromptTokenBlockingLimit || r.MaxTokens > cfg.ResponseTokenBlockingLimit || hasBlockedPhrase {
+		blocked = true
+	}
+
+	// Maximum number of characters of the prompt prefix we include in logs and telemetry.
+	const logPromptPrefixLength = 250
+	promptPrefix := r.FlattenedPrompt
+	if len(promptPrefix) > logPromptPrefixLength {
+		promptPrefix = promptPrefix[:logPromptPrefixLength]
+	}
+
+	res := &flaggingResult{
+		reasons:           reasons,
+		maxTokensToSample: r.MaxTokens,
+		promptPrefix:      promptPrefix,
+		promptTokenCount:  tokenCount,
+		shouldBlock:       blocked,
+	}
+	if hasBlockedPhrase {
+		res.blockedPhrase = &phrase
+	}
+	return res, nil
 }
 
 func (f *flaggingResult) IsFlagged() bool {

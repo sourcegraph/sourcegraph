@@ -20,7 +20,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf/reposource"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
-	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -35,11 +34,12 @@ type vcsPackagesSyncer struct {
 	// placeholder is used to set GIT_AUTHOR_NAME for git commands that don't create
 	// commits or tags. The name of this dependency should never be publicly visible,
 	// so it can have any random value.
-	placeholder reposource.VersionedPackage
-	configDeps  []string
-	source      packagesSource
-	svc         dependenciesService
-	reposDir    string
+	placeholder        reposource.VersionedPackage
+	configDeps         []string
+	source             packagesSource
+	svc                dependenciesService
+	reposDir           string
+	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error)
 }
 
 var _ VCSSyncer = &vcsPackagesSyncer{}
@@ -71,7 +71,7 @@ type dependenciesService interface {
 	IsPackageRepoVersionAllowed(ctx context.Context, scheme string, pkg reposource.PackageName, version string) (allowed bool, err error)
 }
 
-func (s *vcsPackagesSyncer) IsCloneable(_ context.Context, _ api.RepoName, _ *vcs.URL) error {
+func (s *vcsPackagesSyncer) IsCloneable(_ context.Context, _ api.RepoName) error {
 	return nil
 }
 
@@ -79,14 +79,10 @@ func (s *vcsPackagesSyncer) Type() string {
 	return s.typ
 }
 
-func (s *vcsPackagesSyncer) RemoteShowCommand(ctx context.Context, remoteURL *vcs.URL) (cmd *exec.Cmd, err error) {
-	return exec.CommandContext(ctx, "git", "remote", "show", "./"), nil
-}
-
 // Clone writes a package and all requested versions of it into a synthetic git
 // repo at tmpPath by creating one head per version.
 // It reports redacted progress logs via the progressWriter.
-func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, remoteURL *vcs.URL, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
+func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
 	// First, make sure the tmpPath exists.
 	if err := os.MkdirAll(tmpPath, os.ModePerm); err != nil {
 		return errors.Wrapf(err, "clone failed to create tmp dir")
@@ -102,16 +98,26 @@ func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, remote
 	// The Fetch method is responsible for cleaning up temporary directories.
 	// TODO: We should have more fine-grained progress reporting here.
 	tryWrite(s.logger, progressWriter, "Fetching package revisions\n")
-	if _, err := s.Fetch(ctx, remoteURL, "", common.GitDir(tmpPath), ""); err != nil {
+	if _, err := s.Fetch(ctx, repo, common.GitDir(tmpPath), ""); err != nil {
 		return errors.Wrapf(err, "failed to fetch repo for %s", repo)
 	}
 
 	return nil
 }
 
-func (s *vcsPackagesSyncer) Fetch(ctx context.Context, remoteURL *vcs.URL, _ api.RepoName, dir common.GitDir, revspec string) ([]byte, error) {
+func (s *vcsPackagesSyncer) Fetch(ctx context.Context, repo api.RepoName, dir common.GitDir, revspec string) ([]byte, error) {
+	source, err := s.getRemoteURLSource(ctx, repo)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting remote URL source")
+	}
+
+	remoteURL, err := source.RemoteURL(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting remote URL") // This should never happen for Perforce
+	}
+
 	var pkg reposource.Package
-	pkg, err := s.source.ParsePackageFromRepoName(api.RepoName(remoteURL.Path))
+	pkg, err = s.source.ParsePackageFromRepoName(api.RepoName(remoteURL.Path))
 	if err != nil {
 		return nil, err
 	}

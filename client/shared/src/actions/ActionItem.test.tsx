@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as H from 'history'
-import { NEVER } from 'rxjs'
 import { afterEach, describe, expect, it, test, vi } from 'vitest'
 
 import { assertAriaEnabled, createBarrier } from '@sourcegraph/testing'
@@ -15,7 +14,6 @@ vi.mock('mdi-react/OpenInNewIcon', () => 'OpenInNewIcon')
 
 describe('ActionItem', () => {
     const NOOP_EXTENSIONS_CONTROLLER = { executeCommand: () => Promise.resolve(undefined) }
-    const NOOP_PLATFORM_CONTEXT = { settings: NEVER }
     const history = H.createMemoryHistory()
 
     test('non-actionItem variant', () => {
@@ -26,7 +24,6 @@ describe('ActionItem', () => {
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -41,7 +38,6 @@ describe('ActionItem', () => {
                 variant="actionItem"
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -55,7 +51,6 @@ describe('ActionItem', () => {
                 telemetryService={NOOP_TELEMETRY_SERVICE}
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -70,7 +65,6 @@ describe('ActionItem', () => {
                 variant="actionItem"
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -85,7 +79,6 @@ describe('ActionItem', () => {
                 variant="actionItem"
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -101,7 +94,6 @@ describe('ActionItem', () => {
                 title={<span>t2</span>}
                 location={history.location}
                 extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
         expect(component.asFragment()).toMatchSnapshot()
@@ -119,7 +111,6 @@ describe('ActionItem', () => {
                 disabledDuringExecution={true}
                 location={history.location}
                 extensionsController={{ ...NOOP_EXTENSIONS_CONTROLLER, executeCommand: () => wait }}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
 
@@ -146,7 +137,6 @@ describe('ActionItem', () => {
                 showLoadingSpinnerDuringExecution={true}
                 location={history.location}
                 extensionsController={{ ...NOOP_EXTENSIONS_CONTROLLER, executeCommand: () => wait }}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
 
@@ -181,7 +171,6 @@ describe('ActionItem', () => {
                     ...NOOP_EXTENSIONS_CONTROLLER,
                     executeCommand: () => Promise.reject(new Error('x')),
                 }}
-                platformContext={NOOP_PLATFORM_CONTEXT}
             />
         )
 
@@ -210,7 +199,6 @@ describe('ActionItem', () => {
                     telemetryService={NOOP_TELEMETRY_SERVICE}
                     location={history.location}
                     extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                    platformContext={NOOP_PLATFORM_CONTEXT}
                 />
             )
             expect(asFragment()).toMatchSnapshot()
@@ -226,7 +214,6 @@ describe('ActionItem', () => {
                     telemetryService={NOOP_TELEMETRY_SERVICE}
                     location={history.location}
                     extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                    platformContext={NOOP_PLATFORM_CONTEXT}
                 />
             )
             expect(asFragment()).toMatchSnapshot()
@@ -243,7 +230,6 @@ describe('ActionItem', () => {
                     telemetryService={NOOP_TELEMETRY_SERVICE}
                     location={history.location}
                     extensionsController={NOOP_EXTENSIONS_CONTROLLER}
-                    platformContext={NOOP_PLATFORM_CONTEXT}
                 />
             )
             expect(asFragment()).toMatchSnapshot()

@@ -1,0 +1,49 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "lib": ["esnext", "DOM", "DOM.Iterable"],
+    "sourceMap": true,
+    "sourceRoot": "src",
+    "baseUrl": "./src",
+    "paths": {
+      "*": ["types/*", "../../shared/src/types/*", "../../common/src/types/*", "*"],
+    },
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "jsx": "react-jsx",
+  },
+  "references": [
+    {
+      "path": "../branded",
+    },
+    {
+      "path": "../build-config",
+    },
+    {
+      "path": "../client-api",
+    },
+    {
+      "path": "../codeintellify",
+    },
+    {
+      "path": "../common",
+    },
+    {
+      "path": "../extension-api-types",
+    },
+    {
+      "path": "../http-client",
+    },
+    {
+      "path": "../shared",
+    },
+    {
+      "path": "../wildcard",
+    },
+  ],
+  "include": ["./package.json", "**/*", ".*", "**/*.d.ts", "./code-intel-extensions.json"],
+  "exclude": ["node_modules", "../../node_modules", ".vscode-test", "out", "dist"],
+}

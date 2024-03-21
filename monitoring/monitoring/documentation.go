@@ -227,10 +227,11 @@ func (d *documentation) renderDashboardPanelEntry(c *Dashboard, o Observable, pa
 <details>
 <summary>Technical details</summary>
 
-Query: %s
+Query:
 
+`+"```\n%s\n```"+`
 </details>
-`, fmt.Sprintf("`%s`", o.Query))
+`, o.Query)
 
 	// render break for readability
 	fmt.Fprint(&d.dashboards, "\n<br />\n\n")

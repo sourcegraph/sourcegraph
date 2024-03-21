@@ -300,6 +300,11 @@ func RunCommandWriteOutput(ctx context.Context, cmd wrexec.Cmder, writer io.Writ
 	}
 
 	err = cmd.Wait()
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		// Redact the stderr output if we have it.
+		exitErr.Stderr = []byte(redactor(string(exitErr.Stderr)))
+	}
 
 	if ps := cmd.Unwrap().ProcessState; ps != nil && ps.Sys() != nil {
 		if ws, ok := ps.Sys().(syscall.WaitStatus); ok {

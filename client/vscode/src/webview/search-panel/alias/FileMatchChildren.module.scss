@@ -1,0 +1,42 @@
+.file-match-children {
+    background-color: var(--code-bg);
+    border-radius: var(--border-radius);
+    padding: 0.25rem 0;
+    position: relative;
+
+    [data-collapsible='true'] & {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+}
+
+.item {
+    display: flex;
+    align-items: center;
+
+    /*
+ * A combination of padding and margin is used to make sure that the
+ * box-shadow used to mark the item as focused is visible.
+ */
+    padding: 0.125rem 0.375rem;
+    margin: 0.125rem;
+    background-color: var(--code-bg);
+
+    /*
+ * Overflow has to be set here instead of the wrapper otherwise the focus
+ * box-shadow is off when the item is scrolled.
+ */
+    overflow-x: auto;
+
+    &-clickable {
+        cursor: pointer;
+    }
+
+    &-code-wrapper {
+        position: relative;
+
+        &:not(:first-child) {
+            border-top: 1px solid var(--border-color);
+        }
+    }
+}

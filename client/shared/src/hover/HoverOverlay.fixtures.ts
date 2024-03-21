@@ -1,11 +1,9 @@
 import { createMemoryHistory } from 'history'
-import { of } from 'rxjs'
 
 import { MarkupKind } from '@sourcegraph/extension-api-classes'
 
 import type { ActionItemAction } from '../actions/ActionItem'
 import type { MarkupContent, Badged, AggregableBadge } from '../codeintel/legacy-extensions/api'
-import type { PlatformContext } from '../platform/context'
 import { EMPTY_SETTINGS_CASCADE, type SettingsCascadeProps } from '../settings/settings'
 import { NOOP_TELEMETRY_SERVICE } from '../telemetry/telemetryService'
 
@@ -13,15 +11,11 @@ import type { HoverOverlayProps } from './HoverOverlay'
 
 const history = createMemoryHistory()
 const NOOP_EXTENSIONS_CONTROLLER = { executeCommand: () => Promise.resolve() }
-const NOOP_PLATFORM_CONTEXT: Pick<PlatformContext, 'settings'> = {
-    settings: of({ final: {}, subjects: [] }),
-}
 
 export const commonProps = (): HoverOverlayProps & SettingsCascadeProps => ({
     location: history.location,
     telemetryService: NOOP_TELEMETRY_SERVICE,
     extensionsController: NOOP_EXTENSIONS_CONTROLLER,
-    platformContext: NOOP_PLATFORM_CONTEXT,
     overlayPosition: { top: 16, left: 16 },
     settingsCascade: EMPTY_SETTINGS_CASCADE,
 })

@@ -20,7 +20,7 @@ func (o OpenAIGatewayFeatureClient) GetRequest(f codygateway.Feature, req *http.
 	}
 	if f == codygateway.FeatureChatCompletions {
 		body := fmt.Sprintf(`{
-			"model":"gpt-4-1106-preview",
+			"model":"gpt-4-turbo-preview",
 			"messages":[{"role":"user","content":"You are Cody"},{"role":"assistant","content":"Ok, I am Cody"},{"role":"user","content":"What is your real name name though?"}],
 			"n":1,
 			"max_tokens":30,

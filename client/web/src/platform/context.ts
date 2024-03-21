@@ -1,4 +1,5 @@
-import type { ApolloQueryResult, ObservableQuery } from '@apollo/client'
+import type { ApolloClient, ApolloQueryResult, ObservableQuery } from '@apollo/client'
+import { from } from 'rxjs'
 import { map, publishReplay, refCount, shareReplay } from 'rxjs/operators'
 
 import { createAggregateError, asError, logger } from '@sourcegraph/common'
@@ -133,4 +134,27 @@ async function watchViewerSettingsQuery(): Promise<ObservableQuery<ViewerSetting
     return graphQLClient.watchQuery<ViewerSettingsResult, ViewerSettingsVariables>({
         query: getDocumentNode(viewerSettingsQuery),
     })
+}
+
+/**
+ * Helper function to create a function that works like {@link requestGraphQL} but uses Apollo Client.
+ * This can be used in places that expect to be passed {@link PlatformContext['requestGraphQL']}.
+ *
+ * Don't use this for new code. Instead, use Apollo Client directly.
+ */
+export function requestGraphQLAdapter(client: ApolloClient<any>): PlatformContext['requestGraphQL'] {
+    return ({ request, variables }) =>
+        from(
+            client
+                .query({
+                    query: getDocumentNode(request),
+                    variables,
+                })
+                .then(result => {
+                    if (result.error) {
+                        throw result.error
+                    }
+                    return result
+                })
+        )
 }

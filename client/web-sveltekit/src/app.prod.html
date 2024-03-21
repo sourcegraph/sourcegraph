@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta http-equiv="Content-Language" content="en" />
+        <meta name="google" content="notranslate" />
+        <meta name="viewport" content="width=device-width, viewport-fit=cover" />
+        <meta name="referrer" content="origin-when-cross-origin" />
+        <meta name="color-scheme" content="light dark" />
+        <title>{{.Title}}</title>
+
+        <script ignore-csp>
+            window.context = {{ .Context }}
+            window.pageError = {{ .Error }}
+        </script>
+
+        %sveltekit.head%
+    </head>
+    <body data-sveltekit-preload-data data-sveltekit-preload-code="hover">
+        <div style="display: contents">%sveltekit.body%</div>
+        <noscript>
+            <p>
+                Sourcegraph is a web-based code search and navigation tool for dev teams. Search, navigate, and review
+                code. Find answers.
+            </p>
+
+            <br />
+            <br />
+            <br />
+            You need to enable JavaScript to run this app.
+        </noscript>
+    </body>
+</html>

@@ -641,8 +641,8 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 		completionsConfig = &schema.Completions{
 			Provider:        string(conftypes.CompletionsProviderNameSourcegraph),
 			ChatModel:       "anthropic/claude-2.0",
-			FastChatModel:   "anthropic/claude-instant-1",
-			CompletionModel: "anthropic/claude-instant-1",
+			FastChatModel:   "anthropic/claude-instant-1.2",
+			CompletionModel: "anthropic/claude-instant-1.2",
 		}
 	}
 
@@ -685,12 +685,12 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 
 		// Set a default fast chat model.
 		if completionsConfig.FastChatModel == "" {
-			completionsConfig.FastChatModel = "anthropic/claude-instant-1"
+			completionsConfig.FastChatModel = "anthropic/claude-instant-1.2"
 		}
 
 		// Set a default completions model.
 		if completionsConfig.CompletionModel == "" {
-			completionsConfig.CompletionModel = "anthropic/claude-instant-1"
+			completionsConfig.CompletionModel = "anthropic/claude-instant-1.2"
 		}
 	} else if completionsConfig.Provider == string(conftypes.CompletionsProviderNameOpenAI) {
 		// If no endpoint is configured, use a default value.
@@ -735,12 +735,12 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 
 		// Set a default fast chat model.
 		if completionsConfig.FastChatModel == "" {
-			completionsConfig.FastChatModel = "claude-instant-1"
+			completionsConfig.FastChatModel = "claude-instant-1.2"
 		}
 
 		// Set a default completions model.
 		if completionsConfig.CompletionModel == "" {
-			completionsConfig.CompletionModel = "claude-instant-1"
+			completionsConfig.CompletionModel = "claude-instant-1.2"
 		}
 	} else if completionsConfig.Provider == string(conftypes.CompletionsProviderNameAzureOpenAI) {
 		// If no endpoint is configured, this provider is misconfigured.
@@ -796,12 +796,12 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 
 		// Set a default chat model.
 		if completionsConfig.ChatModel == "" {
-			completionsConfig.ChatModel = "anthropic.claude-v2"
+			completionsConfig.ChatModel = "anthropic.claude-v2" //this modelID in Bedrock refers to claude-2.0
 		}
 
 		// Set a default fast chat model.
 		if completionsConfig.FastChatModel == "" {
-			completionsConfig.FastChatModel = "anthropic.claude-instant-v1"
+			completionsConfig.FastChatModel = "anthropic.claude-instant-v1" // this modelID in Bedrock refers to claude-instant-1.x it is not possible to specify the minor version
 		}
 
 		// Set a default completions model.
@@ -1228,9 +1228,15 @@ func openaiDefaultMaxPromptTokens(model string) int {
 		return 7_000
 	case "gpt-4-32k":
 		return 32_000
-	case "gpt-3.5-turbo", "gpt-3.5-turbo-instruct", "gpt-4-1106-preview":
+	case "gpt-3.5-turbo-instruct":
 		return 4_000
-	case "gpt-3.5-turbo-16k":
+	case "gpt-3.5-turbo-16k",
+		"gpt-3.5-turbo":
+		return 16_000
+	case "gpt-4-1106-preview",
+		"gpt-4-turbo-preview":
+		// TODO: Technically, GPT 4 Turbo uses a 128k window, but we should validate
+		// that returning 128k here is the right thing to do.
 		return 16_000
 	default:
 		return 4_000

@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "references": [
+    {
+      "path": "../",
+    },
+    {
+      "path": "../../shared/src/testing",
+    },
+  ],
+  "compilerOptions": {
+    "types": ["node"],
+    "module": "commonjs",
+    "rootDir": ".",
+    "outDir": "../out/src/tests",
+  },
+  "include": ["**/*"],
+  "exclude": [],
+}

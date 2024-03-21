@@ -60,7 +60,7 @@ type Client struct {
 }
 
 // Search performs a symbol search on the symbols service.
-func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (symbols result.Symbols, err error) {
+func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (symbols result.Symbols, limitHit bool, err error) {
 	tr, ctx := trace.New(ctx, "symbols.Search",
 		args.Repo.Attr(),
 		args.CommitID.Attr())
@@ -68,20 +68,24 @@ func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (sym
 
 	response, err := c.searchGRPC(ctx, args)
 	if err != nil {
-		return nil, errors.Wrap(err, "executing symbols search request")
+		return nil, false, errors.Wrap(err, "executing symbols search request")
+	}
+	if response.Err != "" {
+		return nil, false, errors.New(response.Err)
 	}
 
 	symbols = response.Symbols
+	limitHit = response.LimitHit
 
 	// 🚨 SECURITY: We have valid results, so we need to apply sub-repo permissions
 	// filtering.
 	if c.SubRepoPermsChecker == nil {
-		return symbols, err
+		return symbols, limitHit, err
 	}
 
 	checker := c.SubRepoPermsChecker()
 	if !authz.SubRepoEnabled(checker) {
-		return symbols, err
+		return symbols, limitHit, err
 	}
 
 	a := actor.FromContext(ctx)
@@ -94,14 +98,14 @@ func (c *Client) Search(ctx context.Context, args search.SymbolsParameters) (sym
 		}
 		perm, err := authz.ActorPermissions(ctx, checker, a, rc)
 		if err != nil {
-			return nil, errors.Wrap(err, "checking sub-repo permissions")
+			return nil, false, errors.Wrap(err, "checking sub-repo permissions")
 		}
 		if perm.Include(authz.Read) {
 			filtered = append(filtered, r)
 		}
 	}
 
-	return filtered, nil
+	return filtered, limitHit, nil
 }
 
 func (c *Client) searchGRPC(ctx context.Context, args search.SymbolsParameters) (search.SymbolsResponse, error) {

@@ -187,6 +187,10 @@
         display: flex;
         flex: 1;
         overflow: hidden;
+        // Isolate everything in search results so they won't be displayed over
+        // the search suggestions. Previously, hovering over separator would
+        // overlap the suggestions panel.
+        isolation: isolate;
     }
 
     .results {

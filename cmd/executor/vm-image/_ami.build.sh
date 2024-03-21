@@ -34,7 +34,10 @@ GCP_PROJECT="aspect-dev"
 "$gcloud" secrets versions access latest --secret=e2e-builder-sa-key --quiet --project="$GCP_PROJECT" >"workdir/builder-sa-key.json"
 
 export PKR_VAR_name
-PKR_VAR_name="${IMAGE_FAMILY}-${BUILDKITE_BUILD_NUMBER}"
+PKR_VAR_name="${IMAGE_FAMILY}"
+if [ "${RELEASE_INTERNAL:-}" != "true" ]; then
+  PKR_VAR_name="${PKR_VAR_name}-${BUILDKITE_BUILD_NUMBER}"
+fi
 export PKR_VAR_image_family="${IMAGE_FAMILY}"
 export PKR_VAR_tagged_release="${EXECUTOR_IS_TAGGED_RELEASE}"
 export PKR_VAR_version="${VERSION}"

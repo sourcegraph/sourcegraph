@@ -30,5 +30,18 @@ tasks:
         # evaluate Aspect Workflows it is ok
         # TODO(burmudar): Let this only run on main branch
         - //testing:codeintel_integration_test
+  - delivery:
+      auto_deliver: true
+      icon: 'ship'
+      rules:
+        - deliverable: 'attr(tags, "docs-deliverable", //doc/...)'
+          condition:
+            only_on_change: true
+            branches:
+              - '^main$'
+        - deliverable: 'attr(tags, "msp-deliverable", //cmd/...)'
+          condition:
+            branches:
+              - '^main$'
   - finalization:
       queue: aspect-small

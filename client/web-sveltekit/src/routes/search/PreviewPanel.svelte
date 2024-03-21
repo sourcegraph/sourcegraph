@@ -1,14 +1,11 @@
 <script lang="ts" context="module">
-    export interface Range {
-        start: Location
-        end: Location
-    }
+    import type { Range } from '$lib/codemirror/static-highlights'
 
-    export interface Location {
-        // A zero-based line number
-        line: number
-        // A zero-based column number
-        column: number
+    function extractHighlightedRanges(result: ContentMatch | SymbolMatch | PathMatch): Range[] {
+        if (result.type !== 'content') {
+            return []
+        }
+        return result.chunkMatches?.flatMap(chunkMatch => chunkMatch.ranges) || []
     }
 </script>
 
@@ -107,6 +104,7 @@
                 }}
                 highlights={$highlightStore.value ?? ''}
                 {codeIntelAPI}
+                staticHighlightRanges={extractHighlightedRanges(result)}
             />
         {/if}
     </div>
@@ -148,10 +146,11 @@
     .file-link {
         padding: 0.25rem 0.5rem;
         border-bottom: 1px solid var(--border-color);
+        flex: none;
     }
 
     .content {
-        overflow: auto;
-        background-color: var(--code-bg);
+        flex: 1;
+        min-height: 0;
     }
 </style>

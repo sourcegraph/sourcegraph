@@ -1,0 +1,11 @@
+{
+  "extends": ["../../.stylelintrc.json"],
+  "overrides": [
+    {
+      "files": ["./src/webview/index.scss", "./src/webview/theming/highlight.scss"],
+      "rules": {
+        "@sourcegraph/filenames-match-regex": null
+      }
+    }
+  ]
+}

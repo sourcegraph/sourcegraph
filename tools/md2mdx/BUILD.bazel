@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "md2mdx_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/tools/md2mdx",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "md2mdx",
+    embed = [":md2mdx_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "md2mdx_test",
+    srcs = ["main_test.go"],
+    embed = [":md2mdx_lib"],
+    deps = ["@com_github_stretchr_testify//assert"],
+)

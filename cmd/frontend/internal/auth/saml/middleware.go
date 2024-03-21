@@ -61,7 +61,7 @@ func authHandler(db database.DB, w http.ResponseWriter, r *http.Request, next ht
 	// app request, and the sign-out cookie is not present, redirect to the sso sign-in immediately.
 	//
 	// For sign-out requests (sign-out cookie is  present), the user will be redirected to the Sourcegraph login page.
-	ps := providers.Providers()
+	ps := providers.SignInProviders()
 	if len(ps) == 1 && ps[0].Config().Saml != nil && !auth.HasSignOutCookie(r) && !isAPIRequest {
 		p, handled := handleGetProvider(r.Context(), w, ps[0].ConfigID().ID)
 		if handled {

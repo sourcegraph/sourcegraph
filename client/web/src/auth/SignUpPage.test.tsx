@@ -23,6 +23,7 @@ describe('SignUpPage', () => {
             authenticationURL: '',
             serviceID: '',
             clientID: '',
+            noSignIn: false,
         },
         {
             serviceType: 'github',
@@ -31,6 +32,7 @@ describe('SignUpPage', () => {
             authenticationURL: '/.auth/github/login?pc=f00bar',
             serviceID: 'https://github.com',
             clientID: '1234',
+            noSignIn: false,
         },
     ]
 

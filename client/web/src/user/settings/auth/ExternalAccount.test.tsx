@@ -17,6 +17,7 @@ const mockAccount: NormalizedExternalAccount = {
         authenticationURL: 'https://example.com',
         serviceID: '123',
         clientID: '123',
+        noSignIn: false,
     },
 }
 

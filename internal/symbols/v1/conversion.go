@@ -59,8 +59,9 @@ func (x *SearchResponse) FromInternal(r *search.SymbolsResponse) {
 	}
 
 	*x = SearchResponse{
-		Symbols: symbols,
-		Error:   err,
+		Symbols:  symbols,
+		Error:    err,
+		LimitHit: r.LimitHit,
 	}
 }
 
@@ -72,8 +73,9 @@ func (x *SearchResponse) ToInternal() search.SymbolsResponse {
 	}
 
 	return search.SymbolsResponse{
-		Symbols: symbols,
-		Err:     x.GetError(),
+		Symbols:  symbols,
+		Err:      x.GetError(),
+		LimitHit: x.GetLimitHit(),
 	}
 }
 

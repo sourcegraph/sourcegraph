@@ -1,0 +1,35 @@
+.code-excerpt {
+    :global(.line),
+    :global(.code) {
+        /* stylelint-disable-next-line declaration-property-unit-allowed-list */
+        height: 18px;
+        vertical-align: middle;
+        padding: 0;
+    }
+
+    :global(.line) {
+        min-width: 1.5rem;
+        text-align: right;
+        user-select: none;
+
+        &::before {
+            /* draw line number with css so it cannot be copied to clipboard */
+            content: attr(data-line);
+            color: var(--text-muted);
+        }
+    }
+
+    :global(.code) {
+        white-space: pre;
+        padding-left: 1rem;
+    }
+
+    &-error {
+        width: 100%;
+    }
+
+    &-alert {
+        margin-bottom: 0;
+        color: var(--red);
+    }
+}

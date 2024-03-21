@@ -1,0 +1,93 @@
+.result-container {
+    &:last-child {
+        border-bottom-width: 1px;
+    }
+
+    &:not(:last-of-type) {
+        // Prevents the sticky items below from affecting
+        // anything outside of the result container.
+        isolation: isolate;
+        margin-bottom: 1rem;
+    }
+}
+
+.header {
+    padding: 0.5rem 0.5rem 0.5rem 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 1; // Show on top of search result contents
+    background-color: var(--body-bg);
+
+    &-title {
+        flex: 1 1 auto;
+        overflow: hidden;
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    &-divider {
+        border-right: 1px solid var(--border-color-2);
+        height: 1rem;
+    }
+
+    p {
+        margin-bottom: 0;
+    }
+
+    &:not(:only-of-type) {
+        border-bottom: none;
+    }
+
+    &-description {
+        line-height: (14/11);
+    }
+
+    :global(.match-highlight) {
+        color: var(--text-muted-highlighted);
+    }
+}
+
+.toggle-matches-container {
+    display: flex;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.toggle-matches-button {
+    width: 100%;
+    text-align: left;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--border-color);
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    color: var(--text-muted);
+
+    // When expanded, stick collapse button to the bottom of the
+    // screen if there are enough search results to cause scrolling.
+    &--expanded {
+        position: sticky;
+        bottom: 0;
+    }
+
+    &-text {
+        margin-left: 0.125rem;
+    }
+}
+
+.collapsible-results {
+    // The LastSyncedIcon is absolutely-positions inside the search results.
+    // This causes it to show over the sticky header when scrolling unless
+    // we isolate the search result contents.
+    isolation: isolate;
+
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+
+    &:hover {
+        border-color: var(--border-color-2);
+    }
+}

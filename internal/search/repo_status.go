@@ -158,7 +158,7 @@ func repoStatusSingleton(id api.RepoID, status RepoStatus) RepoStatusMap {
 // search limits are hit, and error promotion. If searchErr is a fatal error, it
 // returns a non-nil error; otherwise, if searchErr == nil or a non-fatal error,
 // it returns a nil error.
-func HandleRepoSearchResult(repoID api.RepoID, revSpecs []string, limitHit, timedOut bool, searchErr error) (RepoStatusMap, bool, error) {
+func HandleRepoSearchResult(repoID api.RepoID, revSpecs []string, limitHit, timedOut bool, searchErr error) (RepoStatusMap, error) {
 	var fatalErr error
 	var status RepoStatus
 	if limitHit {
@@ -184,5 +184,5 @@ func HandleRepoSearchResult(repoID api.RepoID, revSpecs []string, limitHit, time
 	} else if searchErr != nil {
 		fatalErr = searchErr
 	}
-	return repoStatusSingleton(repoID, status), limitHit, fatalErr
+	return repoStatusSingleton(repoID, status), fatalErr
 }

@@ -21,17 +21,19 @@ func NewRustPackagesSyncer(
 	connection *schema.RustPackagesConnection,
 	svc *dependencies.Service,
 	client *crates.Client,
+	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error),
 	reposDir string,
 ) VCSSyncer {
 	return &vcsPackagesSyncer{
-		logger:      log.Scoped("RustPackagesSyncer"),
-		typ:         "rust_packages",
-		scheme:      dependencies.RustPackagesScheme,
-		placeholder: reposource.ParseRustVersionedPackage("sourcegraph.com/placeholder@0.0.0"),
-		svc:         svc,
-		configDeps:  connection.Dependencies,
-		reposDir:    reposDir,
-		source:      &rustDependencySource{client: client},
+		logger:             log.Scoped("RustPackagesSyncer"),
+		typ:                "rust_packages",
+		scheme:             dependencies.RustPackagesScheme,
+		placeholder:        reposource.ParseRustVersionedPackage("sourcegraph.com/placeholder@0.0.0"),
+		svc:                svc,
+		configDeps:         connection.Dependencies,
+		reposDir:           reposDir,
+		source:             &rustDependencySource{client: client},
+		getRemoteURLSource: getRemoteURLSource,
 	}
 }
 

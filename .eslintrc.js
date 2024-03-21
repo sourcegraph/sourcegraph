@@ -327,7 +327,7 @@ const config = {
       },
     },
     {
-      files: ['client/browser/**', 'client/jetbrains/**'],
+      files: ['client/vscode/**', 'client/browser/**', 'client/jetbrains/**'],
       rules: {
         'no-console': 'off',
       },

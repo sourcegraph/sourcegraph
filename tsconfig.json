@@ -23,6 +23,9 @@
     { "path": "schema" },
     { "path": "client/codeintellify" },
     { "path": "client/client-api" },
+    {
+      "path": "client/vscode"
+    },
     { "path": "client/jetbrains" },
     { "path": "client/observability-client" },
     { "path": "client/observability-server" }

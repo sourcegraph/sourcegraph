@@ -1,0 +1,170 @@
+.sidebar-container {
+    padding: 0.125rem 0 0 0 !important;
+
+    /* stylelint-disable-next-line scss/selector-no-redundant-nesting-selector */
+    & [data-reach-tabs] {
+        // Override our default background color.
+        background: none;
+    }
+
+    --brand-secondary: var(--vscode-button-hoverBackground);
+    --link-hover-color: var(--vscode-textLink-foreground);
+
+    .btn-outline-secondary:hover {
+        background: transparent !important;
+    }
+
+    a,
+    ul,
+    li,
+    span,
+    button {
+        font-size: var(--vscode-editor-font-size) !important;
+    }
+
+    &__sticky-box {
+        @media (--md-breakpoint-down) {
+            // Sidebar shouldn't be sticky in smaller screens
+            position: static !important;
+
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            column-gap: 1.5rem;
+        }
+
+        @media (--xs-breakpoint-down) {
+            display: block;
+        }
+    }
+}
+
+.sidebar-section {
+    isolation: isolate; // Prevent the z-index below from leaking out of this container
+    margin-bottom: 1.5rem;
+
+    &__tabs-header {
+        margin-top: 1.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    &__button-link {
+        // The global font-weight for .btn elements is 500, which also applies to
+        // link-like buttons. But in this context we want it to be 400.
+        font-weight: 300;
+        color: var(--vscode-textLink-foreground) !important;
+        font-size: var(--vscode-editor-font-size) !important;
+        padding: 0;
+        margin: 0;
+    }
+
+    &__collapse-button {
+        display: flex;
+        align-items: center;
+        text-align: left;
+        width: calc(100% + 0.5rem); // Take full width + account for negative margin
+        border: none;
+        padding: 0.25rem;
+        margin: 0 -0.25rem;
+
+        // Force the button's box-shadow to always show over the sibling element's border
+        position: relative;
+        z-index: 1;
+    }
+
+    &__list {
+        list-style-type: none;
+        max-height: 8rem;
+        overflow: auto;
+        // Negative margin and positive padding allows focus rings to not be cut off by overflow:auto
+        margin: 0 -0.125rem;
+        padding: 0.125rem;
+    }
+
+    &__file-list {
+        list-style-type: none;
+        max-height: 10rem;
+        overflow: auto;
+        // Negative margin and positive padding allows focus rings to not be cut off by overflow:auto
+        margin: 0 -0.125rem;
+        padding: 0.125rem;
+    }
+
+    &__cta {
+        list-style-type: none;
+        overflow: auto;
+        min-height: 8rem;
+        // Negative margin and positive padding allows focus rings to not be cut off by overflow:auto
+        margin: 0 -0.125rem;
+        padding: 0.125rem;
+    }
+
+    &__search-box {
+        display: block;
+        margin: 0.25rem 0;
+    }
+
+    &__list-item {
+        display: flex;
+        // font-size: 0.75rem;
+        font-size: var(--vscode-editor-font-size);
+        padding: 0.25rem 0.375rem;
+        border: 0;
+        border-radius: 3px;
+        width: 100%;
+        text-align: left;
+        overflow-wrap: anywhere;
+
+        &:hover {
+            background-color: var(--color-bg-2);
+            text-decoration: none;
+        }
+
+        &:focus {
+            text-decoration: none;
+        }
+
+        &:active {
+            background-color: var(--color-bg-3);
+        }
+
+        &--break-words {
+            word-break: break-all;
+        }
+    }
+
+    &__icon {
+        margin: 0 0.125rem;
+    }
+
+    &__no-results {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.375rem;
+    }
+
+    &__cta-link {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.375rem;
+    }
+
+    // A helper class for sections that render custom content
+    &__footer {
+        border-top: 1px solid var(--border-color);
+        padding-top: 0.75rem;
+        margin: 0;
+    }
+}
+
+.title {
+    text-transform: uppercase;
+    font-size: var(--vscode-font-size) !important;
+    color: var(--vscode-textPreformat-foreground);
+}
+
+.button,
+.button:link,
+.button:visited {
+    font-size: var(--vscode-font-size) !important;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
