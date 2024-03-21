@@ -1,10 +1,10 @@
 alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'indexing_type') THEN
-        CREATE TYPE indexing_type AS ENUM ('precise', 'syntactic');
-    END IF;
-END$$;
+CREATE TABLE  syntactic_scip_index_last_scan(
+    repository_id int NOT NULL,
+    last_index_scan_at timestamp with time zone NOT NULL,
+    PRIMARY KEY(repository_id)
+);
 
-alter table lsif_last_index_scan add column if not exists indexing_type indexing_type not null default 'precise';
+COMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';
+COMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';

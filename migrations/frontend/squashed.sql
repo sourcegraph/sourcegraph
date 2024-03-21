@@ -65,11 +65,6 @@ CREATE TYPE feature_flag_type AS ENUM (
     'rollout'
 );
 
-CREATE TYPE indexing_type AS ENUM (
-    'precise',
-    'syntactic'
-);
-
 CREATE TYPE lsif_uploads_transition_columns AS (
 	state text,
 	expired boolean,
@@ -3279,8 +3274,7 @@ CREATE VIEW lsif_indexes_with_repository_name AS
 
 CREATE TABLE lsif_last_index_scan (
     repository_id integer NOT NULL,
-    last_index_scan_at timestamp with time zone NOT NULL,
-    indexing_type indexing_type DEFAULT 'precise'::indexing_type NOT NULL
+    last_index_scan_at timestamp with time zone NOT NULL
 );
 
 COMMENT ON TABLE lsif_last_index_scan IS 'Tracks the last time repository was checked for auto-indexing job scheduling.';
@@ -4632,6 +4626,15 @@ CREATE SEQUENCE survey_responses_id_seq
 
 ALTER SEQUENCE survey_responses_id_seq OWNED BY survey_responses.id;
 
+CREATE TABLE syntactic_scip_index_last_scan (
+    repository_id integer NOT NULL,
+    last_index_scan_at timestamp with time zone NOT NULL
+);
+
+COMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';
+
+COMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';
+
 CREATE TABLE syntactic_scip_indexing_jobs (
     id bigint NOT NULL,
     commit text NOT NULL,
@@ -5624,7 +5627,7 @@ ALTER TABLE ONLY lsif_indexes
     ADD CONSTRAINT lsif_indexes_pkey PRIMARY KEY (id);
 
 ALTER TABLE ONLY lsif_last_index_scan
-    ADD CONSTRAINT lsif_last_index_scan_pkey PRIMARY KEY (repository_id, indexing_type);
+    ADD CONSTRAINT lsif_last_index_scan_pkey PRIMARY KEY (repository_id);
 
 ALTER TABLE ONLY lsif_last_retention_scan
     ADD CONSTRAINT lsif_last_retention_scan_pkey PRIMARY KEY (repository_id);
@@ -5805,6 +5808,9 @@ ALTER TABLE ONLY settings
 
 ALTER TABLE ONLY survey_responses
     ADD CONSTRAINT survey_responses_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY syntactic_scip_index_last_scan
+    ADD CONSTRAINT syntactic_scip_index_last_scan_pkey PRIMARY KEY (repository_id);
 
 ALTER TABLE ONLY syntactic_scip_indexing_jobs
     ADD CONSTRAINT syntactic_scip_indexing_jobs_pkey PRIMARY KEY (id);

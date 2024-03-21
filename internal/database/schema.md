@@ -2366,13 +2366,12 @@ Stores metadata about a code intel index job.
 
 # Table "public.lsif_last_index_scan"
 ```
-       Column       |           Type           | Collation | Nullable |         Default          
---------------------+--------------------------+-----------+----------+--------------------------
+       Column       |           Type           | Collation | Nullable | Default 
+--------------------+--------------------------+-----------+----------+---------
  repository_id      | integer                  |           | not null | 
  last_index_scan_at | timestamp with time zone |           | not null | 
- indexing_type      | indexing_type            |           | not null | 'precise'::indexing_type
 Indexes:
-    "lsif_last_index_scan_pkey" PRIMARY KEY, btree (repository_id, indexing_type)
+    "lsif_last_index_scan_pkey" PRIMARY KEY, btree (repository_id)
 
 ```
 
@@ -4013,6 +4012,21 @@ Foreign-key constraints:
 
 ```
 
+# Table "public.syntactic_scip_index_last_scan"
+```
+       Column       |           Type           | Collation | Nullable | Default 
+--------------------+--------------------------+-----------+----------+---------
+ repository_id      | integer                  |           | not null | 
+ last_index_scan_at | timestamp with time zone |           | not null | 
+Indexes:
+    "syntactic_scip_index_last_scan_pkey" PRIMARY KEY, btree (repository_id)
+
+```
+
+Tracks the last time repository was checked for syntactic indexing job scheduling.
+
+**last_index_scan_at**: The last time uploads of this repository were considered for syntactic indexing job scheduling.
+
 # Table "public.syntactic_scip_indexing_jobs"
 ```
          Column         |           Type           | Collation | Nullable |                         Default                          
@@ -5080,11 +5094,6 @@ Foreign-key constraints:
 
 - bool
 - rollout
-
-# Type indexing_type
-
-- precise
-- syntactic
 
 # Type persistmode
 

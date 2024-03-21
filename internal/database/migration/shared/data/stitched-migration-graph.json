@@ -11157,25 +11157,12 @@
 			{
 				"ID": 1709738515,
 				"Name": "Add syntactic indexing support to policies",
-				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nDO $$\nBEGIN\n    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'indexing_type') THEN\n        CREATE TYPE indexing_type AS ENUM ('precise', 'syntactic');\n    END IF;\nEND$$;\n\nalter table lsif_last_index_scan add column if not exists indexing_type indexing_type not null default 'precise';",
-				"DownQuery": "alter table lsif_configuration_policies drop column if exists syntactic_indexing_enabled;\nalter table lsif_last_index_scan drop column if exists indexing_type;\ndrop type if exists indexing_type;",
+				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nCREATE TABLE  syntactic_scip_index_last_scan(\n    repository_id int NOT NULL,\n    last_index_scan_at timestamp with time zone NOT NULL,\n    PRIMARY KEY(repository_id)\n);\n\nCOMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';\nCOMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';",
+				"DownQuery": "alter table lsif_configuration_policies drop column if exists syntactic_indexing_enabled;\ndrop table if exists syntactic_scip_index_last_scan;",
 				"Privileged": false,
 				"NonIdempotent": false,
 				"Parents": [
 					1708596613
-				],
-				"IsCreateIndexConcurrently": false,
-				"IndexMetadata": null
-			},
-			{
-				"ID": 1710779416,
-				"Name": "Change primary key on lsif_last_index_scan",
-				"UpQuery": "-- Perform migration here.\n--\n-- See /migrations/README.md. Highlights:\n--  * Make migrations idempotent (use IF EXISTS)\n--  * Make migrations backwards-compatible (old readers/writers must continue to work)\n--  * If you are using CREATE INDEX CONCURRENTLY, then make sure that only one statement\n--    is defined per file, and that each such statement is NOT wrapped in a transaction.\n--    Each such migration must also declare \"createIndexConcurrently: true\" in their\n--    associated metadata.yaml file.\n--  * If you are modifying Postgres extensions, you must also declare \"privileged: true\"\n--    in the associated metadata.yaml file.\n\nalter table lsif_last_index_scan\n      drop constraint lsif_last_index_scan_pkey,\n      add constraint lsif_last_index_scan_pkey primary key (repository_id, indexing_type);",
-				"DownQuery": "alter table lsif_last_index_scan\n      drop constraint lsif_last_index_scan_pkey,\n      add constraint lsif_last_index_scan_pkey primary key (repository_id);",
-				"Privileged": false,
-				"NonIdempotent": false,
-				"Parents": [
-					1709738515
 				],
 				"IsCreateIndexConcurrently": false,
 				"IndexMetadata": null
@@ -11430,7 +11417,7 @@
 			"v5.3.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
-					1710779416
+					1709738515
 				],
 				"PreCreation": false
 			}
