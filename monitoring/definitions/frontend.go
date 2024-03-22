@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sourcegraph/sourcegraph/monitoring/definitions/shared"
@@ -18,7 +19,8 @@ func Frontend() *monitoring.Dashboard {
 		grpcZoektConfigurationServiceName = "sourcegraph.zoekt.configuration.v1.ZoektConfigurationService"
 		grpcInternalAPIServiceName        = "api.internalapi.v1.ConfigService"
 
-		scrapeJobRegex = `(sourcegraph-)?frontend`
+		scrapeJobRegex              = `(sourcegraph-)?frontend`
+		httpRequestHostVariableName = "httpRequestHost"
 	)
 
 	var sentinelSamplingIntervals []string
@@ -59,6 +61,16 @@ func Frontend() *monitoring.Dashboard {
 					Query:         "src_updatecheck_client_duration_seconds_sum",
 					LabelName:     "instance",
 					ExampleOption: "sourcegraph-frontend:3090",
+				},
+				Multi: true,
+			},
+			{
+				Label: "HTTP request hostname",
+				Name:  httpRequestHostVariableName,
+				OptionsLabelValues: monitoring.ContainerVariableOptionsLabelValues{
+					Query:         "src_http_client_external_request_count",
+					LabelName:     "host",
+					ExampleOption: "ping.sourcegraph.com",
 				},
 				Multi: true,
 			},
@@ -628,6 +640,42 @@ func Frontend() *monitoring.Dashboard {
 							Panel:          monitoring.Panel().Unit(monitoring.Number),
 							Owner:          monitoring.ObservableOwnerSource,
 							Interpretation: `Account lockouts per minute`,
+						},
+					},
+				},
+			},
+			{
+				Title:  "External HTTP Request Rate",
+				Hidden: true,
+				Rows: []monitoring.Row{
+					{
+						{
+							Name:        "external_http_request_rate_by_host",
+							Description: "rate of external HTTP requests by host over 1m",
+							Query:       fmt.Sprintf("sum by (host) (rate(src_http_client_external_request_count{host=~`%s`}[1m]))", fmt.Sprintf("${%s:regex}", httpRequestHostVariableName)),
+							NoAlert:     true,
+							Panel: monitoring.Panel().Unit(monitoring.RequestsPerSecond).LegendFormat("{{host}}").
+								With(monitoring.PanelOptions.ZeroIfNoData()).
+								With(monitoring.PanelOptions.LegendOnRight()),
+							Owner: monitoring.ObservableOwnerSource,
+							Interpretation: strings.TrimSpace(`
+							Shows the rate of external HTTP requests made by Sourcegraph to other services, broken down by host.
+`),
+						},
+					},
+					{
+						{
+							Name:        "external_http_request_rate_by_host_by_code",
+							Description: "rate of external HTTP requests by host and response code over 1m",
+							Query:       fmt.Sprintf("sum by (host, status_code) (rate(src_http_client_external_request_count{host=~`%s`}[1m]))", fmt.Sprintf("${%s:regex}", httpRequestHostVariableName)),
+							NoAlert:     true,
+							Panel: monitoring.Panel().Unit(monitoring.RequestsPerSecond).LegendFormat("{{host}}:{{status_code}}").
+								With(monitoring.PanelOptions.ZeroIfNoData()).
+								With(monitoring.PanelOptions.LegendOnRight()),
+							Owner: monitoring.ObservableOwnerSource,
+							Interpretation: strings.TrimSpace(`
+							Shows the rate of external HTTP requests made by Sourcegraph to other services, broken down by host and response code.
+`),
 						},
 					},
 				},

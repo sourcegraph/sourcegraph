@@ -1074,3 +1074,168 @@ func TestRetryBasedOnStatusCode(t *testing.T) {
 		})
 	}
 }
+
+func TestDoExternalRequestCountMetricsMiddleware(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		observeFuncRan := false
+		observe := func(host, method string, statusCode int) {
+			observeFuncRan = true
+
+			if diff := cmp.Diff("example.com", host); diff != "" {
+				t.Errorf("unexpected host (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff("POST", method); diff != "" {
+				t.Errorf("unexpected method (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(http.StatusOK, statusCode); diff != "" {
+				t.Errorf("unexpected status code (-want +got):\n%s", diff)
+			}
+		}
+		next := newFakeClient(http.StatusOK, nil, nil)
+
+		cli := doExternalRequestCountMetricsMiddleware(next, observe)
+
+		req, _ := http.NewRequest("POST", "http://example.com", nil)
+		_, err := cli.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !observeFuncRan {
+			t.Error("observe() was not called")
+		}
+	})
+
+	t.Run("returns -1 status code if next Doer fails", func(t *testing.T) {
+		observeFuncRan := false
+		observe := func(host, method string, statusCode int) {
+			observeFuncRan = true
+			if diff := cmp.Diff("example.com", host); diff != "" {
+				t.Errorf("unexpected host (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff("POST", method); diff != "" {
+				t.Errorf("unexpected method (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(-1, statusCode); diff != "" {
+				t.Errorf("unexpected status code (-want +got):\n%s", diff)
+			}
+		}
+
+		expectedError := errors.New("fake error")
+
+		next := newFakeClient(http.StatusOK, nil, expectedError)
+
+		cli := doExternalRequestCountMetricsMiddleware(next, observe)
+
+		req, _ := http.NewRequest("POST", "http://example.com", nil)
+		_, err := cli.Do(req)
+		if !errors.Is(err, expectedError) {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if !observeFuncRan {
+			t.Error("observe() was not called")
+		}
+
+	})
+
+	t.Run("prefers request.Host over request.URL.Host", func(t *testing.T) {
+		observeFuncRan := false
+		wrongHost, rightHost := "example.org", "example.com"
+
+		observe := func(host, method string, statusCode int) {
+			observeFuncRan = true
+			if diff := cmp.Diff(rightHost, host); diff != "" {
+				t.Errorf("unexpected host (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff("POST", method); diff != "" {
+				t.Errorf("unexpected method (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(http.StatusOK, statusCode); diff != "" {
+				t.Errorf("unexpected status code (-want +got):\n%s", diff)
+			}
+		}
+
+		next := newFakeClient(http.StatusOK, nil, nil)
+
+		cli := doExternalRequestCountMetricsMiddleware(next, observe)
+
+		req, _ := http.NewRequest("POST", fmt.Sprintf("http://%s", rightHost), nil)
+		req.URL.Host = wrongHost
+		_, err := cli.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !observeFuncRan {
+			t.Error("observe() was not called")
+		}
+	})
+
+	t.Run("falls back to request.URL.Host if request.Host is empty", func(t *testing.T) {
+		observeFuncRan := false
+		rightHost := "example.com"
+
+		observe := func(host, method string, statusCode int) {
+			observeFuncRan = true
+			if diff := cmp.Diff(rightHost, host); diff != "" {
+				t.Errorf("unexpected host (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff("POST", method); diff != "" {
+				t.Errorf("unexpected method (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(http.StatusOK, statusCode); diff != "" {
+				t.Errorf("unexpected status code (-want +got):\n%s", diff)
+			}
+		}
+
+		next := newFakeClient(http.StatusOK, nil, nil)
+
+		cli := doExternalRequestCountMetricsMiddleware(next, observe)
+
+		req, _ := http.NewRequest("POST", fmt.Sprintf("http://%s", rightHost), nil)
+		req.Host = ""
+		_, err := cli.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !observeFuncRan {
+			t.Error("observe() was not called")
+		}
+	})
+
+	t.Run("host is unknown if both request.Host and request.URL.Host are empty", func(t *testing.T) {
+		observeFuncRan := false
+
+		observe := func(host, method string, statusCode int) {
+			observeFuncRan = true
+			if diff := cmp.Diff("<unknown>", host); diff != "" {
+				t.Errorf("unexpected host (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff("POST", method); diff != "" {
+				t.Errorf("unexpected method (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(http.StatusOK, statusCode); diff != "" {
+				t.Errorf("unexpected status code (-want +got):\n%s", diff)
+			}
+		}
+
+		next := newFakeClient(http.StatusOK, nil, nil)
+
+		cli := doExternalRequestCountMetricsMiddleware(next, observe)
+
+		req, _ := http.NewRequest("POST", "http://", nil)
+		req.Host = ""
+		_, err := cli.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !observeFuncRan {
+			t.Error("observe() was not called")
+		}
+	})
+}
