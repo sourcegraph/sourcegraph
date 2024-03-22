@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenizer"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -59,7 +59,7 @@ type flaggingResult struct {
 // perform basic abuse-detection and filtering. The implementation should err on the side of efficency,
 // as the goal isn't for 100% accuracy. But to catch obvious abuse patterns, and let other backend
 // systems do a more through review async.
-func isFlaggedRequest(tk *tokenizer.Tokenizer, r flaggingRequest, cfg flaggingConfig) (*flaggingResult, error) {
+func isFlaggedRequest(tk tokenizer.Tokenizer, r flaggingRequest, cfg flaggingConfig) (*flaggingResult, error) {
 	var reasons []string
 	prompt := strings.ToLower(r.FlattenedPrompt)
 

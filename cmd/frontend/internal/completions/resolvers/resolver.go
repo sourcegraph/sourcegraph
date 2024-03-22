@@ -80,7 +80,7 @@ func (c *completionsResolver) Completions(ctx context.Context, args graphqlbacke
 	params := convertParams(args)
 	// No way to configure the model through the request, we hard code to chat.
 	params.Model = chatModel
-	resp, err := client.Complete(ctx, types.CompletionsFeatureChat, version, params)
+	resp, err := client.Complete(ctx, types.CompletionsFeatureChat, version, params, c.logger)
 	if err != nil {
 		return "", errors.Wrap(err, "client.Complete")
 	}

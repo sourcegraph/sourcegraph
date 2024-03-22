@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/sourcegraph/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/anthropic"
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/fireworks"
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/openai"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
@@ -23,7 +25,7 @@ import (
 
 // NewClient instantiates a completions provider backed by Sourcegraph's managed
 // Cody Gateway service.
-func NewClient(cli httpcli.Doer, endpoint, accessToken string) (types.CompletionsClient, error) {
+func NewClient(cli httpcli.Doer, endpoint, accessToken string, tokenizer tokenusage.Manager) (types.CompletionsClient, error) {
 	gatewayURL, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
@@ -32,6 +34,7 @@ func NewClient(cli httpcli.Doer, endpoint, accessToken string) (types.Completion
 		upstream:    cli,
 		gatewayURL:  gatewayURL,
 		accessToken: accessToken,
+		tokenizer:   tokenizer,
 	}, nil
 }
 
@@ -39,22 +42,23 @@ type codyGatewayClient struct {
 	upstream    httpcli.Doer
 	gatewayURL  *url.URL
 	accessToken string
+	tokenizer   tokenusage.Manager
 }
 
-func (c *codyGatewayClient) Stream(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters, sendEvent types.SendCompletionEvent) error {
+func (c *codyGatewayClient) Stream(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters, sendEvent types.SendCompletionEvent, logger log.Logger) error {
 	cc, err := c.clientForParams(feature, &requestParams)
 	if err != nil {
 		return err
 	}
-	return overwriteErrSource(cc.Stream(ctx, feature, version, requestParams, sendEvent))
+	return overwriteErrSource(cc.Stream(ctx, feature, version, requestParams, sendEvent, logger))
 }
 
-func (c *codyGatewayClient) Complete(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters) (*types.CompletionResponse, error) {
+func (c *codyGatewayClient) Complete(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters, logger log.Logger) (*types.CompletionResponse, error) {
 	cc, err := c.clientForParams(feature, &requestParams)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := cc.Complete(ctx, feature, version, requestParams)
+	resp, err := cc.Complete(ctx, feature, version, requestParams, logger)
 	return resp, overwriteErrSource(err)
 }
 
@@ -80,9 +84,9 @@ func (c *codyGatewayClient) clientForParams(feature types.CompletionsFeature, re
 	// gatewayDoer that authenticates against the Gateway's API.
 	switch provider {
 	case string(conftypes.CompletionsProviderNameAnthropic):
-		return anthropic.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/anthropic-messages"), "", "", true), nil
+		return anthropic.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/anthropic-messages"), "", "", true, c.tokenizer), nil
 	case string(conftypes.CompletionsProviderNameOpenAI):
-		return openai.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/openai"), "", ""), nil
+		return openai.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/openai"), "", "", c.tokenizer), nil
 	case string(conftypes.CompletionsProviderNameFireworks):
 		return fireworks.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/fireworks"), "", ""), nil
 	case "":

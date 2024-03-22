@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenizer"
 )
 
 func TestMakeFlaggingConfig(t *testing.T) {
@@ -59,7 +59,7 @@ func TestIsFlaggedRequest(t *testing.T) {
 
 	// Create a generic tokenizer. If provided to isFlaggedRequest, it will enable
 	// a few more checks.
-	tokenizer, err := tokenizer.NewAnthropicClaudeTokenizer()
+	tokenizer, err := tokenizer.NewAnthropicClaudeTokenizer("anthropic")
 	require.NoError(t, err)
 
 	// callIsFlaggedRequest just wraps the call to isFlaggedResult.

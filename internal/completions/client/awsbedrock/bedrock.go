@@ -18,17 +18,20 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/sourcegraph/log"
 
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func NewClient(cli httpcli.Doer, endpoint, accessToken string) types.CompletionsClient {
+func NewClient(cli httpcli.Doer, endpoint, accessToken string, tokenizer tokenusage.Manager) types.CompletionsClient {
 	return &awsBedrockAnthropicCompletionStreamClient{
 		cli:         cli,
 		accessToken: accessToken,
 		endpoint:    endpoint,
+		tokenizer:   tokenizer,
 	}
 }
 
@@ -40,6 +43,7 @@ type awsBedrockAnthropicCompletionStreamClient struct {
 	cli         httpcli.Doer
 	accessToken string
 	endpoint    string
+	tokenizer   tokenusage.Manager
 }
 
 func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
@@ -47,6 +51,7 @@ func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
 	feature types.CompletionsFeature,
 	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
+	logger log.Logger,
 ) (*types.CompletionResponse, error) {
 	resp, err := c.makeRequest(ctx, requestParams, version, false)
 	if err != nil {
@@ -63,10 +68,22 @@ func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
 		completion += content.Text
 	}
 
+	err = c.tokenizer.TokenizeAndCalculateUsage(inputText(requestParams.Messages), completion, requestParams.Model, string(feature))
+	if err != nil {
+		logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+	}
 	return &types.CompletionResponse{
 		Completion: completion,
 		StopReason: response.StopReason,
 	}, nil
+}
+
+func inputText(messages []types.Message) string {
+	allText := ""
+	for _, message := range messages {
+		allText += message.Text
+	}
+	return allText
 }
 
 func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
@@ -75,6 +92,7 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	logger log.Logger,
 ) error {
 	resp, err := a.makeRequest(ctx, requestParams, version, true)
 	if err != nil {
@@ -101,6 +119,10 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 		if err == io.EOF {
 			if !sentEvent {
 				return errors.New("stream closed with no events")
+			}
+			err = a.tokenizer.TokenizeAndCalculateUsage(inputText(requestParams.Messages), totalCompletion, requestParams.Model, string(feature))
+			if err != nil {
+				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 			}
 			return nil
 		}

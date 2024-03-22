@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcegraph/log"
 
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/conf/deploy"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -389,6 +390,15 @@ func getAndMarshalRepoMetadataUsageJSON(ctx context.Context, db database.DB) (_ 
 	return json.Marshal(repoMetadataUsage)
 }
 
+func getLLMUsageData() (_ json.RawMessage, err error) {
+	Manager := tokenusage.NewManager()
+	usageData, err := Manager.GetAllTokenUsageData()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(usageData)
+}
+
 func getDependencyVersions(ctx context.Context, db database.DB, logger log.Logger) (json.RawMessage, error) {
 	logFunc := logFuncFrom(logger.Scoped("getDependencyVersions"))
 	var (
@@ -500,6 +510,7 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 		CodyUsage2:                    []byte("{}"),
 		CodyProviders:                 []byte("{}"),
 		RepoMetadataUsage:             []byte("{}"),
+		LlmUsage:                      []byte("{}"),
 	}
 
 	totalUsers, err := getTotalUsersCount(ctx, db)
@@ -668,7 +679,7 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 	if err != nil {
 		logFunc("repoMetadataUsage failed", log.Error(err))
 	}
-
+	r.LlmUsage, err = getLLMUsageData()
 	r.HasExtURL = conf.UsingExternalURL()
 	r.BuiltinSignupAllowed = conf.IsBuiltinSignupAllowed()
 	r.AccessRequestEnabled = conf.IsAccessRequestEnabled()
@@ -868,13 +879,13 @@ func Start(logger log.Logger, db database.DB) {
 	}
 	started = true
 
-	const delay = 30 * time.Minute
+	const delay = 1 * time.Minute
 	scopedLog := logger.Scoped("updatecheck")
 	for {
 		check(scopedLog, db)
 
 		// Randomize sleep to prevent thundering herds.
-		randomDelay := time.Duration(rand.Intn(600)) * time.Second
+		randomDelay := time.Duration(rand.Intn(10)) * time.Second
 		time.Sleep(delay + randomDelay)
 	}
 }

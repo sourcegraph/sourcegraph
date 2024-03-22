@@ -14,6 +14,7 @@ go_library(
         "//internal/completions/types",
         "//internal/httpcli",
         "//lib/errors",
+        "@com_github_sourcegraph_log//:log",
     ],
 )
 
@@ -27,6 +28,7 @@ go_test(
     deps = [
         "//internal/completions/types",
         "@com_github_hexops_autogold_v2//:autogold",
+        "@com_github_sourcegraph_log//:log",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],

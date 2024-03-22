@@ -7,7 +7,7 @@ import (
 	"github.com/hexops/autogold/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenizer"
 )
 
 var sampleTexts = []struct {
@@ -91,7 +91,7 @@ Assistant: My answer is (`,
 }
 
 func TestTokenize(t *testing.T) {
-	tk, err := tokenizer.NewAnthropicClaudeTokenizer()
+	tk, err := tokenizer.NewAnthropicClaudeTokenizer("testModel")
 	require.NoError(t, err)
 
 	for i, sample := range sampleTexts {

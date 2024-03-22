@@ -15,6 +15,7 @@ go_library(
         "//internal/completions/client/codygateway",
         "//internal/completions/client/fireworks",
         "//internal/completions/client/openai",
+        "//internal/completions/tokenusage",
         "//internal/completions/types",
         "//internal/conf/conftypes",
         "//internal/httpcli",

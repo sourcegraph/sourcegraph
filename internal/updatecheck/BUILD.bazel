@@ -14,6 +14,7 @@ go_library(
     deps = [
         "//cmd/frontend/hubspot",
         "//cmd/frontend/hubspot/hubspotutil",
+        "//internal/completions/tokenusage",
         "//internal/conf",
         "//internal/conf/deploy",
         "//internal/database",

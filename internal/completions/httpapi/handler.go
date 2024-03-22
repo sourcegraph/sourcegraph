@@ -289,7 +289,7 @@ func newStreamingResponseHandler(logger log.Logger, db database.DB, feature type
 					timeToFirstEventMetrics.Observe(time.Since(start).Seconds(), 1, nil, requestParams.Model)
 				}
 				return f.Send(ctx, event)
-			})
+			}, logger)
 		if err != nil {
 			l := trace.Logger(ctx, logger)
 
@@ -360,7 +360,7 @@ func newStreamingResponseHandler(logger log.Logger, db database.DB, feature type
 // to the client.
 func newNonStreamingResponseHandler(logger log.Logger, db database.DB, feature types.CompletionsFeature) func(ctx context.Context, requestParams types.CompletionRequestParameters, version types.CompletionsVersion, cc types.CompletionsClient, w http.ResponseWriter, userStore database.UserStore) {
 	return func(ctx context.Context, requestParams types.CompletionRequestParameters, version types.CompletionsVersion, cc types.CompletionsClient, w http.ResponseWriter, userStore database.UserStore) {
-		completion, err := cc.Complete(ctx, feature, version, requestParams)
+		completion, err := cc.Complete(ctx, feature, version, requestParams, logger)
 		if err != nil {
 			logFields := []log.Field{log.Error(err)}
 

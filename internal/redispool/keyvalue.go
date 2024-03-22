@@ -25,6 +25,8 @@ type KeyValue interface {
 	SetNx(key string, value any) (bool, error)
 	Incr(key string) (int, error)
 	Incrby(key string, value int) (int, error)
+	IncrbyInt64(key string, value int64) (int64, error)
+	DecrbyInt64(key string, value int64) (int64, error)
 	Del(key string) error
 
 	TTL(key string) (int, error)
@@ -78,6 +80,10 @@ func (v Value) Bytes() ([]byte, error) {
 
 func (v Value) Int() (int, error) {
 	return redis.Int(v.reply, v.err)
+}
+
+func (v Value) Int64() (int64, error) {
+	return redis.Int64(v.reply, v.err)
 }
 
 func (v Value) String() (string, error) {
@@ -178,6 +184,14 @@ func (r *redisKeyValue) Incr(key string) (int, error) {
 
 func (r *redisKeyValue) Incrby(key string, value int) (int, error) {
 	return r.do("INCRBY", r.prefix+key, value).Int()
+}
+
+func (r *redisKeyValue) IncrbyInt64(key string, value int64) (int64, error) {
+	return r.do("INCRBY", r.prefix+key, value).Int64()
+}
+
+func (r *redisKeyValue) DecrbyInt64(key string, value int64) (int64, error) {
+	return r.do("DECRBY", r.prefix+key, value).Int64()
 }
 
 func (r *redisKeyValue) Del(key string) error {

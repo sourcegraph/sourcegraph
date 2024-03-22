@@ -16,6 +16,9 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"golang.org/x/net/http2"
 
+	"github.com/sourcegraph/log"
+
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -106,18 +109,20 @@ func getCredentialOptions() (*azidentity.DefaultAzureCredentialOptions, error) {
 
 type GetCompletionsAPIClientFunc func(accessToken, endpoint string) (CompletionsClient, error)
 
-func NewClient(getClient GetCompletionsAPIClientFunc, accessToken, endpoint string) (types.CompletionsClient, error) {
+func NewClient(getClient GetCompletionsAPIClientFunc, accessToken, endpoint string, tokenizer tokenusage.Manager) (types.CompletionsClient, error) {
 	client, err := getClient(accessToken, endpoint)
 	if err != nil {
 		return nil, err
 	}
 	return &azureCompletionClient{
-		client: client,
+		client:    client,
+		tokenizer: tokenizer,
 	}, nil
 }
 
 type azureCompletionClient struct {
-	client CompletionsClient
+	client    CompletionsClient
+	tokenizer tokenusage.Manager
 }
 
 func (c *azureCompletionClient) Complete(
@@ -125,6 +130,7 @@ func (c *azureCompletionClient) Complete(
 	feature types.CompletionsFeature,
 	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
+	log log.Logger,
 ) (*types.CompletionResponse, error) {
 
 	switch feature {
@@ -185,12 +191,13 @@ func (c *azureCompletionClient) Stream(
 	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	log log.Logger,
 ) error {
 	switch feature {
 	case types.CompletionsFeatureCode:
-		return streamAutocomplete(ctx, c.client, requestParams, sendEvent)
+		return streamAutocomplete(ctx, c.client, requestParams, sendEvent, log)
 	case types.CompletionsFeatureChat:
-		return streamChat(ctx, c.client, requestParams, sendEvent)
+		return streamChat(ctx, c.client, requestParams, sendEvent, log)
 	default:
 		return errors.New("invalid completions feature")
 	}
@@ -201,6 +208,7 @@ func streamAutocomplete(
 	client CompletionsClient,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	logger log.Logger,
 ) error {
 	options, err := getCompletionsOptions(requestParams)
 	if err != nil {
@@ -219,6 +227,11 @@ func streamAutocomplete(
 		entry, err := resp.CompletionsStream.Read()
 		// stream is done
 		if errors.Is(err, io.EOF) {
+			tokenManager := tokenusage.NewManager()
+			err = tokenManager.TokenizeAndCalculateUsage(inputText(requestParams.Messages), content, "azure/"+requestParams.Model, "code_completions")
+			if err != nil {
+				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+			}
 			return nil
 		}
 		// some other error has occured
@@ -250,6 +263,7 @@ func streamChat(
 	client CompletionsClient,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	logger log.Logger,
 ) error {
 
 	resp, err := client.GetChatCompletionsStream(ctx, getChatOptions(requestParams), nil)
@@ -265,6 +279,11 @@ func streamChat(
 		entry, err := resp.ChatCompletionsStream.Read()
 		// stream is done
 		if errors.Is(err, io.EOF) {
+			tokenManager := tokenusage.NewManager()
+			err = tokenManager.TokenizeAndCalculateUsage(inputText(requestParams.Messages), content, "azure/"+requestParams.Model, "chat_completions")
+			if err != nil {
+				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+			}
 			return nil
 		}
 		// some other error has occurred
@@ -292,6 +311,14 @@ func streamChat(
 			}
 		}
 	}
+}
+
+func inputText(messages []types.Message) string {
+	allText := ""
+	for _, message := range messages {
+		allText += message.Text
+	}
+	return allText
 }
 
 // hasValidChatChoice checks to ensure there is a choice and the first one contains non-nil values

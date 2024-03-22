@@ -47,6 +47,9 @@ type MockKeyValue struct {
 	// IncrbyFunc is an instance of a mock function object controlling the
 	// behavior of the method Incrby.
 	IncrbyFunc *KeyValueIncrbyFunc
+	// IncrbyInt64Func is an instance of a mock function object controlling
+	// the behavior of the method IncrbyInt64.
+	IncrbyInt64Func *KeyValueIncrbyInt64Func
 	// KeysFunc is an instance of a mock function object controlling the
 	// behavior of the method Keys.
 	KeysFunc *KeyValueKeysFunc
@@ -136,6 +139,11 @@ func NewMockKeyValue() *MockKeyValue {
 		},
 		IncrbyFunc: &KeyValueIncrbyFunc{
 			defaultHook: func(string, int) (r0 int, r1 error) {
+				return
+			},
+		},
+		IncrbyInt64Func: &KeyValueIncrbyInt64Func{
+			defaultHook: func(string, int64) (r0 int64, r1 error) {
 				return
 			},
 		},
@@ -256,6 +264,11 @@ func NewStrictMockKeyValue() *MockKeyValue {
 				panic("unexpected invocation of MockKeyValue.Incrby")
 			},
 		},
+		IncrbyInt64Func: &KeyValueIncrbyInt64Func{
+			defaultHook: func(string, int64) (int64, error) {
+				panic("unexpected invocation of MockKeyValue.IncrbyInt64")
+			},
+		},
 		KeysFunc: &KeyValueKeysFunc{
 			defaultHook: func(string) ([]string, error) {
 				panic("unexpected invocation of MockKeyValue.Keys")
@@ -352,6 +365,9 @@ func NewMockKeyValueFrom(i KeyValue) *MockKeyValue {
 		},
 		IncrbyFunc: &KeyValueIncrbyFunc{
 			defaultHook: i.Incrby,
+		},
+		IncrbyInt64Func: &KeyValueIncrbyInt64Func{
+			defaultHook: i.IncrbyInt64,
 		},
 		KeysFunc: &KeyValueKeysFunc{
 			defaultHook: i.Keys,
@@ -1426,6 +1442,114 @@ func (c KeyValueIncrbyFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c KeyValueIncrbyFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// KeyValueIncrbyInt64Func describes the behavior when the IncrbyInt64
+// method of the parent MockKeyValue instance is invoked.
+type KeyValueIncrbyInt64Func struct {
+	defaultHook func(string, int64) (int64, error)
+	hooks       []func(string, int64) (int64, error)
+	history     []KeyValueIncrbyInt64FuncCall
+	mutex       sync.Mutex
+}
+
+// IncrbyInt64 delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockKeyValue) IncrbyInt64(v0 string, v1 int64) (int64, error) {
+	r0, r1 := m.IncrbyInt64Func.nextHook()(v0, v1)
+	m.IncrbyInt64Func.appendCall(KeyValueIncrbyInt64FuncCall{v0, v1, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the IncrbyInt64 method
+// of the parent MockKeyValue instance is invoked and the hook queue is
+// empty.
+func (f *KeyValueIncrbyInt64Func) SetDefaultHook(hook func(string, int64) (int64, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// IncrbyInt64 method of the parent MockKeyValue instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *KeyValueIncrbyInt64Func) PushHook(hook func(string, int64) (int64, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *KeyValueIncrbyInt64Func) SetDefaultReturn(r0 int64, r1 error) {
+	f.SetDefaultHook(func(string, int64) (int64, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *KeyValueIncrbyInt64Func) PushReturn(r0 int64, r1 error) {
+	f.PushHook(func(string, int64) (int64, error) {
+		return r0, r1
+	})
+}
+
+func (f *KeyValueIncrbyInt64Func) nextHook() func(string, int64) (int64, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *KeyValueIncrbyInt64Func) appendCall(r0 KeyValueIncrbyInt64FuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of KeyValueIncrbyInt64FuncCall objects
+// describing the invocations of this function.
+func (f *KeyValueIncrbyInt64Func) History() []KeyValueIncrbyInt64FuncCall {
+	f.mutex.Lock()
+	history := make([]KeyValueIncrbyInt64FuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// KeyValueIncrbyInt64FuncCall is an object that describes an invocation of
+// method IncrbyInt64 on an instance of MockKeyValue.
+type KeyValueIncrbyInt64FuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 string
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 int64
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 int64
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c KeyValueIncrbyInt64FuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c KeyValueIncrbyInt64FuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
