@@ -34,36 +34,14 @@ local check_lerna_file = function(root, contents_by_path)
   return false
 end
 
-local can_derive_node_version = function(root, paths, contents_by_path)
-  local ancestors = path.ancestors(root)
-
-  for i = 1, #ancestors do
-    local payload = safe_decode(contents_by_path[path.join(ancestors[i], "package.json")] or "")
-    if payload and payload["engines"] and payload["engines"]["node"] then
-      return true
-    end
-  end
-
-  for i = 1, #ancestors do
-    local candidates = {
-      path.join(ancestors[i], ".nvmrc"),
-      path.join(ancestors[i], ".node-version"),
-      path.join(ancestors[i], ".n-node-version"),
-    }
-    if util.contains_any(paths, candidates) then
-      return true
-    end
-  end
-
-  return false
-end
-
 local infer_typescript_job = function(api, tsconfig_path, should_infer_config)
   local root = path.dirname(tsconfig_path)
   local reverse_ancestors = util.reverse(path.ancestors(tsconfig_path))
 
   api:register(recognizer.new_path_recognizer {
     patterns = {
+      -- To find package roots
+      pattern.new_path_basename "package.json",
       -- To disambiguate installation steps
       pattern.new_path_basename "yarn.lock",
       -- Try to determine version
@@ -76,8 +54,6 @@ local infer_typescript_job = function(api, tsconfig_path, should_infer_config)
     },
 
     patterns_for_content = {
-      -- To read explicitly configured engines and npm client
-      pattern.new_path_basename "package.json",
       pattern.new_path_basename "lerna.json",
       pattern.new_path_exclude(exclude_paths),
     },
@@ -88,7 +64,7 @@ local infer_typescript_job = function(api, tsconfig_path, should_infer_config)
 
       local docker_steps = {}
       for i = 1, #reverse_ancestors do
-        if contents_by_path[path.join(reverse_ancestors[i], "package.json")] then
+        if util.contains(paths, path.join(reverse_ancestors[i], "package.json")) then
           local install_command = ""
           if is_yarn or util.contains(paths, path.join(reverse_ancestors[i], "yarn.lock")) then
             install_command = "yarn"
@@ -110,15 +86,13 @@ local infer_typescript_job = function(api, tsconfig_path, should_infer_config)
       end
 
       local local_steps = {}
-      if can_derive_node_version(root, paths, contents_by_path) then
-        for i = 1, #docker_steps do
-          -- Add `n` invocation command before each docker step
-          docker_steps[i].commands = util.with_new_head(docker_steps[i].commands, typescript_nmusl_command)
-        end
-
-        -- Add `n` invocation (in indexing container) before indexer runs
-        local_steps = { typescript_nmusl_command }
+      for i = 1, #docker_steps do
+        -- Add `n` invocation command before each docker step
+        docker_steps[i].commands = util.with_new_head(docker_steps[i].commands, typescript_nmusl_command)
       end
+
+      -- Add `n` invocation (in indexing container) before indexer runs
+      local_steps = { typescript_nmusl_command }
 
       table.insert(
         local_steps,
