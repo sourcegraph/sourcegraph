@@ -155,7 +155,7 @@ func (s *repositoriesConnectionStore) MarshalCursor(node *RepositoryResolver, or
 		}
 		value = strconv.FormatInt(int64(*size), 10)
 	default:
-		return nil, errors.New(fmt.Sprintf("invalid OrderBy.Field. Expected: one of (name, created_at, gr.repo_size_bytes). Actual: %s", column))
+		return nil, errors.Newf("invalid OrderBy.Field. Expected: one of (name, created_at, gr.repo_size_bytes). Actual: %s", column)
 	}
 
 	cursor := MarshalRepositoryCursor(
@@ -180,12 +180,12 @@ func (s *repositoriesConnectionStore) UnmarshalCursor(cursor string, orderBy dat
 
 	column := orderBy[0].Field
 	if repoCursor.Column != column {
-		return nil, errors.New(fmt.Sprintf("Invalid cursor. Expected: %s Actual: %s", column, repoCursor.Column))
+		return nil, errors.Newf("Invalid cursor. Expected: %s Actual: %s", column, repoCursor.Column)
 	}
 
 	values := strings.Split(repoCursor.Value, "@")
 	if len(values) != 2 {
-		return nil, errors.New(fmt.Sprintf("Invalid cursor. Expected Value: <%s>@<id> Actual Value: %s", column, repoCursor.Value))
+		return nil, errors.Newf("Invalid cursor. Expected Value: <%s>@<id> Actual Value: %s", column, repoCursor.Value)
 	}
 
 	repoID, err := strconv.Atoi(values[1])

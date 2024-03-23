@@ -826,7 +826,7 @@ func unmarshalAssignOwnerArgs(args graphqlbackend.AssignOwnerOrTeamInput, unmars
 		return nil, unmarshalError
 	}
 	if userOrTeamID == 0 {
-		return nil, errors.New(fmt.Sprintf("assigned %s ID should not be 0", unmarshalMode))
+		return nil, errors.Newf("assigned %s ID should not be 0", unmarshalMode)
 	}
 	repoID, err := graphqlbackend.UnmarshalRepositoryID(args.RepoID)
 	if err != nil {

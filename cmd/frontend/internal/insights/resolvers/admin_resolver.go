@@ -500,7 +500,7 @@ func (a *adminBackfillQueueConnectionStore) MarshalCursor(node *graphqlbackend.B
 	switch scheduler.BackfillQueueColumn(column) {
 	case scheduler.State, scheduler.QueuePosition:
 	default:
-		return nil, errors.New(fmt.Sprintf("invalid OrderBy.Field. Expected: one of (STATE, QUEUE_POSITION). Actual: %s", column))
+		return nil, errors.Newf("invalid OrderBy.Field. Expected: one of (STATE, QUEUE_POSITION). Actual: %s", column)
 	}
 
 	// In cursor Column is the what to sort by and the Value is the backfillID

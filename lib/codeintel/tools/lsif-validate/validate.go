@@ -35,7 +35,7 @@ func validate(indexFile *os.File) error {
 	}
 
 	if len(ctx.Errors) > 0 {
-		return errors.New(fmt.Sprintf("Detected %d errors", len(ctx.Errors)))
+		return errors.Newf("Detected %d errors", len(ctx.Errors))
 	}
 
 	return nil

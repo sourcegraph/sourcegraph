@@ -164,7 +164,7 @@ func testDirectory(ctx context.Context, logger log.Logger, indexer []string, dir
 	}
 
 	if !successful {
-		return errors.New(fmt.Sprintf("'%s' Failed.", directory))
+		return errors.Newf("'%s' Failed.", directory)
 	}
 
 	return nil

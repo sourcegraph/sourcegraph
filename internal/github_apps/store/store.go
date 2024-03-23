@@ -118,7 +118,7 @@ func (s *gitHubAppsStore) Create(ctx context.Context, app *ghtypes.GitHubApp) (i
 
 	baseURL, err := url.Parse(app.BaseURL)
 	if err != nil {
-		return -1, errors.New(fmt.Sprintf("unable to parse base URL: %s", baseURL.String()))
+		return -1, errors.Newf("unable to parse base URL: %s", baseURL.String())
 	}
 	baseURL = extsvc.NormalizeBaseURL(baseURL)
 	domain := app.Domain

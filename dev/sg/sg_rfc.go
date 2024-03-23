@@ -126,7 +126,7 @@ sg rfc --private create --type <type> "title"
 					}
 				}
 				if template.Name == "" {
-					return errors.New(fmt.Sprintf("Unknown RFC type: %s", rfcType))
+					return errors.Newf("Unknown RFC type: %s", rfcType)
 				}
 
 				if c.Args().Len() == 0 {

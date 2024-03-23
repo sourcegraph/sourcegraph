@@ -110,7 +110,7 @@ func (c PackageRepoConfig) LoadBaseImage(name string) error {
 func (c PackageRepoConfig) CleanupBaseImageBuild(name string) error {
 	imageDir := c.ImageDir
 	if !strings.HasSuffix(imageDir, "/wolfi-images/local-images") {
-		return errors.New(fmt.Sprintf("directory '%s' does not look like the image output directory - not cleaning up", imageDir))
+		return errors.Newf("directory '%s' does not look like the image output directory - not cleaning up", imageDir)
 	}
 
 	if err := os.RemoveAll(imageDir); err != nil {

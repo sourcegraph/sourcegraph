@@ -166,7 +166,7 @@ func (s *searchJobsConnectionStore) MarshalCursor(node graphqlbackend.SearchJobR
 	case "query":
 		value = node.Query()
 	default:
-		return nil, errors.New(fmt.Sprintf("invalid OrderBy.Field. Expected one of (created_at, agg_state, query). Actual: %s", column))
+		return nil, errors.Newf("invalid OrderBy.Field. Expected one of (created_at, agg_state, query). Actual: %s", column)
 	}
 
 	id, err := UnmarshalSearchJobID(node.ID())
@@ -184,7 +184,7 @@ func (s *searchJobsConnectionStore) MarshalCursor(node graphqlbackend.SearchJobR
 
 func (s *searchJobsConnectionStore) UnmarshalCursor(cursor string, orderBy database.OrderBy) ([]any, error) {
 	if kind := relay.UnmarshalKind(graphql.ID(cursor)); kind != searchJobsCursorKind {
-		return nil, errors.New(fmt.Sprintf("expected a %q cursor, got %q", searchJobsCursorKind, kind))
+		return nil, errors.Newf("expected a %q cursor, got %q", searchJobsCursorKind, kind)
 	}
 	var spec *types.Cursor
 	if err := relay.UnmarshalSpec(graphql.ID(cursor), &spec); err != nil {
@@ -196,12 +196,12 @@ func (s *searchJobsConnectionStore) UnmarshalCursor(cursor string, orderBy datab
 	}
 	column := orderBy[0].Field
 	if spec.Column != column {
-		return nil, errors.New(fmt.Sprintf("expected a %q cursor, got %q", column, spec.Column))
+		return nil, errors.Newf("expected a %q cursor, got %q", column, spec.Column)
 	}
 
 	i := strings.LastIndex(spec.Value, "@")
 	if i == -1 {
-		return nil, errors.New(fmt.Sprintf("Invalid cursor. Expected Value: <%s>@<id> Actual Value: %s", column, spec.Value))
+		return nil, errors.Newf("Invalid cursor. Expected Value: <%s>@<id> Actual Value: %s", column, spec.Value)
 	}
 
 	values := []string{spec.Value[0:i], spec.Value[i+1:]}

@@ -39,7 +39,7 @@ func TestFetchGSM(t *testing.T) {
 			name: "Test cannot find secret returns empty secret",
 			client: &mockClient{
 				AccessFunc: func(ctx context.Context, req *secretmanagerpb.AccessSecretVersionRequest, opts ...gax.CallOption) (*secretmanagerpb.AccessSecretVersionResponse, error) {
-					return nil, errors.New(fmt.Sprintf("rpc error: code = NotFound desc = Secret [%s] not found or has no versions", req.Name))
+					return nil, errors.Newf("rpc error: code = NotFound desc = Secret [%s] not found or has no versions", req.Name)
 				},
 				CloseFunc: func() error { return nil },
 			},

@@ -80,7 +80,7 @@ func ValidateBatchSpecTemplate(spec string) (bool, error) {
 		// to provide a clearer message.
 		errorRe := regexp.MustCompile(`(?i)function "(?P<key>[^"]+)" not defined`)
 		if matches := errorRe.FindStringSubmatch(err.Error()); len(matches) > 0 {
-			return false, errors.New(fmt.Sprintf("validating batch spec template: unknown templating variable: '%s'", matches[1]))
+			return false, errors.Newf("validating batch spec template: unknown templating variable: '%s'", matches[1])
 		}
 		// If we couldn't give a more specific error, fall back on the one from text/template.
 		return false, errors.Wrap(err, "validating batch spec template")
@@ -92,7 +92,7 @@ func ValidateBatchSpecTemplate(spec string) (bool, error) {
 		// to provide a clearer message.
 		errorRe := regexp.MustCompile(`(?i)at <(?P<outer>[^>]+)>:.*for key "(?P<inner>[^"]+)"`)
 		if matches := errorRe.FindStringSubmatch(err.Error()); len(matches) > 0 {
-			return false, errors.New(fmt.Sprintf("validating batch spec template: unknown templating variable: '%s.%s'", matches[1], matches[2]))
+			return false, errors.Newf("validating batch spec template: unknown templating variable: '%s.%s'", matches[1], matches[2])
 		}
 		// If we couldn't give a more specific error, fall back on the one from text/template.
 		return false, errors.Wrap(err, "validating batch spec template")
