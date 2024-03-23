@@ -30,6 +30,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/lazyregexp"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/client"
+	"github.com/sourcegraph/sourcegraph/internal/search/limits"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
 	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
@@ -287,11 +288,10 @@ func parseURLQuery(q url.Values) (*args, error) {
 		return nil, errors.New("no query found")
 	}
 
-	display := get("display", "-1")
+	display := limits.SearchLimits(conf.Get()).DisplayLimit
+
 	var err error
-	if a.Display, err = strconv.Atoi(display); err != nil {
-		return nil, errors.Errorf("display must be an integer, got %q: %w", display, err)
-	}
+	a.Display = display
 
 	maxLineLen := get("max-line-len", "-1")
 	if a.MaxLineLen, err = strconv.Atoi(maxLineLen); err != nil {

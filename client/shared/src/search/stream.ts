@@ -499,15 +499,6 @@ export interface StreamSearchOptions {
     zoektSearchOptions?: string
 
     /**
-     * Limits the number of matches sent down. Note: this is different to the
-     * count: in the query. The search will continue once we hit displayLimit
-     * and updated filters and statistics will continue to stream down.
-     *
-     * If unset all results are streamed down.
-     */
-    displayLimit?: number
-
-    /**
      * Truncates content strings such that no line is longer than
      * maxLineLength. This is used to prevent sending large previews down to
      * the browser which can cause high CPU and network usage.
@@ -527,7 +518,6 @@ function initiateSearchStream(
         zoektSearchOptions,
         featureOverrides,
         searchMode = SearchMode.Precise,
-        displayLimit = 1500,
         maxLineLen,
         sourcegraphURL = '',
         chunkMatches = false,
@@ -542,7 +532,6 @@ function initiateSearchStream(
             ['v', version],
             ['t', patternType as string],
             ['sm', searchMode.toString()],
-            ['display', displayLimit.toString()],
             ['cm', chunkMatches ? 't' : 'f'],
         ]
         if (trace) {
