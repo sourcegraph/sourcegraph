@@ -22,6 +22,7 @@ import { GitCommitNodeByline } from './GitCommitNodeByline'
 
 import styles from './GitCommitNode.module.scss'
 
+const TRUNCATED_COMMIT_MESSAGE_LENGTH = 240
 export interface GitCommitNodeProps {
     node: GitCommitFields
 
@@ -90,6 +91,7 @@ export const GitCommitNode: React.FunctionComponent<React.PropsWithChildren<GitC
     const settings = useSettings()
 
     const [showCommitMessageBody, setShowCommitMessageBody] = useState<boolean>(false)
+    const [truncateCommitMessage, setTruncateCommitMessage] = useState<boolean>(true)
     const [flashCopiedToClipboardMessage, setFlashCopiedToClipboardMessage] = useState<boolean>(false)
 
     const sourceType = node.perforceChangelist ? RepositoryType.PERFORCE_DEPOT : RepositoryType.GIT_REPOSITORY
@@ -166,14 +168,30 @@ export const GitCommitNode: React.FunctionComponent<React.PropsWithChildren<GitC
         </div>
     )
 
-    const commitMessageBody =
-        expandCommitMessageBody || showCommitMessageBody ? (
-            <div className="w-100">
-                <pre className={styles.messageBody}>
-                    {node.body && <Linkified input={node.body} externalURLs={node.externalURLs} />}
-                </pre>
-            </div>
-        ) : undefined
+    const commitMessage = node.body ?? ''
+    const truncationNeeded = commitMessage.length > TRUNCATED_COMMIT_MESSAGE_LENGTH
+    const truncatedCommitMessage =
+        truncateCommitMessage && truncationNeeded
+            ? `${commitMessage.slice(0, TRUNCATED_COMMIT_MESSAGE_LENGTH)}...`
+            : commitMessage
+
+    const commitMessageBody = (
+        <div className="w-100">
+            <pre className={styles.messageBody}>
+                <Linkified input={truncatedCommitMessage} externalURLs={node.externalURLs} />
+                {truncationNeeded && (
+                    <Button
+                        variant="link"
+                        size="sm"
+                        display="inline"
+                        onClick={() => setTruncateCommitMessage(!truncateCommitMessage)}
+                    >
+                        {truncateCommitMessage ? 'see more' : 'see less'}
+                    </Button>
+                )}
+            </pre>
+        </div>
+    )
 
     const bylineElement = (
         <GitCommitNodeByline
@@ -362,7 +380,6 @@ export const GitCommitNode: React.FunctionComponent<React.PropsWithChildren<GitC
                             {!extraCompact && <Link to={canonicalURL}>{oidElement}</Link>}
                             {afterElement}
                         </div>
-                        {commitMessageBody}
                     </div>
                 )}
             </>
