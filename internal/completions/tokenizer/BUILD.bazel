@@ -8,11 +8,8 @@ go_library(
         "tokenizer.go",
     ],
     embedsrcs = ["claude.json"],
-    importpath = "github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer",
-    visibility = [
-        "//cmd/cody-gateway:__subpackages__",
-        "//internal/completions/client/openai:__pkg__",
-    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/completions/tokenizer",
+    visibility = ["//:__subpackages__"],
     deps = ["@com_github_pkoukk_tiktoken_go//:tiktoken-go"],
 )
 

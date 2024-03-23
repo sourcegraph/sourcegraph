@@ -103,6 +103,7 @@ type CompletionResponse struct {
 	Completion string    `json:"completion"`
 	StopReason string    `json:"stopReason"`
 	Logprobs   *Logprobs `json:"logprobs,omitempty"`
+	TokensUsed int       `json:"tokensused,omitempty"`
 }
 
 type Logprobs struct {
