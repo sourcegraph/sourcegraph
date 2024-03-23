@@ -32,7 +32,7 @@ export const IngestedFileViewer: React.FunctionComponent<{ contents: string }> =
                 onSelection(range) {
                     navigate(
                         SourcegraphURL.from(location).setLineRange(
-                            range ? { line: range.line, endLine: range?.endLine } : {}
+                            range ? { line: range.line, endLine: range?.endLine } : null
                         ).search
                     )
                 },

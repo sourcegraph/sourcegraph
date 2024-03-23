@@ -294,7 +294,7 @@ export function toPrettyBlobURL(
                   }
                 : target.position
                 ? { line: target.position.line, character: target.position.character }
-                : {}
+                : null
         )
         .setViewState(target.viewState)
 

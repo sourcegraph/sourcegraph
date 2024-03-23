@@ -25,7 +25,7 @@
             : []
 </script>
 
-<a href={repoAtRevisionURL}>{repoName}</a>
+f<a href={repoAtRevisionURL}>{repoName}</a>
 <span aria-hidden={true}>&nbsp;›&nbsp;</span>
 <!-- #key is needed here to recreate the link because use:highlightNode changes the DOM -->
 <span class="root">

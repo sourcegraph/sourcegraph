@@ -269,7 +269,7 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
         (range: SelectedLineRange) => {
             const url = SourcegraphURL.from(locationRef.current)
                 .deleteSearchParameter('popover')
-                .setLineRange(range ? { line: range.line, endLine: range.endLine } : {})
+                .setLineRange(range ? { line: range.line, endLine: range.endLine } : null)
 
             if (customHistoryAction) {
                 customHistoryAction(

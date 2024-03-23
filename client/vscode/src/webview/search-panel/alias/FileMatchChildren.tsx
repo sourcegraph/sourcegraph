@@ -198,9 +198,8 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
         [result, fetchHighlightedFileLineRanges, grouped, telemetryService]
     )
 
-    const createCodeExcerptLink = (group: MatchGroup): string => {
-        return SourcegraphURL.from(getFileMatchUrl(result)).setLineRange(group.position).toString()
-    }
+    const createCodeExcerptLink = (group: MatchGroup): string =>
+        SourcegraphURL.from(getFileMatchUrl(result)).setLineRange(group.position).toString()
 
     /**
      * This handler implements the logic to simulate the click/keyboard

@@ -83,6 +83,7 @@ describe('SourcegraphURL', () => {
             ${'?L1:1'}                | ${{ line: 24, character: 24 }}                              | ${'/?L24:24'}
             ${'?L1:1&test=test'}      | ${{}}                                                       | ${'/?test=test'}
             ${'?L1:1'}                | ${{}}                                                       | ${'/'}
+            ${'?L1:1'}                | ${null}                                                     | ${'/'}
         `('$input => $expected', ({ input, lpr, expected }) => {
             expect(SourcegraphURL.from(input).setLineRange(lpr).toString()).toBe(expected)
         })

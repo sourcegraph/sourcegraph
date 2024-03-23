@@ -9,10 +9,7 @@
 <script lang="ts">
     import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 
-    import {
-        pluralize,
-        SourcegraphURL,
-    } from '$lib/common'
+    import { pluralize, SourcegraphURL } from '$lib/common'
     import Icon from '$lib/Icon.svelte'
     import { observeIntersection } from '$lib/intersection-observer'
     import { fetchFileRangeMatches } from '$lib/search/api/highlighting'

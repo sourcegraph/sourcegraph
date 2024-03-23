@@ -27,7 +27,7 @@ export const getURLForMode = (location: H.Location, mode: RenderMode): H.Locatio
         url.setSearchParameter(URL_QUERY_PARAM, mode)
     } else {
         // We remove any existing line ranges as they are not supported in rendered mode.
-        url.setLineRange({}).deleteSearchParameter(URL_QUERY_PARAM)
+        url.setLineRange(null).deleteSearchParameter(URL_QUERY_PARAM)
     }
 
     return { ...location, search: url.search }

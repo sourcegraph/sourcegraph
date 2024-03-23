@@ -5,12 +5,10 @@ import { get, type Readable, readable } from 'svelte/store'
 
 import { goto as svelteGoto } from '$app/navigation'
 import { page } from '$app/stores'
-import { SourcegraphURL } from '$lib/common'
 import {
     positionToOffset,
     type Definition,
     type GoToDefinitionOptions,
-    type SelectedLineRange,
     showTemporaryTooltip,
     locationToURL,
     type DocumentInfo,
@@ -30,19 +28,6 @@ import type { BlobPage_Blob } from '../../routes/[...repo=reporev]/(validrev)/(c
  * makes it easier to find the destination token.
  */
 const MINIMUM_GO_TO_DEF_LATENCY_MILLIS = 20
-
-/**
- * Update the URL search parameters with the given line information.
- * Returns a string that starts with `?` and contains the updated search parameters.
- */
-export function updateSearchParamsWithLineInformation(
-    currentSearchParams: URLSearchParams,
-    range: SelectedLineRange
-): string {
-    return SourcegraphURL.from(currentSearchParams)
-        .deleteSearchParameter('popover')
-        .setLineRange(range ? { line: range.line, endLine: range.endLine } : {}).search
-}
 
 export async function goToDefinition(
     documentInfo: DocumentInfo,

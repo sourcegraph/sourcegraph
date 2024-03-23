@@ -11,7 +11,7 @@
     import { toGraphQLResult } from '$lib/graphql'
     import Icon from '$lib/Icon.svelte'
     import LoadingSpinner from '$lib/LoadingSpinner.svelte'
-    import { updateSearchParamsWithLineInformation, createBlobDataHandler } from '$lib/repo/blob'
+    import { createBlobDataHandler } from '$lib/repo/blob'
     import FileDiff from '$lib/repo/FileDiff.svelte'
     import FileHeader from '$lib/repo/FileHeader.svelte'
     import Permalink from '$lib/repo/Permalink.svelte'
@@ -108,8 +108,12 @@
                 {highlights}
                 wrapLines={$lineWrap}
                 selectedLines={selectedPosition?.line ? selectedPosition : null}
-                on:selectline={event => {
-                    goto(updateSearchParamsWithLineInformation($page.url.searchParams, event.detail))
+                on:selectline={({ detail: range }) => {
+                    goto(
+                        SourcegraphURL.from($page.url.searchParams)
+                            .setLineRange(range ? { line: range.line, endLine: range.endLine } : null)
+                            .deleteSearchParameter('popover').search
+                    )
                 }}
                 {codeIntelAPI}
             />
