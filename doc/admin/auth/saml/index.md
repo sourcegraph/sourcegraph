@@ -88,7 +88,7 @@ Use the following filters to restrict how users can create accounts and sign in 
 
 **allowSignup**
 
-  Allows new users to creating their accounts via SAML authentication, or blocks the sign-up when set to `false`.
+  Allows new users to create their accounts via SAML authentication, or blocks the sign-up when set to `false`.
 
   If `false`, users signing in via SAML must have an existing Sourcegraph account, which will be linked to their SAML identity after the sign-in.
 
