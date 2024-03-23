@@ -124,6 +124,10 @@ Clarification and discussion about key concepts, architecture, and development s
 - [Bash](background-information/languages/bash.md)
 - [Terraform](background-information/languages/terraform.md)
 
+### Versioning and Releases
+
+- [Releases and Migrator](background-information/releases/releases_and_migrator.md)
+
 ### SQL
 
 - [Using PostgreSQL](background-information/postgresql.md)
