@@ -137,7 +137,7 @@ export function registerBuiltinClientCommands(
  * @param urlHash The current URL hash (beginning with '#' if non-empty).
  */
 export function urlForOpenPanel(viewID: string, urlHash: string): string {
-    return SourcegraphURL.from({ pathname: '', hash: urlHash }).setViewState(viewID).hash
+    return SourcegraphURL.from({ hash: urlHash }).setViewState(viewID).toString()
 }
 
 /**

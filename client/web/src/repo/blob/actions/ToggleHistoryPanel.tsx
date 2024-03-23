@@ -41,9 +41,7 @@ export class ToggleHistoryPanel extends React.PureComponent<
      * the given value.
      */
     private static locationWithVisibility(location: Location, visible: boolean): To {
-        const url = SourcegraphURL.from(location)
-        const lpr = url.lineRange
-        url.setViewState<BlobPanelTabID>(visible ? 'history' : undefined).setLineRange(lpr)
+        const url = SourcegraphURL.from(location).setViewState<BlobPanelTabID>(visible ? 'history' : undefined)
         return {
             search: url.search,
             hash: url.hash,

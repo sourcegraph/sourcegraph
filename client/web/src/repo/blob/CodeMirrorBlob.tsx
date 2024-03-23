@@ -274,8 +274,9 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
             if (customHistoryAction) {
                 customHistoryAction(
                     createPath({
-                        ...locationRef.current,
+                        pathname: url.pathname,
                         search: url.search,
+                        hash: url.hash,
                     })
                 )
             } else {

@@ -21,7 +21,7 @@ export const getModeFromURL = (location: H.Location): RenderMode => {
  * Returns the URL that displays the blob using the specified mode.
  */
 export const getURLForMode = (location: H.Location, mode: RenderMode): H.Location => {
-    const url = SourcegraphURL.from({ pathname: '', search: location.search })
+    const url = SourcegraphURL.from(location)
 
     if (mode === 'code') {
         url.setSearchParameter(URL_QUERY_PARAM, mode)
@@ -30,5 +30,10 @@ export const getURLForMode = (location: H.Location, mode: RenderMode): H.Locatio
         url.setLineRange(null).deleteSearchParameter(URL_QUERY_PARAM)
     }
 
-    return { ...location, search: url.search }
+    return {
+        ...location,
+        pathname: url.pathname,
+        search: url.search,
+        hash: url.hash,
+    }
 }

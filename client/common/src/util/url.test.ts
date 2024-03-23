@@ -3,35 +3,46 @@ import { describe, expect, it } from 'vitest'
 import { encodeURIPathComponent, LineOrPositionOrRange, SourcegraphURL } from './url'
 
 describe('SourcegraphURL', () => {
-    it('accepts a string URL', () => {
-        expect(SourcegraphURL.from('https://sourcegraph.com/some/path?some=param#L1').toString()).toBe(
-            '/some/path?some=param#L1'
-        )
-        expect(SourcegraphURL.from('/some/path?some=param#L1').toString()).toBe('/some/path?some=param#L1')
-        expect(SourcegraphURL.from('?some=param#L1').toString()).toBe('/?some=param#L1')
-        expect(SourcegraphURL.from('#L1').toString()).toBe('/#L1')
-    })
-    it('accepts a URL object', () => {
-        expect(SourcegraphURL.from(new URL('https://sourcegraph.com/some/path?some=param#L1')).toString()).toBe(
-            '/some/path?some=param#L1'
-        )
-    })
-    it('accepts URLSearchParams', () => {
-        expect(SourcegraphURL.from(new URLSearchParams('some=param')).search).toBe('?some=param')
-    })
-    describe('accepts a "location object"', () => {
-        it.each`
-            pathname        | search           | hash     | expected
-            ${'/some/path'} | ${'?some=param'} | ${'#L1'} | ${'/some/path?some=param#L1'}
-            ${'/some/path'} | ${'some=param'}  | ${'L1'}  | ${'/some/path?some=param#L1'}
-            ${'/some/path'} | ${''}            | ${''}    | ${'/some/path'}
-            ${''}           | ${'?some=param'} | ${'#L1'} | ${'/?some=param#L1'}
-        `(
-            '{pathname: $pathname, search: $search, hash: $hash} => $expected',
-            ({ pathname, search, hash, expected }) => {
-                expect(SourcegraphURL.from({ pathname, search, hash }).toString()).toBe(expected)
-            }
-        )
+    describe('from', () => {
+        describe('string input', () => {
+            it.each`
+                input                                                     | expected
+                ${'https://sourcegraph.com/some/path?some=param#L1'}      | ${'https://sourcegraph.com/some/path?some=param#L1'}
+                ${'https://sourcegraph.com:3443/some/path?some=param#L1'} | ${'https://sourcegraph.com:3443/some/path?some=param#L1'}
+                ${'/some/path?some=param#L1'}                             | ${'/some/path?some=param#L1'}
+                ${'?some=param#L1'}                                       | ${'?some=param#L1'}
+                ${'#L1'}                                                  | ${'#L1'}
+            `('$input => $expected', ({ input, expected }) => {
+                expect(SourcegraphURL.from(input).toString()).toBe(expected)
+            })
+        })
+
+        it('accepts a URL object', () => {
+            expect(SourcegraphURL.from(new URL('https://sourcegraph.com/some/path?some=param#L1')).toString()).toBe(
+                'https://sourcegraph.com/some/path?some=param#L1'
+            )
+        })
+
+        it('accepts URLSearchParams', () => {
+            expect(SourcegraphURL.from(new URLSearchParams('some=param')).search).toBe('?some=param')
+        })
+
+        describe('location object', () => {
+            it.each`
+                pathname        | search           | hash     | expected
+                ${'/some/path'} | ${'?some=param'} | ${'#L1'} | ${'/some/path?some=param#L1'}
+                ${'/some/path'} | ${'some=param'}  | ${'L1'}  | ${'/some/path?some=param#L1'}
+                ${'/some/path'} | ${''}            | ${''}    | ${'/some/path'}
+                ${''}           | ${'?some=param'} | ${'#L1'} | ${'?some=param#L1'}
+                ${''}           | ${''}            | ${'#L1'} | ${'#L1'}
+                ${'/some/path'} | ${''}            | ${'#L1'} | ${'/some/path#L1'}
+            `(
+                '{pathname: $pathname, search: $search, hash: $hash} => $expected',
+                ({ pathname, search, hash, expected }) => {
+                    expect(SourcegraphURL.from({ pathname, search, hash }).toString()).toBe(expected)
+                }
+            )
+        })
     })
 
     describe('get lineRange', () => {
@@ -75,15 +86,15 @@ describe('SourcegraphURL', () => {
             ${'/path?test=test'}      | ${{ line: 24, character: 24 }}                              | ${'/path?L24:24&test=test'}
             ${'/path?L1:1'}           | ${{ line: 24, character: 24 }}                              | ${'/path?L24:24'}
             ${'/path?L1:1&test=test'} | ${{}}                                                       | ${'/path?test=test'}
-            ${'?'}                    | ${{ line: 24, character: 24 }}                              | ${'/?L24:24'}
-            ${'?'}                    | ${{ line: 24, endLine: 56 }}                                | ${'/?L24-56'}
-            ${'?'}                    | ${{ line: 12, character: 3, endLine: 56, endCharacter: 1 }} | ${'/?L12:3-56:1'}
-            ${'?'}                    | ${{ line: 12, character: 0, endLine: 56, endCharacter: 0 }} | ${'/?L12-56'}
-            ${'?test=test'}           | ${{ line: 24, character: 24 }}                              | ${'/?L24:24&test=test'}
-            ${'?L1:1'}                | ${{ line: 24, character: 24 }}                              | ${'/?L24:24'}
-            ${'?L1:1&test=test'}      | ${{}}                                                       | ${'/?test=test'}
-            ${'?L1:1'}                | ${{}}                                                       | ${'/'}
-            ${'?L1:1'}                | ${null}                                                     | ${'/'}
+            ${'?'}                    | ${{ line: 24, character: 24 }}                              | ${'?L24:24'}
+            ${'?'}                    | ${{ line: 24, endLine: 56 }}                                | ${'?L24-56'}
+            ${'?'}                    | ${{ line: 12, character: 3, endLine: 56, endCharacter: 1 }} | ${'?L12:3-56:1'}
+            ${'?'}                    | ${{ line: 12, character: 0, endLine: 56, endCharacter: 0 }} | ${'?L12-56'}
+            ${'?test=test'}           | ${{ line: 24, character: 24 }}                              | ${'?L24:24&test=test'}
+            ${'?L1:1'}                | ${{ line: 24, character: 24 }}                              | ${'?L24:24'}
+            ${'?L1:1&test=test'}      | ${{}}                                                       | ${'?test=test'}
+            ${'?L1:1'}                | ${{}}                                                       | ${''}
+            ${'?L1:1'}                | ${null}                                                     | ${''}
         `('$input => $expected', ({ input, lpr, expected }) => {
             expect(SourcegraphURL.from(input).setLineRange(lpr).toString()).toBe(expected)
         })

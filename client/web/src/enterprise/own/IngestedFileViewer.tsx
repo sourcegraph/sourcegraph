@@ -31,9 +31,9 @@ export const IngestedFileViewer: React.FunctionComponent<{ contents: string }> =
             selectableLineNumbers({
                 onSelection(range) {
                     navigate(
-                        SourcegraphURL.from(location).setLineRange(
-                            range ? { line: range.line, endLine: range?.endLine } : null
-                        ).search
+                        SourcegraphURL.from({ search: location.search, hash: location.hash })
+                            .setLineRange(range ? { line: range.line, endLine: range?.endLine } : null)
+                            .toString()
                     )
                 },
                 initialSelection: lineNumber ? { line: lineNumber } : null,

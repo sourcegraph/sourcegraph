@@ -265,36 +265,44 @@ function formatSearchParameters(searchParameters: string): string {
  */
 export class SourcegraphURL {
     private url: URL
+    private hasPathname: boolean
+    private hasOrigin: boolean
 
     private constructor(url: string | URL) {
         this.url = typeof url === 'string' ? new URL(url, 'http://0.0.0.0/') : new URL(url)
+        this.hasPathname = !(typeof url === 'string' && /^[?#]/.test(url))
+        this.hasOrigin = typeof url !== 'string' || /^https?:/.test(url)
     }
 
     /**
      * Creates a new SourcegraphURL instance from a string, URL, URLSearchParams, or location object.
      *
-     * Important: If you pass a location object with an empty path or URLSearchParams, you should not
-     * use the full URL or the pathname because it won't be set to a useful value. Instead you should
-     * be accessing the `search` or `hash` properties as needed.
+     * When converting the URL back to a string, the string representation depends on the input as well
+     * as the changes that have been made to the URL.
+     *
+     * If the input contains an origin, the output will too.
+     * If the input contains a pathname, the output will too.
+     *
+     * This should make the output fairly predictable.
      */
     public static from(
-        url: string | URL | URLSearchParams | { pathname: string; search?: string | URLSearchParams; hash?: string }
+        url: string | URL | URLSearchParams | { pathname?: string; search?: string | URLSearchParams; hash?: string }
     ): SourcegraphURL {
         if (typeof url === 'string' || url instanceof URL) {
             return new SourcegraphURL(url)
         }
         if (url instanceof URLSearchParams) {
-            return new SourcegraphURL(`/?${formatSearchParameters(url.toString())}`)
+            return new SourcegraphURL(`?${formatSearchParameters(url.toString())}`)
         }
         return SourcegraphURL.fromLocation(url)
     }
 
     private static fromLocation(location: {
-        pathname: string
+        pathname?: string
         search?: string | URLSearchParams
         hash?: string
     }): SourcegraphURL {
-        let { pathname, search = '', hash = '' } = location
+        let { pathname = '', search = '', hash = '' } = location
         if (search) {
             if (typeof search === 'string') {
                 if (!search.startsWith('?')) {
@@ -430,7 +438,7 @@ export class SourcegraphURL {
      * The pathname of the URL.
      */
     public get pathname(): string {
-        return this.url.pathname
+        return this.hasPathname ? this.url.pathname : ''
     }
 
     /**
@@ -456,12 +464,21 @@ export class SourcegraphURL {
     }
 
     /**
-     * Returns a relative(!) URL string, i.e. path, search, and hash.
+     * Returns a string representation of the URL. The output
+     * depends on the original input and the changes that have been
+     * made to the URL.
+     * E.g. if the original input did not include a pathname, the output
+     * won't either.
      *
-     * The URL is prettified.
+     * The stringified URL is prettified.
      */
     public toString(): string {
-        return this.url.pathname + this.search + this.hash
+        return (
+            (this.hasOrigin ? this.url.origin : '') +
+            (this.hasPathname ? this.url.pathname : '') +
+            this.search +
+            this.hash
+        )
     }
 }
 

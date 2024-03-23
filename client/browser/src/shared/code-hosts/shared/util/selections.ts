@@ -40,7 +40,7 @@ export function lprToSelectionsZeroIndexed(lpr: LineOrPositionOrRange): Selectio
 }
 
 export function getSelectionsFromHash(): Selection[] {
-    return lprToSelectionsZeroIndexed(SourcegraphURL.from({ pathname: '', hash: window.location.hash }).lineRange)
+    return lprToSelectionsZeroIndexed(SourcegraphURL.from({ hash: window.location.hash }).lineRange)
 }
 
 export function observeSelectionsFromHash(): Observable<Selection[]> {
