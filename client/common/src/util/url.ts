@@ -270,7 +270,7 @@ export class SourcegraphURL {
 
     private constructor(url: string | URL) {
         this.url = typeof url === 'string' ? new URL(url, 'http://0.0.0.0/') : new URL(url)
-        this.hasPathname = !(typeof url === 'string' && /^[?#]/.test(url))
+        this.hasPathname = !(typeof url === 'string' && /^[#?]/.test(url))
         this.hasOrigin = typeof url !== 'string' || /^https?:/.test(url)
     }
 
