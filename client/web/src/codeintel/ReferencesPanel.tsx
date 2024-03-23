@@ -103,9 +103,10 @@ interface OneBasedPosition {
 
 function createStateFromLocation(location: H.Location): null | State {
     const { pathname, search } = location
-    const sgurl = SourcegraphURL.from(location)
-    const { line, character, endLine, endCharacter } = sgurl.getLineRange()
-    const viewState = sgurl.getViewState()
+    const {
+        lineRange: { line, character, endLine, endCharacter },
+        viewState,
+    } = SourcegraphURL.from(location)
     const { filePath, repoName, revision } = parseBrowserRepoURL(pathname)
 
     // If we don't have enough information in the URL, we can't render the panel

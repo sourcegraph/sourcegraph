@@ -34,7 +34,7 @@ describe('SourcegraphURL', () => {
         )
     })
 
-    describe('getLineRange', () => {
+    describe('get lineRange', () => {
         it.each`
             input         | expected
             ${'L1'}       | ${{ line: 1 }}
@@ -45,9 +45,9 @@ describe('SourcegraphURL', () => {
             ${'L1:1-1:1'} | ${{ line: 1, character: 1 }}
         `('$input => $expected', ({ input, expected }) => {
             // Search parameter position
-            expect(SourcegraphURL.from(`/some/path?${input}`).getLineRange()).toEqual(expected)
+            expect(SourcegraphURL.from(`/some/path?${input}`).lineRange).toEqual(expected)
             // Hash position
-            expect(SourcegraphURL.from(`/some/path#${input}`).getLineRange()).toEqual(expected)
+            expect(SourcegraphURL.from(`/some/path#${input}`).lineRange).toEqual(expected)
         })
 
         it.each`
@@ -59,9 +59,9 @@ describe('SourcegraphURL', () => {
             ${'L1:1-2:1-3:1'} | ${'multiple ranges'}
         `('$input ($message) => {}', ({ input }) => {
             // Search parameter position
-            expect(SourcegraphURL.from(`/some/path?${input}`).getLineRange()).toEqual({})
+            expect(SourcegraphURL.from(`/some/path?${input}`).lineRange).toEqual({})
             // Hash position
-            expect(SourcegraphURL.from(`/some/path#${input}`).getLineRange()).toEqual({})
+            expect(SourcegraphURL.from(`/some/path#${input}`).lineRange).toEqual({})
         })
     })
 
@@ -86,6 +86,18 @@ describe('SourcegraphURL', () => {
             ${'?L1:1'}                | ${null}                                                     | ${'/'}
         `('$input => $expected', ({ input, lpr, expected }) => {
             expect(SourcegraphURL.from(input).setLineRange(lpr).toString()).toBe(expected)
+        })
+    })
+
+    describe('get viewState', () => {
+        it.each`
+            input                               | expected
+            ${'/path#tab=references'}           | ${'references'}
+            ${'/path#test=test&tab=references'} | ${'references'}
+            ${'/path?test=test#tab=references'} | ${'references'}
+            ${'/path?L1:1#tab=references'}      | ${'references'}
+        `('$input => $expected', ({ input, expected }) => {
+            expect(SourcegraphURL.from(input).viewState).toBe(expected)
         })
     })
 
@@ -114,7 +126,7 @@ describe('encodeURIPathComponent', () => {
 describe('parse legacy hash', () => {
     function parseHash(hash: string): LineOrPositionOrRange & { viewState?: string } {
         const url = SourcegraphURL.from({ pathname: '', hash })
-        return { ...url.getLineRange(), viewState: url.getViewState() }
+        return { ...url.lineRange, viewState: url.viewState }
     }
 
     it('parses empty hash', () => {

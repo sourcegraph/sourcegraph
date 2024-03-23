@@ -149,55 +149,23 @@ function formatLineOrPositionOrRange(lpr: LineOrPositionOrRange): string {
 }
 
 /**
- * Adds or updates a line or position range in a URL's search parameters.
+ * Adds, updates or removes a line or position range in search parameters.
  *
- * The input can have different formats, which determine the output format:
- *  - A path with optional search parameters and a hash, e.g. `/foo?bar#L1:2`. In this case
- *    the line or position range is added or updated in the search parameters.
- *  - A query string with optional hash, e.g. `?bar#L1:2`. In this case the line or position
- *    range is added or updated in the query string.
- *
- * The output will start with a `?` if the input starts with a `?`, and with a `/` if the input
- * input is a path.
- *
- * @param href the URL to update
+ * @param inputParams the URL's search parameters
  * @param lpr the line or position range to add or update
- * @returns the updated URL
+ * @returns the updated search parameters
  */
-function addOrUpdateLineRange(href: string, lpr: LineOrPositionOrRange | null): string {
-    const url = new URL(href, 'http://0.0.0.0/') // use a dummy base URL to avoid parsing errors
+function addOrUpdateLineRange(inputParams: URLSearchParams, lpr: LineOrPositionOrRange | null): URLSearchParams {
+    const params = new URLSearchParams(inputParams)
     const range = lpr ? formatLineOrPositionOrRange(lpr) : ''
 
     // Remove existing line range if it exists
-    const existingLineRangeKey = findLineKeyInSearchParameters(url.searchParams)
+    const existingLineRangeKey = findLineKeyInSearchParameters(params)
     if (existingLineRangeKey) {
-        url.searchParams.delete(existingLineRangeKey)
+        params.delete(existingLineRangeKey)
     }
 
-    // If the provided range was valid, i.e. is non-empty, add it to the start of the parameters
-    // The string is constructed "manually" to avoid URLSearchParams encoding the `:` and `-` characters
-    if (range !== '') {
-        url.search = `${range}${url.searchParams.size > 0 ? `&${url.searchParams.toString()}` : ''}`
-    }
-
-    let out = ''
-    if (url.hash.length > 1) {
-        out = url.hash + out
-    }
-    if (url.searchParams.size > 0) {
-        out = url.search + out
-    }
-
-    // Input value was a query string, ensure the output value is also a query string, if it's not-empty
-    if (href.startsWith('?')) {
-        if (!out.startsWith('?')) {
-            out = '?' + out
-        }
-    } else {
-        // Input value was a path, ensure the output value is also a path
-        out = url.pathname + out
-    }
-    return out
+    return range !== '' ? new URLSearchParams([[range, ''], ...params]) : params
 }
 
 /**
@@ -369,7 +337,7 @@ export class SourcegraphURL {
      *
      * @returns the parsed line or position range, or an empty object if the input is invalid
      */
-    public getLineRange(): LineOrPositionOrRange {
+    public get lineRange(): LineOrPositionOrRange {
         const existingLineRangeKey = findLineKeyInSearchParameters(this.url.searchParams)
         if (existingLineRangeKey) {
             return parseLineOrPositionOrRange(existingLineRangeKey)
@@ -386,13 +354,10 @@ export class SourcegraphURL {
      * - Legacy: `#L1:2-3:4$references`
      * - Modern: `#L1:2-3:4&tab=references`
      *
-     *  @template V The type that describes the view state (typically a union of string constants).
-     *              There is no runtime check that the return value satisfies V.
-     *
      *  @returns the parsed view state, or undefined if the input is invalid
      */
-    public getViewState<V extends string = string>(): V | undefined {
-        return parseHash<V>(this.url.hash).viewState
+    public get viewState(): string | undefined {
+        return parseHash(this.url.hash).viewState
     }
 
     // Mutating functions
@@ -412,7 +377,7 @@ export class SourcegraphURL {
      * @returns the updated URL
      */
     public setLineRange(lpr: LineOrPositionOrRange | null): this {
-        this.url.search = addOrUpdateLineRange(this.url.search || '?', lpr)
+        this.url.search = addOrUpdateLineRange(this.url.searchParams, lpr).toString()
         return this
     }
 
@@ -430,7 +395,6 @@ export class SourcegraphURL {
      * @param viewState the view state to set
      */
     public setViewState<V extends string = string>(viewState: V | undefined): this {
-        // FIXME: Allow to reset the hash?
         // Try to preserve existing hash params
         const hashParams = new URLSearchParams(this.url.hash.slice(1))
         if (!viewState && !hashParams.has('tab')) {
@@ -442,7 +406,7 @@ export class SourcegraphURL {
         } else {
             hashParams.delete('tab')
         }
-        this.url.hash = formatSearchParameters(hashParams.toString())
+        this.url.hash = hashParams.toString()
         return this
     }
 
@@ -459,6 +423,14 @@ export class SourcegraphURL {
      */
     public deleteSearchParameter(key: string): this {
         this.url.searchParams.delete(key)
+        return this
+    }
+
+    /**
+     * Sets the hash of the URL.
+     */
+    public setHash(hash: string): this {
+        this.url.hash = hash
         return this
     }
 
@@ -490,7 +462,7 @@ export class SourcegraphURL {
      * The hash of the URL.
      */
     public get hash(): string {
-        return this.url.hash
+        return formatSearchParameters(this.url.hash)
     }
 
     /**
@@ -499,7 +471,7 @@ export class SourcegraphURL {
      * The URL is prettified.
      */
     public toString(): string {
-        return this.url.pathname + formatSearchParameters(this.url.search) + this.url.hash
+        return this.url.pathname + this.search + this.hash
     }
 }
 

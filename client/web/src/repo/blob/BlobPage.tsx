@@ -143,8 +143,7 @@ export const BlobPage: React.FunctionComponent<BlobPageProps> = ({ className, co
     const [enableOwnershipPanels] = useFeatureFlag('enable-ownership-panels', true)
     const enableOwnershipPanel = enableOwnershipPanels && props.ownEnabled
 
-    const lineOrRange = useMemo(() => SourcegraphURL.from(location).getLineRange(), [location])
-    const viewState = useMemo(() => SourcegraphURL.from(location).getViewState(), [location])
+    const { lineRange: lineOrRange, viewState } = useMemo(() => SourcegraphURL.from(location), [location])
 
     // Log view event whenever a new Blob, or a Blob with a different render mode, is visited.
     useEffect(() => {

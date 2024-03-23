@@ -85,7 +85,7 @@ export function parseBrowserRepoURL(href: string): ParsedRepoURI & Pick<ParsedRe
     let position: Position | undefined
     let range: Range | undefined
 
-    const lineRange = url.getLineRange()
+    const lineRange = url.lineRange
     if (lineRange.line) {
         position = {
             line: lineRange.line,

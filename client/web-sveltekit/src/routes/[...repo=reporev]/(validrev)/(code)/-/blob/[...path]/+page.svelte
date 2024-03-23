@@ -50,7 +50,7 @@
     })
     $: if (!blobPending) {
         // Update selected position as soon as blob is loaded
-        selectedPosition = SourcegraphURL.from($page.url).getLineRange()
+        selectedPosition = SourcegraphURL.from($page.url).lineRange
     }
 </script>
 

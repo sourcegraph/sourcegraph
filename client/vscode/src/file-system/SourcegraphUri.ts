@@ -205,11 +205,11 @@ export class SourcegraphUri {
         }
         let position: Position | undefined
 
-        const parsedHash = SourcegraphURL.from(url.toString()).getLineRange()
-        if (parsedHash.line) {
+        const lineRange = SourcegraphURL.from(url.toString()).lineRange
+        if (lineRange.line) {
             position = {
-                line: parsedHash.line,
-                character: parsedHash.character || 0,
+                line: lineRange.line,
+                character: lineRange.character || 0,
             }
         }
         const isDirectory = uri.includes('/-/tree/')

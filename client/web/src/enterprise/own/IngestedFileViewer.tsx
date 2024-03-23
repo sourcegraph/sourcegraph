@@ -22,7 +22,7 @@ export const IngestedFileViewer: React.FunctionComponent<{ contents: string }> =
     const location = useLocation()
     const navigate = useNavigate()
 
-    const lineNumber = useMemo(() => SourcegraphURL.from(location).getLineRange().line, [location])
+    const lineNumber = useMemo(() => SourcegraphURL.from(location).lineRange.line, [location])
 
     const extensions: Extension[] = useMemo(
         () => [

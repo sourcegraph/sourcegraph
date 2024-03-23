@@ -33,7 +33,7 @@ export class ToggleHistoryPanel extends React.PureComponent<
      * Reports the current visibility (derived from the location).
      */
     public static isVisible(location: Location): boolean {
-        return SourcegraphURL.from(location).getViewState<BlobPanelTabID>() === 'history'
+        return SourcegraphURL.from(location).viewState === 'history'
     }
 
     /**
@@ -42,7 +42,7 @@ export class ToggleHistoryPanel extends React.PureComponent<
      */
     private static locationWithVisibility(location: Location, visible: boolean): To {
         const url = SourcegraphURL.from(location)
-        const lpr = url.getLineRange()
+        const lpr = url.lineRange
         url.setViewState<BlobPanelTabID>(visible ? 'history' : undefined).setLineRange(lpr)
         return {
             search: url.search,

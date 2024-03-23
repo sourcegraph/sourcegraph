@@ -46,6 +46,7 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
     } = props
 
     const location = useLocation()
+    console.log(location)
     const { filePath = '' } = parseBrowserRepoURL(location.pathname) // empty string is root
 
     // Redirect tree and blob routes pointing to the root to the repo page
@@ -61,12 +62,15 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
     if (objectType === 'blob' && hashLineNumberMatch) {
         const startLineNumber = parseInt(hashLineNumberMatch[1], 10)
         const endLineNumber = hashLineNumberMatch[2] ? parseInt(hashLineNumberMatch[2].slice(1), 10) : undefined
+        // Navigate's to doesn't seem to work with the SourcegraphURL object, so we need to convert it to a string
         return (
             <Navigate
-                to={SourcegraphURL.from({ pathname: location.pathname, search: location.search }).setLineRange({
-                    line: startLineNumber,
-                    endLine: endLineNumber,
-                })}
+                to={SourcegraphURL.from({ pathname: location.pathname, search: location.search })
+                    .setLineRange({
+                        line: startLineNumber,
+                        endLine: endLineNumber,
+                    })
+                    .toString()}
                 replace={true}
             />
         )
@@ -75,12 +79,15 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
     // For blob pages with legacy URL fragment hashes like "#L17:19-21:23$foo:bar"
     // redirect to the modern URL structure like "?L17:19-21:23#tab=foo:bar"
     if (!hideRepoRevisionContent && objectType === 'blob' && isLegacyFragment(location.hash)) {
-        const url = SourcegraphURL.from(location)
-        const lineRange = url.getLineRange()
-        const viewState = url.getViewState()
+        const { lineRange, viewState } = SourcegraphURL.from(location)
+        // Navigate's to doesn't seem to work with the SourcegraphURL object, so we need to convert it to a string
         return (
             <Navigate
-                to={SourcegraphURL.from(location).setLineRange(lineRange).setViewState(viewState)}
+                to={SourcegraphURL.from(location)
+                    .setHash('')
+                    .setLineRange(lineRange)
+                    .setViewState(viewState)
+                    .toString()}
                 replace={true}
             />
         )

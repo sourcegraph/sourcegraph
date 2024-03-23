@@ -64,7 +64,7 @@ function useBlobPanelViews({
     const location = useLocation()
 
     const position = useMemo(() => {
-        const lineRange = SourcegraphURL.from(location).getLineRange()
+        const lineRange = SourcegraphURL.from(location).lineRange
         return lineRange.line !== undefined ? { line: lineRange.line, character: lineRange.character || 0 } : undefined
     }, [location])
 

@@ -236,7 +236,7 @@ export const CodeMirrorBlob: React.FunctionComponent<BlobProps> = props => {
         // router location API.
         //
         // This is needed to support the reference panel
-        () => SourcegraphURL.from(props.activeURL || location).getLineRange(),
+        () => SourcegraphURL.from(props.activeURL || location).lineRange,
         [props.activeURL, location]
     )
     const hasPin = useMemo(() => urlIsPinned(location.search), [location.search])
@@ -658,9 +658,6 @@ function useCodeIntelExtension(
                       },
                       pin: {
                           onPin(position) {
-                              const search = new URLSearchParams(locationRef.current.search)
-                              search.set('popover', 'pinned')
-
                               updateBrowserHistoryIfChanged(
                                   navigate,
                                   locationRef.current,
@@ -671,9 +668,6 @@ function useCodeIntelExtension(
                               void navigator.clipboard.writeText(window.location.href)
                           },
                           onUnpin() {
-                              const parameters = new URLSearchParams(locationRef.current.search)
-                              parameters.delete('popover')
-
                               updateBrowserHistoryIfChanged(
                                   navigate,
                                   locationRef.current,
@@ -847,6 +841,6 @@ export function updateBrowserHistoryIfChanged(
         currentSearchParameters.some(([key, value]) => newLocation.searchParams.get(key) !== value)
 
     if (needsUpdate) {
-        navigate(newLocation, { replace })
+        navigate(newLocation.toString(), { replace })
     }
 }
