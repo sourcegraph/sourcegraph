@@ -81,7 +81,9 @@
 
 ### Does Cody train on my code?
 
-No, Cody does not train on your code. Our third-party Language Model (LLM) providers also do not train on your specific codebase. Cody operates by following a specific process to generate answers to your queries:
+For Enterprise customers, Sourcegraph will not train on your company’s data. For Free and Pro tier users, Sourcegraph will not train on your data without your permission.
+
+Our third-party Language Model (LLM) providers do not train on your specific codebase. Cody operates by following a specific process to generate answers to your queries:
 
 - **User query**: A user asks a question
 - **Code retrieval**: Sourcegraph, our underlying code intelligence platform, performs a search and code intelligence operation to retrieve code snippets relevant to the user's question. During this process, strict permissions are enforced to ensure that only code that the user has read permission for is retrieved
