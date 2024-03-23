@@ -104,14 +104,6 @@ export interface UIRangeSpec {
     range: UIRange
 }
 
-/**
- * Specifies an LSP mode.
- */
-export interface ModeSpec {
-    /** The LSP mode, which identifies the language server to use. */
-    mode: string
-}
-
 // `panelID` is intended for substitution (e.g. `sub(panel.url, 'panelID', 'implementations')`)
 export type BlobViewState = 'def' | 'references' | 'panelID'
 
