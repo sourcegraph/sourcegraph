@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
 import { mdiWeb, mdiWebOff } from '@mdi/js'
+import { RepoActionInfo } from 'src/repo/RepoActionInfo'
 
 import { SimpleActionItem } from '@sourcegraph/shared/src/actions/SimpleActionItem'
 import type { RenderMode } from '@sourcegraph/shared/src/util/url'
@@ -31,12 +32,13 @@ export const ToggleOpenCodeGraphVisibilityAction: React.FC<Props> = props => {
         // TODO(sqs): telemetry
     }, [setVisible])
 
-    const icon = disabled || !visible ? mdiWebOff : mdiWeb
+    const iconPath = disabled || !visible ? mdiWebOff : mdiWeb
+    const icon = <Icon aria-hidden={true} svgPath={iconPath} className={styles.repoActionIcon} />
 
     if (props.source === 'actionItemsBar') {
         return (
             <SimpleActionItem tooltip={descriptiveText} isActive={visible} onSelect={onCycle} disabled={disabled}>
-                <Icon aria-hidden={true} svgPath={icon} className={styles.repoActionIcon} />
+                {icon}
             </SimpleActionItem>
         )
     }
@@ -44,7 +46,7 @@ export const ToggleOpenCodeGraphVisibilityAction: React.FC<Props> = props => {
     if (props.actionType === 'dropdown') {
         return (
             <RepoHeaderActionMenuLink file={true} as={Button} onClick={onCycle} disabled={disabled}>
-                <Icon aria-hidden={true} svgPath={icon} className={styles.repoActionIcon} />
+                {icon}
                 <span>{descriptiveText}</span>
             </RepoHeaderActionMenuLink>
         )
@@ -57,7 +59,7 @@ export const ToggleOpenCodeGraphVisibilityAction: React.FC<Props> = props => {
                 disabled={disabled}
                 className="d-flex justify-content-center align-items-center"
             >
-                <Icon aria-hidden={true} svgPath={icon} className={styles.repoActionIcon} />
+                <RepoActionInfo icon={icon} displayName="Graph" />
             </RepoHeaderActionAnchor>
         </Tooltip>
     )
