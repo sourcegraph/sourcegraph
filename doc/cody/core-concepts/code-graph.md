@@ -1,6 +1,6 @@
 # Code Graph
 
-<p class="subtitle">Understand what is Code Graph and how Cody use it to gather context.</p>
+<p class="subtitle">Understand what is Code Graph and how Cody uses it to gather context.</p>
 
 Code Graph is a key component of Cody's capacity to generate contextual responses based on your codebase. It involves analyzing the structure of the code rather than treating it as plain text. Cody examines how different components of the codebase are interconnected and how they are used.
 
