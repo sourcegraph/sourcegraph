@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/regexp"
 
 	"github.com/sourcegraph/sourcegraph/internal/search/filter"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -482,6 +483,47 @@ func validatePattern(nodes []Node) error {
 	return err
 }
 
+// validateContent is a best effort validation to avoid the user incorrectly
+// using "content:". Currently content: converts the query type to TypeFile.
+func validateContent(nodes []Node) error {
+	patternCount := 0
+	isContentCount := 0
+	VisitPattern(nodes, func(value string, negated bool, annotation Annotation) {
+		patternCount++
+		if annotation.Labels.IsSet(IsContent) {
+			isContentCount++
+		}
+	})
+
+	if isContentCount == 0 {
+		return nil
+	}
+
+	// Invariant: We now have content: fields.
+
+	var rts result.Types
+	VisitField(nodes, FieldType, func(v string, negated bool, ann Annotation) {
+		rts = rts.With(result.TypeFromString[v])
+	})
+
+	// TypeEmpty is our default which means we nearly always will include
+	// TypeFile. See computeResultTypes.
+	if rts != result.TypeEmpty && rts != result.TypeFile {
+		return errors.New("the query contains a content: field and the query is not type:file. We only support content: on type:file searches at the moment.")
+	}
+
+	if patternCount != isContentCount {
+		// The only way for us to execute this query is if the type is file.
+		if rts == result.TypeFile {
+			return nil
+		}
+
+		return errors.New("the query contains a content: field mixed with a pattern. This is only valid for type:file searches at the moment.")
+	}
+
+	return nil
+}
+
 func validate(nodes []Node) error {
 	succeeds := func(fns ...func([]Node) error) error {
 		for _, fn := range fns {
@@ -500,6 +542,7 @@ func validate(nodes []Node) error {
 		validateCommitParameters,
 		validateTypeStructural,
 		validateRefGlobs,
+		validateContent,
 	)
 }
 
