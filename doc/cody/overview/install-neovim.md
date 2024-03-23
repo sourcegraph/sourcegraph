@@ -172,8 +172,12 @@ return {
 ### `packer.nvim`
 
 ```lua
--- Packer.nvim, also make sure to install nvim-lua/plenary.nvim
-use { 'sourcegraph/sg.nvim', run = 'nvim -l build/init.lua' }
+-- Packer.nvim
+use ({ 
+  "sourcegraph/sg.nvim", 
+  requires = { "nvim-lua/plenary.nvim" },
+  run = "nvim -l build/init.lua"
+})
 ```
 
 ### `vim-plug`
@@ -239,6 +243,20 @@ The `sg.nvim` extension also supports pre-built reusable prompts for Cody called
 - `:CodyTaskPrev`: Cycles to the previous `CodyTask`
 - `:CodyTaskView`: Opens the last active `CodyTask`
 - `:CodyToggle`: Toggle to the current Cody Chat window
+
+## Setting Up Autocompletion
+
+To set up autocompletion with Cody, make sure [`nvim-cmp`](https://github.com/hrsh7th/nvim-cmp) is installed, then set `cody` as a completion source for `nvim-cmp`:
+
+```lua
+local cmp = require("cmp")
+cmp.setup({
+  sources = cmp.config.sources({
+    { name = "cody" },
+    -- Your other sources
+  }),
+})
+```
 
 ## More benefits
 
