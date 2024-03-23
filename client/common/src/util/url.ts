@@ -310,57 +310,7 @@ export class SourcegraphURL {
         return new SourcegraphURL(`${pathname}${search}${hash}`)
     }
 
-    // Parse functions
-
-    /**
-     * Parses the encoded line range from the URL's search parameters or hash.
-     * A line range is often present in file URLs to indicate the selected lines or positions.
-     *
-     * If the URL contains a line range in both the search parameters and the hash,
-     * the search parameters take precedence.
-     *
-     * If the line range is "empty" (e.g. L1:2-1:2), the return value will be simplified
-     * to a position (e.g. L1:2).
-     *
-     * Examples of valid line or position ranges:
-     *
-     *   ?L1 => { line: 1 }
-     *   ?L1:2 => { line: 1, character: 2 }
-     *   ?L1-2 => { line: 1, endLine: 2 }
-     *   ?L1:2-3:4 => { line: 1, character: 2, endLine: 3, endCharacter: 4 }
-     *   ?L1:2-1:2 => { line: 1, character: 2 }
-     *   #L1 => { line: 1 }
-     *   #L1:2 => { line: 1, character: 2 }
-     *   #L1-2 => { line: 1, endLine: 2 }
-     *   #L1:2-3:4 => { line: 1, character: 2, endLine: 3, endCharacter: 4 }
-     *   #L1:2-1:2 => { line: 1, character: 2 }
-     *
-     * @returns the parsed line or position range, or an empty object if the input is invalid
-     */
-    public get lineRange(): LineOrPositionOrRange {
-        const existingLineRangeKey = findLineKeyInSearchParameters(this.url.searchParams)
-        if (existingLineRangeKey) {
-            return parseLineOrPositionOrRange(existingLineRangeKey)
-        }
-        return parseHash(this.url.hash)
-    }
-
-    /**
-     * Parses the view state from the URL.
-     *
-     * The view state is often present in file URLs to indicate the selected tab.
-     *
-     * The function supports both legacy and modern hash formats:
-     * - Legacy: `#L1:2-3:4$references`
-     * - Modern: `#L1:2-3:4&tab=references`
-     *
-     *  @returns the parsed view state, or undefined if the input is invalid
-     */
-    public get viewState(): string | undefined {
-        return parseHash(this.url.hash).viewState
-    }
-
-    // Mutating functions
+    // Mutation methods
 
     /**
      * Adds or updates a line or position range in a URL's search parameters.
@@ -426,15 +376,55 @@ export class SourcegraphURL {
         return this
     }
 
+    // Accessors
+    //
     /**
-     * Sets the hash of the URL.
+     * Parses the encoded line range from the URL's search parameters or hash.
+     * A line range is often present in file URLs to indicate the selected lines or positions.
+     *
+     * If the URL contains a line range in both the search parameters and the hash,
+     * the search parameters take precedence.
+     *
+     * If the line range is "empty" (e.g. L1:2-1:2), the return value will be simplified
+     * to a position (e.g. L1:2).
+     *
+     * Examples of valid line or position ranges:
+     *
+     *   ?L1 => { line: 1 }
+     *   ?L1:2 => { line: 1, character: 2 }
+     *   ?L1-2 => { line: 1, endLine: 2 }
+     *   ?L1:2-3:4 => { line: 1, character: 2, endLine: 3, endCharacter: 4 }
+     *   ?L1:2-1:2 => { line: 1, character: 2 }
+     *   #L1 => { line: 1 }
+     *   #L1:2 => { line: 1, character: 2 }
+     *   #L1-2 => { line: 1, endLine: 2 }
+     *   #L1:2-3:4 => { line: 1, character: 2, endLine: 3, endCharacter: 4 }
+     *   #L1:2-1:2 => { line: 1, character: 2 }
+     *
+     * @returns the parsed line or position range, or an empty object if the input is invalid
      */
-    public setHash(hash: string): this {
-        this.url.hash = hash
-        return this
+    public get lineRange(): LineOrPositionOrRange {
+        const existingLineRangeKey = findLineKeyInSearchParameters(this.url.searchParams)
+        if (existingLineRangeKey) {
+            return parseLineOrPositionOrRange(existingLineRangeKey)
+        }
+        return parseHash(this.url.hash)
     }
 
-    // Accessors
+    /**
+     * Parses the view state from the URL.
+     *
+     * The view state is often present in file URLs to indicate the selected tab.
+     *
+     * The function supports both legacy and modern hash formats:
+     * - Legacy: `#L1:2-3:4$references`
+     * - Modern: `#L1:2-3:4&tab=references`
+     *
+     *  @returns the parsed view state, or undefined if the input is invalid
+     */
+    public get viewState(): string | undefined {
+        return parseHash(this.url.hash).viewState
+    }
 
     /**
      * The pathname of the URL.

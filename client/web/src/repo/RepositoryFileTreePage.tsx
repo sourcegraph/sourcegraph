@@ -46,7 +46,6 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
     } = props
 
     const location = useLocation()
-    console.log(location)
     const { filePath = '' } = parseBrowserRepoURL(location.pathname) // empty string is root
 
     // Redirect tree and blob routes pointing to the root to the repo page
@@ -83,8 +82,7 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
         // Navigate's to doesn't seem to work with the SourcegraphURL object, so we need to convert it to a string
         return (
             <Navigate
-                to={SourcegraphURL.from(location)
-                    .setHash('')
+                to={SourcegraphURL.from({ pathname: location.pathname, search: location.search })
                     .setLineRange(lineRange)
                     .setViewState(viewState)
                     .toString()}
