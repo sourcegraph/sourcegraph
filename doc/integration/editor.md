@@ -12,6 +12,8 @@ We currently have integrations with these editors:
 
 <img src="img/gitpod.svg" alt="Gitpod logo" width="30" height="30" style="margin-right:5px" /> **[Gitpod](https://open-vsx.org/extension/sourcegraph/sourcegraph)**
 
+<img src="img/neovim.svg" alt="Neovim logo" width="30" height="30" style="margin-right:5px" /> **[Neovim](https://github.com/sourcegraph/sg.nvim)**
+
 ## References
 
 - [Installation guide for Gitpod](gitpod.md)
