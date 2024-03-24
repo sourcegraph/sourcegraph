@@ -34,7 +34,7 @@ futures-task = { version = "^0.3.27", features = ["std"], default-features = fal
 
 # Prior version do not build when cross-compiling. It's needed by transitive deps
 # and this forces to bump it.
-rustix = { version = "0.38.8", features = ["std", "use-libc"] }
+rustix = { version = "0.38.19", features = ["std", "use-libc"] }
 
 [workspace]
 members = [
