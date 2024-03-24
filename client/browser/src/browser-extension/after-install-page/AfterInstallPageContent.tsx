@@ -108,7 +108,7 @@ export const AfterInstallPageContent: React.FC<AfterInstallPageContentProps> = p
                                     github.com
                                 </H3>
                                 <Text className="m-0">
-                                    <Icon aria-hidden={true} svgPath={mdiCheck} /> No action required.Your extension
+                                    <Icon aria-hidden={true} svgPath={mdiCheck} /> No action required. Your extension
                                     works here by default.
                                 </Text>
                             </div>
