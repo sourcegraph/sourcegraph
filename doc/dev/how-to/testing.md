@@ -417,7 +417,7 @@ It is possible to run our Percy visual regression tests locally.
 
 #### Adding a new visual snapshot test
 
-Open an existing appropiate browser-based test file (end-to-end or integration) or create a new one.
+Open an existing appropriate browser-based test file (end-to-end or integration) or create a new one.
 You can take screenshot in any test by calling `percySnapshot()`:
 
 ```TypeScript
