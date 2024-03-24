@@ -10,6 +10,19 @@ Each page can visualize the past one week, the past one month, or the path three
 
 These graphs pull directly from the event log table within the Sourcegraph instance they are running. There should not be an increase to the storage on disk of these tables due to these new features. Further, no data beyond published ping data is sent back to Sourcegraph. 
 
+## User Data Definitions
+
+On the user page Admin Analytics, you'll find many different types of user metrics. This section defines what those metrics mean:
+
+- Monthly Active Users (MAU): The total count of active users in a given calendar month. If viewing in the middle of a calendar month, this will show the active users so far in that calendar month 
+- Active Users (rolling 30/60/90 days): The total count of active users in the past 30/60/90 days 
+- Registered Users: The number of accounts on the instance. 
+- Pending Requests: The number of developers who have requested an account for this Sourcegraph instance (note: This functionality was introduced in [Sourcegraph 5.0](https://about.sourcegraph.com/blog/release/5.0)) 
+
+All of these measures use the same [set of events](./pricing.md) to determine whether a user is considered active. 
+
+> NOTE: Occasionally, admins will run a script to delete inactive users periodically. If these users resurrect, they will be counted as a new active user. Thus, if a developer's account is deleted then the developer creates a new account, that represents 2 active users. 
+
 ## Value Calculators
 
 Each page also includes a total time saved value which can be used to measure the value Sourcegraph is bringing to your organization. This metric is derived from the configurable calculators below the total time saved value. Each calculator multiplies event log data (ex: number of precise code intel events such as a go-to-definition) by a configurable number of minutes saved per event to arrive at a time saved by the feature.
