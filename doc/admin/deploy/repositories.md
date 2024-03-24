@@ -6,7 +6,7 @@ Sourcegraph provides reference repositories with branches corresponding to the v
 
 | **Deployment type**       | **Link to reference repository**                         |
 |:--------------------------|:---------------------------------------------------------|
-| Kubernetes                | https://github.com/deploy-sourcegraph-k8s                |
+| Kubernetes                | https://github.com/sourcegraph/deploy-sourcegraph-k8s                |
 | Helm                      | https://github.com/sourcegraph/deploy-sourcegraph-helm   |
 | Docker and Docker Compose | https://github.com/sourcegraph/deploy-sourcegraph-docker |
 
