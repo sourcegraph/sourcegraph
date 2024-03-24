@@ -22,3 +22,7 @@ assignees: ''
 #### Additional context
 
 <!-- Add any other context or other information you'd like to provide. -->
+
+#### Customers impacted
+
+<!-- Paste account links from https://github.com/sourcegraph/accounts/issues then add the tag to this issue (format acct-####) -->
