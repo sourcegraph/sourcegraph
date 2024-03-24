@@ -117,7 +117,7 @@ docker cp codeintel_db.out codeintel-db:/tmp/codeintel_db.out
 
 ```bash
 docker exec pgsql sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/sourcegraph_db.out sg'
-docker exec codeintel-db sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/condeintel_db.out sg'
+docker exec codeintel-db sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/codeintel_db.out sg'
 ```
 
 5\. Start the remaining Sourcegraph services
@@ -184,7 +184,7 @@ docker cp codeintel_db.out codeintel-db:/tmp/codeintel_db.out
 
 ```bash
 docker exec pgsql sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/sourcegraph_db.out sg'
-docker exec codeintel-db sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/condeintel_db.out sg'
+docker exec codeintel-db sh -c 'psql -v ERROR_ON_STOP=1 --username sg -f /tmp/codeintel_db.out sg'
 ```
 
 5\. Start the remaining Sourcegraph services
