@@ -5,8 +5,5 @@ go_library(
     srcs = ["gocheckcompilerdirectives.go"],
     importpath = "github.com/sourcegraph/sourcegraph/dev/linters/gocheckcompilerdirectives",
     visibility = ["//visibility:public"],
-    deps = [
-        "//dev/linters/nolint",
-        "@com_4d63_gocheckcompilerdirectives//checkcompilerdirectives:go_default_library",
-    ],
+    deps = ["//dev/linters/nolint"],
 )

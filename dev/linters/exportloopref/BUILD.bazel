@@ -5,8 +5,5 @@ go_library(
     srcs = ["exportloopref.go"],
     importpath = "github.com/sourcegraph/sourcegraph/dev/linters/exportloopref",
     visibility = ["//visibility:public"],
-    deps = [
-        "//dev/linters/nolint",
-        "@com_github_kyoh86_exportloopref//:go_default_library",
-    ],
+    deps = ["//dev/linters/nolint"],
 )

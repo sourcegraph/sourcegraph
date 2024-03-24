@@ -5,8 +5,5 @@ go_library(
     srcs = ["bodyclose.go"],
     importpath = "github.com/sourcegraph/sourcegraph/dev/linters/bodyclose",
     visibility = ["//visibility:public"],
-    deps = [
-        "//dev/linters/nolint",
-        "@com_github_timakin_bodyclose//passes/bodyclose:go_default_library",
-    ],
+    deps = ["//dev/linters/nolint"],
 )
