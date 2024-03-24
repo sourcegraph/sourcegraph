@@ -230,8 +230,13 @@ export const StatusMessagesNavItem: React.FunctionComponent<React.PropsWithChild
             codeHostMessage = 'No repositories'
             iconProps = { as: CloudInfoIconRefresh }
         } else {
-            codeHostMessage = 'Repositories up to date'
-            iconProps = { as: CloudCheckIconRefresh }
+            if (data.repositories.totalCount) {
+                codeHostMessage = `${data.repositories.totalCount} repo(s) updated`
+                iconProps = { as: CloudCheckIconRefresh }
+            } else {
+                codeHostMessage = 'No repositories connected'
+                iconProps = { as: CloudAlertIconRefresh }
+            }
         }
 
         return (
@@ -252,17 +257,31 @@ export const StatusMessagesNavItem: React.FunctionComponent<React.PropsWithChild
 
         // no status messages
         if (data.statusMessages.length === 0) {
-            return (
-                <StatusMessagesNavItemEntry
-                    key="up-to-date"
-                    title="Repositories up to date"
-                    message="Repositories synced from code host and available for search."
-                    linkTo="/site-admin/repositories"
-                    linkText="View repositories"
-                    linkOnClick={toggleIsOpen}
-                    entryType="success"
-                />
-            )
+            if (data.repositories.totalCount) {
+                return (
+                    <StatusMessagesNavItemEntry
+                        key="up-to-date"
+                        title="Repositories up to date"
+                        message="Repositories synced from code host and available for search."
+                        linkTo="/site-admin/repositories"
+                        linkText="View repositories"
+                        linkOnClick={toggleIsOpen}
+                        entryType="success"
+                    />
+                )
+            } else {
+                return (
+                    <StatusMessagesNavItemEntry
+                        key="no-repositories-connected"
+                        title="No Repositories connected"
+                        message="Unlock the power of Sourcegraph by connecting repos."
+                        linkTo="site-admin/external-services/new"
+                        linkText="Connect a repo"
+                        linkOnClick={toggleIsOpen}
+                        entryType="warning"
+                    />
+                )
+            }
         }
 
         return (
