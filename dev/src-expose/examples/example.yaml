@@ -7,7 +7,7 @@ destination: /data/git-repos
 # before is a command run before sync. before is run from root.
 before: p4 sync
 # dirmode defines what behaviour to use if Dir is missing.
-# 
+#
 #  - fail (default)
 #  - ignore
 #  - remove_dest
@@ -28,4 +28,12 @@ dirs:
   # destination is relative to top-level destination (/data/git-repos). By
   # default it is the same as dir.
   destination: ./nested-project
+  ignore:
+    - "**/.git/*"
+    - "**/.svn/*"
+    - "**/.hg/*"
+    - "**/.idea/*"
+    - "**/target/*"
+    - "**/build/*"
+    - "**/.DS_Store"
 - dir: ./other-project
