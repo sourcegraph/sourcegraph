@@ -41,3 +41,7 @@ The data is updated approximately every 24 hours.
 This new analytics experience has been redesigned from the ground up to provide the most value to administrators. In the future, we plan to deprecate the legacy usage stats page and statistics section once this functionality moved from experimental to generally available. 
 
 Note: The new analytics experience is experimental. For billing information, use [usage stats](./usage_statistics.md).
+
+**If a customer upgrades from an older version of Sourcegraph before admin analytics was introduced, will they have data from the last few months to look at? Or only new events logged going forward?**
+
+The new in-product analytics data is derived from Sourcegraph event logs which capture data regardless of which instance customers are on, so they should have data for the last 93 days. 
