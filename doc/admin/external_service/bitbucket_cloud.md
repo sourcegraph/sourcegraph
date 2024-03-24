@@ -9,6 +9,10 @@ To connect Bitbucket Cloud to Sourcegraph:
 3. Configure the connection to Bitbucket Cloud using the action buttons above the text field. Additional fields can be added using <kbd>Cmd/Ctrl+Space</kbd> for auto-completion. See the [configuration documentation below](#configuration).
 4. Press **Add repositories**.
 
+## Bitbucket App permissions 
+
+Follow the [steps](https://docs.sourcegraph.com/batch_changes/how-tos/configuring_credentials#bitbucket-cloud) to create an app password on Bitbucket
+
 ## Repository syncing
 
 Currently, all repositories belonging to the user configured will be synced.
