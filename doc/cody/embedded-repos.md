@@ -49,6 +49,7 @@ Last updated: 07/23/2023, 12:29 AM UTC
 1. [Codecademy/learn-python](https://github.com/Codecademy/learn-python)
 1. [CodelyTV/php-ddd-example](https://github.com/CodelyTV/php-ddd-example)
 1. [ColinSPuck/RustyVoxelEngine](https://github.com/ColinSPuck/RustyVoxelEngine)
+1. [Combust/mleap](https://github.com/combust/mleap)
 1. [CompVis/stable-diffusion](https://github.com/CompVis/stable-diffusion)
 1. [Conflux-Chain/js-conflux-sdk](https://github.com/Conflux-Chain/js-conflux-sdk)
 1. [CorwinDev/Discord-Bot](https://github.com/CorwinDev/Discord-Bot)
