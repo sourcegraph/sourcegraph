@@ -171,7 +171,7 @@ Usage instructions are provided via [the `caddy` service's inline comments insid
 
 In your [docker-compose.yaml](https://github.com/sourcegraph/deploy-sourcegraph-docker/blob/master/docker-compose/docker-compose.yaml) within the caddy section:
     
-1. In the Environment section of the compose file uncomment & update this line with your Sourcegraph Site Address:
+1. In the Environment section of the compose file uncomment & replace the value of `SRC_SITE_ADDRESS` with your Sourcegraph Site Address:
 
    ```
    - 'SRC_SITE_ADDRESS=sourcegraph.example.com'
@@ -186,12 +186,12 @@ In your [docker-compose.yaml](https://github.com/sourcegraph/deploy-sourcegraph-
    ```
    - '../caddy/builtins/https.custom-cert.Caddyfile:/etc/caddy/Caddyfile' 
    ```
-1. In Volumes section of the compose file uncomment and update the following line with your custom cert path:
+1. In Volumes section of the compose file uncomment and replace the following line with your custom cert path:
 
    ```
    - '/LOCAL/CERT/PATH.pem:/sourcegraph.pem'
    ```
-1. In Volumes section of the compose file uncomment and update the following line with your custom cert path:
+1. In Volumes section of the compose file uncomment and replace the following line with your custom cert path:
 
    ```
    - '/LOCAL/KEY/PATH.key:/sourcegraph.key'
