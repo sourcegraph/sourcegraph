@@ -107,3 +107,9 @@ Known issues:
         - Note: this only completes the failing org jobs. You may then see the `user not found` error above, and will still need to mark the rest of the jobs as complete.
         
     3. If the error messages are neither of those two things, this is not currently a known issue. Contact support and we can help!
+
+## Start Y axis at 0 checkbox on insight dashboards not working
+When clicking the Start Y axis at 0 checkbox, the box populates with a check, but nothing changes on the insight.
+
+### Diagnose and Resolve
+1. This is a bug in v3.40 that was fixed in v3.41. Upgrade to v3.41 to resolve this issue.
