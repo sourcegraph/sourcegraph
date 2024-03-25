@@ -24,14 +24,6 @@ cargo run --bin syntect_server
 You can set the `SRC_SYNTECT_SERVER` environment var to whatever port this
 connects to and test against local Sourcegraph instance.
 
-### Docker Usage (can be used with `sg start`)
-
-```bash
-docker run --detach --name=syntax-highlighter -p 9238:9238 sourcegraph/syntax-highlighter
-```
-
-You can then e.g. `GET` http://localhost:9238/health or http://host.docker.internal:9238/health to confirm it is working.
-
 ## API
 
 See [API](./docs/api.md)
@@ -61,9 +53,7 @@ ONLY=.java cargo test test_all_files -- --nocapture
 
 ## Building docker image
 
-`./build.sh` will build your current repository checkout into a final Docker image. You **DO NOT** need to do this when you push to get it publish. But, you should do this to make sure that it is possible to build the image :smile:.
-
-**AGAIN NOTE**: The docker image will be published automatically via CI.
+See the syntax-highlighter configuration in sg.config.yaml.
 
 ## Updating Sourcegraph
 
