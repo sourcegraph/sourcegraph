@@ -87,7 +87,7 @@ Create a batch change by specifying a search query to get a list of repositories
 - [Site admin configuration for Batch Changes](how-tos/site_admin_configuration.md)
 - [Configuring credentials for Batch Changes](how-tos/configuring_credentials.md)
 - [Handling errored changesets](how-tos/handling_errored_changesets.md)
-- [Opting out of batch changes](how-tos/opting_out_of_batch_changes.md)
+- [Opting out of Batch Changes](how-tos/opting_out_of_batch_changes.md)
 - [Bulk operations on changesets](how-tos/bulk_operations_on_changesets.md)
 - [Using file mounts with server-side execution](how-tos/server_side_file_mounts.md)
 - Batch changes in monorepos <span class="badge badge-beta">Beta</span>
