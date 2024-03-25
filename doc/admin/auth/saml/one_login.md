@@ -31,7 +31,7 @@
  "auth.providers": [
    {
      "type": "saml",
-     "configID": "onelogin",
+     "displayName": "<first name included in SAML Assertion>",
      "identityProviderMetadataURL": "<issuer URL>"
    }
  ]
