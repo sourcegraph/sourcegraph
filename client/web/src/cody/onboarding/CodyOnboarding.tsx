@@ -119,16 +119,6 @@ export const editorGroups: IEditor[][] = [
     ],
 ]
 
-function formatUseCase(action: { work: boolean; personal: boolean }): string {
-    const useCases = []
-    for (const [key, value] of Object.entries(action)) {
-        if (value) {
-            useCases.push(key)
-        }
-    }
-    return useCases.length === 0 ? 'none' : useCases.join(',')
-}
-
 interface CodyOnboardingProps extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
 }
@@ -285,30 +275,27 @@ function PurposeStep({
     const primaryEmail = authenticatedUser.emails.find(email => email.isPrimary)?.email
 
     const handleFormSubmit = (form: HTMLFormElement): void => {
-        const workInput = form[0].querySelector('input[name="using_cody_for_work"]') as HTMLInputElement
-        const personalInput = form[0].querySelector('input[name="using_cody_for_personal"]') as HTMLInputElement
+        const choice = form[0].querySelector('input[name="cody_form_hand_raiser"]') as HTMLInputElement
 
-        const useCase = formatUseCase({
-            work: workInput.checked,
-            personal: personalInput.checked,
-        })
-        eventLogger.log(EventName.CODY_ONBOARDING_PURPOSE_SELECTED, { useCase }, { useCase })
+        const metadata = { onboardingCall: choice.checked ? 1 : 0 }
+
+        eventLogger.log(EventName.CODY_ONBOARDING_PURPOSE_SELECTED, metadata, metadata)
         telemetryRecorder.recordEvent('cody.onboarding.purpose', 'select', {
-            metadata: { workUseCase: workInput.checked ? 1 : 0, personalUseCase: personalInput.checked ? 1 : 0 },
+            metadata,
         })
     }
 
     return (
         <>
             <div className="border-bottom pb-3 mb-3">
-                <H2 className="mb-1">What are you using Cody for?</H2>
+                <H2 className="mb-1">Would you like to learn more about Cody for enterprise?</H2>
                 <Text className="mb-0 text-muted" size="small">
-                    This will allow us to understand our audience better and guide your journey
+                    If you're not ready for a conversation, we'll stick to sharing Cody onboarding resources.
                 </Text>
             </div>
             <div className="d-flex align-items-center border-bottom mb-3 pb-3 justify-content-center">
                 <HubSpotForm
-                    formId="85548efc-a879-4553-9ef0-a8da8fdcf541"
+                    formId="19f34edd-1a98-4fc9-9b2b-c1edca727720"
                     onFormSubmitted={() => {
                         onNext()
                     }}

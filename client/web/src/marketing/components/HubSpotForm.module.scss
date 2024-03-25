@@ -233,4 +233,9 @@
     :global(#hsForm_85548efc-a879-4553-9ef0-a8da8fdcf541) :global(.hs-email) {
         display: none;
     }
+
+    // Disable asterisk from cody onboarding form
+    :global(#label-cody_form_hand_raiser-19f34edd-1a98-4fc9-9b2b-c1edca727720) {
+        display: none;
+    }
 }
