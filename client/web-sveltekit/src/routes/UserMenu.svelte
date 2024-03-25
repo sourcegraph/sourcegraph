@@ -2,7 +2,7 @@
     import Icon from '$lib/Icon.svelte'
     import Avatar from '$lib/Avatar.svelte'
     import type { UserMenu_User } from './UserMenu.gql'
-    import { humanTheme } from '$lib/theme'
+    import { ThemeSetting, themeSetting } from '$lib/theme'
     import { DropdownMenu, MenuLink, MenuRadioGroup, MenuSeparator, Submenu } from '$lib/wildcard'
     import { getButtonClassName } from '$lib/wildcard/Button'
     import { mdiChevronDown, mdiChevronUp, mdiOpenInNew } from '@mdi/js'
@@ -33,7 +33,7 @@
     <MenuSeparator />
     <Submenu>
         <svelte:fragment slot="trigger">Theme</svelte:fragment>
-        <MenuRadioGroup values={['Light', 'Dark', 'System']} value={humanTheme} />
+        <MenuRadioGroup values={[ThemeSetting.Light, ThemeSetting.Dark, ThemeSetting.System]} value={themeSetting} />
     </Submenu>
     {#if organizations.length > 0}
         <MenuSeparator />

@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { validate as validateUUID } from 'uuid'
 
 import { useQuery } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { LoadingSpinner, H4, Text, Link, ErrorAlert, PageHeader, Container } from '@sourcegraph/wildcard'
 
 import { PageTitle } from '../../../components/PageTitle'
@@ -14,14 +15,13 @@ import type {
     UserProductSubscriptionVariables,
 } from '../../../graphql-operations'
 import { SiteAdminAlert } from '../../../site-admin/SiteAdminAlert'
-import { eventLogger } from '../../../tracking/eventLogger'
 import { CodyServicesSection } from '../../site-admin/dotcom/productSubscriptions/CodyServicesSection'
 import { accessTokenPath, errorForPath } from '../../site-admin/dotcom/productSubscriptions/utils'
 
 import { USER_PRODUCT_SUBSCRIPTION } from './backend'
 import { UserProductSubscriptionStatus } from './UserProductSubscriptionStatus'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     user: Pick<UserAreaUserFields, 'settingsURL'>
 }
 
@@ -30,10 +30,11 @@ interface Props {
  */
 export const UserSubscriptionsProductSubscriptionPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
     user,
+    telemetryRecorder,
 }) => {
     const { subscriptionUUID = '' } = useParams<{ subscriptionUUID: string }>()
 
-    useEffect(() => eventLogger.logViewEvent('UserSubscriptionsProductSubscription'), [])
+    useEffect(() => telemetryRecorder.recordEvent('settings.userSubscription', 'view'), [telemetryRecorder])
 
     const isValidUUID = validateUUID(subscriptionUUID)
     const validationError = !isValidUUID && new Error('Subscription ID is not a valid UUID')
@@ -94,6 +95,7 @@ export const UserSubscriptionsProductSubscriptionPage: React.FunctionComponent<R
                     expiresAt={parseISO(productSubscription.activeLicense.info.expiresAt)}
                     licenseKey={productSubscription.activeLicense?.licenseKey ?? null}
                     className="mb-3"
+                    telemetryRecorder={telemetryRecorder}
                 />
             )}
 

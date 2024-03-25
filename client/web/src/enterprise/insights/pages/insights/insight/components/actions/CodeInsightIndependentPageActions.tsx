@@ -4,6 +4,7 @@ import { mdiLinkVariant } from '@mdi/js'
 import { escapeRegExp } from 'lodash'
 import { useNavigate } from 'react-router-dom'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, Link, Icon, Tooltip } from '@sourcegraph/wildcard'
 
@@ -14,12 +15,12 @@ import { useCopyURLHandler } from '../../../../../hooks/use-copy-url-handler'
 
 import styles from './CodeInsightIndependentPageActions.module.scss'
 
-interface Props extends TelemetryProps {
+interface Props extends TelemetryProps, TelemetryV2Props {
     insight: Insight
 }
 
 export const CodeInsightIndependentPageActions: FunctionComponent<Props> = props => {
-    const { insight, telemetryService } = props
+    const { insight, telemetryService, telemetryRecorder } = props
 
     const navigate = useNavigate()
 
@@ -44,6 +45,7 @@ export const CodeInsightIndependentPageActions: FunctionComponent<Props> = props
 
     const handleEditClick = (): void => {
         telemetryService.log('StandaloneInsightPageEditClick')
+        telemetryRecorder.recordEvent('insight', 'edit')
     }
 
     return (
@@ -82,6 +84,7 @@ export const CodeInsightIndependentPageActions: FunctionComponent<Props> = props
                 showModal={showDeleteConfirm}
                 onConfirm={() => navigate('/insights/all')}
                 onCancel={() => setShowDeleteConfirm(false)}
+                telemetryRecorder={telemetryRecorder}
             />
         </div>
     )

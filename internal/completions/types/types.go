@@ -10,7 +10,8 @@ import (
 )
 
 const HUMAN_MESSAGE_SPEAKER = "human"
-const ASISSTANT_MESSAGE_SPEAKER = "assistant"
+const ASSISTANT_MESSAGE_SPEAKER = "assistant"
+const SYSTEM_MESSAGE_SPEAKER = "system"
 
 type Message struct {
 	Speaker string `json:"speaker"`
@@ -18,7 +19,7 @@ type Message struct {
 }
 
 func (m Message) IsValidSpeaker() bool {
-	return m.Speaker == HUMAN_MESSAGE_SPEAKER || m.Speaker == ASISSTANT_MESSAGE_SPEAKER
+	return m.Speaker == HUMAN_MESSAGE_SPEAKER || m.Speaker == ASSISTANT_MESSAGE_SPEAKER
 }
 
 func (m Message) GetPrompt(humanPromptPrefix, assistantPromptPrefix string) (string, error) {
@@ -26,7 +27,7 @@ func (m Message) GetPrompt(humanPromptPrefix, assistantPromptPrefix string) (str
 	switch m.Speaker {
 	case HUMAN_MESSAGE_SPEAKER:
 		prefix = humanPromptPrefix
-	case ASISSTANT_MESSAGE_SPEAKER:
+	case ASSISTANT_MESSAGE_SPEAKER:
 		prefix = assistantPromptPrefix
 	default:
 		return "", errors.Newf("expected message speaker to be 'human' or 'assistant', got %s", m.Speaker)
@@ -167,11 +168,18 @@ func (b CompletionsFeature) ID() int {
 	}
 }
 
+type CompletionsVersion int
+
+const (
+	CompletionsVersionLegacy CompletionsVersion = 0
+	CompletionsV1            CompletionsVersion = 1
+)
+
 type CompletionsClient interface {
 	// Stream executions a completions request, streaming results to the callback.
 	// Callers should check for ErrStatusNotOK and handle the error appropriately.
-	Stream(context.Context, CompletionsFeature, CompletionRequestParameters, SendCompletionEvent) error
+	Stream(context.Context, CompletionsFeature, CompletionsVersion, CompletionRequestParameters, SendCompletionEvent) error
 	// Complete executions a completions request until done. Callers should check
 	// for ErrStatusNotOK and handle the error appropriately.
-	Complete(context.Context, CompletionsFeature, CompletionRequestParameters) (*CompletionResponse, error)
+	Complete(context.Context, CompletionsFeature, CompletionsVersion, CompletionRequestParameters) (*CompletionResponse, error)
 }

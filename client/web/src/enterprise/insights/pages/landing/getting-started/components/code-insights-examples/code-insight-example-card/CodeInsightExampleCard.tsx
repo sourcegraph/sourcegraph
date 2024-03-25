@@ -1,6 +1,7 @@
 import { type FunctionComponent, useContext } from 'react'
 
 import { SyntaxHighlightedSearchQuery } from '@sourcegraph/branded'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, Link, LegendItem, LegendList, ParentSize, LegendItemPoint } from '@sourcegraph/wildcard'
 
@@ -37,7 +38,7 @@ export const CodeInsightExampleCard: FunctionComponent<CodeInsightExampleProps> 
     return <CodeInsightCaptureExample {...props} />
 }
 
-interface CodeInsightSearchExampleProps extends TelemetryProps {
+interface CodeInsightSearchExampleProps extends TelemetryProps, TelemetryV2Props {
     type: InsightType.SearchBased
     content: SearchInsightExampleContent<any>
     templateLink?: string
@@ -45,7 +46,7 @@ interface CodeInsightSearchExampleProps extends TelemetryProps {
 }
 
 const CodeInsightSearchExample: FunctionComponent<CodeInsightSearchExampleProps> = props => {
-    const { templateLink, className, content, telemetryService } = props
+    const { templateLink, className, content, telemetryService, telemetryRecorder } = props
     const seriesToggleState = useSeriesToggle()
 
     const { mode } = useContext(CodeInsightsLandingPageContext)
@@ -54,6 +55,7 @@ const CodeInsightSearchExample: FunctionComponent<CodeInsightSearchExampleProps>
 
     const { trackMouseEnter, trackMouseLeave } = useCodeInsightViewPings({
         telemetryService,
+        telemetryRecorder,
         insightType:
             mode === CodeInsightsLandingPageType.Cloud
                 ? CodeInsightTrackType.CloudLandingPageInsight
@@ -62,6 +64,7 @@ const CodeInsightSearchExample: FunctionComponent<CodeInsightSearchExampleProps>
 
     const handleTemplateLinkClick = (): void => {
         telemetryService.log(bigTemplateClickPingName)
+        telemetryRecorder.recordEvent('insights.getStarted.bigTemplate', 'click')
     }
 
     return (
@@ -115,7 +118,7 @@ const CodeInsightSearchExample: FunctionComponent<CodeInsightSearchExampleProps>
     )
 }
 
-interface CodeInsightCaptureExampleProps extends TelemetryProps {
+interface CodeInsightCaptureExampleProps extends TelemetryProps, TelemetryV2Props {
     type: InsightType.CaptureGroup
     content: CaptureGroupExampleContent<any>
     templateLink?: string
@@ -128,6 +131,7 @@ const CodeInsightCaptureExample: FunctionComponent<CodeInsightCaptureExampleProp
         templateLink,
         className,
         telemetryService,
+        telemetryRecorder,
     } = props
     const seriesToggleState = useSeriesToggle()
 
@@ -136,6 +140,7 @@ const CodeInsightCaptureExample: FunctionComponent<CodeInsightCaptureExampleProp
 
     const { trackMouseEnter, trackMouseLeave } = useCodeInsightViewPings({
         telemetryService,
+        telemetryRecorder,
         insightType:
             mode === CodeInsightsLandingPageType.Cloud
                 ? CodeInsightTrackType.CloudLandingPageInsight
@@ -144,6 +149,7 @@ const CodeInsightCaptureExample: FunctionComponent<CodeInsightCaptureExampleProp
 
     const handleTemplateLinkClick = (): void => {
         telemetryService.log(bigTemplateClickPingName)
+        telemetryRecorder.recordEvent('insights.getStarted.bigTemplate', 'click')
     }
 
     return (

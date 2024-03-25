@@ -41,20 +41,20 @@ type codyGatewayClient struct {
 	accessToken string
 }
 
-func (c *codyGatewayClient) Stream(ctx context.Context, feature types.CompletionsFeature, requestParams types.CompletionRequestParameters, sendEvent types.SendCompletionEvent) error {
+func (c *codyGatewayClient) Stream(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters, sendEvent types.SendCompletionEvent) error {
 	cc, err := c.clientForParams(feature, &requestParams)
 	if err != nil {
 		return err
 	}
-	return overwriteErrSource(cc.Stream(ctx, feature, requestParams, sendEvent))
+	return overwriteErrSource(cc.Stream(ctx, feature, version, requestParams, sendEvent))
 }
 
-func (c *codyGatewayClient) Complete(ctx context.Context, feature types.CompletionsFeature, requestParams types.CompletionRequestParameters) (*types.CompletionResponse, error) {
+func (c *codyGatewayClient) Complete(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, requestParams types.CompletionRequestParameters) (*types.CompletionResponse, error) {
 	cc, err := c.clientForParams(feature, &requestParams)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := cc.Complete(ctx, feature, requestParams)
+	resp, err := cc.Complete(ctx, feature, version, requestParams)
 	return resp, overwriteErrSource(err)
 }
 
@@ -80,7 +80,7 @@ func (c *codyGatewayClient) clientForParams(feature types.CompletionsFeature, re
 	// gatewayDoer that authenticates against the Gateway's API.
 	switch provider {
 	case string(conftypes.CompletionsProviderNameAnthropic):
-		return anthropic.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/anthropic"), "", ""), nil
+		return anthropic.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/anthropic-messages"), "", "", true), nil
 	case string(conftypes.CompletionsProviderNameOpenAI):
 		return openai.NewClient(gatewayDoer(c.upstream, feature, c.gatewayURL, c.accessToken, "/v1/completions/openai"), "", ""), nil
 	case string(conftypes.CompletionsProviderNameFireworks):

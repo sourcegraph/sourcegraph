@@ -75,6 +75,7 @@ export { createCodeIntelAPI, type CodeIntelAPI } from '@sourcegraph/shared/src/c
 export { getModeFromPath } from '@sourcegraph/shared/src/languages'
 export type { ActionItemAction } from '@sourcegraph/shared/src/actions/ActionItem'
 export { repositoryInsertText } from '@sourcegraph/shared/src/search/query/completion-utils'
+export { ThemeSetting, Theme } from '@sourcegraph/shared/src/theme-types'
 
 // Copies of non-reusable code
 

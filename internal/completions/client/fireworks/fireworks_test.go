@@ -33,7 +33,7 @@ func TestErrStatusNotOK(t *testing.T) {
 	}, "", "")
 
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureCode, types.CompletionRequestParameters{Messages: []types.Message{{Text: "Hey"}}})
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureCode, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: []types.Message{{Text: "Hey"}}})
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -43,7 +43,7 @@ func TestErrStatusNotOK(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureCode, types.CompletionRequestParameters{Messages: []types.Message{{Text: "Hey"}}}, func(event types.CompletionResponse) error { return nil })
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureCode, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: []types.Message{{Text: "Hey"}}}, func(event types.CompletionResponse) error { return nil })
 		require.Error(t, err)
 
 		autogold.Expect("Fireworks: unexpected status code 429: oh no, please slow down!").Equal(t, err.Error())

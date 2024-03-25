@@ -1,9 +1,10 @@
-import type { FC } from 'react'
+import { useEffect, type FC } from 'react'
 
 import { mdiPlus } from '@mdi/js'
 
 import { isDefined } from '@sourcegraph/common'
 import { dataOrThrowErrors } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Card, Icon, Link, LoadingSpinner, Button, ErrorAlert } from '@sourcegraph/wildcard'
 
@@ -20,7 +21,7 @@ import { GET_ALL_INSIGHT_CONFIGURATIONS } from './query'
 
 import styles from './AllInsightsView.module.scss'
 
-interface AllInsightsViewProps extends TelemetryProps {}
+interface AllInsightsViewProps extends TelemetryProps, TelemetryV2Props {}
 
 export const AllInsightsView: FC<AllInsightsViewProps> = props => {
     const { connection, loading, hasNextPage, error, fetchMore } = useShowMorePagination<
@@ -37,6 +38,8 @@ export const AllInsightsView: FC<AllInsightsViewProps> = props => {
         },
         options: { fetchPolicy: 'cache-and-network' },
     })
+
+    useEffect(() => props.telemetryRecorder.recordEvent('insights.allInsights', 'view'), [props.telemetryRecorder])
 
     if (connection === undefined) {
         return <LoadingSpinner aria-hidden={true} inline={false} />
@@ -55,6 +58,7 @@ export const AllInsightsView: FC<AllInsightsViewProps> = props => {
                 insights={insights}
                 persistSizeAndOrder={false}
                 telemetryService={props.telemetryService}
+                telemetryRecorder={props.telemetryRecorder}
             />
 
             <footer className={styles.footer}>

@@ -1,6 +1,7 @@
 import type { Meta, StoryFn } from '@storybook/react'
 import { noop } from 'lodash'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { WebStory } from '../../../../../../components/WebStory'
@@ -31,6 +32,7 @@ export const CaptureGroupCreationPage: StoryFn = () => {
             onSuccessfulCreation={noop}
             onInsightCreateRequest={() => Promise.resolve()}
             onCancel={noop}
+            telemetryRecorder={noOpTelemetryRecorder}
         />
     )
 }

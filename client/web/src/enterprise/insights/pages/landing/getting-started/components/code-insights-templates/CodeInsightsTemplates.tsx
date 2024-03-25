@@ -5,6 +5,7 @@ import copy from 'copy-to-clipboard'
 
 import { SyntaxHighlightedSearchQuery } from '@sourcegraph/branded'
 import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Button,
@@ -50,10 +51,10 @@ function getTemplateURL(template: Template): string {
     }
 }
 
-interface CodeInsightsTemplates extends TelemetryProps, React.HTMLAttributes<HTMLElement> {}
+interface CodeInsightsTemplates extends TelemetryProps, TelemetryV2Props, React.HTMLAttributes<HTMLElement> {}
 
 export const CodeInsightsTemplates: React.FunctionComponent<React.PropsWithChildren<CodeInsightsTemplates>> = props => {
-    const { telemetryService, ...otherProps } = props
+    const { telemetryService, telemetryRecorder, ...otherProps } = props
     const tabChangePingName = useLogEventName('InsightsGetStartedTabClick')
     const goCodeCheckerTemplates = useExperimentalFeatures(features => features.goCodeCheckerTemplates)
     const templateSections = getTemplateSections(goCodeCheckerTemplates)
@@ -62,6 +63,7 @@ export const CodeInsightsTemplates: React.FunctionComponent<React.PropsWithChild
         const template = templateSections[index]
 
         telemetryService.log(tabChangePingName, { tabName: template.title }, { tabName: template.title })
+        telemetryRecorder.recordEvent('insights.getStarted.tab', 'click', { metadata: { tab: index } })
     }
 
     return (
@@ -85,12 +87,14 @@ export const CodeInsightsTemplates: React.FunctionComponent<React.PropsWithChild
                     ))}
                 </TabList>
                 <TabPanels>
-                    {templateSections.map(section => (
+                    {templateSections.map((section, index) => (
                         <TemplatesPanel
                             key={section.title}
                             sectionTitle={section.title}
+                            sectionIndex={index}
                             templates={section.templates}
                             telemetryService={telemetryService}
+                            telemetryRecorder={telemetryRecorder}
                         />
                     ))}
                 </TabPanels>
@@ -99,13 +103,14 @@ export const CodeInsightsTemplates: React.FunctionComponent<React.PropsWithChild
     )
 }
 
-interface TemplatesPanelProps extends TelemetryProps {
+interface TemplatesPanelProps extends TelemetryProps, TelemetryV2Props {
     sectionTitle: string
+    sectionIndex: number
     templates: Template[]
 }
 
 const TemplatesPanel: React.FunctionComponent<React.PropsWithChildren<TemplatesPanelProps>> = props => {
-    const { templates, sectionTitle, telemetryService } = props
+    const { templates, sectionTitle, sectionIndex, telemetryService, telemetryRecorder } = props
     const [allVisible, setAllVisible] = useState(false)
     const tabMoreClickPingName = useLogEventName('InsightsGetStartedTabMoreClick')
 
@@ -115,6 +120,7 @@ const TemplatesPanel: React.FunctionComponent<React.PropsWithChildren<TemplatesP
     const handleShowMoreButtonClick = (): void => {
         if (!allVisible) {
             telemetryService.log(tabMoreClickPingName, { tabName: sectionTitle }, { tabName: sectionTitle })
+            telemetryRecorder.recordEvent('insights.getStarted.tab.more', 'click', { metadata: { tab: sectionIndex } })
         }
 
         setAllVisible(!allVisible)
@@ -123,7 +129,12 @@ const TemplatesPanel: React.FunctionComponent<React.PropsWithChildren<TemplatesP
     return (
         <TabPanel className={styles.cards}>
             {templates.slice(0, maxNumberOfCards).map(template => (
-                <TemplateCard key={template.title} template={template} telemetryService={telemetryService} />
+                <TemplateCard
+                    key={template.title}
+                    template={template}
+                    telemetryService={telemetryService}
+                    telemetryRecorder={telemetryRecorder}
+                />
             ))}
 
             {hasMoreLessButton && (
@@ -140,12 +151,12 @@ const TemplatesPanel: React.FunctionComponent<React.PropsWithChildren<TemplatesP
     )
 }
 
-interface TemplateCardProps extends TelemetryProps {
+interface TemplateCardProps extends TelemetryProps, TelemetryV2Props {
     template: Template
 }
 
 const TemplateCard: React.FunctionComponent<React.PropsWithChildren<TemplateCardProps>> = props => {
-    const { template, telemetryService } = props
+    const { template, telemetryService, telemetryRecorder } = props
     const { mode } = useContext(CodeInsightsLandingPageContext)
 
     const series =
@@ -155,6 +166,7 @@ const TemplateCard: React.FunctionComponent<React.PropsWithChildren<TemplateCard
 
     const handleUseTemplateLinkClick = (): void => {
         telemetryService.log('InsightGetStartedTemplateClick')
+        telemetryRecorder.recordEvent('insights.getStarted.template', 'click')
     }
 
     return (
@@ -166,7 +178,12 @@ const TemplateCard: React.FunctionComponent<React.PropsWithChildren<TemplateCard
                 {series.map(
                     line =>
                         line.query && (
-                            <QueryPanel key={line.query} query={line.query} telemetryService={telemetryService} />
+                            <QueryPanel
+                                key={line.query}
+                                query={line.query}
+                                telemetryService={telemetryService}
+                                telemetryRecorder={telemetryRecorder}
+                            />
                         )
                 )}
             </div>
@@ -187,7 +204,7 @@ const TemplateCard: React.FunctionComponent<React.PropsWithChildren<TemplateCard
     )
 }
 
-interface QueryPanelProps extends TelemetryProps {
+interface QueryPanelProps extends TelemetryProps, TelemetryV2Props {
     query: string
 }
 
@@ -195,7 +212,7 @@ const copyTooltip = 'Copy query'
 const copyCompletedTooltip = 'Copied!'
 
 const QueryPanel: React.FunctionComponent<React.PropsWithChildren<QueryPanelProps>> = props => {
-    const { query, telemetryService } = props
+    const { query, telemetryService, telemetryRecorder } = props
 
     const templateCopyClickEvenName = useLogEventName('InsightGetStartedTemplateCopyClick')
     const [currentCopyTooltip, setCurrentCopyTooltip] = useState(copyTooltip)
@@ -207,6 +224,7 @@ const QueryPanel: React.FunctionComponent<React.PropsWithChildren<QueryPanelProp
 
         event.preventDefault()
         telemetryService.log(templateCopyClickEvenName)
+        telemetryRecorder.recordEvent('insights.getStarted.template', 'copy')
     }
 
     return (

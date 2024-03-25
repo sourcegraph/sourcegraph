@@ -1,10 +1,13 @@
 import { useCallback, useContext, useState } from 'react'
 
 import { type ErrorLike, logger } from '@sourcegraph/common'
+import { BillingCategory, BillingProduct } from '@sourcegraph/shared/src/telemetry'
+import { TelemetryRecorder } from '@sourcegraph/telemetry'
 
 import { eventLogger } from '../../../tracking/eventLogger'
 import { CodeInsightsBackendContext, type Insight } from '../core'
 import { getTrackingTypeByInsightType } from '../pings'
+import { V2InsightType } from '../pings/types'
 
 type DeletionInsight = Pick<Insight, 'id' | 'type'>
 
@@ -18,7 +21,9 @@ export interface UseDeleteInsightAPI {
  * Returns delete handler that deletes insight from all subject settings and from all dashboards
  * that include this insight.
  */
-export function useDeleteInsight(): UseDeleteInsightAPI {
+export function useDeleteInsight(
+    telemetryRecorder: TelemetryRecorder<BillingCategory, BillingProduct>
+): UseDeleteInsightAPI {
     const { deleteInsight } = useContext(CodeInsightsBackendContext)
 
     const [loading, setLoading] = useState<boolean>(false)
@@ -39,13 +44,16 @@ export function useDeleteInsight(): UseDeleteInsightAPI {
                 const insightType = getTrackingTypeByInsightType(insight.type)
 
                 eventLogger.log('InsightRemoval', { insightType }, { insightType })
+                telemetryRecorder.recordEvent('insight', 'delete', {
+                    metadata: { insightType: V2InsightType[insightType] },
+                })
             } catch (error) {
                 // TODO [VK] Improve error UI for deleting
                 logger.error(error)
                 setError(error)
             }
         },
-        [loading, deleteInsight]
+        [loading, deleteInsight, telemetryRecorder]
     )
 
     return { delete: handleDelete, loading, error }

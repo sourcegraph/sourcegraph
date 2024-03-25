@@ -37,6 +37,22 @@ export const esbuildDevelopmentServer = async (
     // Start a proxy at :3080. Asset requests (underneath /.assets/) go to esbuild; all other
     // requests go to the upstream.
     const proxyApp = express()
+
+    if (process.env.SVELTEKIT) {
+        // Proxy requests for SvelteKit's assets to the server, not the esbuild server.
+        proxyApp.use(
+            `${assetPathPrefix}/_sk`,
+            createProxyMiddleware({
+                target: {
+                    protocol: 'http:',
+                    host: DEV_SERVER_PROXY_TARGET_ADDR.host,
+                    port: DEV_SERVER_PROXY_TARGET_ADDR.port,
+                },
+                logLevel: 'error',
+            })
+        )
+    }
+
     proxyApp.use(
         assetPathPrefix,
         createProxyMiddleware({

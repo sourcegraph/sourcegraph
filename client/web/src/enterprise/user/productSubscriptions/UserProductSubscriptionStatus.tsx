@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react'
 
 import { mdiKey, mdiInformation } from '@mdi/js'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, CardFooter, Link, Icon, Code, H3 } from '@sourcegraph/wildcard'
 
 import { CopyableText } from '../../../components/CopyableText'
@@ -10,7 +11,7 @@ import { ExpirationDate } from '../../productSubscription/ExpirationDate'
 import { LicenseGenerationKeyWarning } from '../../productSubscription/LicenseGenerationKeyWarning'
 import { ProductCertificate } from '../../productSubscription/ProductCertificate'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     subscriptionName: string
     productNameWithBrand: string
     userCount: number
@@ -29,10 +30,14 @@ export const UserProductSubscriptionStatus: React.FunctionComponent<React.PropsW
     expiresAt,
     licenseKey,
     className,
+    telemetryRecorder,
 }) => {
     const [showLicenseKey, setShowLicenseKey] = useState(false)
 
-    const toggleShowLicenseKey = useCallback((): void => setShowLicenseKey(!showLicenseKey), [showLicenseKey])
+    const toggleShowLicenseKey = useCallback((): void => {
+        telemetryRecorder.recordEvent('settings.userSubscription.licenseKey', showLicenseKey ? 'hide' : 'reveal')
+        setShowLicenseKey(!showLicenseKey)
+    }, [telemetryRecorder, showLicenseKey])
 
     return (
         <ProductCertificate

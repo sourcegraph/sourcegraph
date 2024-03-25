@@ -31,9 +31,9 @@ type observedClient struct {
 
 var _ types.CompletionsClient = (*observedClient)(nil)
 
-func (o *observedClient) Stream(ctx context.Context, feature types.CompletionsFeature, params types.CompletionRequestParameters, send types.SendCompletionEvent) (err error) {
+func (o *observedClient) Stream(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, params types.CompletionRequestParameters, send types.SendCompletionEvent) (err error) {
 	ctx, tr, endObservation := o.ops.stream.With(ctx, &err, observation.Args{
-		Attrs:             append(params.Attrs(feature), attribute.String("feature", string(feature))),
+		Attrs:             append(params.Attrs(feature), attribute.String("feature", string(feature)), attribute.Int("version", int(version))),
 		MetricLabelValues: []string{params.Model},
 	})
 	defer endObservation(1, observation.Args{})
@@ -48,12 +48,12 @@ func (o *observedClient) Stream(ctx context.Context, feature types.CompletionsFe
 		return send(event)
 	}
 
-	return o.inner.Stream(ctx, feature, params, tracedSend)
+	return o.inner.Stream(ctx, feature, version, params, tracedSend)
 }
 
-func (o *observedClient) Complete(ctx context.Context, feature types.CompletionsFeature, params types.CompletionRequestParameters) (resp *types.CompletionResponse, err error) {
+func (o *observedClient) Complete(ctx context.Context, feature types.CompletionsFeature, version types.CompletionsVersion, params types.CompletionRequestParameters) (resp *types.CompletionResponse, err error) {
 	ctx, _, endObservation := o.ops.complete.With(ctx, &err, observation.Args{
-		Attrs:             append(params.Attrs(feature), attribute.String("feature", string(feature))),
+		Attrs:             append(params.Attrs(feature), attribute.String("feature", string(feature)), attribute.Int("version", int(version))),
 		MetricLabelValues: []string{params.Model},
 	})
 	defer endObservation(1, observation.Args{})
@@ -64,7 +64,7 @@ func (o *observedClient) Complete(ctx context.Context, feature types.Completions
 		},
 	})
 
-	return o.inner.Complete(ctx, feature, params)
+	return o.inner.Complete(ctx, feature, version, params)
 }
 
 type operations struct {

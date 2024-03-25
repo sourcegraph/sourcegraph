@@ -30,7 +30,6 @@ go_library(
         "@com_github_dustin_go_humanize//:go-humanize",
         "@com_github_grafana_regexp//:regexp",
         "@com_github_grafana_regexp//syntax",
-        "@com_github_inconshreveable_log15//:log15",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",
         "@com_github_segmentio_fasthash//fnv1",

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
+	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -22,7 +23,25 @@ type flaggingConfig struct {
 	PromptTokenBlockingLimit       int
 	MaxTokensToSampleFlaggingLimit int
 	ResponseTokenBlockingLimit     int
+
+	// If false, flaggingResult.shouldBlock will always be false when returned by isFlaggedRequest.
+	RequestBlockingEnabled bool
 }
+
+// makeFlaggingConfig converts the config.FlaggingConfig into the type used in this package.
+// (This just avoids taking a hard dependency, allowing the config package to change independently, etc.)
+func makeFlaggingConfig(cfg config.FlaggingConfig) flaggingConfig {
+	return flaggingConfig{
+		AllowedPromptPatterns:          cfg.AllowedPromptPatterns,
+		BlockedPromptPatterns:          cfg.BlockedPromptPatterns,
+		PromptTokenFlaggingLimit:       cfg.PromptTokenFlaggingLimit,
+		PromptTokenBlockingLimit:       cfg.PromptTokenBlockingLimit,
+		MaxTokensToSampleFlaggingLimit: cfg.MaxTokensToSampleFlaggingLimit,
+		ResponseTokenBlockingLimit:     cfg.ResponseTokenBlockingLimit,
+		RequestBlockingEnabled:         cfg.RequestBlockingEnabled,
+	}
+}
+
 type flaggingRequest struct {
 	FlattenedPrompt string
 	MaxTokens       int
@@ -53,15 +72,19 @@ func isFlaggedRequest(tk *tokenizer.Tokenizer, r flaggingRequest, cfg flaggingCo
 		reasons = append(reasons, "high_max_tokens_to_sample")
 	}
 
-	// If this prompt consists of a very large number of tokens, then flag it.
-	tokens, err := tk.Tokenize(r.FlattenedPrompt)
-	if err != nil {
-		return &flaggingResult{}, errors.Wrap(err, "tokenize prompt")
-	}
-	tokenCount := len(tokens)
+	// For more accurate flagging, we need to take the actual tokenization of the prompt
+	// into account. However, not every LLM integration has that available.
+	tokenCount := -1
+	if tk != nil {
+		tokens, err := tk.Tokenize(r.FlattenedPrompt)
+		if err != nil {
+			return &flaggingResult{}, errors.Wrap(err, "tokenizing prompt")
+		}
 
-	if tokenCount > cfg.PromptTokenFlaggingLimit {
-		reasons = append(reasons, "high_prompt_token_count")
+		tokenCount = len(tokens)
+		if tokenCount > cfg.PromptTokenFlaggingLimit {
+			reasons = append(reasons, "high_prompt_token_count")
+		}
 	}
 
 	if len(reasons) == 0 {
@@ -92,6 +115,10 @@ func isFlaggedRequest(tk *tokenizer.Tokenizer, r flaggingRequest, cfg flaggingCo
 	if hasBlockedPhrase {
 		res.blockedPhrase = &phrase
 	}
+
+	// Honor the configuration setting for disabling request blocking.
+	res.shouldBlock = res.shouldBlock && cfg.RequestBlockingEnabled
+
 	return res, nil
 }
 

@@ -4,6 +4,7 @@ import { gql, useLazyQuery } from '@apollo/client'
 import { Route, Routes, Navigate } from 'react-router-dom'
 
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
@@ -28,7 +29,7 @@ const EditInsightLazyPage = lazyComponent(
     'EditInsightPage'
 )
 
-export interface CodeInsightsAppRouter extends TelemetryProps {
+export interface CodeInsightsAppRouter extends TelemetryProps, TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
 }
 
@@ -39,7 +40,7 @@ const rootPagePathsToTab = {
 }
 
 export const CodeInsightsAppRouter = withAuthenticatedUser<CodeInsightsAppRouter>(props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
 
     const fetched = useLicense()
     const api = useApi()
@@ -55,20 +56,36 @@ export const CodeInsightsAppRouter = withAuthenticatedUser<CodeInsightsAppRouter
             <Routes>
                 <Route index={true} element={<CodeInsightsSmartRoutingRedirect />} />
 
-                <Route path="create/*" element={<CreationRoutes telemetryService={telemetryService} />} />
+                <Route
+                    path="create/*"
+                    element={
+                        <CreationRoutes telemetryService={telemetryService} telemetryRecorder={telemetryRecorder} />
+                    }
+                />
 
                 <Route path="dashboards/:dashboardId/edit" element={<EditDashboardPage />} />
 
                 <Route
                     path="add-dashboard"
-                    element={<InsightsDashboardCreationPage telemetryService={telemetryService} />}
+                    element={
+                        <InsightsDashboardCreationPage
+                            telemetryService={telemetryService}
+                            telemetryRecorder={telemetryRecorder}
+                        />
+                    }
                 />
 
                 {Object.entries(rootPagePathsToTab).map(([path, activeTab]) => (
                     <Route
                         key="hardcoded-key"
                         path={path}
-                        element={<CodeInsightsRootPage activeTab={activeTab} telemetryService={telemetryService} />}
+                        element={
+                            <CodeInsightsRootPage
+                                activeTab={activeTab}
+                                telemetryService={telemetryService}
+                                telemetryRecorder={telemetryRecorder}
+                            />
+                        }
                     />
                 ))}
 
@@ -77,14 +94,22 @@ export const CodeInsightsAppRouter = withAuthenticatedUser<CodeInsightsAppRouter
                     path="edit/:insightId"
                     element={<RedirectRoute getRedirectURL={({ params }) => `/insights/${params.insightId}/edit`} />}
                 />
-                <Route path=":insightId/edit" element={<EditInsightLazyPage />} />
+                <Route path=":insightId/edit" element={<EditInsightLazyPage telemetryRecorder={telemetryRecorder} />} />
 
                 <Route
                     // Deprecated URL, delete this in the 4.10
                     path="insight/:insightId"
                     element={<RedirectRoute getRedirectURL={({ params }) => `/insights/${params.insightId}`} />}
                 />
-                <Route path=":insightId" element={<CodeInsightIndependentPage telemetryService={telemetryService} />} />
+                <Route
+                    path=":insightId"
+                    element={
+                        <CodeInsightIndependentPage
+                            telemetryService={telemetryService}
+                            telemetryRecorder={telemetryRecorder}
+                        />
+                    }
+                />
 
                 <Route path="*" element={<NotFoundPage pageType="code insights" />} />
             </Routes>

@@ -1,5 +1,6 @@
 import type { Meta } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { WebStory } from '../../../../../components/WebStory'
@@ -14,5 +15,9 @@ const meta: Meta = {
 export default meta
 
 export const CodeInsightsDotComGetStartedStory = () => (
-    <CodeInsightsDotComGetStarted telemetryService={NOOP_TELEMETRY_SERVICE} authenticatedUser={null} />
+    <CodeInsightsDotComGetStarted
+        telemetryService={NOOP_TELEMETRY_SERVICE}
+        authenticatedUser={null}
+        telemetryRecorder={noOpTelemetryRecorder}
+    />
 )

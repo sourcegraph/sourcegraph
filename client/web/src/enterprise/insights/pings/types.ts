@@ -9,6 +9,15 @@ export enum CodeInsightTrackType {
     CloudLandingPageInsight = 'CloudLandingPageInsight',
 }
 
+export const V2InsightType: { [k in CodeInsightTrackType]: number } = {
+    SearchBased: 0,
+    LangStats: 1,
+    CaptureGroup: 2,
+    ComputeInsight: 3,
+    InProductLandingPageInsight: 4,
+    CloudLandingPageInsight: 5,
+}
+
 export const getTrackingTypeByInsightType = (insightType: InsightType): CodeInsightTrackType => {
     switch (insightType) {
         case InsightType.CaptureGroup: {

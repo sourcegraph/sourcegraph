@@ -23,6 +23,12 @@ func TestLangToFileRegexp(t *testing.T) {
 				"/a/b/BUILD.bazel",
 				// *.bzl
 				"/a/b/foo.bzl",
+				// lowercase
+				"build.bazel",
+				"build",
+				// uppercase
+				"BUILD.BAZEL",
+				"BUILD.BZL",
 			},
 			doesntMatch: []string{
 				"aBUILD.bazel",
@@ -31,9 +37,6 @@ func TestLangToFileRegexp(t *testing.T) {
 				"BUILD.bazel/b",
 				"aBUILDb",
 				"BUILDb",
-				// lowercase
-				"build.bazel",
-				"build",
 			},
 		},
 		{
@@ -42,6 +45,8 @@ func TestLangToFileRegexp(t *testing.T) {
 				"Dockerfile",
 				"a/Dockerfile",
 				"/a/b/Dockerfile",
+				"DOCKERFILE",
+				"dockerfile",
 			},
 			doesntMatch: []string{
 				"notaDockerfile",

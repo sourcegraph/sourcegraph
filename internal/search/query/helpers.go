@@ -28,6 +28,15 @@ func UnionRegExps(values []string) string {
 	return "(?:" + strings.Join(values, ")|(?:") + ")"
 }
 
+func CaseInsensitiveRegExp(value string) string {
+	// Don't add (?i) if it is already present.
+	if strings.HasPrefix(value, "(?i)") {
+		return value
+	}
+
+	return `(?i)` + value
+}
+
 // filenamesFromLanguage is a map of language name to full filenames
 // that are associated with it. This is different from extensions, because
 // some languages (like Dockerfile) do not conventionally have an associated
@@ -58,5 +67,7 @@ func LangToFileRegexp(lang string) string {
 	for _, filename := range filenamesFromLanguage[lang] {
 		patterns = append(patterns, "(^|/)"+regexp.QuoteMeta(filename)+"$")
 	}
-	return UnionRegExps(patterns)
+
+	// We always treat lang filters as case insensitive.
+	return CaseInsensitiveRegExp(UnionRegExps(patterns))
 }

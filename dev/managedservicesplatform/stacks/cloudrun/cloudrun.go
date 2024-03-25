@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -517,6 +518,8 @@ func addContainerEnvVars(
 	return nil
 }
 
+// addContainerSecretVolumes adds secret volumes to the container, and mounts
+// https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#example-usage---cloudrunv2-service-secret
 func addContainerSecretVolumes(
 	b builder.Builder,
 	volumes map[string]spec.EnvironmentSecretVolume,
@@ -525,13 +528,18 @@ func addContainerSecretVolumes(
 	slices.Sort(keys)
 	for _, k := range keys {
 		v := volumes[k]
-		b.AddSecretVolume(k, v.MountPath,
+
+		// in secretVolume, we specify the name (filename) of the secret in the volume
+		dir, file := filepath.Split(v.MountPath)
+		b.AddSecretVolume(k, file,
 			builder.SecretRef{
 				Name:    v.Secret,
 				Version: "latest",
 			},
 			292, // 0444 read-only
 		)
+		// then, we mount the secretVolume to the desired path in the container
+		b.AddVolumeMount(k, dir)
 	}
 }
 

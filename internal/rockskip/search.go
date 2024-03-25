@@ -11,10 +11,11 @@ import (
 	"github.com/amit7itz/goset"
 	"github.com/grafana/regexp"
 	"github.com/grafana/regexp/syntax"
-	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 	"github.com/keegancsmith/sqlf"
 	pg "github.com/lib/pq"
 	"github.com/segmentio/fasthash/fnv1"
+
+	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -290,7 +291,12 @@ func (s *Service) querySymbols(ctx context.Context, args search.SymbolsParameter
 		for _, symbol := range allSymbols {
 			if isMatch(symbol.Name) {
 				if symbol.Line < 1 || symbol.Line > len(lines) {
-					log15.Warn("ctags returned an invalid line number", "path", path, "line", symbol.Line, "len(lines)", len(lines), "symbol", symbol.Name)
+					s.logger.Warn("ctags returned an invalid line number",
+						log.String("path", path),
+						log.Int("line", symbol.Line),
+						log.Int("len(lines)", len(lines)),
+						log.String("symbol", symbol.Name),
+					)
 					continue
 				}
 
@@ -564,7 +570,6 @@ func regexMatch(conditions Conditions, regex string, isCaseSensitive bool) *sqlf
 		return conditions.regexI(regex)
 	}
 
-	log15.Error("None of the conditions matched", "regex", regex)
 	return nil
 }
 

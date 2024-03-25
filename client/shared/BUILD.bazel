@@ -300,6 +300,7 @@ ts_project(
         "src/telemetry/index.ts",
         "src/telemetry/telemetryService.ts",
         "src/theme.ts",
+        "src/theme-types.ts",
         "src/tracking/event-log-creators.ts",
         "src/tracking/utm.ts",
         "src/types/core-js/configurator.d.ts",

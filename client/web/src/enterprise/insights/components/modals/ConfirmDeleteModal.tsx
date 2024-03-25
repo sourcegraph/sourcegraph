@@ -2,6 +2,7 @@ import React from 'react'
 
 import { noop } from 'lodash'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { H3, Text } from '@sourcegraph/wildcard'
 
 import type { Insight } from '../../core'
@@ -11,7 +12,7 @@ import { ConfirmationModal } from './ConfirmationModal'
 
 type MinimalInsightFields = Pick<Insight, 'title' | 'id' | 'type'>
 
-interface ConfirmDeleteModalProps {
+interface ConfirmDeleteModalProps extends TelemetryV2Props {
     insight: MinimalInsightFields
     showModal: boolean
     onCancel?: () => void
@@ -23,8 +24,9 @@ export const ConfirmDeleteModal: React.FunctionComponent<ConfirmDeleteModalProps
     showModal,
     onCancel = noop,
     onConfirm = noop,
+    telemetryRecorder,
 }) => {
-    const { delete: handleDelete, loading } = useDeleteInsight()
+    const { delete: handleDelete, loading } = useDeleteInsight(telemetryRecorder)
 
     const handleConfirm = async (): Promise<void> => {
         if (loading) {

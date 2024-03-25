@@ -1,5 +1,6 @@
-import { type FC, useEffect, useMemo } from 'react'
+import { type FC, useEffect, useMemo, useCallback } from 'react'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Link,
@@ -22,7 +23,7 @@ import { useCaptureInsightInitialValues } from './hooks/use-capture-insight-init
 import type { CaptureGroupFormFields } from './types'
 import { getSanitizedCaptureGroupInsight } from './utils/capture-group-insight-sanitizer'
 
-interface CaptureGroupCreationPageProps extends TelemetryProps {
+interface CaptureGroupCreationPageProps extends TelemetryProps, TelemetryV2Props {
     backUrl: string
     onInsightCreateRequest: (event: { insight: MinimalCaptureGroupInsightData }) => Promise<unknown>
     onSuccessfulCreation: () => void
@@ -30,7 +31,8 @@ interface CaptureGroupCreationPageProps extends TelemetryProps {
 }
 
 export const CaptureGroupCreationPage: FC<CaptureGroupCreationPageProps> = props => {
-    const { backUrl, telemetryService, onInsightCreateRequest, onSuccessfulCreation, onCancel } = props
+    const { backUrl, telemetryService, telemetryRecorder, onInsightCreateRequest, onSuccessfulCreation, onCancel } =
+        props
 
     const { licensed, insight } = useUiFeatures()
     const creationPermission = useObservable(useMemo(() => insight.getCreationPermissions(), [insight]))
@@ -39,31 +41,36 @@ export const CaptureGroupCreationPage: FC<CaptureGroupCreationPageProps> = props
 
     useEffect(() => {
         telemetryService.logViewEvent('CodeInsightsCaptureGroupCreationPage')
-    }, [telemetryService])
+        telemetryRecorder.recordEvent('insights.create.captureGroup', 'view')
+    }, [telemetryService, telemetryRecorder])
 
-    const handleSubmit = async (values: CaptureGroupFormFields): Promise<SubmissionErrors | void> => {
-        const insight = getSanitizedCaptureGroupInsight(values)
+    const handleSubmit = useCallback(
+        async (values: CaptureGroupFormFields): Promise<SubmissionErrors> => {
+            const insight = getSanitizedCaptureGroupInsight(values)
 
-        await onInsightCreateRequest({ insight })
+            await onInsightCreateRequest({ insight })
 
-        setInitialFormValues(undefined)
-        telemetryService.log('CodeInsightsCaptureGroupCreationPageSubmitClick')
-        telemetryService.log(
-            'InsightAddition',
-            { insightType: CodeInsightTrackType.CaptureGroupInsight },
-            { insightType: CodeInsightTrackType.CaptureGroupInsight }
-        )
+            setInitialFormValues(undefined)
+            telemetryRecorder.recordEvent('insights.create.captureGroup', 'submit')
+            telemetryService.log('CodeInsightsCaptureGroupCreationPageSubmitClick')
+            telemetryService.log(
+                'InsightAddition',
+                { insightType: CodeInsightTrackType.CaptureGroupInsight },
+                { insightType: CodeInsightTrackType.CaptureGroupInsight }
+            )
 
-        onSuccessfulCreation()
-    }
+            onSuccessfulCreation()
+        },
+        [onInsightCreateRequest, onSuccessfulCreation, setInitialFormValues, telemetryRecorder, telemetryService]
+    )
 
-    const handleCancel = (): void => {
+    const handleCancel = useCallback(() => {
         // Clear initial values if user successfully created search insight
         setInitialFormValues(undefined)
         telemetryService.log('CodeInsightsCaptureGroupCreationPageCancelClick')
-
+        telemetryRecorder.recordEvent('insights.create.captureGroup', 'cancel')
         onCancel()
-    }
+    }, [setInitialFormValues, telemetryRecorder, telemetryService, onCancel])
 
     const handleChange = (event: FormChangeEvent<CaptureGroupFormFields>): void => {
         setInitialFormValues(event.values)

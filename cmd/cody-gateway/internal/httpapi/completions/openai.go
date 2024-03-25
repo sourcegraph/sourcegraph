@@ -126,9 +126,15 @@ func (*OpenAIHandlerMethods) validateRequest(_ context.Context, _ log.Logger, fe
 	return nil
 }
 
-func (*OpenAIHandlerMethods) shouldFlagRequest(_ context.Context, _ log.Logger, _ openaiRequest) (*flaggingResult, error) {
-	// TODO[#61278]: Add missing request validation for all LLM providers in Cody Gateway.
-	return nil, nil
+func (o *OpenAIHandlerMethods) shouldFlagRequest(ctx context.Context, logger log.Logger, req openaiRequest) (*flaggingResult, error) {
+	result, err := isFlaggedRequest(
+		nil, /* tokenzier, meaning token counts aren't considered when for flagging consideration. */
+		flaggingRequest{
+			FlattenedPrompt: req.BuildPrompt(),
+			MaxTokens:       int(req.MaxTokens),
+		},
+		makeFlaggingConfig(o.config.FlaggingConfig))
+	return result, err
 }
 
 func (*OpenAIHandlerMethods) transformBody(body *openaiRequest, identifier string) {

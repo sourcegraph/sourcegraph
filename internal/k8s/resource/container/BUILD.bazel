@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "container",
+    srcs = ["container.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/k8s/resource/container",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//lib/pointers",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@io_k8s_apimachinery//pkg/util/intstr",
+    ],
+)
+
+go_test(
+    name = "container_test",
+    srcs = [
+        "container_test.go",
+        "example_test.go",
+    ],
+    embed = [":container"],
+    deps = [
+        "//lib/pointers",
+        "@com_github_google_go_cmp//cmp",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_apimachinery//pkg/api/resource",
+        "@io_k8s_apimachinery//pkg/util/intstr",
+        "@io_k8s_sigs_yaml//:yaml",
+        "@io_k8s_utils//pointer",
+    ],
+)

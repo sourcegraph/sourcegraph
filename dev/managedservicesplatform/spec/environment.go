@@ -667,6 +667,12 @@ func (v EnvironmentSecretVolume) Validate() []error {
 	if v.MountPath == "" {
 		errs = append(errs, errors.New("mountPath is required"))
 	}
+	if !filepath.IsAbs(v.MountPath) {
+		errs = append(errs, errors.Newf("mountPath must be abs file path, got %q", v.MountPath))
+	}
+	if dir, file := filepath.Split(v.MountPath); dir == "" || file == "" {
+		errs = append(errs, errors.Newf("mountPath may be malformed, got %q", v.MountPath))
+	}
 	if v.Secret == "" {
 		errs = append(errs, errors.New("secret is required"))
 	}

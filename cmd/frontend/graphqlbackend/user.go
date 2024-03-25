@@ -873,6 +873,7 @@ func (r *schemaResolver) SetUserCompletionsQuota(ctx context.Context, args SetUs
 	if err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db); err != nil {
 		return nil, err
 	}
+	requestingActor := actor.FromContext(ctx)
 
 	if args.Quota != nil && *args.Quota <= 0 {
 		return nil, errors.New("quota must be 1 or greater")
@@ -889,17 +890,28 @@ func (r *schemaResolver) SetUserCompletionsQuota(ctx context.Context, args SetUs
 		return nil, err
 	}
 
-	var quota *int
-	if args.Quota != nil {
-		i := int(*args.Quota)
-		quota = &i
-	}
-	if err := r.db.Users().SetChatCompletionsQuota(ctx, user.ID, quota); err != nil {
+	// Lookup the current quota, so we can log the delta.
+	oldQuota, err := r.db.Users().GetChatCompletionsQuota(ctx, user.ID)
+	if err != nil {
 		return nil, err
 	}
-	if featureflag.FromContext(ctx).GetBoolOr("auditlog-expansion", false) {
 
-		// Log an event when a user's Completions quota is updated
+	var newQuota *int
+	if args.Quota != nil {
+		i := int(*args.Quota)
+		newQuota = &i
+	}
+	if err := r.db.Users().SetChatCompletionsQuota(ctx, user.ID, newQuota); err != nil {
+		return nil, err
+	}
+
+	// Log that the user's completions quota was updated.
+	r.logger.Info("setting user completions quota",
+		log.Int("requestingUserID", int(requestingActor.UID)),
+		log.Int("targetUserID", int(user.ID)),
+		log.Intp("oldQuota", oldQuota),
+		log.Intp("newQuota", newQuota))
+	if featureflag.FromContext(ctx).GetBoolOr("auditlog-expansion", false) {
 		if err := r.db.SecurityEventLogs().LogSecurityEvent(ctx, database.SecurityEventNameUserCompletionQuotaUpdated, "", uint32(id), "", "BACKEND", args); err != nil {
 			r.logger.Error("Error logging security event", log.Error(err))
 		}

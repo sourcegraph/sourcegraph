@@ -1,5 +1,6 @@
 import type { Meta, StoryFn } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { WebStory } from '../../../../../../components/WebStory'
@@ -28,7 +29,7 @@ export const IntroPageLicensed: StoryFn = () => {
 
     return (
         <CodeInsightsBackendContext.Provider value={API}>
-            <IntroCreationPage telemetryService={NOOP_TELEMETRY_SERVICE} />
+            <IntroCreationPage telemetryService={NOOP_TELEMETRY_SERVICE} telemetryRecorder={noOpTelemetryRecorder} />
         </CodeInsightsBackendContext.Provider>
     )
 }
@@ -38,7 +39,7 @@ export const IntroPageUnLicensed: StoryFn = () => {
 
     return (
         <CodeInsightsBackendContext.Provider value={API}>
-            <IntroCreationPage telemetryService={NOOP_TELEMETRY_SERVICE} />
+            <IntroCreationPage telemetryService={NOOP_TELEMETRY_SERVICE} telemetryRecorder={noOpTelemetryRecorder} />
         </CodeInsightsBackendContext.Provider>
     )
 }

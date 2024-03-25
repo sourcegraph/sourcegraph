@@ -1,12 +1,13 @@
 import React from 'react'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { H3, Text } from '@sourcegraph/wildcard'
 
 import type { Insight, InsightDashboard } from '../../../../core'
 import { useRemoveInsightFromDashboard } from '../../../../hooks/use-remove-insight'
 import { ConfirmationModal, type ConfirmationModalProps } from '../../../modals/ConfirmationModal'
 
-interface ConfirmRemoveModalProps extends Pick<ConfirmationModalProps, 'showModal' | 'onCancel'> {
+interface ConfirmRemoveModalProps extends TelemetryV2Props, Pick<ConfirmationModalProps, 'showModal' | 'onCancel'> {
     insight: Insight
     dashboard: InsightDashboard | null
 }
@@ -16,8 +17,9 @@ export const ConfirmRemoveModal: React.FunctionComponent<React.PropsWithChildren
     dashboard,
     showModal,
     onCancel,
+    telemetryRecorder,
 }) => {
-    const { remove, loading } = useRemoveInsightFromDashboard()
+    const { remove, loading } = useRemoveInsightFromDashboard(telemetryRecorder)
 
     return (
         <ConfirmationModal

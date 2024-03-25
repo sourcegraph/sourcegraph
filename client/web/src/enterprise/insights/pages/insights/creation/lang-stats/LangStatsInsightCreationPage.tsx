@@ -1,5 +1,6 @@
 import { type FC, useCallback, useEffect, useMemo } from 'react'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useLocalStorage, Link, PageHeader, useObservable, FORM_ERROR } from '@sourcegraph/wildcard'
 
@@ -9,6 +10,7 @@ import { CodeInsightCreationMode, CodeInsightsCreationActions, CodeInsightsPage 
 import type { MinimalLangStatsInsightData } from '../../../../core'
 import { useUiFeatures } from '../../../../hooks'
 import { CodeInsightTrackType } from '../../../../pings'
+import { V2InsightType } from '../../../../pings/types'
 
 import {
     LangStatsInsightCreationContent,
@@ -21,7 +23,7 @@ export interface InsightCreateEvent {
     insight: MinimalLangStatsInsightData
 }
 
-export interface LangStatsInsightCreationPageProps extends TelemetryProps {
+export interface LangStatsInsightCreationPageProps extends TelemetryProps, TelemetryV2Props {
     backUrl: string
 
     /**
@@ -44,7 +46,8 @@ export interface LangStatsInsightCreationPageProps extends TelemetryProps {
 }
 
 export const LangStatsInsightCreationPage: FC<LangStatsInsightCreationPageProps> = props => {
-    const { backUrl, telemetryService, onInsightCreateRequest, onCancel, onSuccessfulCreation } = props
+    const { backUrl, telemetryService, telemetryRecorder, onInsightCreateRequest, onCancel, onSuccessfulCreation } =
+        props
 
     const { licensed, insight } = useUiFeatures()
     const creationPermission = useObservable(useMemo(() => insight.getCreationPermissions(), [insight]))
@@ -60,7 +63,8 @@ export const LangStatsInsightCreationPage: FC<LangStatsInsightCreationPageProps>
 
     useEffect(() => {
         telemetryService.logViewEvent('CodeInsightsCodeStatsCreationPage')
-    }, [telemetryService])
+        telemetryRecorder.recordEvent('insights.create.codeStats', 'view')
+    }, [telemetryService, telemetryRecorder])
 
     const handleSubmit = useCallback<LangStatsInsightCreationContentProps['onSubmit']>(
         async values => {
@@ -70,6 +74,9 @@ export const LangStatsInsightCreationPage: FC<LangStatsInsightCreationPageProps>
 
             // Clear initial values if user successfully created search insight
             setInitialFormValues(undefined)
+            telemetryRecorder.recordEvent('insights.create.codeStats', 'submit', {
+                metadata: { type: V2InsightType[CodeInsightTrackType.LangStatsInsight] },
+            })
             telemetryService.log('CodeInsightsCodeStatsCreationPageSubmitClick')
             telemetryService.log(
                 'InsightAddition',
@@ -79,16 +86,17 @@ export const LangStatsInsightCreationPage: FC<LangStatsInsightCreationPageProps>
 
             onSuccessfulCreation()
         },
-        [onInsightCreateRequest, onSuccessfulCreation, setInitialFormValues, telemetryService]
+        [onInsightCreateRequest, onSuccessfulCreation, setInitialFormValues, telemetryService, telemetryRecorder]
     )
 
     const handleCancel = useCallback(() => {
         // Clear initial values if user successfully created search insight
         setInitialFormValues(undefined)
         telemetryService.log('CodeInsightsCodeStatsCreationPageCancelClick')
+        telemetryRecorder.recordEvent('insights.create.codeStats', 'cancel')
 
         onCancel()
-    }, [setInitialFormValues, telemetryService, onCancel])
+    }, [setInitialFormValues, telemetryService, telemetryRecorder, onCancel])
 
     return (
         <CodeInsightsPage>

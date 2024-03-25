@@ -2,6 +2,7 @@ import type { Meta, StoryFn } from '@storybook/react'
 import delay from 'delay'
 import { noop } from 'lodash'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { WebStory } from '../../../../../../components/WebStory'
@@ -38,6 +39,7 @@ export const ComputeInsightCreationPage: StoryFn = () => {
             onInsightCreateRequest={fakeAPIRequest}
             onSuccessfulCreation={noop}
             onCancel={noop}
+            telemetryRecorder={noOpTelemetryRecorder}
         />
     )
 }

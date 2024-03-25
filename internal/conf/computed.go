@@ -720,7 +720,7 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 	} else if completionsConfig.Provider == string(conftypes.CompletionsProviderNameAnthropic) {
 		// If no endpoint is configured, use a default value.
 		if completionsConfig.Endpoint == "" {
-			completionsConfig.Endpoint = "https://api.anthropic.com/v1/complete"
+			completionsConfig.Endpoint = "https://api.anthropic.com/v1/messages"
 		}
 
 		// If not access token is set, we cannot talk to Anthropic. Bail.
@@ -1213,9 +1213,9 @@ func anthropicDefaultMaxPromptTokens(model string) int {
 		return 100_000
 
 	}
-	if model == "claude-2" || model == "claude-2.0" || model == "claude-2.1" || model == "claude-v2" {
-		// TODO: Technically, v2 also uses a 100k window, but we should validate
-		// that returning 100k here is the right thing to do.
+	if model == "claude-2" || model == "claude-2.0" || model == "claude-2.1" || model == "claude-v2" || model == "claude-3-sonnet-20240229" || model == "claude-3-opus-20240229" || model == "claude-3-haiku-20240307" {
+		// TODO: Technically, v2 and v3 also uses a 100k/200k window respectively, but we should
+		// validate that returning 100k here is the right thing to do.
 		return 12_000
 	}
 	// For now, all other claude models have a 9k token window.

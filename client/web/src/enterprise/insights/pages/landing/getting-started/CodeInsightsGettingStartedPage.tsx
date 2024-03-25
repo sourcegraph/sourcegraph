@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { PageTitle } from '../../../../../components/PageTitle'
@@ -10,23 +11,32 @@ import { DynamicCodeInsightExample } from './components/dynamic-code-insight-exa
 
 import styles from './CodeInsightsGettingStartedPage.module.scss'
 
-interface CodeInsightsGettingStartedPageProps extends TelemetryProps {}
+interface CodeInsightsGettingStartedPageProps extends TelemetryProps, TelemetryV2Props {}
 
 export const CodeInsightsGettingStartedPage: React.FunctionComponent<
     React.PropsWithChildren<CodeInsightsGettingStartedPageProps>
 > = props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
 
     useEffect(() => {
         telemetryService.logViewEvent('InsightsGetStartedPage')
-    }, [telemetryService])
+        telemetryRecorder.recordEvent('insights.getStarted', 'view')
+    }, [telemetryService, telemetryRecorder])
 
     return (
         <main className="pb-5">
             <PageTitle title="Code Insights" />
-            <DynamicCodeInsightExample telemetryService={telemetryService} />
-            <CodeInsightsExamples telemetryService={telemetryService} className={styles.section} />
-            <CodeInsightsTemplates telemetryService={telemetryService} className={styles.section} />
+            <DynamicCodeInsightExample telemetryService={telemetryService} telemetryRecorder={telemetryRecorder} />
+            <CodeInsightsExamples
+                telemetryService={telemetryService}
+                telemetryRecorder={telemetryRecorder}
+                className={styles.section}
+            />
+            <CodeInsightsTemplates
+                telemetryService={telemetryService}
+                telemetryRecorder={telemetryRecorder}
+                className={styles.section}
+            />
         </main>
     )
 }

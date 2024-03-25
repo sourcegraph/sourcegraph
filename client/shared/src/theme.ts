@@ -1,26 +1,9 @@
 import { createContext, useCallback, useContext, useSyncExternalStore } from 'react'
 
 import { useTemporarySetting } from './settings/temporary'
+import { Theme, ThemeSetting } from './theme-types'
 
-/**
- * Enum with possible users theme settings, it might be dark or light
- * or user can pick system and in this case we fall back on system preference
- * with match media
- */
-export enum ThemeSetting {
-    Light = 'light',
-    Dark = 'dark',
-    System = 'system',
-}
-
-/**
- * List of possibles theme values, there is only two themes at the moment,
- * but in the future it could be more than just two
- */
-export enum Theme {
-    Light = 'light',
-    Dark = 'dark',
-}
+export { Theme, ThemeSetting }
 
 interface ThemeContextData {
     themeSetting: ThemeSetting | null
@@ -121,7 +104,7 @@ function useUserThemeSetting(): [ThemeSetting, (setting: ThemeSetting) => void] 
 
 function readStoredThemePreference(value?: string): ThemeSetting {
     // Handle both old and new preference values
-    switch (value) {
+    switch (value?.toLowerCase()) {
         case 'true':
         case 'light': {
             return ThemeSetting.Light

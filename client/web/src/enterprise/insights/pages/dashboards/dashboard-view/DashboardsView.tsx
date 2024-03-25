@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import { Navigate } from 'react-router-dom'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { LoadingSpinner } from '@sourcegraph/wildcard'
 
@@ -10,7 +11,7 @@ import { isPersonalDashboard, useInsightDashboards } from '../../../core'
 
 import { DashboardsContent } from './components/dashboards-content/DashboardsContent'
 
-export interface DashboardsViewProps extends TelemetryProps {
+export interface DashboardsViewProps extends TelemetryProps, TelemetryV2Props {
     /**
      * Possible dashboard id. All insights on the page will be got from
      * dashboard's info from the user or org settings by the dashboard id.
@@ -21,7 +22,7 @@ export interface DashboardsViewProps extends TelemetryProps {
 }
 
 export const DashboardsView: FC<DashboardsViewProps> = props => {
-    const { dashboardId, telemetryService } = props
+    const { dashboardId, telemetryService, telemetryRecorder } = props
 
     const { dashboards } = useInsightDashboards()
 
@@ -51,6 +52,7 @@ export const DashboardsView: FC<DashboardsViewProps> = props => {
                 currentDashboard={currentDashboard}
                 dashboards={dashboards}
                 telemetryService={telemetryService}
+                telemetryRecorder={telemetryRecorder}
             />
         </>
     )

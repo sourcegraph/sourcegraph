@@ -2,11 +2,12 @@ import { useCallback, useRef } from 'react'
 
 import { useDebouncedCallback } from 'use-debounce'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
-import type { CodeInsightTrackType } from './types'
+import { V2InsightType, type CodeInsightTrackType } from './types'
 
-interface UseCodeInsightViewPingsInput extends TelemetryProps {
+interface UseCodeInsightViewPingsInput extends TelemetryProps, TelemetryV2Props {
     /**
      * View tracking type is used to send a proper pings event (InsightHover, InsightDataPointClick)
      * with view type as a tracking variable.
@@ -25,7 +26,7 @@ interface PingHandlers {
  * Shared logic for tracking insight related ping events on the insight card component.
  */
 export function useCodeInsightViewPings(props: UseCodeInsightViewPingsInput): PingHandlers {
-    const { insightType, telemetryService } = props
+    const { insightType, telemetryService, telemetryRecorder } = props
     const timeoutID = useRef<number>()
 
     const trackMouseEnter = useCallback(() => {
@@ -34,8 +35,11 @@ export function useCodeInsightViewPings(props: UseCodeInsightViewPingsInput): Pi
         // the view quickly, clear the timeout for logging the event
         timeoutID.current = window.setTimeout(() => {
             telemetryService.log('InsightHover', { insightType }, { insightType })
+            telemetryRecorder.recordEvent('insight', 'hover', {
+                metadata: { insightType: V2InsightType[insightType] },
+            })
         }, 500)
-    }, [insightType, telemetryService])
+    }, [insightType, telemetryService, telemetryRecorder])
 
     const trackMouseLeave = useCallback(() => {
         window.clearTimeout(timeoutID.current)
@@ -43,10 +47,16 @@ export function useCodeInsightViewPings(props: UseCodeInsightViewPingsInput): Pi
 
     const trackDatumClicks = useCallback(() => {
         telemetryService.log('InsightDataPointClick', { insightType }, { insightType })
-    }, [insightType, telemetryService])
+        telemetryRecorder.recordEvent('insight.dataPoint', 'click', {
+            metadata: { insightType: V2InsightType[insightType] },
+        })
+    }, [insightType, telemetryService, telemetryRecorder])
 
     const trackFilterChanges = useDebouncedCallback(() => {
         telemetryService.log('InsightFiltersChange', { insightType }, { insightType })
+        telemetryRecorder.recordEvent('insight.filters', 'change', {
+            metadata: { insightType: V2InsightType[insightType] },
+        })
     }, 1000)
 
     return {

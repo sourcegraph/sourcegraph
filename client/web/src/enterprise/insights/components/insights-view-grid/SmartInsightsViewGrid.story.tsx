@@ -1,6 +1,7 @@
 import type { MockedResponse } from '@apollo/client/testing/core'
 import type { Meta } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 
@@ -1195,6 +1196,7 @@ export const SmartInsightsViewGridExample = (): JSX.Element => (
             persistSizeAndOrder={false}
             insights={INSIGHT_CONFIGURATIONS}
             telemetryService={NOOP_TELEMETRY_SERVICE}
+            telemetryRecorder={noOpTelemetryRecorder}
         />
     </MockedTestProvider>
 )

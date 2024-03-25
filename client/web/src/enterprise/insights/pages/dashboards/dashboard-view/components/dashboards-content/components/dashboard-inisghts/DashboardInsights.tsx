@@ -1,6 +1,7 @@
 import { type FC, useContext, useMemo } from 'react'
 
 import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { LoadingSpinner, useObservable } from '@sourcegraph/wildcard'
 
@@ -8,7 +9,7 @@ import { SmartInsightsViewGrid, InsightContext, type GridApi } from '../../../..
 import { CodeInsightsBackendContext, type CustomInsightDashboard } from '../../../../../../../core'
 import { EmptyCustomDashboard } from '../empty-insight-dashboard/EmptyInsightDashboard'
 
-interface DashboardInsightsProps extends TelemetryProps {
+interface DashboardInsightsProps extends TelemetryProps, TelemetryV2Props {
     currentDashboard: CustomInsightDashboard
     className?: string
     onAddInsightRequest?: () => void
@@ -16,7 +17,8 @@ interface DashboardInsightsProps extends TelemetryProps {
 }
 
 export const DashboardInsights: FC<DashboardInsightsProps> = props => {
-    const { currentDashboard, telemetryService, className, onAddInsightRequest, onDashboardCreate } = props
+    const { currentDashboard, telemetryService, telemetryRecorder, className, onAddInsightRequest, onDashboardCreate } =
+        props
 
     const { getInsights } = useContext(CodeInsightsBackendContext)
     const codeInsightsCompute = useExperimentalFeatures(settings => settings.codeInsightsCompute ?? false)
@@ -45,6 +47,7 @@ export const DashboardInsights: FC<DashboardInsightsProps> = props => {
                     id={currentDashboard.id}
                     insights={insights}
                     telemetryService={telemetryService}
+                    telemetryRecorder={telemetryRecorder}
                     className={className}
                     onGridCreate={onDashboardCreate}
                 />

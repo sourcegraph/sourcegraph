@@ -33,7 +33,7 @@ All notable changes to Sourcegraph are documented in this file.
 - Fixed a bug where clicking "Exclude Repo" on Azure DevOps or Gerrit repositories would not work. [#60509](https://github.com/sourcegraph/sourcegraph/pull/60509)
 - Links in codeintel popovers respect the revision from the URL. [#60545](https://github.com/sourcegraph/sourcegraph/pull/60545)
 
-## Unreleased
+## 5.3.3
 
 ### Added
 

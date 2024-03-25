@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators'
 
 import { createAggregateError } from '@sourcegraph/common'
 import { gql } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, Link, PageHeader, Text } from '@sourcegraph/wildcard'
 
 import { queryGraphQL } from '../../../backend/graphql'
@@ -24,7 +25,7 @@ import {
     type ProductSubscriptionNodeProps,
 } from '../../dotcom/productSubscriptions/ProductSubscriptionNode'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     user: UserAreaUserFields
 }
 
@@ -35,9 +36,10 @@ interface Props {
 export const UserSubscriptionsProductSubscriptionsPage: React.FunctionComponent<
     React.PropsWithChildren<Props>
 > = props => {
-    useEffect(() => {
-        eventLogger.logViewEvent('UserSubscriptionsProductSubscriptions')
-    }, [])
+    useEffect(
+        () => props.telemetryRecorder.recordEvent('settings.userSubscriptions', 'view'),
+        [props.telemetryRecorder]
+    )
 
     const queryLicenses = useCallback(
         (args: { first?: number }): Observable<ProductSubscriptionsResult['dotcom']['productSubscriptions']> => {
@@ -86,7 +88,10 @@ export const UserSubscriptionsProductSubscriptionsPage: React.FunctionComponent<
                         Search your private code with{' '}
                         <Link
                             to="https://sourcegraph.com"
-                            onClick={() => eventLogger.log('ClickedOnEnterpriseCTA', { location: 'Subscriptions' })}
+                            onClick={() => {
+                                eventLogger.log('ClickedOnEnterpriseCTA', { location: 'Subscriptions' })
+                                props.telemetryRecorder.recordEvent('settings.userSubscriptions.enterpriseCTA', 'click')
+                            }}
                         >
                             Sourcegraph Enterprise
                         </Link>

@@ -74,10 +74,13 @@ func (c *completionsResolver) Completions(ctx context.Context, args graphqlbacke
 		return "", err
 	}
 
+	// GraphQL API is considered a legacy API
+	version := types.CompletionsVersionLegacy
+
 	params := convertParams(args)
 	// No way to configure the model through the request, we hard code to chat.
 	params.Model = chatModel
-	resp, err := client.Complete(ctx, types.CompletionsFeatureChat, params)
+	resp, err := client.Complete(ctx, types.CompletionsFeatureChat, version, params)
 	if err != nil {
 		return "", errors.Wrap(err, "client.Complete")
 	}

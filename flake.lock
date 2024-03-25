@@ -33,6 +33,22 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-bazel": {
+      "locked": {
+        "lastModified": 1710347736,
+        "narHash": "sha256-AqT4QwGkZuSWlNOn+xiM7oLwKQc3okwur/gnYuUYXQ0=",
+        "owner": "Strum355",
+        "repo": "nixpkgs",
+        "rev": "1e01835f072e832806d4e5097856ca21faf9811c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Strum355",
+        "ref": "bazel-7.1.0",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1682268651,
@@ -53,6 +69,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-bazel": "nixpkgs-bazel",
         "nixpkgs-stable": "nixpkgs-stable"
       }
     },

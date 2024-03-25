@@ -1,0 +1,11 @@
+[]types.CompletionResponse{
+	{
+		Completion: "He",
+	},
+	{Completion: "Hello"},
+	{Completion: "Hello!"},
+	{
+		Completion: "Hello!",
+		StopReason: "end_turn",
+	},
+}

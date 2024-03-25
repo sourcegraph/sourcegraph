@@ -10,7 +10,7 @@ exports[`GlobalNavbar > code search only license 1`] = `
       class="h1 logo"
     >
       <a
-        class="d-flex align-items-center"
+        class="anchorLink d-flex align-items-center"
         href="/search"
       >
         BrandLogo
@@ -156,7 +156,7 @@ exports[`GlobalNavbar > cody only license 1`] = `
       class="h1 logo"
     >
       <a
-        class="d-flex align-items-center"
+        class="anchorLink d-flex align-items-center"
         href="/search"
       >
         BrandLogo
@@ -302,7 +302,7 @@ exports[`GlobalNavbar > default 1`] = `
       class="h1 logo"
     >
       <a
-        class="d-flex align-items-center"
+        class="anchorLink d-flex align-items-center"
         href="/search"
       >
         BrandLogo

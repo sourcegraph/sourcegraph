@@ -132,27 +132,20 @@ func (a *AnthropicHandlerMethods) getAPIURLByFeature(feature codygateway.Feature
 }
 
 func (a *AnthropicHandlerMethods) validateRequest(ctx context.Context, logger log.Logger, _ codygateway.Feature, ar anthropicRequest) error {
-	if ar.MaxTokensToSample > int32(a.config.MaxTokensToSample) {
-		return errors.Errorf("max_tokens_to_sample exceeds maximum allowed value of %d: %d", a.config.MaxTokensToSample, ar.MaxTokensToSample)
+	maxTokensToSample := a.config.FlaggingConfig.MaxTokensToSample
+	if ar.MaxTokensToSample > int32(maxTokensToSample) {
+		return errors.Errorf("max_tokens_to_sample exceeds maximum allowed value of %d: %d", maxTokensToSample, ar.MaxTokensToSample)
 	}
 	return nil
 }
 
 func (a *AnthropicHandlerMethods) shouldFlagRequest(ctx context.Context, logger log.Logger, ar anthropicRequest) (*flaggingResult, error) {
-	cfg := a.config
 	result, err := isFlaggedRequest(a.anthropicTokenizer,
 		flaggingRequest{
 			FlattenedPrompt: ar.Prompt,
 			MaxTokens:       int(ar.MaxTokensToSample),
 		},
-		flaggingConfig{
-			AllowedPromptPatterns:          cfg.AllowedPromptPatterns,
-			BlockedPromptPatterns:          cfg.BlockedPromptPatterns,
-			PromptTokenFlaggingLimit:       cfg.PromptTokenFlaggingLimit,
-			PromptTokenBlockingLimit:       cfg.PromptTokenBlockingLimit,
-			MaxTokensToSampleFlaggingLimit: cfg.MaxTokensToSampleFlaggingLimit,
-			ResponseTokenBlockingLimit:     cfg.ResponseTokenBlockingLimit,
-		},
+		makeFlaggingConfig(a.config.FlaggingConfig),
 	)
 	if err != nil {
 		return nil, err
@@ -166,7 +159,6 @@ func (a *AnthropicHandlerMethods) shouldFlagRequest(ctx context.Context, logger 
 		if err := a.promptRecorder.Record(ctx, ar.BuildPrompt()); err != nil {
 			logger.Warn("failed to record flagged prompt", log.Error(err))
 		}
-		result.shouldBlock = result.shouldBlock && a.config.RequestBlockingEnabled
 	}
 	return result, nil
 }

@@ -35,6 +35,9 @@ func NewDecoder(r io.Reader) *decoder {
 		if i := bytes.Index(data, []byte("\r\n\r\n")); i >= 0 {
 			return i + 4, data[:i], nil
 		}
+		if i := bytes.Index(data, []byte("\n\n")); i >= 0 {
+			return i + 2, data[:i], nil
+		}
 		// If we're at EOF, we have a final, non-terminated event. This should
 		// be empty.
 		if atEOF {
@@ -56,26 +59,30 @@ func (d *decoder) Scan() bool {
 		return false
 	}
 	for d.scanner.Scan() {
+		// event: $_name
 		// data: json($data)|[DONE]
-		line := d.scanner.Bytes()
-		typ, data := splitColon(line)
-		switch {
-		case bytes.Equal(typ, []byte("data")):
-			d.data = data
-			// Check for special sentinel value used by the Anthropic API to
-			// indicate that the stream is done.
-			if bytes.Equal(data, doneBytes) {
-				d.done = true
+
+		lines := bytes.Split(d.scanner.Bytes(), []byte("\n"))
+		for _, line := range lines {
+			typ, data := splitColon(line)
+
+			switch {
+			case bytes.Equal(typ, []byte("data")):
+				d.data = data
+				// Check for special sentinel value used by the Anthropic API to
+				// indicate that the stream is done.
+				if bytes.Equal(data, doneBytes) {
+					d.done = true
+					return false
+				}
+				return true
+			case bytes.Equal(typ, []byte("event")):
+				// Anthropic sends the event name in the data payload as well so we ignore it for snow
+				continue
+			default:
+				d.err = errors.Errorf("malformed data, expected data: %s %q", typ, line)
 				return false
 			}
-			return true
-		case bytes.Equal(typ, []byte("event")):
-			// Anthropic occasionally sends ping events.
-			// Just ignore these and continue scanning.
-			continue
-		default:
-			d.err = errors.Errorf("malformed data, expected data: %s %q", typ, line)
-			return false
 		}
 	}
 
@@ -83,7 +90,6 @@ func (d *decoder) Scan() bool {
 	return false
 }
 
-// Event returns the event data of the last decoded event
 func (d *decoder) Data() []byte {
 	return d.data
 }

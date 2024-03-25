@@ -4,6 +4,7 @@ import delay from 'delay'
 import { noop } from 'lodash'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 
@@ -67,6 +68,7 @@ export const LangStatsInsightCreationPage: StoryFn = () => {
                 onCancel={noop}
                 onSuccessfulCreation={noop}
                 telemetryService={NOOP_TELEMETRY_SERVICE}
+                telemetryRecorder={noOpTelemetryRecorder}
             />
         </MockedTestProvider>
     )

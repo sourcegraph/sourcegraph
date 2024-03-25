@@ -26,16 +26,18 @@ func (*mockPromptRecorder) Record(ctx context.Context, prompt string) error {
 func TestIsFlaggedAnthropicRequest(t *testing.T) {
 	validPreamble := "You are cody-gateway."
 
-	cfg := config.AnthropicConfig{
+	cfg := config.FlaggingConfig{
 		PromptTokenFlaggingLimit:       18000,
 		PromptTokenBlockingLimit:       20000,
+		MaxTokensToSample:              0, // Not used within isFlaggedRequest.
 		MaxTokensToSampleFlaggingLimit: 1000,
 		ResponseTokenBlockingLimit:     1000,
 		RequestBlockingEnabled:         true,
 	}
-	cfgWithPreamble := config.AnthropicConfig{
+	cfgWithPreamble := config.FlaggingConfig{
 		PromptTokenFlaggingLimit:       18000,
 		PromptTokenBlockingLimit:       20000,
+		MaxTokensToSample:              0, // Not used within isFlaggedRequest.
 		MaxTokensToSampleFlaggingLimit: 1000,
 		ResponseTokenBlockingLimit:     1000,
 		RequestBlockingEnabled:         true,
@@ -46,12 +48,14 @@ func TestIsFlaggedAnthropicRequest(t *testing.T) {
 
 	// Helper function for calling the AnthropicHandlerMethod's shouldFlagRequest, using the supplied
 	// request and configuration.
-	callShouldFlagRequest := func(t *testing.T, ar anthropicRequest, cfg config.AnthropicConfig) (*flaggingResult, error) {
+	callShouldFlagRequest := func(t *testing.T, ar anthropicRequest, flaggingConfig config.FlaggingConfig) (*flaggingResult, error) {
 		t.Helper()
 		anthropicUpstream := &AnthropicHandlerMethods{
 			anthropicTokenizer: tk,
 			promptRecorder:     &mockPromptRecorder{},
-			config:             cfg,
+			config: config.AnthropicConfig{
+				FlaggingConfig: flaggingConfig,
+			},
 		}
 		ctx := context.Background()
 		logger := logtest.NoOp(t)

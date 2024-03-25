@@ -123,6 +123,7 @@ type azureCompletionClient struct {
 func (c *azureCompletionClient) Complete(
 	ctx context.Context,
 	feature types.CompletionsFeature,
+	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 ) (*types.CompletionResponse, error) {
 
@@ -181,6 +182,7 @@ func completeChat(
 func (c *azureCompletionClient) Stream(
 	ctx context.Context,
 	feature types.CompletionsFeature,
+	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
 ) error {
@@ -312,7 +314,7 @@ func getChatMessages(messages []types.Message) []azopenai.ChatRequestMessageClas
 		switch m.Speaker {
 		case types.HUMAN_MESSAGE_SPEAKER:
 			azureMessages[i] = &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message)}
-		case types.ASISSTANT_MESSAGE_SPEAKER:
+		case types.ASSISTANT_MESSAGE_SPEAKER:
 			azureMessages[i] = &azopenai.ChatRequestAssistantMessage{Content: &message}
 		}
 

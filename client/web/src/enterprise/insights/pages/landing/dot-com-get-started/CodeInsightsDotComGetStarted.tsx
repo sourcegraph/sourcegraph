@@ -3,6 +3,7 @@ import React, { useEffect } from 'react'
 import classNames from 'classnames'
 
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, Card, CardBody, Link, PageHeader } from '@sourcegraph/wildcard'
 
@@ -20,19 +21,20 @@ import styles from './CodeInsightsDotComGetStarted.module.scss'
 
 const DOT_COM_CONTEXT = { mode: CodeInsightsLandingPageType.Cloud }
 
-export interface CodeInsightsDotComGetStartedProps extends TelemetryProps {
+export interface CodeInsightsDotComGetStartedProps extends TelemetryProps, TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
 }
 
 export const CodeInsightsDotComGetStarted: React.FunctionComponent<
     React.PropsWithChildren<CodeInsightsDotComGetStartedProps>
 > = props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
     const isSourcegraphDotCom = window.context.sourcegraphDotComMode
 
     useEffect(() => {
         telemetryService.logViewEvent('CloudInsightsGetStartedPage')
-    }, [telemetryService])
+        telemetryRecorder.recordEvent('cloudInsights.getStarted', 'view')
+    }, [telemetryService, telemetryRecorder])
 
     return (
         <CodeInsightsLandingPageContext.Provider value={DOT_COM_CONTEXT}>
@@ -46,7 +48,12 @@ export const CodeInsightsDotComGetStarted: React.FunctionComponent<
                                 as={Link}
                                 to="https://sourcegraph.com"
                                 variant="primary"
-                                onClick={() => eventLogger.log('ClickedOnEnterpriseCTA', { location: 'TryInsights' })}
+                                onClick={() => {
+                                    eventLogger.log('ClickedOnEnterpriseCTA', { location: 'TryInsights' })
+                                    telemetryRecorder.recordEvent('insights.enterpriseCTA', 'click', {
+                                        metadata: { location: 0 },
+                                    })
+                                }}
                             >
                                 Get Sourcegraph Enterprise
                             </Button>
@@ -85,14 +92,22 @@ export const CodeInsightsDotComGetStarted: React.FunctionComponent<
                         To track Insights across your team's private repositories,{' '}
                         <Link
                             to="https://sourcegraph.com"
-                            onClick={() => eventLogger.log('ClickedOnEnterpriseCTA', { location: 'Insights' })}
+                            onClick={() => {
+                                eventLogger.log('ClickedOnEnterpriseCTA', { location: 'Insights' })
+                                telemetryRecorder.recordEvent('insights.enterpriseCTA', 'click', {
+                                    metadata: { location: 0 },
+                                })
+                            }}
                         >
                             get Sourcegraph Enterprise
                         </Link>
                         .
                     </CallToActionBanner>
 
-                    <CodeInsightsExamplesPicker telemetryService={telemetryService} />
+                    <CodeInsightsExamplesPicker
+                        telemetryService={telemetryService}
+                        telemetryRecorder={telemetryRecorder}
+                    />
                 </main>
             </Page>
         </CodeInsightsLandingPageContext.Provider>

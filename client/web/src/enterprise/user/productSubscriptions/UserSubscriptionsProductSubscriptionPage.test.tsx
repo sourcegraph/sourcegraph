@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { MockedTestProvider, waitForNextApolloResponse } from '@sourcegraph/shared/src/testing/apollo'
 import { renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
 
@@ -28,7 +29,10 @@ describe('UserSubscriptionsProductSubscriptionPage', () => {
                     },
                 ]}
             >
-                <UserSubscriptionsProductSubscriptionPage user={{ settingsURL: '/u' }} />
+                <UserSubscriptionsProductSubscriptionPage
+                    user={{ settingsURL: '/u' }}
+                    telemetryRecorder={noOpTelemetryRecorder}
+                />
             </MockedTestProvider>,
             { path: '/:subscriptionUUID', route: `/${uuid}` }
         )

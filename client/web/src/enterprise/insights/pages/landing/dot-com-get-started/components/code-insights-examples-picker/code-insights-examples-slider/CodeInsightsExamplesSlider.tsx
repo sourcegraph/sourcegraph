@@ -3,6 +3,7 @@ import React, { forwardRef, useEffect, useRef, useState } from 'react'
 import classNames from 'classnames'
 import { useMergeRefs } from 'use-callback-ref'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, type ForwardReferenceComponent, H3 } from '@sourcegraph/wildcard'
 
@@ -11,12 +12,12 @@ import { EXAMPLES } from '../examples'
 
 import styles from './CodeInsightsExamplesSlider.module.scss'
 
-interface CodeInsightsExamplesSliderProps extends TelemetryProps {}
+interface CodeInsightsExamplesSliderProps extends TelemetryProps, TelemetryV2Props {}
 
 export const CodeInsightsExamplesSlider: React.FunctionComponent<
     React.PropsWithChildren<CodeInsightsExamplesSliderProps>
 > = props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
     const itemElementReferences = useRef<Map<number, HTMLElement | null>>(new Map())
     const [activeExampleIndex, setActiveExampleIndex] = useState<number>(0)
 
@@ -27,6 +28,7 @@ export const CodeInsightsExamplesSlider: React.FunctionComponent<
         if (nextElementReference) {
             nextElementReference.scrollIntoView({ block: 'nearest', inline: 'start' })
             telemetryService.log('CloudCodeInsightsGetStartedUseCase')
+            telemetryRecorder.recordEvent('cloudInsights.getStarted.useCase.back', 'click')
         }
     }
 
@@ -37,6 +39,7 @@ export const CodeInsightsExamplesSlider: React.FunctionComponent<
         if (nextElementReference) {
             nextElementReference.scrollIntoView({ block: 'nearest', inline: 'start' })
             telemetryService.log('CloudCodeInsightsGetStartedUseCase')
+            telemetryRecorder.recordEvent('cloudInsights.getStarted.useCase.forward', 'click')
         }
     }
 
@@ -83,6 +86,7 @@ export const CodeInsightsExamplesSlider: React.FunctionComponent<
                             {...example}
                             className={styles.sliderChart}
                             telemetryService={telemetryService}
+                            telemetryRecorder={telemetryRecorder}
                         />
                     </CodeInsightsExamplesSliderItem>
                 ))}

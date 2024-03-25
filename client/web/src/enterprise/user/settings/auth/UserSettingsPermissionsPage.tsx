@@ -33,7 +33,6 @@ import { ActionContainer } from '../../../../repo/settings/components/ActionCont
 import { ExternalRepositoryIcon } from '../../../../site-admin/components/ExternalRepositoryIcon'
 import { PermissionsSyncJobsTable } from '../../../../site-admin/permissions-center/PermissionsSyncJobsTable'
 import { Table, type IColumn } from '../../../../site-admin/UserManagement/components/Table'
-import { eventLogger } from '../../../../tracking/eventLogger'
 import { PermissionReasonBadgeProps } from '../../../settings/permissons'
 
 import { scheduleUserPermissionsSync, UserPermissionsInfoQuery } from './backend'
@@ -52,7 +51,7 @@ export const UserSettingsPermissionsPage: React.FunctionComponent<React.PropsWit
     telemetryService,
     telemetryRecorder,
 }) => {
-    useEffect(() => eventLogger.logViewEvent('UserSettingsPermissions'), [])
+    useEffect(() => telemetryRecorder.recordEvent('settings.permissions', 'view'), [telemetryRecorder])
 
     const [{ query }, setSearchQuery] = useURLSyncedState({ query: '' })
     const debouncedQuery = useDebounce(query, 300)

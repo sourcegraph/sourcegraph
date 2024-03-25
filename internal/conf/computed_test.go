@@ -416,7 +416,7 @@ func TestGetCompletionsConfig(t *testing.T) {
 				CompletionModelMaxTokens: 9000,
 				AccessToken:              "asdf",
 				Provider:                 "anthropic",
-				Endpoint:                 "https://api.anthropic.com/v1/complete",
+				Endpoint:                 "https://api.anthropic.com/v1/messages",
 			},
 		},
 		{
@@ -441,7 +441,7 @@ func TestGetCompletionsConfig(t *testing.T) {
 				CompletionModelMaxTokens: 9000,
 				AccessToken:              "asdf",
 				Provider:                 "anthropic",
-				Endpoint:                 "https://api.anthropic.com/v1/complete",
+				Endpoint:                 "https://api.anthropic.com/v1/messages",
 			},
 		},
 		{

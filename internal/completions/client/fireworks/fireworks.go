@@ -46,6 +46,7 @@ type fireworksClient struct {
 func (c *fireworksClient) Complete(
 	ctx context.Context,
 	feature types.CompletionsFeature,
+	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 ) (*types.CompletionResponse, error) {
 	resp, err := c.makeRequest(ctx, feature, requestParams, false)
@@ -83,6 +84,7 @@ func (c *fireworksClient) Complete(
 func (c *fireworksClient) Stream(
 	ctx context.Context,
 	feature types.CompletionsFeature,
+	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
 ) error {
@@ -190,7 +192,7 @@ func (c *fireworksClient) makeRequest(ctx context.Context, feature types.Complet
 			switch m.Speaker {
 			case types.HUMAN_MESSAGE_SPEAKER:
 				role = "user"
-			case types.ASISSTANT_MESSAGE_SPEAKER:
+			case types.ASSISTANT_MESSAGE_SPEAKER:
 				role = "assistant"
 			default:
 				role = strings.ToLower(role)

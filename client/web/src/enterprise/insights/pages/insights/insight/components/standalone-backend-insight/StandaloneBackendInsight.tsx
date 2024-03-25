@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 
 import { useQuery } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Card, CardBody, useDebounce, useDeepMemo, type FormChangeEvent } from '@sourcegraph/wildcard'
 
@@ -41,13 +42,13 @@ import { StandaloneInsightContextMenu } from '../context-menu/StandaloneInsightC
 
 import styles from './StandaloneBackendInsight.module.scss'
 
-interface StandaloneBackendInsight extends TelemetryProps {
+interface StandaloneBackendInsight extends TelemetryProps, TelemetryV2Props {
     insight: BackendInsight
     className?: string
 }
 
 export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackendInsight> = props => {
-    const { telemetryService, insight, className } = props
+    const { telemetryService, telemetryRecorder, insight, className } = props
     const navigate = useNavigate()
     const { updateInsight } = useContext(CodeInsightsBackendContext)
     const [saveAsNewView] = useSaveInsightAsNewView({ dashboard: null })
@@ -109,6 +110,7 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
 
     const { trackMouseLeave, trackMouseEnter, trackDatumClicks } = useCodeInsightViewPings({
         telemetryService,
+        telemetryRecorder,
         insightType: getTrackingTypeByInsightType(insight.type),
     })
 
@@ -122,6 +124,7 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
         await updateInsight({ insightId: insight.id, nextInsightData: { ...insight, filters } }).toPromise()
         setOriginalInsightFilters(filters)
         telemetryService.log('CodeInsightsSearchBasedFilterUpdating')
+        telemetryRecorder.recordEvent('insights.searchBasedFilter', 'update', { metadata: { location: 1 } })
     }
 
     const handleInsightFilterCreation = async (values: DrillDownInsightCreationFormValues): Promise<void> => {
@@ -135,6 +138,7 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
         setOriginalInsightFilters(filters)
         navigate('/insights/all')
         telemetryService.log('CodeInsightsSearchBasedFilterInsightCreation')
+        telemetryRecorder.recordEvent('insights.createFromFilter.searchBased', 'submit', { metadata: { location: 1 } })
     }
 
     return (

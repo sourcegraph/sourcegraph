@@ -3,6 +3,7 @@ import { type FunctionComponent, useLayoutEffect, useState } from 'react'
 import classNames from 'classnames'
 import { throttle } from 'lodash'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Button, Card, CardBody, Link, H2 } from '@sourcegraph/wildcard'
 
@@ -13,10 +14,10 @@ import { EXAMPLES } from './examples'
 
 import styles from './CodeInsightsExamplesPicker.module.scss'
 
-interface CodeInsightsExamplesPickerProps extends TelemetryProps {}
+interface CodeInsightsExamplesPickerProps extends TelemetryProps, TelemetryV2Props {}
 
 export const CodeInsightsExamplesPicker: FunctionComponent<CodeInsightsExamplesPickerProps> = props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
     const [activeExampleIndex, setActiveExampleIndex] = useState(0)
     const [windowSize, setWindowSize] = useState(0)
 
@@ -32,6 +33,7 @@ export const CodeInsightsExamplesPicker: FunctionComponent<CodeInsightsExamplesP
     const handleUseCaseButtonClick = (useCaseIndex: number): void => {
         setActiveExampleIndex(useCaseIndex)
         telemetryService.log('CloudCodeInsightsGetStartedUseCase')
+        telemetryRecorder.recordEvent('codeInsights.getStarted.useCase', 'click')
     }
 
     const isMobileLayout = windowSize <= 900
@@ -78,10 +80,13 @@ export const CodeInsightsExamplesPicker: FunctionComponent<CodeInsightsExamplesP
                     {...EXAMPLES[activeExampleIndex]}
                     className={styles.section}
                     telemetryService={telemetryService}
+                    telemetryRecorder={telemetryRecorder}
                 />
             )}
 
-            {isMobileLayout && <CodeInsightsExamplesSlider telemetryService={telemetryService} />}
+            {isMobileLayout && (
+                <CodeInsightsExamplesSlider telemetryService={telemetryService} telemetryRecorder={telemetryRecorder} />
+            )}
         </Card>
     )
 }

@@ -1,11 +1,15 @@
-import { getContext } from 'svelte'
+import { getContext, setContext } from 'svelte'
 import { readable, writable, type Readable, type Writable } from 'svelte/store'
 
 import type { Settings, TemporarySettingsStorage } from '$lib/shared'
 
 import type { AuthenticatedUser, FeatureFlag } from '../routes/layout.gql'
 
-export { isLightTheme } from './theme'
+export { themeSetting, theme, isLightTheme } from './theme'
+
+// Only exported to be used for mocking tests
+// TODO (fkling): Find a better way to initialize mocked contexts and stores
+export const KEY = '__sourcegraph__'
 
 export interface SourcegraphContext {
     settings: Readable<Settings | null>
@@ -14,13 +18,17 @@ export interface SourcegraphContext {
     featureFlags: Readable<FeatureFlag[]>
 }
 
-export const KEY = '__sourcegraph__'
-
-export function getStores(): SourcegraphContext {
-    const { settings, user, temporarySettingsStorage, featureFlags } = getContext<SourcegraphContext>(KEY)
-    return { settings, user, temporarySettingsStorage, featureFlags }
+export function setAppContext(context: SourcegraphContext): void {
+    setContext<SourcegraphContext>(KEY, context)
 }
 
+export function getStores(): SourcegraphContext {
+    return getContext<SourcegraphContext>(KEY)
+}
+
+/**
+ * This store returns the currently logged in user.
+ */
 export const user = {
     subscribe(subscriber: (user: AuthenticatedUser | null) => void) {
         const { user } = getStores()
@@ -28,6 +36,9 @@ export const user = {
     },
 }
 
+/**
+ * This store returns the user's settings.
+ */
 export const settings = {
     subscribe(subscriber: (settings: Settings | null) => void) {
         const { settings } = getStores()

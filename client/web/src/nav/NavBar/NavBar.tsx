@@ -58,9 +58,9 @@ export const NavBar = forwardRef(function NavBar({ children, logo }, reference):
             {logo && (
                 <>
                     <H1 className={navBarStyles.logo}>
-                        <RouterNavLink className="d-flex align-items-center" to={logoUrl}>
+                        <Link className="d-flex align-items-center" to={logoUrl}>
                             {logo}
-                        </RouterNavLink>
+                        </Link>
                     </H1>
                     <hr className={navBarStyles.divider} aria-hidden={true} />
                 </>

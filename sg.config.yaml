@@ -417,6 +417,12 @@ commands:
       # Needed so that node can ping the caddy server
       NODE_TLS_REJECT_UNAUTHORIZED: 0
 
+  web-sveltekit:
+    description: Enterprise version of the web sveltekit app
+    cmd: pnpm --filter @sourcegraph/web-sveltekit dev:enterprise
+    install: |
+      pnpm install
+
   web-standalone-http:
     description: Standalone web frontend (dev) with API proxy to a configurable URL
     cmd: pnpm --filter @sourcegraph/web serve:dev --color
@@ -1793,6 +1799,28 @@ commandsets:
 
   enterprise-sveltekit:
     <<: *enterprise_set
+    # Keep in sync with &enterprise_set.commands
+    commands:
+      - frontend
+      - worker
+      - repo-updater
+      - web
+      - web-sveltekit
+      - gitserver-0
+      - gitserver-1
+      - searcher
+      - caddy
+      - symbols
+      # TODO https://github.com/sourcegraph/devx-support/issues/537
+      # - docsite
+      - syntax-highlighter
+      - zoekt-index-0
+      - zoekt-index-1
+      - zoekt-web-0
+      - zoekt-web-1
+      - blobstore
+      - embeddings
+      - telemetry-gateway
     env:
       SVELTEKIT: true
 

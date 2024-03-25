@@ -77,7 +77,7 @@ func TestErrStatusNotOK(t *testing.T) {
 
 	mockClient, _ := NewClient(getAzureAPIClient, "", "")
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionRequestParameters{})
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -87,7 +87,7 @@ func TestErrStatusNotOK(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
 		require.Error(t, err)
 
 		autogold.Expect("AzureOpenAI: unexpected status code 429: too many requests").Equal(t, err.Error())
@@ -114,7 +114,7 @@ func TestGenericErr(t *testing.T) {
 
 	mockClient, _ := NewClient(getAzureAPIClient, "", "")
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionRequestParameters{})
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -124,7 +124,7 @@ func TestGenericErr(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
 		require.Error(t, err)
 
 		autogold.Expect("error").Equal(t, err.Error())

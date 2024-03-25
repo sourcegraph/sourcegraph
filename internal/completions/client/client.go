@@ -33,7 +33,7 @@ func Get(
 func getBasic(endpoint string, provider conftypes.CompletionsProviderName, accessToken string) (types.CompletionsClient, error) {
 	switch provider {
 	case conftypes.CompletionsProviderNameAnthropic:
-		return anthropic.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken), nil
+		return anthropic.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, false), nil
 	case conftypes.CompletionsProviderNameOpenAI:
 		return openai.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken), nil
 	case conftypes.CompletionsProviderNameAzureOpenAI:

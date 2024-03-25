@@ -2,6 +2,7 @@ import { forwardRef, useContext, useState, type HTMLAttributes } from 'react'
 
 import { useMergeRefs } from 'use-callback-ref'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Link, ParentSize, ErrorAlert } from '@sourcegraph/wildcard'
 
@@ -23,13 +24,13 @@ import { InsightContext } from '../InsightContext'
 
 import styles from './LangStatsInsightCard.module.scss'
 
-interface BuiltInInsightProps extends TelemetryProps, HTMLAttributes<HTMLElement> {
+interface BuiltInInsightProps extends TelemetryProps, TelemetryV2Props, HTMLAttributes<HTMLElement> {
     insight: LangStatsInsight
     resizing: boolean
 }
 
 export const LangStatsInsightCard = forwardRef<HTMLElement, BuiltInInsightProps>((props, ref) => {
-    const { insight, resizing, telemetryService, children, ...attributes } = props
+    const { insight, resizing, telemetryService, telemetryRecorder, children, ...attributes } = props
 
     const { currentDashboard } = useContext(InsightContext)
     const cardRef = useMergeRefs([ref])
@@ -46,6 +47,7 @@ export const LangStatsInsightCard = forwardRef<HTMLElement, BuiltInInsightProps>
 
     const { trackDatumClicks, trackMouseLeave, trackMouseEnter } = useCodeInsightViewPings({
         telemetryService,
+        telemetryRecorder,
         insightType: getTrackingTypeByInsightType(insight.type),
     })
 
@@ -76,6 +78,7 @@ export const LangStatsInsightCard = forwardRef<HTMLElement, BuiltInInsightProps>
                         currentDashboard={currentDashboard}
                         zeroYAxisMin={zeroYAxisMin}
                         onToggleZeroYAxisMin={() => setZeroYAxisMin(!zeroYAxisMin)}
+                        telemetryRecorder={telemetryRecorder}
                     />
                 )}
             </InsightCardHeader>

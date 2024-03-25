@@ -1,10 +1,13 @@
 import { useCallback, useContext, useState } from 'react'
 
 import { type ErrorLike, logger } from '@sourcegraph/common'
+import { BillingCategory, BillingProduct } from '@sourcegraph/shared/src/telemetry'
+import { TelemetryRecorder } from '@sourcegraph/telemetry'
 
 import { eventLogger } from '../../../tracking/eventLogger'
 import { CodeInsightsBackendContext, type Insight, type InsightDashboard } from '../core'
 import { getTrackingTypeByInsightType } from '../pings'
+import { V2InsightType } from '../pings/types'
 
 interface RemoveInsightInput {
     insight: Pick<Insight, 'id' | 'title' | 'type'>
@@ -17,7 +20,9 @@ export interface useRemoveInsightFromDashboardAPI {
     error: ErrorLike | undefined
 }
 
-export function useRemoveInsightFromDashboard(): useRemoveInsightFromDashboardAPI {
+export function useRemoveInsightFromDashboard(
+    telemetryRecorder: TelemetryRecorder<BillingCategory, BillingProduct>
+): useRemoveInsightFromDashboardAPI {
     const { removeInsightFromDashboard } = useContext(CodeInsightsBackendContext)
 
     const [loading, setLoading] = useState<boolean>(false)
@@ -44,13 +49,16 @@ export function useRemoveInsightFromDashboard(): useRemoveInsightFromDashboardAP
                 const insightType = getTrackingTypeByInsightType(insight.type)
 
                 eventLogger.log('InsightRemovalFromDashboard', { insightType }, { insightType })
+                telemetryRecorder.recordEvent('insight', 'removeFromDashboard', {
+                    metadata: { insightType: V2InsightType[insightType] },
+                })
             } catch (error) {
                 // TODO [VK] Improve error UI for removing
                 logger.error(error)
                 setError(error)
             }
         },
-        [loading, removeInsightFromDashboard]
+        [loading, removeInsightFromDashboard, telemetryRecorder]
     )
 
     return { remove: handleRemove, loading, error }

@@ -2912,7 +2912,7 @@
         },
         "endpoint": {
           "type": "string",
-          "description": "The endpoint under which to reach the provider. Currently only used for provider types \"sourcegraph\", \"openai\" and \"anthropic\". The default values are \"https://cody-gateway.sourcegraph.com\", \"https://api.openai.com/v1/chat/completions\", and \"https://api.anthropic.com/v1/complete\" for Sourcegraph, OpenAI, and Anthropic, respectively."
+          "description": "The endpoint under which to reach the provider. Currently only used for provider types \"sourcegraph\", \"openai\" and \"anthropic\". The default values are \"https://cody-gateway.sourcegraph.com\", \"https://api.openai.com/v1/chat/completions\", and \"https://api.anthropic.com/v1/messages\" for Sourcegraph, OpenAI, and Anthropic, respectively."
         },
         "perUserDailyLimit": {
           "description": "If > 0, limits the number of completions requests allowed for a user in a day. On instances that allow anonymous requests, we enforce the rate limit by IP.",

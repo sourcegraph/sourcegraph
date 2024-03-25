@@ -2,6 +2,7 @@ import type { FunctionComponent } from 'react'
 
 import { useLocation } from 'react-router-dom'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Link, H2, Text } from '@sourcegraph/wildcard'
 
@@ -14,7 +15,10 @@ import { ALPINE_VERSIONS_INSIGHT, CSS_MODULES_VS_GLOBAL_STYLES_INSIGHT } from '.
 
 import styles from './CodeInsightsExamples.module.scss'
 
-export interface CodeInsightsExamplesProps extends TelemetryProps, React.HTMLAttributes<HTMLElement> {}
+export interface CodeInsightsExamplesProps
+    extends TelemetryProps,
+        TelemetryV2Props,
+        React.HTMLAttributes<HTMLElement> {}
 
 const SEARCH_INSIGHT_CREATION_UI_URL_PARAMETERS = encodeSearchInsightUrl({
     title: CSS_MODULES_VS_GLOBAL_STYLES_INSIGHT.title,
@@ -33,7 +37,7 @@ const CAPTURE_GROUP_INSIGHT_CREATION_UI_URL_PARAMETERS = encodeCaptureInsightURL
  * code insights landing pages.
  */
 export const CodeInsightsExamples: FunctionComponent<CodeInsightsExamplesProps> = props => {
-    const { telemetryService, ...otherProps } = props
+    const { telemetryService, telemetryRecorder, ...otherProps } = props
     const { pathname, search } = useLocation()
 
     return (
@@ -50,6 +54,7 @@ export const CodeInsightsExamples: FunctionComponent<CodeInsightsExamplesProps> 
                     content={CSS_MODULES_VS_GLOBAL_STYLES_INSIGHT}
                     templateLink={`/insights/create/search?${SEARCH_INSIGHT_CREATION_UI_URL_PARAMETERS}`}
                     telemetryService={telemetryService}
+                    telemetryRecorder={telemetryRecorder}
                     className={styles.card}
                 />
 
@@ -58,6 +63,7 @@ export const CodeInsightsExamples: FunctionComponent<CodeInsightsExamplesProps> 
                     content={ALPINE_VERSIONS_INSIGHT}
                     templateLink={`/insights/create/capture-group?${CAPTURE_GROUP_INSIGHT_CREATION_UI_URL_PARAMETERS}`}
                     telemetryService={telemetryService}
+                    telemetryRecorder={telemetryRecorder}
                     className={styles.card}
                 />
             </div>

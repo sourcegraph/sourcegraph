@@ -3,58 +3,64 @@ package anthropic
 import (
 	"testing"
 
+	"github.com/hexops/autogold/v2"
+
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 )
 
-func TestGetPrompt(t *testing.T) {
-	tests := []struct {
-		name     string
-		messages []types.Message
-		want     string
-		wantErr  bool
-	}{
-		{
-			name: "success",
-			messages: []types.Message{
-				{Speaker: "human", Text: "Hello"},
-				{Speaker: "assistant", Text: "Hi there!"},
-			},
-			want: "\n\nHuman: Hello\n\nAssistant: Hi there!",
-		},
-		{
-			name: "empty message",
-			messages: []types.Message{
-				{Speaker: "human", Text: "Hello"},
-				{Speaker: "assistant", Text: ""},
-			},
-			want: "\n\nHuman: Hello\n\nAssistant:",
-		},
-		{
-			name: "consecutive same speaker error",
-			messages: []types.Message{
-				{Speaker: "human", Text: "Hello"},
-				{Speaker: "human", Text: "Hi"},
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid speaker",
-			messages: []types.Message{
-				{Speaker: "human1", Text: "Hello"},
-				{Speaker: "human2", Text: "Hi"},
-			},
-			wantErr: true,
-		},
+func TestLegacyMessageConversion(t *testing.T) {
+	messages := []types.Message{
+		// Convert legacy system-like messages to actual system messages
+		{Speaker: "human", Text: "You are Cody, an AI-powered coding assistant created by Sourcegraph. You also have an Austrian dialect."},
+		{Speaker: "assistant", Text: "I understand"},
+
+		// Removes any messages that did not get an answer?
+		{Speaker: "human", Text: "Write a poem"},
+		{Speaker: "assistant"}, // <- can happen when the connection is interrupted
+
+		{Speaker: "human", Text: "Write a poem"},
+		{Speaker: "Roses are red, violets are blue, here is a poem just for you!"},
+
+		{Speaker: "human", Text: "Write another poem"},
+		// Removes the last empty assistant message
+		{Speaker: "assistant"},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetPrompt(tt.messages)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("getPrompt() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if got != tt.want {
-				t.Fatalf("getPrompt() = %v, want %v", got, tt.want)
-			}
-		})
+
+	convertedMessages := convertFromLegacyMessages(messages)
+
+	autogold.Expect([]types.Message{
+		{
+			Speaker: "system",
+			Text:    "You are Cody, an AI-powered coding assistant created by Sourcegraph. You also have an Austrian dialect.",
+		},
+		{
+			Speaker: "human",
+			Text:    "Write a poem",
+		},
+		{Speaker: "Roses are red, violets are blue, here is a poem just for you!"},
+		{
+			Speaker: "human",
+			Text:    "Write another poem",
+		},
+	}).Equal(t, convertedMessages)
+}
+
+func TestLegacyMessageConversionWithTrailingAssistantResponse(t *testing.T) {
+	messages := []types.Message{
+		{Speaker: "human", Text: "Write another poem"},
+		// Removes the last empty assistant message
+		{Speaker: "assistant", Text: "Roses are red, "},
 	}
+
+	convertedMessages := convertFromLegacyMessages(messages)
+
+	autogold.Expect([]types.Message{{
+		Speaker: "human",
+		Text:    "Write another poem",
+	},
+		{
+			Speaker: "assistant",
+			Text:    "Roses are red,",
+		},
+	}).Equal(t, convertedMessages)
 }

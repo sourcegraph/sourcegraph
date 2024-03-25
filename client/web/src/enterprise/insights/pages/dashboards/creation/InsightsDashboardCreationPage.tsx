@@ -4,6 +4,7 @@ import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 import { lastValueFrom } from 'rxjs'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { PageHeader, Container, Button, LoadingSpinner, useObservable, Link, Tooltip } from '@sourcegraph/wildcard'
 
@@ -20,12 +21,12 @@ import {
 
 import styles from './InsightsDashboardCreationPage.module.scss'
 
-interface InsightsDashboardCreationPageProps extends TelemetryProps {}
+interface InsightsDashboardCreationPageProps extends TelemetryProps, TelemetryV2Props {}
 
 export const InsightsDashboardCreationPage: React.FunctionComponent<
     React.PropsWithChildren<InsightsDashboardCreationPageProps>
 > = props => {
-    const { telemetryService } = props
+    const { telemetryService, telemetryRecorder } = props
 
     const navigate = useNavigate()
     const { dashboard } = useUiFeatures()
@@ -44,6 +45,7 @@ export const InsightsDashboardCreationPage: React.FunctionComponent<
         const createdDashboard = await lastValueFrom(createDashboard({ name, owners: [owner] }))
 
         telemetryService.log('CodeInsightsDashboardCreationPageSubmitClick')
+        telemetryRecorder.recordEvent('insights.dashboard', 'create')
 
         // Navigate user to the dashboard page with new created dashboard
         navigate(`/insights/dashboards/${createdDashboard.id}`)

@@ -5,6 +5,7 @@ import classNames from 'classnames'
 import { noop } from 'lodash'
 
 import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Link,
     Menu,
@@ -37,7 +38,7 @@ import { ConfirmRemoveModal } from './ConfirmRemoveModal'
 
 import styles from './InsightContextMenu.module.scss'
 
-export interface InsightCardMenuProps {
+export interface InsightCardMenuProps extends TelemetryV2Props {
     insight: Insight
     currentDashboard: InsightDashboard | null
     zeroYAxisMin: boolean
@@ -48,7 +49,7 @@ export interface InsightCardMenuProps {
  * Renders context menu (three dots menu) for particular insight card.
  */
 export const InsightContextMenu: FC<InsightCardMenuProps> = props => {
-    const { insight, currentDashboard, zeroYAxisMin, onToggleZeroYAxisMin = noop } = props
+    const { insight, currentDashboard, zeroYAxisMin, onToggleZeroYAxisMin = noop, telemetryRecorder } = props
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
@@ -186,6 +187,7 @@ export const InsightContextMenu: FC<InsightCardMenuProps> = props => {
                 insight={insight}
                 showModal={showDeleteConfirm}
                 onCancel={() => setShowDeleteConfirm(false)}
+                telemetryRecorder={telemetryRecorder}
             />
 
             <ConfirmRemoveModal
@@ -193,6 +195,7 @@ export const InsightContextMenu: FC<InsightCardMenuProps> = props => {
                 dashboard={currentDashboard}
                 showModal={showRemoveConfirm}
                 onCancel={() => setShowRemoveConfirm(false)}
+                telemetryRecorder={telemetryRecorder}
             />
 
             <ShareLinkModal

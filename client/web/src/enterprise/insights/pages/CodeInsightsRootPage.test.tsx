@@ -9,6 +9,7 @@ import sinon from 'sinon'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 import { MockIntersectionObserver } from '@sourcegraph/shared/src/testing/MockIntersectionObserver'
 
@@ -102,6 +103,7 @@ describe('CodeInsightsRootPage', () => {
             <CodeInsightsRootPage
                 activeTab={CodeInsightsRootPageTab.Dashboards}
                 telemetryService={mockTelemetryService}
+                telemetryRecorder={noOpTelemetryRecorder}
             />,
             {
                 route: '/insights/dashboards/foo',
@@ -117,6 +119,7 @@ describe('CodeInsightsRootPage', () => {
             <CodeInsightsRootPage
                 activeTab={CodeInsightsRootPageTab.Dashboards}
                 telemetryService={mockTelemetryService}
+                telemetryRecorder={noOpTelemetryRecorder}
             />,
             {
                 route: '/insights/dashboards/foo',

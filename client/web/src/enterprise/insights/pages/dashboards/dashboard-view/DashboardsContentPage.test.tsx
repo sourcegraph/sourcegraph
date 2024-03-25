@@ -9,6 +9,7 @@ import sinon from 'sinon'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getDocumentNode } from '@sourcegraph/http-client'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 import { MockIntersectionObserver } from '@sourcegraph/shared/src/testing/MockIntersectionObserver'
 import { type RenderWithBrandedContextResult, renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
@@ -169,7 +170,11 @@ const renderDashboardsContent = (
     ...renderWithBrandedContext(
         <MockedTestProvider mocks={mocks}>
             <Wrapper>
-                <DashboardsView dashboardId={dashboardID} telemetryService={mockTelemetryService} />
+                <DashboardsView
+                    dashboardId={dashboardID}
+                    telemetryService={mockTelemetryService}
+                    telemetryRecorder={noOpTelemetryRecorder}
+                />
             </Wrapper>
         </MockedTestProvider>
     ),

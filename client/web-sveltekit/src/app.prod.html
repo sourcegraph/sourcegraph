@@ -17,6 +17,16 @@
         </script>
 
         %sveltekit.head%
+
+        <script>
+            const userPreference = localStorage.getItem('sourcegraph-theme') || 'System'
+            const theme =
+                (userPreference === 'System' && window.matchMedia('(prefers-color-scheme: dark)').matches) ||
+                userPreference === 'Dark'
+                    ? 'theme-dark'
+                    : 'theme-light'
+            document.documentElement.classList.add(theme)
+        </script>
     </head>
     <body data-sveltekit-preload-data data-sveltekit-preload-code="hover">
         <div style="display: contents">%sveltekit.body%</div>

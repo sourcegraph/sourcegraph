@@ -36,6 +36,30 @@ func TestNewExhaustive(t *testing.T) {
 		WantJob   autogold.Value
 	}{
 		{
+			Name:  "case sensitive lang match",
+			Query: `type:file index:no lang:cpp content case:yes`,
+			WantPager: autogold.Expect(`
+(REPOPAGER
+  (containsRefGlobs . false)
+  (repoOpts.useIndex . no)
+  (PARTIALREPOS
+    (SEARCHERTEXTSEARCH
+      (useFullDeadline . true)
+      (patternInfo . TextPatternInfo{"content",case,nopath,filematchlimit:1000000,lang:cpp,F:"(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)"})
+      (numRepos . 0)
+      (pathRegexps . [(?i)(?:\.cpp$)|(?:\.c\+\+$)|(?:\.cc$)|(?:\.cp$)|(?:\.cxx$)|(?:\.h$)|(?:\.h\+\+$)|(?:\.hh$)|(?:\.hpp$)|(?:\.hxx$)|(?:\.inc$)|(?:\.inl$)|(?:\.ino$)|(?:\.ipp$)|(?:\.ixx$)|(?:\.re$)|(?:\.tcc$)|(?:\.tpp$)])
+      (indexed . false))))
+`),
+			WantJob: autogold.Expect(`
+(SEARCHERTEXTSEARCH
+  (useFullDeadline . true)
+  (patternInfo . TextPatternInfo{"content",case,nopath,filematchlimit:1000000,lang:cpp,F:"(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)"})
+  (numRepos . 1)
+  (pathRegexps . [(?i)(?:\.cpp$)|(?:\.c\+\+$)|(?:\.cc$)|(?:\.cp$)|(?:\.cxx$)|(?:\.h$)|(?:\.h\+\+$)|(?:\.hh$)|(?:\.hpp$)|(?:\.hxx$)|(?:\.inc$)|(?:\.inl$)|(?:\.ino$)|(?:\.ipp$)|(?:\.ixx$)|(?:\.re$)|(?:\.tcc$)|(?:\.tpp$)])
+  (indexed . false))
+`),
+		},
+		{
 			Name:  "glob",
 			Query: `type:file index:no repo:foo rev:*refs/heads/dev* content`,
 			WantPager: autogold.Expect(`
