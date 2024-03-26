@@ -274,9 +274,13 @@ func testSyntacticStoreWithoutConfigurationPolicies(t *testing.T, db database.DB
 
 func assertRepoList(t *testing.T, store RepositorySchedulingStore, batchOptions RepositoryBatchOptions, now time.Time, want []int) {
 	t.Helper()
+	wantedRepos := make([]RepositoryToIndex, len(want))
+	for i, repoId := range want {
+		wantedRepos[i] = RepositoryToIndex{ID: repoId}
+	}
 	if repositories, err := store.GetRepositoriesForIndexScan(context.Background(), batchOptions, now); err != nil {
 		t.Fatalf("unexpected error fetching repositories for index scan: %s", err)
-	} else if diff := cmp.Diff(want, repositories); diff != "" {
+	} else if diff := cmp.Diff(wantedRepos, repositories); diff != "" {
 		t.Fatalf("unexpected repository list (-want +got):\n%s", diff)
 	}
 }

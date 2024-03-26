@@ -22,7 +22,7 @@ type RepoRev struct {
 
 type RepositorySchedulingStore interface {
 	WithTransaction(ctx context.Context, f func(tx RepositorySchedulingStore) error) error
-	GetRepositoriesForIndexScan(ctx context.Context, batchOptions RepositoryBatchOptions, now time.Time) ([]int, error)
+	GetRepositoriesForIndexScan(ctx context.Context, batchOptions RepositoryBatchOptions, now time.Time) ([]RepositoryToIndex, error)
 }
 
 type store struct {
@@ -99,7 +99,7 @@ func (store *store) GetRepositoriesForIndexScan(
 	ctx context.Context,
 	batchOptions RepositoryBatchOptions,
 	now time.Time,
-) (_ []int, err error) {
+) (_ []RepositoryToIndex, err error) {
 	var repositoryMatchLimitValue int
 	if batchOptions.RepositoryMatchLimit != nil {
 		repositoryMatchLimitValue = *batchOptions.RepositoryMatchLimit
@@ -138,7 +138,18 @@ func (store *store) GetRepositoriesForIndexScan(
 		now,
 	)
 
-	return basestore.ScanInts(store.db.Query(ctx, finalQuery))
+	repositoryIds, err := basestore.ScanInts(store.db.Query(ctx, finalQuery))
+
+	if err != nil {
+		return nil, err
+	}
+
+	repos := make([]RepositoryToIndex, len(repositoryIds))
+	for i, repoId := range repositoryIds {
+		repos[i] = RepositoryToIndex{ID: repoId}
+	}
+
+	return repos, nil
 
 }
 

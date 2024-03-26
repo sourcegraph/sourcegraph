@@ -29,17 +29,5 @@ func NewService(store RepositorySchedulingStore) RepositorySchedulingService {
 }
 
 func (s *service) GetRepositoriesForIndexScan(ctx context.Context, batchOptions RepositoryBatchOptions, now time.Time) ([]RepositoryToIndex, error) {
-	ids, error := s.store.GetRepositoriesForIndexScan(ctx, batchOptions, now)
-
-	if error != nil {
-		return nil, error
-	}
-
-	repos := make([]RepositoryToIndex, len(ids))
-	for i, repoId := range ids {
-		repos[i] = RepositoryToIndex{ID: repoId}
-	}
-
-	return repos, nil
-
+	return s.store.GetRepositoriesForIndexScan(ctx, batchOptions, now)
 }
