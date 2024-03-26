@@ -1,4 +1,4 @@
-alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;
+alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool not null default false;
 
 CREATE TABLE IF NOT EXISTS syntactic_scip_index_last_scan(
     repository_id int NOT NULL,

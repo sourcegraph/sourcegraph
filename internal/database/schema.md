@@ -2119,7 +2119,7 @@ Stores data points for a code insight that do not need to be queried directly, b
  repository_patterns         | text[]                   |           |          | 
  last_resolved_at            | timestamp with time zone |           |          | 
  embeddings_enabled          | boolean                  |           | not null | false
- syntactic_indexing_enabled  | boolean                  |           |          | true
+ syntactic_indexing_enabled  | boolean                  |           | not null | false
 Indexes:
     "lsif_configuration_policies_pkey" PRIMARY KEY, btree (id)
     "lsif_configuration_policies_repository_id" btree (repository_id)
