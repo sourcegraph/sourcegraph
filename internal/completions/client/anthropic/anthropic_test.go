@@ -61,7 +61,7 @@ func TestValidAnthropicMessagesStream(t *testing.T) {
 		`event: content_block_stop
 		data: {"type": "content_block_stop", "index": 0}`,
 		`event: message_delta
-		data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null, "usage":{"output_tokens": 15}}}`,
+		data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null}, "usage":{"output_tokens": 15}}`,
 		`event: message_stop
 		data: {"type": "message_stop"}`,
 	}

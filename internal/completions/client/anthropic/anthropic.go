@@ -62,12 +62,13 @@ func (a *anthropicClient) Complete(
 	completion := ""
 	for _, content := range response.Content {
 		completion += content.Text
-		err = a.tokenManager.TokenizeAndCalculateUsage(inputText(requestParams.Messages), completion, "anthropic/"+requestParams.Model, string(feature))
-		if err != nil {
-			return nil, err
-		}
-
 	}
+
+	err = a.tokenManager.UpdateAnthropicModelUsage(response.Usage.InputTokens, response.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.CompletionResponse{
 		Completion: completion,
 		StopReason: response.StopReason,
@@ -90,7 +91,8 @@ func (a *anthropicClient) Stream(
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
-	var completedString string
+	completedString := ""
+	var inputPromptTokens int
 	for dec.Scan() {
 		if ctx.Err() != nil && ctx.Err() == context.Canceled {
 			return nil
@@ -110,6 +112,11 @@ func (a *anthropicClient) Stream(
 		}
 
 		switch event.Type {
+		case "message_start":
+			if event.Message != nil && event.Message.Usage != nil {
+				inputPromptTokens = event.Message.Usage.InputTokens
+			}
+			continue
 		case "content_block_delta":
 			if event.Delta != nil {
 				completedString += event.Delta.Text
@@ -117,6 +124,10 @@ func (a *anthropicClient) Stream(
 		case "message_delta":
 			if event.Delta != nil {
 				stopReason = event.Delta.StopReason
+				err = a.tokenManager.UpdateAnthropicModelUsage(inputPromptTokens, event.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
+				if err != nil {
+					logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+				}
 			}
 		default:
 			continue
@@ -135,19 +146,7 @@ func (a *anthropicClient) Stream(
 		return dec.Err()
 	}
 
-	err = a.tokenManager.TokenizeAndCalculateUsage(inputText(requestParams.Messages), completedString, "anthropic/"+requestParams.Model, string(feature))
-	if err != nil {
-		logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
-	}
 	return nil
-}
-
-func inputText(messages []types.Message) string {
-	allText := ""
-	for _, message := range messages {
-		allText += message.Text
-	}
-	return allText
 }
 
 func (a *anthropicClient) makeRequest(ctx context.Context, requestParams types.CompletionRequestParameters, version types.CompletionsVersion, stream bool) (*http.Response, error) {
@@ -240,8 +239,9 @@ type anthropicMessageContent struct {
 }
 
 type anthropicNonStreamingResponse struct {
-	Content    []anthropicMessageContent `json:"content"`
-	StopReason string                    `json:"stop_reason"`
+	Content    []anthropicMessageContent      `json:"content"`
+	Usage      anthropicMessagesResponseUsage `json:"usage"`
+	StopReason string                         `json:"stop_reason"`
 }
 
 // AnthropicMessagesStreamingResponse captures all relevant-to-us fields from each relevant SSE event from https://docs.anthropic.com/claude/reference/messages_post.
@@ -249,6 +249,17 @@ type anthropicStreamingResponse struct {
 	Type         string                                `json:"type"`
 	Delta        *anthropicStreamingResponseTextBucket `json:"delta"`
 	ContentBlock *anthropicStreamingResponseTextBucket `json:"content_block"`
+	Usage        *anthropicMessagesResponseUsage       `json:"usage"`
+	Message      *anthropicStreamingResponseMessage    `json:"message"`
+}
+
+type anthropicStreamingResponseMessage struct {
+	Usage *anthropicMessagesResponseUsage `json:"usage"`
+}
+
+type anthropicMessagesResponseUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
 }
 
 type anthropicStreamingResponseTextBucket struct {

@@ -46,6 +46,18 @@ func (m *Manager) TokenizeAndCalculateUsage(inputText, outputText, model, featur
 	return nil
 }
 
+func (m *Manager) UpdateAnthropicModelUsage(inputTokens, outputTokens int, model, feature string) error {
+	baseKey := fmt.Sprintf("%s:%s:", model, feature)
+
+	if err := m.updateTokenCounts(baseKey+"input", int64(inputTokens)); err != nil {
+		return errors.Newf("failed to update input token counts: %w", err)
+	}
+	if err := m.updateTokenCounts(baseKey+"output", int64(outputTokens)); err != nil {
+		return errors.Newf("failed to update output token counts: %w", err)
+	}
+	return nil
+}
+
 func (m *Manager) updateTokenCounts(key string, tokenCount int64) error {
 	if _, err := m.Cache.IncrbyInt64(key, tokenCount); err != nil {
 		return errors.Newf("failed to increment token count for key %s: %w", key, err)
