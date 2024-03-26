@@ -62,34 +62,45 @@ func TestSelectRepositoriesForSyntacticIndexing(t *testing.T) {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	// Can return null last_index_scan
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 2), now, []int{50, 51})
+	// The following tests simulate the passage of time (i.e. repeated scheduled invocations of the repo scheduling logic)
+	// T is time
 
-	// 20 minutes later, first two repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
+	// T = 0: No records in last index scan table, so we return all repos permitted by the limit parameter
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 2), now, []int{50, 51})
 
-	// 30 minutes later, all repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+	// T + 20 minutes: first two repositories are still on cooldown
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
-	// 90 minutes later, all repositories are visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*89), []int{50, 51, 52, 53})
+	// T + 30 minutes: all repositories are on cooldown
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
 
-	// Make new invisible repository
+	// T + 90 minutes: all repositories are visible again
+	// Repos 50, 51 are visible because they were scheduled at (T + 0) - which is more than 1 hour ago
+	// Repos 52, 53 are visible because they were scheduled at (T + 20) - which is more than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
+
+	// Make a new repository, not yet covered by the configuration policies
 	insertRepo(t, db, 54, "r4")
 
-	// 95 minutes later, new repository is not yet visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
+	// T + 95: no repositories are visible
+	// Repos 50,51,52,53 are invisible because they were scheduled at (T + 90), which is less than 1 hour ago
+	// Repo 54 is invisible because it doesn't have `indexing_enabled=true` in the configuration policies table
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
 
+	// Explicit enable indexing for repo 54
 	query = `UPDATE lsif_configuration_policies SET syntactic_indexing_enabled = true WHERE id = 105`
 	if _, err := db.ExecContext(context.Background(), query); err != nil {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	// 100 minutes later, only new repository is visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
+	// T + 100: only repository 54 is visible
+	// Repos 50-53 are still on cooldown as they were scheduled at (T + 90), less than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
 
-	// 110 minutes later, nothing is ready to go (too close to last index scan)
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
+	// T + 110: no repositories are visible
+	// Repos 50,51,52,53 are invisible because they were scheduled at (T + 90), which is less than 1 hour ago
+	// Repo 54 is invisible because it was scheduled at (T + 100), which is less than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
 
 	// Update repo 50 (GIT_COMMIT/HEAD policy), and 51 (GIT_TREE policy)
 	gitserverReposQuery := sqlf.Sprintf(`UPDATE gitserver_repos SET last_changed = %s WHERE repo_id IN (50, 52)`, now.Add(time.Minute*105))
@@ -97,7 +108,9 @@ func TestSelectRepositoriesForSyntacticIndexing(t *testing.T) {
 		t.Fatalf("unexpected error while upodating gitserver_repos last updated time: %s", err)
 	}
 
-	// 110 minutes later, updated repositories are ready for re-indexing
+	// T + 110: only repository 50 is visible
+	// Repos 51-54 are invisible because they were scheduled less than 1 hour ago
+	// Repo 50 is visible despite it being scheduled less than 1 hour ago - it was recently updated, so that takes precedence
 	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int{50})
 }
 
@@ -146,34 +159,45 @@ func TestSelectRepositoriesForPreciseIndexing(t *testing.T) {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	// Can return null last_index_scan
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 2), now, []int{50, 51})
+	// The following tests simulate the passage of time (i.e. repeated scheduled invocations of the repo scheduling logic)
+	// T is time
 
-	// 20 minutes later, first two repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
+	// T = 0: No records in last index scan table, so we return all repos permitted by the limit parameter
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 2), now, []int{50, 51})
 
-	// 30 minutes later, all repositories are still on cooldown
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+	// T + 20 minutes: first two repositories are still on cooldown
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
-	// 90 minutes later, all repositories are visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*89), []int{50, 51, 52, 53})
+	// T + 30 minutes: all repositories are on cooldown
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
 
-	// Make new invisible repository
+	// T + 90 minutes: all repositories are visible again
+	// Repos 50, 51 are visible because they were scheduled at (T + 0) - which is more than 1 hour ago
+	// Repos 52, 53 are visible because they were scheduled at (T + 20) - which is more than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
+
+	// Make a new repository, not yet covered by the configuration policies
 	insertRepo(t, db, 54, "r4")
 
-	// 95 minutes later, new repository is not yet visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
+	// T + 95: no repositories are visible
+	// Repos 50,51,52,53 are invisible because they were scheduled at (T + 90), which is less than 1 hour ago
+	// Repo 54 is invisible because it doesn't have `indexing_enabled=true` in the configuration policies table
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*95), []int(nil))
 
+	// Explicit enable indexing for repo 54
 	query = `UPDATE lsif_configuration_policies SET indexing_enabled = true WHERE id = 105`
 	if _, err := db.ExecContext(context.Background(), query); err != nil {
 		t.Fatalf("unexpected error while inserting configuration policies: %s", err)
 	}
 
-	// 100 minutes later, only new repository is visible
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
+	// T + 100: only repository 54 is visible
+	// Repos 50-53 are still on cooldown as they were scheduled at (T + 90), less than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*100), []int{54})
 
-	// 110 minutes later, nothing is ready to go (too close to last index scan)
-	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
+	// T + 110: no repositories are visible
+	// Repos 50,51,52,53 are invisible because they were scheduled at (T + 90), which is less than 1 hour ago
+	// Repo 54 is invisible because it was scheduled at (T + 100), which is less than 1 hour ago
+	assertRepoList(t, store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*110), []int(nil))
 
 	// Update repo 50 (GIT_COMMIT/HEAD policy), and 51 (GIT_TREE policy)
 	gitserverReposQuery := sqlf.Sprintf(`UPDATE gitserver_repos SET last_changed = %s WHERE repo_id IN (50, 52)`, now.Add(time.Minute*105))
@@ -181,7 +205,9 @@ func TestSelectRepositoriesForPreciseIndexing(t *testing.T) {
 		t.Fatalf("unexpected error while upodating gitserver_repos last updated time: %s", err)
 	}
 
-	// 110 minutes later, updated repositories are ready for re-indexing
+	// T + 110: only repository 50 is visible
+	// Repos 51-54 are invisible because they were scheduled less than 1 hour ago
+	// Repo 50 is visible despite it being scheduled less than 1 hour ago - it was recently updated, so that takes precedence
 	assertRepoList(t, store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*110), []int{50})
 }
 
@@ -235,20 +261,28 @@ func TestSelectRepositoriesForIndexScanWithGlobalPolicy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// The following tests simulate the passage of time (i.e. repeated scheduled invocations of the repo scheduling logic)
+			// T is time
+
+			// N.B. We use 1 hour process delay in all those tests,
+			// which means that IF the repository id was returned, it will be put on cooldown for an hour
+
 			// Returns nothing when disabled
-			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, false, nil, 100), now, []int(nil))
+			assertRepoList(t, tt.store, NewBatchOptions(1*time.Hour, false, nil, 100), now, []int(nil))
 
-			// Can return null last_index_scan
-			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, &limit, 100), now, []int{50, 51})
+			// T = 0: No records in last index scan table, so we return all repos permitted by the limit parameter
+			assertRepoList(t, tt.store, NewBatchOptions(1*time.Hour, true, &limit, 100), now, []int{50, 51})
 
-			// 20 minutes later, first two repositories are still on cooldown
-			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
+			// T + 20 minutes: first two repositories are still on cooldown
+			assertRepoList(t, tt.store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*20), []int{52, 53})
 
-			// 30 minutes later, all repositories are still on cooldown
-			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
+			// T + 30 minutes: all repositories are on cooldown
+			assertRepoList(t, tt.store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*30), []int(nil))
 
-			// 90 minutes later, all repositories are visible
-			assertRepoList(t, tt.store, NewBatchOptions(time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
+			// T + 90 minutes: all repositories are visible again
+			// Repos 50, 51 are visible because they were scheduled at (T + 0) - which is more than 1 hour ago
+			// Repos 52, 53 are visible because they were scheduled at (T + 20) - which is more than 1 hour ago
+			assertRepoList(t, tt.store, NewBatchOptions(1*time.Hour, true, nil, 100), now.Add(time.Minute*90), []int{50, 51, 52, 53})
 
 		})
 	}
