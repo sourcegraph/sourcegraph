@@ -21,7 +21,7 @@ import (
 const wolfiImageDir = "wolfi-images"
 const wolfiPackageDir = "wolfi-packages"
 
-var baseImageRegex = lazyregexp.New(`wolfi-images\/([\w-]+)[.]yaml`)
+var baseImageRegex = lazyregexp.New(`wolfi-images\/([\w-]+)[.](?:yaml|lock[.]json)`)
 var packageRegex = lazyregexp.New(`wolfi-packages\/([\w-]+)[.]yaml`)
 
 // WolfiPackagesOperations rebuilds any packages whose configurations have changed
@@ -50,10 +50,17 @@ func WolfiBaseImagesOperations(changedFiles []string, tag string, packagesChange
 	ops := operations.NewNamedSet("Base image builds")
 	logger := log.Scoped("gen-pipeline")
 
+	builtImage := make(map[string]bool)
 	var buildStepKeys []string
 	for _, c := range changedFiles {
 		match := baseImageRegex.FindStringSubmatch(c)
 		if len(match) == 2 {
+			// Don't build the same image twice
+			if builtImage[match[1]] {
+				continue
+			}
+			builtImage[match[1]] = true
+
 			buildFunc, key := buildWolfiBaseImage(match[1], tag, packagesChanged)
 			ops.Append(buildFunc)
 			buildStepKeys = append(buildStepKeys, key)
@@ -61,8 +68,6 @@ func WolfiBaseImagesOperations(changedFiles []string, tag string, packagesChange
 			logger.Fatal(fmt.Sprintf("Unable to extract base image name from '%s', matches were %+v\n", c, match))
 		}
 	}
-
-	ops.Append(allBaseImagesBuilt(buildStepKeys))
 
 	return ops, len(buildStepKeys)
 }
@@ -129,6 +134,7 @@ func buildWolfiBaseImage(target string, tag string, dependOnPackages bool) (func
 }
 
 // No-op to ensure all base images are updated before building full images
+// DEPRECATED: Due to switch to Bazel, building base images is an optional convenience
 func allBaseImagesBuilt(baseImageKeys []string) func(*bk.Pipeline) {
 	return func(pipeline *bk.Pipeline) {
 		pipeline.AddStep(":octopus: All base images built",
@@ -275,7 +281,7 @@ func getPackagesFromBaseImageConfig(configFile string) ([]string, error) {
 }
 
 // addWolfiOps adds operations to rebuild modified Wolfi packages and base images.
-func addWolfiOps(c Config) (packageOps, baseImageOps *operations.Set) {
+func addWolfiOps(c Config) (packageOps, baseImageOps, apkoOps *operations.Set) {
 	// Rebuild Wolfi packages that have config changes
 	var updatedPackages []string
 	if c.Diff.Has(changed.WolfiPackages) {
@@ -298,12 +304,14 @@ func addWolfiOps(c Config) (packageOps, baseImageOps *operations.Set) {
 			c.Version,
 			(len(updatedPackages) > 0),
 		)
+
+		apkoOps = WolfiCheckApkoLocks()
 	}
 
-	return packageOps, baseImageOps
+	return packageOps, baseImageOps, apkoOps
 }
 
-// wolfiRebuildAllBaseImages adds operations to rebuild all Wolfi base images and push to registry
+// wolfiRebuildAllBaseImages [deprecated] adds operations to rebuild all Wolfi base images and push to registry
 func wolfiRebuildAllBaseImages(c Config) *operations.Set {
 	// List all YAML files in wolfi-images/
 	dir := "wolfi-images"
@@ -333,17 +341,42 @@ func wolfiRebuildAllBaseImages(c Config) *operations.Set {
 	return baseImageOps
 }
 
-// wolfiGenerateBaseImagePR updates base image hashes and creates a PR in GitHub
-func wolfiGenerateBaseImagePR() *operations.Set {
-	ops := operations.NewNamedSet("Base Image Update PR")
+// wolfiBaseImageLockAndCreatePR updates base image hashes and creates a PR in GitHub
+func wolfiBaseImageLockAndCreatePR() *operations.Set {
+	ops := operations.NewNamedSet("Base Image Package Update PR")
 
 	ops.Append(
 		func(pipeline *bk.Pipeline) {
-			pipeline.AddStep(":whale::hash: Update Base Image Hashes",
-				bk.Cmd("./dev/ci/scripts/wolfi/update-base-image-hashes.sh"),
+			pipeline.AddStep(":whale::hash: Lock Base Image Packages",
+				bk.Cmd("./dev/ci/scripts/wolfi/update-base-image-lockfiles.sh"),
 				bk.Agent("queue", "bazel"),
-				bk.DependsOn("buildAllBaseImages"),
 				bk.Key("updateBaseImageHashes"),
+			)
+		},
+	)
+
+	return ops
+}
+
+// WolfiCheckApkoLocks checks that all apko YAML and Lockfiles are in sync
+// It should be run whenever a Wolfi YAML or lockfile is updated
+func WolfiCheckApkoLocks() *operations.Set {
+	ops := operations.NewNamedSet("Apko Lock")
+	cmd := "./dev/ci/scripts/wolfi/apko-check-lock.sh"
+
+	ops.Append(
+		func(pipeline *bk.Pipeline) {
+			pipeline.AddStep(":whale::lock: Check apko lockfiles",
+				bk.AnnotatedCmd(cmd, bk.AnnotatedCmdOpts{
+					Annotations: &bk.AnnotationOpts{
+						Type:            bk.AnnotationTypeInfo,
+						IncludeNames:    false,
+						MultiJobContext: "apko-check-lock",
+					},
+				}),
+				bk.Agent("queue", "bazel"),
+				bk.Key("apko-check-lock"),
+				bk.SoftFail(222),
 			)
 		},
 	)

@@ -52,7 +52,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "//wolfi-images:wolfi_base_image",
+    base = "//wolfi-images/sourcegraph:wolfi_base_image",
     entrypoint = [
         "/sbin/tini",
         "--",

@@ -19,5 +19,3 @@ accounts:
     - username: jaeger
       uid: 10001
       gid: 10002
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

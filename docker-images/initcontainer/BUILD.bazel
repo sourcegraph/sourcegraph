@@ -3,7 +3,7 @@ load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
-    base = "//wolfi-images:wolfi_base_image",
+    base = "//wolfi-images/sourcegraph:wolfi_base_image",
     entrypoint = ["/bin/sh"],
     user = "root",
 )

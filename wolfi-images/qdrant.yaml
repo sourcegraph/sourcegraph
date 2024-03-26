@@ -16,5 +16,3 @@ paths:
 
 entrypoint:
   command: /sbin/tini -- /usr/local/bin/qdrant --config-path /etc/qdrant/config.yaml
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

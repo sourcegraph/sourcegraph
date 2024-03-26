@@ -15,5 +15,3 @@ paths:
     permissions: 0o755
 
 work-dir: /otel-collector
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

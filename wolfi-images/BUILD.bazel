@@ -1,8 +1,4 @@
-load("//wolfi-images:defs.bzl", "wolfi_base")
-
 exports_files(glob([
     "*.yaml",
     "*.lock.json",
 ]))
-
-wolfi_base(target = "sourcegraph")

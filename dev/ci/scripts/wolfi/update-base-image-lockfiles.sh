@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Run `sg wolfi lock` to update all package lockfiles for Wolfi base images.
+# Push a new branch to GitHub, and open a PR.
+# Can be run from any base branch, and will create an appropriate PR.
+
 set -eu -o pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/../../../.."
@@ -9,17 +13,17 @@ bazel \
   --bazelrc=.bazelrc \
   --bazelrc=.aspect/bazelrc/ci.bazelrc \
   --bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc \
-  run //dev/sg -- wolfi update-hashes
+  run //dev/sg -- wolfi lock
 # Print diff
-git diff dev/oci_deps.bzl
+git diff wolfi-images/*.lock.json
 
 # Git and GitHub config
-BRANCH_NAME="wolfi-auto-update/main"
+BRANCH_NAME="wolfi-auto-update/${BUILDKITE_BRANCH}"
 TIMESTAMP=$(TZ=UTC date "+%Y-%m-%d %H:%M:%S UTC")
-PR_TITLE="Auto-update Wolfi base images to latest"
+PR_TITLE="Auto-update package lockfiles for Wolfi base images"
 # PR_REVIEWER="sourcegraph/security"
-PR_LABELS="SSDLC,wolfi-auto-update,backport 5.3"
-PR_BODY="Automatically generated PR to update Wolfi base images to the latest hashes.
+PR_LABELS="SSDLC,wolfi-auto-update"
+PR_BODY="Automatically generated PR to update package lockfiles for Wolfi base images.
 
 Built from Buildkite run [#${BUILDKITE_BUILD_NUMBER}](https://buildkite.com/sourcegraph/sourcegraph/builds/${BUILDKITE_BUILD_NUMBER}).
 ## Test Plan
@@ -30,8 +34,8 @@ Built from Buildkite run [#${BUILDKITE_BUILD_NUMBER}](https://buildkite.com/sour
 # Delete branch if it exists; catch status code if not
 git branch -D "${BRANCH_NAME}" || :
 git checkout -b "${BRANCH_NAME}"
-git add dev/oci_deps.bzl
-git commit -m "Auto-update Wolfi base image hashes at ${TIMESTAMP}"
+git add wolfi-images/*.lock.json
+git commit -m "Auto-update package lockfiles for Wolfi base images at ${TIMESTAMP}"
 git push --force -u origin "${BRANCH_NAME}"
 echo ":git: Successfully commited changes and pushed to branch ${BRANCH_NAME}"
 
@@ -40,8 +44,8 @@ if gh pr list --head "${BRANCH_NAME}" --state open | grep -q "${PR_TITLE}"; then
   echo ":github: A pull request already exists - editing it"
   gh pr edit "${BRANCH_NAME}" --body "${PR_BODY}"
 else
-  # If not, create a new PR from the branch foobar-day
+  # If not, create a new PR from the branch main
   # TODO: Once validated add '--reviewer "${PR_REVIEWER}"'
-  gh pr create --title "${PR_TITLE}" --head "${BRANCH_NAME}" --base main --body "${PR_BODY}" --label "${PR_LABELS}"
+  gh pr create --title "${PR_TITLE}" --head "${BRANCH_NAME}" --base "${BUILDKITE_BRANCH}" --body "${PR_BODY}" --label "${PR_LABELS}"
   echo ":github: Created a new pull request from branch '${BRANCH_NAME}' with title '${PR_TITLE}'"
 fi

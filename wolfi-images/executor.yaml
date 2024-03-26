@@ -15,5 +15,3 @@ paths:
   - path: /usr/local/bin
     type: directory
     permissions: 0o755
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

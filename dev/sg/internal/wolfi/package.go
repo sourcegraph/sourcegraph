@@ -52,6 +52,10 @@ func InitLocalPackageRepo() (PackageRepoConfig, error) {
 	}
 
 	// Generate keys for local repository
+	// Skip if we are running on buildkite
+	if os.Getenv("BUILDKITE") == "true" {
+		return c, nil
+	}
 	if _, err = os.Stat(c.KeyFilepath); os.IsNotExist(err) {
 		if err := c.GenerateKeypair(); err != nil {
 			return c, err

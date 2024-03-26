@@ -25,6 +25,7 @@ contents:
     - pcre
     - posix-libc-utils # Adds locale, used by server postgres init scripts
     - postgresql-12
+    - postgresql-12-client
     - postgresql-12-contrib
     - prometheus-postgres-exporter
     - prometheus-alertmanager
@@ -44,6 +45,8 @@ contents:
     - p4-fusion-sg@sourcegraph
     - s3proxy@sourcegraph
     - grafana-7@chainguard
+
+    - apk-tools
 
 accounts:
   groups:
@@ -85,5 +88,3 @@ paths:
   - path: /sg_grafana_additional_dashboards
     type: directory
     permissions: 0o755
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

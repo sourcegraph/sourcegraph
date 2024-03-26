@@ -3,7 +3,6 @@ load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_tarball")
 load("//wolfi-images:defs.bzl", "wolfi_base")
 
 rust_binary(
@@ -84,7 +83,7 @@ pkg_tar(
 # reflecting better real production usage.
 oci_image(
     name = "scip-ctags_image",
-    base = "//wolfi-images:wolfi_base_image",
+    base = "//wolfi-images/sourcegraph:wolfi_base_image",
     entrypoint = ["/scip-ctags"],
     tars = [":tar_scip-ctags"],
 )

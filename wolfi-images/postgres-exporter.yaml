@@ -18,5 +18,3 @@ accounts:
     - username: postgres_exporter
       uid: 20001
       gid: 102
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

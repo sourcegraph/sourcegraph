@@ -36,5 +36,3 @@ paths:
     uid: 100
     gid: 101
     permissions: 0o755
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

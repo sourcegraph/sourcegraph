@@ -23,5 +23,3 @@ contents:
 # it does not support running container with non-root user.
 accounts:
   run-as: root
-
-# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

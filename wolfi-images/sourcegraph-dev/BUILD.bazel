@@ -1,0 +1,3 @@
+load("//wolfi-images:defs.bzl", "wolfi_base")
+
+wolfi_base(target = "sourcegraph-dev")

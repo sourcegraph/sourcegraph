@@ -1,6 +1,6 @@
 load("@aspect_bazel_lib//lib:yq.bzl", "yq")
 load("@rules_apko//apko:defs.bzl", "apko_image")
-load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
+load("//dev:oci_defs.bzl", "oci_image", "oci_tarball")
 
 def wolfi_base(name = "wolfi", target = None):
     if target == None:
@@ -20,7 +20,7 @@ def wolfi_base(name = "wolfi", target = None):
         name = "wolfi_base_apko",
         architecture = "amd64",
         config = ":wolfi_config",
-        contents = "@{}_apko_lock//:contents".format(target),
+        contents = "@{}_apko_lock//:contents".format(target.replace("-", "_")),
         tag = "{}-base:latest".format(target),
         visibility = ["//visibility:private"],
     )
