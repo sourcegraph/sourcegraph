@@ -4009,21 +4009,6 @@ Foreign-key constraints:
 
 ```
 
-# Table "public.syntactic_scip_index_last_scan"
-```
-       Column       |           Type           | Collation | Nullable | Default 
---------------------+--------------------------+-----------+----------+---------
- repository_id      | integer                  |           | not null | 
- last_index_scan_at | timestamp with time zone |           | not null | 
-Indexes:
-    "syntactic_scip_index_last_scan_pkey" PRIMARY KEY, btree (repository_id)
-
-```
-
-Tracks the last time repository was checked for syntactic indexing job scheduling.
-
-**last_index_scan_at**: The last time uploads of this repository were considered for syntactic indexing job scheduling.
-
 # Table "public.syntactic_scip_indexing_jobs"
 ```
          Column         |           Type           | Collation | Nullable |                         Default                          
@@ -4064,6 +4049,21 @@ Stores metadata about a code intel syntactic index job.
 **enqueuer_user_id**: ID of the user who scheduled this index. Records with a non-NULL user ID are prioritised over the rest
 
 **execution_logs**: An array of [log entries](https://sourcegraph.com/github.com/sourcegraph/sourcegraph@3.23/-/blob/internal/workerutil/store.go#L48:6) (encoded as JSON) from the most recent execution.
+
+# Table "public.syntactic_scip_last_index_scan"
+```
+       Column       |           Type           | Collation | Nullable | Default 
+--------------------+--------------------------+-----------+----------+---------
+ repository_id      | integer                  |           | not null | 
+ last_index_scan_at | timestamp with time zone |           | not null | 
+Indexes:
+    "syntactic_scip_last_index_scan_pkey" PRIMARY KEY, btree (repository_id)
+
+```
+
+Tracks the last time repository was checked for syntactic indexing job scheduling.
+
+**last_index_scan_at**: The last time uploads of this repository were considered for syntactic indexing job scheduling.
 
 # Table "public.team_members"
 ```

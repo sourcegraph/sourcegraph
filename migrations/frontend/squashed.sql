@@ -4626,15 +4626,6 @@ CREATE SEQUENCE survey_responses_id_seq
 
 ALTER SEQUENCE survey_responses_id_seq OWNED BY survey_responses.id;
 
-CREATE TABLE syntactic_scip_index_last_scan (
-    repository_id integer NOT NULL,
-    last_index_scan_at timestamp with time zone NOT NULL
-);
-
-COMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';
-
-COMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';
-
 CREATE TABLE syntactic_scip_indexing_jobs (
     id bigint NOT NULL,
     commit text NOT NULL,
@@ -4693,6 +4684,15 @@ CREATE VIEW syntactic_scip_indexing_jobs_with_repository_name AS
    FROM (syntactic_scip_indexing_jobs u
      JOIN repo r ON ((r.id = u.repository_id)))
   WHERE (r.deleted_at IS NULL);
+
+CREATE TABLE syntactic_scip_last_index_scan (
+    repository_id integer NOT NULL,
+    last_index_scan_at timestamp with time zone NOT NULL
+);
+
+COMMENT ON TABLE syntactic_scip_last_index_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';
+
+COMMENT ON COLUMN syntactic_scip_last_index_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';
 
 CREATE TABLE team_members (
     team_id integer NOT NULL,
@@ -5809,11 +5809,11 @@ ALTER TABLE ONLY settings
 ALTER TABLE ONLY survey_responses
     ADD CONSTRAINT survey_responses_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY syntactic_scip_index_last_scan
-    ADD CONSTRAINT syntactic_scip_index_last_scan_pkey PRIMARY KEY (repository_id);
-
 ALTER TABLE ONLY syntactic_scip_indexing_jobs
     ADD CONSTRAINT syntactic_scip_indexing_jobs_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY syntactic_scip_last_index_scan
+    ADD CONSTRAINT syntactic_scip_last_index_scan_pkey PRIMARY KEY (repository_id);
 
 ALTER TABLE ONLY team_members
     ADD CONSTRAINT team_members_team_id_user_id_key PRIMARY KEY (team_id, user_id);
