@@ -16,7 +16,6 @@ go_library(
         "//cmd/worker/internal/codeintel",
         "//cmd/worker/internal/codemonitors",
         "//cmd/worker/internal/codygateway",
-        "//cmd/worker/internal/embeddings/repo",
         "//cmd/worker/internal/encryption",
         "//cmd/worker/internal/executormultiqueue",
         "//cmd/worker/internal/executors",

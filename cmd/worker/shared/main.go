@@ -17,7 +17,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/codeintel"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/codemonitors"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/codygateway"
-	repoembeddings "github.com/sourcegraph/sourcegraph/cmd/worker/internal/embeddings/repo"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/encryption"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/executormultiqueue"
 	"github.com/sourcegraph/sourcegraph/cmd/worker/internal/executors"
@@ -117,10 +116,6 @@ func LoadConfig(registerEnterpriseMigrators oobmigration.RegisterMigratorsFunc) 
 		"codeintel-package-filter-applicator":         codeintel.NewPackagesFilterApplicatorJob(),
 
 		"auth-sourcegraph-operator-cleaner": auth.NewSourcegraphOperatorCleaner(),
-
-		"repo-embedding-janitor":   repoembeddings.NewRepoEmbeddingJanitorJob(),
-		"repo-embedding-job":       repoembeddings.NewRepoEmbeddingJob(),
-		"repo-embedding-scheduler": repoembeddings.NewRepoEmbeddingSchedulerJob(),
 
 		"own-repo-indexing-queue": own.NewOwnRepoIndexingQueue(),
 
