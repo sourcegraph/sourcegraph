@@ -26,12 +26,12 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func NewClient(cli httpcli.Doer, endpoint, accessToken string, tokenizer tokenusage.Manager) types.CompletionsClient {
+func NewClient(cli httpcli.Doer, endpoint, accessToken string, tokenManager tokenusage.Manager) types.CompletionsClient {
 	return &awsBedrockAnthropicCompletionStreamClient{
-		cli:         cli,
-		accessToken: accessToken,
-		endpoint:    endpoint,
-		tokenizer:   tokenizer,
+		cli:          cli,
+		accessToken:  accessToken,
+		endpoint:     endpoint,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -40,10 +40,10 @@ const (
 )
 
 type awsBedrockAnthropicCompletionStreamClient struct {
-	cli         httpcli.Doer
-	accessToken string
-	endpoint    string
-	tokenizer   tokenusage.Manager
+	cli          httpcli.Doer
+	accessToken  string
+	endpoint     string
+	tokenManager tokenusage.Manager
 }
 
 func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
@@ -68,22 +68,14 @@ func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
 		completion += content.Text
 	}
 
-	err = c.tokenizer.TokenizeAndCalculateUsage(inputText(requestParams.Messages), completion, requestParams.Model, string(feature))
+	err = c.tokenManager.UpdateAnthropicModelUsage(response.Usage.InputTokens, response.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
 	if err != nil {
-		logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+		return nil, err
 	}
 	return &types.CompletionResponse{
 		Completion: completion,
 		StopReason: response.StopReason,
 	}, nil
-}
-
-func inputText(messages []types.Message) string {
-	allText := ""
-	for _, message := range messages {
-		allText += message.Text
-	}
-	return allText
 }
 
 func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
@@ -105,6 +97,7 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 	// the new incremental Anthropic API, but our clients still expect a full
 	// response in each event.
 	var totalCompletion string
+	var inputPromptTokens int
 	dec := eventstream.NewDecoder()
 	// Allocate a 1 MB buffer for decoding.
 	buf := make([]byte, 0, 1024*1024)
@@ -119,10 +112,6 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 		if err == io.EOF {
 			if !sentEvent {
 				return errors.New("stream closed with no events")
-			}
-			err = a.tokenizer.TokenizeAndCalculateUsage(inputText(requestParams.Messages), totalCompletion, requestParams.Model, string(feature))
-			if err != nil {
-				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 			}
 			return nil
 		}
@@ -152,6 +141,11 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 		}
 		stopReason := ""
 		switch event.Type {
+		case "message_start":
+			if event.Message != nil && event.Message.Usage != nil {
+				inputPromptTokens = event.Message.Usage.InputTokens
+			}
+			continue
 		case "content_block_delta":
 			if event.Delta != nil {
 				totalCompletion += event.Delta.Text
@@ -159,6 +153,10 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 		case "message_delta":
 			if event.Delta != nil {
 				stopReason = event.Delta.StopReason
+				err = a.tokenManager.UpdateAnthropicModelUsage(inputPromptTokens, event.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
+				if err != nil {
+					logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+				}
 			}
 		default:
 			continue
@@ -317,8 +315,9 @@ func awsConfigOptsForKeyConfig(endpoint string, accessToken string) []func(*conf
 }
 
 type bedrockAnthropicNonStreamingResponse struct {
-	Content    []bedrockAnthropicMessageContent `json:"content"`
-	StopReason string                           `json:"stop_reason"`
+	Content    []bedrockAnthropicMessageContent      `json:"content"`
+	StopReason string                                `json:"stop_reason"`
+	Usage      bedrockAnthropicMessagesResponseUsage `json:"usage"`
 }
 
 // AnthropicMessagesStreamingResponse captures all relevant-to-us fields from each relevant SSE event from https://docs.anthropic.com/claude/reference/messages_post.
@@ -326,6 +325,17 @@ type bedrockAnthropicStreamingResponse struct {
 	Type         string                                       `json:"type"`
 	Delta        *bedrockAnthropicStreamingResponseTextBucket `json:"delta"`
 	ContentBlock *bedrockAnthropicStreamingResponseTextBucket `json:"content_block"`
+	Usage        *bedrockAnthropicMessagesResponseUsage       `json:"usage"`
+	Message      *bedrockAnthropicStreamingResponseMessage    `json:"message"`
+}
+
+type bedrockAnthropicStreamingResponseMessage struct {
+	Usage *bedrockAnthropicMessagesResponseUsage `json:"usage"`
+}
+
+type bedrockAnthropicMessagesResponseUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
 }
 
 type bedrockAnthropicStreamingResponseTextBucket struct {
