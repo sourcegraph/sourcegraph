@@ -8,8 +8,9 @@ import (
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/computenetwork"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/computesubnetwork"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/servicenetworkingconnection"
-	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/vpcaccessconnector"
 
+	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/random"
+	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resourceid"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
@@ -22,18 +23,17 @@ type Config struct {
 type Output struct {
 	// Network is the private network for GCP resources that the Cloud Run
 	// workload needs to access.
-	Network computenetwork.ComputeNetwork
+	Network    computenetwork.ComputeNetwork
+	Subnetwork computesubnetwork.ComputeSubnetwork
 	// ServiceNetworkingConnection is required for Cloud SQL access, and is
 	// provisioned by default.
 	ServiceNetworkingConnection servicenetworkingconnection.ServiceNetworkingConnection
-	// Connector is used by Cloud Run to connect to the private network.
-	Connector vpcaccessconnector.VpcAccessConnector
 }
 
 // New sets up a network for the Cloud Run service to interface with other GCP
 // services. This should only be created once, hence why it does not have accept
 // a resourceid.ID
-func New(scope constructs.Construct, config Config) *Output {
+func New(scope constructs.Construct, id resourceid.ID, config Config) *Output {
 	network := computenetwork.NewComputeNetwork(
 		scope,
 		pointers.Ptr("cloudrun-network"),
@@ -44,20 +44,30 @@ func New(scope constructs.Construct, config Config) *Output {
 			AutoCreateSubnetworks: false,
 		})
 
+	// This is similar to the setup in Cloud v1.1 for connecting to Cloud SQL - we
+	// set up an arbitrary ip_cidr_range that covers enough IPs for VPC direct access.
+	// https://cloud.google.com/run/docs/configuring/vpc-direct-vpc#supported-ip-ranges
+	subnetworkIPCIDRRange := "172.16.0.0/12"
+	subnetworkName := random.New(scope, id.Group("subnetwork-name"), random.Config{
+		Prefix:     config.ServiceID,
+		ByteLength: 4,
+		Keepers: map[string]*string{
+			// Range change requires recreation of the subnetwork, so we need
+			// to change the randomized suffix.
+			"ipcidrrange": pointers.Ptr(subnetworkIPCIDRRange),
+		},
+	})
 	subnetwork := computesubnetwork.NewComputeSubnetwork(
 		scope,
 		pointers.Ptr("cloudrun-subnetwork"),
 		&computesubnetwork.ComputeSubnetworkConfig{
-			Project: &config.ProjectID,
-			Region:  &config.Region,
-			Name:    &config.ServiceID,
-			Network: network.Id(),
+			Project:     &config.ProjectID,
+			Region:      &config.Region,
+			Name:        &subnetworkName.HexValue,
+			Network:     network.Id(),
+			IpCidrRange: pointers.Ptr(subnetworkIPCIDRRange),
 
-			// This is similar to the setup in Cloud v1.1 for connecting to Cloud SQL - we
-			// set up an arbitrary ip_cidr_range that covers enough IPs for most needs. The
-			// private_x_google_access stuff is based on security requirements.
-			// We must use a /28 range because that's the range supported by VPC connectors.
-			IpCidrRange:           pointers.Ptr("10.0.0.0/28"),
+			// Security requirements
 			PrivateIpGoogleAccess: false,
 			//checkov:skip=CKV_GCP_76: Enable dual-stack support for subnetworks is destrutive and require re-creating the subnet and all dependent resources (e.g. NEG)
 			PrivateIpv6GoogleAccess: pointers.Ptr("DISABLE_GOOGLE_ACCESS"),
@@ -92,25 +102,9 @@ func New(scope constructs.Construct, config Config) *Output {
 			ReservedPeeringRanges: &[]*string{serviceNetworkingConnectionIP.Name()},
 		})
 
-	// Cloud Run services can't connect directly to networks, and seem to require a
-	// VPC connector, so we provision one to allow Cloud Run services to talk to
-	// other GCP services (like Redis)
-	connector := vpcaccessconnector.NewVpcAccessConnector(
-		scope,
-		pointers.Ptr("cloudrun-connector"),
-		&vpcaccessconnector.VpcAccessConnectorConfig{
-			Project: &config.ProjectID,
-			Region:  &config.Region,
-			Name:    pointers.Ptr(config.ServiceID),
-			Subnet: &vpcaccessconnector.VpcAccessConnectorSubnet{
-				Name: subnetwork.Name(),
-			},
-		},
-	)
-
 	return &Output{
 		Network:                     network,
+		Subnetwork:                  subnetwork,
 		ServiceNetworkingConnection: serviceNetworkingConnection,
-		Connector:                   connector,
 	}
 }

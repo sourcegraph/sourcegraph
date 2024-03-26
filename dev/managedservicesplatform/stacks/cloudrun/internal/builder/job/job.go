@@ -81,12 +81,20 @@ func (b *jobBuilder) AddDependency(dep cdktf.ITerraformDependable) {
 
 func (b *jobBuilder) Build(stack cdktf.TerraformStack, vars builder.Variables) (builder.Resource, error) {
 	var vpcAccess *cloudrunv2job.CloudRunV2JobTemplateTemplateVpcAccess
+	var launchStage *string
 	if vars.PrivateNetwork != nil {
+		// https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloud_run_v2_service#example-usage---cloudrunv2-service-directvpc
+		// https://cloud.google.com/run/docs/configuring/vpc-direct-vpc
+		launchStage = pointers.Ptr("BETA") // Direct VPC is still in beta.
 		vpcAccess = &cloudrunv2job.CloudRunV2JobTemplateTemplateVpcAccess{
-			Connector: vars.PrivateNetwork.Connector.SelfLink(),
-			Egress:    pointers.Ptr("PRIVATE_RANGES_ONLY"),
+			NetworkInterfaces: &[]*cloudrunv2job.CloudRunV2JobTemplateTemplateVpcAccessNetworkInterfaces{{
+				Network:    vars.PrivateNetwork.Network.Id(),
+				Subnetwork: vars.PrivateNetwork.Subnetwork.Id(),
+			}},
+			Egress: pointers.Ptr("ALL_TRAFFIC"),
 		}
 	}
+
 	name, err := vars.Name()
 	if err != nil {
 		return nil, err
@@ -96,6 +104,8 @@ func (b *jobBuilder) Build(stack cdktf.TerraformStack, vars builder.Variables) (
 		Name:      pointers.Ptr(name),
 		Location:  pointers.Ptr(vars.GCPRegion),
 		DependsOn: &b.dependencies,
+
+		LaunchStage: launchStage,
 
 		Template: &cloudrunv2job.CloudRunV2JobTemplate{
 			TaskCount: pointers.Ptr(float64(1)),
