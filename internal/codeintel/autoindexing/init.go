@@ -51,7 +51,7 @@ func NewIndexSchedulers(
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
 	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
-	autoindexingDeps AutoIndexingService,
+	autoindexingSvc AutoIndexingService,
 	repoStore database.RepoStore,
 ) []goroutine.BackgroundRoutine {
 	return background.NewIndexSchedulers(
@@ -59,9 +59,9 @@ func NewIndexSchedulers(
 		policiesSvc,
 		policyMatcher,
 		repoSchedulingSvc,
-		autoindexingDeps.indexEnqueuer,
+		autoindexingSvc.indexEnqueuer,
 		repoStore,
-		autoindexingDeps.store,
+		autoindexingSvc.store,
 		SchedulerConfigInst,
 	)
 }

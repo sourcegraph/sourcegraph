@@ -35,7 +35,7 @@ var m = new(metrics.SingletonREDMetrics)
 
 func NewScheduler(
 	observationCtx *observation.Context,
-	repositorySchedulerSvc reposcheduler.RepositorySchedulingService,
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
 	indexEnqueuer IndexEnqueuer,
@@ -43,7 +43,7 @@ func NewScheduler(
 	config *Config,
 ) goroutine.BackgroundRoutine {
 	job := indexSchedulerJob{
-		repositorySchedulerSvc: repositorySchedulerSvc,
+		repositorySchedulerSvc: repoSchedulingSvc,
 		policiesSvc:            policiesSvc,
 		policyMatcher:          policyMatcher,
 		indexEnqueuer:          indexEnqueuer,
