@@ -25,7 +25,7 @@ func (f *FeatureFlag) EvaluateForUser(userID int32) bool {
 	case f.Bool != nil:
 		return f.Bool.Value
 	case f.Rollout != nil:
-		return hashUserAndFlag(userID, f.Name)%10000 < uint32(f.Rollout.Rollout)
+		return f.Rollout.Evaluate(f.Name, userID)
 	}
 	panic("one of Bool or Rollout must be set")
 }
@@ -76,6 +76,10 @@ type FeatureFlagRollout struct {
 	// users for which this feature flag will evaluate to 'true' in increments
 	// of 0.01%
 	Rollout int32
+}
+
+func (f *FeatureFlagRollout) Evaluate(flagName string, userID int32) bool {
+	return hashUserAndFlag(userID, flagName)%10000 < uint32(f.Rollout)
 }
 
 type Override struct {

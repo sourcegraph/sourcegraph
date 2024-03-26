@@ -162,11 +162,10 @@ func (p *Publisher) Publish(ctx context.Context, events []*telemetrygatewayv1.Ev
 			// ourselves, and attach attributes for ease of routing the pub/sub
 			// message.
 			if err := p.topic.PublishMessage(ctx, payload, extractPubSubAttributes(p.source, event)); err != nil {
-				// Try to record the cancel cause as the primary error in case
-				// one is recorded.
+				// Explicitly record the cancel cause if one is provided.
 				if cancelCause := context.Cause(ctx); cancelCause != nil {
-					return errors.Wrapf(cancelCause, "%s: interrupted event publish",
-						err.Error())
+					return errors.Wrapf(err, "interrupted event publish, cause: %s",
+						errors.Safe(cancelCause.Error()))
 				}
 				return errors.Wrap(err, "publishing event")
 			}

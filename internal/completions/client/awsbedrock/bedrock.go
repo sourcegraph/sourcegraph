@@ -45,22 +45,26 @@ type awsBedrockAnthropicCompletionStreamClient struct {
 func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
 	ctx context.Context,
 	feature types.CompletionsFeature,
-	_ types.CompletionsVersion,
+	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 ) (*types.CompletionResponse, error) {
-	resp, err := c.makeRequest(ctx, requestParams, false)
+	resp, err := c.makeRequest(ctx, requestParams, version, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "making request")
 	}
 	defer resp.Body.Close()
 
-	var response bedrockAnthropicCompletionResponse
+	var response bedrockAnthropicNonStreamingResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, errors.Wrap(err, "decoding response")
 	}
+	completion := ""
+	for _, content := range response.Content {
+		completion += content.Text
+	}
 
 	return &types.CompletionResponse{
-		Completion: response.Completion,
+		Completion: completion,
 		StopReason: response.StopReason,
 	}, nil
 }
@@ -68,15 +72,16 @@ func (c *awsBedrockAnthropicCompletionStreamClient) Complete(
 func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 	ctx context.Context,
 	feature types.CompletionsFeature,
-	_ types.CompletionsVersion,
+	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
 ) error {
-	resp, err := a.makeRequest(ctx, requestParams, true)
+	resp, err := a.makeRequest(ctx, requestParams, version, true)
 	if err != nil {
 		return errors.Wrap(err, "making request")
 	}
 	defer resp.Body.Close()
+	var sentEvent bool
 
 	// totalCompletion is the complete completion string, bedrock already uses
 	// the new incremental Anthropic API, but our clients still expect a full
@@ -94,6 +99,9 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 
 		// AWS's event stream decoder returns EOF once completed, so return.
 		if err == io.EOF {
+			if !sentEvent {
+				return errors.New("stream closed with no events")
+			}
 			return nil
 		}
 
@@ -116,19 +124,27 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 			continue
 		}
 
-		var event bedrockAnthropicCompletionResponse
+		var event bedrockAnthropicStreamingResponse
 		if err := json.Unmarshal(data, &event); err != nil {
 			return errors.Errorf("failed to decode event payload: %w - body: %s", err, string(data))
 		}
-
-		// Collect the whole completion, AWS already uses the new Anthropic API
-		// that sends partial completion results, but our clients still expect
-		// a fill completion to be returned.
-		totalCompletion += event.Completion
-
+		stopReason := ""
+		switch event.Type {
+		case "content_block_delta":
+			if event.Delta != nil {
+				totalCompletion += event.Delta.Text
+			}
+		case "message_delta":
+			if event.Delta != nil {
+				stopReason = event.Delta.StopReason
+			}
+		default:
+			continue
+		}
+		sentEvent = true
 		err = sendEvent(types.CompletionResponse{
 			Completion: totalCompletion,
-			StopReason: event.StopReason,
+			StopReason: stopReason,
 		})
 		if err != nil {
 			return errors.Wrap(err, "sending event")
@@ -140,15 +156,10 @@ type awsEventStreamPayload struct {
 	Bytes []byte `json:"bytes"`
 }
 
-func (c *awsBedrockAnthropicCompletionStreamClient) makeRequest(ctx context.Context, requestParams types.CompletionRequestParameters, stream bool) (*http.Response, error) {
+func (c *awsBedrockAnthropicCompletionStreamClient) makeRequest(ctx context.Context, requestParams types.CompletionRequestParameters, version types.CompletionsVersion, stream bool) (*http.Response, error) {
 	defaultConfig, err := config.LoadDefaultConfig(ctx, awsConfigOptsForKeyConfig(c.endpoint, c.accessToken)...)
 	if err != nil {
 		return nil, errors.Wrap(err, "loading aws config")
-	}
-
-	creds, err := defaultConfig.Credentials.Retrieve(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "retrieving aws credentials")
 	}
 
 	if requestParams.TopK == -1 {
@@ -159,33 +170,41 @@ func (c *awsBedrockAnthropicCompletionStreamClient) makeRequest(ctx context.Cont
 		requestParams.TopP = 0
 	}
 
-	prompt, err := GetPrompt(requestParams.Messages)
-	if err != nil {
-		return nil, err
-	}
-	// Backcompat: Remove this code once enough clients are upgraded and we drop the
-	// Prompt field on requestParams.
-	if prompt == "" {
-		prompt = requestParams.Prompt
-	}
-
-	if len(requestParams.StopSequences) == 0 {
-		requestParams.StopSequences = []string{HUMAN_PROMPT}
-	}
-
 	if requestParams.MaxTokensToSample == 0 {
 		requestParams.MaxTokensToSample = 300
 	}
 
+	creds, err := defaultConfig.Credentials.Retrieve(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "retrieving aws credentials")
+	}
+
+	convertedMessages := requestParams.Messages
+	stopSequences := removeWhitespaceOnlySequences(requestParams.StopSequences)
+	if version == types.CompletionsVersionLegacy {
+		convertedMessages = types.ConvertFromLegacyMessages(convertedMessages)
+	}
+
+	messages, err := toAnthropicMessages(convertedMessages)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the first message from `system` to a top-level system prompt
+	system := "" // prevent the upstream API from setting this
+	if len(messages) > 0 && messages[0].Role == types.SYSTEM_MESSAGE_SPEAKER {
+		system = messages[0].Content[0].Text
+		messages = messages[1:]
+	}
+
 	payload := bedrockAnthropicCompletionsRequestParameters{
-		StopSequences:     requestParams.StopSequences,
-		Temperature:       requestParams.Temperature,
-		MaxTokensToSample: requestParams.MaxTokensToSample,
-		TopP:              requestParams.TopP,
-		TopK:              requestParams.TopK,
-		Prompt:            prompt,
-		// Hard coded for now, so we don't accidentally get a newer API response
-		// we don't support.
+		StopSequences:    stopSequences,
+		Temperature:      requestParams.Temperature,
+		MaxTokens:        requestParams.MaxTokensToSample,
+		TopP:             requestParams.TopP,
+		TopK:             requestParams.TopK,
+		Messages:         messages,
+		System:           system,
 		AnthropicVersion: "bedrock-2023-05-31",
 	}
 
@@ -275,17 +294,88 @@ func awsConfigOptsForKeyConfig(endpoint string, accessToken string) []func(*conf
 	return configOpts
 }
 
-type bedrockAnthropicCompletionsRequestParameters struct {
-	Prompt            string   `json:"prompt"`
-	Temperature       float32  `json:"temperature,omitempty"`
-	MaxTokensToSample int      `json:"max_tokens_to_sample"`
-	StopSequences     []string `json:"stop_sequences,omitempty"`
-	TopK              int      `json:"top_k,omitempty"`
-	TopP              float32  `json:"top_p,omitempty"`
-	AnthropicVersion  string   `json:"anthropic_version"`
+type bedrockAnthropicNonStreamingResponse struct {
+	Content    []bedrockAnthropicMessageContent `json:"content"`
+	StopReason string                           `json:"stop_reason"`
 }
 
-type bedrockAnthropicCompletionResponse struct {
-	Completion string `json:"completion"`
-	StopReason string `json:"stop_reason"`
+// AnthropicMessagesStreamingResponse captures all relevant-to-us fields from each relevant SSE event from https://docs.anthropic.com/claude/reference/messages_post.
+type bedrockAnthropicStreamingResponse struct {
+	Type         string                                       `json:"type"`
+	Delta        *bedrockAnthropicStreamingResponseTextBucket `json:"delta"`
+	ContentBlock *bedrockAnthropicStreamingResponseTextBucket `json:"content_block"`
+}
+
+type bedrockAnthropicStreamingResponseTextBucket struct {
+	Text       string `json:"text"`        // for event `content_block_delta`
+	StopReason string `json:"stop_reason"` // for event `message_delta`
+}
+
+type bedrockAnthropicCompletionsRequestParameters struct {
+	Messages      []bedrockAnthropicMessage `json:"messages,omitempty"`
+	Temperature   float32                   `json:"temperature,omitempty"`
+	TopP          float32                   `json:"top_p,omitempty"`
+	TopK          int                       `json:"top_k,omitempty"`
+	Stream        bool                      `json:"stream,omitempty"`
+	StopSequences []string                  `json:"stop_sequences,omitempty"`
+	MaxTokens     int                       `json:"max_tokens,omitempty"`
+
+	// These are not accepted from the client an instead are only used to talk to the upstream LLM
+	// APIs directly (these do NOT need to be set when talking to Cody Gateway)
+	System           string `json:"system,omitempty"`
+	AnthropicVersion string `json:"anthropic_version"`
+}
+
+type bedrockAnthropicMessage struct {
+	Role    string                           `json:"role"` // "user", "assistant", or "system" (only allowed for the first message)
+	Content []bedrockAnthropicMessageContent `json:"content"`
+}
+
+type bedrockAnthropicMessageContent struct {
+	Type string `json:"type"` // "text" or "image" (not yet supported)
+	Text string `json:"text"`
+}
+
+func removeWhitespaceOnlySequences(sequences []string) []string {
+	var result []string
+	for _, sequence := range sequences {
+		if len(strings.TrimSpace(sequence)) > 0 {
+			result = append(result, sequence)
+		}
+	}
+	return result
+}
+
+func toAnthropicMessages(messages []types.Message) ([]bedrockAnthropicMessage, error) {
+	anthropicMessages := make([]bedrockAnthropicMessage, 0, len(messages))
+
+	for i, message := range messages {
+		speaker := message.Speaker
+		text := message.Text
+
+		anthropicRole := message.Speaker
+
+		switch speaker {
+		case types.SYSTEM_MESSAGE_SPEAKER:
+			if i != 0 {
+				return nil, errors.New("system role can only be used in the first message")
+			}
+		case types.ASSISTANT_MESSAGE_SPEAKER:
+		case types.HUMAN_MESSAGE_SPEAKER:
+			anthropicRole = "user"
+		default:
+			return nil, errors.Errorf("unexpected role: %s", text)
+		}
+
+		if text == "" {
+			return nil, errors.New("message content cannot be empty")
+		}
+
+		anthropicMessages = append(anthropicMessages, bedrockAnthropicMessage{
+			Role:    anthropicRole,
+			Content: []bedrockAnthropicMessageContent{{Text: text, Type: "text"}},
+		})
+	}
+
+	return anthropicMessages, nil
 }

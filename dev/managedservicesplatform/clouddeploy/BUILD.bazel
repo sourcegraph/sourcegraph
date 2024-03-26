@@ -5,7 +5,6 @@ go_library(
     name = "clouddeploy",
     srcs = ["clouddeploy.go"],
     embedsrcs = [
-        "customtarget.yaml",
         "skaffold.yaml",
         "target.template.yaml",
     ],

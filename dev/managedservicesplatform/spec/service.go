@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"fmt"
+
 	"github.com/grafana/regexp"
 
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -48,6 +50,16 @@ func (s ServiceSpec) GetName() string {
 // GetKind returns Kind if configured, otherwise the default (ServiceKindService).
 func (s ServiceSpec) GetKind() ServiceKind {
 	return pointers.Deref(s.Kind, ServiceKindService)
+}
+
+// GetGoLink returns the https://www.golinks.io/ page for this service's generated
+// infrastructure docs (sg msp operations generate-handbook-pages). The anchor
+// can be used to link to a specific section.
+func (s ServiceSpec) GetGoLink(anchor string) string {
+	if anchor == "" {
+		return "go/msp-ops/" + s.ID
+	}
+	return fmt.Sprintf("go/msp-ops/%s#%s", s.ID, anchor)
 }
 
 func (s ServiceSpec) Validate() []error {

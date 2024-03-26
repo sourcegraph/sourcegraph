@@ -8,6 +8,7 @@
     overflow: auto;
     top: 0;
     left: 0;
+    pointer-events: none;
 
     &-absolute {
         position: absolute;

@@ -11157,8 +11157,21 @@
 			{
 				"ID": 1709738515,
 				"Name": "Add syntactic indexing support to policies",
-				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool default true;\n\nCREATE TABLE IF NOT EXISTS syntactic_scip_index_last_scan(\n    repository_id int NOT NULL,\n    last_index_scan_at timestamp with time zone NOT NULL,\n    PRIMARY KEY(repository_id)\n);\n\nCOMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';\nCOMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';",
+				"UpQuery": "alter table lsif_configuration_policies add column if not exists syntactic_indexing_enabled bool not null default false;\n\nCREATE TABLE IF NOT EXISTS syntactic_scip_index_last_scan(\n    repository_id int NOT NULL,\n    last_index_scan_at timestamp with time zone NOT NULL,\n    PRIMARY KEY(repository_id)\n);\n\nCOMMENT ON TABLE syntactic_scip_index_last_scan IS 'Tracks the last time repository was checked for syntactic indexing job scheduling.';\nCOMMENT ON COLUMN syntactic_scip_index_last_scan.last_index_scan_at IS 'The last time uploads of this repository were considered for syntactic indexing job scheduling.';",
 				"DownQuery": "alter table lsif_configuration_policies drop column if exists syntactic_indexing_enabled;\ndrop table if exists syntactic_scip_index_last_scan;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1708596613
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
+			},
+			{
+				"ID": 1711003437,
+				"Name": "remove feature flag foreign key",
+				"UpQuery": "-- Perform migration here.\n--\n-- See /migrations/README.md. Highlights:\n--  * Make migrations idempotent (use IF EXISTS)\n--  * Make migrations backwards-compatible (old readers/writers must continue to work)\n--  * If you are using CREATE INDEX CONCURRENTLY, then make sure that only one statement\n--    is defined per file, and that each such statement is NOT wrapped in a transaction.\n--    Each such migration must also declare \"createIndexConcurrently: true\" in their\n--    associated metadata.yaml file.\n--  * If you are modifying Postgres extensions, you must also declare \"privileged: true\"\n--    in the associated metadata.yaml file.\n\nALTER TABLE feature_flag_overrides\nDROP CONSTRAINT IF EXISTS feature_flag_overrides_flag_name_fkey;",
+				"DownQuery": "-- Undo the changes made in the up migration\n\n-- Drop first to make it idempotent\nALTER TABLE feature_flag_overrides\nDROP CONSTRAINT IF EXISTS feature_flag_overrides_flag_name_fkey;\n\nALTER TABLE feature_flag_overrides\nADD CONSTRAINT feature_flag_overrides_flag_name_fkey\nFOREIGN KEY (flag_name)\nREFERENCES feature_flags(flag_name)\nON UPDATE CASCADE\nON DELETE CASCADE;",
 				"Privileged": false,
 				"NonIdempotent": false,
 				"Parents": [
@@ -11417,7 +11430,8 @@
 			"v5.3.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
-					1709738515
+					1709738515,
+					1711003437
 				],
 				"PreCreation": false
 			}

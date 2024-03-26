@@ -9,6 +9,15 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/spec"
 )
 
+const (
+	// Use a real service and environment to help validate links actually work
+	// in our golden tests (TestRender).
+	// https://handbook.sourcegraph.com/departments/engineering/managed-services/msp-testbed#test
+	testServiceID          = "msp-testbed"
+	testServiceEnvironment = "test"
+	testProjectID          = "msp-testbed-test-77589aae45d0"
+)
+
 func TestRender(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -18,7 +27,7 @@ func TestRender(t *testing.T) {
 		name: "basic",
 		spec: spec.Spec{
 			Service: spec.ServiceSpec{
-				ID:          "msp-testbed",
+				ID:          testServiceID,
 				Description: "Test service for MSP",
 			},
 			Build: spec.BuildSpec{
@@ -29,9 +38,9 @@ func TestRender(t *testing.T) {
 				},
 			},
 			Environments: []spec.EnvironmentSpec{{
-				ID:        "dev",
+				ID:        testServiceEnvironment,
+				ProjectID: testProjectID,
 				Category:  spec.EnvironmentCategoryTest,
-				ProjectID: "msp-testbed-dev-xxxx",
 			}},
 		},
 	}, {
@@ -49,9 +58,9 @@ func TestRender(t *testing.T) {
 				},
 			},
 			Environments: []spec.EnvironmentSpec{{
-				ID:        "dev",
+				ID:        testServiceEnvironment,
+				ProjectID: testProjectID,
 				Category:  spec.EnvironmentCategoryTest,
-				ProjectID: "msp-testbed-dev-xxxx",
 				Resources: &spec.EnvironmentResourcesSpec{
 					Redis: &spec.EnvironmentResourceRedisSpec{},
 					PostgreSQL: &spec.EnvironmentResourcePostgreSQLSpec{

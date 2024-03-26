@@ -143,22 +143,39 @@ func (c Command) Merge(other Command) Command {
 	merged := c
 
 	merged.Config = c.Config.Merge(other.Config)
-
-	if other.Cmd != merged.Cmd && other.Cmd != "" {
-		merged.Cmd = other.Cmd
-	}
-	if other.Install != merged.Install && other.Install != "" {
-		merged.Install = other.Install
-	}
-	if other.InstallFunc != merged.InstallFunc && other.InstallFunc != "" {
-		merged.InstallFunc = other.InstallFunc
-	}
-
-	if !equal(merged.Watch, other.Watch) && len(other.Watch) != 0 {
-		merged.Watch = other.Watch
-	}
-
+	merged.Cmd = mergeStrings(c.Cmd, other.Cmd)
+	merged.Install = mergeStrings(c.Install, other.Install)
+	merged.InstallFunc = mergeStrings(c.InstallFunc, other.InstallFunc)
+	merged.Watch = mergeSlices(c.Watch, other.Watch)
 	return merged
+}
+
+func mergeStrings(a, b string) string {
+	if b != "" {
+		return b
+	}
+	return a
+}
+
+func mergeSlices[T any](a, b []T) []T {
+	if len(b) > 0 {
+		return b
+	}
+	return a
+}
+
+// Merge maps properly merges the two, as opposed to every other merge method which
+// simply overwrites the first with the second.
+// This is to preserve the behavior of the original code.
+func mergeMaps[K comparable, V any](a, b map[K]V) map[K]V {
+	if a == nil {
+		return b
+	}
+	for k, v := range b {
+		a[k] = v
+	}
+
+	return a
 }
 
 func equal(a, b []string) bool {

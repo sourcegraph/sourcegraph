@@ -29,6 +29,9 @@ export function render(tether: Tether, eventTarget: HTMLElement | null, preserve
         setMaxSize(tether.element, null)
     }
 
+    // Restore pointer events
+    setStyle(tether.element, 'pointer-events', 'all')
+
     // Restore visibility for correct measure in layout service
     setVisibility(tether.element, true)
     setVisibility((tether.marker as HTMLElement) ?? null, true)

@@ -124,7 +124,7 @@ func (a *anthropicClient) makeRequest(ctx context.Context, requestParams types.C
 	convertedMessages := requestParams.Messages
 	stopSequences := removeWhitespaceOnlySequences(requestParams.StopSequences)
 	if version == types.CompletionsVersionLegacy {
-		convertedMessages = convertFromLegacyMessages(convertedMessages)
+		convertedMessages = types.ConvertFromLegacyMessages(convertedMessages)
 	}
 	var payload any
 	messages, err := toAnthropicMessages(convertedMessages)

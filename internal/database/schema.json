@@ -13448,13 +13448,6 @@
       ],
       "Constraints": [
         {
-          "Name": "feature_flag_overrides_flag_name_fkey",
-          "ConstraintType": "f",
-          "RefTableName": "feature_flags",
-          "IsDeferrable": false,
-          "ConstraintDefinition": "FOREIGN KEY (flag_name) REFERENCES feature_flags(flag_name) ON UPDATE CASCADE ON DELETE CASCADE"
-        },
-        {
           "Name": "feature_flag_overrides_has_org_or_user_id",
           "ConstraintType": "c",
           "RefTableName": "",

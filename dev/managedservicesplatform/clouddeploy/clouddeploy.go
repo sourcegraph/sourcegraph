@@ -59,14 +59,20 @@ func NewCloudRunCustomTargetSkaffoldAssetsArchive() (*bytes.Buffer, error) {
 	return &buf, nil
 }
 
-//go:embed customtarget.yaml
-var cloudDeployCustomTarget []byte
-
 //go:embed target.template.yaml
 var cloudDeployTargetTemplateRaw string
+
+// cloudDeployTargetTemplate is used to generate a clouddeploy_target
+// using 'customTarget', which is not yet suppported by the Terraform provider:
+// https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/clouddeploy_target
 var cloudDeployTargetTemplate = template.Must(template.New("cloudDeployTargetTemplate").
 	Parse(cloudDeployTargetTemplateRaw))
 
+// RenderSpec renders a Cloud Deploy pipeline specification for use with 'gcloud deploy apply'.
+// It sumplements the in-Terraform configuration in dev/managedservicesplatform/internal/resource/deliverypipeline
+// with additional configuration that is not yet available in Terraform:
+//
+// - clouddeploy_target with custom target type
 func RenderSpec(
 	service spec.ServiceSpec,
 	build spec.BuildSpec,
@@ -74,13 +80,11 @@ func RenderSpec(
 	region string,
 ) (*bytes.Buffer, error) {
 	var targetsSpec bytes.Buffer
-	if _, err := targetsSpec.Write(cloudDeployCustomTarget); err != nil {
-		return nil, err
-	}
-
-	for _, stage := range config.Stages {
-		if _, err := targetsSpec.WriteString("\n---\n"); err != nil {
-			return nil, err
+	for i, stage := range config.Stages {
+		if i != 0 { // if not first
+			if _, err := targetsSpec.WriteString("\n---\n"); err != nil {
+				return nil, err
+			}
 		}
 
 		var b bytes.Buffer

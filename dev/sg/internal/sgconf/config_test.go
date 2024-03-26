@@ -81,17 +81,45 @@ commandsets:
 
 func TestParseAndMerge(t *testing.T) {
 	a := `
+env:
+  GLOBAL_VAR: 'global var orig'
+  OVERRIDE_VAR: 'override var orig'
 commands:
   frontend:
     cmd: .bin/frontend
     install: go build .bin/frontend github.com/sourcegraph/sourcegraph/cmd/frontend
     checkBinary: .bin/frontend
     env:
-      EXTSVC_CONFIG_FILE: '../dev-private/enterprise/dev/external-services-config.json'
+      COMMAND_VAR: 'command local'
+      COMMAND_OVERRIDE_VAR: 'command local'
     watch:
       - lib
       - internal
       - cmd/frontend
+bazelCommands:
+  frontend:
+    target: //cmd/frontend
+    env:
+      BAZEL_VAR: 'bazel command local'
+      BAZEL_OVERRIDE_VAR: 'bazel command local'
+dockerCommands:
+  frontend:
+    docker:
+      image: grafana:candidate
+      ports:
+        - 3370
+      flags:
+        cpus: 1
+      volumes:
+          - from: src
+            to: dest
+      linux:
+          flags:
+            add-host: host.docker.internal:host-gateway
+            user: $UID
+    env:
+      DOCKER_VAR: 'docker command local'
+      DOCKER_OVERRIDE_VAR: 'docker command local'
 `
 	config, err := parseConfig([]byte(a))
 	if err != nil {
@@ -99,10 +127,36 @@ commands:
 	}
 
 	b := `
+env:
+  OVERRIDE_VAR: 'override var override'
 commands:
   frontend:
     env:
-      EXTSVC_CONFIG_FILE: ''
+      COMMAND_OVERRIDE_VAR: 'command override'
+bazelCommands:
+  frontend:
+    runTarget: //cmd/frontend-run
+    env:
+      BAZEL_OVERRIDE_VAR: 'bazel command override'
+dockerCommands:
+  frontend:
+    docker:
+      image: grafana:update
+      ports:
+        - 3370
+        - 3371
+      flags:
+        memory: 1g
+      volumes:
+          - from: override-src
+            to: dst
+      linux:
+          flags:
+            user: root
+          env:
+            FOO: bar
+    env:
+      DOCKER_OVERRIDE_VAR: 'docker command override'
 `
 
 	overwrite, err := parseConfig([]byte(b))
@@ -110,30 +164,75 @@ commands:
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	config.Merge(overwrite)
+	merged := config.Merge(overwrite)
 
-	cmd, ok := config.Commands["frontend"]
-	if !ok {
-		t.Fatalf("command not found")
+	want := &Config{
+		Env: map[string]string{
+			"GLOBAL_VAR":   "global var orig",
+			"OVERRIDE_VAR": "override var override",
+		},
+		Commands: map[string]*run.Command{"frontend": {
+			Config: run.SGConfigCommandOptions{
+				Name: "frontend",
+				Env: map[string]string{
+					"COMMAND_VAR":          "command local",
+					"COMMAND_OVERRIDE_VAR": "command override"},
+				RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
+			},
+			Cmd:         ".bin/frontend",
+			Install:     "go build .bin/frontend github.com/sourcegraph/sourcegraph/cmd/frontend",
+			CheckBinary: ".bin/frontend",
+			Watch: []string{
+				"lib",
+				"internal",
+				"cmd/frontend",
+			},
+		},
+		},
+		BazelCommands: map[string]*run.BazelCommand{"frontend": {
+			Config: run.SGConfigCommandOptions{
+				Name: "frontend",
+				Env: map[string]string{
+					"BAZEL_VAR":          "bazel command local",
+					"BAZEL_OVERRIDE_VAR": "bazel command override",
+				},
+				RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
+			},
+			Target:    "//cmd/frontend",
+			RunTarget: "//cmd/frontend-run",
+		},
+		},
+		DockerCommands: map[string]*run.DockerCommand{"frontend": {
+			Config: run.SGConfigCommandOptions{
+				Name: "frontend",
+				Env: map[string]string{
+					"DOCKER_VAR":          "docker command local",
+					"DOCKER_OVERRIDE_VAR": "docker command override",
+				},
+				RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
+			},
+			Docker: run.DockerOptions{
+				Image: "grafana:update",
+				Volumes: []run.DockerVolume{
+					{
+						From: "override-src",
+						To:   "dst",
+					},
+				},
+				Flags: map[string]string{"cpus": "1", "memory": "1g"},
+				Ports: []string{"3370",
+					"3371",
+				},
+				Linux: run.DockerLinuxOptions{
+					Flags: map[string]string{
+						"add-host": "host.docker.internal:host-gateway",
+						"user":     "root"},
+					Env: map[string]string{"FOO": "bar"}}},
+		},
+		},
 	}
 
-	want := &run.Command{
-		Config: run.SGConfigCommandOptions{
-			Name:           "frontend",
-			Env:            map[string]string{"EXTSVC_CONFIG_FILE": ""},
-			RepositoryRoot: os.Getenv("SG_FORCE_REPO_ROOT"),
-		},
-		Cmd:         ".bin/frontend",
-		Install:     "go build .bin/frontend github.com/sourcegraph/sourcegraph/cmd/frontend",
-		CheckBinary: ".bin/frontend",
-		Watch: []string{
-			"lib",
-			"internal",
-			"cmd/frontend",
-		},
-	}
-
-	if diff := cmp.Diff(cmd, want); diff != "" {
-		t.Fatalf("wrong cmd. (-want +got):\n%s", diff)
+	if diff := cmp.Diff(want, merged); diff != "" {
+		t.Fatalf("wrong config. (-want +got):\n%s", diff)
 	}
 }

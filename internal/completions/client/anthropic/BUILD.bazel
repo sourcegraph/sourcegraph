@@ -23,7 +23,6 @@ go_test(
     srcs = [
         "anthropic_test.go",
         "decoder_test.go",
-        "prompt_test.go",
     ],
     data = glob(["testdata/**"]),
     embed = [":anthropic"],

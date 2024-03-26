@@ -66,8 +66,8 @@ This service is operated on the %s.`,
 		s.Service.GetName(),
 		markdown.Link("Managed Services Platform (MSP)", mspURL))
 
-	md.Admonitionf(markdown.AdmonitionImportant, "If this is your first time here, you should follow the %s as well to set up the prerequisite tooling.",
-		markdown.Link("sourcegraph/managed-services README", "https://github.com/sourcegraph/managed-services/blob/main/README.md"))
+	md.Admonitionf(markdown.AdmonitionImportant, "If this is your first time here, you must follow the %s as well to clone the service definitions repository and set up the prerequisite tooling.",
+		markdown.Link("sourcegraph/managed-services 'Tooling setup' guide", "https://github.com/sourcegraph/managed-services/blob/main/README.md"))
 
 	md.Paragraphf("If you need assistance with MSP infrastructure, reach out to the %s team in #discuss-core-services.",
 		markdown.Link("Core Services", coreServicesURL))
@@ -126,6 +126,8 @@ This service is operated on the %s.`,
 		// ResourceKind:env-specific header
 		resourceHeadings := map[string]string{}
 
+		sentryLink := markdown.Linkf("Sentry "+markdown.Codef("%s-%s", s.Service.ID, env.ID), "https://sourcegraph.sentry.io/projects/%s-%s/", s.Service.ID, env.ID)
+		slackChannelName := fmt.Sprintf("alerts-%s-%s", s.Service.ID, env.ID)
 		overview := [][]string{
 			{"Project ID", markdown.Linkf(markdown.Code(env.ProjectID), cloudRunURL)},
 			{"Category", markdown.Bold(string(env.Category))},
@@ -134,8 +136,9 @@ This service is operated on the %s.`,
 				resourceHeadings[k] = h
 				return l
 			}), ", ")},
+			{"Slack notifications", markdown.Linkf("#"+slackChannelName, "https://sourcegraph.slack.com/archives/"+slackChannelName)},
 			{"Alerts", markdown.Linkf("GCP monitoring", "https://console.cloud.google.com/monitoring/alerting?project=%s", env.ProjectID)},
-			{"Sentry", markdown.Linkf(markdown.Codef("%s-%s", s.Service.ID, env.ID), "https://sourcegraph.sentry.io/projects/%s-%s/", s.Service.ID, env.ID)},
+			{"Errors", sentryLink},
 		}
 		if env.EnvironmentServiceSpec != nil {
 			if domain := env.Domain.GetDNSName(); domain != "" {
@@ -185,6 +188,8 @@ This service is operated on the %s.`,
 				{"Console", markdown.Linkf(
 					fmt.Sprintf("Cloud Run %s", string(serviceKind)), cloudRunURL)},
 				{"Service logs", markdown.Link("GCP logging", ServiceLogsURL(serviceKind, env.ProjectID))},
+				{"Service traces", markdown.Linkf("Cloud Trace", "https://console.cloud.google.com/traces/list?project=%s", env.ProjectID)},
+				{"Service errors", sentryLink},
 			},
 		)
 
@@ -216,6 +221,9 @@ This service is operated on the %s.`,
 						{"Databases", strings.Join(mapTo(pg.Databases, markdown.Code), ", ")},
 					},
 				)
+
+				md.Admonitionf(markdown.AdmonitionNote, "The %s is required for BOTH read-only and write access to the database.",
+					entitleEditorLinksByCategory[env.Category])
 
 				managedServicesRepoLink := markdown.Link(markdown.Code("sourcegraph/managed-services"),
 					"https://github.com/sourcegraph/managed-services")

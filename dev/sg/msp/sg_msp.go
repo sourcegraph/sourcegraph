@@ -151,7 +151,7 @@ sg msp init -owner core-services -name "MSP Example Service" msp-example
 					return errors.Newf("exactly 2 arguments required, '<service ID>' and '<env ID>' - " +
 						" this command is for adding an environment to an existing service, did you mean to use 'sg msp init' instead?")
 				}
-				svc, err := useServiceArgument(c)
+				svc, err := useServiceArgument(c, true)
 				if err != nil {
 					return err
 				}
@@ -279,7 +279,7 @@ sg msp generate -all <service>
 				},
 			},
 			Action: func(c *cli.Context) error {
-				svc, err := useServiceArgument(c)
+				svc, err := useServiceArgument(c, true)
 				if err != nil {
 					return err
 				}
@@ -405,7 +405,7 @@ The '-handbook-path' flag can also be used to specify where sourcegraph/handbook
 			},
 			BashComplete: msprepo.ServicesAndEnvironmentsCompletion(),
 			Action: func(c *cli.Context) error {
-				svc, env, err := useServiceAndEnvironmentArguments(c)
+				svc, env, err := useServiceAndEnvironmentArguments(c, true)
 				if err != nil {
 					return err
 				}
@@ -465,7 +465,7 @@ full access, use the '-write-access' flag.
 					},
 					BashComplete: msprepo.ServicesAndEnvironmentsCompletion(),
 					Action: func(c *cli.Context) error {
-						_, env, err := useServiceAndEnvironmentArguments(c)
+						svc, env, err := useServiceAndEnvironmentArguments(c, true)
 						if err != nil {
 							return err
 						}
@@ -519,7 +519,8 @@ full access, use the '-write-access' flag.
 						proxy, err := cloudsqlproxy.NewCloudSQLProxy(
 							connectionName,
 							serviceAccountEmail,
-							proxyPort)
+							proxyPort,
+							svc.Service.GetGoLink(env.ID))
 						if err != nil {
 							return err
 						}
@@ -573,7 +574,7 @@ sg msp tfc view <service> <environment>
 								terraformcloud.MSPWorkspaceTag))
 						}
 
-						service, err := useServiceArgument(c)
+						service, err := useServiceArgument(c, false)
 						if err != nil {
 							return err
 						}
@@ -618,7 +619,7 @@ Supports completions on services and environments.`,
 					},
 					BashComplete: msprepo.ServicesAndEnvironmentsCompletion(),
 					Action: func(c *cli.Context) error {
-						service, err := useServiceArgument(c)
+						service, err := useServiceArgument(c, false)
 						if err != nil {
 							return err
 						}
@@ -689,7 +690,7 @@ Supports completions on services and environments.`,
 						},
 					),
 					Action: func(c *cli.Context) error {
-						service, env, err := useServiceAndEnvironmentArguments(c)
+						service, env, err := useServiceAndEnvironmentArguments(c, false)
 						if err != nil {
 							return err
 						}

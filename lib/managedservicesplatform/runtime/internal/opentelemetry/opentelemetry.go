@@ -5,9 +5,10 @@ import (
 
 	"github.com/sourcegraph/conc"
 	"github.com/sourcegraph/log"
-	gcpdetector "go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+
+	// Use semconv version matching the one used by go.opentelemetry.io/otel/sdk/resource
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -61,8 +62,6 @@ func Init(ctx context.Context, logger log.Logger, config Config, r log.Resource)
 func getOpenTelemetryResource(ctx context.Context, r log.Resource) (*resource.Resource, error) {
 	// Identify your application using resource detection
 	return resource.New(ctx,
-		// Use the GCP resource detector to detect information about the GCP platform
-		resource.WithDetectors(gcpdetector.NewDetector()),
 		// Use the default detectors
 		resource.WithTelemetrySDK(),
 		// Add our own attributes

@@ -9,6 +9,7 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/dev/sg/cloudsqlproxy",
     visibility = ["//visibility:public"],
     deps = [
+        "//dev/sg/internal/background",
         "//dev/sg/internal/std",
         "//lib/errors",
         "//lib/output",

@@ -18,7 +18,10 @@ go_library(
 
 go_test(
     name = "types_test",
-    srcs = ["errors_test.go"],
+    srcs = [
+        "errors_test.go",
+        "types_test.go",
+    ],
     embed = [":types"],
     deps = [
         "@com_github_hexops_autogold_v2//:autogold",

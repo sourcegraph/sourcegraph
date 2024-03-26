@@ -15,6 +15,7 @@ import (
 // A DockerCommand is a command definition for sg run/start that uses
 // bazel under the hood. It will handle restarting itself autonomously,
 // as long as iBazel is running and watch that specific target.
+// Note: if you add a field here be sure to add it to the `Merge` method
 type DockerCommand struct {
 	Config SGConfigCommandOptions
 	Docker DockerOptions `yaml:"docker"`
@@ -39,11 +40,30 @@ type DockerOptions struct {
 	Linux DockerLinuxOptions `yaml:"linux"`
 }
 
+func (do DockerOptions) Merge(other DockerOptions) DockerOptions {
+	merged := do
+	merged.Image = mergeStrings(merged.Image, other.Image)
+	merged.Pull = merged.Pull || other.Pull
+	merged.Volumes = mergeSlices(merged.Volumes, other.Volumes)
+	merged.Flags = mergeMaps(merged.Flags, other.Flags)
+	merged.Ports = mergeSlices(merged.Ports, other.Ports)
+	merged.Linux = merged.Linux.Merge(other.Linux)
+	return merged
+}
+
 // DockerLinuxOptions is a struct that holds linux specific modifications to
 // DockerEngine parameters for the DockerCommand
 type DockerLinuxOptions struct {
 	Flags map[string]string `yaml:"flags"`
 	Env   map[string]string `yaml:"env"`
+}
+
+func (dlo DockerLinuxOptions) Merge(other DockerLinuxOptions) DockerLinuxOptions {
+	merged := dlo
+	merged.Flags = mergeMaps(merged.Flags, other.Flags)
+	merged.Env = mergeMaps(merged.Env, other.Env)
+
+	return merged
 }
 
 // Details for a docker volume to mount into the container
@@ -210,6 +230,18 @@ func (dc DockerCommand) GetExecCmd(ctx context.Context) (*exec.Cmd, error) {
 	}
 	cmd := dc.GetCmd(bin, runtime.GOOS == "linux")
 	return exec.CommandContext(ctx, "bash", "-c", cmd), nil
+}
+
+// Overrides the behavior of this command with other command.
+// This is used for the sg.config.overwrite.yaml functionality
+func (bc DockerCommand) Merge(other DockerCommand) DockerCommand {
+	merged := bc
+
+	merged.Target = mergeStrings(merged.Target, other.Target)
+	merged.Config = merged.Config.Merge(other.Config)
+	merged.Docker = merged.Docker.Merge(other.Docker)
+
+	return merged
 }
 
 type Entry[K, V any] struct {

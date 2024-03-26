@@ -1,15 +1,13 @@
-package anthropic
+package types
 
 import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
-
-	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 )
 
 func TestLegacyMessageConversion(t *testing.T) {
-	messages := []types.Message{
+	messages := []Message{
 		// Convert legacy system-like messages to actual system messages
 		{Speaker: "human", Text: "You are Cody, an AI-powered coding assistant created by Sourcegraph. You also have an Austrian dialect."},
 		{Speaker: "assistant", Text: "I understand"},
@@ -26,9 +24,9 @@ func TestLegacyMessageConversion(t *testing.T) {
 		{Speaker: "assistant"},
 	}
 
-	convertedMessages := convertFromLegacyMessages(messages)
+	convertedMessages := ConvertFromLegacyMessages(messages)
 
-	autogold.Expect([]types.Message{
+	autogold.Expect([]Message{
 		{
 			Speaker: "system",
 			Text:    "You are Cody, an AI-powered coding assistant created by Sourcegraph. You also have an Austrian dialect.",
@@ -46,15 +44,15 @@ func TestLegacyMessageConversion(t *testing.T) {
 }
 
 func TestLegacyMessageConversionWithTrailingAssistantResponse(t *testing.T) {
-	messages := []types.Message{
+	messages := []Message{
 		{Speaker: "human", Text: "Write another poem"},
 		// Removes the last empty assistant message
 		{Speaker: "assistant", Text: "Roses are red, "},
 	}
 
-	convertedMessages := convertFromLegacyMessages(messages)
+	convertedMessages := ConvertFromLegacyMessages(messages)
 
-	autogold.Expect([]types.Message{{
+	autogold.Expect([]Message{{
 		Speaker: "human",
 		Text:    "Write another poem",
 	},

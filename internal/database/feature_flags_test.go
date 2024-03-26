@@ -216,8 +216,7 @@ func testNewOverrideRoundtrip(t *testing.T, db DB) {
 			assertErr: errorContains(`violates foreign key constraint "feature_flag_overrides_namespace_user_id_fkey"`),
 		},
 		{
-			override:  &ff.Override{UserID: &u1.ID, FlagName: "invalid-flag-name", Value: false},
-			assertErr: errorContains(`violates foreign key constraint "feature_flag_overrides_flag_name_fkey"`),
+			override: &ff.Override{UserID: &u1.ID, FlagName: "invalid-flag-name", Value: false},
 		},
 		{
 			override:  &ff.Override{FlagName: ff1.Name, Value: false},
@@ -304,14 +303,17 @@ func testListUserOverrides(t *testing.T, db DB) {
 		require.Empty(t, got)
 	})
 
-	t.Run("non-unique override errors", func(t *testing.T) {
+	t.Run("non-unique override upserts", func(t *testing.T) {
 		t.Cleanup(cleanup(t, db))
 		u1 := mkUser("u1")
 		f1 := mkFFBool("f", true)
 		_, err := flagStore.CreateOverride(ctx, &ff.Override{UserID: &u1.ID, FlagName: f1.Name, Value: true})
 		require.NoError(t, err)
-		_, err = flagStore.CreateOverride(ctx, &ff.Override{UserID: &u1.ID, FlagName: f1.Name, Value: true})
-		require.Error(t, err)
+		_, err = flagStore.CreateOverride(ctx, &ff.Override{UserID: &u1.ID, FlagName: f1.Name, Value: false})
+		require.NoError(t, err)
+		flags, err := flagStore.GetUserFlags(ctx, u1.ID)
+		require.NoError(t, err)
+		require.Equal(t, flags[f1.Name], false)
 	})
 }
 

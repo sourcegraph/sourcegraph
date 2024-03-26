@@ -122,7 +122,7 @@ exports[`FeedbackPrompt > should render submit error correctly 1`] = `
     class="floatingPanel popover menu"
     hidden=""
     role="dialog"
-    style="visibility: hidden;"
+    style="pointer-events: all; visibility: hidden;"
   >
     <div
       data-focus-guard="true"

@@ -80,7 +80,11 @@ func (b *Builder) Admonitionf(level AdmonitionLevel, content string, args ...any
 		panic(fmt.Sprintf("unknown admonition level %q", level))
 	}
 	for _, line := range strings.Split(strings.TrimSpace(fmt.Sprintf(content, args...)), "\n") {
-		b.acc.WriteString("> " + line)
+		if line == "" {
+			b.acc.WriteString(">") // don't write unnecessary whitespace
+		} else {
+			b.acc.WriteString("> " + line)
+		}
 		b.acc.WriteString("\n")
 	}
 }

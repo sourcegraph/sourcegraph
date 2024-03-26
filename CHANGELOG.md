@@ -26,6 +26,8 @@ All notable changes to Sourcegraph are documented in this file.
 ### Changed
 
 - GitHub apps installation records will only be deleted from the database if the GitHub App has been uninstalled or if the GitHub app has been deleted. [#60460](https://github.com/sourcegraph/sourcegraph/pull/60460)
+- The Anthropic provider for Cody has been updated to use the messages API which includes support for Claude 3 models. This is applicable to both BYOK and Cody Gateway users. The messages API does not support model identifiers which only set a major model version such as: `claude-2`, `claude-instant-v1` and `claude-instant-1`. Default values have been updated to `claude-2.0` and `claude-instant-1.2`, any legacy models identifiers in the site config will be set to the corresponding default previously mentioned. [#60953](https://github.com/sourcegraph/sourcegraph/pull/60953) [#61324](https://github.com/sourcegraph/sourcegraph/pull/61324)
+- The AWS Bedrock provider for Cody has been updated to use Anthropic's Messages API, bringing support for Claude 3 models. [#61347](https://github.com/sourcegraph/sourcegraph/pull/61347)
 
 ### Fixed
 

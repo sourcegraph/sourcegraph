@@ -106,6 +106,12 @@ func (runner *cmdRunner) run(ctx context.Context) error {
 					shouldRestart, err := runner.reinstall(ctx, cmd)
 					if err != nil {
 						runner.printError(cmd, err)
+
+						// If the error came from the install step then we continue watching
+						// and will retry building if there is another source change.
+						if _, ok := err.(installErr); ok {
+							continue
+						}
 						return err
 					}
 
@@ -164,7 +170,6 @@ func (runner *cmdRunner) reinstall(ctx context.Context, cmd SGConfigCommand) (bo
 		}
 
 		if err := installer.RunInstall(ctx, runner.parentEnv); err != nil {
-			runner.printError(cmd, err)
 			return false, err
 		}
 		newHash, err := md5HashFile(bin)

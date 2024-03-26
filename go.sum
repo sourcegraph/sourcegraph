@@ -531,6 +531,7 @@ github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 h1:7HZCaLC5+BZpm
 github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4/go.mod h1:5tD+neXqOorC30/tWg0LCSkrqj/AR6gu8yY8/fpw1q0=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
+github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.15.0/go.mod h1:0h5ZqXfHYED7Bhv2ZJamyIOUej9KtShiJESRwBDUSsw=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
@@ -1069,6 +1070,7 @@ github.com/hexops/autogold/v2 v2.2.1 h1:JPUXuZQGkcQMv7eeDXuNMovjfoRYaa0yVcm+F3vo
 github.com/hexops/autogold/v2 v2.2.1/go.mod h1:IJwxtUfj1BGLm0YsR/k+dIxYi6xbeLjqGke2bzcOTMI=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
+github.com/hexops/valast v1.4.3/go.mod h1:Iqx2kLj3Jn47wuXpj3wX40xn6F93QNFBHuiKBerkTGA=
 github.com/hexops/valast v1.4.4 h1:rETyycw+/L2ZVJHHNxEBgh8KUn+87WugH9MxcEv9PGs=
 github.com/hexops/valast v1.4.4/go.mod h1:Jcy1pNH7LNraVaAZDLyv21hHg2WBv9Nf9FL6fGxU7o4=
 github.com/hjson/hjson-go/v4 v4.0.0/go.mod h1:KaYt3bTw3zhBjYqnXkYywcYctk0A2nxeEFTse3rH13E=
@@ -1289,6 +1291,7 @@ github.com/mattn/go-colorable v0.0.10-0.20170816031813-ad5389df28cd/go.mod h1:9v
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-colorable v0.1.4/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=
 github.com/mattn/go-colorable v0.1.6/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
+github.com/mattn/go-colorable v0.1.9/go.mod h1:u6P/XSegPjTcexA+o6vUJrdnUu04hMope9wVRipJSqc=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.2/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
@@ -1641,8 +1644,8 @@ github.com/sourcegraph/alertmanager v0.21.1-0.20211110092431-863f5b1ee51b h1:Mly
 github.com/sourcegraph/alertmanager v0.21.1-0.20211110092431-863f5b1ee51b/go.mod h1:0MLTrjQI8EuVmvykEhcfr/7X0xmaDAZrqMgxIq3OXHk=
 github.com/sourcegraph/conc v0.3.1-0.20240108182409-4afefce20f9b h1:0FsjN+u9fNXTS2C1JnJ6G/gkgcUg8dscyyfu3PwHWUQ=
 github.com/sourcegraph/conc v0.3.1-0.20240108182409-4afefce20f9b/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
-github.com/sourcegraph/go-ctags v0.0.0-20231024141911-299d0263dc95 h1:7MrEECTEf+UmMdllIIbAHng17Uwqm8WbHEUAyv9LMBk=
-github.com/sourcegraph/go-ctags v0.0.0-20231024141911-299d0263dc95/go.mod h1:ZYjpRXoJrRlxjU9ZfpaUKJkk62AjhJPffN3rlw2aqxM=
+github.com/sourcegraph/go-ctags v0.0.0-20240325032535-71f1ec6e46e4 h1:jppwnpC+DT9tIiRbw21lD0drA9Jqu4X47iA4gTk4w8M=
+github.com/sourcegraph/go-ctags v0.0.0-20240325032535-71f1ec6e46e4/go.mod h1:Or1cqbhDzkbH+hlwv5iW7uCTPEMKH9u/mTUh7otRQHY=
 github.com/sourcegraph/go-diff v0.6.2-0.20221123165719-f8cd299c40f3 h1:11miag7hlORpW7ici5mL7T9PyiEsmVmf+8PFOvJ/ZrA=
 github.com/sourcegraph/go-diff v0.6.2-0.20221123165719-f8cd299c40f3/go.mod h1:iBszgVvyxdc8SFZ7gm69go2KDdt3ag071iBaWPF6cjs=
 github.com/sourcegraph/go-jsonschema v0.0.0-20221230021921-34aaf28fc4ac h1:Bq9XPdAOBkA9NWeNEh2VeIlGlizg9rL5VkYFZje2S+4=
@@ -1661,10 +1664,10 @@ github.com/sourcegraph/log v0.0.0-20231018134238-fbadff7458bb h1:tHKdC+bXxxGJ0cy
 github.com/sourcegraph/log v0.0.0-20231018134238-fbadff7458bb/go.mod h1:IDp09QkoqS8Z3CyN2RW6vXjgABkNpDbyjLIHNQwQ8P8=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/cloudflare v0.0.0-20230822024612-edb48c530722 h1:0bXluGjV4O3XBeFA3Kck9kHS3ilvgJo8mW9ADx8oeHE=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/cloudflare v0.0.0-20230822024612-edb48c530722/go.mod h1:Djd6jHBZqe4/+MEpiBxKvzPS24NqYxNBbAYv/0074JI=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/google v0.0.0-20231222002716-51aa712b9bcc h1:5sY4zK5cz127gqcUQyLHQUc6oAijf9cWLNyBATntBSg=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/google v0.0.0-20231222002716-51aa712b9bcc/go.mod h1:P1liUcPEczidOp1kyPvi2eqil4243IuPJ+tCOASCHEk=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20231222002716-51aa712b9bcc h1:BMYXT/otUbE7daoJLSvTHo6/WwEclPzpoH8m/8+M0Ws=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20231222002716-51aa712b9bcc/go.mod h1:/z34dv4NLXti+0VQsUoRTXBeH6n7OWtPv/iWFX6z5dg=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/google v0.0.0-20240325114905-87053fe51a82 h1:bv17EeWRJavA4xxnXT8iJjKZB9eF9bhV2jOnHl/xcJU=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/google v0.0.0-20240325114905-87053fe51a82/go.mod h1:P1liUcPEczidOp1kyPvi2eqil4243IuPJ+tCOASCHEk=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20240325114905-87053fe51a82 h1:oIc1606BRD16jY6TcfQurYiew8PAH/tBjhaxXK89J4Y=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20240325114905-87053fe51a82/go.mod h1:/z34dv4NLXti+0VQsUoRTXBeH6n7OWtPv/iWFX6z5dg=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/nobl9 v0.0.0-20240131130226-cb88836e6df8 h1:kzWUr3tOgSaWLH6tRre+nQWaIspel2Adh07xlstYKrA=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/nobl9 v0.0.0-20240131130226-cb88836e6df8/go.mod h1:1HTn7/xUQWdIjhr9ROmAVAwgG2mdJB6aJjKyi5aCDCg=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/opsgenie v0.0.0-20231230001101-a13188f9c749 h1:h0n42wBNI4h28Bb42A7TJbSLwmcpIvYI9NZrprPUt/A=
@@ -1687,8 +1690,8 @@ github.com/sourcegraph/scip v0.3.3 h1:3EOkChYOntwHl0pPSAju7rj0oRuujh8owC4vjGDEr0
 github.com/sourcegraph/scip v0.3.3/go.mod h1:Q67VaoTpftINIy/CLrkYQOMwlsx67h8ys+ligmdUcqM=
 github.com/sourcegraph/yaml v1.0.1-0.20200714132230-56936252f152 h1:z/MpntplPaW6QW95pzcAR/72Z5TWDyDnSo0EOcyij9o=
 github.com/sourcegraph/yaml v1.0.1-0.20200714132230-56936252f152/go.mod h1:GIjDIg/heH5DOkXY3YJ/wNhfHsQHoXGjl8G8amsYQ1I=
-github.com/sourcegraph/zoekt v0.0.0-20240313063445-cc5e093366ea h1:aD4CM/TsPP91VTUL49ffUVLFmQu0AesOOrpWVebjwTY=
-github.com/sourcegraph/zoekt v0.0.0-20240313063445-cc5e093366ea/go.mod h1:1q5GDMv8B5ywNhmp+befvwOZdf7b3qm+b/as0d4PDt8=
+github.com/sourcegraph/zoekt v0.0.0-20240325122943-f2577c25dc61 h1:byvTmeoPS5n7R5Tj6vqj6P33L3dIsUIbnO2BKx7k3Dc=
+github.com/sourcegraph/zoekt v0.0.0-20240325122943-f2577c25dc61/go.mod h1:+j+huwz4ZnffJmDHeLJyI9AY4a8DKQnfNV0J//upnyo=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/afero v0.0.0-20170901052352-ee1bd8ee15a1/go.mod h1:j4pytiNVoe2o6bmDsKpLACNPDBIoEAkihy7loJ1B0CQ=
 github.com/spf13/afero v1.1.2/go.mod h1:j4pytiNVoe2o6bmDsKpLACNPDBIoEAkihy7loJ1B0CQ=

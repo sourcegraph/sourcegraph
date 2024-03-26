@@ -29,51 +29,18 @@ type SGConfigCommandOptions struct {
 func (opts SGConfigCommandOptions) Merge(other SGConfigCommandOptions) SGConfigCommandOptions {
 	merged := opts
 
-	if other.Name != merged.Name && other.Name != "" {
-		merged.Name = other.Name
-	}
-	if other.Description != merged.Description && other.Description != "" {
-		merged.Description = other.Description
-	}
-	if other.Description != merged.Description && other.Description != "" {
-		merged.Description = other.Description
-	}
-	if other.PreCmd != merged.PreCmd && other.PreCmd != "" {
-		merged.PreCmd = other.PreCmd
-	}
-	if other.Args != merged.Args && other.Args != "" {
-		merged.Args = other.Args
-	}
-	if other.IgnoreStdout != merged.IgnoreStdout && !merged.IgnoreStdout {
-		merged.IgnoreStdout = other.IgnoreStdout
-	}
-	if other.IgnoreStderr != merged.IgnoreStderr && !merged.IgnoreStderr {
-		merged.IgnoreStderr = other.IgnoreStderr
-	}
+	merged.Name = mergeStrings(merged.Name, other.Name)
+	merged.Description = mergeStrings(merged.Description, other.Description)
+	merged.PreCmd = mergeStrings(merged.PreCmd, other.PreCmd)
+	merged.Args = mergeStrings(merged.Args, other.Args)
+	merged.IgnoreStdout = other.IgnoreStdout || merged.IgnoreStdout
+	merged.IgnoreStderr = other.IgnoreStderr || merged.IgnoreStderr
 	merged.ContinueWatchOnExit = other.ContinueWatchOnExit || merged.ContinueWatchOnExit
-	if other.Preamble != merged.Preamble && other.Preamble != "" {
-		merged.Preamble = other.Preamble
-	}
-	if other.Logfile != merged.Logfile && other.Logfile != "" {
-		merged.Logfile = other.Logfile
-	}
-	if other.RepositoryRoot != merged.RepositoryRoot && other.RepositoryRoot != "" {
-		merged.RepositoryRoot = other.RepositoryRoot
-	}
-
-	for k, v := range other.Env {
-		if merged.Env == nil {
-			merged.Env = make(map[string]string)
-		}
-		merged.Env[k] = v
-	}
-
-	for k, v := range other.ExternalSecrets {
-		if merged.ExternalSecrets == nil {
-			merged.ExternalSecrets = make(map[string]secrets.ExternalSecret)
-		}
-		merged.ExternalSecrets[k] = v
-	}
+	merged.Preamble = mergeStrings(merged.Preamble, other.Preamble)
+	merged.Logfile = mergeStrings(merged.Logfile, other.Logfile)
+	merged.RepositoryRoot = mergeStrings(merged.RepositoryRoot, other.RepositoryRoot)
+	merged.Env = mergeMaps(merged.Env, other.Env)
+	merged.ExternalSecrets = mergeMaps(merged.ExternalSecrets, other.ExternalSecrets)
 
 	return merged
 }

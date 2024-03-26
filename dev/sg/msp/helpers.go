@@ -24,7 +24,9 @@ import (
 
 // useServiceArgument retrieves the service spec corresponding to the first
 // argument.
-func useServiceArgument(c *cli.Context) (*spec.Spec, error) {
+//
+// 'exact' indicates that no additional arguments are expected.
+func useServiceArgument(c *cli.Context, exact bool) (*spec.Spec, error) {
 	serviceID := c.Args().First()
 	if serviceID == "" {
 		return nil, errors.New("argument service is required")
@@ -35,14 +37,22 @@ func useServiceArgument(c *cli.Context) (*spec.Spec, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "load service %q", serviceID)
 	}
+
+	// Arg 0 is service, arg 1 is environment - any additional arguments are
+	// unexpected if we are getting exact arguments.
+	if exact && c.Args().Get(1) != "" {
+		return s, errors.Newf("got unexpected additional arguments %q - note that flags must be placed BEFORE arguments, i.e. '<flags> <arguments>'",
+			strings.Join(c.Args().Slice()[1:], " "))
+	}
+
 	return s, nil
 }
 
 // useServiceAndEnvironmentArguments retrieves the service and environment specs
 // corresponding to the first and second arguments respectively. It should only
 // be used if both arguments are required.
-func useServiceAndEnvironmentArguments(c *cli.Context) (*spec.Spec, *spec.EnvironmentSpec, error) {
-	svc, err := useServiceArgument(c)
+func useServiceAndEnvironmentArguments(c *cli.Context, exact bool) (*spec.Spec, *spec.EnvironmentSpec, error) {
+	svc, err := useServiceArgument(c, false)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -56,6 +66,13 @@ func useServiceAndEnvironmentArguments(c *cli.Context) (*spec.Spec, *spec.Enviro
 	if env == nil {
 		return svc, nil, errors.Newf("environment %q not found in service spec, available environments: %+v",
 			environmentID, svc.ListEnvironmentIDs())
+	}
+
+	// Arg 0 is service, arg 1 is environment - any additional arguments are
+	// unexpected if we are getting exact arguments.
+	if exact && c.Args().Get(2) != "" {
+		return svc, env, errors.Newf("got unexpected additional arguments %q - note that flags must be placed BEFORE arguments, i.e. '<flags> <arguments>'",
+			strings.Join(c.Args().Slice()[2:], " "))
 	}
 
 	return svc, env, nil
@@ -182,8 +199,11 @@ func generateTerraform(serviceID string, opts generateTerraformOptions) error {
 		if rollout := service.BuildRolloutPipelineConfiguration(env); rollout != nil {
 			pending.Updatef("[%s] Building rollout pipeline configurations for environment %q...", serviceID, env.ID)
 
-			// region is currently fixed
-			region := cloudrun.GCPRegion
+			// First, we generate the Cloud Deploy configuration file with
+			// additional configuration for the rollout pipeline that we can't
+			// yet provide with Terraform. In the future, we can hopefully
+			// replace this with a pure-Terraform version.
+			region := cloudrun.GCPRegion // region is currently fixed
 			deploySpec, err := clouddeploy.RenderSpec(
 				service.Service,
 				service.Build,
@@ -192,7 +212,6 @@ func generateTerraform(serviceID string, opts generateTerraformOptions) error {
 			if err != nil {
 				return errors.Wrap(err, "render Cloud Deploy configuration file")
 			}
-
 			deploySpecFilename := fmt.Sprintf("rollout-%s.clouddeploy.yaml", region)
 			comment := generateCloudDeployDocstring(env.ProjectID, serviceID, region, deploySpecFilename)
 			if err := os.WriteFile(
@@ -203,6 +222,10 @@ func generateTerraform(serviceID string, opts generateTerraformOptions) error {
 				return errors.Wrap(err, "write Cloud Deploy configuration file")
 			}
 
+			// Next, we generate skaffold.yaml archive for upload to GCS. See
+			// cloudrun.ScaffoldSourceFile docstring for more on why we need
+			// to generate this separately. This step will likely always be
+			// rquired.
 			skaffoldObject, err := clouddeploy.NewCloudRunCustomTargetSkaffoldAssetsArchive()
 			if err != nil {
 				return errors.Wrap(err, "create Cloud Deploy custom target skaffold YAML archive")

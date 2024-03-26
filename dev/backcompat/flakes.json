@@ -52,5 +52,12 @@
             "prefix": "TestRepoStatistics_Compaction",
             "reason": "Updates the gitserver_repos_statistics table to different format that doesn't work with old query anymore"
         }
+    ],
+    "5.3.0": [
+        {
+            "path": "internal/database",
+            "prefix": "TestFeatureFlagStore",
+            "reason": "We remove constraints and the old tests checked that we were failing"
+        }
     ]
 }
