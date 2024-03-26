@@ -5,6 +5,7 @@
     import { type TabsContext, KEY } from './Tabs.svelte'
 
     export let title: string
+    export let iconPath: string | null = null
 
     const context = getContext<TabsContext>(KEY)
     const id = uuid.v4()
