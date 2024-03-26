@@ -10,7 +10,6 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/internal/completions/client/awsbedrock",
     visibility = ["//:__subpackages__"],
     deps = [
-        "//internal/completions/client/anthropic",
         "//internal/completions/tokenusage",
         "//internal/completions/types",
         "//internal/httpcli",
