@@ -1,10 +1,8 @@
 package reposcheduler
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"time"
 
 	"github.com/keegancsmith/sqlf"
@@ -39,7 +37,7 @@ var _ RepositorySchedulingStore = &store{}
 func NewPreciseStore(observationCtx *observation.Context, db database.DB) RepositorySchedulingStore {
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
-		logger:     logger.Scoped("reposcheduler.store"),
+		logger:     observationCtx.Logger.Scoped("reposcheduler.syntactic_store"),
 		operations: newOperations(observationCtx),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "indexing_enabled",
@@ -51,11 +49,11 @@ func NewPreciseStore(observationCtx *observation.Context, db database.DB) Reposi
 func NewSyntacticStore(observationCtx *observation.Context, db database.DB) RepositorySchedulingStore {
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
-		logger:     logger.Scoped("reposcheduler.store"),
+		logger:     observationCtx.Logger.Scoped("reposcheduler.precise_store"),
 		operations: newOperations(observationCtx),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "syntactic_indexing_enabled",
-			lastScanTableName:         "syntactic_scip_index_last_scan",
+			lastScanTableName:         "syntactic_scip_last_index_scan",
 		},
 	}
 }
@@ -83,17 +81,6 @@ func (s *store) Transact(ctx context.Context) (*store, error) {
 
 func (s *store) Done(err error) error {
 	return s.db.Done(err)
-}
-
-func executeTemplate(t *template.Template, data any) (string, error) {
-	var buf *bytes.Buffer
-
-	err := t.Execute(buf, data)
-	if err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
 }
 
 type dbLayout struct {
@@ -140,8 +127,6 @@ func (store *store) GetRepositoriesForIndexScan(
 	}
 
 	query := getRepositoriesForIndexScanQuery(store.dbLayout)
-
-	fmt.Println(query)
 
 	finalQuery := sqlf.Sprintf(
 		query,

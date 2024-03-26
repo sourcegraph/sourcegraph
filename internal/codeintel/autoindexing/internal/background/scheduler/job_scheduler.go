@@ -24,11 +24,11 @@ import (
 )
 
 type indexSchedulerJob struct {
-	repositorySchedulerSvc reposcheduler.RepositorySchedulingService
-	policiesSvc            PoliciesService
-	policyMatcher          PolicyMatcher
-	indexEnqueuer          IndexEnqueuer
-	repoStore              database.RepoStore
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService
+	policiesSvc       PoliciesService
+	policyMatcher     PolicyMatcher
+	indexEnqueuer     IndexEnqueuer
+	repoStore         database.RepoStore
 }
 
 var m = new(metrics.SingletonREDMetrics)
@@ -43,11 +43,11 @@ func NewScheduler(
 	config *Config,
 ) goroutine.BackgroundRoutine {
 	job := indexSchedulerJob{
-		repositorySchedulerSvc: repoSchedulingSvc,
-		policiesSvc:            policiesSvc,
-		policyMatcher:          policyMatcher,
-		indexEnqueuer:          indexEnqueuer,
-		repoStore:              repoStore,
+		repoSchedulingSvc: repoSchedulingSvc,
+		policiesSvc:       policiesSvc,
+		policyMatcher:     policyMatcher,
+		indexEnqueuer:     indexEnqueuer,
+		repoStore:         repoStore,
 	}
 
 	redMetrics := m.Get(func() *metrics.REDMetrics {
@@ -104,7 +104,7 @@ func (b indexSchedulerJob) handleScheduler(
 	// set should contain repositories that have yet to be updated, or that have been updated least recently.
 	// This allows us to update every repository reliably, even if it takes a long time to process through
 	// the backlog.
-	repositories, err := b.repositorySchedulerSvc.GetRepositoriesForIndexScan(
+	repositories, err := b.repoSchedulingSvc.GetRepositoriesForIndexScan(
 		ctx,
 		reposcheduler.NewBatchOptions(
 			repositoryProcessDelay,
