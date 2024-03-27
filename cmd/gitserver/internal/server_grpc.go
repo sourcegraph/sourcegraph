@@ -44,7 +44,7 @@ type service interface {
 }
 
 func NewGRPCServer(server *Server) proto.GitserverServiceServer {
-	return &grpcServer{
+	var srv proto.GitserverServiceServer = &grpcServer{
 		logger:         server.logger,
 		reposDir:       server.reposDir,
 		db:             server.db,
@@ -54,6 +54,16 @@ func NewGRPCServer(server *Server) proto.GitserverServiceServer {
 		getBackendFunc: server.getBackendFunc,
 		svc:            server,
 	}
+
+	exptFeatures := conf.SiteConfig().ExperimentalFeatures
+	if exptFeatures != nil && exptFeatures.GitserverExhaustiveLogging {
+		srv = &loggingGRPCServer{
+			GitserverServiceServer: srv,
+			logger:                 server.logger,
+		}
+	}
+
+	return srv
 }
 
 type grpcServer struct {

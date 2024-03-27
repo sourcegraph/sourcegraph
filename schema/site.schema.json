@@ -601,6 +601,11 @@
               "default": "useFileContents"
             }
           }
+        },
+        "gitserverExhaustiveLogging": {
+          "description": "Whether to log all incoming gRPC requests to each gitserver instance",
+          "type": "boolean",
+          "default": false
         }
       },
       "examples": [
