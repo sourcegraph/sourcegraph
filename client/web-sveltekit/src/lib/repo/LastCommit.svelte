@@ -1,8 +1,8 @@
 <script lang="ts">
     import { formatDistanceToNow } from 'date-fns'
 
+    import type { Avatar_User } from '$lib/Avatar.gql'
     import Avatar from '$lib/Avatar.svelte'
-    import type { Avatar_User } from '$testing/graphql-type-mocks'
 
     export let commitURL: string
     export let avatarURL: string | null
@@ -19,6 +19,9 @@
 
     function getFirstNameAndLastInitial(name: string): string {
         const names = name.split(' ')
+        if (names.length < 2) {
+            return `${names[0]}`
+        }
         return `${names[0]} ${names[names.length - 1].charAt(0).toUpperCase()}.`
     }
 
@@ -28,7 +31,7 @@
         return msg.join(' ')
     }
 
-    function extractSHA(cm: string): string {
+    function extractPRNumber(cm: string): string {
         let cmWords = cm.split(' ')
         let sha = cmWords[cmWords.length - 1]
         return sha.slice(1, sha.length - 1)
@@ -45,7 +48,7 @@
     }
 
     $: commitMessageNoSHA = truncateIfNeeded(commitMessage)
-    $: commitSHA = extractSHA(commitMessage)
+    $: PRNumber = extractPRNumber(commitMessage)
 </script>
 
 <div class="latest-commit">
@@ -58,7 +61,7 @@
 
     <div class="commit-message">
         <small>{commitMessageNoSHA}</small>
-        (<a href={commitURL}><small>{commitSHA}</small></a>)
+        (<a href={commitURL}><small>{PRNumber}</small></a>)
     </div>
 
     <div class="commit-date">
