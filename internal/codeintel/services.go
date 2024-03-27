@@ -18,7 +18,7 @@ import (
 )
 
 type Services struct {
-	AutoIndexingService          *autoindexing.AutoIndexingService
+	AutoIndexingService          *autoindexing.Service
 	PreciseRepoSchedulingService reposcheduler.RepositorySchedulingService
 	CodenavService               *codenav.Service
 	DependenciesService          *ossdependencies.Service
