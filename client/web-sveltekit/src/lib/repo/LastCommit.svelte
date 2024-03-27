@@ -9,9 +9,7 @@
 
     function getFirstNameAndLastInitial(name: string): string {
         const names = name.split(' ')
-        const firstName = names[0]
-        const lastInitial = names[names.length - 1].charAt(0).toUpperCase()
-        return `${firstName} ${lastInitial}.`
+        return `${names[0]} ${names[names.length - 1].charAt(0).toUpperCase()}.`
     }
 
     function extractCommitMessage(commitMessage: string): string {
@@ -20,26 +18,20 @@
         return msg.join(' ')
     }
 
-    function extractSHA(commitMessage: string): string {
-        let split = commitMessage.split(' ')
-        let sha = split[split.length - 1]
-        let noParens = sha.slice(1, sha.length - 1)
-        return noParens
+    function extractSHA(cm: string): string {
+        let cmWords = cm.split(' ')
+        let sha = cmWords[cmWords.length - 1]
+        return sha.slice(1, sha.length - 1)
     }
 
     function convertToElapsedTime(commitDateString: string): string {
         const commitDate = new Date(commitDateString)
-        const elapsed = formatDistanceToNow(commitDate, { addSuffix: true })
-
-        return elapsed
+        return formatDistanceToNow(commitDate, { addSuffix: true })
     }
 
-    function truncateIfNeeded(commitMessage: string): string {
-        commitMessage = extractCommitMessage(commitMessage)
-        if (commitMessage.length > 30) {
-            return commitMessage.substring(0, 30) + '...'
-        }
-        return commitMessage
+    function truncateIfNeeded(cm: string): string {
+        cm = extractCommitMessage(commitMessage)
+        return cm.length > 30 ? cm.substring(0, 30) + '...' : cm
     }
 
     $: commitMessageNoSHA = truncateIfNeeded(commitMessage)
