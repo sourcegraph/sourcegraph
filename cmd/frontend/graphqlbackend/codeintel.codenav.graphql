@@ -106,6 +106,21 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
         character: Int!
 
         """
+        When specified, indicates that this request should be paginated and
+        to fetch results starting at this cursor.
+        A future request can be made for more results by passing in the
+        'LocationConnection.pageInfo.endCursor' that is returned.
+        """
+        after: String
+
+        """
+        When specified, indicates that this request should be paginated and
+        the first N results (relative to the cursor) should be returned. i.e.
+        how many results to return per page.
+        """
+        first: Int
+
+        """
         When specified, it filters references by filename.
         """
         filter: String
@@ -118,12 +133,12 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
         """
         The line on which the symbol occurs (zero-based, inclusive).
         """
-        line: Int!
+        line: Int
 
         """
         The character (not byte) of the start line on which the symbol occurs (zero-based, inclusive).
         """
-        character: Int!
+        character: Int
 
         """
         When specified, indicates that this request should be paginated and
@@ -232,6 +247,19 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
     ): Hover
 
     """
+    Either one of 'symbol' or 'range' must be provided, but this isn't enforced at the GraphQL
+    layer due to the lack of support for input unions.
+    https://github.com/graphql/graphql-wg/blob/main/rfcs/InputUnion.md
+    """
+    usages(
+        symbol: LookupSCIPSymbol,
+        range: LookupRange,
+        filter: UsagesFilter,
+        first: Int,
+        after: String,
+    ): UsageConnection!
+
+    """
     Code diagnostics provided through LSIF.
     """
     diagnostics(first: Int): DiagnosticConnection!
@@ -245,6 +273,77 @@ type GitBlobLSIFData implements TreeEntryLSIFData {
     SCIP snapshot data (similar to the additional information from the `scip snapshot` command) for each SCIP Occurrence.
     """
     snapshot(indexID: ID!): [SnapshotData!]
+}
+
+"""
+In the future, we may want to extend this to allow passing in a suffix or a "symbol pattern".
+"""
+input LookupSCIPSymbol {
+    name: String!
+    provenance: Provenance!
+}
+
+type SCIPSymbol {
+    name: String!
+    provenance: Provenance!
+}
+
+input LookupRange {
+    start: LookupPosition!
+    end: LookupPosition!
+}
+
+input LookupPosition {
+    line: Int!
+    character: Int!
+}
+
+input UsagesFilter {
+    and: [UsagesFilter!]
+    or: [UsagesFilter!]
+    not: UsagesFilter
+    # TODO: Can we be flexible here and allow patterns while still maintaining fast queries.
+    repository: String
+    path: String
+    kind: SymbolUsageKind
+    # TODO: Provide a way of controlling fallback behavior for indexes?
+    # Not super sure how that would work, given that for different repositories,
+    # the hashes will all be different?
+}
+
+enum SymbolUsageKind {
+    Definition,
+    Reference,
+    Implementation,
+    Super,
+}
+
+type UsageConnection {
+    nodes: [Usage!]!
+    pageInfo: PageInfo!
+}
+
+type Usage {
+    symbol: SCIPSymbol!
+    """
+    NOTE: Do not pass
+    TODO: For this blob, it is generally more useful to get +N/-N lines
+    rather than having to pass a range internally for the contents since
+    the offsets from the start will not be known a-priori.
+    """
+    blob: GitBlob!
+    """
+    Instead of blob { content }, allows accessing a sub-span of the content
+    using relative coordinates from the range of this usage. If linesBefore
+    or linesAfter is negative or exceeds the number of available lines,
+    the value is interpreted as until the start/end of the file.
+    """
+    surroundingBlobContent(surroundingLines: SurroundingLines = {linesBefore: 0, linesAfter: 0}): String!
+}
+
+input SurroundingLines {
+    linesBefore: Int
+    linesAfter: Int
 }
 
 """

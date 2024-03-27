@@ -6172,15 +6172,53 @@ type HighlightedFile {
     """
     html: String!
     """
-    Base64 encoded JSON payload of LSIF Typed with syntax highlighting data.
+    DEPRECATED: Base64 encoded JSON payload of SCIP with syntax highlighting data.
     """
     lsif: String!
+    """
+    """
+    document: AssociatedSCIPDocument!
     """
     A list of the desired line ranges. Each list is a list of lines, where each element is an HTML
     table row '<tr>...</tr>' string. This is useful if you only need to display specific subsets of
     the file.
     """
     lineRanges(ranges: [HighlightLineRange!]!): [[String!]!]!
+}
+
+enum Provenance {
+    Precise,
+    Syntactic,
+    SearchBased,
+}
+
+interface WithProvenance {
+    """
+    Coarse-grained information about the data source.
+    """
+    provenance: Provenance!
+    """
+    Opaque fine-grained information describing the data source.
+
+    Provided only for debugging.
+
+    This field should be ignored when checking structural equality.
+    """
+    dataSource: String!
+}
+
+type AssociatedSCIPDocument implements WithProvenance {
+    """
+    Base64 encoded SCIP payload.
+
+    After decoding, the resulting byte buffer can be parsed with
+    pre-generated bindings in the sourcegraph/scip repository or
+    manually generating bindings using
+    https://github.com/sourcegraph/scip/blob/main/scip.proto
+    """
+    data: String!
+    provenance: Provenance!
+    dataSource: String!
 }
 
 """
