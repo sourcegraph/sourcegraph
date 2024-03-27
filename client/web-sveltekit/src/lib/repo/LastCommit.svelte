@@ -41,7 +41,7 @@
 
     function truncateIfNeeded(cm: string): string {
         cm = extractCommitMessage(commitMessage)
-        return cm.length > 30 ? cm.substring(0, 30) + '...' : cm
+        return cm.length > 23 ? cm.substring(0, 23) + '...' : cm
     }
 
     $: commitMessageNoSHA = truncateIfNeeded(commitMessage)
@@ -49,24 +49,20 @@
 </script>
 
 <div class="latest-commit">
-    <div class="commit-info">
-        <div class="user-info">
-            <Avatar {avatar} />
-            <div class="display-name">
-                <small>{getFirstNameAndLastInitial(displayName)}</small>
-            </div>
+    <div class="user-info">
+        <Avatar {avatar} />
+        <div class="display-name">
+            <small>{getFirstNameAndLastInitial(displayName)}</small>
         </div>
+    </div>
 
-        <div class="commit-message">
-            <small>
-                {commitMessageNoSHA}
-                (<a href={commitURL}>{commitSHA}</a>)
-            </small>
-        </div>
+    <div class="commit-message">
+        <small>{commitMessageNoSHA}</small>
+        (<a href={commitURL}><small>{commitSHA}</small></a>)
+    </div>
 
-        <div class="commit-date">
-            <small>{convertToElapsedTime(commitDate)}</small>
-        </div>
+    <div class="commit-date">
+        <small>{convertToElapsedTime(commitDate)}</small>
     </div>
 </div>
 
@@ -75,28 +71,25 @@
         display: flex;
         flex-flow: row nowrap;
         padding-right: 0.5rem;
+        min-width: 300px;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .user-info {
         display: flex;
         flex-flow: row nowrap;
         align-items: center;
+        margin-right: 0.5rem;
     }
 
     .display-name {
-        margin-left: 0.3rem;
-    }
-
-    .commit-info {
-        display: flex;
-        flex-flow: row nowrap;
-        min-width: 290px;
-        align-items: center;
-        justify-content: space-between;
+        margin-left: 0.4rem;
     }
 
     .commit-message,
     .commit-date {
         color: var(--text-muted);
+        margin-right: 0.5rem;
     }
 </style>
