@@ -82,7 +82,6 @@
 
     const sidebarSize = getSeparatorPosition('repo-sidebar', 0.2)
     $: sidebarWidth = `max(200px, ${$sidebarSize * 100}%)`
-    $: console.log(latestCommit)
 
     onMount(() => {
         // We want the whole page to be scrollable and hide page and repo navigation
@@ -149,17 +148,17 @@
                         />
                     {/key}
                 </TabPanel>
-                <TabPanel title="Blame">hi</TabPanel>
             </Tabs>
             {#if latestCommit}
                 <LastCommit
                     commitURL={latestCommit.canonicalURL}
-                    avatarURL={latestCommit?.author?.person?.avatarURL}
-                    displayName={latestCommit?.author?.person?.displayName}
-                    commitMessage={latestCommit?.subject}
-                    commitDate={latestCommit?.author?.date}
-                    owner="No owner"
+                    avatarURL={latestCommit.author.person.avatarURL}
+                    displayName={latestCommit.author.person.displayName}
+                    commitMessage={latestCommit.subject}
+                    commitDate={latestCommit.author.date}
                 />
+            {:else}
+                <LoadingSpinner inline />
             {/if}
         </div>
     </div>

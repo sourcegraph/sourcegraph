@@ -6,7 +6,6 @@
     export let displayName: string
     export let commitMessage: string
     export let commitDate: string
-    export let owner: string
 
     function getFirstNameAndLastInitial(name: string): string {
         const names = name.split(' ')
@@ -35,7 +34,15 @@
         return elapsed
     }
 
-    $: commitMessageNoSHA = extractCommitMessage(commitMessage)
+    function truncateIfNeeded(commitMessage: string): string {
+        commitMessage = extractCommitMessage(commitMessage)
+        if (commitMessage.length > 30) {
+            return commitMessage.substring(0, 30) + '...'
+        }
+        return commitMessage
+    }
+
+    $: commitMessageNoSHA = truncateIfNeeded(commitMessage)
     $: commitSHA = extractSHA(commitMessage)
 </script>
 
@@ -58,9 +65,6 @@
             <small>{convertToElapsedTime(commitDate)}</small>
         </div>
     </div>
-    <div class="owner-info">
-        <div class="owner"><small>{owner}</small></div>
-    </div>
 </div>
 
 <style lang="scss">
@@ -82,16 +86,11 @@
         flex-flow: row nowrap;
         align-items: center;
         justify-content: space-evenly;
-        border-right: 1px solid var(--text-muted);
         padding-right: 0.2rem;
     }
 
     .commit-info div {
         padding: 0 0.3rem;
-    }
-
-    .owner-info {
-        padding: 0rem 0.5rem;
     }
 
     .commit-message,
