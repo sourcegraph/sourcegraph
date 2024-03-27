@@ -19,11 +19,22 @@ var (
 	m = new(metrics.SingletonREDMetrics)
 )
 
-func newOperations(observationCtx *observation.Context) *operations {
+func newOperations(observationCtx *observation.Context, storeType StoreType) *operations {
+	var metricPrefix string
+	var operationNamespace string
+
+	if storeType == Precise {
+		metricPrefix = "codeintel_precise_reposcheduler_store"
+		operationNamespace = "precise_reposcheduler"
+	} else {
+		metricPrefix = "codeintel_syntactic_reposcheduler_store"
+		operationNamespace = "syntactic_reposcheduler"
+	}
+
 	m := m.Get(func() *metrics.REDMetrics {
 		return metrics.NewREDMetrics(
 			observationCtx.Registerer,
-			"codeintel_autoindexing_store",
+			metricPrefix,
 			metrics.WithLabels("op"),
 			metrics.WithCountHelp("Total number of method invocations."),
 		)
@@ -31,7 +42,7 @@ func newOperations(observationCtx *observation.Context) *operations {
 
 	op := func(name string) *observation.Operation {
 		return observationCtx.Operation(observation.Op{
-			Name:              fmt.Sprintf("codeintel.reposcheduler.store.%s", name),
+			Name:              fmt.Sprintf("codeintel.%s.store.%s", operationNamespace, name),
 			MetricLabelValues: []string{name},
 			Metrics:           m,
 		})

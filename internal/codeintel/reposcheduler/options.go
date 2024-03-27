@@ -3,17 +3,32 @@ package reposcheduler
 import "time"
 
 type RepositoryBatchOptions struct {
-	ProcessDelay         time.Duration
-	AllowGlobalPolicies  bool
-	RepositoryMatchLimit *int
-	Limit                int
+	// Time to wait before making repository visible again
+	// after previous scan. Note that this delay can be superseded if repository
+	// has been changed in the meantime
+	ProcessDelay time.Duration
+
+	// If allowGlobalPolicies is false, then configuration policies that define neither a repository id
+	// nor a non-empty set of repository patterns wl be ignored.
+	// When true, such policies apply over all repositories known to the instance.
+	AllowGlobalPolicies               bool
+
+	// This optional limit controls how many repositores will be considered by matching
+	// via global policy. As global policy matches large sets of repositories,
+	// this limit allows reducing the number of repositories that will be considered
+	// for scanning.
+	GlobalPolicyRepositoriesMatcLimit *int
+
+
+	// The maximum number repositories that will be returned in a batch
+	Limit                             int
 }
 
 func NewBatchOptions(processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int) RepositoryBatchOptions {
 	return RepositoryBatchOptions{
-		ProcessDelay:         processDelay,
-		AllowGlobalPolicies:  allowGlobalPolicies,
-		RepositoryMatchLimit: repositoryMatchLimit,
-		Limit:                limit,
+		ProcessDelay:                      processDelay,
+		AllowGlobalPolicies:               allowGlobalPolicies,
+		GlobalPolicyRepositoriesMatcLimit: repositoryMatchLimit,
+		Limit:                             limit,
 	}
 }

@@ -34,11 +34,18 @@ type store struct {
 
 var _ RepositorySchedulingStore = &store{}
 
+type StoreType int8
+
+const (
+	Precise   StoreType = 1
+	Syntactic StoreType = 2
+)
+
 func NewPreciseStore(observationCtx *observation.Context, db database.DB) RepositorySchedulingStore {
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
 		logger:     observationCtx.Logger.Scoped("reposcheduler.syntactic_store"),
-		operations: newOperations(observationCtx),
+		operations: newOperations(observationCtx, Precise),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "indexing_enabled",
 			lastScanTableName:         "lsif_last_index_scan",
@@ -50,7 +57,7 @@ func NewSyntacticStore(observationCtx *observation.Context, db database.DB) Repo
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
 		logger:     observationCtx.Logger.Scoped("reposcheduler.precise_store"),
-		operations: newOperations(observationCtx),
+		operations: newOperations(observationCtx, Syntactic),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "syntactic_indexing_enabled",
 			lastScanTableName:         "syntactic_scip_last_index_scan",
@@ -91,32 +98,29 @@ type dbLayout struct {
 // GetRepositoriesForIndexScan returns a set of repository identifiers that should be considered
 // for indexing jobs. Repositories that were returned previously from this call within the given
 // process delay are not returned.
-//
-// If allowGlobalPolicies is false, then configuration policies that define neither a repository id
-// nor a non-empty set of repository patterns wl be ignored. When true, such policies apply over all
-// repositories known to the instance.
 func (store *store) GetRepositoriesForIndexScan(
 	ctx context.Context,
 	batchOptions RepositoryBatchOptions,
 	now time.Time,
 ) (_ []RepositoryToIndex, err error) {
-	var repositoryMatchLimitValue int
-	if batchOptions.RepositoryMatchLimit != nil {
-		repositoryMatchLimitValue = *batchOptions.RepositoryMatchLimit
+	var globalPolicyRepositoryMatchLimitValue int
+	if batchOptions.GlobalPolicyRepositoriesMatcLimit != nil {
+		globalPolicyRepositoryMatchLimitValue = *batchOptions.GlobalPolicyRepositoriesMatcLimit
 	}
 
-	ctx, _, endObservation := store.operations.getRepositoriesForIndexScan.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
-		attribute.Bool("allowGlobalPolicies", batchOptions.AllowGlobalPolicies),
-		attribute.Int("repositoryMatchLimit", repositoryMatchLimitValue),
-		attribute.Int("limit", batchOptions.Limit),
-	}})
+	ctx, _, endObservation := store.operations.getRepositoriesForIndexScan.With(ctx, &err,
+		observation.Args{Attrs: []attribute.KeyValue{
+			attribute.Bool("allowGlobalPolicies", batchOptions.AllowGlobalPolicies),
+			attribute.Int("globalPolicyRepositoryMatchLimit", globalPolicyRepositoryMatchLimitValue),
+			attribute.Int("limit", batchOptions.Limit),
+		}})
 	defer endObservation(1, observation.Args{})
 
 	queries := make([]*sqlf.Query, 0, 3)
 	if batchOptions.AllowGlobalPolicies {
 		queries = append(queries, sqlf.Sprintf(
 			getRepositoriesForIndexScanGlobalRepositoriesQuery,
-			optionalLimit(batchOptions.RepositoryMatchLimit),
+			optionalLimit(batchOptions.GlobalPolicyRepositoriesMatcLimit),
 		))
 	}
 	queries = append(queries, sqlf.Sprintf(getRepositoriesForIndexScanRepositoriesWithPolicyQuery(store.dbLayout)))
