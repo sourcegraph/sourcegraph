@@ -26,7 +26,7 @@ func NewService(
 	depsSvc DependenciesService,
 	policiesSvc PoliciesService,
 	gitserverClient gitserver.Client,
-) *AutoIndexingService {
+) *Service {
 	store := autoindexingstore.New(scopedContext("store", observationCtx), db)
 	inferenceSvc := inference.NewService(db)
 
@@ -51,7 +51,7 @@ func NewIndexSchedulers(
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
 	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
-	autoindexingSvc AutoIndexingService,
+	autoindexingSvc Service,
 	repoStore database.RepoStore,
 ) []goroutine.BackgroundRoutine {
 	return background.NewIndexSchedulers(
@@ -71,7 +71,7 @@ func NewDependencyIndexSchedulers(
 	db database.DB,
 	uploadSvc UploadService,
 	depsSvc DependenciesService,
-	autoindexingSvc *AutoIndexingService,
+	autoindexingSvc *Service,
 	repoUpdater RepoUpdaterClient,
 ) []goroutine.BackgroundRoutine {
 	return background.NewDependencyIndexSchedulers(
@@ -88,7 +88,7 @@ func NewDependencyIndexSchedulers(
 
 func NewSummaryBuilder(
 	observationCtx *observation.Context,
-	autoindexingSvc *AutoIndexingService,
+	autoindexingSvc *Service,
 	uploadSvc UploadService,
 ) []goroutine.BackgroundRoutine {
 	return background.NewSummaryBuilder(
