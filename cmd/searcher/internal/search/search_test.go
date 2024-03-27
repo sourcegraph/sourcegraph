@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -381,55 +382,61 @@ file contains invalid utf8 � characters
 		}, nil
 	}
 
-	service := &search.Service{
-		Store:   s,
-		Log:     s.Log,
-		Indexed: backend.ZoektDial(zoektURL),
-	}
-
-	grpcServer := defaults.NewServer(logtest.Scoped(t))
-	proto.RegisterSearcherServiceServer(grpcServer, &search.Server{
-		Service: service,
-	})
-
-	handler := internalgrpc.MultiplexHandlers(grpcServer, http.HandlerFunc(http.NotFound))
-
-	ts := httptest.NewServer(handler)
-
-	t.Cleanup(func() {
-		ts.Close()
-	})
-
-	conf.Mock(&conf.Unified{})
-	t.Cleanup(func() {
-		conf.Mock(nil)
-	})
-
-	for i, test := range cases {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if test.arg.IsStructuralPat {
-				maybeSkipComby(t)
+	hybridSearch := []bool{true, false}
+	for _, withHybridSearch := range hybridSearch {
+		t.Run(fmt.Sprintf("withHybridSearch=%t", withHybridSearch), func(t *testing.T) {
+			service := &search.Service{
+				Store:               s,
+				Log:                 s.Log,
+				Indexed:             backend.ZoektDial(zoektURL),
+				DisableHybridSearch: !withHybridSearch,
 			}
 
-			req := protocol.Request{
-				Repo:            "foo",
-				URL:             "u",
-				Commit:          "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-				PatternInfo:     test.arg,
-				FetchTimeout:    fetchTimeoutForCI(t),
-				NumContextLines: test.contextLines,
+			grpcServer := defaults.NewServer(logtest.Scoped(t))
+			proto.RegisterSearcherServiceServer(grpcServer, &search.Server{
+				Service: service,
+			})
+
+			handler := internalgrpc.MultiplexHandlers(grpcServer, http.HandlerFunc(http.NotFound))
+
+			ts := httptest.NewServer(handler)
+
+			t.Cleanup(func() {
+				ts.Close()
+			})
+
+			conf.Mock(&conf.Unified{})
+			t.Cleanup(func() {
+				conf.Mock(nil)
+			})
+
+			for i, test := range cases {
+				t.Run(strconv.Itoa(i), func(t *testing.T) {
+					if test.arg.IsStructuralPat {
+						maybeSkipComby(t)
+					}
+
+					req := protocol.Request{
+						Repo:            "foo",
+						URL:             "u",
+						Commit:          "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+						PatternInfo:     test.arg,
+						FetchTimeout:    fetchTimeoutForCI(t),
+						NumContextLines: test.contextLines,
+					}
+					m, err := doSearch(t, ts.URL, &req)
+					if err != nil {
+						t.Fatalf("%s failed: %s", test.arg.String(), err)
+					}
+					sort.Sort(sortByPath(m))
+					got := toString(m)
+					err = sanityCheckSorted(m)
+					if err != nil {
+						t.Fatalf("%s malformed response: %s\n%s", test.arg.String(), err, got)
+					}
+					test.want.Equal(t, got)
+				})
 			}
-			m, err := doSearch(t, ts.URL, &req)
-			if err != nil {
-				t.Fatalf("%s failed: %s", test.arg.String(), err)
-			}
-			sort.Sort(sortByPath(m))
-			got := toString(m)
-			err = sanityCheckSorted(m)
-			if err != nil {
-				t.Fatalf("%s malformed response: %s\n%s", test.arg.String(), err, got)
-			}
-			test.want.Equal(t, got)
 		})
 	}
 }

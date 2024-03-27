@@ -1,19 +1,28 @@
 <script lang="ts">
-    import { mdiAlertCircle, mdiChevronDown, mdiChevronLeft, mdiInformationOutline, mdiMagnify } from '@mdi/js'
+    import {
+        mdiAlertCircle,
+        mdiAlert,
+        mdiChevronDown,
+        mdiChevronLeft,
+        mdiInformationOutline,
+        mdiMagnify,
+    } from '@mdi/js'
 
-    import { getProgressText, limitHit, sortBySeverity } from '$lib/branded'
+    import { limitHit, sortBySeverity } from '$lib/branded'
     import { renderMarkdown, pluralize } from '$lib/common'
     import Icon from '$lib/Icon.svelte'
     import Popover from '$lib/Popover.svelte'
+    import ResultsIndicator from '$lib/search/resultsIndicator/ResultsIndicator.svelte'
     import SyntaxHighlightedQuery from '$lib/search/SyntaxHighlightedQuery.svelte'
     import type { Progress, Skipped } from '$lib/shared'
     import { Button } from '$lib/wildcard'
 
     export let progress: Progress
+    export let state: 'complete' | 'error' | 'loading'
 
     const icons: Record<string, string> = {
         info: mdiInformationOutline,
-        warning: mdiAlertCircle,
+        warning: mdiAlert,
         error: mdiAlertCircle,
     }
     let searchAgainDisabled = true
@@ -25,23 +34,22 @@
         )
     }
 
-    $: severity = progress.skipped.some(skipped => skipped.severity === 'warn' || skipped.severity === 'error')
-        ? 'error'
-        : 'info'
     $: hasSkippedItems = progress.skipped.length > 0
     $: sortedItems = sortBySeverity(progress.skipped)
     $: openItems = sortedItems.map((_, index) => index === 0)
     $: suggestedItems = sortedItems.filter((skipped): skipped is Required<Skipped> => !!skipped.suggested)
     $: hasSuggestedItems = suggestedItems.length > 0
+    $: severity = progress.skipped.some(skipped => skipped.severity === 'warn' || skipped.severity === 'error')
+        ? 'error'
+        : 'info'
+    $: isError = severity === 'error' || state === 'error'
 </script>
 
 <Popover let:registerTrigger let:toggle placement="bottom-start">
-    <Button variant="secondary" size="sm" outline>
+    <Button variant={isError ? 'danger' : 'secondary'} size="sm" outline>
         <svelte:fragment slot="custom" let:buttonClass>
             <button use:registerTrigger class="{buttonClass} progress-button" on:click={() => toggle()}>
-                <Icon svgPath={icons[severity]} inline />
-                {getProgressText(progress).visibleText}
-                <Icon svgPath={mdiChevronDown} inline />
+                <ResultsIndicator {state} {suggestedItems} {progress} {severity} />
             </button>
         </svelte:fragment>
     </Button>
@@ -115,31 +123,33 @@
 </Popover>
 
 <style lang="scss">
-    div.streaming-popover {
-        width: 20rem;
-
-        p,
-        h3,
-        form {
-            margin: 1rem;
-        }
-    }
-
     .chevron > :global(svg) {
         fill: currentColor !important;
-    }
-
-    div.message {
-        border-left: 2px solid var(--primary);
-        padding-left: 0.5rem;
-        margin: 0 1rem 1rem 1rem;
     }
 
     label {
         display: block;
     }
 
+    .message {
+        border-left: 2px solid var(--primary);
+        padding-left: 0.5rem;
+        margin: 0 1rem 1rem 1rem;
+    }
+
     .progress-button {
-        border: none;
+        border: 1px solid var(--border-color-2);
+        border-radius: 4px;
+        margin-left: 0.3rem;
+    }
+
+    .streaming-popover {
+        width: 24rem;
+
+        p,
+        h3,
+        form {
+            margin: 1rem;
+        }
     }
 </style>

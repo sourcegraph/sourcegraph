@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//cmd/cody-gateway/internal/httpapi/embeddings",
         "//internal/codygateway",
+        "//internal/completions/client/anthropic",
         "//internal/completions/client/fireworks",
         "//internal/env",
         "//internal/trace/policy",

@@ -14,14 +14,15 @@ export const abbreviateNumber = (number: number): string => {
     return (number / 1e9).toFixed(1) + 'b'
 }
 
-export const getProgressText = (progress: Progress): { visibleText: string; readText: string } => {
+export const getProgressText = (progress: Progress): { visibleText: string; readText: string; duration: number } => {
     const contentWithoutTimeUnit =
         `${abbreviateNumber(progress.matchCount)}` +
         `${limitHit(progress) ? '+' : ''} ${pluralize('result', progress.matchCount)} in ` +
         `${(progress.durationMs / 1000).toFixed(2)}`
     const visibleText = `${contentWithoutTimeUnit}s`
     const readText = `${contentWithoutTimeUnit} seconds`
-    return { visibleText, readText }
+    const duration = progress.durationMs
+    return { visibleText, readText, duration }
 }
 
 export const limitHit = (progress: Progress): boolean =>

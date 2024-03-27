@@ -60,8 +60,10 @@ export const UserSettingsProfilePage: React.FunctionComponent<React.PropsWithChi
                     after={
                         window.context.sourcegraphDotComMode && (
                             <Text className="mt-4">
-                                <Link to="https://sourcegraph.com/contact">Contact support</Link> to delete your
-                                account.
+                                <Link to="mailto:support@sourcegraph.com" target="_blank" rel="noopener noreferrer">
+                                    Contact support
+                                </Link>{' '}
+                                to delete your account.
                             </Text>
                         )
                     }

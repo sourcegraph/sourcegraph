@@ -26,6 +26,7 @@ go_library(
     visibility = ["//:__subpackages__"],
     deps = [
         "//internal/api/internalapi",
+        "//internal/completions/client/anthropic",
         "//internal/conf/confdefaults",
         "//internal/conf/conftypes",
         "//internal/conf/deploy",

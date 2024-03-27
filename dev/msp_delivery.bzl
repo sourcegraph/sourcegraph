@@ -1,6 +1,6 @@
 """ MSP Delivery defs"""
 
-def msp_delivery(name, gcp_delivery_pipeline, gcp_project, repository, gcp_region = "us-central1"):
+def msp_delivery(name, msp_service_id, gcp_project, repository, gcp_region = "us-central1"):
     native.sh_binary(
         name = name,
         srcs = ["//dev/ci:msp_deploy.sh"],
@@ -13,7 +13,7 @@ def msp_delivery(name, gcp_delivery_pipeline, gcp_project, repository, gcp_regio
             "//dev/tools:gcloud",
         ],
         env = {
-            "GCP_DELIVERY_PIPELINE": gcp_delivery_pipeline,
+            "MSP_SERVICE_ID": msp_service_id,
             "GCP_PROJECT": gcp_project,
             "GCP_REGION": gcp_region,
             "REPOSITORY": repository,

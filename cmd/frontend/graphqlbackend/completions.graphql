@@ -3,6 +3,7 @@ extend type Query {
     Returns a string of completion responses
     """
     completions(input: CompletionsInput!, fast: Boolean = false): String!
+        @deprecated(reason: "Consumers should use non graphql endpoints when communicating the completions endpoint")
 }
 
 """

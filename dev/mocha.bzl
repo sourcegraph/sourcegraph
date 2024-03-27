@@ -1,7 +1,6 @@
 load("@npm//:mocha/package_json.bzl", mocha_bin = "bin")
 load("@aspect_rules_esbuild//esbuild:defs.bzl", "esbuild")
-load("@aspect_rules_js//js:defs.bzl", "js_run_binary")
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@aspect_rules_js//js:defs.bzl", "js_test")
 
 NON_BUNDLED = [
     # Dependencies loaded by mocha itself before the tests.
@@ -95,39 +94,26 @@ def mocha_test(name, tests, deps = [], args = [], data = [], env = {}, is_percy_
     })
 
     if is_percy_enabled:
-        # Extract test specific arguments.
-        flaky = kwargs.pop("flaky")
-        timeout = kwargs.pop("timeout")
-
-        binary_name = "%s_binary" % name
-
-        # `js_run_binary` is used here in the combination with `build_test` instead of
-        # `js_test` because only `js_run_binary` currntly supports the `stamp` attribute.
-        # otherwise we could use js_binary with bazel test.
-        # https://docs.aspect.build/rules/aspect_rules_js/docs/js_run_binary#stamp
-        js_run_binary(
-            name = binary_name,
+        js_test(
+            name = name,
             args = args,
             env = dict(env, **{
                 "PERCY_ON": "true",
             }),
-            use_default_shell_env = True,
-            srcs = data,
-            out_dirs = ["out"],
-            silent_on_success = True,
+            data = data + [
+                "//:node_modules/@percy/cli",
+                "//:node_modules/@percy/puppeteer",
+                "//:node_modules/mocha",
+                "//:node_modules/resolve-bin",
+                "//client/shared/dev:run_mocha_tests_with_percy",
+            ],
             # Executed mocha tests with Percy enabled via `percy exec -- mocha ...`
             # Prepends volatile env variables to the command to make Percy aware of the
             # current git branch and commit.
-            tool = "//client/shared/dev:run_mocha_tests_with_percy",
-            testonly = True,
+            entry_point = "//client/shared/dev:run_mocha_tests_with_percy",
+            flaky = kwargs.pop("flaky"),
+            timeout = kwargs.pop("timeout"),
             **kwargs
-        )
-
-        build_test(
-            name = name,
-            targets = [binary_name],
-            timeout = timeout,
-            flaky = flaky,
         )
     else:
         mocha_bin.mocha_test(

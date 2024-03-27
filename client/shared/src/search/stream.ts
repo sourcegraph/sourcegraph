@@ -202,6 +202,8 @@ export interface TeamMatch extends BaseOwnerMatch {
  * Should be replaced when a new ones come in.
  */
 export interface Progress {
+    // No more progress to be tracked
+    done?: boolean
     /**
      * The number of repositories matching the repo: filter. Is set once they
      * are resolved.

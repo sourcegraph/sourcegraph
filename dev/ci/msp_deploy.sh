@@ -3,9 +3,9 @@
 set -eux -o pipefail
 
 # Service Specific Parameters
+: "${MSP_SERVICE_ID:?"MSP_SERVICE_ID is required"}"
 : "${GCP_PROJECT:?"GCP_PROJECT is required"}"
 : "${GCP_REGION:?"GCP_REGION is required"}"
-: "${GCP_DELIVERY_PIPELINE:?"GCP_DELIVERY_PIPELINE is required"}"
 : "${REPOSITORY:?"REPOSITORY is required"}"
 
 # CI Variables
@@ -20,6 +20,7 @@ set -eux -o pipefail
 
 # Computed Variables
 GCP_CLOUDRUN_SKAFFOLD_SOURCE="gs://${GCP_PROJECT}-cloudrun-skaffold/source.tar.gz"
+GCP_DELIVERY_PIPELINE="${MSP_SERVICE_ID}-${GCP_REGION}-rollout"
 SHORT_SHA="${BUILDKITE_COMMIT:0:12}"
 TAG="${SHORT_SHA}_${BUILDKITE_BUILD_NUMBER}"
 # resource ids must be lower-case letters, numbers, and hyphens,

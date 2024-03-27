@@ -31,11 +31,11 @@ common --test_env=BUILDKITE
 # Needed for mocha tests
 # We have to use the `--action_env` flag here instead of `--test_env` because
 # the mocha tests target is the build target and it's tested with `build_test`.
-common --action_env=HEADLESS=false
+common --test_env=HEADLESS=false
 # if we set this to localhost, chrome will refuse to conenct since local host is in its HTTP Strict Transport Security
 # by setting the loopback address we get passed that
-common --action_env=SOURCEGRAPH_BASE_URL="http://127.0.0.1:7080"
-common --action_env=DISPLAY=:99
+common --test_env=SOURCEGRAPH_BASE_URL="http://127.0.0.1:7080"
+common --test_env=DISPLAY=:99
 
 # Provides git commit, branch information to build targets like Percy via status file.
 # https://bazel.build/docs/user-manual#workspace-status
@@ -54,3 +54,7 @@ common --action_env=PGUSER=postgres
 # This overrides the same flag set in ci.bazelrc. Note that if for some reason this bazelrc is loaded before ci.bazelrc,
 # then the ci.bazelrc will override this one.
 test --flaky_test_attempts=2
+
+# See https://github.com/aspect-build/rules_js/issues/1412
+# Sometimes the build fails due to some flakiness where a npm package fails to be copied
+common --noexperimental_merged_skyframe_analysis_execution

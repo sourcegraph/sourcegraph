@@ -50,7 +50,9 @@ func NewBeforeCreateUserHook() func(context.Context, database.DB, *extsvc.Accoun
 		}
 
 		// Block creation of a new user beyond the licensed user count (unless true-up is allowed).
-		userCount, err := db.Users().Count(ctx, nil)
+		userCount, err := db.Users().Count(ctx, &database.UsersListOptions{
+			ExcludeSourcegraphOperators: true,
+		})
 		if err != nil {
 			return err
 		}

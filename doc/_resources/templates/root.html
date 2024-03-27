@@ -54,7 +54,7 @@
         <!-- Default to light theme if no JavaScript -->
 		<body class="theme-light">
              <nav class="notice" style="display: flex; flex-direction: row; width: 100%; position: fixed; z-index: 9999; background: #ec624d; padding: 0.5rem; text-align: center; margin: 0 auto .5rem; color: black;">
-                    <p style="text-align: center; display: flex; margin: 0 auto; align-items: center;">⚠️ You're viewing our old docs, which we no longer maintain. For all the new updates, read our <a style="background: black; padding: 0.2rem 0.6rem; border-radius: 5px; margin-left: 0.5rem; color: white;" href="https://sourcegraph.com/docs/">Latest Docs »</a></p>
+                    <p style="text-align: center; display: flex; margin: 0 auto; align-items: center;">⚠️ You're viewing our old docs, which we no longer maintain. For all the new updates, read our <a style="background: black; padding: 0.2rem 0.6rem; border-radius: 5px; margin-left: 0.5rem; color: white;" href="https://sourcegraph.com/docs" id="latest-docs-redirect">Latest Docs »</a></p>
             </nav>
             <script>
                 // If dark theme is requested, set it immediately to avoid flashing.
@@ -69,6 +69,10 @@
             <link rel="stylesheet" href="https://esm.sh/@markprompt/css@0.12.0?css" />
 
             <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    // append the current path to the redirect link
+                    document.getElementById("latest-docs-redirect").href += window.location.pathname
+                });
             </script>
             <script type="module">
                 import { markprompt, openMarkprompt } from 'https://esm.sh/@markprompt/web@0.15.0';

@@ -64,7 +64,7 @@ oci_push(
 
 msp_delivery(
     name = "msp_deploy",
-    gcp_delivery_pipeline = "msp-testbed-us-central1-rollout",
     gcp_project = "msp-testbed-robert-7be9",
+    msp_service_id = "msp-testbed",
     repository = "us.gcr.io/sourcegraph-dev/msp-example",
 )

@@ -12,11 +12,11 @@ const resolveBin = require('resolve-bin')
 // to the Puppeteer browser executable downloaded in the postinstall script.
 /** @returns {Record<string, string>} env vars */
 function getEnvVars() {
-  // JS_BINARY__EXECROOT – Set by Bazel `js_run_binary` rule.
-  // BAZEL_BINDIR – Set by Bazel `js_run_binary` rule.
-  const { JS_BINARY__EXECROOT, BAZEL_BINDIR } = process.env
+  // JS_BINARY__EXECROOT – Set by Bazel `js_test` rule.
+  // JS_BINARY__BINDIR – Set by Bazel `js_test` rule.
+  const { JS_BINARY__EXECROOT, JS_BINARY__BINDIR } = process.env
 
-  if (!JS_BINARY__EXECROOT || !BAZEL_BINDIR) {
+  if (!JS_BINARY__EXECROOT || !JS_BINARY__BINDIR) {
     throw new Error('Missing required environment variables')
   }
 
@@ -26,7 +26,7 @@ function getEnvVars() {
   // https://github.com/percy/cli/blob/059ec21653a07105e223aa5a3ec1f815a7123ad7/packages/env/src/environment.js#L138-L139
   // https://bazel.build/docs/user-manual#workspace-status
   //
-  // NB: we derive the volatile-status.txt file path from the BAZEL_BINDIR since we are
+  // NB: we derive the volatile-status.txt file path from the JS_BINARY__BINDIR since we are
   // intentionally pulling volatile data without defining the volatile status as an input so we
   // don't bust the cache with its contents of volatile-status.txt
   // (https://github.com/bazelbuild/bazel/issues/16231). This can be improved in the future by using
@@ -34,7 +34,7 @@ function getEnvVars() {
   // volatile-status.txt file from the action inputs
   // (https://github.com/bazelbuild/bazel/pull/16240)
   const statusFilePath = path.join(
-    path.dirname(path.dirname(path.join(JS_BINARY__EXECROOT, BAZEL_BINDIR))),
+    path.dirname(path.dirname(path.join(JS_BINARY__EXECROOT, JS_BINARY__BINDIR))),
     'volatile-status.txt'
   )
   const volatileEnvVariables = Object.fromEntries(

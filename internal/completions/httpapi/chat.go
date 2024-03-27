@@ -11,6 +11,7 @@ import (
 
 	"github.com/sourcegraph/log"
 
+	"github.com/sourcegraph/sourcegraph/internal/completions/client/anthropic"
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/fireworks"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
@@ -74,8 +75,10 @@ func isAllowedCustomChatModel(model string, isProUser bool) bool {
 	// When updating these two lists, make sure you also update `allowedModels` in codygateway_dotcom_user.go.
 	if isProUser {
 		switch model {
-		case "anthropic/claude-3-sonnet-20240229",
-			"anthropic/claude-3-opus-20240229",
+		case
+			"anthropic/" + anthropic.Claude3Haiku,
+			"anthropic/" + anthropic.Claude3Sonnet,
+			"anthropic/" + anthropic.Claude3Opus,
 			"fireworks/" + fireworks.Mixtral8x7bInstruct,
 			"openai/gpt-3.5-turbo",
 			"openai/gpt-4-1106-preview",
@@ -93,7 +96,10 @@ func isAllowedCustomChatModel(model string, isProUser bool) bool {
 		}
 	} else {
 		switch model {
-		case // Remove after the Claude 3 rollout is complete
+		case
+			"anthropic/" + anthropic.Claude3Haiku,
+			"anthropic/" + anthropic.Claude3Sonnet,
+			// Remove after the Claude 3 rollout is complete
 			"anthropic/claude-2",
 			"anthropic/claude-2.0",
 			"anthropic/claude-instant-v1",

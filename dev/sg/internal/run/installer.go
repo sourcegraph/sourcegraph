@@ -51,6 +51,9 @@ type InstallManager struct {
 }
 
 func Install(ctx context.Context, env map[string]string, verbose bool, cmds []Installer) error {
+	if len(cmds) == 0 {
+		return nil
+	}
 	installer := newInstallManager(cmds, std.Out, env, verbose)
 
 	installer.start(ctx)

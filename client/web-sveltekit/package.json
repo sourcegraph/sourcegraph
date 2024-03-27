@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "playwright test",
     "test:dev": "PORT=5173 playwright test --ui",
+    "test:svelte": "vitest --run",
     "sync": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

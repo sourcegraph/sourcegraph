@@ -33,6 +33,7 @@ go_library(
         "//internal/authz",
         "//internal/cody",
         "//internal/codygateway",
+        "//internal/completions/client/anthropic",
         "//internal/completions/client/fireworks",
         "//internal/completions/types",
         "//internal/conf",

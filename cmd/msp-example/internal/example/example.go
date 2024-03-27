@@ -1,9 +1,14 @@
 package example
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/sourcegraph/log"
@@ -65,6 +70,59 @@ func (s Service) Initialize(
 		requestCounter.Add(r.Context(), 1)
 		_, _ = w.Write([]byte(fmt.Sprintf("Variable: %s", config.Variable)))
 	}))
+	// Test endpoint for making CURL requests to arbitrary targets from this
+	// service, for testing networking. Requires diagnostic auth.
+	h.Handle("/proxy", contract.DiagnosticsAuthMiddleware(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			host := r.URL.Query().Get("host")
+			if host == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte("query parameter 'host' is required"))
+				return
+			}
+			hostURL, err := url.Parse(host)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+
+			path := r.URL.Query().Get("path")
+			if path == "" {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte("query parameter 'path' is required"))
+				return
+			}
+
+			// Copy the request body and build the request
+			defer r.Body.Close()
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+			proxiedRequest, err := http.NewRequest(r.Method, "/"+path, bytes.NewReader(body))
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+
+			// Copy relevant request headers after stripping their prefixes
+			for k, vs := range r.Header {
+				if strings.HasPrefix(k, "X-Proxy-") {
+					for _, v := range vs {
+						proxiedRequest.Header.Add(strings.TrimPrefix(k, "X-Proxy-"), v)
+					}
+				}
+			}
+
+			// Send to target
+			proxy := httputil.NewSingleHostReverseProxy(hostURL)
+			proxy.ServeHTTP(w, proxiedRequest)
+		}),
+	))
 	contract.RegisterDiagnosticsHandlers(h, serviceState{
 		statelessMode: config.StatelessMode,
 		contract:      contract,

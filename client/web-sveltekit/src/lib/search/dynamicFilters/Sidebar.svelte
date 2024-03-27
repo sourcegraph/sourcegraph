@@ -55,9 +55,9 @@
     import Section from './Section.svelte'
 
     export let searchQuery: string
-    export let loading: boolean
     export let streamFilters: Filter[]
     export let selectedFilters: URLQueryFilter[]
+    export let state: 'complete' | 'error' | 'loading'
 
     $: groupedFilters = groupFilters(streamFilters, selectedFilters)
     $: typeFilters = staticTypeFilters.map((staticTypeFilter): SectionItem => {
@@ -138,7 +138,7 @@
         <Section items={groupedFilters.file} title="By file" showAll />
         <Section items={groupedFilters.utility} title="Utility" showAll />
 
-        {#if loading}
+        {#if state === 'loading'}
             <LoadingSkeleton />
         {/if}
 

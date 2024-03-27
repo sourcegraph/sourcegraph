@@ -11,6 +11,10 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
+const Claude3Haiku = "claude-3-haiku-20240307"
+const Claude3Sonnet = "claude-3-sonnet-20240229"
+const Claude3Opus = "claude-3-opus-20240229"
+
 func NewClient(cli httpcli.Doer, apiURL, accessToken string, viaGateway bool) types.CompletionsClient {
 	return &anthropicClient{
 		cli:         cli,

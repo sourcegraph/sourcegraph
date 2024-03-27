@@ -23,7 +23,6 @@
     import { limitHit } from '$lib/branded'
     import Icon from '$lib/Icon.svelte'
     import { observeIntersection } from '$lib/intersection-observer'
-    import LoadingSpinner from '$lib/LoadingSpinner.svelte'
     import type { URLQueryFilter } from '$lib/search/dynamicFilters'
     import DynamicFiltersSidebar from '$lib/search/dynamicFilters/Sidebar.svelte'
     import { createRecentSearchesStore } from '$lib/search/input/recentSearches'
@@ -64,9 +63,9 @@
     const filtersSidebarPosition = getSeparatorPosition('search-results-sidebar', 0.2)
     const previewSidebarPosition = getSeparatorPosition('preview-sidebar', 0.2)
 
-    $: loading = $stream.state === 'loading'
+    $: state = $stream.state // 'loading', 'error', 'complete'
     $: results = $stream.results
-    $: if (!loading) {
+    $: if (state !== 'loading') {
         recentSearches.addRecentSearch({
             query: queryFromURL,
             limitHit: limitHit($stream.progress),
@@ -133,17 +132,12 @@
 
 <div class="search-results">
     <div style:width={`clamp(14rem, ${$filtersSidebarPosition * 100}%, 35%)`}>
-        <DynamicFiltersSidebar {selectedFilters} streamFilters={$stream.filters} searchQuery={queryFromURL} {loading} />
+        <DynamicFiltersSidebar {selectedFilters} streamFilters={$stream.filters} searchQuery={queryFromURL} {state} />
     </div>
     <Separator currentPosition={filtersSidebarPosition} />
     <div class="results">
         <aside class="actions">
-            {#if loading}
-                <div>
-                    <LoadingSpinner inline />
-                </div>
-            {/if}
-            <StreamingProgress progress={$stream.progress} on:submit={onResubmitQuery} />
+            <StreamingProgress {state} progress={$stream.progress} on:submit={onResubmitQuery} />
         </aside>
         <div class="result-list" bind:this={resultContainer}>
             <ol>
@@ -158,7 +152,7 @@
                     {/if}
                 {/each}
             </ol>
-            {#if resultsToShow.length === 0 && !loading}
+            {#if resultsToShow.length === 0 && state !== 'loading'}
                 <div class="no-result">
                     <Icon svgPath={mdiCloseOctagonOutline} />
                     <p>No results found</p>
@@ -206,9 +200,6 @@
             padding-left: 0.25rem;
             display: flex;
             align-items: center;
-            // Explictly set height to avoid jumping when loading spinner is
-            // shown/hidden.
-            height: 3rem;
             flex-shrink: 0;
         }
 
