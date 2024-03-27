@@ -11,7 +11,7 @@ type RepositoryBatchOptions struct {
 	// If allowGlobalPolicies is false, then configuration policies that define neither a repository id
 	// nor a non-empty set of repository patterns wl be ignored.
 	// When true, such policies apply over all repositories known to the instance.
-	AllowGlobalPolicies               bool
+	AllowGlobalPolicies bool
 
 	// This optional limit controls how many repositores will be considered by matching
 	// via global policy. As global policy matches large sets of repositories,
@@ -19,9 +19,8 @@ type RepositoryBatchOptions struct {
 	// for scanning.
 	GlobalPolicyRepositoriesMatcLimit *int
 
-
 	// The maximum number repositories that will be returned in a batch
-	Limit                             int
+	Limit int
 }
 
 func NewBatchOptions(processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int) RepositoryBatchOptions {
