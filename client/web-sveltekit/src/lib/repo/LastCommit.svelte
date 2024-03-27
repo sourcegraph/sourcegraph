@@ -1,11 +1,21 @@
 <script lang="ts">
     import { formatDistanceToNow } from 'date-fns'
 
+    import Avatar from '$lib/Avatar.svelte'
+    import type { Avatar_User } from '$testing/graphql-type-mocks'
+
     export let commitURL: string
     export let avatarURL: string | null
     export let displayName: string
     export let commitMessage: string
     export let commitDate: string
+
+    let avatar: Avatar_User = {
+        __typename: 'User',
+        avatarURL: avatarURL,
+        displayName: displayName,
+        username: displayName,
+    }
 
     function getFirstNameAndLastInitial(name: string): string {
         const names = name.split(' ')
@@ -40,19 +50,18 @@
 
 <div class="latest-commit">
     <div class="commit-info">
-        <img class="avatar" src={avatarURL} role="presentation" aria-hidden="true" alt="Avatar of {displayName}" />
+        <Avatar {avatar} />
         <div class="display-name">
             <small>{getFirstNameAndLastInitial(displayName)}</small>
         </div>
 
-        <!-- TODO: don't hard code this-->
         <div class="commit-message">
             <small>
                 {commitMessageNoSHA}
                 (<a href={commitURL}>{commitSHA}</a>)
             </small>
         </div>
-        <!-- TODO: don't hard code this-->
+
         <div class="commit-date">
             <small>{convertToElapsedTime(commitDate)}</small>
         </div>
@@ -86,8 +95,7 @@
     }
 
     .commit-message,
-    .commit-date,
-    .owner {
+    .commit-date {
         color: var(--text-muted);
     }
 </style>
