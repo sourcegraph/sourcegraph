@@ -7,6 +7,7 @@
     import LoadingSpinner from '$lib/LoadingSpinner.svelte'
     import { fetchSidebarFileTree } from '$lib/repo/api/tree'
     import HistoryPanel, { type Capture as HistoryCapture } from '$lib/repo/HistoryPanel.svelte'
+    import LastCommit from '$lib/repo/LastCommit.svelte'
     import SidebarToggleButton from '$lib/repo/SidebarToggleButton.svelte'
     import { sidebarOpen } from '$lib/repo/stores'
     import Separator, { getSeparatorPosition } from '$lib/Separator.svelte'
@@ -81,6 +82,7 @@
 
     const sidebarSize = getSeparatorPosition('repo-sidebar', 0.2)
     $: sidebarWidth = `max(200px, ${$sidebarSize * 100}%)`
+    $: console.log(latestCommit)
 
     onMount(() => {
         // We want the whole page to be scrollable and hide page and repo navigation
@@ -149,14 +151,16 @@
                 </TabPanel>
                 <TabPanel title="Blame">hi</TabPanel>
             </Tabs>
-            <div class="latest-commit">
-                {latestCommit?.author?.person?.avatarURL}
-                {latestCommit?.author?.person?.avatarURL}
-                {latestCommit?.author?.person?.displayName}
-                {latestCommit?.subject}
-                {latestCommit?.author?.date}
-                | no owner
-            </div>
+            {#if latestCommit}
+                <LastCommit
+                    commitURL={latestCommit.canonicalURL}
+                    avatarURL={latestCommit?.author?.person?.avatarURL}
+                    displayName={latestCommit?.author?.person?.displayName}
+                    commitMessage={latestCommit?.subject}
+                    commitDate={latestCommit?.author?.date}
+                    owner="No owner"
+                />
+            {/if}
         </div>
     </div>
 </section>
