@@ -50,9 +50,11 @@
 
 <div class="latest-commit">
     <div class="commit-info">
-        <Avatar {avatar} />
-        <div class="display-name">
-            <small>{getFirstNameAndLastInitial(displayName)}</small>
+        <div class="user-info">
+            <Avatar {avatar} />
+            <div class="display-name">
+                <small>{getFirstNameAndLastInitial(displayName)}</small>
+            </div>
         </div>
 
         <div class="commit-message">
@@ -69,29 +71,28 @@
 </div>
 
 <style lang="scss">
-    .avatar {
-        width: 1rem;
-        height: 1rem;
-        border-radius: 100%;
-        margin-right: 0.3rem;
-    }
-
     .latest-commit {
         display: flex;
         flex-flow: row nowrap;
+        padding-right: 0.5rem;
+    }
+
+    .user-info {
+        display: flex;
+        flex-flow: row nowrap;
         align-items: center;
+    }
+
+    .display-name {
+        margin-left: 0.3rem;
     }
 
     .commit-info {
         display: flex;
         flex-flow: row nowrap;
+        min-width: 290px;
         align-items: center;
-        justify-content: space-evenly;
-        padding-right: 0.2rem;
-    }
-
-    .commit-info div {
-        padding: 0 0.3rem;
+        justify-content: space-between;
     }
 
     .commit-message,
