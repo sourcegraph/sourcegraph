@@ -10,10 +10,7 @@ type RepositoryToIndex struct {
 }
 
 type RepositorySchedulingService interface {
-	GetRepositoriesForIndexScan(
-		ctx context.Context,
-		_ RepositoryBatchOptions,
-		now time.Time) (_ []RepositoryToIndex, err error)
+	GetRepositoriesForIndexScan(ctx context.Context, _ RepositoryBatchOptions, now time.Time) (_ []RepositoryToIndex, err error)
 }
 
 type service struct {

@@ -19,11 +19,11 @@ var (
 	m = new(metrics.SingletonREDMetrics)
 )
 
-func newOperations(observationCtx *observation.Context, storeType StoreType) *operations {
+func newOperations(observationCtx *observation.Context, storeType storeType) *operations {
 	var metricPrefix string
 	var operationNamespace string
 
-	if storeType == Precise {
+	if storeType == preciseStore {
 		metricPrefix = "codeintel_precise_reposcheduler_store"
 		operationNamespace = "precise_reposcheduler"
 	} else {

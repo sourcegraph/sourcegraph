@@ -34,18 +34,18 @@ type store struct {
 
 var _ RepositorySchedulingStore = &store{}
 
-type StoreType int8
+type storeType int8
 
 const (
-	Precise   StoreType = 1
-	Syntactic StoreType = 2
+	preciseStore   storeType = 1
+	syntacticStore storeType = 2
 )
 
 func NewPreciseStore(observationCtx *observation.Context, db database.DB) RepositorySchedulingStore {
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
 		logger:     observationCtx.Logger.Scoped("reposcheduler.syntactic_store"),
-		operations: newOperations(observationCtx, Precise),
+		operations: newOperations(observationCtx, preciseStore),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "indexing_enabled",
 			lastScanTableName:         "lsif_last_index_scan",
@@ -57,7 +57,7 @@ func NewSyntacticStore(observationCtx *observation.Context, db database.DB) Repo
 	return &store{
 		db:         basestore.NewWithHandle(db.Handle()),
 		logger:     observationCtx.Logger.Scoped("reposcheduler.precise_store"),
-		operations: newOperations(observationCtx, Syntactic),
+		operations: newOperations(observationCtx, syntacticStore),
 		dbLayout: dbLayout{
 			policyEnablementFieldName: "syntactic_indexing_enabled",
 			lastScanTableName:         "syntactic_scip_last_index_scan",
@@ -104,8 +104,8 @@ func (store *store) GetRepositoriesForIndexScan(
 	now time.Time,
 ) (_ []RepositoryToIndex, err error) {
 	var globalPolicyRepositoryMatchLimitValue int
-	if batchOptions.GlobalPolicyRepositoriesMatcLimit != nil {
-		globalPolicyRepositoryMatchLimitValue = *batchOptions.GlobalPolicyRepositoriesMatcLimit
+	if batchOptions.GlobalPolicyRepositoriesMatchLimit != nil {
+		globalPolicyRepositoryMatchLimitValue = *batchOptions.GlobalPolicyRepositoriesMatchLimit
 	}
 
 	ctx, _, endObservation := store.operations.getRepositoriesForIndexScan.With(ctx, &err,
@@ -120,7 +120,7 @@ func (store *store) GetRepositoriesForIndexScan(
 	if batchOptions.AllowGlobalPolicies {
 		queries = append(queries, sqlf.Sprintf(
 			getRepositoriesForIndexScanGlobalRepositoriesQuery,
-			optionalLimit(batchOptions.GlobalPolicyRepositoriesMatcLimit),
+			optionalLimit(batchOptions.GlobalPolicyRepositoriesMatchLimit),
 		))
 	}
 	queries = append(queries, sqlf.Sprintf(getRepositoriesForIndexScanRepositoriesWithPolicyQuery(store.dbLayout)))
