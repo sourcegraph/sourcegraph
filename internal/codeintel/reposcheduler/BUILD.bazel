@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "reposcheduler",
+    srcs = [
+        "init.go",
+        "options.go",
+        "store.go",
+        "store_observability.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/database",
+        "//internal/database/basestore",
+        "//internal/database/dbutil",
+        "//internal/metrics",
+        "//internal/observation",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_sourcegraph_log//:log",
+        "@io_opentelemetry_go_otel//attribute",
+    ],
+)
+
+go_test(
+    name = "reposcheduler_test",
+    srcs = ["store_test.go"],
+    embed = [":reposcheduler"],
+    tags = ["requires-network"],
+    deps = [
+        "//internal/database",
+        "//internal/database/dbtest",
+        "//internal/observation",
+        "//internal/timeutil",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_sourcegraph_log//logtest",
+    ],
+)

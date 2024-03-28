@@ -12,6 +12,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/inference"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/store"
 	policiesshared "github.com/sourcegraph/sourcegraph/internal/codeintel/policies/shared"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
@@ -23,18 +24,18 @@ import (
 )
 
 type indexSchedulerJob struct {
-	autoindexingSvc AutoIndexingService
-	policiesSvc     PoliciesService
-	policyMatcher   PolicyMatcher
-	indexEnqueuer   IndexEnqueuer
-	repoStore       database.RepoStore
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService
+	policiesSvc       PoliciesService
+	policyMatcher     PolicyMatcher
+	indexEnqueuer     IndexEnqueuer
+	repoStore         database.RepoStore
 }
 
 var m = new(metrics.SingletonREDMetrics)
 
 func NewScheduler(
 	observationCtx *observation.Context,
-	autoindexingSvc AutoIndexingService,
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
 	indexEnqueuer IndexEnqueuer,
@@ -42,11 +43,11 @@ func NewScheduler(
 	config *Config,
 ) goroutine.BackgroundRoutine {
 	job := indexSchedulerJob{
-		autoindexingSvc: autoindexingSvc,
-		policiesSvc:     policiesSvc,
-		policyMatcher:   policyMatcher,
-		indexEnqueuer:   indexEnqueuer,
-		repoStore:       repoStore,
+		repoSchedulingSvc: repoSchedulingSvc,
+		policiesSvc:       policiesSvc,
+		policyMatcher:     policyMatcher,
+		indexEnqueuer:     indexEnqueuer,
+		repoStore:         repoStore,
 	}
 
 	redMetrics := m.Get(func() *metrics.REDMetrics {
@@ -103,12 +104,13 @@ func (b indexSchedulerJob) handleScheduler(
 	// set should contain repositories that have yet to be updated, or that have been updated least recently.
 	// This allows us to update every repository reliably, even if it takes a long time to process through
 	// the backlog.
-	repositories, err := b.autoindexingSvc.GetRepositoriesForIndexScan(
+	repositories, err := b.repoSchedulingSvc.GetRepositoriesForIndexScan(
 		ctx,
-		repositoryProcessDelay,
-		conf.CodeIntelAutoIndexingAllowGlobalPolicies(),
-		repositoryMatchLimit,
-		repositoryBatchSize,
+		reposcheduler.NewBatchOptions(
+			repositoryProcessDelay,
+			conf.CodeIntelAutoIndexingAllowGlobalPolicies(),
+			repositoryMatchLimit,
+			repositoryBatchSize),
 		time.Now(),
 	)
 	if err != nil {
@@ -128,13 +130,13 @@ func (b indexSchedulerJob) handleScheduler(
 		errMu sync.Mutex
 	)
 
-	for _, repositoryID := range repositories {
+	for _, repository := range repositories {
 		if err := sema.Acquire(ctx, 1); err != nil {
 			return err
 		}
 		go func() {
 			defer sema.Release(1)
-			if repositoryErr := b.handleRepository(ctx, repositoryID, policyBatchSize, now); repositoryErr != nil {
+			if repositoryErr := b.handleRepository(ctx, repository.ID, policyBatchSize, now); repositoryErr != nil {
 				if !errors.As(err, &inference.LimitError{}) {
 					errMu.Lock()
 					errs = errors.Append(errs, repositoryErr)

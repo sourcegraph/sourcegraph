@@ -145,10 +145,6 @@ func IsLimitError(err error) bool {
 	return errors.As(err, &inference.LimitError{})
 }
 
-func (s *Service) GetRepositoriesForIndexScan(ctx context.Context, processDelay time.Duration, allowGlobalPolicies bool, repositoryMatchLimit *int, limit int, now time.Time) ([]int, error) {
-	return s.store.GetRepositoriesForIndexScan(ctx, processDelay, allowGlobalPolicies, repositoryMatchLimit, limit, now)
-}
-
 func (s *Service) RepositoryIDsWithConfiguration(ctx context.Context, offset, limit int) ([]uploadsshared.RepositoryWithAvailableIndexers, int, error) {
 	return s.store.RepositoryIDsWithConfiguration(ctx, offset, limit)
 }

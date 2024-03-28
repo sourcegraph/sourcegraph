@@ -15540,6 +15540,19 @@
           "Comment": "Whether or not this configuration policy affects data retention rules."
         },
         {
+          "Name": "syntactic_indexing_enabled",
+          "Index": 17,
+          "TypeName": "boolean",
+          "IsNullable": false,
+          "Default": "false",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
+        {
           "Name": "type",
           "Index": 4,
           "TypeName": "text",
@@ -26571,6 +26584,52 @@
           "ConstraintDefinition": "CHECK (commit ~ '^[a-f0-9]{40}$'::text)"
         }
       ],
+      "Triggers": []
+    },
+    {
+      "Name": "syntactic_scip_last_index_scan",
+      "Comment": "Tracks the last time repository was checked for syntactic indexing job scheduling.",
+      "Columns": [
+        {
+          "Name": "last_index_scan_at",
+          "Index": 2,
+          "TypeName": "timestamp with time zone",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": "The last time uploads of this repository were considered for syntactic indexing job scheduling."
+        },
+        {
+          "Name": "repository_id",
+          "Index": 1,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        }
+      ],
+      "Indexes": [
+        {
+          "Name": "syntactic_scip_last_index_scan_pkey",
+          "IsPrimaryKey": true,
+          "IsUnique": true,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE UNIQUE INDEX syntactic_scip_last_index_scan_pkey ON syntactic_scip_last_index_scan USING btree (repository_id)",
+          "ConstraintType": "p",
+          "ConstraintDefinition": "PRIMARY KEY (repository_id)"
+        }
+      ],
+      "Constraints": null,
       "Triggers": []
     },
     {

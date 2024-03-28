@@ -45,8 +45,8 @@ go_test(
         "coverage_test.go",
         "dependencies_test.go",
         "enqueuer_test.go",
-        "scheduler_test.go",
         "store_helpers_test.go",
+        "store_test.go",
     ],
     embed = [":store"],
     tags = [
@@ -61,7 +61,6 @@ go_test(
         "//internal/database/dbtest",
         "//internal/executor",
         "//internal/observation",
-        "//internal/timeutil",
         "@com_github_google_go_cmp//cmp",
         "@com_github_keegancsmith_sqlf//:sqlf",
         "@com_github_lib_pq//:pq",

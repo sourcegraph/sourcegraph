@@ -17,6 +17,7 @@ go_library(
         "//internal/codeintel/dependencies",
         "//internal/codeintel/policies",
         "//internal/codeintel/policies/shared",
+        "//internal/codeintel/reposcheduler",
         "//internal/codeintel/uploads/shared",
         "//internal/conf",
         "//internal/database",

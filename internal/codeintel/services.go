@@ -8,6 +8,7 @@ import (
 	ossdependencies "github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/policies"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/ranking"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/sentinel"
 	codeintelshared "github.com/sourcegraph/sourcegraph/internal/codeintel/shared"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads"
@@ -17,15 +18,16 @@ import (
 )
 
 type Services struct {
-	AutoIndexingService *autoindexing.Service
-	CodenavService      *codenav.Service
-	DependenciesService *ossdependencies.Service
-	PoliciesService     *policies.Service
-	RankingService      *ranking.Service
-	UploadsService      *uploads.Service
-	SentinelService     *sentinel.Service
-	ContextService      *context.Service
-	GitserverClient     gitserver.Client
+	AutoIndexingService          *autoindexing.Service
+	PreciseRepoSchedulingService reposcheduler.RepositorySchedulingService
+	CodenavService               *codenav.Service
+	DependenciesService          *ossdependencies.Service
+	PoliciesService              *policies.Service
+	RankingService               *ranking.Service
+	UploadsService               *uploads.Service
+	SentinelService              *sentinel.Service
+	ContextService               *context.Service
+	GitserverClient              gitserver.Client
 }
 
 type ServiceDependencies struct {
@@ -46,16 +48,18 @@ func NewServices(deps ServiceDependencies) (Services, error) {
 	rankingSvc := ranking.NewService(deps.ObservationCtx, db, codeIntelDB)
 	sentinelService := sentinel.NewService(deps.ObservationCtx, db)
 	contextService := context.NewService(deps.ObservationCtx, db)
+	reposchedulingService := reposcheduler.NewService(reposcheduler.NewPreciseStore(deps.ObservationCtx, db))
 
 	return Services{
-		AutoIndexingService: autoIndexingSvc,
-		CodenavService:      codenavSvc,
-		DependenciesService: dependenciesSvc,
-		PoliciesService:     policiesSvc,
-		RankingService:      rankingSvc,
-		UploadsService:      uploadsSvc,
-		SentinelService:     sentinelService,
-		ContextService:      contextService,
-		GitserverClient:     gitserverClient,
+		AutoIndexingService:          autoIndexingSvc,
+		PreciseRepoSchedulingService: reposchedulingService,
+		CodenavService:               codenavSvc,
+		DependenciesService:          dependenciesSvc,
+		PoliciesService:              policiesSvc,
+		RankingService:               rankingSvc,
+		UploadsService:               uploadsSvc,
+		SentinelService:              sentinelService,
+		ContextService:               contextService,
+		GitserverClient:              gitserverClient,
 	}, nil
 }

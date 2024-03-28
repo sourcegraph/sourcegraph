@@ -52,7 +52,8 @@ func (j *autoindexingScheduler) Routines(_ context.Context, observationCtx *obse
 		services.UploadsService,
 		services.PoliciesService,
 		matcher,
-		services.AutoIndexingService,
+		services.PreciseRepoSchedulingService,
+		*services.AutoIndexingService,
 		db.Repos(),
 	), nil
 }

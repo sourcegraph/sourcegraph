@@ -6,6 +6,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/summary"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/jobselector"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/store"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -23,7 +24,7 @@ func NewIndexSchedulers(
 	observationCtx *observation.Context,
 	policiesSvc scheduler.PoliciesService,
 	policyMatcher scheduler.PolicyMatcher,
-	autoindexingSvc scheduler.AutoIndexingService,
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
 	indexEnqueuer scheduler.IndexEnqueuer,
 	repoStore database.RepoStore,
 	store store.Store,
@@ -32,7 +33,7 @@ func NewIndexSchedulers(
 	return []goroutine.BackgroundRoutine{
 		scheduler.NewScheduler(
 			observationCtx,
-			autoindexingSvc,
+			repoSchedulingSvc,
 			policiesSvc,
 			policyMatcher,
 			indexEnqueuer,

@@ -7,6 +7,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/summary"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/inference"
 	autoindexingstore "github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/store"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
@@ -49,14 +50,15 @@ func NewIndexSchedulers(
 	uploadSvc UploadService,
 	policiesSvc PoliciesService,
 	policyMatcher PolicyMatcher,
-	autoindexingSvc *Service,
+	repoSchedulingSvc reposcheduler.RepositorySchedulingService,
+	autoindexingSvc Service,
 	repoStore database.RepoStore,
 ) []goroutine.BackgroundRoutine {
 	return background.NewIndexSchedulers(
 		scopedContext("scheduler", observationCtx),
 		policiesSvc,
 		policyMatcher,
-		autoindexingSvc,
+		repoSchedulingSvc,
 		autoindexingSvc.indexEnqueuer,
 		repoStore,
 		autoindexingSvc.store,
