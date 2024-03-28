@@ -122,7 +122,15 @@ func Snapshot(ctx context.Context, logger log.Logger, db database.DB, query stri
 				continue
 			}
 			if err != nil {
-				return err
+				var revErr *gitdomain.RevisionNotFoundError
+				if errors.As(err, &revErr) && (rev == "HEAD" || rev == "") {
+					// revision errors on HEAD mean that the repo is empty
+					// (or something else is horribly wrong), so we'll ignore for now.
+					// Snapshot is used when creating or modifying monitors;
+					// any revision errors that persist will be surfaced in the logs when the monitors are run.
+				} else {
+					return err
+				}
 			}
 			mu.Lock()
 			resolvedRevisions[repoID] = append(resolvedRevisions[repoID], string(res))
