@@ -14,6 +14,9 @@ type GitDir string
 
 // Path is a helper which returns filepath.Join(dir, elem...)
 func (dir GitDir) Path(elem ...string) string {
+	if len(elem) == 0 {
+		return string(dir)
+	}
 	return filepath.Join(append([]string{string(dir)}, elem...)...)
 }
 

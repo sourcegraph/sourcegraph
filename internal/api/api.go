@@ -31,7 +31,7 @@ func (r RepoName) Equal(o RepoName) bool {
 // RepoHashedName is the hashed name of a repo
 type RepoHashedName string
 
-var deletedRegex = lazyregexp.New("DELETED-[0-9]+\\.[0-9]+-")
+var deletedRegex = lazyregexp.New("^DELETED-[0-9]+\\.[0-9]+-")
 
 // UndeletedRepoName will "undelete" a repo name. When we soft-delete a repo we
 // change its name in the database, this function extracts the original repo

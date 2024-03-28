@@ -12,12 +12,6 @@ import (
 )
 
 type P4UsersArguments struct {
-	// ReposDir is the directory where the repositories are stored.
-	ReposDir string
-	// P4Home is the path to the directory that 'p4' will use as $HOME
-	// and where it will store cache data.
-	P4Home string
-
 	// P4PORT is the address of the Perforce server.
 	P4Port string
 	// P4User is the Perforce username to authenticate with.
@@ -27,7 +21,7 @@ type P4UsersArguments struct {
 }
 
 // P4Users returns all of users known to the Perforce server.
-func P4Users(ctx context.Context, args P4UsersArguments) ([]perforce.User, error) {
+func P4Users(ctx context.Context, fs gitserverfs.FS, args P4UsersArguments) ([]perforce.User, error) {
 	options := []P4OptionFunc{
 		WithAuthentication(args.P4User, args.P4Passwd),
 		WithHost(args.P4Port),
@@ -35,13 +29,18 @@ func P4Users(ctx context.Context, args P4UsersArguments) ([]perforce.User, error
 
 	options = append(options, WithArguments("-Mj", "-ztag", "users"))
 
-	scratchDir, err := gitserverfs.TempDir(args.ReposDir, "p4-users-")
+	p4home, err := fs.P4HomeDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create p4home dir")
+	}
+
+	scratchDir, err := fs.TempDir("p4-users-")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create temp dir to invoke 'p4 users'")
 	}
 	defer os.Remove(scratchDir)
 
-	cmd := NewBaseCommand(ctx, args.P4Home, scratchDir, options...)
+	cmd := NewBaseCommand(ctx, p4home, scratchDir, options...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctxerr := ctx.Err(); ctxerr != nil {

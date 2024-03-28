@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcegraph/log"
 
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/unpack"
 
@@ -36,7 +37,7 @@ const (
 	jvmMajorVersion0 = 44
 )
 
-func NewJVMPackagesSyncer(connection *schema.JVMPackagesConnection, svc *dependencies.Service, getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error), cacheDir string, reposDir string) VCSSyncer {
+func NewJVMPackagesSyncer(connection *schema.JVMPackagesConnection, svc *dependencies.Service, getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error), cacheDir string, fs gitserverfs.FS) VCSSyncer {
 	placeholder, err := reposource.ParseMavenVersionedPackage("com.sourcegraph:sourcegraph:1.0.0")
 	if err != nil {
 		panic(fmt.Sprintf("expected placeholder package to parse but got %v", err))
@@ -51,7 +52,7 @@ func NewJVMPackagesSyncer(connection *schema.JVMPackagesConnection, svc *depende
 		placeholder: placeholder,
 		svc:         svc,
 		configDeps:  connection.Maven.Dependencies,
-		reposDir:    reposDir,
+		fs:          fs,
 		source: &jvmPackagesSyncer{
 			coursier: chandle,
 			config:   connection,

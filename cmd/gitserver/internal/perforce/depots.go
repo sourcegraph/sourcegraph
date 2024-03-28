@@ -56,12 +56,6 @@ type perforceDepot struct {
 
 // P4DepotsArguments contains the arguments for P4Depots.
 type P4DepotsArguments struct {
-	// ReposDir is the directory where the repos are stored.
-	ReposDir string
-	// P4Home is the path to the directory that 'p4' will use as $HOME
-	// and where it will store cache data.
-	P4Home string
-
 	// P4Port is the address of the Perforce server.
 	P4Port string
 	// P4User is the Perforce username to authenticate with.
@@ -76,7 +70,7 @@ type P4DepotsArguments struct {
 // P4Depots returns all of the depots to which the user has access on the host
 // and whose names match the given nameFilter, which can contain asterisks (*) for wildcards
 // if nameFilter is blank, return all depots.
-func P4Depots(ctx context.Context, args P4DepotsArguments) ([]perforceDepot, error) {
+func P4Depots(ctx context.Context, fs gitserverfs.FS, args P4DepotsArguments) ([]perforceDepot, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -91,13 +85,18 @@ func P4Depots(ctx context.Context, args P4DepotsArguments) ([]perforceDepot, err
 		options = append(options, WithArguments("-Mj", "-ztag", "depots", "-e", args.NameFilter))
 	}
 
-	scratchDir, err := gitserverfs.TempDir(args.ReposDir, "p4-depots-")
+	p4home, err := fs.P4HomeDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create p4home dir")
+	}
+
+	scratchDir, err := fs.TempDir("p4-depots-")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create temp dir to invoke 'p4 depots'")
 	}
 	defer os.Remove(scratchDir)
 
-	cmd := NewBaseCommand(ctx, args.P4Home, scratchDir, options...)
+	cmd := NewBaseCommand(ctx, p4home, scratchDir, options...)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {

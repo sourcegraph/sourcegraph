@@ -57,7 +57,7 @@ func TestUnpackPythonPackage_TGZ(t *testing.T) {
 	pkg := bytes.NewReader(createTgz(t, files))
 
 	tmp := t.TempDir()
-	if err := unpackPythonPackage(pkg, "https://some.where/pckg.tar.gz", tmp, tmp); err != nil {
+	if err := unpackPythonPackage(pkg, "https://some.where/pckg.tar.gz", func() (string, error) { return tmp, nil }, tmp); err != nil {
 		t.Fatal()
 	}
 
@@ -127,7 +127,7 @@ func TestUnpackPythonPackage_ZIP(t *testing.T) {
 	}
 
 	tmp := t.TempDir()
-	if err := unpackPythonPackage(&zipBuf, "https://some.where/pckg.zip", tmp, tmp); err != nil {
+	if err := unpackPythonPackage(&zipBuf, "https://some.where/pckg.zip", func() (string, error) { return os.MkdirTemp(tmp, "zip") }, tmp); err != nil {
 		t.Fatal()
 	}
 
@@ -171,13 +171,13 @@ func TestUnpackPythonPackage_InvalidZip(t *testing.T) {
 
 	pkg := bytes.NewReader(createTgz(t, files))
 
-	if err := unpackPythonPackage(pkg, "https://some.where/pckg.whl", t.TempDir(), t.TempDir()); err == nil {
+	if err := unpackPythonPackage(pkg, "https://some.where/pckg.whl", func() (string, error) { return t.TempDir(), nil }, t.TempDir()); err == nil {
 		t.Fatal("no error returned from unpack package")
 	}
 }
 
 func TestUnpackPythonPackage_UnsupportedFormat(t *testing.T) {
-	if err := unpackPythonPackage(bytes.NewReader([]byte{}), "https://some.where/pckg.exe", "", ""); err == nil {
+	if err := unpackPythonPackage(bytes.NewReader([]byte{}), "https://some.where/pckg.exe", func() (string, error) { return "", nil }, ""); err == nil {
 		t.Fatal()
 	}
 }
@@ -211,7 +211,7 @@ func TestUnpackPythonPackage_Wheel(t *testing.T) {
 	}
 
 	tmp := t.TempDir()
-	if err := unpackPythonPackage(b, wheelURL, tmp, tmp); err != nil {
+	if err := unpackPythonPackage(b, wheelURL, func() (string, error) { return os.MkdirTemp(tmp, "wheel") }, tmp); err != nil {
 		t.Fatal(err)
 	}
 

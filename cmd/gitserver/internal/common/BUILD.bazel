@@ -17,7 +17,10 @@ go_library(
 
 go_test(
     name = "common_test",
-    srcs = ["queue_test.go"],
+    srcs = [
+        "common_test.go",
+        "queue_test.go",
+    ],
     embed = [":common"],
     deps = [
         "//internal/observation",

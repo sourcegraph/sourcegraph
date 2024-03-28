@@ -111,5 +111,6 @@ write_source_files(
         "//internal/workerutil/dbworker/store/mocks:generate_mocks",
         "//internal/workerutil:generate_mocks",
         "//lib/background:generate_mocks",
+        "//cmd/gitserver/internal/gitserverfs:generate_mocks",
     ],
 )

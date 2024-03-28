@@ -7,7 +7,6 @@ go_library(
     srcs = [
         "cleanup.go",
         "clone.go",
-        "disk.go",
         "ensurerevision.go",
         "gitservice.go",
         "list_gitolite.go",
@@ -60,7 +59,6 @@ go_library(
         "//internal/hostname",
         "//internal/lazyregexp",
         "//internal/limiter",
-        "//internal/metrics",
         "//internal/observation",
         "//internal/perforce",
         "//internal/ratelimit",
@@ -77,7 +75,6 @@ go_library(
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/promauto",
         "@com_github_sourcegraph_log//:log",
-        "@com_github_sourcegraph_mountinfo//:mountinfo",
         "@io_opentelemetry_go_otel//attribute",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//status",

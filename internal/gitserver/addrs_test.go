@@ -16,41 +16,44 @@ func TestAddrForRepo(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	t.Run("no deduplicated forks", func(t *testing.T) {
-		testCases := []struct {
-			name string
-			repo api.RepoName
-			want string
-		}{
-			{
-				name: "repo1",
-				repo: api.RepoName("repo1"),
-				want: "gitserver-3",
-			},
-			{
-				name: "check we normalise",
-				repo: api.RepoName("repo1.git"),
-				want: "gitserver-3",
-			},
-			{
-				name: "another repo",
-				repo: api.RepoName("github.com/sourcegraph/sourcegraph.git"),
-				want: "gitserver-2",
-			},
-			{
-				name: "pinned repo", // different server address that the hashing function would normally yield
-				repo: api.RepoName("repo2"),
-				want: "gitserver-1",
-			},
-		}
+	testCases := []struct {
+		name string
+		repo api.RepoName
+		want string
+	}{
+		{
+			name: "repo1",
+			repo: api.RepoName("repo1"),
+			want: "gitserver-3",
+		},
+		{
+			name: "check we target the original instance prior to deletion",
+			repo: api.RepoName("DELETED-123123.123123-repo1"),
+			want: "gitserver-3",
+		},
+		{
+			name: "deletion and pinning work together",
+			repo: api.RepoName("DELETED-123123.123123-repo2"),
+			want: "gitserver-1",
+		},
+		{
+			name: "another repo",
+			repo: api.RepoName("github.com/sourcegraph/sourcegraph"),
+			want: "gitserver-2",
+		},
+		{
+			name: "pinned repo", // different server address that the hashing function would normally yield
+			repo: api.RepoName("repo2"),
+			want: "gitserver-1",
+		},
+	}
 
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				got := ga.AddrForRepo(ctx, tc.repo)
-				if got != tc.want {
-					t.Fatalf("Want %q, got %q", tc.want, got)
-				}
-			})
-		}
-	})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ga.AddrForRepo(ctx, tc.repo)
+			if got != tc.want {
+				t.Fatalf("Want %q, got %q", tc.want, got)
+			}
+		})
+	}
 }

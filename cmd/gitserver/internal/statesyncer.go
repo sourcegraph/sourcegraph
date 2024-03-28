@@ -14,7 +14,6 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
@@ -45,7 +44,7 @@ func NewRepoStateSyncer(
 	db database.DB,
 	locker RepositoryLocker,
 	shardID string,
-	reposDir string,
+	fs gitserverfs.FS,
 	interval time.Duration,
 	batchSize int,
 	perSecond int,
@@ -78,7 +77,7 @@ func NewRepoStateSyncer(
 			fullSync = fullSync || currentPinned != previousPinned
 			previousPinned = currentPinned
 
-			if err := syncRepoState(ctx, logger, db, locker, shardID, reposDir, gitServerAddrs, batchSize, perSecond, fullSync); err != nil {
+			if err := syncRepoState(ctx, logger, db, locker, shardID, fs, gitServerAddrs, batchSize, perSecond, fullSync); err != nil {
 				// after a failed full sync, we should attempt it again in the next
 				// invocation.
 				fullSync = true
@@ -102,7 +101,7 @@ func syncRepoState(
 	db database.DB,
 	locker RepositoryLocker,
 	shardID string,
-	reposDir string,
+	fs gitserverfs.FS,
 	gitServerAddrs gitserver.GitserverAddresses,
 	batchSize int,
 	perSecond int,
@@ -189,11 +188,6 @@ func syncRepoState(
 		for _, repo := range repos {
 			repoSyncStateCounter.WithLabelValues("check").Inc()
 
-			// We may have a deleted repo, we need to extract the original name both to
-			// ensure that the shard check is correct and also so that we can find the
-			// directory.
-			repo.Name = api.UndeletedRepoName(repo.Name)
-
 			// Ensure we're only dealing with repos we are responsible for.
 			addr := gitServerAddrs.AddrForRepo(ctx, repo.Name)
 			if !hostnameMatch(shardID, addr) {
@@ -202,9 +196,12 @@ func syncRepoState(
 			}
 			repoSyncStateCounter.WithLabelValues("this_shard").Inc()
 
-			dir := gitserverfs.RepoDirFromName(reposDir, repo.Name)
-			cloned := repoCloned(dir)
-			_, cloning := locker.Status(dir)
+			cloned, err := fs.RepoCloned(repo.Name)
+			if err != nil {
+				// Failed to determine cloned state, we have to skip this record for now.
+				continue
+			}
+			_, cloning := locker.Status(repo.Name)
 
 			var shouldUpdate bool
 			if repo.ShardID != shardID {

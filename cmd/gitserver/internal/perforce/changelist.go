@@ -17,12 +17,6 @@ import (
 
 // GetChangeListByIDArguments are the arguments for GetChangelistByID.
 type GetChangeListByIDArguments struct {
-	// ReposDir is the directory where the repositories are stored.
-	ReposDir string
-	// P4Home is the path to the directory that 'p4' will use as $HOME
-	// and where it will store cache data.
-	P4Home string
-
 	// P4PORT is the address of the Perforce server.
 	P4Port string
 	// P4User is the Perforce username to authenticate with.
@@ -34,7 +28,7 @@ type GetChangeListByIDArguments struct {
 	ChangelistID string
 }
 
-func GetChangelistByID(ctx context.Context, args GetChangeListByIDArguments) (*p4types.Changelist, error) {
+func GetChangelistByID(ctx context.Context, fs gitserverfs.FS, args GetChangeListByIDArguments) (*p4types.Changelist, error) {
 	options := []P4OptionFunc{
 		WithAuthentication(args.P4User, args.P4Passwd),
 		WithHost(args.P4Port),
@@ -50,13 +44,18 @@ func GetChangelistByID(ctx context.Context, args GetChangeListByIDArguments) (*p
 		"-e", args.ChangelistID, // start from this changelist and go up
 	))
 
-	scratchDir, err := gitserverfs.TempDir(args.ReposDir, "p4-changelist-")
+	p4home, err := fs.P4HomeDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create p4home dir")
+	}
+
+	scratchDir, err := fs.TempDir("p4-changelist-")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create temp dir to invoke 'p4 changes'")
 	}
 	defer os.Remove(scratchDir)
 
-	cmd := NewBaseCommand(ctx, args.P4Home, scratchDir, options...)
+	cmd := NewBaseCommand(ctx, p4home, scratchDir, options...)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -85,10 +84,6 @@ func GetChangelistByID(ctx context.Context, args GetChangeListByIDArguments) (*p
 
 // GetChangeListByClientArguments are the arguments for GetChangelistByClient.
 type GetChangeListByClientArguments struct {
-	// P4Home is the path to the directory that 'p4' will use as $HOME
-	// and where it will store cache data.
-	P4Home string
-
 	// P4PORT is the address of the Perforce server.
 	P4Port string
 	// P4User is the Perforce username to authenticate with.
@@ -103,7 +98,7 @@ type GetChangeListByClientArguments struct {
 	Client string
 }
 
-func GetChangelistByClient(ctx context.Context, args GetChangeListByClientArguments) (*p4types.Changelist, error) {
+func GetChangelistByClient(ctx context.Context, fs gitserverfs.FS, args GetChangeListByClientArguments) (*p4types.Changelist, error) {
 	options := []P4OptionFunc{
 		WithAuthentication(args.P4User, args.P4Passwd),
 		WithHost(args.P4Port),
@@ -120,7 +115,12 @@ func GetChangelistByClient(ctx context.Context, args GetChangeListByClientArgume
 		"-c", args.Client,
 	))
 
-	cmd := NewBaseCommand(ctx, args.P4Home, args.WorkDir, options...)
+	p4home, err := fs.P4HomeDir()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create p4home dir")
+	}
+
+	cmd := NewBaseCommand(ctx, p4home, args.WorkDir, options...)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {

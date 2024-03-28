@@ -19,7 +19,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 
-	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	proto "github.com/sourcegraph/sourcegraph/internal/gitserver/v1"
 	"github.com/sourcegraph/sourcegraph/internal/grpc/defaults"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -174,8 +173,11 @@ type GitserverAddresses struct {
 func (g *GitserverAddresses) AddrForRepo(ctx context.Context, repoName api.RepoName) string {
 	addrForRepoInvoked.Inc()
 
-	// Normalizing the name in case the caller didn't.
-	name := string(protocol.NormalizeRepo(repoName))
+	// We undelete the repo name for the addr function so that we can still reach the
+	// right gitserver after a repo has been deleted (and the name changed by that).
+	// Ideally we wouldn't need this, but as long as we use RepoName as the identifier
+	// in gitserver, we have to do this.
+	name := string(api.UndeletedRepoName(repoName))
 	if pinnedAddr, ok := g.PinnedServers[name]; ok {
 		return pinnedAddr
 	}

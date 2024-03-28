@@ -18,9 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/conf/reposource"
+	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -36,6 +38,9 @@ func TestVcsDependenciesSyncer_Fetch(t *testing.T) {
 	}
 	depsService := &fakeDepsService{deps: map[reposource.PackageName]dependencies.PackageRepoReference{}}
 
+	root := t.TempDir()
+	fs := gitserverfs.New(&observation.TestContext, root)
+	require.NoError(t, fs.Initialize())
 	remoteURL := &vcs.URL{URL: url.URL{Path: "fake/foo"}}
 
 	s := vcsPackagesSyncer{
@@ -45,7 +50,7 @@ func TestVcsDependenciesSyncer_Fetch(t *testing.T) {
 		placeholder: placeholder,
 		source:      depsSource,
 		svc:         depsService,
-		reposDir:    t.TempDir(),
+		fs:          fs,
 		getRemoteURLSource: func(ctx context.Context, name api.RepoName) (RemoteURLSource, error) {
 			return RemoteURLSourceFunc(func(_ context.Context) (*vcs.URL, error) {
 				return remoteURL, nil

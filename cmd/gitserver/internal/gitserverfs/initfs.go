@@ -10,14 +10,14 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func InitGitserverFileSystem(logger log.Logger, reposDir string) error {
+func initGitserverFileSystem(logger log.Logger, reposDir string) error {
 	// Ensure the ReposDir exists.
 	if err := os.MkdirAll(reposDir, os.ModePerm); err != nil {
 		return errors.Wrap(err, "creating SRC_REPOS_DIR")
 	}
 	// Ensure the Perforce Dir exists.
-	p4Home := filepath.Join(reposDir, P4HomeName)
-	if err := os.MkdirAll(p4Home, os.ModePerm); err != nil {
+	p4Home, err := makeP4HomeDir(reposDir)
+	if err != nil {
 		return errors.Wrapf(err, "ensuring p4Home exists: %q", p4Home)
 	}
 	// Ensure the tmp dir exists, is cleaned up, and TMP_DIR is set properly.
@@ -40,6 +40,15 @@ func InitGitserverFileSystem(logger log.Logger, reposDir string) error {
 	return nil
 }
 
+func makeP4HomeDir(reposDir string) (string, error) {
+	p4Home := filepath.Join(reposDir, p4HomeName)
+	// Ensure the directory exists
+	if err := os.MkdirAll(p4Home, os.ModePerm); err != nil {
+		return "", errors.Wrapf(err, "ensuring p4Home exists: %q", p4Home)
+	}
+	return p4Home, nil
+}
+
 // setupAndClearTmp sets up the tempdir for reposDir as well as clearing it
 // out. It returns the temporary directory location.
 func setupAndClearTmp(logger log.Logger, reposDir string) (string, error) {
@@ -48,8 +57,8 @@ func setupAndClearTmp(logger log.Logger, reposDir string) (string, error) {
 	// Additionally, we create directories with the prefix .tmp-old which are
 	// asynchronously removed. We do not remove in place since it may be a
 	// slow operation to block on. Our tmp dir will be ${s.ReposDir}/.tmp
-	dir := filepath.Join(reposDir, TempDirName) // .tmp
-	oldPrefix := TempDirName + "-old"
+	dir := filepath.Join(reposDir, tempDirName) // .tmp
+	oldPrefix := tempDirName + "-old"
 	if _, err := os.Stat(dir); err == nil {
 		// Rename the current tmp file, so we can asynchronously remove it. Use
 		// a consistent pattern so if we get interrupted, we can clean it
@@ -60,7 +69,7 @@ func setupAndClearTmp(logger log.Logger, reposDir string) (string, error) {
 		}
 		// oldTmp dir exists, so we need to use a child of oldTmp as the
 		// rename target.
-		if err := os.Rename(dir, filepath.Join(oldTmp, TempDirName)); err != nil {
+		if err := os.Rename(dir, filepath.Join(oldTmp, tempDirName)); err != nil {
 			return "", err
 		}
 	}

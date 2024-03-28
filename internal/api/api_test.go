@@ -32,6 +32,16 @@ func TestUndeletedRepoName(t *testing.T) {
 			have: RepoName("DELETED-1650977466.716686-github.com/owner/repo"),
 			want: RepoName("github.com/owner/repo"),
 		},
+		{
+			name: "Double deleted",
+			have: RepoName("DELETED-1650977466.716686-DELETED-1650977466.716686-github.com/owner/repo"),
+			want: RepoName("DELETED-1650977466.716686-github.com/owner/repo"),
+		},
+		{
+			name: "Not actually deleted",
+			have: RepoName("github.com/DELETED-1650977466.716686-owner/repo"),
+			want: RepoName("github.com/DELETED-1650977466.716686-owner/repo"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

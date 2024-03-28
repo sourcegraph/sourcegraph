@@ -1,3 +1,4 @@
+load("//dev:go_mockgen.bzl", "go_mockgen")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 load("//dev:go_defs.bzl", "go_test")
 
@@ -6,18 +7,22 @@ go_library(
     srcs = [
         "fs.go",
         "initfs.go",
+        "mock.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs",
     visibility = ["//cmd/gitserver:__subpackages__"],
     deps = [
         "//cmd/gitserver/internal/common",
         "//internal/api",
-        "//internal/database",
+        "//internal/diskusage",
         "//internal/fileutil",
         "//internal/gitserver/protocol",
-        "//internal/types",
+        "//internal/metrics",
+        "//internal/observation",
         "//lib/errors",
+        "@com_github_prometheus_client_golang//prometheus",
         "@com_github_sourcegraph_log//:log",
+        "@com_github_sourcegraph_mountinfo//:mountinfo",
     ],
 )
 
@@ -28,16 +33,20 @@ go_test(
         "initfs_test.go",
     ],
     embed = [":gitserverfs"],
-    tags = ["requires-network"],
     deps = [
         "//cmd/gitserver/internal/common",
-        "//internal/api",
-        "//internal/database",
-        "//internal/database/dbmocks",
-        "//internal/database/dbtest",
-        "//internal/types",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",
-        "@com_github_stretchr_testify//require",
     ],
+)
+
+go_mockgen(
+    name = "generate_mocks",
+    out = "mock.go",
+    manifests = [
+        "//:mockgen.yaml",
+        "//:mockgen.test.yaml",
+        "//:mockgen.temp.yaml",
+    ],
+    deps = [":gitserverfs"],
 )

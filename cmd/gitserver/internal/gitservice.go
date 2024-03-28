@@ -15,7 +15,6 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/accesslog"
-	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/lib/gitservice"
@@ -76,7 +75,7 @@ func (s *Server) gitServiceHandler() *gitservice.Handler {
 
 	return &gitservice.Handler{
 		Dir: func(d string) string {
-			return string(gitserverfs.RepoDirFromName(s.reposDir, api.RepoName(d)))
+			return string(s.fs.RepoDir(api.RepoName(d)))
 		},
 
 		ErrorHook: func(err error, stderr string) {

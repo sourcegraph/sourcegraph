@@ -4,17 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // IsDepotPathCloneableArguments are the arguments for IsDepotPathCloneable.
 type IsDepotPathCloneableArguments struct {
-	// ReposDir is the directory where the repositories are stored.
-	ReposDir string
-	// P4Home is the path to the directory that 'p4' will use as $HOME
-	// and where it will store cache data.
-	P4Home string
-
 	// P4PORT is the address of the Perforce server.
 	P4Port string
 	// P4User is the Perforce username to authenticate with.
@@ -26,12 +21,9 @@ type IsDepotPathCloneableArguments struct {
 	DepotPath string
 }
 
-func IsDepotPathCloneable(ctx context.Context, args IsDepotPathCloneableArguments) error {
+func IsDepotPathCloneable(ctx context.Context, fs gitserverfs.FS, args IsDepotPathCloneableArguments) error {
 	// start with a test and set up trust if necessary
-	if err := P4TestWithTrust(ctx, P4TestWithTrustArguments{
-		ReposDir: args.ReposDir,
-		P4Home:   args.P4Home,
-
+	if err := P4TestWithTrust(ctx, fs, P4TestWithTrustArguments{
 		P4Port:   args.P4Port,
 		P4User:   args.P4User,
 		P4Passwd: args.P4Passwd,
@@ -48,10 +40,7 @@ func IsDepotPathCloneable(ctx context.Context, args IsDepotPathCloneableArgument
 	depot := strings.Split(strings.TrimLeft(args.DepotPath, "/"), "/")[0]
 
 	// get a list of depots that match the supplied depot (if it's defined)
-	depots, err := P4Depots(ctx, P4DepotsArguments{
-		ReposDir: args.ReposDir,
-
-		P4Home: args.P4Home,
+	depots, err := P4Depots(ctx, fs, P4DepotsArguments{
 		P4Port: args.P4Port,
 
 		P4User:   args.P4User,

@@ -11,6 +11,7 @@ import (
 
 	"github.com/sourcegraph/log"
 
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/conf/reposource"
@@ -26,8 +27,8 @@ func NewNpmPackagesSyncer(
 	connection schema.NpmPackagesConnection,
 	svc *dependencies.Service,
 	client npm.Client,
+	fs gitserverfs.FS,
 	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error),
-	reposDir string,
 ) VCSSyncer {
 	placeholder, err := reposource.ParseNpmVersionedPackage("@sourcegraph/placeholder@1.0.0")
 	if err != nil {
@@ -41,7 +42,7 @@ func NewNpmPackagesSyncer(
 		placeholder:        placeholder,
 		svc:                svc,
 		configDeps:         connection.Dependencies,
-		reposDir:           reposDir,
+		fs:                 fs,
 		source:             &npmPackagesSyncer{client: client},
 		getRemoteURLSource: getRemoteURLSource,
 	}

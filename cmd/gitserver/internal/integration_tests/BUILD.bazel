@@ -15,6 +15,7 @@ go_library(
         "//cmd/gitserver/internal/common",
         "//cmd/gitserver/internal/git",
         "//cmd/gitserver/internal/git/gitcli",
+        "//cmd/gitserver/internal/gitserverfs",
         "//cmd/gitserver/internal/vcssyncer",
         "//internal/api",
         "//internal/database/dbmocks",
@@ -23,6 +24,7 @@ go_library(
         "//internal/gitserver/v1:gitserver",
         "//internal/grpc",
         "//internal/grpc/defaults",
+        "//internal/observation",
         "//internal/ratelimit",
         "//internal/types",
         "//internal/vcs",
@@ -30,6 +32,7 @@ go_library(
         "//lib/errors",
         "@com_github_sourcegraph_log//:log",
         "@com_github_sourcegraph_log//logtest",
+        "@com_github_stretchr_testify//require",
         "@org_golang_x_time//rate",
     ],
 )

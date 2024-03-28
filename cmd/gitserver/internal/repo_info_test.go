@@ -8,7 +8,6 @@ import (
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
@@ -63,7 +62,8 @@ func testDeleteRepo(t *testing.T, deletedInDB bool) {
 		Repo: repoName,
 	})
 
-	size := gitserverfs.DirSize(gitserverfs.RepoDirFromName(s.reposDir, repoName).Path("."))
+	size, err := s.fs.DirSize(string(s.fs.RepoDir(repoName)))
+	require.NoError(t, err)
 	want := &types.GitserverRepo{
 		RepoID:        dbRepo.ID,
 		ShardID:       "",
@@ -95,9 +95,10 @@ func testDeleteRepo(t *testing.T, deletedInDB bool) {
 	}
 
 	// Now we can delete it
-	require.NoError(t, deleteRepo(ctx, logger, db, "", reposDir, dbRepo.Name))
+	require.NoError(t, deleteRepo(ctx, db, "", s.fs, dbRepo.Name))
 
-	size = gitserverfs.DirSize(gitserverfs.RepoDirFromName(s.reposDir, repoName).Path("."))
+	size, err = s.fs.DirSize(string(s.fs.RepoDir(repoName)))
+	require.NoError(t, err)
 	if size != 0 {
 		t.Fatalf("Size should be 0, got %d", size)
 	}

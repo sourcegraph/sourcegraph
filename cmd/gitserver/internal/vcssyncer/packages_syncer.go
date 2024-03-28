@@ -38,7 +38,7 @@ type vcsPackagesSyncer struct {
 	configDeps         []string
 	source             packagesSource
 	svc                dependenciesService
-	reposDir           string
+	fs                 gitserverfs.FS
 	getRemoteURLSource func(ctx context.Context, name api.RepoName) (RemoteURLSource, error)
 }
 
@@ -306,7 +306,7 @@ func (s *vcsPackagesSyncer) fetchVersions(ctx context.Context, name reposource.P
 // gitPushDependencyTag is responsible for cleaning up temporary directories
 // created in the process.
 func (s *vcsPackagesSyncer) gitPushDependencyTag(ctx context.Context, bareGitDirectory string, dep reposource.VersionedPackage) error {
-	workDir, err := gitserverfs.TempDir(s.reposDir, s.Type())
+	workDir, err := s.fs.TempDir(s.Type())
 	if err != nil {
 		return err
 	}

@@ -4,8 +4,6 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
-	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"os"
 	"os/exec"
 	"path"
@@ -14,10 +12,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
+
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/conf/reposource"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -217,7 +219,9 @@ func TestJVMCloneCommand(t *testing.T) {
 
 	depsSvc := dependencies.TestService(database.NewDB(logger, dbtest.NewDB(t)))
 	cacheDir := filepath.Join(dir, "cache")
-	s := NewJVMPackagesSyncer(&schema.JVMPackagesConnection{Maven: schema.Maven{Dependencies: []string{}}}, depsSvc, testGetRemoteURLSource, cacheDir, dir).(*vcsPackagesSyncer)
+	fs := gitserverfs.New(&observation.TestContext, dir)
+	require.NoError(t, fs.Initialize())
+	s := NewJVMPackagesSyncer(&schema.JVMPackagesConnection{Maven: schema.Maven{Dependencies: []string{}}}, depsSvc, testGetRemoteURLSource, cacheDir, fs).(*vcsPackagesSyncer)
 	bareGitDirectory := path.Join(dir, "git")
 
 	s.runCloneCommand(t, bareGitDirectory, []string{exampleVersionedPackage})

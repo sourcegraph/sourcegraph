@@ -20,7 +20,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/executil"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git/gitcli"
-	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/perforce"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/sshagent"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/urlredactor"
@@ -45,21 +44,20 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 
 	var resp protocol.CreateCommitFromPatchResponse
 
-	repo := string(protocol.NormalizeRepo(req.Repo))
-	repoDir := filepath.Join(s.reposDir, repo)
-	repoGitDir := filepath.Join(repoDir, ".git")
-	if _, err := os.Stat(repoGitDir); os.IsNotExist(err) {
-		repoGitDir = filepath.Join(s.reposDir, repo)
-		if _, err := os.Stat(repoGitDir); os.IsNotExist(err) {
-			resp.SetError(repo, "", "", errors.Wrap(err, "gitserver: repo does not exist"))
-			return resp
-		}
+	repo := req.Repo
+	cloned, err := s.fs.RepoCloned(repo)
+	if err != nil {
+		resp.SetError(repo, "", "", errors.Wrap(err, "failed to check if repo is cloned"))
+		return resp
+	}
+	if !cloned {
+		resp.SetError(repo, "", "", errors.Wrap(err, "gitserver: repo does not exist"))
+		return resp
 	}
 
-	var (
-		remoteURL *vcs.URL
-		err       error
-	)
+	repoGitDir := s.fs.RepoDir(repo)
+
+	var remoteURL *vcs.URL
 
 	if req.Push != nil && req.Push.RemoteURL != "" {
 		remoteURL, err = vcs.ParseURL(req.Push.RemoteURL)
@@ -114,7 +112,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 	}()
 
 	// Ensure tmp directory exists
-	tmpRepoDir, err := gitserverfs.TempDir(s.reposDir, "patch-repo-")
+	tmpRepoDir, err := s.fs.TempDir("patch-repo-")
 	if err != nil {
 		resp.SetError(repo, "", "", errors.Wrap(err, "gitserver: make tmp repo"))
 		return resp
@@ -160,7 +158,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 	tmpGitPathEnv := "GIT_DIR=" + filepath.Join(tmpRepoDir, ".git")
 
 	tmpObjectsDir := filepath.Join(tmpRepoDir, ".git", "objects")
-	repoObjectsDir := filepath.Join(repoGitDir, "objects")
+	repoObjectsDir := repoGitDir.Path("objects")
 
 	altObjectsEnv := "GIT_ALTERNATE_OBJECT_DIRECTORIES=" + repoObjectsDir
 
@@ -295,7 +293,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 			resp.ChangelistId = cid
 		} else {
 			cmd = exec.CommandContext(ctx, "git", "push", "--force", remoteURL.String(), fmt.Sprintf("%s:%s", cmtHash, ref))
-			cmd.Dir = repoGitDir
+			repoGitDir.Set(cmd)
 
 			// If the protocol is SSH and a private key was given, we want to
 			// use it for communication with the code host.
@@ -332,7 +330,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 
 	if req.PushRef == nil {
 		cmd = exec.CommandContext(ctx, "git", "update-ref", "--", ref, cmtHash)
-		cmd.Dir = repoGitDir
+		repoGitDir.Set(cmd)
 
 		if out, err = run(cmd, "creating ref", false); err != nil {
 			logger.Error("Failed to create ref for commit.", log.String("commit", cmtHash), log.String("output", string(out)))
@@ -348,7 +346,7 @@ func (s *Server) CreateCommitFromPatch(ctx context.Context, req protocol.CreateC
 //
 // The ref prefix `ref/<ref type>/` is stripped away from the returned
 // refs.
-func (s *Server) repoRemoteRefs(ctx context.Context, remoteURL *vcs.URL, repoName, prefix string) (map[string]string, error) {
+func (s *Server) repoRemoteRefs(ctx context.Context, remoteURL *vcs.URL, repoName api.RepoName, prefix string) (map[string]string, error) {
 	// The expected output of this git command is a list of:
 	// <commit hash> <ref name>
 	cmd := exec.Command("git", "ls-remote", remoteURL.String(), prefix+"*")
@@ -393,7 +391,7 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 	repo := string(req.Repo)
 	baseCommit := string(req.BaseCommit)
 
-	p4home, err := gitserverfs.MakeP4HomeDir(s.reposDir)
+	p4home, err := s.fs.P4HomeDir()
 	if err != nil {
 		return "", err
 	}
@@ -424,7 +422,7 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 	p4client := strings.TrimPrefix(req.TargetRef, "refs/heads/")
 
 	// do all work in (another) temporary directory
-	tmpClientDir, err := gitserverfs.TempDir(s.reposDir, "perforce-client-")
+	tmpClientDir, err := s.fs.TempDir("perforce-client-")
 	if err != nil {
 		return "", errors.Wrap(err, "gitserver: make tmp repo for Perforce client")
 	}
@@ -461,7 +459,6 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 
 	// check to see if there's a changelist for this target branch already
 	args := perforce.GetChangeListByClientArguments{
-		P4Home:   p4home,
 		P4Port:   p4port,
 		P4User:   p4user,
 		P4Passwd: p4passwd,
@@ -470,7 +467,7 @@ func (s *Server) shelveChangelist(ctx context.Context, req protocol.CreateCommit
 		Client:  p4client,
 	}
 
-	cl, err := perforce.GetChangelistByClient(ctx, args)
+	cl, err := perforce.GetChangelistByClient(ctx, s.fs, args)
 	if err == nil && cl.ID != "" {
 		return cl.ID, nil
 	}
