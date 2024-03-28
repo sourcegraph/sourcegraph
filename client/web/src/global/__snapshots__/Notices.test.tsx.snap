@@ -58,5 +58,52 @@ exports[`Notices > shows notices for location 1`] = `
       </button>
     </div>
   </div>
+  <div
+    class="notices"
+  >
+    <div
+      aria-live="polite"
+      class="alert alertInfo"
+      data-testid="notice-alert"
+      role="alert"
+    >
+      <div
+        class="markdown"
+      >
+        <p>
+          b
+        </p>
+      </div>
+    </div>
+    <div
+      aria-live="polite"
+      class="alert alertNote"
+      data-testid="notice-alert"
+      role="alert"
+    >
+      <div
+        class="markdown"
+      >
+        <p>
+          a message with a variant
+        </p>
+      </div>
+    </div>
+    <div
+      aria-live="polite"
+      class="alert alertSuccess"
+      data-testid="notice-alert"
+      role="alert"
+      style="background-color: #00f0ff; text-align: center;"
+    >
+      <div
+        class="markdown"
+      >
+        <p>
+          a message with style overrides
+        </p>
+      </div>
+    </div>
+  </div>
 </DocumentFragment>
 `;

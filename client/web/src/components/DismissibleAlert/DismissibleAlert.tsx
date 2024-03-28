@@ -28,6 +28,7 @@ export const DismissibleAlert: React.FunctionComponent<React.PropsWithChildren<D
     testId,
     children,
     variant,
+    styleOverrides,
 }) => {
     const [dismissed, setDismissed] = React.useState<boolean>(
         partialStorageKey ? isAlertDismissed(partialStorageKey) : false
@@ -45,8 +46,19 @@ export const DismissibleAlert: React.FunctionComponent<React.PropsWithChildren<D
     }
 
     return (
-        <Alert data-testid={testId} className={classNames(styles.container, className)} variant={variant}>
-            <div className={styles.content}>{children}</div>
+        <Alert
+            data-testid={testId}
+            className={classNames(styles.container, className)}
+            variant={variant}
+            styleOverrides={styleOverrides}
+        >
+            <div
+                className={classNames(styles.content, {
+                    'justify-content-center': styleOverrides?.textCentered,
+                })}
+            >
+                {children}
+            </div>
             <Button aria-label="Dismiss alert" variant="icon" className={styles.closeButton} onClick={onDismiss}>
                 <Icon aria-hidden={true} svgPath={mdiClose} />
             </Button>

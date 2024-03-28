@@ -29,10 +29,11 @@ const NoticeAlert: React.FunctionComponent<React.PropsWithChildren<NoticeAlertPr
 }) => {
     const content = <Markdown dangerousInnerHTML={renderMarkdown(notice.message)} />
 
-    const sharedProps = {
+    const sharedProps: AlertProps & { 'data-testid': typeof testId } = {
         'data-testid': testId,
-        variant: getAlertVariant(notice.location),
+        variant: notice.variant || getAlertVariant(notice.location),
         className: classNames(notice.location !== 'top' && 'bg transparent border p-2', className),
+        styleOverrides: notice.styleOverrides,
     }
 
     return notice.dismissible ? (
