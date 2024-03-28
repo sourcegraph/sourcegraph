@@ -276,6 +276,7 @@ LIMIT %s
 // FindClosestCompletedUploads returns the set of uploads that can most accurately answer queries for the given repository, commit, path, and
 // optional indexer. If rootMustEnclosePath is true, then only dumps with a root which is a prefix of path are returned. Otherwise,
 // any dump with a root intersecting the given path is returned.
+// Syntactic indexes are not returned unless the requested indexer is shared.SyntacticIndexer
 //
 // This method should be used when the commit is known to exist in the lsif_nearest_uploads table. If it doesn't, then this method
 // will return no dumps (as the input commit is not reachable from anything with an upload). The nearest uploads table must be
@@ -1096,6 +1097,9 @@ func makeFindClosestProcessUploadsConditions(path string, rootMustEnclosePath bo
 	}
 	if indexer != "" {
 		conds = append(conds, sqlf.Sprintf("indexer = %s", indexer))
+	} else {
+		// NOTE(Christoph): We want to ignore syntactic indices unless we're explicitly requesting them
+		conds = append(conds, sqlf.Sprintf("indexer <> %s", shared.SyntacticIndexer))
 	}
 
 	return conds

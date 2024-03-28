@@ -9,7 +9,6 @@ import (
 
 type operations struct {
 	insertMetadata              *observation.Operation
-	newSCIPWriter               *observation.Operation
 	idsWithMeta                 *observation.Operation
 	reconcileCandidates         *observation.Operation
 	deleteLsifDataByUploadIds   *observation.Operation
@@ -38,7 +37,6 @@ func newOperations(observationCtx *observation.Context) *operations {
 
 	return &operations{
 		insertMetadata:              op("InsertMetadata"),
-		newSCIPWriter:               op("NewSCIPWriter"),
 		idsWithMeta:                 op("IDsWithMeta"),
 		reconcileCandidates:         op("ReconcileCandidates"),
 		deleteLsifDataByUploadIds:   op("DeleteLsifDataByUploadIds"),

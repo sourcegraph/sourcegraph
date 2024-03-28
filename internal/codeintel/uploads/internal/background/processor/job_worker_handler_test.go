@@ -60,7 +60,7 @@ func TestHandle(t *testing.T) {
 
 	// Track writes to symbols table
 	scipWriter := NewMockLSIFSCIPWriter()
-	mockLSIFStore.NewSCIPWriterFunc.SetDefaultReturn(scipWriter, nil)
+	mockLSIFStore.NewPreciseSCIPWriterFunc.SetDefaultReturn(scipWriter, nil)
 
 	scipWriter.InsertDocumentFunc.SetDefaultHook(func(_ context.Context, _ string, _ *scip.Document) error {
 		return nil
@@ -297,7 +297,7 @@ func TestHandleError(t *testing.T) {
 
 	// Track writes to symbols table
 	scipWriter := NewMockLSIFSCIPWriter()
-	mockLSIFStore.NewSCIPWriterFunc.SetDefaultReturn(scipWriter, nil)
+	mockLSIFStore.NewPreciseSCIPWriterFunc.SetDefaultReturn(scipWriter, nil)
 
 	// Give correlation package a valid input dump
 	mockUploadStore.GetFunc.SetDefaultHook(copyTestDumpScip)

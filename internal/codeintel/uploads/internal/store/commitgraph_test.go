@@ -1010,6 +1010,7 @@ func TestFindClosestCompletedUploadsIndexerName(t *testing.T) {
 		{ID: 6, Commit: makeCommit(2), Root: "root2/", Indexer: "idx2"},
 		{ID: 7, Commit: makeCommit(3), Root: "root3/", Indexer: "idx2"},
 		{ID: 8, Commit: makeCommit(4), Root: "root4/", Indexer: "idx2"},
+		{ID: 9, Commit: makeCommit(4), Root: "root4/", Indexer: shared.SyntacticIndexer},
 	}
 	insertUploads(t, db, uploads...)
 
@@ -1051,6 +1052,7 @@ func TestFindClosestCompletedUploadsIndexerName(t *testing.T) {
 			{UploadID: 6, Distance: 2},
 			{UploadID: 7, Distance: 1},
 			{UploadID: 8, Distance: 0},
+			{UploadID: 9, Distance: 0},
 		},
 	}
 	if diff := cmp.Diff(expectedVisibleUploads, normalizeVisibleUploads(visibleUploads)); diff != "" {
@@ -1078,6 +1080,8 @@ func TestFindClosestCompletedUploadsIndexerName(t *testing.T) {
 		{commit: makeCommit(5), file: "root2/file.ts", indexer: "idx2", graph: graph, allOfIDs: []int{6}},
 		{commit: makeCommit(5), file: "root3/file.ts", indexer: "idx2", graph: graph, allOfIDs: []int{7}},
 		{commit: makeCommit(5), file: "root4/file.ts", indexer: "idx2", graph: graph, allOfIDs: []int{8}},
+		{commit: makeCommit(5), file: "root4/file.ts", indexer: "", graph: graph, allOfIDs: []int{4, 8}},
+		{commit: makeCommit(5), file: "root4/file.ts", indexer: shared.SyntacticIndexer, graph: graph, allOfIDs: []int{9}},
 	})
 }
 

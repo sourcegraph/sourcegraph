@@ -40,7 +40,7 @@ func TestInsertSharedDocumentsConcurrently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to start transaction: %s", err)
 	}
-	scipWriter24, err := tx1.NewSCIPWriter(ctx, 24)
+	scipWriter24, err := tx1.NewPreciseSCIPWriter(ctx, 24)
 	if err != nil {
 		t.Fatalf("failed to create SCIP writer: %s", err)
 	}
@@ -66,7 +66,7 @@ func TestInsertSharedDocumentsConcurrently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to start transaction: %s", err)
 	}
-	scipWriter25, err := tx2.NewSCIPWriter(ctx, 25)
+	scipWriter25, err := tx2.NewPreciseSCIPWriter(ctx, 25)
 	if err != nil {
 		t.Fatalf("failed to create SCIP writer: %s", err)
 	}
@@ -115,7 +115,7 @@ func TestInsertDocumentWithSymbols(t *testing.T) {
 
 	var n uint32
 	if err := store.WithTransaction(ctx, func(tx Store) error {
-		scipWriter24, err := tx.NewSCIPWriter(ctx, 24)
+		scipWriter24, err := tx.NewPreciseSCIPWriter(ctx, 24)
 		if err != nil {
 			t.Fatalf("failed to write SCIP symbols: %s", err)
 		}

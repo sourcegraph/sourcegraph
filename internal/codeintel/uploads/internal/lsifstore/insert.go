@@ -100,7 +100,19 @@ INSERT INTO codeintel_scip_metadata (upload_id, text_document_encoding, tool_nam
 VALUES (%s, %s, %s, %s, %s, %s)
 `
 
-func (s *store) NewSCIPWriter(ctx context.Context, uploadID int) (SCIPWriter, error) {
+func (s *store) NewSyntacticSCIPWriter(ctx context.Context, uploadID int) (SCIPWriter, error) {
+
+	scipWriter := &scipWriter{
+		uploadID:             uploadID,
+		db:                   s.db,
+		insertedSymbolsCount: 0,
+		isSyntactic:          true,
+	}
+
+	return scipWriter, nil
+}
+
+func (s *store) NewPreciseSCIPWriter(ctx context.Context, uploadID int) (SCIPWriter, error) {
 	if !s.db.InTransaction() {
 		return nil, errors.New("WriteSCIPSymbols must be called in a transaction")
 	}
@@ -136,11 +148,11 @@ func (s *store) NewSCIPWriter(ctx context.Context, uploadID int) (SCIPWriter, er
 	)
 
 	scipWriter := &scipWriter{
-		uploadID:           uploadID,
-		db:                 s.db,
-		symbolNameInserter: symbolNameInserter,
-		symbolInserter:     symbolInserter,
-		count:              0,
+		uploadID:             uploadID,
+		db:                   s.db,
+		symbolNameInserter:   symbolNameInserter,
+		symbolInserter:       symbolInserter,
+		insertedSymbolsCount: 0,
 	}
 
 	return scipWriter, nil
@@ -166,14 +178,15 @@ CREATE TEMPORARY TABLE t_codeintel_scip_symbols (
 `
 
 type scipWriter struct {
-	uploadID           int
-	nextID             int
-	db                 *basestore.Store
-	symbolNameInserter *batch.Inserter
-	symbolInserter     *batch.Inserter
-	count              uint32
-	batchPayloadSum    int
-	batch              []bufferedDocument
+	uploadID             int
+	nextID               int
+	isSyntactic          bool
+	db                   *basestore.Store
+	symbolNameInserter   *batch.Inserter
+	symbolInserter       *batch.Inserter
+	insertedSymbolsCount uint32
+	batchPayloadSum      int
+	batch                []bufferedDocument
 }
 
 type bufferedDocument struct {
@@ -303,6 +316,16 @@ func (s *scipWriter) flush(ctx context.Context) error {
 		return errors.New("unexpected number of document lookup records inserted")
 	}
 
+	return s.writeSymbols(ctx, documents, documentLookupIDs)
+
+}
+
+func (s *scipWriter) writeSymbols(ctx context.Context, documents []bufferedDocument, documentLookupIDs []int) error {
+	// We don't write symbols for syntactic indexes, because we can't perform
+	// fuzzy matching against the trie datastructure we build for symbols in the database
+	if s.isSyntactic {
+		return nil
+	}
 	symbolNameMap := map[string]struct{}{}
 	invertedRangeIndexes := make([][]shared.InvertedRangeIndex, 0, len(documents))
 	for _, document := range documents {
@@ -383,7 +406,7 @@ func (s *scipWriter) flush(ctx context.Context) error {
 				return err
 			}
 
-			atomic.AddUint32(&s.count, 1)
+			atomic.AddUint32(&s.insertedSymbolsCount, 1)
 		}
 	}
 
@@ -404,7 +427,12 @@ func (s *scipWriter) Flush(ctx context.Context) (uint32, error) {
 		return 0, err
 	}
 
-	// Flush all data into temp tables
+	// We don't need to flush symbols for syntactic indexes, as we don't write any for them
+	if s.isSyntactic {
+		return s.insertedSymbolsCount, nil
+	}
+
+	// Flush all symbols data into temp tables
 	if err := s.symbolNameInserter.Flush(ctx); err != nil {
 		return 0, err
 	}
@@ -412,15 +440,14 @@ func (s *scipWriter) Flush(ctx context.Context) (uint32, error) {
 		return 0, err
 	}
 
-	// Move all data from temp tables into target tables
+	// Move all symbols data from temp tables into target tables
 	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolNamesQuery, s.uploadID)); err != nil {
 		return 0, err
 	}
 	if err := s.db.Exec(ctx, sqlf.Sprintf(scipWriterFlushSymbolsQuery, s.uploadID, 1)); err != nil {
 		return 0, err
 	}
-
-	return s.count, nil
+	return s.insertedSymbolsCount, nil
 }
 
 const scipWriterFlushSymbolNamesQuery = `

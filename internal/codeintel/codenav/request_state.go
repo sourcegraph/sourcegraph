@@ -121,6 +121,8 @@ func (l *UploadsDataLoader) SetUploadInCacheMap(uploads []shared.CompletedUpload
 	l.cacheMutex.Lock()
 	defer l.cacheMutex.Unlock()
 
+	// Sus, compare with AddUpload, where we're also appending the new uploads to l.uploads
+	// There seem to be invariants broken here, or not written down elsewhere
 	for i := range uploads {
 		l.uploadsByID[uploads[i].ID] = uploads[i]
 	}
