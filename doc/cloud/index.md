@@ -60,9 +60,9 @@ All Sourcegraph features are avilable on Sourcegraph Cloud instances out-of-the-
 - Granting your team application-level admin access to the instance.
 - Configuring any IP-restrictions (e.g. VPN) and/or SSO restrictions to the instance.
 
-### Monthly upgrades and maintenance
+### Regular upgrades and maintenance
 
-- Automatic monthly [upgrades](../admin/updates/index.md) and maintenance.
+- Automatic [upgrades](../admin/updates/index.md) when a new Souregraph version is released and maintenance when security patches are needed.
 - Regular reassessment of resource utilization based on your organization's unique usage to determine if costs can be reduced without impact to service. Additionally, you will automatically benefit from any committed use cloud provider discounts we receive.
 
 ### Custom domains
