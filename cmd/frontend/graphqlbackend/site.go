@@ -3,6 +3,7 @@ package graphqlbackend
 import (
 	"bytes"
 	"context"
+	"github.com/sourcegraph/sourcegraph/schema"
 	"os"
 	"strconv"
 	"strings"
@@ -657,6 +658,27 @@ func (c *codyLLMConfigurationResolver) CompletionModelMaxTokens() *int32 {
 		return &max
 	}
 	return nil
+}
+
+type codyContextResolver struct {
+	config schema.SiteConfiguration
+}
+
+func (c *codyContextResolver) ExcludedRepoPatterns() *[]string {
+	return c.config.CodyContextFilters.ExcludedRepoPatterns
+}
+func (c *codyContextResolver) IncludedRepoPatterns() *[]string {
+	return c.config.CodyContextFilters.IncludedRepoPatterns
+}
+func (c *codyContextResolver) ExcludedFilePatterns() *[]string {
+	return c.config.CodyContextFilters.ExcludedFilePatterns
+}
+func (c *codyContextResolver) IncludedFilePatterns() *[]string {
+	return c.config.CodyContextFilters.IncludedFilePatterns
+}
+
+func (r *siteResolver) CodyContextFilters() *codyContextResolver {
+	return &codyContextResolver{config: conf.Get().SiteConfig()}
 }
 
 func allowEdit(before, after string, allowlist []string) ([]string, bool) {

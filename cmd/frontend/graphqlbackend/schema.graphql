@@ -7246,6 +7246,13 @@ type DefaultSettings implements SettingsSubject {
         )
 }
 
+type CodyContextFilters {
+    excludedRepoPatterns: [String!]
+    includedRepoPatterns: [String!]
+    excludedFilePatterns: [String!]
+    includedFilePatterns: [String!]
+}
+
 """
 A site is an installation of Sourcegraph that consists of one or more
 servers that share the same configuration and database.
@@ -7517,6 +7524,8 @@ type Site implements SettingsSubject {
     Site-admin only.
     """
     codyGatewayRateLimitStatus: [CodyGatewayRateLimitStatus!]
+
+    codyContextFilters: CodyContextFilters
 }
 
 """

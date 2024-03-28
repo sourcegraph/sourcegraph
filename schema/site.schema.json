@@ -2570,6 +2570,49 @@
       },
       "group": "Cody"
     },
+    "cody.contextFilters": {
+      "description": "TODO",
+      "type": "object",
+      "properties": {
+        "excludedRepoPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "!go": {
+            "pointer": true
+          }
+        },
+        "includedRepoPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "!go": {
+            "pointer": true
+          }
+        },
+        "excludedFilePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "!go": {
+            "pointer": true
+          }
+        },
+        "includedFilePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "!go": {
+            "pointer": true
+          }
+        }
+      },
+      "group": "Cody"
+    },
     "cody.permissions": {
       "description": "Whether to enable Cody role-based access controls. Only respected if cody.restrictUsersFeatureFlag is not set. See https://sourcegraph.com/docs/admin/access_control",
       "type": "boolean",

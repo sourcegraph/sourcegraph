@@ -616,6 +616,14 @@ type Codeintel struct {
 	Weight int `json:"weight"`
 }
 
+// CodyContextFilters description: TODO
+type CodyContextFilters struct {
+	ExcludedFilePatterns *[]string `json:"excludedFilePatterns,omitempty"`
+	ExcludedRepoPatterns *[]string `json:"excludedRepoPatterns,omitempty"`
+	IncludedFilePatterns *[]string `json:"includedFilePatterns,omitempty"`
+	IncludedRepoPatterns *[]string `json:"includedRepoPatterns,omitempty"`
+}
+
 // CodyGateway description: Configuration related to the Cody Gateway service management. This should only be used on sourcegraph.com.
 type CodyGateway struct {
 	// BigQueryDataset description: The dataset to pull BigQuery Cody Gateway related events from.
@@ -2767,6 +2775,8 @@ type SiteConfiguration struct {
 	CodeIntelRankingDocumentReferenceCountsGraphKey string `json:"codeIntelRanking.documentReferenceCountsGraphKey,omitempty"`
 	// CodeIntelRankingStaleResultsAge description: The interval at which to run the reduce job that computes document reference counts. Default is 24hrs.
 	CodeIntelRankingStaleResultsAge int `json:"codeIntelRanking.staleResultsAge,omitempty"`
+	// CodyContextFilters description: TODO
+	CodyContextFilters *CodyContextFilters `json:"cody.contextFilters,omitempty"`
 	// CodyEnabled description: Enable or disable Cody instance-wide. When Cody is disabled, all Cody endpoints and GraphQL queries will return errors, Cody will not show up in the site-admin sidebar, and Cody in the global navbar will only show a call-to-action for site-admins to enable Cody.
 	CodyEnabled *bool `json:"cody.enabled,omitempty"`
 	// CodyPermissions description: Whether to enable Cody role-based access controls. Only respected if cody.restrictUsersFeatureFlag is not set. See https://sourcegraph.com/docs/admin/access_control
@@ -3037,6 +3047,7 @@ func (v *SiteConfiguration) UnmarshalJSON(data []byte) error {
 	delete(m, "codeIntelRanking.documentReferenceCountsEnabled")
 	delete(m, "codeIntelRanking.documentReferenceCountsGraphKey")
 	delete(m, "codeIntelRanking.staleResultsAge")
+	delete(m, "cody.contextFilters")
 	delete(m, "cody.enabled")
 	delete(m, "cody.permissions")
 	delete(m, "cody.restrictUsersFeatureFlag")
