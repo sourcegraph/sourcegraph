@@ -7,5 +7,6 @@ import (
 )
 
 func main() {
+	println("test stamp")
 	runtime.Start[example.Config](example.Service{})
 }
