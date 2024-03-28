@@ -3,7 +3,7 @@ import React, { useCallback, useMemo } from 'react'
 import { mdiAlertCircle, mdiAlert, mdiArrowLeftBold, mdiArrowRightBold } from '@mdi/js'
 import classNames from 'classnames'
 import { type Observable, of, timer } from 'rxjs'
-import { catchError, concatMap, delay, map, repeatWhen, takeWhile } from 'rxjs/operators'
+import { catchError, concatMap, map, repeat, takeWhile } from 'rxjs/operators'
 import { parse as _parseVersion, type SemVer } from 'semver'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
@@ -93,7 +93,7 @@ export const SiteAdminMigrationsPage: React.FunctionComponent<
                     concatMap(() =>
                         fetchAllMigrations().pipe(
                             catchError((error): [ErrorLike] => [asError(error)]),
-                            repeatWhen(observable => observable.pipe(delay(REFRESH_INTERVAL_MS)))
+                            repeat({ delay: REFRESH_INTERVAL_MS })
                         )
                     ),
                     takeWhile(() => true, true)

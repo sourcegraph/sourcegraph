@@ -1,5 +1,5 @@
-import { from, type Observable } from 'rxjs'
-import { delay, filter, map, retryWhen, switchMap } from 'rxjs/operators'
+import { from, throwError, timer, type Observable } from 'rxjs'
+import { map, retry, switchMap } from 'rxjs/operators'
 
 import { createAggregateError, memoizeObservable, sha256 } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
@@ -167,19 +167,9 @@ export const resolveRevision = memoizeObservable(
 export function retryWhenCloneInProgressError<T>(): (v: Observable<T>) => Observable<T> {
     return (maybeErrors: Observable<T>) =>
         maybeErrors.pipe(
-            retryWhen(errors =>
-                errors.pipe(
-                    filter(error => {
-                        if (isCloneInProgressErrorLike(error)) {
-                            return true
-                        }
-
-                        // Don't swallow other errors.
-                        throw error
-                    }),
-                    delay(1000)
-                )
-            )
+            retry({
+                delay: error => (isCloneInProgressErrorLike(error) ? timer(1000) : throwError(() => error)),
+            })
         )
 }
 

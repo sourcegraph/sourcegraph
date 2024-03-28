@@ -89,31 +89,35 @@ async function createTestUser(
     { username, testUserPassword }: { username: string } & Pick<Config, 'testUserPassword'>
 ): Promise<void> {
     // If there's an error, try to create the user
-    const passwordResetURL = await gqlClient
-        .mutateGraphQL<CreateUserResult, CreateUserVariables>(
-            gql`
-                mutation CreateUser($username: String!, $email: String) {
-                    createUser(username: $username, email: $email) {
-                        resetPasswordURL
+    const passwordResetURL = await lastValueFrom(
+        gqlClient
+            .mutateGraphQL<CreateUserResult, CreateUserVariables>(
+                gql`
+                    mutation CreateUser($username: String!, $email: String) {
+                        createUser(username: $username, email: $email) {
+                            resetPasswordURL
+                        }
                     }
-                }
-            `,
-            { username, email: null }
-        )
-        .pipe(
-            map(dataOrThrowErrors),
-            catchError(error =>
-                throwError(
-                    new Error(
-                        `Could not create user ${JSON.stringify(
-                            username
-                        )} (you may need to update the sudo access token used by the test): ${asError(error).message})`
+                `,
+                { username, email: null }
+            )
+            .pipe(
+                map(dataOrThrowErrors),
+                catchError(error =>
+                    throwError(
+                        () =>
+                            new Error(
+                                `Could not create user ${JSON.stringify(
+                                    username
+                                )} (you may need to update the sudo access token used by the test): ${
+                                    asError(error).message
+                                })`
+                            )
                     )
-                )
-            ),
-            map(({ createUser }) => createUser.resetPasswordURL)
-        )
-        .toPromise()
+                ),
+                map(({ createUser }) => createUser.resetPasswordURL)
+            )
+    )
     if (!passwordResetURL) {
         throw new Error('passwordResetURL was empty')
     }
@@ -174,7 +178,7 @@ export async function ensureNewUser(
             throw error
         }
     }
-    await createUser({ requestGraphQL }, username, email).toPromise()
+    await createUser({ requestGraphQL }, username, email)
     return () => deleteUser({ requestGraphQL }, username, true)
 }
 
@@ -192,11 +196,11 @@ export async function ensureNewOrganization(
         throw new Error(`More than one organization name exists with name ${variables.name}`)
     }
     if (matchingOrgs.length === 1) {
-        await deleteOrganization({ requestGraphQL }, matchingOrgs[0].id).toPromise()
+        await deleteOrganization({ requestGraphQL }, matchingOrgs[0].id)
     }
     const createdOrg = await lastValueFrom(createOrganization({ requestGraphQL }, variables))
     return {
-        destroy: () => deleteOrganization({ requestGraphQL }, createdOrg.id).toPromise(),
+        destroy: () => deleteOrganization({ requestGraphQL }, createdOrg.id),
         result: createdOrg,
     }
 }
@@ -245,14 +249,10 @@ export async function editSiteConfig(
         newContents = jsonc.applyEdits(newContents, editFunc(newContents))
     }
     return {
-        result: await lastValueFrom(updateSiteConfiguration(gqlClient, origConfig.configuration.id, newContents)),
+        result: await updateSiteConfiguration(gqlClient, origConfig.configuration.id, newContents),
         destroy: async () => {
             const site = await lastValueFrom(fetchSiteConfiguration(gqlClient))
-            await updateSiteConfiguration(
-                gqlClient,
-                site.configuration.id,
-                origConfig.configuration.effectiveContents
-            ).toPromise()
+            await updateSiteConfiguration(gqlClient, site.configuration.id, origConfig.configuration.effectiveContents)
         },
     }
 }

@@ -1,4 +1,4 @@
-import { from, type Observable, of } from 'rxjs'
+import { from, type Observable, of, lastValueFrom, firstValueFrom } from 'rxjs'
 import { first } from 'rxjs/operators'
 import { TestScheduler } from 'rxjs/testing'
 import * as sinon from 'sinon'
@@ -358,8 +358,8 @@ describe('getDefinitionURL', () => {
 
     it('emits null if the locations result is empty', () =>
         expect(
-            of({ isLoading: false, result: [] })
-                .pipe(
+            lastValueFrom(
+                of({ isLoading: false, result: [] }).pipe(
                     getDefinitionURL(
                         { urlToFile, requestGraphQL },
                         {
@@ -369,7 +369,7 @@ describe('getDefinitionURL', () => {
                     ),
                     first(({ isLoading }) => !isLoading)
                 )
-                .toPromise()
+            )
         ).resolves.toStrictEqual({ isLoading: false, result: null }))
 
     describe('if there is exactly 1 location result', () => {
@@ -396,11 +396,11 @@ describe('getDefinitionURL', () => {
                         Partial<ViewStateSpec>
                 ) => ''
             )
-            await of({
-                isLoading: false,
-                result: [{ uri: 'git://r3?c3#f' }],
-            })
-                .pipe(
+            await lastValueFrom(
+                of({
+                    isLoading: false,
+                    result: [{ uri: 'git://r3?c3#f' }],
+                }).pipe(
                     getDefinitionURL(
                         { urlToFile, requestGraphQL },
                         {
@@ -410,7 +410,7 @@ describe('getDefinitionURL', () => {
                     ),
                     first(({ isLoading }) => !isLoading)
                 )
-                .toPromise()
+            )
             sinon.assert.calledOnce(urlToFile)
             expect(urlToFile.getCalls()[0].args[0]).toMatchObject({
                 filePath: 'f',
@@ -424,11 +424,11 @@ describe('getDefinitionURL', () => {
         describe('when the result is inside the current root', () => {
             it('emits the definition URL the user input revision (not commit SHA) of the root', () =>
                 expect(
-                    of({
-                        isLoading: false,
-                        result: [{ uri: 'git://r3?c3#f' }],
-                    })
-                        .pipe(
+                    lastValueFrom(
+                        of({
+                            isLoading: false,
+                            result: [{ uri: 'git://r3?c3#f' }],
+                        }).pipe(
                             getDefinitionURL(
                                 { urlToFile, requestGraphQL },
                                 {
@@ -438,18 +438,18 @@ describe('getDefinitionURL', () => {
                             ),
                             first(({ isLoading }) => !isLoading)
                         )
-                        .toPromise()
+                    )
                 ).resolves.toEqual({ isLoading: false, result: { url: '/r3@v3/-/blob/f', multiple: false } }))
         })
 
         describe('when the result is not inside the current root (different repo and/or commit)', () => {
             it('emits the definition URL with range', () =>
                 expect(
-                    of({
-                        isLoading: false,
-                        result: [FIXTURE_LOCATION_CLIENT],
-                    })
-                        .pipe(
+                    lastValueFrom(
+                        of({
+                            isLoading: false,
+                            result: [FIXTURE_LOCATION_CLIENT],
+                        }).pipe(
                             getDefinitionURL(
                                 { urlToFile, requestGraphQL },
                                 {
@@ -459,16 +459,16 @@ describe('getDefinitionURL', () => {
                             ),
                             first(({ isLoading }) => !isLoading)
                         )
-                        .toPromise()
+                    )
                 ).resolves.toEqual({ isLoading: false, result: { url: '/r2@c2/-/blob/f2?L3:3', multiple: false } }))
 
             it('emits the definition URL without range', () =>
                 expect(
-                    of({
-                        isLoading: false,
-                        result: [{ ...FIXTURE_LOCATION_CLIENT, range: undefined }],
-                    })
-                        .pipe(
+                    lastValueFrom(
+                        of({
+                            isLoading: false,
+                            result: [{ ...FIXTURE_LOCATION_CLIENT, range: undefined }],
+                        }).pipe(
                             getDefinitionURL(
                                 { urlToFile, requestGraphQL },
                                 {
@@ -478,27 +478,26 @@ describe('getDefinitionURL', () => {
                             ),
                             first(({ isLoading }) => !isLoading)
                         )
-                        .toPromise()
+                    )
                 ).resolves.toEqual({ isLoading: false, result: { url: '/r2@c2/-/blob/f2', multiple: false } }))
         })
     })
 
     it('emits the definition panel URL if there is more than 1 location result', () =>
         expect(
-            of({
-                isLoading: false,
-                result: [FIXTURE_LOCATION_CLIENT, { ...FIXTURE_LOCATION, uri: 'other' }],
-            })
-                .pipe(
+            firstValueFrom(
+                of({
+                    isLoading: false,
+                    result: [FIXTURE_LOCATION_CLIENT, { ...FIXTURE_LOCATION, uri: 'other' }],
+                }).pipe(
                     getDefinitionURL(
                         { urlToFile, requestGraphQL },
                         {
                             getWorkspaceRoots: () => of([{ uri: 'git://r?c', inputRevision: 'v' }]),
                         },
                         FIXTURE_PARAMS
-                    ),
-                    first()
+                    )
                 )
-                .toPromise()
+            )
         ).resolves.toEqual({ isLoading: false, result: { url: '/r@v/-/blob/f?L2:2#tab=def', multiple: true } }))
 })

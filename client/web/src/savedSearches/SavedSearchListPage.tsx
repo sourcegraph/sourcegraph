@@ -5,7 +5,7 @@ import { VisuallyHidden } from '@reach/visually-hidden'
 import classNames from 'classnames'
 import { useLocation } from 'react-router-dom'
 import { Subject, Subscription } from 'rxjs'
-import { catchError, mapTo, switchMap } from 'rxjs/operators'
+import { catchError, map, switchMap } from 'rxjs/operators'
 import { useCallbackRef } from 'use-callback-ref'
 
 import { logger } from '@sourcegraph/common'
@@ -58,7 +58,7 @@ class SavedSearchNode extends React.PureComponent<NodeProps, NodeState> {
                 .pipe(
                     switchMap(search =>
                         deleteSavedSearch(search.id).pipe(
-                            mapTo(undefined),
+                            map(() => undefined),
                             catchError(error => {
                                 logger.error(error)
                                 return []

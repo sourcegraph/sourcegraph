@@ -9,8 +9,8 @@ import {
     type TransactionSpec,
 } from '@codemirror/state'
 import { Decoration, EditorView, keymap } from '@codemirror/view'
-import { concat, from, of } from 'rxjs'
-import { timeoutWith } from 'rxjs/operators'
+import { from, merge, timer } from 'rxjs'
+import { map, takeWhile } from 'rxjs/operators'
 
 import type { LineOrPositionOrRange } from '@sourcegraph/common'
 
@@ -239,15 +239,14 @@ const selectedToken = StateField.define<{
                         return true
                     }
 
-                    const tooltip$ = from(getHoverTooltip(view.state, selected.range.from))
+                    const loadingTooltip = new LoadingTooltip(selected.range.from, selected.range.to)
                     showTokenTooltip(
                         view,
-                        tooltip$.pipe(
-                            timeoutWith(
-                                50,
-                                concat(of(new LoadingTooltip(selected.range.from, selected.range.to)), tooltip$)
-                            )
-                        )
+                        // Show loading tooltip after 50ms, if the request is still pending
+                        merge(
+                            from(getHoverTooltip(view.state, selected.range.from)),
+                            timer(50).pipe(map(() => loadingTooltip))
+                        ).pipe(takeWhile(tooltip => tooltip !== loadingTooltip, true))
                     )
                     return true
                 },

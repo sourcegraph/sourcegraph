@@ -15,7 +15,6 @@ import {
     switchMap,
     take,
     concatMap,
-    mapTo,
     catchError,
     distinctUntilChanged,
 } from 'rxjs/operators'
@@ -424,7 +423,7 @@ main()
 
 function validateSite(): Observable<boolean> {
     return fetchSite(requestGraphQL).pipe(
-        mapTo(true),
+        map(() => true),
         catchError(() => [false])
     )
 }
@@ -458,7 +457,7 @@ function observeCurrentTabRepoSyncError(): Observable<boolean> {
 function observeSourcegraphUrlValidation(): Observable<boolean> {
     return merge(
         // Whenever the URL was persisted to storage, we can assume it was validated before-hand
-        observeStorageKey('sync', 'sourcegraphURL').pipe(mapTo(true)),
+        observeStorageKey('sync', 'sourcegraphURL').pipe(map(() => true)),
         timer(0, INTERVAL_FOR_SOURCEGRPAH_URL_CHECK).pipe(mergeMap(() => validateSite()))
     )
 }

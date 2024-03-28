@@ -1,6 +1,5 @@
 import type { Remote } from 'comlink'
-import { concat, from, of, Subscription, type Unsubscribable } from 'rxjs'
-import { first } from 'rxjs/operators'
+import { firstValueFrom, lastValueFrom, Subscription, type Unsubscribable } from 'rxjs'
 
 import type { ActionContributionClientCommandUpdateConfiguration, Evaluated, KeyPath } from '@sourcegraph/client-api'
 import { formatSearchParameters } from '@sourcegraph/common'
@@ -66,14 +65,10 @@ export function registerBuiltinClientCommands(
         registerCommand({
             command: 'executeLocationProvider',
             run: (id: string, uri: string, position: Position) =>
-                concat(
+                firstValueFrom(
                     wrapRemoteObservable(extensionHost.getLocations(id, { textDocument: { uri }, position })),
-                    // Concat with [] to avoid undefined promise value when the getLocation observable completes
-                    // without emitting. See https://github.com/ReactiveX/rxjs/issues/1736.
-                    of([])
-                )
-                    .pipe(first())
-                    .toPromise(),
+                    { defaultValue: [] }
+                ),
         })
     )
 
@@ -101,13 +96,13 @@ export function registerBuiltinClientCommands(
                 // is set to `true`. It is up to the client (e.g. browser
                 // extension) to check that parameter and prevent the request
                 // from being sent to Sourcegraph.com.
-                from(
+                lastValueFrom(
                     context.requestGraphQL({
                         request: query,
                         variables,
                         mightContainPrivateInfo: true,
                     })
-                ).toPromise(),
+                ),
         })
     )
 

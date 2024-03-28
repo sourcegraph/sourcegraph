@@ -5,7 +5,7 @@ import AlertCircleIcon from 'mdi-react/AlertCircleIcon'
 import MapSearchIcon from 'mdi-react/MapSearchIcon'
 import { Route, Routes, type NavigateFunction } from 'react-router-dom'
 import { combineLatest, merge, type Observable, of, Subject, Subscription } from 'rxjs'
-import { catchError, distinctUntilChanged, map, mapTo, startWith, switchMap } from 'rxjs/operators'
+import { catchError, distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators'
 
 import { type ErrorLike, isErrorLike, asError, logger } from '@sourcegraph/common'
 import { gql, dataOrThrowErrors } from '@sourcegraph/http-client'
@@ -170,7 +170,7 @@ export class OrgArea extends React.Component<OrgAreaProps> {
 
         // Fetch organization.
         this.subscriptions.add(
-            combineLatest([nameChanges, merge(this.refreshRequests.pipe(mapTo(false)), of(true))])
+            combineLatest([nameChanges, merge(this.refreshRequests.pipe(map(() => false)), of(true))])
                 .pipe(
                     switchMap(([name, forceRefresh]) => {
                         type PartialStateUpdate = Pick<State, 'orgOrError'>

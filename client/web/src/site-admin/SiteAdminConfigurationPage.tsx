@@ -4,8 +4,8 @@ import type { FC } from 'react'
 import { type ApolloClient, useApolloClient } from '@apollo/client'
 import classNames from 'classnames'
 import * as jsonc from 'jsonc-parser'
-import { lastValueFrom, Subject, Subscription } from 'rxjs'
-import { delay, mergeMap, retryWhen, tap, timeout } from 'rxjs/operators'
+import { lastValueFrom, timer, Subject, Subscription } from 'rxjs'
+import { delay, mergeMap, retry, tap, timeout } from 'rxjs/operators'
 
 import { logger } from '@sourcegraph/common'
 import type { SiteConfiguration } from '@sourcegraph/shared/src/schema/site.schema'
@@ -276,12 +276,12 @@ class SiteAdminConfigurationContent extends React.Component<Props, State> {
                     mergeMap(() =>
                         // wait for server to restart
                         fetchSite().pipe(
-                            retryWhen(errors =>
-                                errors.pipe(
-                                    tap(() => this.forceUpdate()),
-                                    delay(500)
-                                )
-                            ),
+                            retry({
+                                delay: () => {
+                                    this.forceUpdate()
+                                    return timer(500)
+                                },
+                            }),
                             timeout(10000)
                         )
                     ),

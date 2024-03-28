@@ -1,7 +1,7 @@
 import { proxy, type Remote } from 'comlink'
 import { noop, sortBy } from 'lodash'
 import { BehaviorSubject, EMPTY, type Unsubscribable } from 'rxjs'
-import { mapTo } from 'rxjs/operators'
+import { map } from 'rxjs/operators'
 import type * as sourcegraph from 'sourcegraph'
 
 import { logger } from '@sourcegraph/common'
@@ -60,9 +60,12 @@ export function createExtensionAPIFactory(
         }
         return configuration
     }
-    const configuration: typeof sourcegraph['configuration'] = Object.assign(state.settings.pipe(mapTo(undefined)), {
-        get: getConfiguration,
-    })
+    const configuration: typeof sourcegraph['configuration'] = Object.assign(
+        state.settings.pipe(map(() => undefined)),
+        {
+            get: getConfiguration,
+        }
+    )
 
     // Workspace
     const workspace: typeof sourcegraph['workspace'] = {
@@ -80,7 +83,7 @@ export function createExtensionAPIFactory(
         },
         onDidOpenTextDocument: state.openedTextDocuments.asObservable(),
         openedTextDocuments: state.openedTextDocuments.asObservable(),
-        onDidChangeRoots: state.roots.pipe(mapTo(undefined)),
+        onDidChangeRoots: state.roots.pipe(map(() => undefined)),
         rootChanges: state.rootChanges.asObservable(),
         versionContextChanges: EMPTY,
         searchContextChanges: state.searchContextChanges.asObservable(),

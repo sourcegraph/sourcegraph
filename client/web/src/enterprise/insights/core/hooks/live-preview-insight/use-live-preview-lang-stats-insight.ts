@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { escapeRegExp, partition, sum } from 'lodash'
-import { defer, type Observable } from 'rxjs'
+import { defer, lastValueFrom, type Observable } from 'rxjs'
 import { map, retry } from 'rxjs/operators'
 
 import { asError } from '@sourcegraph/common'
@@ -114,13 +114,14 @@ async function getLangStats(inputs: GetInsightContentInputs): Promise<Categorica
     const pathRegexp = path ? `file:^${escapeRegExp(path)}/` : ''
     const query = `repo:^${escapeRegExp(repository)}$ ${pathRegexp}`
 
-    const stats = await defer(() => fetchLangStatsInsight(query))
-        .pipe(
+    const stats = await lastValueFrom(
+        defer(() => fetchLangStatsInsight(query)).pipe(
             // The search may time out, but a retry is then likely faster because caches are warm
             retry(3),
             map(data => data.search!.stats)
-        )
-        .toPromise()
+        ),
+        { defaultValue: undefined }
+    )
 
     if (!stats || stats.languages.length === 0) {
         throw new Error("We couldn't find the language statistics, try changing the repository.")

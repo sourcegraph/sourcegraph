@@ -114,7 +114,7 @@ function mockQueryConduit(responseMap?: ConduitResponseMap): QueryConduitHelper<
     return (endpoint, parameters) => {
         const mock = responseMap?.[endpoint] || DEFAULT_CONDUIT_RESPONSES[endpoint]
         if (!mock) {
-            return throwError(new Error(`No mock for endpoint ${endpoint}`))
+            return throwError(() => new Error(`No mock for endpoint ${endpoint}`))
         }
         return mock(parameters)
     }

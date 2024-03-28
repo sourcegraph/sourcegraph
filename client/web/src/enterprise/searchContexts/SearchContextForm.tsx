@@ -268,7 +268,7 @@ export const SearchContextForm: React.FunctionComponent<React.PropsWithChildren<
                             return parseRepositories().pipe(
                                 switchMap(repositoriesOrError => {
                                     if (repositoriesOrError.type === 'errors') {
-                                        return throwError(createAggregateError(repositoriesOrError.errors))
+                                        return throwError(() => createAggregateError(repositoriesOrError.errors))
                                     }
                                     return of(repositoriesOrError.repositories)
                                 }),
@@ -276,7 +276,7 @@ export const SearchContextForm: React.FunctionComponent<React.PropsWithChildren<
                             )
                         }
                         if (queryState.query.trim().length === 0) {
-                            return throwError(new Error('Search query has to be non-empty.'))
+                            return throwError(() => new Error('Search query has to be non-empty.'))
                         }
                         return of({ input: { ...partialInput, query: queryState.query }, repositories: [] })
                     }),

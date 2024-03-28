@@ -1,5 +1,7 @@
 import { useContext, useState } from 'react'
 
+import { lastValueFrom } from 'rxjs'
+
 import { type ErrorLike, asError } from '@sourcegraph/common'
 
 import { CodeInsightsBackendContext } from '../../../../../../core/backend/code-insights-backend-context'
@@ -28,7 +30,7 @@ export function useDeleteDashboardHandler(props: UseDeleteDashboardHandlerProps)
         setLoadingOrError(true)
 
         try {
-            await deleteDashboard({ id: dashboard.id }).toPromise()
+            await lastValueFrom(deleteDashboard({ id: dashboard.id }), { defaultValue: undefined })
 
             setLoadingOrError(false)
             onSuccess()

@@ -1,4 +1,4 @@
-import { of } from 'rxjs'
+import { of, lastValueFrom } from 'rxjs'
 
 import {
     type ContentMatch,
@@ -249,9 +249,7 @@ export const downloadSearchResults = (
           })
         : of(results)
 
-    // Once we update to RxJS 7, we need to change `toPromise` to `lastValueFrom`.
-    // See https://rxjs.dev/deprecations/to-promise
-    return resultsObservable.toPromise().then(results => {
+    return lastValueFrom(resultsObservable, { defaultValue: undefined }).then(results => {
         if (results?.state === 'error') {
             const error = results.progress.skipped.find(skipped => skipped.reason === 'error')
             if (error) {

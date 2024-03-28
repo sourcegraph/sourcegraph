@@ -237,20 +237,20 @@ function inviteUserToOrganization(
 }
 
 function addUserToOrganization(username: string, organization: Scalars['ID']): Promise<void> {
-    return requestGraphQL<AddUserToOrganizationResult, AddUserToOrganizationVariables>(
-        gql`
-            mutation AddUserToOrganization($organization: ID!, $username: String!) {
-                addUserToOrganization(organization: $organization, username: $username) {
-                    alwaysNil
+    return lastValueFrom(
+        requestGraphQL<AddUserToOrganizationResult, AddUserToOrganizationVariables>(
+            gql`
+                mutation AddUserToOrganization($organization: ID!, $username: String!) {
+                    addUserToOrganization(organization: $organization, username: $username) {
+                        alwaysNil
+                    }
                 }
+            `,
+            {
+                username,
+                organization,
             }
-        `,
-        {
-            username,
-            organization,
-        }
-    )
-        .pipe(
+        ).pipe(
             map(({ data, errors }) => {
                 if (!data?.addUserToOrganization || (errors && errors.length > 0)) {
                     eventLogger.log('AddOrgMemberFailed')
@@ -259,7 +259,7 @@ function addUserToOrganization(username: string, organization: Scalars['ID']): P
                 eventLogger.log('OrgMemberAdded')
             })
         )
-        .toPromise()
+    )
 }
 
 interface InvitedNotificationProps {

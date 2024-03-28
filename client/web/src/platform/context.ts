@@ -1,6 +1,6 @@
 import type { ApolloClient, ApolloQueryResult, ObservableQuery } from '@apollo/client'
-import { from } from 'rxjs'
-import { map, publishReplay, refCount, shareReplay } from 'rxjs/operators'
+import { from, ReplaySubject } from 'rxjs'
+import { map, share, shareReplay } from 'rxjs/operators'
 
 import { createAggregateError, asError, logger } from '@sourcegraph/common'
 import { fromObservableQueryPromise, getDocumentNode } from '@sourcegraph/http-client'
@@ -41,8 +41,12 @@ export function createPlatformContext(props: {
             map(mapViewerSettingsResult),
             shareReplay(1),
             map(gqlToCascade),
-            publishReplay(1),
-            refCount()
+            share({
+                connector: () => new ReplaySubject(1),
+                resetOnError: false,
+                resetOnComplete: false,
+                resetOnRefCountZero: false,
+            })
         ),
         updateSettings: async (subject, edit) => {
             const settingsQueryWatcher = await settingsQueryWatcherPromise

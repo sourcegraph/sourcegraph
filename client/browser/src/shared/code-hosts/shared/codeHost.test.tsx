@@ -4,8 +4,8 @@ import { promisify } from 'util'
 import type { RenderResult } from '@testing-library/react'
 import type { Remote } from 'comlink'
 import { uniqueId, noop, pick } from 'lodash'
-import { BehaviorSubject, NEVER, of, Subscription } from 'rxjs'
-import { take, first } from 'rxjs/operators'
+import { BehaviorSubject, firstValueFrom, lastValueFrom, NEVER, of, Subscription } from 'rxjs'
+import { take } from 'rxjs/operators'
 import { TestScheduler } from 'rxjs/testing'
 import * as sinon from 'sinon'
 import type * as sourcegraph from 'sourcegraph'
@@ -207,7 +207,7 @@ describe('codeHost', () => {
                     }),
                 })
             )
-            await wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(first()).toPromise()
+            await firstValueFrom(wrapRemoteObservable(extensionHostAPI.viewerUpdates()))
 
             expect(getEditors(extensionAPI)).toEqual([
                 {
@@ -277,7 +277,9 @@ describe('codeHost', () => {
                     platformContext: createMockPlatformContext(),
                 })
             )
-            await wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(take(2)).toPromise()
+            await lastValueFrom(wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(take(2)), {
+                defaultValue: null,
+            })
 
             expect(getEditors(extensionAPI)).toEqual([
                 {
@@ -299,7 +301,7 @@ describe('codeHost', () => {
             // // Simulate codeView1 removal
             setTimeout(() => mutations.next([{ addedNodes: [], removedNodes: [codeView1] }]))
             // One editor should have been removed, model should still exist
-            await wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(first()).toPromise()
+            await firstValueFrom(wrapRemoteObservable(extensionHostAPI.viewerUpdates()), { defaultValue: null })
 
             expect(getEditors(extensionAPI)).toEqual([
                 {
@@ -313,7 +315,7 @@ describe('codeHost', () => {
             // // Simulate codeView2 removal
             setTimeout(() => mutations.next([{ addedNodes: [], removedNodes: [codeView2] }]))
             // // Second editor and model should have been removed
-            await wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(first()).toPromise()
+            await firstValueFrom(wrapRemoteObservable(extensionHostAPI.viewerUpdates()), { defaultValue: null })
             expect(getEditors(extensionAPI)).toEqual([])
         })
 
@@ -357,7 +359,7 @@ describe('codeHost', () => {
                     extensionsController: createMockController(extensionHostAPI),
                 })
             )
-            await wrapRemoteObservable(extensionHostAPI.viewerUpdates()).pipe(first()).toPromise()
+            await firstValueFrom(wrapRemoteObservable(extensionHostAPI.viewerUpdates()), { defaultValue: null })
             expect(getEditors(extensionAPI).length).toEqual(1)
             await tick()
             codeView.dispatchEvent(new MouseEvent('mouseover'))

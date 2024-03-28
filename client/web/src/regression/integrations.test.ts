@@ -1,5 +1,5 @@
 import { describe, test } from 'mocha'
-import { merge } from 'rxjs'
+import { lastValueFrom, merge } from 'rxjs'
 import { fromFetch } from 'rxjs/fetch'
 import { catchError } from 'rxjs/operators'
 
@@ -17,14 +17,18 @@ describe('Native integrations regression test suite', () => {
             '/.assets/extension/css/contentPage.main.bundle.css',
             '/.assets/extension/extensionHostFrame.html',
         ]
-        await merge(
-            ...assets.map(asset =>
-                fromFetch(new URL(asset, sourcegraphBaseUrl).href, { selector: response => [checkOk(response)] }).pipe(
-                    catchError(() => {
-                        throw new Error('Error fetching native integration asset: ' + asset)
-                    })
+        await lastValueFrom(
+            merge(
+                ...assets.map(asset =>
+                    fromFetch(new URL(asset, sourcegraphBaseUrl).href, {
+                        selector: response => [checkOk(response)],
+                    }).pipe(
+                        catchError(() => {
+                            throw new Error('Error fetching native integration asset: ' + asset)
+                        })
+                    )
                 )
             )
-        ).toPromise()
+        )
     })
 })

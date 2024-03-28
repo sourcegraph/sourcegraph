@@ -1,5 +1,5 @@
 import { type Location, createPath } from 'react-router-dom'
-import { Subscription, Subject } from 'rxjs'
+import { Subscription, Subject, lastValueFrom } from 'rxjs'
 import { tap, last } from 'rxjs/operators'
 import { afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 
@@ -198,11 +198,11 @@ describe('updateQueryStateFromURL', () => {
             const { wait, done } = createBarrier()
             const [locationSubject, location] = createHistoryObservable('q=context:me+test')
 
-            getQueryStateFromLocation({
-                location: locationSubject,
-                isSearchContextAvailable,
-            })
-                .pipe(
+            lastValueFrom(
+                getQueryStateFromLocation({
+                    location: locationSubject,
+                    isSearchContextAvailable,
+                }).pipe(
                     last(),
                     tap(({ searchContextSpec, query }) => {
                         expect(searchContextSpec?.spec).toEqual('me')
@@ -210,8 +210,7 @@ describe('updateQueryStateFromURL', () => {
                         done()
                     })
                 )
-                .toPromise()
-                .catch(logger.error)
+            ).catch(logger.error)
 
             locationSubject.next(location)
             locationSubject.complete()

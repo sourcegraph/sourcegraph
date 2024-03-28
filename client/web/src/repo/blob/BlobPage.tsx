@@ -7,7 +7,7 @@ import MapSearchIcon from 'mdi-react/MapSearchIcon'
 import { createPortal } from 'react-dom'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import type { Observable } from 'rxjs'
-import { catchError, map, mapTo, startWith, switchMap } from 'rxjs/operators'
+import { catchError, map, startWith, switchMap } from 'rxjs/operators'
 import type { Optional } from 'utility-types'
 
 import type { StreamingSearchResultsListProps } from '@sourcegraph/branded'
@@ -242,7 +242,7 @@ export const BlobPage: React.FunctionComponent<BlobPageProps> = ({ className, co
         useCallback(
             (clicks: Observable<void>) =>
                 clicks.pipe(
-                    mapTo(true),
+                    map(() => true),
                     startWith(false),
                     switchMap(disableTimeout =>
                         fetchBlob({

@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import copy from 'copy-to-clipboard'
 import { merge, type Observable, of } from 'rxjs'
-import { delay, startWith, switchMapTo, tap } from 'rxjs/operators'
+import { delay, startWith, switchMap, tap } from 'rxjs/operators'
 
 import { useEventObservable } from '@sourcegraph/wildcard'
 
@@ -23,7 +23,7 @@ export function useCopyURLHandler(): useCopiedHandlerReturn {
             (clicks: Observable<URLValue>) =>
                 clicks.pipe(
                     tap(copyDashboardURL),
-                    switchMapTo(merge(of(true), of(false).pipe(delay(2000)))),
+                    switchMap(() => merge(of(true), of(false).pipe(delay(2000)))),
                     startWith(false)
                 ),
             [copyDashboardURL]

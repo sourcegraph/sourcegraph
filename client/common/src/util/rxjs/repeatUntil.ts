@@ -1,5 +1,5 @@
 import type { Observable } from 'rxjs'
-import { repeatWhen, delay, takeWhile, repeat } from 'rxjs/operators'
+import { takeWhile, repeat } from 'rxjs/operators'
 
 /**
  * Mirrors values from the source observable and resubscribes to the source observable when it completes,
@@ -17,7 +17,7 @@ export const repeatUntil =
     ) =>
     (source: Observable<T>): Observable<T> =>
         source.pipe(
-            options ? repeatWhen(completions => completions.pipe(delay(options.delay))) : repeat(),
+            repeat(options),
             // Inclusive takeWhile so that the first value matching `select()` is emitted.
             takeWhile(value => !select(value), true)
         )

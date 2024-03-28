@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 
 import type { Subject } from 'rxjs'
-import { delay, repeatWhen, tap } from 'rxjs/operators'
+import { repeat, tap } from 'rxjs/operators'
 
 import { H2 } from '@sourcegraph/wildcard'
 
@@ -50,7 +50,7 @@ export const ExternalServiceSyncJobsList: React.FunctionComponent<ExternalServic
                         }
                     }
                 }),
-                repeatWhen(obs => obs.pipe(delay(1500)))
+                repeat({ delay: 1500 })
             ),
         [externalServiceID, queryExternalServiceSyncJobs, updateSyncInProgress, updateNumberOfRepos]
     )

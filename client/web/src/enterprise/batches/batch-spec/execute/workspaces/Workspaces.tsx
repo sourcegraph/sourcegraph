@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 
-import { delay, repeatWhen, retryWhen, filter, tap } from 'rxjs/operators'
+import { timer } from 'rxjs'
+import { repeat, retry, tap } from 'rxjs/operators'
 
 import { FilteredConnection, type FilteredConnectionQueryArguments } from '../../../../../components/FilteredConnection'
 import { ConnectionError } from '../../../../../components/FilteredConnection/ui'
@@ -45,19 +46,15 @@ export const Workspaces: React.FunctionComponent<React.PropsWithChildren<Workspa
                 search: filters.search ?? null,
                 state: filters.state ?? null,
             }).pipe(
-                repeatWhen(notifier => notifier.pipe(delay(2500))),
-                retryWhen(errors =>
-                    errors.pipe(
-                        filter(error => {
-                            // Capture the error, but don't throw it so the data in the
-                            // connection remains visible.
-                            setError(error)
-                            return true
-                        }),
-                        // Retry after 5s.
-                        delay(5000)
-                    )
-                ),
+                repeat({ delay: 2500 }),
+                retry({
+                    delay: error => {
+                        // Capture the error, but don't throw it so the data in the
+                        // connection remains visible.
+                        setError(error)
+                        return timer(5000)
+                    },
+                }),
                 tap(() => {
                     // Reset the error when the query succeeds.
                     setError(undefined)

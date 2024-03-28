@@ -48,7 +48,7 @@ export const AuthenticatedEditSearchContextPage: React.FunctionComponent<
             repositories: SearchContextRepositoryRevisionsInput[]
         ): Observable<SearchContextFields> => {
             if (!id) {
-                return throwError(new Error('Cannot update search context with undefined ID'))
+                return throwError(() => new Error('Cannot update search context with undefined ID'))
             }
             return updateSearchContext({ id, searchContext, repositories }, platformContext)
         },
@@ -61,7 +61,9 @@ export const AuthenticatedEditSearchContextPage: React.FunctionComponent<
                 fetchSearchContextBySpec(spec, platformContext).pipe(
                     switchMap(searchContext => {
                         if (!searchContext.viewerCanManage) {
-                            return throwError(new Error('You do not have sufficient permissions to edit this context.'))
+                            return throwError(
+                                () => new Error('You do not have sufficient permissions to edit this context.')
+                            )
                         }
                         return of(searchContext)
                     }),

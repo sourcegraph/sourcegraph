@@ -1,6 +1,7 @@
 import { type FC, useContext } from 'react'
 
 import { useNavigate } from 'react-router-dom'
+import { lastValueFrom } from 'rxjs'
 
 import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
@@ -42,7 +43,7 @@ export const InsightCreationPage: FC<InsightCreationPageProps> = props => {
     const handleInsightCreateRequest = async (event: InsightCreateEvent): Promise<unknown> => {
         const { insight } = event
 
-        return createInsight({ insight, dashboardId: dashboardId ?? null }).toPromise()
+        return lastValueFrom(createInsight({ insight, dashboardId: dashboardId ?? null }), { defaultValue: undefined })
     }
 
     const handleInsightSuccessfulCreation = (): void => {

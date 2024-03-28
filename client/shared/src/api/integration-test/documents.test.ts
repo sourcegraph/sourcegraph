@@ -16,7 +16,7 @@ describe('Documents (integration)', () => {
 
         test('adds new text documents', async () => {
             const { extensionAPI, extensionHostAPI } = await integrationTestContext()
-            // const documents = from(extensionAPI.workspace.openedTextDocuments).pipe(take(1)).toPromise()
+            // const documents = firstValueFrom(from(extensionAPI.workspace.openedTextDocuments))
             await extensionHostAPI.addTextDocumentIfNotExists({ uri: 'file:///f2', languageId: 'l2', text: 't2' })
 
             assertToJSON(extensionAPI.workspace.textDocuments, [

@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/browser'
 import classNames from 'classnames'
 import { fromEvent, lastValueFrom } from 'rxjs'
-import { filter, map, mapTo, tap } from 'rxjs/operators'
+import { filter, map, tap } from 'rxjs/operators'
 import type { Omit } from 'utility-types'
 
 import { fetchCache, type LineOrPositionOrRange, subtypeOf } from '@sourcegraph/common'
@@ -304,7 +304,7 @@ export const gitlabCodeHost = subtypeOf<CodeHost>()({
                 tap(({ repository }) => {
                     repoNameOnSourcegraph.next(repository?.name ?? '')
                 }),
-                mapTo(true)
+                map(() => true)
             )
         ),
 })

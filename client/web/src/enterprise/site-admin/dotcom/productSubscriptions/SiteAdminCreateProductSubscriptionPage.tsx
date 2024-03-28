@@ -3,7 +3,7 @@ import React, { useCallback, useEffect } from 'react'
 import { mdiPlus } from '@mdi/js'
 import { Navigate } from 'react-router-dom'
 import { merge, of, type Observable } from 'rxjs'
-import { catchError, concatMapTo, map, tap } from 'rxjs/operators'
+import { catchError, concatMap, map, tap } from 'rxjs/operators'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
@@ -63,7 +63,7 @@ const UserCreateSubscriptionNode: React.FunctionComponent<React.PropsWithChildre
                 submits.pipe(
                     tap(event => event.preventDefault()),
                     tap(() => eventLogger.log('NewProductSubscriptionCreated')),
-                    concatMapTo(
+                    concatMap(() =>
                         merge(
                             of('saving' as const),
                             createProductSubscription({ accountID: props.node.id }).pipe(

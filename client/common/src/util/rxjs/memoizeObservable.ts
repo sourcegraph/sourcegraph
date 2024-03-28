@@ -1,5 +1,5 @@
-import type { Observable } from 'rxjs'
-import { publishReplay, refCount, tap } from 'rxjs/operators'
+import { ReplaySubject, type Observable } from 'rxjs'
+import { share, tap } from 'rxjs/operators'
 
 let allCachesResetSeq = 0
 
@@ -40,8 +40,12 @@ export function memoizeObservable<P, T>(
             return hit
         }
         const observable = func(parameters).pipe(
-            publishReplay(),
-            refCount(),
+            share({
+                connector: () => new ReplaySubject(1),
+                resetOnError: false,
+                resetOnComplete: false,
+                resetOnRefCountZero: false,
+            }),
             tap({
                 error: () => {
                     cache.delete(key)

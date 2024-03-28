@@ -2,6 +2,7 @@ import React, { useContext, useMemo, useState } from 'react'
 
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
+import { lastValueFrom } from 'rxjs'
 
 import { useQuery } from '@sourcegraph/http-client'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
@@ -121,7 +122,9 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
     }
 
     const handleFilterSave = async (filters: InsightFilters): Promise<void> => {
-        await updateInsight({ insightId: insight.id, nextInsightData: { ...insight, filters } }).toPromise()
+        await lastValueFrom(updateInsight({ insightId: insight.id, nextInsightData: { ...insight, filters } }), {
+            defaultValue: undefined,
+        })
         setOriginalInsightFilters(filters)
         telemetryService.log('CodeInsightsSearchBasedFilterUpdating')
         telemetryRecorder.recordEvent('insights.searchBasedFilter', 'update', { metadata: { location: 1 } })

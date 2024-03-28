@@ -23,7 +23,6 @@ import {
     filter,
     first,
     map,
-    mapTo,
     observeOn,
     share,
     switchMap,
@@ -459,11 +458,11 @@ export function createHoverifier<C extends object, D, A>({
                     overlayElement === null
                         ? of(value)
                         : race(
-                              fromEvent(overlayElement, 'mouseover').pipe(mapTo('suppress')),
+                              fromEvent(overlayElement, 'mouseover').pipe(map(() => 'suppress')),
                               of('emit').pipe(delay(MOUSEOVER_DELAY))
                           ).pipe(
                               filter(action => action === 'emit'),
-                              mapTo(value)
+                              map(() => value)
                           )
                 )
             )
@@ -744,14 +743,14 @@ export function createHoverifier<C extends object, D, A>({
             scrollEvents.pipe(
                 filter(() => scrollBoundaries.some(elementOverlaps(hoveredTokenElement))),
                 first(),
-                mapTo({
+                map(() => ({
                     ...rest,
                     hoveredTokenElement,
                     pinned: false,
                     hoverOrError: undefined,
                     hoveredToken: undefined,
                     actionsOrError: undefined,
-                })
+                }))
             )
         )
     }

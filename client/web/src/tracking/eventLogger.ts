@@ -1,5 +1,5 @@
-import { EMPTY, fromEvent, merge, type Observable } from 'rxjs'
-import { catchError, map, publishReplay, refCount, take } from 'rxjs/operators'
+import { EMPTY, fromEvent, merge, ReplaySubject, type Observable } from 'rxjs'
+import { catchError, map, share, take } from 'rxjs/operators'
 import * as uuid from 'uuid'
 
 import { isErrorLike, isFirefox, logger } from '@sourcegraph/common'
@@ -66,8 +66,12 @@ const browserExtensionMessageReceived: Observable<{ platform?: string; version?:
     )
 ).pipe(
     // Replay the same latest value for every subscriber
-    publishReplay(1),
-    refCount()
+    share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false,
+    })
 )
 
 export class EventLogger implements TelemetryService, SharedEventLogger {

@@ -1,4 +1,4 @@
-import { take } from 'rxjs/operators'
+import { firstValueFrom } from 'rxjs'
 
 import { logger } from '@sourcegraph/common'
 
@@ -77,7 +77,9 @@ export async function migrateLocalStorageToTemporarySettings(storage: TemporaryS
     for (const migration of migrations) {
         // Use the first value of the setting to check if it exists.
         // Only migrate if the setting is not already set.
-        const temporarySetting = await storage.get(migration.temporarySettingsKey).pipe(take(1)).toPromise()
+        const temporarySetting = await firstValueFrom(storage.get(migration.temporarySettingsKey), {
+            defaultValue: undefined,
+        })
         if (temporarySetting === undefined) {
             try {
                 const value = parse(migration.type, localStorage.getItem(migration.localStorageKey))

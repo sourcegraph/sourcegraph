@@ -19,6 +19,7 @@ import {
     BehaviorSubject,
     fromEvent,
     lastValueFrom,
+    throwError,
 } from 'rxjs'
 import {
     catchError,
@@ -33,8 +34,7 @@ import {
     tap,
     startWith,
     distinctUntilChanged,
-    retryWhen,
-    mapTo,
+    retry,
     take,
 } from 'rxjs/operators'
 
@@ -680,7 +680,7 @@ const isSafeToContinueCodeIntel = async ({
             // Show "Configure Sourcegraph" button
             console.warn('Repository is not cloned.', error)
 
-            const settingsURL = await observeUserSettingsURL(requestGraphQL).toPromise()
+            const settingsURL = await lastValueFrom(observeUserSettingsURL(requestGraphQL), { defaultValue: undefined })
 
             if (rawRepoName && settingsURL) {
                 render(
@@ -817,7 +817,7 @@ export async function handleCodeHost({
             switchMap(([, { rawRepoName, revision }]) =>
                 resolveRevision({ repoName: rawRepoName, revision, requestGraphQL }).pipe(
                     retryWhenCloneInProgressError(),
-                    mapTo(true),
+                    map(() => true),
                     startWith(undefined)
                 )
             ),
@@ -944,17 +944,9 @@ export async function handleCodeHost({
                     },
                 }),
                 // Retry auth errors after the user closed a sign-in tab
-                retryWhen(errors =>
-                    errors.pipe(
-                        // Don't swallow non-auth errors
-                        tap(error => {
-                            if (!isHTTPAuthError(error)) {
-                                throw error
-                            }
-                        }),
-                        switchMap(() => signInCloses)
-                    )
-                ),
+                retry({
+                    delay: error => (isHTTPAuthError(error) ? signInCloses : throwError(() => error)),
+                }),
                 catchError(error => {
                     // Log errors but don't break the handling of other code views
                     console.error('Could not resolve file info for code view', error)

@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 
 import { useNavigate } from 'react-router-dom'
+import { lastValueFrom } from 'rxjs'
 
 import { gql, useMutation } from '@sourcegraph/http-client'
 import { Container, Button, Alert, Form } from '@sourcegraph/wildcard'
@@ -45,9 +46,7 @@ export const EditUserProfileForm: React.FunctionComponent<React.PropsWithChildre
             // In case the edited user is the current user, immediately reflect the changes in the
             // UI.
             // TODO: Migrate this to use the Apollo cache
-            refreshAuthenticatedUser()
-                .toPromise()
-                .finally(() => {})
+            lastValueFrom(refreshAuthenticatedUser(), { defaultValue: undefined }).finally(() => {})
         },
         onError: () => eventLogger.log('UpdateUserFailed'),
     })

@@ -41,7 +41,7 @@ export const DeleteMonitorModal: React.FunctionComponent<React.PropsWithChildren
                             )
                         }
 
-                        return throwError(new Error('Failed to delete: Code monitor ID not provided'))
+                        return throwError(() => new Error('Failed to delete: Code monitor ID not provided'))
                     })
                 ),
             [deleteCodeMonitor, navigate, codeMonitor]

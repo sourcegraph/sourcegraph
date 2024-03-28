@@ -11,6 +11,6 @@ export function asObservable<T>(function_: () => Observable<T> | T): Observable<
         }
         return of(value)
     } catch (error) {
-        return throwError(error)
+        return throwError(() => error)
     }
 }

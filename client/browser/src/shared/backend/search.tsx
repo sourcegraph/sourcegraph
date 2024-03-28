@@ -1,6 +1,6 @@
 /* eslint rxjs/no-ignored-subscription: warn */
-import { Subject, forkJoin } from 'rxjs'
-import { debounceTime, distinctUntilChanged, map, publishReplay, refCount, repeat, switchMap } from 'rxjs/operators'
+import { ReplaySubject, Subject, forkJoin } from 'rxjs'
+import { debounceTime, distinctUntilChanged, map, repeat, switchMap, share } from 'rxjs/operators'
 
 import type { SearchMatch } from '@sourcegraph/shared/src/search/stream'
 import { fetchStreamSuggestions } from '@sourcegraph/shared/src/search/suggestions'
@@ -116,8 +116,12 @@ export const createSuggestionFetcher = (): ((input: SuggestionInput) => void) =>
                         suggestions: suggestions.flat().flatMap(suggestion => createSuggestions(suggestion)),
                         handler,
                     })),
-                    publishReplay(),
-                    refCount()
+                    share({
+                        connector: () => new ReplaySubject(),
+                        resetOnError: false,
+                        resetOnComplete: false,
+                        resetOnRefCountZero: false,
+                    })
                 )
             ),
             // But resubscribe afterwards

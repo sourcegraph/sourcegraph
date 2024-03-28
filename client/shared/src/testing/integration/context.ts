@@ -11,7 +11,7 @@ import { readFile, mkdir } from 'mz/fs'
 import pTimeout from 'p-timeout'
 import * as prettier from 'prettier'
 import { Subject, Subscription, lastValueFrom, throwError } from 'rxjs'
-import { first, timeoutWith } from 'rxjs/operators'
+import { first, timeout } from 'rxjs/operators'
 
 import { STATIC_ASSETS_PATH } from '@sourcegraph/build-config'
 import { logger, asError, keyExistsIn } from '@sourcegraph/common'
@@ -294,7 +294,11 @@ export const createSharedIntegrationTestContext = async <
                         (request: GraphQLRequestEvent<TGraphQlOperationNames>): request is GraphQLRequestEvent<O> =>
                             request.operationName === operationName
                     ),
-                    timeoutWith(4000, throwError(new Error(`Timeout waiting for GraphQL request "${operationName}"`)))
+                    timeout({
+                        first: 4000,
+                        with: () =>
+                            throwError(() => new Error(`Timeout waiting for GraphQL request "${operationName}"`)),
+                    })
                 )
             )
             await triggerRequest()

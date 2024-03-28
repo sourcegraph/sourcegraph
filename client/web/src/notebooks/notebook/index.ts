@@ -4,7 +4,7 @@ import { escapeRegExp } from 'lodash'
 // eslint-disable-next-line no-restricted-imports
 import { type marked, Renderer } from 'marked'
 import { type Observable, forkJoin, of } from 'rxjs'
-import { startWith, catchError, mapTo, map, switchMap } from 'rxjs/operators'
+import { startWith, catchError, map, switchMap } from 'rxjs/operators'
 import * as uuid from 'uuid'
 
 import { renderMarkdown, asError, isErrorLike } from '@sourcegraph/common'
@@ -263,11 +263,11 @@ export class Notebook {
             }
             // Identical if/else if branches to make the TS compiler happy
             if (block.type === 'query') {
-                observables.push(block.output.pipe(mapTo(DONE)))
+                observables.push(block.output.pipe(map(() => DONE)))
             } else if (block.type === 'file') {
-                observables.push(block.output.pipe(mapTo(DONE)))
+                observables.push(block.output.pipe(map(() => DONE)))
             } else if (block.type === 'symbol') {
-                observables.push(block.output.pipe(mapTo(DONE)))
+                observables.push(block.output.pipe(map(() => DONE)))
             }
         }
         // We store output observables and join them into a single observable,

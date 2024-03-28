@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { Navigate } from 'react-router-dom'
 import { concat, type Observable, Subject, Subscription } from 'rxjs'
-import { catchError, concatMap, distinctUntilKeyChanged, map, mapTo, tap, withLatestFrom } from 'rxjs/operators'
+import { catchError, concatMap, distinctUntilKeyChanged, map, tap, withLatestFrom } from 'rxjs/operators'
 
 import { asError, type ErrorLike, isErrorLike, logger } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
@@ -204,6 +204,9 @@ export const OrgInvitationPageLegacy = withAuthenticatedUser(
                     }
                 `,
                 args
-            ).pipe(map(dataOrThrowErrors), mapTo(undefined))
+            ).pipe(
+                map(dataOrThrowErrors),
+                map(() => undefined)
+            )
     }
 )

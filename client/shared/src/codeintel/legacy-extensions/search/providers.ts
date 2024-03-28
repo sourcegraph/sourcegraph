@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/check-param-names */
 import { flatten, sortBy } from 'lodash'
-import { from, isObservable, type Observable } from 'rxjs'
-import { take } from 'rxjs/operators'
+import { firstValueFrom, from, isObservable } from 'rxjs'
 
 import * as sourcegraph from '../api'
 import type { FilterDefinitions, LanguageSpec } from '../language-specs/language-spec'
@@ -239,7 +238,7 @@ export function createProviders(
         }
 
         // Get the first definition and ensure it has a range
-        const def = asArray(await (from(result) as Observable<sourcegraph.Definition>).pipe(take(1)).toPromise())[0]
+        const def = asArray(await firstValueFrom(from(result), { defaultValue: undefined }))[0]
         if (!def?.range) {
             return null
         }

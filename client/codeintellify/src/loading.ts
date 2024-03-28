@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash'
 import { type OperatorFunction, merge, combineLatest, of } from 'rxjs'
-import { share, startWith, map, filter, mapTo, delay, endWith, scan, takeUntil, last } from 'rxjs/operators'
+import { share, startWith, map, filter, delay, endWith, scan, takeUntil, last } from 'rxjs/operators'
 
 export const LOADING = 'loading' as const
 
@@ -67,7 +67,7 @@ export const emitLoading =
             ]).pipe(
                 // Show the loader when the provider is loading and has no result yet
                 filter(([{ isLoading, result }]) => isLoading && isEqual(result, emptyResultValue)),
-                mapTo(LOADING)
+                map(() => LOADING)
             ),
             // Show the provider results (and no more loader) once the source emitted the first result or is no longer loading.
             sharedSource.pipe(

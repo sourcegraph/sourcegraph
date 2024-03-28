@@ -1,6 +1,6 @@
 import { type ApolloCache, type ApolloClient, gql } from '@apollo/client'
 import { from, type Observable, of } from 'rxjs'
-import { catchError, map, mapTo, switchMap } from 'rxjs/operators'
+import { catchError, map, switchMap } from 'rxjs/operators'
 
 import { isDefined } from '@sourcegraph/common'
 import { fromObservableQuery } from '@sourcegraph/http-client'
@@ -166,7 +166,7 @@ export class CodeInsightsGqlBackend implements CodeInsightsBackend {
                     cache.evict({ id: deletedDashboardReference })
                 },
             })
-        ).pipe(mapTo(undefined))
+        ).pipe(map(() => undefined))
     }
 
     public updateDashboard = (input: DashboardUpdateInput): Observable<DashboardUpdateResult> =>

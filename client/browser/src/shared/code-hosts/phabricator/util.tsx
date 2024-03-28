@@ -207,7 +207,7 @@ export function getPhabricatorState(
 
         throw new Error(`Could not determine Phabricator state from stateUrl ${stateUrl}`)
     } catch (error) {
-        return throwError(error)
+        return throwError(() => error)
     }
 }
 

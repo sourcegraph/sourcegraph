@@ -4,7 +4,8 @@ import { type Observable, of, throwError } from 'rxjs'
 
 import type { CodeInsightsBackend } from './code-insights-backend'
 
-const errorMockMethod = (methodName: string) => () => throwError(new Error(`Implement ${methodName} method first`))
+const errorMockMethod = (methodName: string) => () =>
+    throwError(() => new Error(`Implement ${methodName} method first`))
 
 /**
  * Default context api class. Provides mock methods only.

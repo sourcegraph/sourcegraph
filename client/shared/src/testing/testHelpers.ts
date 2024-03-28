@@ -45,7 +45,7 @@ const NOOP_MOCKS: Mocks = {
     settings: of({ final: {}, subjects: [] }),
     updateSettings: () => Promise.reject(new Error('Mocks#updateSettings not implemented')),
     getGraphQLClient: () => Promise.reject(new Error('Mocks#getGraphQLClient not implemented')),
-    requestGraphQL: () => throwError(new Error('Mocks#queryGraphQL not implemented')),
+    requestGraphQL: () => throwError(() => new Error('Mocks#queryGraphQL not implemented')),
     clientApplication: 'sourcegraph',
 }
 

@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { trimEnd, uniq } from 'lodash'
 import { createRoot } from 'react-dom/client'
 import { from, noop, type Observable, of } from 'rxjs'
-import { catchError, distinctUntilChanged, filter, map, mapTo } from 'rxjs/operators'
+import { catchError, distinctUntilChanged, filter, map } from 'rxjs/operators'
 import type { Optional } from 'utility-types'
 
 import { asError, isDefined } from '@sourcegraph/common'
@@ -90,7 +90,7 @@ const isFullPage = !new URLSearchParams(window.location.search).get('popup')
 
 const validateSourcegraphUrl = (url: string): Observable<string | undefined> =>
     fetchSite(options => createRequestGraphQL(url)(options)).pipe(
-        mapTo(undefined),
+        map(() => undefined),
         catchError(error => {
             const { message } = asError(error)
             // We lose Error type when communicating from the background page

@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import classNames from 'classnames'
+import { lastValueFrom } from 'rxjs'
 import { useMergeRefs } from 'use-callback-ref'
 
 import { isDefined } from '@sourcegraph/common'
@@ -120,7 +121,9 @@ export const BackendInsightView = forwardRef<HTMLElement, BackendInsightProps>((
     async function handleFilterSave(filters: InsightFilters): Promise<void> {
         const insightWithNewFilters = { ...insight, filters }
 
-        await updateInsight({ insightId: insight.id, nextInsightData: insightWithNewFilters }).toPromise()
+        await lastValueFrom(updateInsight({ insightId: insight.id, nextInsightData: insightWithNewFilters }), {
+            defaultValue: undefined,
+        })
 
         telemetryService.log('CodeInsightsSearchBasedFilterUpdating')
         telemetryRecorder.recordEvent('insights.searchBasedfilter', 'update', { metadata: { location: 0 } })

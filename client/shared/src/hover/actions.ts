@@ -24,7 +24,6 @@ import {
     switchMap,
     takeUntil,
     scan,
-    mapTo,
 } from 'rxjs/operators'
 
 import { ContributableMenu, type TextDocumentPositionParameters } from '@sourcegraph/client-api'
@@ -179,7 +178,7 @@ export function getHoverActionsContext(
             ),
             definitionURLOrError.pipe(
                 filter(({ result }) => result !== null),
-                mapTo(true)
+                map(() => true)
             )
         ),
     ]).pipe(

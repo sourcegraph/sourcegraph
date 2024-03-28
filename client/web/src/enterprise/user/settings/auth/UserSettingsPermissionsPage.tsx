@@ -249,7 +249,7 @@ class ScheduleUserPermissionsSyncActionContainer extends React.PureComponent<Sch
     }
 
     private scheduleUserPermissions = async (): Promise<void> => {
-        await scheduleUserPermissionsSync({ user: this.props.user.id }).toPromise()
+        await scheduleUserPermissionsSync({ user: this.props.user.id })
     }
 }
 

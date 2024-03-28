@@ -163,7 +163,7 @@ export const ErrorStory: StoryFn = () => (
         {webProps => (
             <SearchContextPage
                 {...webProps}
-                fetchSearchContextBySpec={() => throwError(new Error('Failed to fetch search context'))}
+                fetchSearchContextBySpec={() => throwError(() => new Error('Failed to fetch search context'))}
                 platformContext={NOOP_PLATFORM_CONTEXT}
                 authenticatedUser={mockAuthenticatedUser}
             />

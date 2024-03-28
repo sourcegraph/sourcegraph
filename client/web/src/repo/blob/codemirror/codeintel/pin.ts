@@ -1,7 +1,7 @@
 import { Facet } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { concat, from, of } from 'rxjs'
-import { timeoutWith } from 'rxjs/operators'
+import { from, merge, timer } from 'rxjs'
+import { map, takeWhile } from 'rxjs/operators'
 
 import type { LineOrPositionOrRange } from '@sourcegraph/common'
 
@@ -38,8 +38,13 @@ export const pinnedRange = Facet.define<{ from: number; to: number } | null, { f
         showTooltip.computeN([self], state => {
             const range = state.facet(self)
             if (range) {
-                const tooltip$ = from(getHoverTooltip(state, range.from))
-                return [tooltip$.pipe(timeoutWith(50, concat(of(new LoadingTooltip(range.from, range.to)), tooltip$)))]
+                const loadingTooltip = new LoadingTooltip(range.from, range.to)
+                return [
+                    // Show loading tooltip after 50ms if the hover tooltip is not yet available
+                    merge(from(getHoverTooltip(state, range.from)), timer(50).pipe(map(() => loadingTooltip))).pipe(
+                        takeWhile(tooltip => tooltip !== loadingTooltip, true)
+                    ),
+                ]
             }
             return []
         }),

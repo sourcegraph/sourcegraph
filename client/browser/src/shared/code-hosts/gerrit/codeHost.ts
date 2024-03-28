@@ -1,6 +1,6 @@
 import { compact, find, head } from 'lodash'
-import { interval, type Observable, type Subject } from 'rxjs'
-import { filter, map, refCount, publishReplay } from 'rxjs/operators'
+import { ReplaySubject, interval, type Observable, type Subject } from 'rxjs'
+import { filter, map, share } from 'rxjs/operators'
 
 import type { MutationRecordLike } from '../../util/dom'
 import type { CodeHost } from '../shared/codeHost'
@@ -355,8 +355,12 @@ export const observeMutations = (
         filter(({ addedNodes, removedNodes }) => !!addedNodes.length || !!removedNodes.length),
         // Wrap in an array, because that's how mutation observers emit events.
         map(mutationRecord => [mutationRecord]),
-        publishReplay(),
-        refCount()
+        share({
+            connector: () => new ReplaySubject(),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false,
+        })
     )
 }
 

@@ -4,8 +4,7 @@ import '../../config/content.entry'
 // Polyfill before other imports.
 import '../../shared/polyfills'
 
-import { fromEvent, Subscription } from 'rxjs'
-import { first } from 'rxjs/operators'
+import { firstValueFrom, fromEvent, Subscription } from 'rxjs'
 
 import { setLinkComponent, AnchorLink } from '@sourcegraph/wildcard'
 
@@ -90,9 +89,9 @@ async function main(): Promise<void> {
     // If the extension marker isn't present, inject it and listen for a custom event sent by the native
     // integration to signal its activation.
     injectExtensionMarker()
-    const nativeIntegrationActivationEventReceived = fromEvent(document, NATIVE_INTEGRATION_ACTIVATED)
-        .pipe(first())
-        .toPromise()
+    const nativeIntegrationActivationEventReceived = firstValueFrom(fromEvent(document, NATIVE_INTEGRATION_ACTIVATED), {
+        defaultValue: undefined,
+    })
 
     let previousSubscription: Subscription
     subscriptions.add(

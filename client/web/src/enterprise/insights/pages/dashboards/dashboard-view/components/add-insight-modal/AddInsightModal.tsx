@@ -2,6 +2,7 @@ import { type FC, type ReactElement, type ReactNode, useContext, useState, useMe
 
 import { useApolloClient } from '@apollo/client'
 import { mdiClose } from '@mdi/js'
+import { lastValueFrom } from 'rxjs'
 
 import { isErrorLike, pluralize } from '@sourcegraph/common'
 import {
@@ -53,11 +54,14 @@ export const AddInsightModal: FC<AddInsightModalProps> = props => {
         try {
             const prevInsights = getCachedDashboardInsights(client, dashboard.id)
 
-            await assignInsightsToDashboard({
-                id: dashboard.id,
-                prevInsightIds: prevInsights.map(insight => insight.id),
-                nextInsightIds: dashboardInsights.map(insight => insight.id),
-            }).toPromise()
+            await lastValueFrom(
+                assignInsightsToDashboard({
+                    id: dashboard.id,
+                    prevInsightIds: prevInsights.map(insight => insight.id),
+                    nextInsightIds: dashboardInsights.map(insight => insight.id),
+                }),
+                { defaultValue: undefined }
+            )
             setSubmittingOrError(false)
             onClose()
         } catch (error) {

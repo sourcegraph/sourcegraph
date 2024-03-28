@@ -1,5 +1,7 @@
 import { useCallback, useContext, useState } from 'react'
 
+import { lastValueFrom } from 'rxjs'
+
 import { type ErrorLike, logger } from '@sourcegraph/common'
 import { BillingCategory, BillingProduct } from '@sourcegraph/shared/src/telemetry'
 import { TelemetryRecorder } from '@sourcegraph/telemetry'
@@ -40,7 +42,7 @@ export function useDeleteInsight(
             setError(undefined)
 
             try {
-                await deleteInsight(insight.id).toPromise()
+                await lastValueFrom(deleteInsight(insight.id), { defaultValue: undefined })
                 const insightType = getTrackingTypeByInsightType(insight.type)
 
                 eventLogger.log('InsightRemoval', { insightType }, { insightType })

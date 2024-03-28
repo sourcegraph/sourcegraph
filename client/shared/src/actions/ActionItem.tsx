@@ -4,7 +4,7 @@ import { mdiHelpCircleOutline, mdiOpenInNew } from '@mdi/js'
 import classNames from 'classnames'
 import type * as H from 'history'
 import { from, Subject, Subscription } from 'rxjs'
-import { catchError, map, mapTo, mergeMap, startWith, tap } from 'rxjs/operators'
+import { catchError, map, mergeMap, startWith, tap } from 'rxjs/operators'
 
 import type { ActionContribution, Evaluated } from '@sourcegraph/client-api'
 import { asError, type ErrorLike, isExternalLink, logger } from '@sourcegraph/common'
@@ -142,7 +142,7 @@ export class ActionItem extends React.PureComponent<ActionItemProps, State, type
                                       )
                                   )
                         ).pipe(
-                            mapTo(null),
+                            map(() => null),
                             catchError(error => [asError(error)]),
                             map(actionOrError => ({ actionOrError })),
                             tap(() => {

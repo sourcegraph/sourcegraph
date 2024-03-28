@@ -2,17 +2,7 @@ import React, { type FC } from 'react'
 
 import { useParams } from 'react-router-dom'
 import { concat, of, Subject, Subscription } from 'rxjs'
-import {
-    catchError,
-    delay,
-    distinctUntilChanged,
-    map,
-    mapTo,
-    mergeMap,
-    startWith,
-    switchMap,
-    tap,
-} from 'rxjs/operators'
+import { catchError, delay, distinctUntilChanged, map, mergeMap, startWith, switchMap, tap } from 'rxjs/operators'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { Alert, LoadingSpinner } from '@sourcegraph/wildcard'
@@ -89,7 +79,7 @@ class InnerSavedSearchUpdateForm extends React.Component<Props, State> {
                                 this.props.namespace.__typename === 'User' ? this.props.namespace.id : null,
                                 this.props.namespace.__typename === 'Org' ? this.props.namespace.id : null
                             ).pipe(
-                                mapTo(null),
+                                map(() => null),
                                 tap(() => eventLogger.log('SavedSearchUpdated')),
                                 mergeMap(() =>
                                     concat(

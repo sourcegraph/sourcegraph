@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 
-import { repeatWhen, delay } from 'rxjs/operators'
+import { repeat } from 'rxjs/operators'
 
 import type { ErrorLike } from '@sourcegraph/common'
 import { Container } from '@sourcegraph/wildcard'
@@ -59,7 +59,7 @@ export const BatchChangeCloseChangesetsList: React.FunctionComponent<React.Props
                 onlyPublishedByThisBatchChange: true,
                 search: null,
                 onlyArchived: false,
-            }).pipe(repeatWhen(notifier => notifier.pipe(delay(5000)))),
+            }).pipe(repeat({ delay: 5000 })),
         [batchChangeID, queryChangesets]
     )
 
