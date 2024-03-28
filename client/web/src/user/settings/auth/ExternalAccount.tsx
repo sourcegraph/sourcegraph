@@ -135,6 +135,21 @@ export const ExternalAccountConnectionDetails: FC<ExternalAccountConnectionDetai
                 </>
             )
         }
+        // Bitbucket Server doesn't have a URL because there are no profile pages
+        // as far as I can tell, so using a slightly modified version here.
+        case 'bitbucketServer':
+            return (
+                <>
+                    {account.external?.login ? (
+                        <>
+                            {account.external.displayName} (@{account.external.login})
+                        </>
+                    ) : (
+                        'Not connected'
+                    )}
+                </>
+            )
+
         default: {
             return (
                 <>

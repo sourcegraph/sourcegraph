@@ -31,6 +31,9 @@ export const stringToCodeHostType = (codeHostType: string): CodeHostType => {
         case 'bitbucketCloud': {
             return CodeHostType.BITBUCKETCLOUD
         }
+        case 'bitbucketServer': {
+            return CodeHostType.BITBUCKETSERVER
+        }
         case 'gitolite': {
             return CodeHostType.GITOLITE
         }

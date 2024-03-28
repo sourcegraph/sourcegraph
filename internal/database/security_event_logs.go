@@ -65,6 +65,9 @@ const (
 	SecurityEventBitbucketCloudAuthSucceeded SecurityEventName = "BitbucketCloudAuthSucceeded"
 	SecurityEventBitbucketCloudAuthFailed    SecurityEventName = "BitbucketCloudAuthFailed"
 
+	SecurityEventBitbucketServerAuthSucceeded SecurityEventName = "BitbucketServerAuthSucceeded"
+	SecurityEventBitbucketServerAuthFailed    SecurityEventName = "BitbucketServerAuthFailed"
+
 	SecurityEventAzureDevOpsAuthSucceeded SecurityEventName = "AzureDevOpsAuthSucceeded"
 	SecurityEventAzureDevOpsAuthFailed    SecurityEventName = "AzureDevOpsAuthFailed"
 

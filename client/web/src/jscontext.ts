@@ -16,6 +16,7 @@ export interface AuthProvider {
         | 'github'
         | 'gitlab'
         | 'bitbucketCloud'
+        | 'bitbucketServer'
         | 'http-header'
         | 'openidconnect'
         | 'sourcegraph-operator'

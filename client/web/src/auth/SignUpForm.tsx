@@ -226,6 +226,8 @@ export const SignUpForm: React.FunctionComponent<React.PropsWithChildren<SignUpF
                                         <Icon aria-hidden={true} svgPath={mdiGitlab} />
                                     ) : provider.serviceType === 'bitbucketCloud' ? (
                                         <Icon aria-hidden={true} svPath={mdiBitbucket} />
+                                    ) : provider.serviceType === 'bitbucketServer' ? (
+                                        <Icon aria-hidden={true} svPath={mdiBitbucket} />
                                     ) : null}{' '}
                                     Continue with {provider.displayName}
                                 </Button>
