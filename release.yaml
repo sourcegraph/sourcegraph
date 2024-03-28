@@ -28,14 +28,14 @@ internal:
 
             exit_code=0
 
-            if [ -n "$(git branch -a | grep -q {{git.branch}})"  ]; then
+            if [ -n "$(git branch -a | grep {{git.branch}})"  ]; then
               git checkout "{{git.branch}}"
             else
               echo "❌ Branch '{{git.branch}}' does not exist"
               exit 1
             fi
 
-            if [ -n "$(git status --porcelain)" ]; then
+            if [ -n "$(git -P diff origin/{{git.branch}})" ]; then
               echo "❌ Branch '{{git.branch}}' contains unpushed commits"
               exit 1
             fi
