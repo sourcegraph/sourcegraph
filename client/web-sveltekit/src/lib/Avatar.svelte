@@ -9,7 +9,7 @@
         const names = name.split(' ')
         const initials = names.map(name => name.charAt(0).toLowerCase())
         if (initials.length > 1) {
-            return `${initials[0]}${initials[initials.length - 1]}`
+            return `${initials[0]}${initials[initials.length - 1].toUpperCase()}`
         }
         return initials[0]
     }
@@ -49,8 +49,8 @@
         color: var(--color-bg-1);
         align-items: center;
         justify-content: center;
-        min-width: 1.5rem;
-        min-height: 1.5rem;
+        min-width: 1rem;
+        min-height: 1rem;
         position: relative;
         background: linear-gradient(to bottom, var(--logo-purple), var(--logo-orange));
         width: var(--avatar-size, var(--icon-inline-size));
