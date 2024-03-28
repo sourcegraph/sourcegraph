@@ -1,0 +1,36 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "tokenusage",
+    srcs = ["tokenusage.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/completions/tokenusage",
+    visibility = [
+        "//cmd/cody-gateway:__subpackages__",
+        "//internal/completions/client:__pkg__",
+        "//internal/completions/client/anthropic:__pkg__",
+        "//internal/completions/client/awsbedrock:__pkg__",
+        "//internal/completions/client/azureopenai:__pkg__",
+        "//internal/completions/client/codygateway:__pkg__",
+        "//internal/completions/client/openai:__pkg__",
+        "//internal/updatecheck:__pkg__",
+    ],
+    deps = [
+        "//internal/completions/tokenizer",
+        "//internal/rcache",
+        "//lib/errors",
+    ],
+)
+
+go_test(
+    name = "tokenusage_test",
+    srcs = ["tokenusage_test.go"],
+    tags = [
+        # Test requires localhost database
+        "requires-network",
+    ],
+    deps = [
+        ":tokenusage",
+        "//internal/rcache",
+    ],
+)

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sourcegraph/log"
+
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -48,6 +50,7 @@ func (c *fireworksClient) Complete(
 	feature types.CompletionsFeature,
 	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
+	logger log.Logger,
 ) (*types.CompletionResponse, error) {
 	resp, err := c.makeRequest(ctx, feature, requestParams, false)
 	if err != nil {
@@ -87,6 +90,7 @@ func (c *fireworksClient) Stream(
 	_ types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	logger log.Logger,
 ) error {
 	logprobsInclude := uint8(0)
 	requestParams.Logprobs = &logprobsInclude

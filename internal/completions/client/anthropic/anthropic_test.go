@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/sourcegraph/log"
+
 	"github.com/hexops/autogold/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 )
 
@@ -32,14 +35,16 @@ func linesToResponse(lines []string, separator string) []byte {
 }
 
 func getMockClient(responseBody []byte) types.CompletionsClient {
+	tokenManager := tokenusage.NewManager()
 	return NewClient(&mockDoer{
 		func(r *http.Request) (*http.Response, error) {
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(responseBody))}, nil
 		},
-	}, "", "", false)
+	}, "", "", false, *tokenManager)
 }
 
 func TestValidAnthropicMessagesStream(t *testing.T) {
+	logger := log.Scoped("completions")
 	var mockAnthropicMessagesResponseLines = []string{
 		`event: message_start
 		data: {"type": "message_start", "message": {"id": "msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY", "type": "message", "role": "assistant", "content": [], "model": "claude-3-opus-20240229", "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 25, "output_tokens": 1}}}`,
@@ -56,7 +61,7 @@ func TestValidAnthropicMessagesStream(t *testing.T) {
 		`event: content_block_stop
 		data: {"type": "content_block_stop", "index": 0}`,
 		`event: message_delta
-		data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null, "usage":{"output_tokens": 15}}}`,
+		data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null}, "usage":{"output_tokens": 15}}`,
 		`event: message_stop
 		data: {"type": "message_stop"}`,
 	}
@@ -69,7 +74,7 @@ func TestValidAnthropicMessagesStream(t *testing.T) {
 	}, func(event types.CompletionResponse) error {
 		events = append(events, event)
 		return nil
-	})
+	}, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,9 +83,10 @@ func TestValidAnthropicMessagesStream(t *testing.T) {
 
 func TestInvalidAnthropicMessagesStream(t *testing.T) {
 	var mockAnthropicInvalidResponseLines = []string{`data:{]`}
+	logger := log.Scoped("completions")
 
 	mockClient := getMockClient(linesToResponse(mockAnthropicInvalidResponseLines, "\r\n\r\n"))
-	err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+	err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil }, logger)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -88,6 +94,7 @@ func TestInvalidAnthropicMessagesStream(t *testing.T) {
 }
 
 func TestErrStatusNotOK(t *testing.T) {
+	tokenManager := tokenusage.NewManager()
 	mockClient := NewClient(&mockDoer{
 		func(r *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -95,10 +102,11 @@ func TestErrStatusNotOK(t *testing.T) {
 				Body:       io.NopCloser(bytes.NewReader([]byte("oh no, please slow down!"))),
 			}, nil
 		},
-	}, "", "", false)
+	}, "", "", false, *tokenManager)
 
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
+		logger := log.Scoped("completions")
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -108,7 +116,8 @@ func TestErrStatusNotOK(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		logger := log.Scoped("completions")
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil }, logger)
 		require.Error(t, err)
 
 		autogold.Expect("Anthropic: unexpected status code 429: oh no, please slow down!").Equal(t, err.Error())
@@ -127,7 +136,7 @@ func TestCompleteApiToMessages(t *testing.T) {
 				Body:       io.NopCloser(bytes.NewReader([]byte("oh no, please slow down!"))),
 			}, nil
 		},
-	}, "", "", false)
+	}, "", "", false, *tokenusage.NewManager())
 	messages := []types.Message{
 		{Speaker: "human", Text: "¡Hola!"},
 		// /complete prompts can have human messages without an assistant response. These should
@@ -139,7 +148,8 @@ func TestCompleteApiToMessages(t *testing.T) {
 	}
 
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: messages})
+		logger := log.Scoped("completions")
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: messages}, logger)
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -151,8 +161,9 @@ func TestCompleteApiToMessages(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
+		logger := log.Scoped("completions")
 		stream := true
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: messages, Stream: &stream}, func(event types.CompletionResponse) error { return nil })
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{Messages: messages, Stream: &stream}, func(event types.CompletionResponse) error { return nil }, logger)
 		require.Error(t, err)
 
 		assert.NotNil(t, response)

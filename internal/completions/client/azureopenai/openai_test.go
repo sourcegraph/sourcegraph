@@ -14,6 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/log"
+
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -74,10 +77,11 @@ func TestErrStatusNotOK(t *testing.T) {
 			return azopenai.GetChatCompletionsStreamResponse{}, azure429ResponseError()
 		},
 	})
-
-	mockClient, _ := NewClient(getAzureAPIClient, "", "")
+	tokenManager := tokenusage.NewManager()
+	mockClient, _ := NewClient(getAzureAPIClient, "", "", *tokenManager)
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
+		logger := log.Scoped("completions")
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -87,7 +91,8 @@ func TestErrStatusNotOK(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		logger := log.Scoped("completions")
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil }, logger)
 		require.Error(t, err)
 
 		autogold.Expect("AzureOpenAI: unexpected status code 429: too many requests").Equal(t, err.Error())
@@ -111,10 +116,11 @@ func TestGenericErr(t *testing.T) {
 			return azopenai.GetChatCompletionsStreamResponse{}, errors.New("error")
 		},
 	})
-
-	mockClient, _ := NewClient(getAzureAPIClient, "", "")
+	tokenManager := tokenusage.NewManager()
+	mockClient, _ := NewClient(getAzureAPIClient, "", "", *tokenManager)
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
+		logger := log.Scoped("completions")
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -124,7 +130,8 @@ func TestGenericErr(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		logger := log.Scoped("completions")
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil }, logger)
 		require.Error(t, err)
 
 		autogold.Expect("error").Equal(t, err.Error())

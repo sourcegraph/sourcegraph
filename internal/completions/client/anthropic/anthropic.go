@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/sourcegraph/log"
+
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -15,12 +18,14 @@ const Claude3Haiku = "claude-3-haiku-20240307"
 const Claude3Sonnet = "claude-3-sonnet-20240229"
 const Claude3Opus = "claude-3-opus-20240229"
 
-func NewClient(cli httpcli.Doer, apiURL, accessToken string, viaGateway bool) types.CompletionsClient {
+func NewClient(cli httpcli.Doer, apiURL, accessToken string, viaGateway bool, tokenManager tokenusage.Manager) types.CompletionsClient {
+
 	return &anthropicClient{
-		cli:         cli,
-		accessToken: accessToken,
-		apiURL:      apiURL,
-		viaGateway:  viaGateway,
+		cli:          cli,
+		accessToken:  accessToken,
+		apiURL:       apiURL,
+		viaGateway:   viaGateway,
+		tokenManager: tokenManager,
 	}
 }
 
@@ -29,10 +34,11 @@ const (
 )
 
 type anthropicClient struct {
-	cli         httpcli.Doer
-	accessToken string
-	apiURL      string
-	viaGateway  bool
+	cli          httpcli.Doer
+	accessToken  string
+	apiURL       string
+	viaGateway   bool
+	tokenManager tokenusage.Manager
 }
 
 func (a *anthropicClient) Complete(
@@ -40,6 +46,7 @@ func (a *anthropicClient) Complete(
 	feature types.CompletionsFeature,
 	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
+	logger log.Logger,
 ) (*types.CompletionResponse, error) {
 	resp, err := a.makeRequest(ctx, requestParams, version, false)
 	if err != nil {
@@ -57,6 +64,11 @@ func (a *anthropicClient) Complete(
 		completion += content.Text
 	}
 
+	err = a.tokenManager.UpdateAnthropicModelUsage(response.Usage.InputTokens, response.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.CompletionResponse{
 		Completion: completion,
 		StopReason: response.StopReason,
@@ -70,6 +82,7 @@ func (a *anthropicClient) Stream(
 	version types.CompletionsVersion,
 	requestParams types.CompletionRequestParameters,
 	sendEvent types.SendCompletionEvent,
+	logger log.Logger,
 ) error {
 	resp, err := a.makeRequest(ctx, requestParams, version, true)
 	if err != nil {
@@ -78,8 +91,8 @@ func (a *anthropicClient) Stream(
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
-
-	completion := ""
+	completedString := ""
+	var inputPromptTokens int
 	for dec.Scan() {
 		if ctx.Err() != nil && ctx.Err() == context.Canceled {
 			return nil
@@ -99,20 +112,29 @@ func (a *anthropicClient) Stream(
 		}
 
 		switch event.Type {
+		case "message_start":
+			if event.Message != nil && event.Message.Usage != nil {
+				inputPromptTokens = event.Message.Usage.InputTokens
+			}
+			continue
 		case "content_block_delta":
 			if event.Delta != nil {
-				completion += event.Delta.Text
+				completedString += event.Delta.Text
 			}
 		case "message_delta":
 			if event.Delta != nil {
 				stopReason = event.Delta.StopReason
+				err = a.tokenManager.UpdateAnthropicModelUsage(inputPromptTokens, event.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature))
+				if err != nil {
+					logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+				}
 			}
 		default:
 			continue
 		}
 
 		err = sendEvent(types.CompletionResponse{
-			Completion: completion,
+			Completion: completedString,
 			StopReason: stopReason,
 		})
 		if err != nil {
@@ -120,8 +142,11 @@ func (a *anthropicClient) Stream(
 		}
 
 	}
+	if dec.Err() != nil {
+		return dec.Err()
+	}
 
-	return dec.Err()
+	return nil
 }
 
 func (a *anthropicClient) makeRequest(ctx context.Context, requestParams types.CompletionRequestParameters, version types.CompletionsVersion, stream bool) (*http.Response, error) {
@@ -214,8 +239,9 @@ type anthropicMessageContent struct {
 }
 
 type anthropicNonStreamingResponse struct {
-	Content    []anthropicMessageContent `json:"content"`
-	StopReason string                    `json:"stop_reason"`
+	Content    []anthropicMessageContent      `json:"content"`
+	Usage      anthropicMessagesResponseUsage `json:"usage"`
+	StopReason string                         `json:"stop_reason"`
 }
 
 // AnthropicMessagesStreamingResponse captures all relevant-to-us fields from each relevant SSE event from https://docs.anthropic.com/claude/reference/messages_post.
@@ -223,6 +249,17 @@ type anthropicStreamingResponse struct {
 	Type         string                                `json:"type"`
 	Delta        *anthropicStreamingResponseTextBucket `json:"delta"`
 	ContentBlock *anthropicStreamingResponseTextBucket `json:"content_block"`
+	Usage        *anthropicMessagesResponseUsage       `json:"usage"`
+	Message      *anthropicStreamingResponseMessage    `json:"message"`
+}
+
+type anthropicStreamingResponseMessage struct {
+	Usage *anthropicMessagesResponseUsage `json:"usage"`
+}
+
+type anthropicMessagesResponseUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
 }
 
 type anthropicStreamingResponseTextBucket struct {

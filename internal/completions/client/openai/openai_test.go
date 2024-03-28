@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
+	"github.com/sourcegraph/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 )
 
@@ -23,6 +25,7 @@ func (c *mockDoer) Do(r *http.Request) (*http.Response, error) {
 }
 
 func TestErrStatusNotOK(t *testing.T) {
+	tokenManager := tokenusage.NewManager()
 	mockClient := NewClient(&mockDoer{
 		func(r *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -30,10 +33,11 @@ func TestErrStatusNotOK(t *testing.T) {
 				Body:       io.NopCloser(bytes.NewReader([]byte("oh no, please slow down!"))),
 			}, nil
 		},
-	}, "", "")
+	}, "", "", *tokenManager)
 
 	t.Run("Complete", func(t *testing.T) {
-		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{})
+		logger := log.Scoped("completions")
+		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
 		require.Error(t, err)
 		assert.Nil(t, resp)
 
@@ -43,7 +47,8 @@ func TestErrStatusNotOK(t *testing.T) {
 	})
 
 	t.Run("Stream", func(t *testing.T) {
-		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil })
+		logger := log.Scoped("completions")
+		err := mockClient.Stream(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, func(event types.CompletionResponse) error { return nil }, logger)
 		require.Error(t, err)
 
 		autogold.Expect("OpenAI: unexpected status code 429: oh no, please slow down!").Equal(t, err.Error())

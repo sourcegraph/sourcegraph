@@ -235,6 +235,7 @@ func TestSerializeBasic(t *testing.T) {
 		"search_jobs_usage": null,
 		"search_onboarding": null,
 		"homepage_panels": null,
+		"llm_usage": null,
 		"repositories": null,
 		"repository_size_histogram": null,
 		"retention_statistics": null,
@@ -314,6 +315,7 @@ func TestSerializeLimited(t *testing.T) {
 		"search_jobs_usage": null,
 		"search_onboarding": null,
 		"homepage_panels": null,
+		"llm_usage": null,
 		"repositories": null,
 		"repository_size_histogram": null,
 		"retention_statistics": null,
@@ -396,6 +398,7 @@ func TestSerializeFromQuery(t *testing.T) {
 		"search_jobs_usage": null,
 		"search_onboarding": null,
 		"repositories": null,
+		"llm_usage": null,
 		"repository_size_histogram": null,
 		"retention_statistics": null,
 		"installer_email": "test@sourcegraph.com",
@@ -461,6 +464,7 @@ func TestSerializeBatchChangesUsage(t *testing.T) {
 		"search_onboarding": null,
 		"repositories": null,
 		"repository_size_histogram": null,
+		"llm_usage": null,
 		"retention_statistics": null,
 		"installer_email": "test@sourcegraph.com",
 		"auth_providers": "foo,bar",
@@ -514,6 +518,7 @@ func TestSerializeGrowthStatistics(t *testing.T) {
 		"notebooks_usage": null,
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
+		"llm_usage": null,
 		"migrated_extensions_usage": null,
 		"own_usage": null,
 		"search_usage": null,
@@ -774,6 +779,7 @@ func TestSerializeCodeIntelUsage(t *testing.T) {
 		"notebooks_usage": null,
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
+		"llm_usage": null,
 		"migrated_extensions_usage": null,
 		"own_usage": null,
 		"cody_providers": null,
@@ -932,6 +938,7 @@ func TestSerializeOldCodeIntelUsage(t *testing.T) {
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
 		"migrated_extensions_usage": null,
+		"llm_usage": null,
 		"own_usage": null,
 		"dependency_versions": null,
 		"extensions_usage": null,
@@ -1006,6 +1013,7 @@ func TestSerializeCodeHostVersions(t *testing.T) {
 		"has_cody_enabled": "false",
 		"saved_searches": null,
 		"homepage_panels": null,
+		"llm_usage": null,
 		"search_jobs_usage": null,
 		"search_onboarding": null,
 		"repositories": null,
@@ -1100,6 +1108,7 @@ func TestSerializeOwn(t *testing.T) {
 		"notebooks_usage": null,
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
+		"llm_usage": null,
 		"migrated_extensions_usage": null,
 		"own_usage": {
 			"feature_flag_on": true,
@@ -1181,6 +1190,7 @@ func TestSerializeRepoMetadataUsage(t *testing.T) {
 				}
 			}
 		}`),
+		LlmUsage: nil,
 	}
 
 	now := time.Now()
@@ -1214,6 +1224,7 @@ func TestSerializeRepoMetadataUsage(t *testing.T) {
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
 		"migrated_extensions_usage": null,
+		"llm_usage": null,
 		"own_usage": null,
 		"repo_metadata_usage": {
 			"summary": {
@@ -1290,6 +1301,7 @@ func TestSerializeCodyProviders(t *testing.T) {
 		"notebooks_usage": null,
 		"code_host_integration_usage": null,
 		"ide_extensions_usage": null,
+		"llm_usage":                 null,
 		"migrated_extensions_usage": null,
 		"own_usage": null,
 		"search_usage": null,

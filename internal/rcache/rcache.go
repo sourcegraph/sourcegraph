@@ -3,6 +3,7 @@ package rcache
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -11,6 +12,7 @@ import (
 	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 
 	"github.com/sourcegraph/sourcegraph/internal/redispool"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // dataVersion is used for releases that change type structure for
@@ -86,6 +88,67 @@ func (r *Cache) SetWithTTL(key string, b []byte, ttl int) {
 	if err != nil {
 		log15.Warn("failed to execute redis command", "cmd", "SETEX", "error", err)
 	}
+}
+
+// SetInt stores an integer value under the specified key in the cache
+func (r *Cache) SetInt(key string, value int64) {
+	// Convert int to byte slice for storage
+	valueStr := strconv.FormatInt(value, 10) // 10 is the base for decimal
+	r.Set(key, []byte(valueStr))
+}
+
+// GetInt gets an integer value by key. Returns the value and a boolean indicating if the key exists.
+func (r *Cache) GetInt64(key string) (int64, bool, error) {
+	b, found := r.Get(key)
+	if !found {
+		return 0, false, nil
+	}
+	// Correctly convert byte slice to int64
+	value, err := strconv.ParseInt(string(b), 10, 64) // 10 is the base, 64 is the bit size
+	if err != nil {
+		return 0, false, errors.Newf("failed to convert value to int", "value", string(b), "error", err)
+	}
+	return value, true, nil
+}
+
+// IncrbyInt64 increments the integer value of a key by the given amount.
+// It returns the new value after the increment.
+func (r *Cache) IncrbyInt64(key string, value int64) (int64, error) {
+	newValue, err := kv().IncrbyInt64(r.rkeyPrefix()+key, value)
+	if err != nil {
+		return newValue, errors.Newf("failed to execute redis command", "cmd", "INCRBY", "error", err)
+	}
+
+	if r.ttlSeconds > 0 {
+		// Optionally, set a TTL on the key if ttlSeconds is specified for the cache.
+		err = kv().Expire(r.rkeyPrefix()+key, r.ttlSeconds)
+		if err != nil {
+			return newValue, errors.Newf("failed to execute redis command", "cmd", "INCRBY", "error", err)
+			// Decide whether to return this error or not based on your error handling policy.
+		}
+	}
+
+	return newValue, nil
+}
+
+// DecrbyInt64 increments the decrements value of a key by the given amount.
+// It returns the new value after the increment.
+func (r *Cache) DecrbyInt64(key string, value int64) (int64, error) {
+	newValue, err := kv().DecrbyInt64(r.rkeyPrefix()+key, value)
+	if err != nil {
+		return newValue, errors.Newf("failed to execute redis command", "cmd", "DECRBY", "error", err)
+	}
+
+	if r.ttlSeconds > 0 {
+		// Optionally, set a TTL on the key if ttlSeconds is specified for the cache.
+		err = kv().Expire(r.rkeyPrefix()+key, r.ttlSeconds)
+		if err != nil {
+			return newValue, errors.Newf("failed to execute redis command", "cmd", "DECRBY", "error", err)
+			// Decide whether to return this error or not based on your error handling policy.
+		}
+	}
+
+	return newValue, nil
 }
 
 func (r *Cache) Increase(key string) {

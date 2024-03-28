@@ -9,6 +9,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/codygateway"
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/fireworks"
 	"github.com/sourcegraph/sourcegraph/internal/completions/client/openai"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenusage"
 	"github.com/sourcegraph/sourcegraph/internal/completions/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
@@ -31,19 +32,20 @@ func Get(
 }
 
 func getBasic(endpoint string, provider conftypes.CompletionsProviderName, accessToken string) (types.CompletionsClient, error) {
+	tokenManager := tokenusage.NewManager()
 	switch provider {
 	case conftypes.CompletionsProviderNameAnthropic:
-		return anthropic.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, false), nil
+		return anthropic.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, false, *tokenManager), nil
 	case conftypes.CompletionsProviderNameOpenAI:
-		return openai.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken), nil
+		return openai.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, *tokenManager), nil
 	case conftypes.CompletionsProviderNameAzureOpenAI:
-		return azureopenai.NewClient(azureopenai.GetAPIClient, endpoint, accessToken)
+		return azureopenai.NewClient(azureopenai.GetAPIClient, endpoint, accessToken, *tokenManager)
 	case conftypes.CompletionsProviderNameSourcegraph:
-		return codygateway.NewClient(httpcli.CodyGatewayDoer, endpoint, accessToken)
+		return codygateway.NewClient(httpcli.CodyGatewayDoer, endpoint, accessToken, *tokenManager)
 	case conftypes.CompletionsProviderNameFireworks:
 		return fireworks.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken), nil
 	case conftypes.CompletionsProviderNameAWSBedrock:
-		return awsbedrock.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken), nil
+		return awsbedrock.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, *tokenManager), nil
 	default:
 		return nil, errors.Newf("unknown completion stream provider: %s", provider)
 	}

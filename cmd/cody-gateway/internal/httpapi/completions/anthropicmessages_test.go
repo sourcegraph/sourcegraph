@@ -13,7 +13,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/shared/config"
 
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenizer"
 )
 
 func TestIsFlaggedAnthropicMessagesRequest(t *testing.T) {
@@ -36,7 +36,7 @@ func TestIsFlaggedAnthropicMessagesRequest(t *testing.T) {
 		RequestBlockingEnabled:         true,
 		AllowedPromptPatterns:          []string{strings.ToLower(validPreamble)},
 	}
-	tk, err := tokenizer.NewAnthropicClaudeTokenizer()
+	tk, err := tokenizer.NewAnthropicClaudeTokenizer("anthropic/claude-2")
 	require.NoError(t, err)
 
 	// Helper function for calling the AnthropicMessageHandlerMethod's shouldFlagRequest, using the supplied
@@ -162,7 +162,7 @@ func TestIsFlaggedAnthropicMessagesRequest(t *testing.T) {
 }
 
 func TestAnthropicMessagesRequestJSON(t *testing.T) {
-	_, err := tokenizer.NewAnthropicClaudeTokenizer()
+	_, err := tokenizer.NewAnthropicClaudeTokenizer("anthropic/claude-2")
 	require.NoError(t, err)
 
 	r := anthropicMessagesRequest{Model: "anthropic/claude-3-sonnet-20240229", Messages: []anthropicMessage{

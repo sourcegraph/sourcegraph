@@ -8,9 +8,16 @@ go_library(
         "tokenizer.go",
     ],
     embedsrcs = ["claude.json"],
-    importpath = "github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer",
-    visibility = ["//cmd/cody-gateway:__subpackages__"],
-    deps = ["@com_github_pkoukk_tiktoken_go//:tiktoken-go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/completions/tokenizer",
+    visibility = [
+        "//cmd/cody-gateway:__subpackages__",
+        "//internal/completions/client/anthropic:__pkg__",
+        "//internal/completions/tokenusage:__pkg__",
+    ],
+    deps = [
+        "//lib/errors",
+        "@com_github_pkoukk_tiktoken_go//:tiktoken-go",
+    ],
 )
 
 go_test(

@@ -15,8 +15,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/events"
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/limiter"
 	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/notify"
-	"github.com/sourcegraph/sourcegraph/cmd/cody-gateway/internal/tokenizer"
 	"github.com/sourcegraph/sourcegraph/internal/codygateway"
+	"github.com/sourcegraph/sourcegraph/internal/completions/tokenizer"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/httpcli"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -39,7 +39,7 @@ func NewAnthropicHandler(
 	autoFlushStreamingResponses bool,
 ) (http.Handler, error) {
 	// Tokenizer only needs to be initialized once, and can be shared globally.
-	anthropicTokenizer, err := tokenizer.NewAnthropicClaudeTokenizer()
+	anthropicTokenizer, err := tokenizer.NewTokenizer("anthropic/claude-2")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ type anthropicTokenCount struct {
 
 // GetPromptTokenCount computes the token count of the prompt exactly once using
 // the given tokenizer. It is not concurrency-safe.
-func (ar *anthropicRequest) GetPromptTokenCount(tk *tokenizer.Tokenizer) (int, error) {
+func (ar *anthropicRequest) GetPromptTokenCount(tk tokenizer.Tokenizer) (int, error) {
 	if ar.promptTokens == nil {
 		tokens, err := tk.Tokenize(ar.Prompt)
 		ar.promptTokens = &anthropicTokenCount{
@@ -122,7 +122,7 @@ type anthropicResponse struct {
 }
 
 type AnthropicHandlerMethods struct {
-	anthropicTokenizer *tokenizer.Tokenizer
+	anthropicTokenizer tokenizer.Tokenizer
 	promptRecorder     PromptRecorder
 	config             config.AnthropicConfig
 }
