@@ -135,7 +135,7 @@ func EmbedRepo(
 		reportProgress(&stats)
 	}
 
-	codeIndexStats, err := embedFiles(ctx, logger, codeFileNames, client, contextService, opts.FileFilters, opts.SplitOptions, readLister, opts.MaxCodeEmbeddings, opts.BatchSize, opts.ExcludeChunks, insertCode, reportCodeProgress)
+	codeIndexStats, err := embedFiles(ctx, logger, opts.RepoName, codeFileNames, client, contextService, opts.FileFilters, opts.SplitOptions, readLister, opts.MaxCodeEmbeddings, opts.BatchSize, opts.ExcludeChunks, insertCode, reportCodeProgress)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -160,7 +160,7 @@ func EmbedRepo(
 		reportProgress(&stats)
 	}
 
-	textIndexStats, err := embedFiles(ctx, logger, textFileNames, client, contextService, opts.FileFilters, opts.SplitOptions, readLister, opts.MaxTextEmbeddings, opts.BatchSize, opts.ExcludeChunks, insertText, reportTextProgress)
+	textIndexStats, err := embedFiles(ctx, logger, opts.RepoName, textFileNames, client, contextService, opts.FileFilters, opts.SplitOptions, readLister, opts.MaxTextEmbeddings, opts.BatchSize, opts.ExcludeChunks, insertText, reportTextProgress)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -227,6 +227,7 @@ type FlushResults struct {
 func embedFiles(
 	ctx context.Context,
 	logger log.Logger,
+	repoName api.RepoName,
 	files []FileEntry,
 	embeddingsClient client.EmbeddingsClient,
 	contextService ContextService,
@@ -255,7 +256,7 @@ func embedFiles(
 
 		batchChunks := make([]string, len(batch))
 		for idx, chunk := range batch {
-			batchChunks[idx] = chunk.Content
+			batchChunks[idx] = addMetadataHeader(chunk.Content, string(repoName), chunk.FileName)
 		}
 
 		batchEmbeddings, err := embeddingsClient.GetDocumentEmbeddings(ctx, batchChunks)

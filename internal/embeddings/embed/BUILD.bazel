@@ -8,6 +8,7 @@ go_library(
         "embed.go",
         "files.go",
         "iface.go",
+        "metadata_header.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/internal/embeddings/embed",
     visibility = ["//:__subpackages__"],
@@ -38,6 +39,7 @@ go_test(
     srcs = [
         "embed_test.go",
         "files_test.go",
+        "metadata_header_test.go",
         "mocks_test.go",
     ],
     embed = [":embed"],
