@@ -49,7 +49,7 @@ export const CodeIntelRankingPage: FunctionComponent<CodeIntelRankingPageProps> 
 }) => {
     useEffect(() => {
         telemetryService.logViewEvent('CodeIntelRankingPage')
-        telemetryRecorder.recordEvent('codeIntel.ranking', 'view')
+        telemetryRecorder.recordEvent('admin.codeIntel.ranking', 'view')
     }, [telemetryService, telemetryRecorder])
 
     const { data, loading, error, refetch } = useRankingSummary({})

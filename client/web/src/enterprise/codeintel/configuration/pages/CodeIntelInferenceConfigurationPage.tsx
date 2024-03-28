@@ -25,7 +25,7 @@ export const CodeIntelInferenceConfigurationPage: FunctionComponent<CodeIntelInf
     const inferencePreview = previewScript !== null ? previewScript : inferenceScript
 
     useEffect(() => {
-        props.telemetryRecorder.recordEvent('codeIntel.inferenceConfiguration', 'view')
+        props.telemetryRecorder.recordEvent('admin.codeIntel.inferenceConfiguration', 'view')
     }, [props.telemetryRecorder])
 
     return (

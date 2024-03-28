@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 
 import { mdiMagnify } from '@mdi/js'
 import { Navigate, useLocation } from 'react-router-dom'
@@ -26,7 +26,7 @@ import { SearchContextForm } from './SearchContextForm'
 export interface CreateSearchContextPageProps
     extends TelemetryProps,
         Pick<SearchContextProps, 'createSearchContext' | 'deleteSearchContext'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     authenticatedUser: AuthenticatedUser
     isSourcegraphDotCom: boolean
 }
@@ -40,12 +40,19 @@ export const AuthenticatedCreateSearchContextPage: React.FunctionComponent<
 
     const query = parseSearchURLQuery(location.search)
 
+    useEffect(() => {
+        platformContext.telemetryRecorder.recordEvent('searchContexts.create', 'view')
+    }, [platformContext.telemetryRecorder])
+
     const onSubmit = useCallback(
         (
             id: Scalars['ID'] | undefined,
             searchContext: SearchContextInput,
             repositories: SearchContextRepositoryRevisionsInput[]
-        ): Observable<SearchContextFields> => createSearchContext({ searchContext, repositories }, platformContext),
+        ): Observable<SearchContextFields> => {
+            platformContext.telemetryRecorder.recordEvent('searchContext', 'create')
+            return createSearchContext({ searchContext, repositories }, platformContext)
+        },
         [createSearchContext, platformContext]
     )
 

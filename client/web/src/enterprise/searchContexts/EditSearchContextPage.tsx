@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 
 import { mdiMagnify } from '@mdi/js'
 import { useParams } from 'react-router-dom'
@@ -27,7 +27,7 @@ import { SearchContextForm } from './SearchContextForm'
 export interface EditSearchContextPageProps
     extends TelemetryProps,
         Pick<SearchContextProps, 'updateSearchContext' | 'fetchSearchContextBySpec' | 'deleteSearchContext'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     authenticatedUser: AuthenticatedUser
     isSourcegraphDotCom: boolean
 }
@@ -41,6 +41,11 @@ export const AuthenticatedEditSearchContextPage: React.FunctionComponent<
     const spec: string = params.spec ? `${params.specOrOrg}/${params.spec}` : params.specOrOrg!
 
     const { updateSearchContext, fetchSearchContextBySpec, platformContext } = props
+
+    useEffect(() => {
+        platformContext.telemetryRecorder.recordEvent('searchContext.edit', 'view')
+    }, [platformContext.telemetryRecorder])
+
     const onSubmit = useCallback(
         (
             id: Scalars['ID'] | undefined,
@@ -50,6 +55,7 @@ export const AuthenticatedEditSearchContextPage: React.FunctionComponent<
             if (!id) {
                 return throwError(new Error('Cannot update search context with undefined ID'))
             }
+            platformContext.telemetryRecorder.recordEvent('searchContext', 'update')
             return updateSearchContext({ id, searchContext, repositories }, platformContext)
         },
         [updateSearchContext, platformContext]

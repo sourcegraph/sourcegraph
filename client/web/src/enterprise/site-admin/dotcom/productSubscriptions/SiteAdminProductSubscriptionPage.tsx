@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { logger } from '@sourcegraph/common'
 import { useMutation, useQuery } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, LoadingSpinner, Link, Icon, ErrorAlert, PageHeader, Container, H3, Text } from '@sourcegraph/wildcard'
 
 import {
@@ -25,7 +26,6 @@ import type {
     ArchiveProductSubscriptionResult,
     ArchiveProductSubscriptionVariables,
 } from '../../../../graphql-operations'
-import { eventLogger } from '../../../../tracking/eventLogger'
 import { AccountName } from '../../../dotcom/productSubscriptions/AccountName'
 import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { LicenseGenerationKeyWarning } from '../../../productSubscription/LicenseGenerationKeyWarning'
@@ -40,15 +40,17 @@ import { SiteAdminGenerateProductLicenseForSubscriptionForm } from './SiteAdminG
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
 import { accessTokenPath, errorForPath } from './utils'
 
-interface Props {}
+interface Props extends TelemetryV2Props {}
 
 /**
  * Displays a product subscription in the site admin area.
  */
-export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.PropsWithChildren<Props>> = () => {
+export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
+    telemetryRecorder,
+}) => {
     const navigate = useNavigate()
     const { subscriptionUUID = '' } = useParams<{ subscriptionUUID: string }>()
-    useEffect(() => eventLogger.logViewEvent('SiteAdminProductSubscription'), [])
+    useEffect(() => telemetryRecorder.recordEvent('admin.productSubscription', 'view'), [telemetryRecorder])
 
     const [showGenerate, setShowGenerate] = useState<boolean>(false)
 
@@ -77,12 +79,13 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
             return
         }
         try {
+            telemetryRecorder.recordEvent('admin.productSubscription', 'archive')
             await archiveProductSubscription({ variables: { id: data.dotcom.productSubscription.id } })
             navigate('/site-admin/dotcom/product/subscriptions')
         } catch (error) {
             logger.error(error)
         }
-    }, [data, archiveProductSubscription, navigate])
+    }, [data, archiveProductSubscription, navigate, telemetryRecorder])
 
     const toggleShowGenerate = useCallback((): void => setShowGenerate(previousValue => !previousValue), [])
 
@@ -202,6 +205,7 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
                     productSubscriptionID={productSubscription.id}
                     productSubscriptionUUID={subscriptionUUID}
                     refetchSubscription={refetch}
+                    telemetryRecorder={telemetryRecorder}
                 />
 
                 <H3 className="d-flex align-items-start">
@@ -216,6 +220,7 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
                         subscriptionUUID={subscriptionUUID}
                         toggleShowGenerate={toggleShowGenerate}
                         setRefetch={setRefetchRef}
+                        telemetryRecorder={telemetryRecorder}
                     />
                 </Container>
             </div>
@@ -227,17 +232,25 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
                     latestLicense={productSubscription.productLicenses?.nodes[0] ?? undefined}
                     onGenerate={onLicenseUpdate}
                     onCancel={() => setShowGenerate(false)}
+                    telemetryRecorder={telemetryRecorder}
                 />
             )}
         </>
     )
 }
 
-const ProductSubscriptionLicensesConnection: React.FunctionComponent<{
+interface ProductSubscriptionLicensesConnectionProps extends TelemetryV2Props {
     subscriptionUUID: string
     toggleShowGenerate: () => void
     setRefetch: (refetch: () => void) => void
-}> = ({ subscriptionUUID, setRefetch, toggleShowGenerate }) => {
+}
+
+const ProductSubscriptionLicensesConnection: React.FunctionComponent<ProductSubscriptionLicensesConnectionProps> = ({
+    subscriptionUUID,
+    setRefetch,
+    toggleShowGenerate,
+    telemetryRecorder,
+}) => {
     const { loading, hasNextPage, fetchMore, refetchAll, connection, error } = useProductSubscriptionLicensesConnection(
         subscriptionUUID,
         20
@@ -268,6 +281,7 @@ const ProductSubscriptionLicensesConnection: React.FunctionComponent<{
                         defaultExpanded={node.id === licenseIDFromLocationHash}
                         showSubscription={false}
                         onRevokeCompleted={refetchAll}
+                        telemetryRecorder={telemetryRecorder}
                     />
                 ))}
             </ConnectionList>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import { useSearchParams } from 'react-router-dom'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, PageHeader } from '@sourcegraph/wildcard'
 
 import {
@@ -15,20 +16,21 @@ import {
     ConnectionForm,
 } from '../../../../components/FilteredConnection/ui'
 import { PageTitle } from '../../../../components/PageTitle'
-import { eventLogger } from '../../../../tracking/eventLogger'
 
 import { useQueryProductLicensesConnection } from './backend'
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
 
-interface Props {}
+interface Props extends TelemetryV2Props {}
 
 const SEARCH_PARAM_KEY = 'query'
 
 /**
  * Displays the product licenses that have been created on Sourcegraph.com.
  */
-export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsWithChildren<Props>> = () => {
-    useEffect(() => eventLogger.logPageView('SiteAdminLicenseKeyLookup'), [])
+export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
+    telemetryRecorder,
+}) => {
+    useEffect(() => telemetryRecorder.recordEvent('admin.licenseKeyLookup', 'view'), [telemetryRecorder])
 
     const [searchParams, setSearchParams] = useSearchParams()
 
@@ -83,6 +85,7 @@ export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsW
                                         node={node}
                                         showSubscription={true}
                                         onRevokeCompleted={refetchAll}
+                                        telemetryRecorder={telemetryRecorder}
                                     />
                                 ))}
                             </ConnectionList>

@@ -9,6 +9,7 @@ import type { Controller } from '../extensions/controller'
 import type { PlatformContext } from '../platform/context'
 import type { AggregateStreamingSearchResults, ContentMatch, RepositoryMatch } from '../search/stream'
 import type { SettingsCascade } from '../settings/settings'
+import { noOpTelemetryRecorder } from '../telemetry'
 
 export const CHUNK_MATCH_RESULT: ContentMatch = {
     type: 'content',
@@ -643,10 +644,11 @@ export const extensionsController: Controller = {
 
 export const NOOP_PLATFORM_CONTEXT: Pick<
     PlatformContext,
-    'sourcegraphURL' | 'requestGraphQL' | 'urlToFile' | 'settings'
+    'sourcegraphURL' | 'requestGraphQL' | 'urlToFile' | 'settings' | 'telemetryRecorder'
 > = {
     requestGraphQL: () => EMPTY,
     urlToFile: () => '',
     settings: of(NOOP_SETTINGS_CASCADE),
     sourcegraphURL: '',
+    telemetryRecorder: noOpTelemetryRecorder,
 }

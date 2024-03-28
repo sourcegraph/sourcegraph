@@ -5,6 +5,7 @@ import { capitalize } from 'lodash'
 import { useLocation } from 'react-router-dom'
 
 import { RepoEmbeddingJobState } from '@sourcegraph/shared/src/graphql-operations'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
     Button,
@@ -43,7 +44,7 @@ import { RepoEmbeddingJobNode } from './RepoEmbeddingJobNode'
 
 import styles from './SiteAdminCodyPage.module.scss'
 
-export interface SiteAdminCodyPageProps extends TelemetryProps {}
+export interface SiteAdminCodyPageProps extends TelemetryProps, TelemetryV2Props {}
 
 interface RepoEmbeddingJobsFormValues {
     repositories: string[]
@@ -72,10 +73,11 @@ const enumToFilterValues = <T extends string>(enumeration: { [key in T]: T }): F
     return values
 }
 
-export const SiteAdminCodyPage: FC<SiteAdminCodyPageProps> = ({ telemetryService }) => {
+export const SiteAdminCodyPage: FC<SiteAdminCodyPageProps> = ({ telemetryService, telemetryRecorder }) => {
     useEffect(() => {
         telemetryService.logPageView('SiteAdminCodyPage')
-    }, [telemetryService])
+        telemetryRecorder.recordEvent('admin.cody.embeddingsJobs', 'view')
+    }, [telemetryService, telemetryRecorder])
 
     const location = useLocation()
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
@@ -119,10 +121,11 @@ export const SiteAdminCodyPage: FC<SiteAdminCodyPageProps> = ({ telemetryService
 
     const onSubmit = useCallback(
         async (repoNames: string[]) => {
+            telemetryRecorder.recordEvent('admin.cody.embeddingsJobs', 'scheduleJob')
             await scheduleRepoEmbeddingJobs({ variables: { repoNames } })
             refetchFirst()
         },
-        [refetchFirst, scheduleRepoEmbeddingJobs]
+        [refetchFirst, scheduleRepoEmbeddingJobs, telemetryRecorder]
     )
 
     const form = useForm<RepoEmbeddingJobsFormValues>({

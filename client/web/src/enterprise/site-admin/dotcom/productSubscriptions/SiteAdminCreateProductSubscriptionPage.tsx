@@ -7,6 +7,7 @@ import { catchError, concatMapTo, map, tap } from 'rxjs/operators'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, useEventObservable, Link, Alert, Icon, Form, Container, PageHeader } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
@@ -20,9 +21,8 @@ import type {
     ProductSubscriptionAccountFields,
     CreateProductSubscriptionResult,
 } from '../../../../graphql-operations'
-import { eventLogger } from '../../../../tracking/eventLogger'
 
-interface UserCreateSubscriptionNodeProps {
+interface UserCreateSubscriptionNodeProps extends TelemetryV2Props {
     /**
      * The user to display in this list item.
      */
@@ -62,7 +62,7 @@ const UserCreateSubscriptionNode: React.FunctionComponent<React.PropsWithChildre
             > =>
                 submits.pipe(
                     tap(event => event.preventDefault()),
-                    tap(() => eventLogger.log('NewProductSubscriptionCreated')),
+                    tap(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions', 'create')),
                     concatMapTo(
                         merge(
                             of('saving' as const),
@@ -72,7 +72,7 @@ const UserCreateSubscriptionNode: React.FunctionComponent<React.PropsWithChildre
                         )
                     )
                 ),
-            [props.node.id]
+            [props.node.id, props.telemetryRecorder]
         )
     )
 
@@ -114,7 +114,7 @@ const UserCreateSubscriptionNode: React.FunctionComponent<React.PropsWithChildre
     )
 }
 
-interface Props {
+interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
 }
 
@@ -126,9 +126,7 @@ interface Props {
 export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
     React.PropsWithChildren<Props>
 > = props => {
-    useEffect(() => {
-        eventLogger.logViewEvent('SiteAdminCreateProductSubscription')
-    })
+    useEffect(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions.create', 'view'))
     return (
         <div className="site-admin-create-product-subscription-page">
             <PageTitle title="Create product subscription" />

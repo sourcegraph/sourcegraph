@@ -5,13 +5,13 @@ import { map } from 'rxjs/operators'
 
 import { createAggregateError } from '@sourcegraph/common'
 import { gql } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { H2 } from '@sourcegraph/wildcard'
 
 import { queryGraphQL } from '../../../../backend/graphql'
 import { FilteredConnection } from '../../../../components/FilteredConnection'
 import { PageTitle } from '../../../../components/PageTitle'
 import type { CustomerFields, CustomersResult, CustomersVariables } from '../../../../graphql-operations'
-import { eventLogger } from '../../../../tracking/eventLogger'
 import { userURL } from '../../../../user'
 import { AccountName } from '../../../dotcom/productSubscriptions/AccountName'
 
@@ -42,13 +42,13 @@ const SiteAdminCustomerNode: React.FunctionComponent<React.PropsWithChildren<Sit
     </li>
 )
 
-interface Props {}
+interface Props extends TelemetryV2Props {}
 
 /**
  * Displays a list of customers associated with user accounts on Sourcegraph.com.
  */
 export const SiteAdminProductCustomersPage: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
-    useEffect(() => eventLogger.logViewEvent('SiteAdminProductCustomers'), [])
+    useEffect(() => props.telemetryRecorder.recordEvent('admin.customers', 'view'), [props.telemetryRecorder])
 
     const updates = useMemo(() => new Subject<void>(), [])
     const nodeProps: Pick<SiteAdminCustomerNodeProps, Exclude<keyof SiteAdminCustomerNodeProps, 'node'>> = {}

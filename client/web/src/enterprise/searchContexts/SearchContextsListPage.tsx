@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { mdiMagnify, mdiPlus } from '@mdi/js'
 
@@ -17,7 +17,7 @@ import styles from './SearchContextsListPage.module.scss'
 
 export interface SearchContextsListPageProps
     extends Pick<SearchContextProps, 'fetchSearchContexts' | 'getUserSearchContextNamespaces'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     isSourcegraphDotCom: boolean
     authenticatedUser: AuthenticatedUser | null
 }
@@ -30,6 +30,10 @@ export const SearchContextsListPage: React.FunctionComponent<SearchContextsListP
     isSourcegraphDotCom,
 }) => {
     const [alert, setAlert] = useState<string | undefined>()
+
+    useEffect(() => {
+        platformContext.telemetryRecorder.recordEvent('searchContexts.list', 'view')
+    }, [platformContext.telemetryRecorder])
 
     return (
         <div data-testid="search-contexts-list-page" className="w-100">
@@ -60,9 +64,13 @@ export const SearchContextsListPage: React.FunctionComponent<SearchContextsListP
                                     To search across your team's private repositories,{' '}
                                     <Link
                                         to="https://sourcegraph.com"
-                                        onClick={() =>
+                                        onClick={() => {
                                             eventLogger.log('ClickedOnEnterpriseCTA', { location: 'ContextsSettings' })
-                                        }
+                                            platformContext.telemetryRecorder.recordEvent(
+                                                'searchContexts.enterpriseCTA',
+                                                'click'
+                                            )
+                                        }}
                                     >
                                         get Sourcegraph Enterprise
                                     </Link>

@@ -80,7 +80,7 @@ export const CodeIntelPreciseIndexPage: FunctionComponent<CodeIntelPreciseIndexP
 
     useEffect(() => {
         telemetryService.logViewEvent('CodeIntelPreciseIndexPage')
-        telemetryRecorder.recordEvent('codeIntel.preciseIndex', 'view')
+        telemetryRecorder.recordEvent('repo.codeIntel.preciseIndex', 'view')
     }, [telemetryService, telemetryRecorder])
 
     const apolloClient = useApolloClient()

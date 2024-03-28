@@ -16,7 +16,6 @@ import {
 } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { QueryState, SearchContextProps } from '@sourcegraph/shared/src/search'
-import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import {
@@ -112,7 +111,7 @@ const LOADING = 'loading' as const
 export interface SearchContextFormProps
     extends TelemetryProps,
         Pick<SearchContextProps, 'deleteSearchContext'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     searchContext?: SearchContextFields
     query?: string
     authenticatedUser: AuthenticatedUser
@@ -473,8 +472,7 @@ export const SearchContextForm: React.FunctionComponent<React.PropsWithChildren<
                                 onChange={onRepositoriesConfigChange}
                                 validateRepositories={validateRepositories}
                                 repositories={searchContext?.repositories}
-                                // TODO (dadlerj) replace with real telemetryRecorder
-                                telemetryRecorder={noOpTelemetryRecorder}
+                                telemetryRecorder={platformContext.telemetryRecorder}
                             />
                         </div>
                     </div>

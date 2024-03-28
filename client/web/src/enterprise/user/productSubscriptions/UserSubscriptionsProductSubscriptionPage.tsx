@@ -114,6 +114,7 @@ export const UserSubscriptionsProductSubscriptionPage: React.FunctionComponent<R
                 productSubscriptionID={productSubscription.id}
                 productSubscriptionUUID={subscriptionUUID}
                 refetchSubscription={refetch}
+                telemetryRecorder={telemetryRecorder}
             />
         </div>
     )

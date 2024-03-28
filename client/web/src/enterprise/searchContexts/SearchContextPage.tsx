@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { mdiMagnify } from '@mdi/js'
 import classNames from 'classnames'
@@ -41,7 +41,7 @@ import styles from './SearchContextPage.module.scss'
 
 export interface SearchContextPageProps
     extends Pick<SearchContextProps, 'fetchSearchContextBySpec'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     authenticatedUser: Pick<AuthenticatedUser, 'id'> | null
 }
 
@@ -151,6 +151,10 @@ export const SearchContextPage: React.FunctionComponent<SearchContextPageProps> 
     const spec: string = params.spec ? `${params.specOrOrg}/${params.spec}` : params.specOrOrg!
 
     const LOADING = 'loading' as const
+
+    useEffect(() => {
+        platformContext.telemetryRecorder.recordEvent('searchContext', 'view')
+    }, [platformContext.telemetryRecorder])
 
     const searchContextOrError = useObservable(
         React.useMemo(

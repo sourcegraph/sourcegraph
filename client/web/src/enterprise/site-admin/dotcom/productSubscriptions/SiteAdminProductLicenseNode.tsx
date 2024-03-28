@@ -4,6 +4,7 @@ import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { useMutation } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Alert,
     Button,
@@ -31,7 +32,7 @@ import { REVOKE_LICENSE } from './backend'
 
 const getLicenseUUID = (id: string): string => atob(id).slice('ProductLicense:"'.length, -1)
 
-export interface SiteAdminProductLicenseNodeProps {
+export interface SiteAdminProductLicenseNodeProps extends TelemetryV2Props {
     node: ProductLicenseFields
     showSubscription: boolean
     defaultExpanded?: boolean
@@ -43,12 +44,13 @@ export interface SiteAdminProductLicenseNodeProps {
  */
 export const SiteAdminProductLicenseNode: React.FunctionComponent<
     React.PropsWithChildren<SiteAdminProductLicenseNodeProps>
-> = ({ node, showSubscription, onRevokeCompleted, defaultExpanded = false }) => {
+> = ({ node, showSubscription, onRevokeCompleted, defaultExpanded = false, telemetryRecorder }) => {
     const [revoke, { loading, error }] = useMutation<RevokeLicenseResult, RevokeLicenseVariables>(REVOKE_LICENSE)
 
     const onRevoke = useCallback(() => {
         const reason = window.prompt('Reason for revoking the license key:')
         if (reason) {
+            telemetryRecorder.recordEvent('admin.productSubscription.license', 'revoke')
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             revoke({
                 variables: {
@@ -62,7 +64,7 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                 },
             })
         }
-    }, [revoke, node, onRevokeCompleted])
+    }, [revoke, node, onRevokeCompleted, telemetryRecorder])
 
     const [open, setOpen] = useState(defaultExpanded)
     const toggleOpen = useCallback(() => {

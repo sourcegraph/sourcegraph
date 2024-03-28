@@ -90,7 +90,7 @@ export const GlobalDashboardPage: React.FunctionComponent<GlobalDashboardPagePro
 }) => {
     useEffect(() => {
         telemetryService.logPageView('CodeIntelGlobalDashboard')
-        telemetryRecorder.recordEvent('codeIntel.globalDashboard', 'view')
+        telemetryRecorder.recordEvent('admin.codeIntel.dashboard', 'view')
     }, [telemetryService, telemetryRecorder])
 
     const { data, error, loading } = useQuery<GlobalCodeIntelStatusResult>(globalCodeIntelStatusQuery, {

@@ -2,13 +2,13 @@ import React, { useEffect } from 'react'
 
 import { mdiPlus } from '@mdi/js'
 
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, Container, Icon, Link, PageHeader } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
 import { FilteredConnection } from '../../../../components/FilteredConnection'
 import { PageTitle } from '../../../../components/PageTitle'
 import type { SiteAdminProductSubscriptionFields } from '../../../../graphql-operations'
-import { eventLogger } from '../../../../tracking/eventLogger'
 
 import { queryProductSubscriptions } from './backend'
 import {
@@ -19,7 +19,7 @@ import {
 
 import styles from './SiteAdminCreateProductSubscriptionPage.module.scss'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
 }
 
@@ -29,8 +29,9 @@ interface Props {
  */
 export const SiteAdminProductSubscriptionsPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
     authenticatedUser,
+    telemetryRecorder,
 }) => {
-    useEffect(() => eventLogger.logViewEvent('SiteAdminProductSubscriptions'), [])
+    useEffect(() => telemetryRecorder.recordEvent('admin.productSubscriptions', 'view'), [telemetryRecorder])
 
     return (
         <div className="site-admin-product-subscriptions-page">

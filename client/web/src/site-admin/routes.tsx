@@ -375,11 +375,13 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     },
     {
         path: '/license',
-        render: () => <SiteAdminProductSubscriptionPage />,
+        render: props => (
+            <SiteAdminProductSubscriptionPage telemetryRecorder={props.platformContext.telemetryRecorder} />
+        ),
     },
     {
         path: '/dotcom/customers',
-        render: () => <SiteAdminProductCustomersPage />,
+        render: props => <SiteAdminProductCustomersPage telemetryRecorder={props.platformContext.telemetryRecorder} />,
         condition: () => SHOW_BUSINESS_FEATURES,
     },
     {
@@ -394,7 +396,9 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     },
     {
         path: '/dotcom/product/subscriptions',
-        render: props => <SiteAdminProductSubscriptionsPage {...props} />,
+        render: props => (
+            <SiteAdminProductSubscriptionsPage {...props} telemetryRecorder={props.platformContext.telemetryRecorder} />
+        ),
         condition: () => SHOW_BUSINESS_FEATURES,
     },
     {
@@ -496,7 +500,7 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     {
         exact: true,
         path: '/embeddings',
-        render: props => <SiteAdminCodyPage {...props} />,
+        render: props => <SiteAdminCodyPage {...props} telemetryRecorder={props.platformContext.telemetryRecorder} />,
         condition: codyIsEnabled,
     },
     {

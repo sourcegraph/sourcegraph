@@ -8,6 +8,7 @@ import { noop } from 'lodash'
 
 import { useMutation } from '@sourcegraph/http-client'
 import type { Scalars } from '@sourcegraph/shared/src/graphql-operations'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Alert,
     Button,
@@ -61,7 +62,7 @@ import styles from './SiteAdminGenerateProductLicenseForSubscriptionForm.module.
 interface License extends Omit<ProductLicenseFields, 'subscription' | 'info'> {
     info: Omit<ProductLicenseInfoFields, 'productNameWithBrand'> | null
 }
-interface Props {
+interface Props extends TelemetryV2Props {
     subscriptionID: Scalars['ID']
     subscriptionAccount: string
     latestLicense: License | undefined
@@ -152,6 +153,15 @@ const getTagsFromFormData = (formData: FormData): string[] =>
         ])
     )
 
+const getTagsForTelemetry = (formData: FormData): { [key: string]: number } => ({
+    trueUp: formData.trueUp ? 1 : 0,
+    trial: formData.trial ? 1 : 0,
+    airGapped: formData.airGapped ? 1 : 0,
+    batchChanges: formData.batchChanges ? 1 : 0,
+    codeInsights: formData.codeInsights ? 1 : 0,
+    disableTelemetry: formData.disableTelemetry ? 1 : 0,
+})
+
 const HANDBOOK_INFO_URL =
     'https://handbook.sourcegraph.com/ce/license_keys#how-to-create-a-license-key-for-a-new-prospect-or-new-customer'
 
@@ -162,7 +172,7 @@ const HANDBOOK_INFO_URL =
  */
 export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionComponent<
     React.PropsWithChildren<Props>
-> = ({ latestLicense, subscriptionID, subscriptionAccount, onGenerate, onCancel }) => {
+> = ({ latestLicense, subscriptionID, subscriptionAccount, onGenerate, onCancel, telemetryRecorder }) => {
     const labelId = 'generateLicense'
 
     const [hasAcknowledgedInfo, setHasAcknowledgedInfo] = useState(false)
@@ -287,10 +297,13 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
     const onSubmit = useCallback<React.FormEventHandler>(
         event => {
             event.preventDefault()
+            telemetryRecorder.recordEvent('admin.productSubscription.license', 'generate', {
+                metadata: getTagsForTelemetry(formData),
+            })
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             generateLicense()
         },
-        [generateLicense]
+        [formData, telemetryRecorder, generateLicense]
     )
 
     const tags = useDebounce<string[]>(tagsFromString(formData.tags), 300)

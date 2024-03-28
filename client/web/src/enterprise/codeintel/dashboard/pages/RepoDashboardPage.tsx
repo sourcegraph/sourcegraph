@@ -103,7 +103,7 @@ export const RepoDashboardPage: React.FunctionComponent<RepoDashboardPageProps> 
 }) => {
     useEffect(() => {
         telemetryService.logPageView('CodeIntelRepoDashboard')
-        telemetryRecorder.recordEvent('codeIntel.repoDashboard', 'view')
+        telemetryRecorder.recordEvent('repo.codeIntel.dashboard', 'view')
     }, [telemetryService, telemetryRecorder])
 
     const location = useLocation()

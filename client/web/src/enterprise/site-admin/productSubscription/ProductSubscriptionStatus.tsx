@@ -7,6 +7,7 @@ import { catchError, map } from 'rxjs/operators'
 
 import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
 import { gql, dataOrThrowErrors } from '@sourcegraph/http-client'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     LoadingSpinner,
     useObservable,
@@ -64,14 +65,17 @@ const queryProductLicenseInfo = (): Observable<{
         }))
     )
 
-interface Props {
+interface Props extends TelemetryV2Props {
     className?: string
 }
 
 /**
  * A component displaying information about and the status of the product subscription.
  */
-export const ProductSubscriptionStatus: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ className }) => {
+export const ProductSubscriptionStatus: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
+    className,
+    telemetryRecorder,
+}) => {
     /** The product subscription status, or an error, or undefined while loading. */
     const statusOrError = useObservable(
         useMemo(() => queryProductLicenseInfo().pipe(catchError((error): [ErrorLike] => [asError(error)])), [])
@@ -125,6 +129,11 @@ export const ProductSubscriptionStatus: React.FunctionComponent<React.PropsWithC
                                     rel="noopener"
                                     variant="primary"
                                     size="sm"
+                                    onClick={() =>
+                                        telemetryRecorder.recordEvent('admin.productSubscription.upgradeCTA', 'click', {
+                                            metadata: { location: 0 },
+                                        })
+                                    }
                                 >
                                     Upgrade
                                 </ButtonLink>
@@ -145,6 +154,12 @@ export const ProductSubscriptionStatus: React.FunctionComponent<React.PropsWithC
                                             rel="noopener"
                                             variant="primary"
                                             size="sm"
+                                            onClick={() =>
+                                                telemetryRecorder.recordEvent(
+                                                    'admin.productSubscription.enterpriseCTA',
+                                                    'click'
+                                                )
+                                            }
                                         >
                                             Get license
                                         </ButtonLink>
@@ -168,7 +183,16 @@ export const ProductSubscriptionStatus: React.FunctionComponent<React.PropsWithC
             {!hasTrueUp && license.userCount - actualUserCount < 0 && (
                 <Alert variant="warning">
                     You have exceeded your licensed users.{' '}
-                    <Link to="https://sourcegraph.com/pricing" target="_blank" rel="noopener">
+                    <Link
+                        to="https://sourcegraph.com/pricing"
+                        target="_blank"
+                        rel="noopener"
+                        onClick={() =>
+                            telemetryRecorder.recordEvent('admin.productSubscription.upgradeCTA', 'click', {
+                                metadata: { location: 1 },
+                            })
+                        }
+                    >
                         Upgrade your license
                     </Link>{' '}
                     to true up and prevent a retroactive charge.

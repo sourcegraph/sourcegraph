@@ -8,6 +8,7 @@ import { Toggle } from '@sourcegraph/branded/src/components/Toggle'
 import { logger } from '@sourcegraph/common'
 import { useMutation, useQuery } from '@sourcegraph/http-client'
 import { CodyGatewayRateLimitSource } from '@sourcegraph/shared/src/graphql-operations'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     H3,
     ProductStatusBadge,
@@ -54,7 +55,7 @@ import { numberFormatter, prettyInterval } from './utils'
 
 import styles from './CodyServicesSection.module.scss'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     productSubscriptionUUID: string
     productSubscriptionID: Scalars['ID']
     currentSourcegraphAccessToken: string | null
@@ -72,6 +73,7 @@ export const CodyServicesSection: React.FunctionComponent<Props> = ({
     accessTokenError,
     refetchSubscription,
     codyGatewayAccess,
+    telemetryRecorder,
 }) => {
     const [updateCodyGatewayConfig, { loading: updateCodyGatewayConfigLoading, error: updateCodyGatewayConfigError }] =
         useMutation<UpdateCodyGatewayConfigResult, UpdateCodyGatewayConfigVariables>(UPDATE_CODY_GATEWAY_CONFIG)
@@ -87,6 +89,10 @@ export const CodyServicesSection: React.FunctionComponent<Props> = ({
             return
         }
         try {
+            telemetryRecorder.recordEvent(
+                'admin.productSubscription.codyAccess',
+                codyServicesStateChange ? 'enable' : 'disable'
+            )
             await updateCodyGatewayConfig({
                 variables: {
                     productSubscriptionID,
@@ -100,7 +106,13 @@ export const CodyServicesSection: React.FunctionComponent<Props> = ({
             // Reset the intent to change state.
             setCodyServicesStateChange(undefined)
         }
-    }, [productSubscriptionID, refetchSubscription, updateCodyGatewayConfig, codyServicesStateChange])
+    }, [
+        productSubscriptionID,
+        refetchSubscription,
+        updateCodyGatewayConfig,
+        codyServicesStateChange,
+        telemetryRecorder,
+    ])
 
     return (
         <>

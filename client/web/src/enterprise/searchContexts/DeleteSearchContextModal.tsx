@@ -14,7 +14,7 @@ import { ALLOW_NAVIGATION } from '../../components/AwayPrompt'
 
 interface DeleteSearchContextModalProps
     extends Pick<SearchContextProps, 'deleteSearchContext'>,
-        PlatformContextProps<'requestGraphQL'> {
+        PlatformContextProps<'requestGraphQL' | 'telemetryRecorder'> {
     isOpen: boolean
     searchContext: SearchContextFields
     toggleDeleteModal: () => void
@@ -34,6 +34,7 @@ export const DeleteSearchContextModal: React.FunctionComponent<
                     mergeMap(() =>
                         deleteSearchContext(searchContext.id, platformContext).pipe(
                             tap(() => {
+                                platformContext.telemetryRecorder.recordEvent('searchContext', 'delete')
                                 navigate('/contexts', { state: ALLOW_NAVIGATION })
                             }),
                             startWith(LOADING),

@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 import { renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
 
@@ -43,6 +44,7 @@ describe('SiteAdminProductLicenseNode', () => {
                         onRevokeCompleted={function (): void {
                             throw new Error('Function not implemented.')
                         }}
+                        telemetryRecorder={noOpTelemetryRecorder}
                     />
                 </MockedTestProvider>
             ).asFragment()
@@ -84,6 +86,7 @@ describe('SiteAdminProductLicenseNode', () => {
                         onRevokeCompleted={function (): void {
                             throw new Error('Function not implemented.')
                         }}
+                        telemetryRecorder={noOpTelemetryRecorder}
                     />
                 </MockedTestProvider>
             ).asFragment()
