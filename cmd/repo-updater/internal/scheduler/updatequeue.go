@@ -24,6 +24,7 @@ type updateQueue struct {
 	notifyEnqueue chan struct{}
 }
 
+// only called on process exit.
 func (q *updateQueue) reset() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -43,6 +44,12 @@ func (q *updateQueue) reset() {
 //
 // If the given priority is higher than the one in the queue,
 // the repo's position in the queue is updated accordingly.
+// Called by the updatescheduler only:
+// - Called when the schedule says a repo is due now. This is the equivalent of our DB query saying we should insert a new job.
+// - Called with high priority when repoupdater.EnqueueRepoUpdate gRPC is called. This can be implemented as a DB call that inserts a record when none is present with high prio, or updates the priority of an existing queued,errored job to be at least high prio (before aging).
+// - Called with low priority when the syncer signals that the repo was either Added newly, or has been modified. Unmodified repos are not enqueued.
+//
+// When does the schedule say a repo is due?
 func (q *updateQueue) enqueue(repo configuredRepo, p priority) (updated bool) {
 	if repo.ID == 0 {
 		panic("repo.id is zero")
@@ -82,12 +89,18 @@ func (q *updateQueue) enqueue(repo configuredRepo, p priority) (updated bool) {
 
 // nextSeq increments and returns the next sequence number.
 // The caller must hold the lock on q.mu.
+// Not required in DB, we have things to order by.
 func (q *updateQueue) nextSeq() uint64 {
 	q.seq++
 	return q.seq
 }
 
 // remove removes the repo from the queue if the repo.Updating matches the updating argument.
+// Called in the update scheduler after a successful update. Aka: The repo no longer needs to be
+// updated immediately. Solved by the fetch job in the DB being "consumed" (aka set to done).
+// Only removed if it is actively being worked on. I don't think this matters in DB world.
+// Also called in the scheduler when a repo is detected as removed by the syncer.
+// This will be handled by a DB trigger that removes the job from the DB.
 func (q *updateQueue) remove(repo configuredRepo, updating bool) (removed bool) {
 	if repo.ID == 0 {
 		panic("repo.id is zero")
@@ -108,6 +121,10 @@ func (q *updateQueue) remove(repo configuredRepo, updating bool) (removed bool) 
 // acquireNext acquires the next repo for update.
 // The acquired repo must be removed from the queue
 // when the update finishes (independent of success or failure).
+// This is called from the actual scheduler loop (aka the thing that calls gitserver)
+// and it uses the concurrent fetches limiter.
+// The scheduler loop immediately spawns a goroutine to call gitserver and proceeds
+// with the next entry.
 func (q *updateQueue) acquireNext() (configuredRepo, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
