@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react'
 import classNames from 'classnames'
 
 import { logger } from '@sourcegraph/common'
-import { Button, Modal, Link, Code, Label, Text, Input, ErrorAlert, Form } from '@sourcegraph/wildcard'
+import { Button, Modal, Link, Code, Label, Text, Input, ErrorAlert, Form, Select } from '@sourcegraph/wildcard'
 
 import { LoaderButton } from '../../../components/LoaderButton'
 import { ExternalServiceKind, type Scalars } from '../../../graphql-operations'
@@ -148,6 +148,8 @@ export const AddCredentialModal: React.FunctionComponent<React.PropsWithChildren
             ? 'App password'
             : 'Personal access token'
 
+    const isGitHubKind = externalServiceKind == ExternalServiceKind.GITHUB
+
     return (
         <Modal onDismiss={onCancel} aria-labelledby={labelId}>
             <div className="test-add-credential-modal">
@@ -156,6 +158,16 @@ export const AddCredentialModal: React.FunctionComponent<React.PropsWithChildren
                     externalServiceKind={externalServiceKind}
                     externalServiceURL={externalServiceURL}
                 />
+                {isGitHubKind && (
+                    <Select
+                        id="credential-kind"
+                        selectSize="sm"
+                        label="Select an Authentication scheme for your credential"
+                    >
+                        <option>Personal Access Token</option>
+                        <option>GitHub App</option>
+                    </Select>
+                )}
                 {requiresSSH && (
                     <div className="d-flex w-100 justify-content-between mb-4">
                         <div className="flex-grow-1 mr-2">
