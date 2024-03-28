@@ -24,6 +24,13 @@ export class TemporarySettingsStorage {
     private loadSubscription: Subscription | null = null
     private saveSubscription: Subscription | null = null
 
+    /**
+     * Any updates from the server are ignored while a mutation is taking place.
+     * This is used to prevent processing stale/slow updates from the server when the
+     * settings are updated rapidly.
+     */
+    private updatePending = false
+
     public dispose(): void {
         this.loadSubscription?.unsubscribe()
         this.saveSubscription?.unsubscribe()
@@ -60,17 +67,25 @@ export class TemporarySettingsStorage {
         this.settingsBackend = backend
 
         this.loadSubscription = this.settingsBackend.load().subscribe(settings => {
-            this.settings = settings
-            this.onChange.next(settings)
+            if (!this.updatePending) {
+                this.settings = settings
+                this.onChange.next(settings)
+            }
         })
     }
 
     public set<K extends keyof TemporarySettings>(key: K, value: TemporarySettings[K]): void {
+        this.updatePending = true
+
         this.settings[key] = value
         this.onChange.next(this.settings)
 
         this.saveSubscription?.unsubscribe()
-        this.saveSubscription = this.settingsBackend.edit({ [key]: value }).subscribe()
+        this.saveSubscription = this.settingsBackend.edit({ [key]: value }).subscribe({
+            complete: () => {
+                this.updatePending = false
+            },
+        })
     }
 
     public get<K extends keyof TemporarySettings>(
