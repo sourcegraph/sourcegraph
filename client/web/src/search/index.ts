@@ -1,14 +1,14 @@
 import { escapeRegExp, memoize } from 'lodash'
 import type { Location } from 'react-router-dom'
 import { from, type Observable, of, type Subject } from 'rxjs'
-import { startWith, switchMap, map, distinctUntilChanged } from 'rxjs/operators'
+import { distinctUntilChanged, map, startWith, switchMap } from 'rxjs/operators'
 
 import { memoizeObservable } from '@sourcegraph/common'
 import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import { SearchMode } from '@sourcegraph/shared/src/search'
 import { discreteValueAliases, escapeSpaces } from '@sourcegraph/shared/src/search/query/filters'
 import { stringHuman } from '@sourcegraph/shared/src/search/query/printer'
-import { findFilter, FilterKind, getGlobalSearchContextFilter } from '@sourcegraph/shared/src/search/query/query'
+import { FilterKind, findFilter, getGlobalSearchContextFilter } from '@sourcegraph/shared/src/search/query/query'
 import { scanSearchQuery } from '@sourcegraph/shared/src/search/query/scanner'
 import { createLiteral } from '@sourcegraph/shared/src/search/query/token'
 import { omitFilter } from '@sourcegraph/shared/src/search/query/transformer'
@@ -134,6 +134,18 @@ export function parseSearchURL(
     if (appendCaseFilter) {
         // Invariant: If case:value was in the query, it is erased at this point. Add case:yes if needed.
         query = caseSensitive ? `${query} case:yes` : query
+    }
+
+    // For pattern types other than "keyword" or "regexp", we don't have UI elements to indicate which patternType
+    // is active, hence we keep/add patternType: in those cases.
+    if (patternType && !(patternType === SearchPatternType.keyword || patternType === SearchPatternType.regexp)) {
+        // If structural search is enabled, then we have toggle for it in UI, and we don't have to append the // //
+        // patternType: filter
+        query =
+            patternType === SearchPatternType.structural &&
+            window.context?.experimentalFeatures?.structuralSearch === 'enabled'
+                ? query
+                : `${query} patternType:${patternType}`
     }
 
     return {

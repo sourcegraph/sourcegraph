@@ -22,7 +22,7 @@ describe('search/index', () => {
         expect(
             parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:yes&patternType=standard&case=yes')
         ).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph',
+            query: 'TEST repo:sourcegraph/sourcegraph patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: true,
             searchMode: SearchMode.Precise,
@@ -31,7 +31,7 @@ describe('search/index', () => {
         expect(
             parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:no&patternType=standard&case=yes')
         ).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph',
+            query: 'TEST repo:sourcegraph/sourcegraph patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
@@ -47,7 +47,7 @@ describe('search/index', () => {
         })
 
         expect(parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:yes&patternType=standard')).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph',
+            query: 'TEST repo:sourcegraph/sourcegraph patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: true,
             searchMode: SearchMode.Precise,
@@ -65,7 +65,7 @@ describe('search/index', () => {
         })
 
         expect(parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph&patternType=standard')).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph',
+            query: 'TEST repo:sourcegraph/sourcegraph patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
@@ -74,23 +74,23 @@ describe('search/index', () => {
 
     test('parseSearchURL with appendCaseFilter', () => {
         expect(
-            parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:yes&patternType=standard&case=yes', {
+            parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:yes&patternType=keyword&case=yes', {
                 appendCaseFilter: true,
             })
         ).toStrictEqual({
             query: 'TEST repo:sourcegraph/sourcegraph case:yes',
-            patternType: SearchPatternType.standard,
+            patternType: SearchPatternType.keyword,
             caseSensitive: true,
             searchMode: SearchMode.Precise,
         })
 
         expect(
-            parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:no&patternType=standard&case=yes', {
+            parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph+case:no&patternType=keyword&case=yes', {
                 appendCaseFilter: true,
             })
         ).toStrictEqual({
             query: 'TEST repo:sourcegraph/sourcegraph',
-            patternType: SearchPatternType.standard,
+            patternType: SearchPatternType.keyword,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
         })
@@ -111,7 +111,7 @@ describe('search/index', () => {
                 appendCaseFilter: true,
             })
         ).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph case:yes',
+            query: 'TEST repo:sourcegraph/sourcegraph case:yes patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: true,
             searchMode: SearchMode.Precise,
@@ -132,8 +132,17 @@ describe('search/index', () => {
         expect(
             parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph&patternType=standard', { appendCaseFilter: true })
         ).toStrictEqual({
-            query: 'TEST repo:sourcegraph/sourcegraph',
+            query: 'TEST repo:sourcegraph/sourcegraph patternType:standard',
             patternType: SearchPatternType.standard,
+            caseSensitive: false,
+            searchMode: SearchMode.Precise,
+        })
+
+        expect(
+            parseSearchURL('q=TEST+repo:sourcegraph/sourcegraph&patternType=keyword', { appendCaseFilter: true })
+        ).toStrictEqual({
+            query: 'TEST repo:sourcegraph/sourcegraph',
+            patternType: SearchPatternType.keyword,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
         })
@@ -141,21 +150,21 @@ describe('search/index', () => {
 
     test('parseSearchURL preserves literal search compatibility', () => {
         expect(parseSearchURL('q=/a literal pattern/&patternType=literal')).toStrictEqual({
-            query: 'content:"/a literal pattern/"',
+            query: 'content:"/a literal pattern/" patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
         })
 
         expect(parseSearchURL('q=not /a literal pattern/&patternType=literal')).toStrictEqual({
-            query: 'not content:"/a literal pattern/"',
+            query: 'not content:"/a literal pattern/" patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
         })
 
         expect(parseSearchURL('q=un.*touched&patternType=literal')).toStrictEqual({
-            query: 'un.*touched',
+            query: 'un.*touched patternType:standard',
             patternType: SearchPatternType.standard,
             caseSensitive: false,
             searchMode: SearchMode.Precise,
