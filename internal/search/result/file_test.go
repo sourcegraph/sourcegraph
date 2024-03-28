@@ -114,7 +114,7 @@ func TestConvertMatches(t *testing.T) {
 			output []*LineMatch
 		}{{
 			input: ChunkMatch{
-				Content:      "line1\nline2\nline3",
+				Content:      "line1\nline2\nline3\n",
 				ContentStart: Location{Line: 1},
 				Ranges: Ranges{{
 					Start: Location{1, 1, 1},
@@ -187,7 +187,7 @@ func TestConvertMatches(t *testing.T) {
 			}},
 		}, {
 			input: ChunkMatch{
-				Content:      "line1\nline2",
+				Content:      "line1\nline2\n",
 				ContentStart: Location{Line: 1},
 				Ranges: Ranges{{
 					Start: Location{0, 1, 0},

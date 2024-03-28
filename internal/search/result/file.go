@@ -279,7 +279,7 @@ func (cm ChunkMatch) MatchedContent() []string {
 // between lines in a multiline match, but it allows us to keep providing the
 // LineMatch representation for clients without breaking backwards compatibility.
 func (h ChunkMatch) AsLineMatches() []*LineMatch {
-	lines := strings.Split(h.Content, "\n")
+	lines := strings.Split(strings.TrimSuffix(h.Content, "\n"), "\n")
 	lineMatches := make([]*LineMatch, 0, len(lines))
 	for i, line := range lines {
 		lineNumber := h.ContentStart.Line + i

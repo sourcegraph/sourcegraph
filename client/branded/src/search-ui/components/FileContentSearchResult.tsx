@@ -299,7 +299,7 @@ function chunkToMatchGroup(chunk: ChunkMatch): MatchGroup {
         endLine: range.end.line,
         endCharacter: range.end.column,
     }))
-    const plaintextLines = chunk.content.split(/\r?\n/)
+    const plaintextLines = chunk.content.replace(/\r?\n$/, '').split(/\r?\n/)
     return {
         plaintextLines,
         highlightedHTMLRows: undefined, // populated lazily
