@@ -55,8 +55,6 @@ type operations struct {
 	branchesContaining       *observation.Operation
 	commitsUniqueToBranch    *observation.Operation
 	getDefaultBranch         *observation.Operation
-	listDirectoryChildren    *observation.Operation
-	lsFiles                  *observation.Operation
 	logReverseEach           *observation.Operation
 	diffSymbols              *observation.Operation
 	diffPath                 *observation.Operation
@@ -152,8 +150,6 @@ func newOperations(observationCtx *observation.Context) *operations {
 		branchesContaining:       op("BranchesContaining"),
 		commitsUniqueToBranch:    op("CommitsUniqueToBranch"),
 		getDefaultBranch:         op("GetDefaultBranch"),
-		listDirectoryChildren:    op("ListDirectoryChildren"),
-		lsFiles:                  op("LsFiles"),
 		logReverseEach:           op("LogReverseEach"),
 		diffSymbols:              op("DiffSymbols"),
 		diffPath:                 op("DiffPath"),

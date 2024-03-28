@@ -411,11 +411,6 @@ type Client interface {
 	// ListTags returns a list of all tags in the repository. If commitObjs is non-empty, only all tags pointing at those commits are returned.
 	ListTags(ctx context.Context, repo api.RepoName, commitObjs ...string) ([]*gitdomain.Tag, error)
 
-	// ListDirectoryChildren fetches the list of children under the given directory
-	// names. The result is a map keyed by the directory names with the list of files
-	// under each.
-	ListDirectoryChildren(ctx context.Context, repo api.RepoName, commit api.CommitID, dirnames []string) (map[string][]string, error)
-
 	// Diff returns an iterator that can be used to access the diff between two
 	// commits on a per-file basis. The iterator must be closed with Close when no
 	// longer required.
@@ -449,9 +444,6 @@ type Client interface {
 	// supplied branch name is the default branch, then this method instead returns
 	// all commits reachable from HEAD.
 	CommitsUniqueToBranch(ctx context.Context, repo api.RepoName, branchName string, isDefaultBranch bool, maxAge *time.Time) (map[string]time.Time, error)
-
-	// LsFiles returns the output of `git ls-files`.
-	LsFiles(ctx context.Context, repo api.RepoName, commit api.CommitID, pathspecs ...gitdomain.Pathspec) ([]string, error)
 
 	// GetCommit returns the commit with the given commit ID, or RevisionNotFoundError if no such commit
 	// exists.

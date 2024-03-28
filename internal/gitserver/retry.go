@@ -160,4 +160,14 @@ func (r *automaticRetryClient) ResolveRevision(ctx context.Context, in *proto.Re
 	return r.base.ResolveRevision(ctx, in, opts...)
 }
 
+func (r *automaticRetryClient) Stat(ctx context.Context, in *proto.StatRequest, opts ...grpc.CallOption) (*proto.StatResponse, error) {
+	opts = append(defaults.RetryPolicy, opts...)
+	return r.base.Stat(ctx, in, opts...)
+}
+
+func (r *automaticRetryClient) ReadDir(ctx context.Context, in *proto.ReadDirRequest, opts ...grpc.CallOption) (proto.GitserverService_ReadDirClient, error) {
+	opts = append(defaults.RetryPolicy, opts...)
+	return r.base.ReadDir(ctx, in, opts...)
+}
+
 var _ proto.GitserverServiceClient = &automaticRetryClient{}

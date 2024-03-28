@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"io"
+	"io/fs"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
@@ -59,6 +60,19 @@ type GitBackend interface {
 	// If passed a commit sha, will also verify that the commit exists.
 	// If the revspec can not be resolved to a commit, a RevisionNotFoundError is returned.
 	ResolveRevision(ctx context.Context, revspec string) (api.CommitID, error)
+	// Stat returns the file info for the given path at the given commit.
+	// If the file does not exist, a os.PathError is returned.
+	// If the commit does not exist, a RevisionNotFoundError is returned.
+	// Stat supports submodules, symlinks, directories and files.
+	Stat(ctx context.Context, commit api.CommitID, path string) (fs.FileInfo, error)
+	// ReadDir returns the list of files and directories in the given path at the given commit.
+	// Path can be used to read subdirectories.
+	// If the path does not exist, a os.PathError is returned.
+	// If the commit does not exist, a RevisionNotFoundError is returned.
+	// ReadDir supports submodules, symlinks, directories and files.
+	// If recursive is true, ReadDir will return the contents of all subdirectories.
+	// The caller must call Close on the returned ReadDirIterator when done.
+	ReadDir(ctx context.Context, commit api.CommitID, path string, recursive bool) (ReadDirIterator, error)
 
 	// Exec is a temporary helper to run arbitrary git commands from the exec endpoint.
 	// No new usages of it should be introduced and once the migration is done we will
@@ -116,3 +130,12 @@ const (
 	// ArchiveFormatTar indicates a tar archive is desired.
 	ArchiveFormatTar ArchiveFormat = "tar"
 )
+
+// ReadDirIterator is an iterator for the contents of a directory.
+type ReadDirIterator interface {
+	// Next returns the next file in the directory. io.EOF is returned at the end
+	// of the stream.
+	Next() (fs.FileInfo, error)
+	// Close closes the iterator.
+	Close() error
+}

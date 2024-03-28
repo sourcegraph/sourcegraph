@@ -9,6 +9,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 )
 
+// TODO: Remove.
 func TestGetObject(t *testing.T) {
 	t.Parallel()
 

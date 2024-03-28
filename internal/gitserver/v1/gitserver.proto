@@ -36,6 +36,9 @@ service GitserverService {
   // If the given treeish does not exist, an error with a RevisionNotFoundPayload
   // is returned.
   //
+  // If the given paths are not found in the given treeish, an error with a FileNotFoundPayload
+  // is returned.
+  //
   // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
   // error will be returned, with a RepoNotFoundPayload in the details.
   rpc Archive(ArchiveRequest) returns (stream ArchiveResponse) {
@@ -90,6 +93,8 @@ service GitserverService {
   // if subrepo permissions are enabled for the repo. If access is denied, an error
   // with a UnauthorizedPayload in the details is returned.
   //
+  // If the given path is not found, an error with a FileNotFoundPayload is returned.
+  //
   // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
   // error will be returned, with a RepoNotFoundPayload in the details.
   rpc Blame(BlameRequest) returns (stream BlameResponse) {
@@ -109,6 +114,8 @@ service GitserverService {
   // with a UnauthorizedPayload in the details is returned.
   // If the path points to a submodule, no error is returned and an empty file is
   // streamed back.
+  //
+  // If the given path is not found, an error with a FileNotFoundPayload is returned.
   //
   // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
   // error will be returned, with a RepoNotFoundPayload in the details.
@@ -148,6 +155,89 @@ service GitserverService {
   rpc ResolveRevision(ResolveRevisionRequest) returns (ResolveRevisionResponse) {
     option idempotency_level = IDEMPOTENT;
   }
+  // Stat returns a FileInfo describing the named file descriptor at the given commit.
+	// Stat supports submodules, symlinks, directories and files.
+  //
+	// If the commit does not exist, an error with RevisionNotFoundPayload is
+  // returned.
+  //
+  // If the given path is not found, an error with a FileNotFoundPayload is returned.
+  // If subrepo permissions are enabled and the file is not visible to the actor,
+  // an error with a FileNotFoundPayload is returned.
+  //
+  // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
+  // error will be returned, with a RepoNotFoundPayload in the details.
+  rpc Stat(StatRequest) returns (StatResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  // ReadDir returns a list of FileInfos describing the files and subdirectories
+  // in the given directory.
+  //
+	// If the commit does not exist, an error with RevisionNotFoundPayload is
+  // returned.
+  //
+  // If the given path is not found, an error with a FileNotFoundPayload is returned.
+  // If subrepo permissions are enabled and certain file descriptors are not visible
+  // to the actor, they are omitted.
+  //
+  // If the given repo is not cloned, it will be enqueued for cloning and a NotFound
+  // error will be returned, with a RepoNotFoundPayload in the details.
+  rpc ReadDir(ReadDirRequest) returns (stream ReadDirResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message StatRequest {
+  // repo_name is the name of the repo to run the blame operation in.
+  // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
+  string repo_name = 2;
+  // The commit at which we want to stat the file.
+  string commit_sha = 3;
+  // The path to the file to stat.
+  bytes path = 4;
+}
+
+message StatResponse {
+  FileInfo file_info = 1;
+}
+
+message ReadDirRequest {
+  // repo_name is the name of the repo to run the blame operation in.
+  // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
+  string repo_name = 2;
+  // The commit at which we want to read the directory.
+  string commit_sha = 3;
+  // The path to the directory to read. Empty means root.
+  optional bytes path = 4;
+  // recursive indicates whether to read the directory recursively. The default is false.
+  bool recursive = 5;
+}
+
+message ReadDirResponse {
+  repeated FileInfo file_info = 1;
+}
+
+message GitSubmodule {
+  // URL is the submodule repository clone URL.
+	string url = 1;
+	// Path is the path of the submodule relative to the repository root.
+  bytes path = 2;
+	// CommitSHA is the pinned commit ID of the submodule (in the submodule repository's
+  // commit ID space).
+	string commit_sha = 3;
+}
+
+message FileInfo {
+  // The file name, relative to the repository root.
+  bytes name = 1;
+  // The file size.
+  int64 size = 2;
+  // The file mode.
+  uint32 mode = 3;
+  // The blob OID in the git ODB.
+  string blob_oid = 4;
+  // If this FileInfo describes a submodule, this field will be populated.
+  optional GitSubmodule submodule = 5;
 }
 
 message ResolveRevisionRequest {

@@ -290,4 +290,26 @@ func (r *errorTranslatingClient) ResolveRevision(ctx context.Context, in *proto.
 	return res, convertGRPCErrorToGitDomainError(err)
 }
 
+func (r *errorTranslatingClient) Stat(ctx context.Context, in *proto.StatRequest, opts ...grpc.CallOption) (*proto.StatResponse, error) {
+	res, err := r.base.Stat(ctx, in, opts...)
+	return res, convertGRPCErrorToGitDomainError(err)
+}
+
+func (r *errorTranslatingClient) ReadDir(ctx context.Context, in *proto.ReadDirRequest, opts ...grpc.CallOption) (proto.GitserverService_ReadDirClient, error) {
+	cc, err := r.base.ReadDir(ctx, in, opts...)
+	if err != nil {
+		return nil, convertGRPCErrorToGitDomainError(err)
+	}
+	return &errorTranslatingReadDirClient{cc}, nil
+}
+
+type errorTranslatingReadDirClient struct {
+	proto.GitserverService_ReadDirClient
+}
+
+func (r *errorTranslatingReadDirClient) Recv() (*proto.ReadDirResponse, error) {
+	res, err := r.GitserverService_ReadDirClient.Recv()
+	return res, convertGRPCErrorToGitDomainError(err)
+}
+
 var _ proto.GitserverServiceClient = &errorTranslatingClient{}

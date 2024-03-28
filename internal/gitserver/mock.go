@@ -78,6 +78,9 @@ type MockGitserverServiceClient struct {
 	// PerforceUsersFunc is an instance of a mock function object
 	// controlling the behavior of the method PerforceUsers.
 	PerforceUsersFunc *GitserverServiceClientPerforceUsersFunc
+	// ReadDirFunc is an instance of a mock function object controlling the
+	// behavior of the method ReadDir.
+	ReadDirFunc *GitserverServiceClientReadDirFunc
 	// ReadFileFunc is an instance of a mock function object controlling the
 	// behavior of the method ReadFile.
 	ReadFileFunc *GitserverServiceClientReadFileFunc
@@ -99,6 +102,9 @@ type MockGitserverServiceClient struct {
 	// SearchFunc is an instance of a mock function object controlling the
 	// behavior of the method Search.
 	SearchFunc *GitserverServiceClientSearchFunc
+	// StatFunc is an instance of a mock function object controlling the
+	// behavior of the method Stat.
+	StatFunc *GitserverServiceClientStatFunc
 }
 
 // NewMockGitserverServiceClient creates a new mock of the
@@ -201,6 +207,11 @@ func NewMockGitserverServiceClient() *MockGitserverServiceClient {
 				return
 			},
 		},
+		ReadDirFunc: &GitserverServiceClientReadDirFunc{
+			defaultHook: func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (r0 v1.GitserverService_ReadDirClient, r1 error) {
+				return
+			},
+		},
 		ReadFileFunc: &GitserverServiceClientReadFileFunc{
 			defaultHook: func(context.Context, *v1.ReadFileRequest, ...grpc.CallOption) (r0 v1.GitserverService_ReadFileClient, r1 error) {
 				return
@@ -233,6 +244,11 @@ func NewMockGitserverServiceClient() *MockGitserverServiceClient {
 		},
 		SearchFunc: &GitserverServiceClientSearchFunc{
 			defaultHook: func(context.Context, *v1.SearchRequest, ...grpc.CallOption) (r0 v1.GitserverService_SearchClient, r1 error) {
+				return
+			},
+		},
+		StatFunc: &GitserverServiceClientStatFunc{
+			defaultHook: func(context.Context, *v1.StatRequest, ...grpc.CallOption) (r0 *v1.StatResponse, r1 error) {
 				return
 			},
 		},
@@ -339,6 +355,11 @@ func NewStrictMockGitserverServiceClient() *MockGitserverServiceClient {
 				panic("unexpected invocation of MockGitserverServiceClient.PerforceUsers")
 			},
 		},
+		ReadDirFunc: &GitserverServiceClientReadDirFunc{
+			defaultHook: func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error) {
+				panic("unexpected invocation of MockGitserverServiceClient.ReadDir")
+			},
+		},
 		ReadFileFunc: &GitserverServiceClientReadFileFunc{
 			defaultHook: func(context.Context, *v1.ReadFileRequest, ...grpc.CallOption) (v1.GitserverService_ReadFileClient, error) {
 				panic("unexpected invocation of MockGitserverServiceClient.ReadFile")
@@ -372,6 +393,11 @@ func NewStrictMockGitserverServiceClient() *MockGitserverServiceClient {
 		SearchFunc: &GitserverServiceClientSearchFunc{
 			defaultHook: func(context.Context, *v1.SearchRequest, ...grpc.CallOption) (v1.GitserverService_SearchClient, error) {
 				panic("unexpected invocation of MockGitserverServiceClient.Search")
+			},
+		},
+		StatFunc: &GitserverServiceClientStatFunc{
+			defaultHook: func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error) {
+				panic("unexpected invocation of MockGitserverServiceClient.Stat")
 			},
 		},
 	}
@@ -439,6 +465,9 @@ func NewMockGitserverServiceClientFrom(i v1.GitserverServiceClient) *MockGitserv
 		PerforceUsersFunc: &GitserverServiceClientPerforceUsersFunc{
 			defaultHook: i.PerforceUsers,
 		},
+		ReadDirFunc: &GitserverServiceClientReadDirFunc{
+			defaultHook: i.ReadDir,
+		},
 		ReadFileFunc: &GitserverServiceClientReadFileFunc{
 			defaultHook: i.ReadFile,
 		},
@@ -459,6 +488,9 @@ func NewMockGitserverServiceClientFrom(i v1.GitserverServiceClient) *MockGitserv
 		},
 		SearchFunc: &GitserverServiceClientSearchFunc{
 			defaultHook: i.Search,
+		},
+		StatFunc: &GitserverServiceClientStatFunc{
+			defaultHook: i.Stat,
 		},
 	}
 }
@@ -2760,6 +2792,125 @@ func (c GitserverServiceClientPerforceUsersFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
+// GitserverServiceClientReadDirFunc describes the behavior when the ReadDir
+// method of the parent MockGitserverServiceClient instance is invoked.
+type GitserverServiceClientReadDirFunc struct {
+	defaultHook func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error)
+	hooks       []func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error)
+	history     []GitserverServiceClientReadDirFuncCall
+	mutex       sync.Mutex
+}
+
+// ReadDir delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitserverServiceClient) ReadDir(v0 context.Context, v1 *v1.ReadDirRequest, v2 ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error) {
+	r0, r1 := m.ReadDirFunc.nextHook()(v0, v1, v2...)
+	m.ReadDirFunc.appendCall(GitserverServiceClientReadDirFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the ReadDir method of
+// the parent MockGitserverServiceClient instance is invoked and the hook
+// queue is empty.
+func (f *GitserverServiceClientReadDirFunc) SetDefaultHook(hook func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// ReadDir method of the parent MockGitserverServiceClient instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *GitserverServiceClientReadDirFunc) PushHook(hook func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitserverServiceClientReadDirFunc) SetDefaultReturn(r0 v1.GitserverService_ReadDirClient, r1 error) {
+	f.SetDefaultHook(func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitserverServiceClientReadDirFunc) PushReturn(r0 v1.GitserverService_ReadDirClient, r1 error) {
+	f.PushHook(func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error) {
+		return r0, r1
+	})
+}
+
+func (f *GitserverServiceClientReadDirFunc) nextHook() func(context.Context, *v1.ReadDirRequest, ...grpc.CallOption) (v1.GitserverService_ReadDirClient, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitserverServiceClientReadDirFunc) appendCall(r0 GitserverServiceClientReadDirFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitserverServiceClientReadDirFuncCall
+// objects describing the invocations of this function.
+func (f *GitserverServiceClientReadDirFunc) History() []GitserverServiceClientReadDirFuncCall {
+	f.mutex.Lock()
+	history := make([]GitserverServiceClientReadDirFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitserverServiceClientReadDirFuncCall is an object that describes an
+// invocation of method ReadDir on an instance of
+// MockGitserverServiceClient.
+type GitserverServiceClientReadDirFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 *v1.ReadDirRequest
+	// Arg2 is a slice containing the values of the variadic arguments
+	// passed to this method invocation.
+	Arg2 []grpc.CallOption
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 v1.GitserverService_ReadDirClient
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation. The variadic slice argument is flattened in this array such
+// that one positional argument and three variadic arguments would result in
+// a slice of four, not two.
+func (c GitserverServiceClientReadDirFuncCall) Args() []interface{} {
+	trailing := []interface{}{}
+	for _, val := range c.Arg2 {
+		trailing = append(trailing, val)
+	}
+
+	return append([]interface{}{c.Arg0, c.Arg1}, trailing...)
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitserverServiceClientReadDirFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
 // GitserverServiceClientReadFileFunc describes the behavior when the
 // ReadFile method of the parent MockGitserverServiceClient instance is
 // invoked.
@@ -3602,6 +3753,124 @@ func (c GitserverServiceClientSearchFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitserverServiceClientSearchFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitserverServiceClientStatFunc describes the behavior when the Stat
+// method of the parent MockGitserverServiceClient instance is invoked.
+type GitserverServiceClientStatFunc struct {
+	defaultHook func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error)
+	hooks       []func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error)
+	history     []GitserverServiceClientStatFuncCall
+	mutex       sync.Mutex
+}
+
+// Stat delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitserverServiceClient) Stat(v0 context.Context, v1 *v1.StatRequest, v2 ...grpc.CallOption) (*v1.StatResponse, error) {
+	r0, r1 := m.StatFunc.nextHook()(v0, v1, v2...)
+	m.StatFunc.appendCall(GitserverServiceClientStatFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the Stat method of the
+// parent MockGitserverServiceClient instance is invoked and the hook queue
+// is empty.
+func (f *GitserverServiceClientStatFunc) SetDefaultHook(hook func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Stat method of the parent MockGitserverServiceClient instance invokes the
+// hook at the front of the queue and discards it. After the queue is empty,
+// the default hook function is invoked for any future action.
+func (f *GitserverServiceClientStatFunc) PushHook(hook func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitserverServiceClientStatFunc) SetDefaultReturn(r0 *v1.StatResponse, r1 error) {
+	f.SetDefaultHook(func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitserverServiceClientStatFunc) PushReturn(r0 *v1.StatResponse, r1 error) {
+	f.PushHook(func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error) {
+		return r0, r1
+	})
+}
+
+func (f *GitserverServiceClientStatFunc) nextHook() func(context.Context, *v1.StatRequest, ...grpc.CallOption) (*v1.StatResponse, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitserverServiceClientStatFunc) appendCall(r0 GitserverServiceClientStatFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitserverServiceClientStatFuncCall objects
+// describing the invocations of this function.
+func (f *GitserverServiceClientStatFunc) History() []GitserverServiceClientStatFuncCall {
+	f.mutex.Lock()
+	history := make([]GitserverServiceClientStatFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitserverServiceClientStatFuncCall is an object that describes an
+// invocation of method Stat on an instance of MockGitserverServiceClient.
+type GitserverServiceClientStatFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 *v1.StatRequest
+	// Arg2 is a slice containing the values of the variadic arguments
+	// passed to this method invocation.
+	Arg2 []grpc.CallOption
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *v1.StatResponse
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation. The variadic slice argument is flattened in this array such
+// that one positional argument and three variadic arguments would result in
+// a slice of four, not two.
+func (c GitserverServiceClientStatFuncCall) Args() []interface{} {
+	trailing := []interface{}{}
+	for _, val := range c.Arg2 {
+		trailing = append(trailing, val)
+	}
+
+	return append([]interface{}{c.Arg0, c.Arg1}, trailing...)
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitserverServiceClientStatFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 

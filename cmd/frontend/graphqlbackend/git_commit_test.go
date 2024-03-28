@@ -2,7 +2,9 @@ package graphqlbackend
 
 import (
 	"context"
+	"io/fs"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -18,6 +20,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
+	"github.com/sourcegraph/sourcegraph/internal/fileutil"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/internal/types"
@@ -288,7 +291,12 @@ func TestGitCommitFileNames(t *testing.T) {
 	}
 	backend.Mocks.Repos.MockGetCommit_Return_NoCheck(t, &gitdomain.Commit{ID: exampleCommitSHA1})
 	gitserverClient := gitserver.NewMockClient()
-	gitserverClient.LsFilesFunc.SetDefaultReturn([]string{"a", "b"}, nil)
+	gitserverClient.ReadDirFunc.SetDefaultReturn([]fs.FileInfo{
+		&fileutil.FileInfo{Name_: "a"},
+		&fileutil.FileInfo{Name_: "b"},
+		// We also return a dir to check that it's skipped in the output.
+		&fileutil.FileInfo{Name_: "dir", Mode_: os.ModeDir},
+	}, nil)
 	defer func() {
 		backend.Mocks = backend.MockServices{}
 	}()
@@ -332,7 +340,12 @@ func TestGitCommitAncestors(t *testing.T) {
 	backend.Mocks.Repos.MockGetCommit_Return_NoCheck(t, &gitdomain.Commit{ID: exampleCommitSHA1})
 
 	client := gitserver.NewMockClient()
-	client.LsFilesFunc.SetDefaultReturn([]string{"a", "b"}, nil)
+	client.ReadDirFunc.SetDefaultReturn([]fs.FileInfo{
+		&fileutil.FileInfo{Name_: "a"},
+		&fileutil.FileInfo{Name_: "b"},
+		// We also return a dir to check that it's skipped in the output.
+		&fileutil.FileInfo{Name_: "dir", Mode_: os.ModeDir},
+	}, nil)
 
 	// A linear commit tree:
 	// * -> c1 -> c2 -> c3 -> c4 -> c5 (HEAD)

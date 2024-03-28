@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -1259,6 +1260,218 @@ func (gs *grpcServer) ResolveRevision(ctx context.Context, req *proto.ResolveRev
 	return &proto.ResolveRevisionResponse{
 		CommitSha: string(sha),
 	}, nil
+}
+
+func (gs *grpcServer) Stat(ctx context.Context, req *proto.StatRequest) (*proto.StatResponse, error) {
+	accesslog.Record(
+		ctx,
+		req.GetRepoName(),
+		log.String("commit", req.GetCommitSha()),
+		log.String("path", string(req.GetPath())),
+	)
+
+	if req.GetRepoName() == "" {
+		return nil, status.New(codes.InvalidArgument, "repo must be specified").Err()
+	}
+
+	if req.GetCommitSha() == "" {
+		return nil, status.New(codes.InvalidArgument, "commit_sha must be specified").Err()
+	}
+
+	repoName := api.RepoName(req.GetRepoName())
+	repoDir := gitserverfs.RepoDirFromName(gs.reposDir, repoName)
+
+	if err := gs.maybeStartClone(ctx, repoName); err != nil {
+		return nil, err
+	}
+
+	backend := gs.getBackendFunc(repoDir, repoName)
+
+	fi, err := backend.Stat(ctx, api.CommitID(req.GetCommitSha()), string(req.GetPath()))
+	if err != nil {
+		if os.IsNotExist(err) {
+			var path string
+			var pathError *os.PathError
+			if errors.As(err, &pathError) {
+				path = pathError.Path
+			}
+			s, err := status.New(codes.NotFound, "file not found").WithDetails(&proto.FileNotFoundPayload{
+				Repo:   string(repoName),
+				Commit: string(req.GetCommitSha()),
+				Path:   path,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, s.Err()
+		}
+
+		var e *gitdomain.RevisionNotFoundError
+		if errors.As(err, &e) {
+			s, err := status.New(codes.NotFound, "revision not found").WithDetails(&proto.RevisionNotFoundPayload{
+				Repo: req.GetRepoName(),
+				Spec: e.Spec,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, s.Err()
+		}
+
+		gs.svc.LogIfCorrupt(ctx, repoName, err)
+		// TODO: Better error checking.
+		return nil, err
+	}
+
+	if ok, err := authz.SubRepoEnabledForRepo(ctx, gs.subRepoChecker, repoName); err != nil {
+		return nil, err
+	} else if ok {
+		// Applying sub-repo permissions
+		a := actor.FromContext(ctx)
+		include, filteringErr := authz.FilterActorFileInfo(ctx, gs.subRepoChecker, a, repoName, fi)
+		if filteringErr != nil {
+			return nil, errors.Wrap(filteringErr, "filtering paths")
+		}
+		if !include {
+			s, err := status.New(codes.NotFound, "file not found").WithDetails(&proto.FileNotFoundPayload{
+				Repo:   string(repoName),
+				Commit: string(req.GetCommitSha()),
+				Path:   string(req.GetPath()),
+			})
+			if err != nil {
+				return nil, err
+			}
+			return nil, s.Err()
+		}
+	}
+
+	// TODO: Subrepoperms for readdir
+	// files, err := c.lsTree(ctx, repo, commit, path, recurse)
+	// files := []fs.FileInfo{}
+
+	// if err != nil || !authz.SubRepoEnabled(c.subRepoPermsChecker) {
+	// 	return files, err
+	// }
+
+	// a := actor.FromContext(ctx)
+	// filtered, filteringErr := authz.FilterActorFileInfos(ctx, c.subRepoPermsChecker, a, repo, files)
+	// if filteringErr != nil {
+	// 	return nil, errors.Wrap(err, "filtering paths")
+	// } else {
+	// 	return filtered, nil
+	// }
+
+	return &proto.StatResponse{
+		FileInfo: fileInfoToProto(fi),
+	}, nil
+}
+
+func (gs *grpcServer) ReadDir(req *proto.ReadDirRequest, ss proto.GitserverService_ReadDirServer) (err error) {
+	ctx := ss.Context()
+
+	accesslog.Record(
+		ctx,
+		req.GetRepoName(),
+		log.String("commit", req.GetCommitSha()),
+		log.String("path", string(req.GetPath())),
+	)
+
+	if req.GetRepoName() == "" {
+		return status.New(codes.InvalidArgument, "repo must be specified").Err()
+	}
+
+	if len(req.GetCommitSha()) == 0 {
+		return status.New(codes.InvalidArgument, "commit_sha must be specified").Err()
+	}
+
+	repoName := api.RepoName(req.GetRepoName())
+	repoDir := gitserverfs.RepoDirFromName(gs.reposDir, repoName)
+
+	if err := gs.maybeStartClone(ctx, repoName); err != nil {
+		return err
+	}
+
+	backend := gs.getBackendFunc(repoDir, repoName)
+
+	it, err := backend.ReadDir(ctx, api.CommitID(req.GetCommitSha()), string(req.GetPath()), req.GetRecursive())
+	if err != nil {
+		if os.IsNotExist(err) {
+			s, err := status.New(codes.NotFound, "file not found").WithDetails(&proto.FileNotFoundPayload{
+				Repo:   req.GetRepoName(),
+				Commit: string(req.GetCommitSha()),
+				Path:   string(req.GetPath()),
+			})
+			if err != nil {
+				return err
+			}
+			return s.Err()
+		}
+		var e *gitdomain.RevisionNotFoundError
+		if errors.As(err, &e) {
+			s, err := status.New(codes.NotFound, "revision not found").WithDetails(&proto.RevisionNotFoundPayload{
+				Repo: req.GetRepoName(),
+				Spec: e.Spec,
+			})
+			if err != nil {
+				return err
+			}
+			return s.Err()
+		}
+		gs.svc.LogIfCorrupt(ctx, repoName, err)
+		// TODO: Better error checking.
+		return err
+	}
+	defer func() { err = errors.Append(err, it.Close()) }()
+
+	batch := make([]*proto.FileInfo, 0, 50)
+
+	sendBatch := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		if err := ss.Send(&proto.ReadDirResponse{
+			FileInfo: batch,
+		}); err != nil {
+			return err
+		}
+		batch = batch[:0]
+		return nil
+	}
+
+	for {
+		fi, err := it.Next()
+		if err != nil {
+			if err == io.EOF {
+				return sendBatch()
+			}
+		}
+		batch = append(batch, fileInfoToProto(fi))
+		if len(batch) == 50 {
+			if err := sendBatch(); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func fileInfoToProto(fi fs.FileInfo) *proto.FileInfo {
+	p := &proto.FileInfo{
+		Name: []byte(fi.Name()),
+		Size: fi.Size(),
+		Mode: uint32(fi.Mode()),
+	}
+	sys := fi.Sys()
+	switch s := sys.(type) {
+	case gitdomain.Submodule:
+		p.Submodule = &proto.GitSubmodule{
+			Url:       s.URL,
+			CommitSha: string(s.CommitID),
+			Path:      []byte(s.Path),
+		}
+	case gitdomain.ObjectInfo:
+		p.BlobOid = s.OID().String()
+	}
+	return p
 }
 
 func (gs *grpcServer) maybeStartClone(ctx context.Context, repo api.RepoName) error {

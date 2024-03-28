@@ -61,23 +61,26 @@ func (r *analyticsIndexer) indexRepo(ctx context.Context, repoId api.RepoID, che
 	if err != nil {
 		return errors.Wrap(err, "repoStore.Get")
 	}
-	files, err := r.client.LsFiles(ctx, repo.Name, "HEAD")
-	if err != nil {
-		return errors.Wrap(err, "ls-files")
-	}
 	// Try to compute ownership stats
 	commitID, err := r.client.ResolveRevision(ctx, repo.Name, "HEAD", gitserver.ResolveRevisionOptions{NoEnsureRevision: true})
 	if err != nil {
 		return errcode.MakeNonRetryable(errors.Wrapf(err, "cannot resolve HEAD"))
+	}
+	files, err := r.client.ReadDir(ctx, repo.Name, commitID, "", true)
+	if err != nil {
+		return errors.Wrap(err, "ls-tree")
 	}
 	isOwnedViaCodeowners := r.codeowners(ctx, repo, commitID)
 	isOwnedViaAssignedOwnership := r.assignedOwners(ctx, repo, commitID)
 	var totalCount int
 	var ownCounts database.PathAggregateCounts
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
 		totalCount++
-		countCodeowners := isOwnedViaCodeowners(f)
-		countAssignedOwnership := isOwnedViaAssignedOwnership(f)
+		countCodeowners := isOwnedViaCodeowners(f.Name())
+		countAssignedOwnership := isOwnedViaAssignedOwnership(f.Name())
 		if countCodeowners {
 			ownCounts.CodeownedFileCount++
 		}
@@ -105,7 +108,7 @@ func (r *analyticsIndexer) indexRepo(ctx context.Context, repoId api.RepoID, che
 	if rowCount == 0 {
 		return errors.New("expected CODEOWNERS-owned file count update")
 	}
-	ownAnalyticsFilesCounter.Add(float64(len(files)))
+	ownAnalyticsFilesCounter.Add(float64(totalCount))
 	return nil
 }
 

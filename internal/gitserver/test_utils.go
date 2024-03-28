@@ -2,7 +2,6 @@ package gitserver
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path"
@@ -120,22 +119,14 @@ func CreateGitCommand(dir, name string, args ...string) *exec.Cmd {
 	return c
 }
 
-func AsJSON(v any) string {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
-
-func AppleTime(t string) string {
+func appleTime(t string) string {
 	ti, _ := time.Parse(time.RFC3339, t)
 	return ti.Local().Format("200601021504.05")
 }
 
-var Times = []string{
-	AppleTime("2006-01-02T15:04:05Z"),
-	AppleTime("2014-05-06T19:20:21Z"),
+var times = []string{
+	appleTime("2006-01-02T15:04:05Z"),
+	appleTime("2014-05-06T19:20:21Z"),
 }
 
 // ComputeCommitHash Computes hash of last commit in a given repo dir

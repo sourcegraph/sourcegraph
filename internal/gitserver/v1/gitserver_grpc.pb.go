@@ -45,6 +45,8 @@ const (
 	GitserverService_ReadFile_FullMethodName                    = "/gitserver.v1.GitserverService/ReadFile"
 	GitserverService_GetCommit_FullMethodName                   = "/gitserver.v1.GitserverService/GetCommit"
 	GitserverService_ResolveRevision_FullMethodName             = "/gitserver.v1.GitserverService/ResolveRevision"
+	GitserverService_Stat_FullMethodName                        = "/gitserver.v1.GitserverService/Stat"
+	GitserverService_ReadDir_FullMethodName                     = "/gitserver.v1.GitserverService/ReadDir"
 )
 
 // GitserverServiceClient is the client API for GitserverService service.
@@ -145,6 +147,10 @@ type GitserverServiceClient interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(ctx context.Context, in *ResolveRevisionRequest, opts ...grpc.CallOption) (*ResolveRevisionResponse, error)
+	// Stat returns a FileInfo describing the named file at commit.
+	Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error)
+	// ReadDir returns a list of FileInfos describing the files in the directory.
+	ReadDir(ctx context.Context, in *ReadDirRequest, opts ...grpc.CallOption) (GitserverService_ReadDirClient, error)
 }
 
 type gitserverServiceClient struct {
@@ -529,6 +535,47 @@ func (c *gitserverServiceClient) ResolveRevision(ctx context.Context, in *Resolv
 	return out, nil
 }
 
+func (c *gitserverServiceClient) Stat(ctx context.Context, in *StatRequest, opts ...grpc.CallOption) (*StatResponse, error) {
+	out := new(StatResponse)
+	err := c.cc.Invoke(ctx, GitserverService_Stat_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gitserverServiceClient) ReadDir(ctx context.Context, in *ReadDirRequest, opts ...grpc.CallOption) (GitserverService_ReadDirClient, error) {
+	stream, err := c.cc.NewStream(ctx, &GitserverService_ServiceDesc.Streams[6], GitserverService_ReadDir_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &gitserverServiceReadDirClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type GitserverService_ReadDirClient interface {
+	Recv() (*ReadDirResponse, error)
+	grpc.ClientStream
+}
+
+type gitserverServiceReadDirClient struct {
+	grpc.ClientStream
+}
+
+func (x *gitserverServiceReadDirClient) Recv() (*ReadDirResponse, error) {
+	m := new(ReadDirResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // GitserverServiceServer is the server API for GitserverService service.
 // All implementations must embed UnimplementedGitserverServiceServer
 // for forward compatibility
@@ -627,6 +674,10 @@ type GitserverServiceServer interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error)
+	// Stat returns a FileInfo describing the named file at commit.
+	Stat(context.Context, *StatRequest) (*StatResponse, error)
+	// ReadDir returns a list of FileInfos describing the files in the directory.
+	ReadDir(*ReadDirRequest, GitserverService_ReadDirServer) error
 	mustEmbedUnimplementedGitserverServiceServer()
 }
 
@@ -711,6 +762,12 @@ func (UnimplementedGitserverServiceServer) GetCommit(context.Context, *GetCommit
 }
 func (UnimplementedGitserverServiceServer) ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveRevision not implemented")
+}
+func (UnimplementedGitserverServiceServer) Stat(context.Context, *StatRequest) (*StatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Stat not implemented")
+}
+func (UnimplementedGitserverServiceServer) ReadDir(*ReadDirRequest, GitserverService_ReadDirServer) error {
+	return status.Errorf(codes.Unimplemented, "method ReadDir not implemented")
 }
 func (UnimplementedGitserverServiceServer) mustEmbedUnimplementedGitserverServiceServer() {}
 
@@ -1216,6 +1273,45 @@ func _GitserverService_ResolveRevision_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitserverService_Stat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverServiceServer).Stat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverService_Stat_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverServiceServer).Stat(ctx, req.(*StatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GitserverService_ReadDir_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ReadDirRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(GitserverServiceServer).ReadDir(m, &gitserverServiceReadDirServer{stream})
+}
+
+type GitserverService_ReadDirServer interface {
+	Send(*ReadDirResponse) error
+	grpc.ServerStream
+}
+
+type gitserverServiceReadDirServer struct {
+	grpc.ServerStream
+}
+
+func (x *gitserverServiceReadDirServer) Send(m *ReadDirResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // GitserverService_ServiceDesc is the grpc.ServiceDesc for GitserverService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1303,6 +1399,10 @@ var GitserverService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ResolveRevision",
 			Handler:    _GitserverService_ResolveRevision_Handler,
 		},
+		{
+			MethodName: "Stat",
+			Handler:    _GitserverService_Stat_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -1333,6 +1433,11 @@ var GitserverService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ReadFile",
 			Handler:       _GitserverService_ReadFile_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ReadDir",
+			Handler:       _GitserverService_ReadDir_Handler,
 			ServerStreams: true,
 		},
 	},

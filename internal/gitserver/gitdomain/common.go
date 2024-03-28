@@ -39,6 +39,9 @@ const (
 // (os.ModeDevice) beyond the Git "160000" commit mode bits. The choice of os.ModeDevice is
 // arbitrary.
 const ModeSubmodule = 0160000 | os.ModeDevice
+const ModeDir = 0o40000
+const ModeFile = 0o644
+const ModeSymlink = 0o20000
 
 // Submodule holds information about a Git submodule and is
 // returned in the FileInfo's Sys field by Stat/ReadDir calls.
