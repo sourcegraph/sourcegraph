@@ -27,6 +27,7 @@ go_test(
     srcs = [
         "client_test.go",
         "grpc_test.go",
+        "http_test.go",
     ],
     embed = [":requestclient"],
     deps = [

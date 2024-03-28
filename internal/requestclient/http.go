@@ -96,6 +96,10 @@ func httpMiddleware(next http.Handler, external bool) http.Handler {
 			}
 		}
 
+		remoteAddr := strings.Split(req.RemoteAddr, ":")[0]
+		// Default value if not using Cloudflare
+		realIp := remoteAddr
+
 		var wafIPCountryCode string
 		if external && useCloudflareHeaders {
 			// Try to find trusted Cloudflare-provided country code of the request.
@@ -106,10 +110,16 @@ func httpMiddleware(next http.Handler, external bool) http.Handler {
 			if cfIPCountry := req.Header.Get("CF-IPCountry"); cfIPCountry != "" && cfIPCountry != "XX" {
 				wafIPCountryCode = cfIPCountry
 			}
+
+			// Set the real IP of the client to the connecting IP, if using Cloudflare.
+			if forwardedFor != "" {
+				realIp = forwardedFor
+			}
 		}
 
 		ctxWithClient := WithClient(req.Context(), &Client{
-			IP:           strings.Split(req.RemoteAddr, ":")[0],
+			IP:           remoteAddr,
+			RealIP:       realIp,
 			ForwardedFor: req.Header.Get(headerKeyForwardedFor),
 			UserAgent:    req.Header.Get(headerKeyUserAgent),
 

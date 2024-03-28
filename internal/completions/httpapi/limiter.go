@@ -3,8 +3,9 @@ package httpapi
 import (
 	"context"
 	"fmt"
-	"github.com/sourcegraph/sourcegraph/internal/featureflag"
 	"time"
+
+	"github.com/sourcegraph/sourcegraph/internal/featureflag"
 
 	"github.com/gomodule/redigo/redis"
 
@@ -63,20 +64,10 @@ func (r *rateLimiter) TryAcquire(ctx context.Context) (err error) {
 	if !a.IsAuthenticated() {
 		// Fall back to the IP address, if provided in context (ie. this is a request handler).
 		req := requestclient.FromContext(ctx)
-		var ip string
-		if req != nil {
-			ip = req.IP
-			// Note: ForwardedFor header in general can be spoofed. For
-			// Sourcegraph.com we use a trusted value for this so this is a
-			// reliable value to rate limit with.
-			if req.ForwardedFor != "" {
-				ip = req.ForwardedFor
-			}
-		}
-		if ip == "" {
+		if req == nil || req.RealIP == "" {
 			return errors.Wrap(auth.ErrNotAuthenticated, "cannot claim rate limit for unauthenticated user without request context")
 		}
-		key = anonymousKey(ip, r.scope)
+		key = anonymousKey(req.RealIP, r.scope)
 	}
 
 	rstore := r.rstore.WithContext(ctx)

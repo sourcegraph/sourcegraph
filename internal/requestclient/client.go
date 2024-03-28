@@ -17,6 +17,9 @@ type clientKey struct{}
 type Client struct {
 	// IP identifies the IP of the client.
 	IP string
+	// RealIP identifies the original IP of the client, before any proxying based on
+	// X-Forwarded-For or similar headers.
+	RealIP string
 	// ForwardedFor identifies the originating IP address of a client. It can
 	// be a comma-separated list of IP addresses.
 	//
