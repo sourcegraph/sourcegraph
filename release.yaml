@@ -24,22 +24,21 @@ internal:
       patch:
         - name: "git:branch"
           cmd: |
-            set -eu
+            set -exu
 
-            export exit_code=0
-            git rev-parse --verify refs/heads/{{git.branch}} --exit-code || exit_code=$?
-            if [ $exit_code -eq 0  ]; then
+            exit_code=0
+
+            if [ -n "$(git branch -a | grep -q {{git.branch}})"  ]; then
               git checkout "{{git.branch}}"
             else
-              exit 0
               echo "---- TEMPORARY ----"
               git checkout -b "{{git.branch}}"
               echo "--------------------"
-              echo "❌ Branch '{{git.branch}}' does not exist"
-              exit 1
+              # echo "❌ Branch '{{git.branch}}' does not exist"
+              # exit 1
             fi
 
-            git push -u origin "{{git.branch}}    "
+            git push -u origin "{{git.branch}}"
         - name: "buildkite"
           cmd: |
             echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
