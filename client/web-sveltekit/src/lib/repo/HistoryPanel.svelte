@@ -29,7 +29,6 @@
             scroller: scroller?.capture(),
         }
     }
-    $: console.log(history)
 
     export async function restore(data: Capture) {
         if (data.scroller) {

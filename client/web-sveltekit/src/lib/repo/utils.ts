@@ -1,5 +1,7 @@
-import { resolveRoute } from '$app/paths'
 import { formatDistanceToNow } from 'date-fns'
+import { capitalize } from 'lodash'
+
+import { resolveRoute } from '$app/paths'
 
 import type { ResolvedRevision } from '../../routes/[...repo=reporev]/+layout'
 
@@ -69,9 +71,11 @@ export async function resolveRevision(
 export function getFirstNameAndLastInitial(name: string): string {
     const names = name.split(' ')
     if (names.length < 2) {
-        return `${names[0]}`
+        return `${capitalize(names[0].toLowerCase())}`
     }
-    return `${names[0]} ${names[names.length - 1].charAt(0).toUpperCase()}.`
+    const firstName = names[0].toLowerCase()
+    const lastInitial = names[names.length - 1].charAt(0).toUpperCase()
+    return `${capitalize(firstName)} ${lastInitial}.`
 }
 
 export function extractPRNumber(cm: string): string | null {
@@ -103,12 +107,11 @@ function hasPRNumber(cm: string): boolean {
     return false
 }
 
-function extractCommitMessage(commitMessage: string): string {
-    if (hasPRNumber(commitMessage)) {
-        let splitMsg = commitMessage.split(' ')
-        let msg = splitMsg.slice(0, splitMsg.length - 1)
-        return msg.join(' ')
+export function extractCommitMessage(cm: string): string {
+    if (!hasPRNumber(cm)) {
+        return cm
     }
-    return commitMessage
+    let splitMsg = cm.split(' ')
+    let msg = splitMsg.slice(0, splitMsg.length - 1)
+    return msg.join(' ')
 }
-
