@@ -72,7 +72,7 @@ func (srv *gitHubAppServer) registerRoutes(router *mux.Router) {
 
 // SetupGitHubAppRoutes registers the routes for the GitHub App setup API.
 func SetupGitHubAppRoutes(router *mux.Router, db database.DB) {
-	ghAppState := rcache.NewWithTTL("github_app_state", cacheTTLSeconds)
+	ghAppState := rcache.NewWithTTL("github_app_state", cacheTTLSeconds, false)
 	appServer := &gitHubAppServer{
 		cache: ghAppState,
 		db:    db,

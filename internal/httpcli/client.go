@@ -83,7 +83,7 @@ type Factory struct {
 // redisCache is an HTTP cache backed by Redis. The TTL of a week is a balance
 // between caching values for a useful amount of time versus growing the cache
 // too large.
-var redisCache = rcache.NewWithTTL("http", 604800)
+var redisCache = rcache.NewWithTTL("http", 604800, false)
 
 // CachedTransportOpt is the default transport cache - it will return values from
 // the cache where possible (avoiding a network request) and will additionally add

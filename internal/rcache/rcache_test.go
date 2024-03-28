@@ -46,7 +46,7 @@ func TestCache_namespace(t *testing.T) {
 
 	caches := make([]*Cache, len(cases))
 	for i, test := range cases {
-		caches[i] = New(test.prefix)
+		caches[i] = New(test.prefix, false)
 		for k, v := range test.entries {
 			caches[i].Set(k, []byte(v))
 		}
@@ -73,7 +73,7 @@ func TestCache_namespace(t *testing.T) {
 func TestCache_simple(t *testing.T) {
 	SetupForTest(t)
 
-	c := New("some_prefix")
+	c := New("some_prefix", false)
 	_, ok := c.Get("a")
 	if ok {
 		t.Fatal("Initial Get should find nothing")
@@ -98,7 +98,7 @@ func TestCache_simple(t *testing.T) {
 func TestCache_deleteAllKeysWithPrefix(t *testing.T) {
 	SetupForTest(t)
 
-	c := New("some_prefix")
+	c := New("some_prefix", false)
 	var aKeys, bKeys []string
 	var key string
 	for i := range 10 {
@@ -147,7 +147,7 @@ func TestCache_deleteAllKeysWithPrefix(t *testing.T) {
 func TestCache_Increase(t *testing.T) {
 	SetupForTest(t)
 
-	c := NewWithTTL("some_prefix", 1)
+	c := NewWithTTL("some_prefix", 1, false)
 	c.Increase("a")
 
 	got, ok := c.Get("a")
@@ -166,7 +166,7 @@ func TestCache_Increase(t *testing.T) {
 func TestCache_KeyTTL(t *testing.T) {
 	SetupForTest(t)
 
-	c := NewWithTTL("some_prefix", 1)
+	c := NewWithTTL("some_prefix", 1, false)
 	c.Set("a", []byte("b"))
 
 	ttl, ok := c.KeyTTL("a")
@@ -191,7 +191,7 @@ func TestCache_KeyTTL(t *testing.T) {
 func TestCache_SetWithTTL(t *testing.T) {
 	SetupForTest(t)
 
-	c := NewWithTTL("some_prefix", 60)
+	c := NewWithTTL("some_prefix", 60, false)
 	c.SetWithTTL("a", []byte("b"), 30)
 	b, ok := c.Get("a")
 	if !ok {
@@ -225,7 +225,7 @@ func TestCache_Hashes(t *testing.T) {
 	SetupForTest(t)
 
 	// Test SetHashItem
-	c := NewWithTTL("simple_hash", 1)
+	c := NewWithTTL("simple_hash", 1, false)
 	err := c.SetHashItem("key", "hashKey1", "value1")
 	assert.NoError(t, err)
 	err = c.SetHashItem("key", "hashKey2", "value2")

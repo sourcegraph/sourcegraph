@@ -49,7 +49,7 @@ func NewMultiHandler(
 	batchesQueueHandler QueueHandler[*btypes.BatchSpecWorkspaceExecutionJob],
 ) MultiHandler {
 	siteConfig := conf.Get().SiteConfiguration
-	dequeueCache := rcache.New(executortypes.DequeueCachePrefix)
+	dequeueCache := rcache.New(executortypes.DequeueCachePrefix, false)
 	dequeueCacheConfig := executortypes.DequeuePropertiesPerQueue
 	if siteConfig.ExecutorsMultiqueue != nil && siteConfig.ExecutorsMultiqueue.DequeueCacheConfig != nil {
 		dequeueCacheConfig = siteConfig.ExecutorsMultiqueue.DequeueCacheConfig

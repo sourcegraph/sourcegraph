@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 
 	"github.com/google/uuid"
@@ -132,7 +133,7 @@ func TestGithubAppHTTPAPI(t *testing.T) {
 	db.GitHubAppsFunc.SetDefaultReturn(mockGitHubAppsStore)
 
 	rcache.SetupForTest(t)
-	cache := rcache.NewWithTTL("test_cache", 200)
+	cache := rcache.NewWithTTL("test_cache", 200, false)
 
 	mux := mux.NewRouter()
 	subrouter := mux.PathPrefix("/githubapp/").Subrouter()

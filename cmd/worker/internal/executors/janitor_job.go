@@ -32,7 +32,7 @@ func (j *janitorJob) Routines(_ context.Context, observationCtx *observation.Con
 		return nil, err
 	}
 
-	dequeueCache := rcache.New(executortypes.DequeueCachePrefix)
+	dequeueCache := rcache.New(executortypes.DequeueCachePrefix, false)
 
 	routines := []goroutine.BackgroundRoutine{
 		goroutine.NewPeriodicGoroutine(

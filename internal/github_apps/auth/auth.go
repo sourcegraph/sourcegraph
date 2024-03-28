@@ -124,7 +124,7 @@ func NewInstallationAccessToken(
 	appAuthenticator auth.Authenticator,
 	encryptionKey encryption.Key, // Used to encrypt the token before caching it
 ) *InstallationAuthenticator {
-	cache := rcache.NewWithTTL("github_app_installation_token", 55*60)
+	cache := rcache.NewWithTTL("github_app_installation_token", 55*60, false)
 	auther := &InstallationAuthenticator{
 		baseURL:          baseURL,
 		installationID:   installationID,

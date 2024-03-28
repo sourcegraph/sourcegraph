@@ -23,7 +23,7 @@ import (
 // filenames. Enabled by default.
 var useEnhancedLanguageDetection, _ = strconv.ParseBool(env.Get("USE_ENHANCED_LANGUAGE_DETECTION", "true", "Enable more accurate but slower language detection that uses file contents"))
 
-var inventoryCache = rcache.New(fmt.Sprintf("inv:v2:enhanced_%v", useEnhancedLanguageDetection))
+var inventoryCache = rcache.New(fmt.Sprintf("inv:v2:enhanced_%v", useEnhancedLanguageDetection), false)
 
 // InventoryContext returns the inventory context for computing the inventory for the repository at
 // the given commit.

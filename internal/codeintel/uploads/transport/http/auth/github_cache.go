@@ -13,7 +13,7 @@ type GitHubAuthCache struct {
 }
 
 var githubAuthCache = &GitHubAuthCache{
-	cache: rcache.NewWithTTL("codeintel.github-authz:", 60 /* seconds */),
+	cache: rcache.NewWithTTL("codeintel.github-authz:", 60 /* seconds */, false),
 }
 
 func (c *GitHubAuthCache) Get(key string) (authorized bool, _ bool) {

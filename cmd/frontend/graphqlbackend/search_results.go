@@ -434,7 +434,7 @@ func (srs *searchResultsStats) ApproximateResultCount() string { return srs.JApp
 func (srs *searchResultsStats) Sparkline() []int32             { return srs.JSparkline }
 
 var (
-	searchResultsStatsCache   = rcache.NewWithTTL("search_results_stats", 3600) // 1h
+	searchResultsStatsCache   = rcache.NewWithTTL("search_results_stats", 3600, false) // 1h
 	searchResultsStatsCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "src_graphql_search_results_stats_cache_hit",
 		Help: "Counts cache hits and misses for search results stats (e.g. sparklines).",
