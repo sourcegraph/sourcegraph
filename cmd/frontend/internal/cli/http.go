@@ -110,6 +110,7 @@ func newExternalHTTPHandler(
 	//
 	// 🚨 SECURITY: Auth middleware that must run before other auth middlewares.
 	h = middleware.Trace(h)
+	h = middleware.DataLoader(h)
 	h = gcontext.ClearHandler(h)
 	h = healthCheckMiddleware(h)
 	h = middleware.BlackHole(h)

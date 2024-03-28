@@ -636,7 +636,8 @@ func NewSchema(
 	return graphql.ParseSchema(
 		strings.Join(schemas, "\n"),
 		resolver,
-		opts...)
+		opts...,
+	)
 }
 
 // schemaResolver handles all GraphQL queries for Sourcegraph. To do this, it
