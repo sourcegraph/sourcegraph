@@ -3,7 +3,7 @@ import { concat, from, of, Subscription, type Unsubscribable } from 'rxjs'
 import { first } from 'rxjs/operators'
 
 import type { ActionContributionClientCommandUpdateConfiguration, Evaluated, KeyPath } from '@sourcegraph/client-api'
-import { formatSearchParameters } from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import type { Position } from '@sourcegraph/extension-api-types'
 
 import { wrapRemoteObservable } from '../api/client/api/common'
@@ -137,13 +137,7 @@ export function registerBuiltinClientCommands(
  * @param urlHash The current URL hash (beginning with '#' if non-empty).
  */
 export function urlForOpenPanel(viewID: string, urlHash: string): string {
-    // Preserve the existing URL fragment, if any.
-    const parameters = new URLSearchParams(urlHash.slice('#'.length))
-    parameters.set('tab', viewID)
-    // In the URL fragment, the 'L1:2-3:4' is treated as a parameter with no value. Undo the escaping of ':'
-    // and the addition of the '=' for the empty value, for aesthetic reasons.
-    const parametersString = formatSearchParameters(parameters)
-    return `#${parametersString}`
+    return SourcegraphURL.from({ hash: urlHash }).setViewState(viewID).toString()
 }
 
 /**

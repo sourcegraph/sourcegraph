@@ -18,7 +18,7 @@ import type { CodeIntelExtensionHostAPI, FlatExtensionHostAPI, ScipParameters } 
 import { proxySubscribable } from '../api/extension/api/common'
 import { toPosition } from '../api/extension/api/types'
 import { getModeFromPath } from '../languages'
-import { parseRepoURI } from '../util/url'
+import { parseRepoGitURI } from '../util/url'
 
 import type { DocumentSelector, TextDocument, DocumentHighlight } from './legacy-extensions/api'
 import * as sourcegraph from './legacy-extensions/api'
@@ -143,7 +143,7 @@ function requestFor(textParameters: TextDocumentPositionParameters): LanguageReq
 function toTextDocument(textDocument: TextDocumentIdentifier): sourcegraph.TextDocument {
     return {
         uri: textDocument.uri,
-        languageId: getModeFromPath(parseRepoURI(textDocument.uri).filePath || ''),
+        languageId: getModeFromPath(parseRepoGitURI(textDocument.uri).filePath || ''),
         text: undefined,
     }
 }

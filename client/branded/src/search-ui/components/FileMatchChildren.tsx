@@ -3,7 +3,7 @@ import React, { useCallback, type KeyboardEvent, type MouseEvent } from 'react'
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 
-import { appendLineRangeQueryParameter, toPositionOrRangeQueryParameter } from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import type { MatchGroup } from '@sourcegraph/shared/src/components/ranking/PerFileResultRanking'
 import { type ContentMatch, getFileMatchUrl } from '@sourcegraph/shared/src/search/stream'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
@@ -27,19 +27,15 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
     const { result, grouped, telemetryService } = props
 
     const createCodeExcerptLink = (group: MatchGroup): string => {
-        const positionOrRangeQueryParameter = toPositionOrRangeQueryParameter({
-            range: {
-                start: {
-                    line: group.matches[0].startLine + 1,
-                    character: group.matches[0].startCharacter + 1,
-                },
-                end: {
-                    line: group.matches[0].endLine + 1,
-                    character: group.matches[0].endCharacter + 1,
-                },
-            },
-        })
-        return appendLineRangeQueryParameter(getFileMatchUrl(result), positionOrRangeQueryParameter)
+        const match = group.matches[0]
+        return SourcegraphURL.from(getFileMatchUrl(result))
+            .setLineRange({
+                line: match.startLine + 1,
+                character: match.startCharacter + 1,
+                endLine: match.endLine + 1,
+                endCharacter: match.endCharacter + 1,
+            })
+            .toString()
     }
 
     const navigate = useNavigate()

@@ -11,7 +11,7 @@ import {
     RevisionNotFoundError,
 } from '@sourcegraph/shared/src/backend/errors'
 import {
-    makeRepoURI,
+    makeRepoGitURI,
     type RepoRevision,
     type RepoSpec,
     type ResolvedRevisionSpec,
@@ -168,7 +168,7 @@ export const resolveRepoRevision = memoizeObservable(
                 }
             })
         ),
-    makeRepoURI
+    makeRepoGitURI
 )
 
 export const fetchFileExternalLinks = memoizeObservable(
@@ -198,7 +198,7 @@ export const fetchFileExternalLinks = memoizeObservable(
                 return data.repository.commit.file.externalURLs
             })
         ),
-    makeRepoURI
+    makeRepoGitURI
 )
 
 interface FetchCommitMessageResult {
@@ -227,5 +227,5 @@ export const fetchCommitMessage = memoizeObservable(
             map(dataOrThrowErrors),
             map(data => data.repository.commit.message)
         ),
-    makeRepoURI
+    makeRepoGitURI
 )

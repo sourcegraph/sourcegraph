@@ -1,5 +1,6 @@
+import { SourcegraphURL } from '@sourcegraph/common'
 import type { Position } from '@sourcegraph/extension-api-types'
-import { parseQueryAndHash, parseRepoRevision } from '@sourcegraph/shared/src/util/url'
+import { parseRepoRevision } from '@sourcegraph/shared/src/util/url'
 
 export interface SourcegraphUriOptionals {
     revision?: string
@@ -204,11 +205,11 @@ export class SourcegraphUri {
         }
         let position: Position | undefined
 
-        const parsedHash = parseQueryAndHash(url.search, url.hash)
-        if (parsedHash.line) {
+        const lineRange = SourcegraphURL.from(url.toString()).lineRange
+        if (lineRange.line) {
             position = {
-                line: parsedHash.line,
-                character: parsedHash.character || 0,
+                line: lineRange.line,
+                character: lineRange.character || 0,
             }
         }
         const isDirectory = uri.includes('/-/tree/')

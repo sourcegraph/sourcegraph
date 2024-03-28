@@ -14,7 +14,7 @@ import {
     hasFindImplementationsSupport,
 } from '@sourcegraph/shared/src/codeintel/api'
 import type { Occurrence } from '@sourcegraph/shared/src/codeintel/scip'
-import { parseRepoURI, toURIWithPath } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI, parseRepoGitURI } from '@sourcegraph/shared/src/util/url'
 import type { UIRangeSpec } from '@sourcegraph/shared/src/util/url'
 
 import type { WebHoverOverlayProps } from '../../../../components/WebHoverOverlay'
@@ -117,7 +117,7 @@ export class CodeIntelAPIAdapter {
     private hasCodeIntelligenceSupport: boolean
 
     constructor(private config: CodeIntelAPIConfig) {
-        this.documentURI = toURIWithPath({
+        this.documentURI = makeRepoGitURI({
             repoName: config.documentInfo.repoName,
             filePath: config.documentInfo.filePath,
             commitID: config.documentInfo.commitID,
@@ -173,7 +173,7 @@ export class CodeIntelAPIAdapter {
             )
             .then(locations => {
                 for (const location of locations) {
-                    const { repoName, filePath, revision } = parseRepoURI(location.uri)
+                    const { repoName, filePath, revision } = parseRepoGitURI(location.uri)
                     if (
                         filePath &&
                         location.range &&
@@ -197,7 +197,7 @@ export class CodeIntelAPIAdapter {
                 }
                 if (locations.length === 1) {
                     const location = locations[0]
-                    const { repoName, filePath, revision } = parseRepoURI(location.uri)
+                    const { repoName, filePath, revision } = parseRepoGitURI(location.uri)
                     if (!(filePath && location.range)) {
                         return { type: 'none', occurrence }
                     }

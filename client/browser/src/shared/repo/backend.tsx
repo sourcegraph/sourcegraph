@@ -12,7 +12,7 @@ import {
 import type { PlatformContext } from '@sourcegraph/shared/src/platform/context'
 import {
     type FileSpec,
-    makeRepoURI,
+    makeRepoGitURI,
     type RawRepoSpec,
     type RepoSpec,
     type ResolvedRevisionSpec,
@@ -161,7 +161,7 @@ export const resolveRevision = memoizeObservable(
                 return repository.commit.oid
             })
         ),
-    makeRepoURI
+    makeRepoGitURI
 )
 
 export function retryWhenCloneInProgressError<T>(): (v: Observable<T>) => Observable<T> {
@@ -241,5 +241,5 @@ export const fetchBlobContentLines = memoizeObservable(
                 return repository.commit.file.content.split('\n')
             })
         ),
-    makeRepoURI
+    makeRepoGitURI
 )

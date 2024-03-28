@@ -1,6 +1,6 @@
 import type * as H from 'history'
 
-import { findLineKeyInSearchParameters } from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import type { RenderMode } from '@sourcegraph/shared/src/util/url'
 
 const URL_QUERY_PARAM = 'view'
@@ -21,19 +21,19 @@ export const getModeFromURL = (location: H.Location): RenderMode => {
  * Returns the URL that displays the blob using the specified mode.
  */
 export const getURLForMode = (location: H.Location, mode: RenderMode): H.Location => {
-    const searchParameters = new URLSearchParams(location.search)
+    const url = SourcegraphURL.from(location)
 
     if (mode === 'code') {
-        searchParameters.set(URL_QUERY_PARAM, mode)
+        url.setSearchParameter(URL_QUERY_PARAM, mode)
     } else {
         // We remove any existing line ranges as they are not supported in rendered mode.
-        const existingLineRangeKey = findLineKeyInSearchParameters(searchParameters)
-        if (existingLineRangeKey) {
-            searchParameters.delete(existingLineRangeKey)
-        }
-
-        searchParameters.delete(URL_QUERY_PARAM)
+        url.setLineRange(null).deleteSearchParameter(URL_QUERY_PARAM)
     }
 
-    return { ...location, search: searchParameters.toString() }
+    return {
+        ...location,
+        pathname: url.pathname,
+        search: url.search,
+        hash: url.hash,
+    }
 }

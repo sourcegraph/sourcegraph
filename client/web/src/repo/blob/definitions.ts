@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators'
 
 import { memoizeObservable } from '@sourcegraph/common'
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
-import { makeRepoURI, type UIRange } from '@sourcegraph/shared/src/util/url'
+import { makeRepoGitURI, type UIRange } from '@sourcegraph/shared/src/util/url'
 
 import { requestGraphQL } from '../../backend/graphql'
 import type { DefinitionFields } from '../../graphql-operations'
@@ -149,6 +149,6 @@ export const fetchDefinitionsFromRanges = memoizeObservable(
     },
     options => {
         const { repoName, revision, filePath, ranges } = options
-        return `${makeRepoURI({ repoName, revision, filePath })}?${ranges.map(buildRangeKey).join(',')}`
+        return `${makeRepoGitURI({ repoName, revision, filePath })}?${ranges.map(buildRangeKey).join(',')}`
     }
 )

@@ -13,7 +13,7 @@ import type { Optional } from 'utility-types'
 import type { StreamingSearchResultsListProps } from '@sourcegraph/branded'
 import { TabbedPanelContent } from '@sourcegraph/branded/src/components/panel/TabbedPanelContent'
 import { NoopEditor } from '@sourcegraph/cody-shared/dist/editor'
-import { asError, type ErrorLike, isErrorLike, basename } from '@sourcegraph/common'
+import { asError, type ErrorLike, isErrorLike, basename, SourcegraphURL } from '@sourcegraph/common'
 import {
     createActiveSpan,
     reactManualTracer,
@@ -28,7 +28,7 @@ import { type SettingsCascadeProps, useExperimentalFeatures } from '@sourcegraph
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
-import { type ModeSpec, parseQueryAndHash, type RepoFile } from '@sourcegraph/shared/src/util/url'
+import { type ModeSpec, type RepoFile } from '@sourcegraph/shared/src/util/url'
 import {
     Alert,
     Button,
@@ -143,10 +143,7 @@ export const BlobPage: React.FunctionComponent<BlobPageProps> = ({ className, co
     const [enableOwnershipPanels] = useFeatureFlag('enable-ownership-panels', true)
     const enableOwnershipPanel = enableOwnershipPanels && props.ownEnabled
 
-    const lineOrRange = useMemo(
-        () => parseQueryAndHash(location.search, location.hash),
-        [location.search, location.hash]
-    )
+    const { lineRange: lineOrRange, viewState } = useMemo(() => SourcegraphURL.from(location), [location])
 
     // Log view event whenever a new Blob, or a Blob with a different render mode, is visited.
     useEffect(() => {
@@ -618,7 +615,7 @@ export const BlobPage: React.FunctionComponent<BlobPageProps> = ({ className, co
                     />
                 </TraceSpanProvider>
             )}
-            {parseQueryAndHash(location.search, location.hash).viewState &&
+            {viewState &&
                 createPortal(
                     <Panel
                         className={styles.panel}

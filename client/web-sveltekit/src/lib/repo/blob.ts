@@ -5,12 +5,10 @@ import { get, type Readable, readable } from 'svelte/store'
 
 import { goto as svelteGoto } from '$app/navigation'
 import { page } from '$app/stores'
-import { addLineRangeQueryParameter, formatSearchParameters, toPositionOrRangeQueryParameter } from '$lib/common'
 import {
     positionToOffset,
     type Definition,
     type GoToDefinitionOptions,
-    type SelectedLineRange,
     showTemporaryTooltip,
     locationToURL,
     type DocumentInfo,
@@ -30,29 +28,6 @@ import type { BlobPage_Blob } from '../../routes/[...repo=reporev]/(validrev)/(c
  * makes it easier to find the destination token.
  */
 const MINIMUM_GO_TO_DEF_LATENCY_MILLIS = 20
-
-export function updateSearchParamsWithLineInformation(
-    currentSearchParams: URLSearchParams,
-    range: SelectedLineRange
-): string {
-    const parameters = new URLSearchParams(currentSearchParams)
-    parameters.delete('popover')
-
-    let query: string | undefined
-
-    if (range?.line !== range?.endLine && range?.endLine) {
-        query = toPositionOrRangeQueryParameter({
-            range: {
-                start: { line: range.line },
-                end: { line: range.endLine },
-            },
-        })
-    } else if (range?.line) {
-        query = toPositionOrRangeQueryParameter({ position: { line: range.line } })
-    }
-
-    return formatSearchParameters(addLineRangeQueryParameter(parameters, query))
-}
 
 export async function goToDefinition(
     documentInfo: DocumentInfo,

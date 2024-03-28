@@ -11,7 +11,7 @@ import {
     HighlightResponseFormat,
 } from '../graphql-operations'
 import type { PlatformContext } from '../platform/context'
-import { makeRepoURI } from '../util/url'
+import { makeRepoGitURI } from '../util/url'
 
 /*
     Highlighted file result query doesn't support `format` on Sourcegraph versions older than 3.43.
@@ -127,7 +127,7 @@ export const fetchHighlightedFileLineRanges = memoizeObservable(
             )
     },
     context =>
-        makeRepoURI(context) +
+        makeRepoGitURI(context) +
         `?disableTimeout=${String(context.disableTimeout)}&ranges=${context.ranges
             .map(range => `${range.startLine}:${range.endLine}`)
             .join(',')}&format=${context.format}`

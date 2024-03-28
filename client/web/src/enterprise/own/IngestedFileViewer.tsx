@@ -4,13 +4,8 @@ import { EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import {
-    addLineRangeQueryParameter,
-    formatSearchParameters,
-    toPositionOrRangeQueryParameter,
-} from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import { CodeMirrorEditor, defaultEditorTheme } from '@sourcegraph/shared/src/components/CodeMirrorEditor'
-import { parseQueryAndHash } from '@sourcegraph/shared/src/util/url'
 
 import { selectableLineNumbers } from '../../repo/blob/codemirror/linenumbers'
 
@@ -26,12 +21,8 @@ const theme = EditorView.theme({
 export const IngestedFileViewer: React.FunctionComponent<{ contents: string }> = ({ contents }) => {
     const location = useLocation()
     const navigate = useNavigate()
-    const search = location.search
 
-    const lineNumber = useMemo(
-        () => parseQueryAndHash(location.search, location.hash).line,
-        [location.search, location.hash]
-    )
+    const lineNumber = useMemo(() => SourcegraphURL.from(location).lineRange.line, [location])
 
     const extensions: Extension[] = useMemo(
         () => [
@@ -39,21 +30,17 @@ export const IngestedFileViewer: React.FunctionComponent<{ contents: string }> =
             theme,
             selectableLineNumbers({
                 onSelection(range) {
-                    let query
-                    if (range) {
-                        const position = { line: range.line }
-                        query = toPositionOrRangeQueryParameter(
-                            range.endLine ? { range: { start: position, end: { line: range.endLine } } } : { position }
-                        )
-                    }
-                    const newSearchParameters = addLineRangeQueryParameter(new URLSearchParams(search), query)
-                    navigate('?' + formatSearchParameters(newSearchParameters))
+                    navigate(
+                        SourcegraphURL.from({ search: location.search, hash: location.hash })
+                            .setLineRange(range ? { line: range.line, endLine: range?.endLine } : null)
+                            .toString()
+                    )
                 },
                 initialSelection: lineNumber ? { line: lineNumber } : null,
             }),
             defaultEditorTheme,
         ],
-        [lineNumber, search, navigate]
+        [lineNumber, location, navigate]
     )
 
     return <CodeMirrorEditor value={contents} extensions={extensions} />

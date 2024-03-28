@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators'
 
 import type { HoverMerged } from '@sourcegraph/client-api'
 import type { Hoverifier } from '@sourcegraph/codeintellify'
-import { appendLineRangeQueryParameter, toPositionOrRangeQueryParameter } from '@sourcegraph/common'
+import { SourcegraphURL } from '@sourcegraph/common'
 import type { ActionItemAction } from '@sourcegraph/shared/src/actions/ActionItem'
 import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import type { MatchGroupMatch } from '@sourcegraph/shared/src/components/ranking/PerFileResultRanking'
@@ -198,10 +198,8 @@ export const FileMatchChildren: React.FunctionComponent<React.PropsWithChildren<
         [result, fetchHighlightedFileLineRanges, grouped, telemetryService]
     )
 
-    const createCodeExcerptLink = (group: MatchGroup): string => {
-        const positionOrRangeQueryParameter = toPositionOrRangeQueryParameter({ position: group.position })
-        return appendLineRangeQueryParameter(getFileMatchUrl(result), positionOrRangeQueryParameter)
-    }
+    const createCodeExcerptLink = (group: MatchGroup): string =>
+        SourcegraphURL.from(getFileMatchUrl(result)).setLineRange(group.position).toString()
 
     /**
      * This handler implements the logic to simulate the click/keyboard

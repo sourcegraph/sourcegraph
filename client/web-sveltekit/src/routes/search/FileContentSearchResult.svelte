@@ -9,12 +9,7 @@
 <script lang="ts">
     import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 
-    import {
-        addLineRangeQueryParameter,
-        formatSearchParameters,
-        pluralize,
-        toPositionOrRangeQueryParameter,
-    } from '$lib/common'
+    import { pluralize, SourcegraphURL } from '$lib/common'
     import Icon from '$lib/Icon.svelte'
     import { observeIntersection } from '$lib/intersection-observer'
     import { fetchFileRangeMatches } from '$lib/search/api/highlighting'
@@ -61,16 +56,8 @@
         }, 0)
     }
 
-    function getMatchURL(startLine: number, endLine: number): string {
-        const searchParams = formatSearchParameters(
-            addLineRangeQueryParameter(
-                // We don't want to preserve the 'q' query parameter.
-                // We might have to adjust this if we want to preserve other query parameters.
-                new URLSearchParams(),
-                toPositionOrRangeQueryParameter({ range: { start: { line: startLine }, end: { line: endLine } } })
-            )
-        )
-        return `${fileURL}?${searchParams}`
+    function getMatchURL(line: number, endLine: number): string {
+        return SourcegraphURL.from(fileURL).setLineRange({ line, endLine }).toString()
     }
 
     let visible = false

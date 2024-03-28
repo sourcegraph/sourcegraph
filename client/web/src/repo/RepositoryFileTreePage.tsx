@@ -2,10 +2,10 @@ import type { FC } from 'react'
 
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { appendLineRangeQueryParameter } from '@sourcegraph/common'
+import { SourcegraphURL, isLegacyFragment } from '@sourcegraph/common'
 import { TraceSpanProvider } from '@sourcegraph/observability-client'
 import { getModeFromPath } from '@sourcegraph/shared/src/languages'
-import { isLegacyFragment, parseQueryAndHash, toRepoURL } from '@sourcegraph/shared/src/util/url'
+import { toRepoURL } from '@sourcegraph/shared/src/util/url'
 import { LoadingSpinner } from '@sourcegraph/wildcard'
 
 import { ErrorBoundary } from '../components/ErrorBoundary'
@@ -13,7 +13,7 @@ import type { SourcegraphContext } from '../jscontext'
 import type { NotebookProps } from '../notebooks'
 import type { OwnConfigProps } from '../own/OwnConfigProps'
 import { GettingStartedTour } from '../tour/GettingStartedTour'
-import { formatHash, formatLineOrPositionOrRange, parseBrowserRepoURL } from '../util/url'
+import { parseBrowserRepoURL } from '../util/url'
 
 import { BlobPage } from './blob/BlobPage'
 import type { RepoRevisionContainerContext } from './RepoRevisionContainer'
@@ -61,24 +61,34 @@ export const RepositoryFileTreePage: FC<RepositoryFileTreePageProps> = props => 
     if (objectType === 'blob' && hashLineNumberMatch) {
         const startLineNumber = parseInt(hashLineNumberMatch[1], 10)
         const endLineNumber = hashLineNumberMatch[2] ? parseInt(hashLineNumberMatch[2].slice(1), 10) : undefined
-        const url = appendLineRangeQueryParameter(
-            location.pathname + location.search,
-            `L${startLineNumber}` + (endLineNumber ? `-${endLineNumber}` : '')
+        // Navigate's to doesn't seem to work with the SourcegraphURL object, so we need to convert it to a string
+        return (
+            <Navigate
+                to={SourcegraphURL.from({ pathname: location.pathname, search: location.search })
+                    .setLineRange({
+                        line: startLineNumber,
+                        endLine: endLineNumber,
+                    })
+                    .toString()}
+                replace={true}
+            />
         )
-        return <Navigate to={url} replace={true} />
     }
 
     // For blob pages with legacy URL fragment hashes like "#L17:19-21:23$foo:bar"
-    // redirect to the modern URL fragment hashes like "#L17:19-21:23&tab=foo:bar"
+    // redirect to the modern URL structure like "?L17:19-21:23#tab=foo:bar"
     if (!hideRepoRevisionContent && objectType === 'blob' && isLegacyFragment(location.hash)) {
-        const parsedQuery = parseQueryAndHash(location.search, location.hash)
-        const hashParameters = new URLSearchParams()
-        if (parsedQuery.viewState) {
-            hashParameters.set('tab', parsedQuery.viewState)
-        }
-        const range = formatLineOrPositionOrRange(parsedQuery)
-        const url = appendLineRangeQueryParameter(location.pathname + location.search, range ? `L${range}` : undefined)
-        return <Navigate to={url + formatHash(hashParameters)} replace={true} />
+        const { lineRange, viewState } = SourcegraphURL.from(location)
+        // Navigate's to doesn't seem to work with the SourcegraphURL object, so we need to convert it to a string
+        return (
+            <Navigate
+                to={SourcegraphURL.from({ pathname: location.pathname, search: location.search })
+                    .setLineRange(lineRange)
+                    .setViewState(viewState)
+                    .toString()}
+                replace={true}
+            />
+        )
     }
 
     return (

@@ -9,7 +9,7 @@ import VisibilitySensor from 'react-visibility-sensor'
 import type { Observable } from 'rxjs'
 
 import { CodeExcerpt } from '@sourcegraph/branded'
-import { type ErrorLike, logger, pluralize } from '@sourcegraph/common'
+import { type ErrorLike, logger, pluralize, SourcegraphURL } from '@sourcegraph/common'
 import { Position } from '@sourcegraph/extension-api-classes'
 import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
@@ -23,7 +23,6 @@ import {
     type RevisionSpec,
     type FileSpec,
     type ResolvedRevisionSpec,
-    parseQueryAndHash,
     toPrettyBlobURL,
 } from '@sourcegraph/shared/src/util/url'
 import {
@@ -103,8 +102,11 @@ interface OneBasedPosition {
 }
 
 function createStateFromLocation(location: H.Location): null | State {
-    const { hash, pathname, search } = location
-    const { line, character, endLine, endCharacter, viewState } = parseQueryAndHash(search, hash)
+    const { pathname, search } = location
+    const {
+        lineRange: { line, character, endLine, endCharacter },
+        viewState,
+    } = SourcegraphURL.from(location)
     const { filePath, repoName, revision } = parseBrowserRepoURL(pathname)
 
     // If we don't have enough information in the URL, we can't render the panel
