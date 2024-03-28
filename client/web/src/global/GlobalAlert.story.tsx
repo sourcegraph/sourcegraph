@@ -1,5 +1,6 @@
 import type { Meta, StoryFn } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { H1, H2, Code, Text } from '@sourcegraph/wildcard'
 import { BrandedStory } from '@sourcegraph/wildcard/src/stories'
 
@@ -36,11 +37,16 @@ export const GlobalAlerts: StoryFn = () => (
         </Text>
         <H2>Variants</H2>
         {Object.values(AlertType).map(type => (
-            <GlobalAlert key={type} alert={{ message: 'Something happened!', isDismissibleWithKey: null, type }} />
+            <GlobalAlert
+                key={type}
+                alert={{ message: 'Something happened!', isDismissibleWithKey: null, type }}
+                telemetryRecorder={noOpTelemetryRecorder}
+            />
         ))}
         <H2>Dismissible</H2>
         <GlobalAlert
             alert={{ message: 'You can dismiss me', isDismissibleWithKey: 'dismiss-key', type: AlertType.INFO }}
+            telemetryRecorder={noOpTelemetryRecorder}
         />
     </div>
 )

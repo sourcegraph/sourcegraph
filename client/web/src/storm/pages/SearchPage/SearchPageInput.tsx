@@ -16,6 +16,7 @@ import {
     type SearchModeProps,
     getUserSearchContextNamespaces,
 } from '@sourcegraph/shared/src/search'
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { Form } from '@sourcegraph/wildcard'
 
 import { Notices } from '../../../global/Notices'
@@ -210,7 +211,7 @@ export const SearchPageInput: FC<SearchPageInputProps> = props => {
                             <div className="d-flex flex-grow-1 w-100">{input}</div>
                         </TraceSpanProvider>
                     </div>
-                    <Notices className="my-3 text-center" location="home" />
+                    <Notices className="my-3 text-center" location="home" telemetryRecorder={noOpTelemetryRecorder} />
                 </Form>
             </div>
             {simpleSearch && (

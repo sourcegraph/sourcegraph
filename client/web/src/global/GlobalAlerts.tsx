@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import classNames from 'classnames'
 import { parseISO, differenceInDays } from 'date-fns'
@@ -6,6 +6,7 @@ import { parseISO, differenceInDays } from 'date-fns'
 import { renderMarkdown } from '@sourcegraph/common'
 import { gql, useQuery } from '@sourcegraph/http-client'
 import { useSettings } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Link, Markdown } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
@@ -22,7 +23,7 @@ import { Notices, VerifyEmailNotices } from './Notices'
 
 import styles from './GlobalAlerts.module.scss'
 
-interface Props {
+interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
 }
 
@@ -45,12 +46,21 @@ const adminOnboardingRemovedAlerts = ['externalURL', 'email.smtp', 'enable repos
 /**
  * Fetches and displays relevant global alerts at the top of the page
  */
-export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser }) => {
+export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser, telemetryRecorder }) => {
     const settings = useSettings()
     const [isAdminOnboardingEnabled] = useFeatureFlag('admin-onboarding', true)
     const { data } = useQuery<GlobalAlertsSiteFlagsResult, GlobalAlertsSiteFlagsVariables>(QUERY, {
         fetchPolicy: 'cache-and-network',
     })
+
+    useEffect(() => {
+        if (settings?.motd && Array.isArray(settings.motd)) {
+            telemetryRecorder.recordEvent('alert.motd', 'view')
+        }
+        if (process.env.SOURCEGRAPH_API_URL) {
+            telemetryRecorder.recordEvent('alert.proxyAPI', 'view')
+        }
+    }, [settings?.motd, telemetryRecorder])
 
     const siteFlagsValue = data?.site
     let alerts = siteFlagsValue?.alerts ?? []
@@ -67,16 +77,25 @@ export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser
             {siteFlagsValue && (
                 <>
                     {siteFlagsValue?.needsRepositoryConfiguration && (
-                        <NeedsRepositoryConfigurationAlert className={styles.alert} />
+                        <NeedsRepositoryConfigurationAlert
+                            className={styles.alert}
+                            telemetryRecorder={telemetryRecorder}
+                        />
                     )}
                     {siteFlagsValue.freeUsersExceeded && (
                         <FreeUsersExceededAlert
                             noLicenseWarningUserCount={siteFlagsValue.productSubscription.noLicenseWarningUserCount}
                             className={styles.alert}
+                            telemetryRecorder={telemetryRecorder}
                         />
                     )}
                     {alerts.map((alert, index) => (
-                        <GlobalAlert key={index} alert={alert} className={styles.alert} />
+                        <GlobalAlert
+                            key={index}
+                            alert={alert}
+                            className={styles.alert}
+                            telemetryRecorder={telemetryRecorder}
+                        />
                     ))}
                     {siteFlagsValue.productSubscription.license &&
                         (() => {
@@ -87,6 +106,7 @@ export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser
                                         expiresAt={expiresAt}
                                         daysLeft={Math.floor(differenceInDays(expiresAt, Date.now()))}
                                         className={styles.alert}
+                                        telemetryRecorder={telemetryRecorder}
                                     />
                                 )
                             )
@@ -121,10 +141,12 @@ export const GlobalAlerts: React.FunctionComponent<Props> = ({ authenticatedUser
                     .
                 </DismissibleAlert>
             )}
-
-            <Notices alertClassName={styles.alert} location="top" />
-
-            <VerifyEmailNotices authenticatedUser={authenticatedUser} alertClassName={styles.alert} />
+            <Notices alertClassName={styles.alert} location="top" telemetryRecorder={telemetryRecorder} />
+            <VerifyEmailNotices
+                authenticatedUser={authenticatedUser}
+                alertClassName={styles.alert}
+                telemetryRecorder={telemetryRecorder}
+            />
         </div>
     )
 }
