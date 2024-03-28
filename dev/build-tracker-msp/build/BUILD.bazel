@@ -1,0 +1,32 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "build",
+    srcs = [
+        "build.go",
+        "steps.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/build-tracker/build",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//dev/build-tracker/notify",
+        "//dev/build-tracker/util",
+        "//lib/errors",
+        "@com_github_buildkite_go_buildkite_v3//buildkite",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_test(
+    name = "build_test",
+    timeout = "short",
+    srcs = ["build_test.go"],
+    embed = [":build"],
+    deps = [
+        "@com_github_buildkite_go_buildkite_v3//buildkite",
+        "@com_github_sourcegraph_log//logtest",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

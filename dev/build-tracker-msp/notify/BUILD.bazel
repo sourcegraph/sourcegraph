@@ -1,0 +1,24 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "notify",
+    srcs = ["slack.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/build-tracker/notify",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//dev/team",
+        "//lib/errors",
+        "@com_github_google_go_github_v55//github",
+        "@com_github_slack_go_slack//:slack",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_test(
+    name = "notify_test",
+    timeout = "short",
+    srcs = ["slack_test.go"],
+    embed = [":notify"],
+    deps = ["@com_github_hexops_autogold_v2//:autogold"],
+)

@@ -1,0 +1,72 @@
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//dev:msp_delivery.bzl", "msp_delivery")
+load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
+
+go_library(
+    name = "build-tracker-msp_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/build-tracker-msp",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//internal/version",
+        "//lib/background",
+        "//lib/managedservicesplatform/runtime",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_binary(
+    name = "build-tracker-msp",
+    embed = [":build-tracker-msp_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "tar_build-tracker-msp",
+    srcs = [":build-tracker-msp"],
+)
+
+oci_image(
+    name = "image",
+    base = "@wolfi_base",
+    entrypoint = [
+        "/sbin/tini",
+        "--",
+        "build-tracker-msp",
+    ],
+    tars = [":tar_build-tracker-msp"],
+    user = "sourcegraph",
+)
+
+oci_tarball(
+    name = "image_tarball",
+    image = ":image",
+    repo_tags = ["build-tracker:candidate"],
+)
+
+container_structure_test(
+    name = "image_test",
+    timeout = "short",
+    configs = ["image_test.yaml"],
+    driver = "docker",
+    image = ":image",
+    tags = [
+        "exclusive",
+        "requires-network",
+    ],
+)
+
+oci_push(
+    name = "candidate_push",
+    image = ":image",
+    repository = image_repository("build-tracker"),
+)
+
+msp_delivery(
+    name = "msp_deploy",
+    gcp_project = "build-tracker-prod-59bf",
+    msp_service_id = "build-tracker",
+    repository = "us.gcr.io/sourcegraph-dev/build-tracker",
+)
