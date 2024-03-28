@@ -1,0 +1,25 @@
+{
+    "teamEmail": "team@sourcegraph.com",
+    // these dates should always be in sync with the Sourcegraph Handbook release schedule
+    // https://handbook.sourcegraph.com/departments/engineering/dev/process/releases/#release-schedule
+    "events": [
+        {
+            "name": "March 2024 Release",
+            "codeFreezeDate": "2024-03-06T09:00:00-07:00",
+            "monthlyReleaseDate": "2024-03-08T09:00:00-07:00",
+            "patchReleaseDate": "2024-03-20T09:00:00-07:00"
+        },
+        {
+            "name": "April 2024 Release",
+            "codeFreezeDate": "2024-04-03T09:00:00-07:00",
+            "monthlyReleaseDate": "2024-04-05T09:00:00-07:00",
+            "patchReleaseDate": "2024-04-22T09:00:00-07:00"
+        },
+        {
+            "name": "May 2024 Release",
+            "codeFreezeDate": "2024-05-02T09:00:00-07:00",
+            "monthlyReleaseDate": "2024-05-06T09:00:00-07:00",
+            "patchReleaseDate": "2024-05-20T09:00:00-07:00"
+        }
+    ]
+}

@@ -2,12 +2,14 @@ package release
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/sourcegraph/run"
+	"github.com/urfave/cli/v2"
+
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/category"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
-	"github.com/urfave/cli/v2"
 )
 
 // releaseBaseFlags are the flags that are common to all subcommands of the release command.
@@ -160,6 +162,27 @@ var Command = &cli.Command{
 					return err
 				}
 				return r.Promote(cctx.Context)
+			},
+		},
+		{
+			Name:      "calendar",
+			Usage:     "Generate a calendar events for releases",
+			Aliases:   []string{"cal"},
+			Category:  category.Util,
+			UsageText: "sg release calendar --config /path/to/calendar/config",
+			Action:    generateCalendarEvents,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:     "config",
+					Required: true,
+					Usage:    "Path to the calendar config file",
+					Action: func(ctx *cli.Context, s string) error {
+						if _, err := os.Stat(s); err != nil {
+							return errors.Newf("config file %q does not exist", s)
+						}
+						return nil
+					},
+				},
 			},
 		},
 	},
