@@ -1,8 +1,12 @@
 <script lang="ts">
-    import { formatDistanceToNow } from 'date-fns'
-
     import type { Avatar_User } from '$lib/Avatar.gql'
     import Avatar from '$lib/Avatar.svelte'
+    import {
+        truncateIfNeeded,
+        extractPRNumber,
+        getFirstNameAndLastInitial,
+        convertToElapsedTime,
+    } from '$lib/repo/utils'
 
     export let latestCommit: LastCommitProps
 
@@ -28,37 +32,7 @@
         username: latestCommit.author.person.name,
     }
 
-    function getFirstNameAndLastInitial(name: string): string {
-        const names = name.split(' ')
-        if (names.length < 2) {
-            return `${names[0]}`
-        }
-        return `${names[0]} ${names[names.length - 1].charAt(0).toUpperCase()}.`
-    }
-
-    function extractCommitMessage(commitMessage: string): string {
-        let split = commitMessage.split(' ')
-        let msg = split.slice(0, split.length - 1)
-        return msg.join(' ')
-    }
-
-    function extractPRNumber(cm: string): string {
-        let cmWords = cm.split(' ')
-        let sha = cmWords[cmWords.length - 1]
-        return sha.slice(1, sha.length - 1)
-    }
-
-    function convertToElapsedTime(commitDateString: string): string {
-        const commitDate = new Date(commitDateString)
-        return formatDistanceToNow(commitDate, { addSuffix: true })
-    }
-
-    function truncateIfNeeded(cm: string): string {
-        cm = extractCommitMessage(cm)
-        return cm.length > 23 ? cm.substring(0, 23) + '...' : cm
-    }
-
-    $: commitMessageNoSHA = truncateIfNeeded(latestCommit.subject)
+    $: commitMessageNoPR = truncateIfNeeded(latestCommit.subject)
     $: PRNumber = extractPRNumber(latestCommit.subject)
 </script>
 
@@ -71,8 +45,12 @@
     </div>
 
     <div class="commit-message">
-        <small>{commitMessageNoSHA}</small>
-        (<a href={latestCommit.canonicalURL}><small>{PRNumber}</small></a>)
+        {#if PRNumber}
+            <small>{commitMessageNoPR}</small>
+            (<a href={latestCommit.canonicalURL}><small>{PRNumber}</small></a>)
+        {:else}
+            <a href={latestCommit.canonicalURL}><small>{commitMessageNoPR}</small></a>
+        {/if}
     </div>
 
     <div class="commit-date">

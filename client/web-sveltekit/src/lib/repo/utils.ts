@@ -1,4 +1,5 @@
 import { resolveRoute } from '$app/paths'
+import { formatDistanceToNow } from 'date-fns'
 
 import type { ResolvedRevision } from '../../routes/[...repo=reporev]/+layout'
 
@@ -64,3 +65,50 @@ export async function resolveRevision(
     }
     return (await parent()).resolvedRevision.commitID
 }
+
+export function getFirstNameAndLastInitial(name: string): string {
+    const names = name.split(' ')
+    if (names.length < 2) {
+        return `${names[0]}`
+    }
+    return `${names[0]} ${names[names.length - 1].charAt(0).toUpperCase()}.`
+}
+
+export function extractPRNumber(cm: string): string | null {
+    if (!hasPRNumber(cm)) {
+        return null
+    }
+    let cmWords = cm.split(' ')
+    let sha = cmWords[cmWords.length - 1]
+    return sha.slice(1, sha.length - 1)
+}
+
+export function convertToElapsedTime(commitDateString: string): string {
+    const commitDate = new Date(commitDateString)
+    return formatDistanceToNow(commitDate, { addSuffix: true })
+}
+
+export function truncateIfNeeded(cm: string): string {
+    cm = extractCommitMessage(cm)
+    return cm.length > 23 ? cm.substring(0, 23) + '...' : cm
+}
+
+function hasPRNumber(cm: string): boolean {
+    let words = cm.split(' ')
+    for (let word of words) {
+        if (/\(#(\d+)\)/.test(word)) {
+            return true
+        }
+    }
+    return false
+}
+
+function extractCommitMessage(commitMessage: string): string {
+    if (hasPRNumber(commitMessage)) {
+        let splitMsg = commitMessage.split(' ')
+        let msg = splitMsg.slice(0, splitMsg.length - 1)
+        return msg.join(' ')
+    }
+    return commitMessage
+}
+
