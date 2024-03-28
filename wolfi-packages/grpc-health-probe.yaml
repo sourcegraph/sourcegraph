@@ -1,0 +1,38 @@
+package:
+  name: grpc-health-probe
+  version: 0.4.24
+  epoch: 0
+  description: "A command-line tool to perform health-checks for gRPC applications in Kubernetes and elsewhere"
+  target-architecture:
+    - x86_64
+  copyright:
+    - paths:
+      - "*"
+      license: 'Apache-2.0 License'
+
+environment:
+  contents:
+    repositories:
+      - https://packages.wolfi.dev/os
+    keyring:
+      - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
+    packages:
+      - build-base
+      - wget
+      - perl
+      - bash
+      - cmake
+      - busybox
+      - ca-certificates-bundle
+
+pipeline:
+  - uses: fetch
+    with:
+      uri: https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v${{package.version}}/grpc_health_probe-linux-amd64
+      expected-sha256: 7e564681110ee4563637457b91e42f62f96b79618a835bb05ae2305acdcc3db0
+      extract: false
+
+  - runs: |
+      mkdir -p ${{targets.destdir}}/usr/local/bin/
+      chmod +x grpc_health_probe-linux-amd64
+      cp grpc_health_probe-linux-amd64 ${{targets.destdir}}/usr/local/bin/grpc_health_probe
