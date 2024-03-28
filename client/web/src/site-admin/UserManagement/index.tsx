@@ -19,7 +19,7 @@ export interface UsersManagementProps {
     renderAssignmentModal: (
         onCancel: () => void,
         onSuccess: (user: { username: string }) => void,
-        user: SiteUser
+        users: SiteUser[]
     ) => React.ReactNode
 }
 

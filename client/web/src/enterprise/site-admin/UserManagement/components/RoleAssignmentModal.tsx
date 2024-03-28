@@ -44,6 +44,7 @@ export const RoleAssignmentModal: React.FunctionComponent<RoleAssignmentModalPro
     onSuccess,
     user,
 }) => {
+    console.log(user, '<====')
     const labelID = 'RoleAssignment'
 
     const id = useId()
