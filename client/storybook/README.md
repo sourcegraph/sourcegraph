@@ -19,3 +19,4 @@ pnpm storybook:build
 # Load only a subset of stories to boost build performance.
 STORIES_GLOB='client/web/src/**/*.story.tsx' pnpm start
 ```
+Hello World

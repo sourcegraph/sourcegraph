@@ -28,3 +28,4 @@ func NewStack(stacks *stack.Set, vars Variables) (*CrossStackOutput, error) {
   // ...
 }
 ```
+Hello World

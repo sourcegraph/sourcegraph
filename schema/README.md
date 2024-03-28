@@ -18,3 +18,4 @@ Sourcegraph uses the following JSON Schemas:
 ## Known issues
 
 - The JSON Schema IDs (URIs) are of the form `https://sourcegraph.com/v1/*.schema.json#`, but these are not actually valid URLs. This means you generally need to supply them to JSON Schema validation libraries manually instead of having the validator fetch the schema from the web.
+Hello World

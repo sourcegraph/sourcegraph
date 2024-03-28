@@ -14,3 +14,4 @@ To work on this file:
 Alternatively you can also:
 
 1. run `pnpm run start`
+Hello World

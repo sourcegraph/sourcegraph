@@ -17,3 +17,4 @@ Usage of ./progress-bot:
 The `progress-bot` is deployed with [this GitHub action](../../../.github/workflows/progress.yml).
 
 In order to deploy a new version, first run `docker build -t sourcegraph/progress-bot .` and then `docker push sourcegraph/progress-bot`.
+Hello World

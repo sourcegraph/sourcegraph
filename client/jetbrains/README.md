@@ -26,3 +26,4 @@ Run the following commands to preview the components in a standalone HTML file.
 ```sh
 pnpm standalone && open http://localhost:3000/
 ```
+Hello World

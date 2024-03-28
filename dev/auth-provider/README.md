@@ -23,3 +23,4 @@ If you need to edit client or user information and want to persist your changes:
 1.  Run `RESET=1 scripts/configure-keycloak.sh` to clobber the existing configuration with the `config/*.json` files' configuration.
 
 Not sure how to edit the JSON to achieve your desired outcome? Use the Keycloak admin interface at http://localhost:3220/auth (login as `root`/`q`) to change configuration, and then export to JSON.
+Hello World

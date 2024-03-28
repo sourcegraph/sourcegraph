@@ -27,3 +27,4 @@
 
 `sg` is the CLI tool that Sourcegraph developers can use to develop Sourcegraph.
 Learn more about it [here](https://sourcegraph.com/docs/dev/background-information/sg).
+Hello World

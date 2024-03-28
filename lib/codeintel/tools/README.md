@@ -135,3 +135,4 @@ This command validates the output of an LSIF indexer. The following properties a
 ## lsif-visualize
 
 Documentation coming soon.
+Hello World

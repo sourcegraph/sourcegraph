@@ -19,3 +19,4 @@ All images in this directory are built and published automatically on CI:
 1. Create a `build.sh` and add your publishing script to it - the script should end with `docker tag ... "$IMAGE"`. See the scripts in this directory for examples.
 2. Ensure your new script is executable with `chmod +x build.sh` (you can try it via e.g. `IMAGE=fake-repo/cadvisor:latest docker-images/$SERVICE/build.sh`, or by [building a test image](https://handbook.sourcegraph.com/engineering/deployments#building-docker-images-for-a-specific-branch))
 3. Add an image to the automated builds pipeline by adding it to [`SourcegraphDockerImages`](https://sourcegraph.com/search?q=repo:%5Egithub%5C.com/sourcegraph/sourcegraph%24+file:%5Edev/ci/images/images%5C.go+SourcegraphDockerImages&patternType=literal).
+Hello World

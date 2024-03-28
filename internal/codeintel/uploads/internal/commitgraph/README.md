@@ -124,3 +124,4 @@ We then run a query to compare the actual table and the temporary table and inse
 ### TODO: Queries for commits not yet in the annotated commit graph
 
 When information is requested for an unknown commit in a repository we ask git server for a fragment of the commit graph that includes the commit and "graft" it onto our existing graph
+Hello World

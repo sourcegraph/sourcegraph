@@ -7,3 +7,4 @@ In particular, components cannot make use of global CSS classes but must accept 
 For more details, see [Styling UI in the handbook](../../doc/dev/background-information/web/styling.md).
 
 Code that is only used in branded contexts (web app, options menu of the browser extension, ...) should go into [`../branded`](../branded) instead.
+Hello World

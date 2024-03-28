@@ -149,3 +149,4 @@ The Sourcegraph extension uses major.EVEN_NUMBER.patch (eg. 2.0.1) for release v
 
 Please see the [CONTRIBUTING](./CONTRIBUTING.md) document if you are interested in contributing directly to our code
 base.
+Hello World

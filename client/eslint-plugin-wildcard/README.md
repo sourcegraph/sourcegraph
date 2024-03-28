@@ -12,3 +12,4 @@ Update your `.eslintrc` file to add the following configuration:
 ```
 
 This will enable the plugin in your project and enforce our recommended rules.
+Hello World

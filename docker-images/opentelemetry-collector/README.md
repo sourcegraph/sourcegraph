@@ -34,3 +34,4 @@ Each configuration requires environment variables to configure certain values - 
 To learn more about configuration in general, see the official [collector configuration docs](https://opentelemetry.io/docs/collector/configuration).
 
 In the out-of-the-box configurations, debug pages ("zPages") are available at port 55679 by default - see [Exposed zPages routes](https://github.com/open-telemetry/opentelemetry-collector/blob/main/extension/zpagesextension/README.md#exposed-zpages-routes).
+Hello World

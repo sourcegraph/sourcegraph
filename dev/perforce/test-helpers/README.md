@@ -60,3 +60,4 @@ A helper script that idempotently:
 **Run this script whenever you run a new test case and need to change the group membership.**
 
 _The address of the Perforce server, the superuser credentials to use, the test user credentials, and the depot name are all configurable via environment variables. See the beginning of [./p4-setup-protections.sh](./p4-setup-protections.sh) for more information._
+Hello World

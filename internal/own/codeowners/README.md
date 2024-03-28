@@ -5,3 +5,4 @@ If making changes to the proto file, please refresh the generated Go code by run
 ```
 sg generate buf
 ```
+Hello World

@@ -31,3 +31,4 @@ eliminates the trailing slash for index pages, but doesn't account for that when
 
 As mentioned above, it's pretty empirical. When finding some broken rendering, add a unit test in `main_test.go` and work out
 some way to get it right.
+Hello World

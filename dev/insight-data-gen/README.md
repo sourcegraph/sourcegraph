@@ -85,3 +85,4 @@ salami
 2. Launch `src-cli` and mount generated repos to Sourcegraph
 3. Gracefully handle duplicate commits
 4. Generate the manifest with some help input rather than require the manifest manually created
+Hello World

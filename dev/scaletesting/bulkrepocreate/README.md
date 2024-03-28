@@ -35,3 +35,4 @@ _The script will run `git push` which requires to authenticate as the user pushi
 > Can I `ctrl-c` the script as we have a `-resume` flag?
 
 No. The script is made to handle errors from third parties, it's not handling anything else.
+Hello World

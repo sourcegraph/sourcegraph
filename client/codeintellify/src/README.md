@@ -30,3 +30,4 @@ You need to provide your own UI component (referred to as the HoverOverlay) that
 | Hover overlay       | Also called tooltip                                                                                                                                                                                           |
 | hoverify            | To attach all the listeners needed to a code view so that it will display overlay on hovers and clicks.                                                                                                       |
 | unhoverify          | To unsubscribe from the Subscription returned by `hoverifier.hoverify()`. Removes all event listeners from the code view again and hides the hover overlay if it was triggered by the unhoverified code view. |
+Hello World

@@ -19,3 +19,4 @@ Please note that migrating from the Alpine image, this require a manual step to 
 
 - Build: `bazel build //docker-images/codeintel-db:image_tarball`
 - Test: `bazel build //docker-images/codeintel-db:image_test`
+Hello World

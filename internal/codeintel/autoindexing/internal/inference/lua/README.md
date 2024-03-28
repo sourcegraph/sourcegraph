@@ -7,3 +7,4 @@ this directory.
 
 We could investigate using something like Selene or other tools to enforce that
 we don't have any typos across Lua-Go boundary, but I'll leave the for future exploration.
+Hello World

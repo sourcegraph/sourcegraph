@@ -130,3 +130,4 @@ Yes, as long as the content didn't change in the GCS bucket and nobody re-tagged
 
 The `genrule` that creates the tarball has the `stamp = 1` attribute, so Bazel will inspect the stable status variables and will
 rebuild this if it changes. And the `VERSION` is a stable attribute, so it will get rebuilt every time it changes, .i.e. on each release.
+Hello World

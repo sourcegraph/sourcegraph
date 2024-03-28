@@ -13,3 +13,4 @@ Set the importpath to github.com/sourcegraph/sourcegraph/dev/llinters/staticchec
 ## How to regenerate the analyzers
 
 To regenerate the `BUILD.bazel` and `analyzer.bzl` files run `go generate` in `dev/linters/staticcheck`. This effectively runs `go run ./cmd/gen.go`
+Hello World

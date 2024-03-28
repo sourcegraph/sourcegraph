@@ -10,3 +10,4 @@ For more details about this package, refer to the [API documentation](https://so
 To learn more about developing monitoring for Sourcegraph, refer to [the observability developer's guide](https://sourcegraph.com/docs/dev/background-information/observability).
 
 To learn more about the Sourcegraph monitoring generator, refer to [the monitoring generator overview](https://sourcegraph.com/docs/dev/background-information/observability/monitoring-generator).
+Hello World

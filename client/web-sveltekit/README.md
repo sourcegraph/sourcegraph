@@ -109,3 +109,4 @@ pnpm run build
 
 Currently SvelteKit is configured to create a client-side single page
 application.
+Hello World

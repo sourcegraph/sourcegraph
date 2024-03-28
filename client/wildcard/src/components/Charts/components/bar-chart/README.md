@@ -27,3 +27,4 @@ algorithm doesn't work well in all cases. Sometimes when you're using bright col
 To solve this problem, if you need to use bright colors on the chart, and you want to get control
 over active/non-active colors, you can specify colors for the bar non-active state manually with `getDatumFadeColor` prop.
 If you set this prop, this turns off the generic color algorithm for non-active bars and takes the color provided by you.
+Hello World
