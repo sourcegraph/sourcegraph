@@ -230,6 +230,7 @@ func listProjects(ctx context.Context, client *gitlab.Client, listInternalRepos 
 
 	q := make(url.Values)
 	q.Add("per_page", "100") // 100 is the maximum page size
+	q.Add("simple", "true")  // Return limited fields for each project since we don't need all fields for permissions
 	if !experimentalVisibility {
 		q.Add("min_access_level", "20") // 20 => Reporter access (i.e. have access to project code)
 	}
