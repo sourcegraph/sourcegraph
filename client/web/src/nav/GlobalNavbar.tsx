@@ -21,6 +21,7 @@ import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/cont
 import type { Settings } from '@sourcegraph/shared/src/schema/settings.schema'
 import type { SearchContextInputProps } from '@sourcegraph/shared/src/search'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Button, ButtonLink, Link, ProductStatusBadge } from '@sourcegraph/wildcard'
@@ -63,7 +64,8 @@ export interface GlobalNavbarProps
         BatchChangesProps,
         NotebookProps,
         CodeMonitoringProps,
-        OwnConfigProps {
+        OwnConfigProps,
+        TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
     isSourcegraphDotCom: boolean
     showSearchBox: boolean

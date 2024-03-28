@@ -8,6 +8,7 @@ import { UserAvatar } from '@sourcegraph/shared/src/components/UserAvatar'
 import { useKeyboardShortcut } from '@sourcegraph/shared/src/keyboardShortcuts/useKeyboardShortcut'
 import { Shortcut } from '@sourcegraph/shared/src/react-shortcuts'
 import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
+import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useTheme, ThemeSetting } from '@sourcegraph/shared/src/theme'
 import {
@@ -39,7 +40,7 @@ type MinimalAuthenticatedUser = Pick<
     'username' | 'avatarURL' | 'settingsURL' | 'organizations' | 'siteAdmin' | 'session' | 'displayName' | 'emails'
 >
 
-export interface UserNavItemProps extends TelemetryProps {
+export interface UserNavItemProps extends TelemetryProps, TelemetryV2Props {
     authenticatedUser: MinimalAuthenticatedUser
     isSourcegraphDotCom: boolean
     menuButtonRef?: React.Ref<HTMLButtonElement>

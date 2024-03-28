@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react'
 import { useMemo } from '@storybook/addons'
 import type { Meta, StoryFn, Args } from '@storybook/react'
 
+import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 
 import { WebStory } from '../components/WebStory'
@@ -70,6 +71,7 @@ const commonProps = (props: Args): UserNavItemProps => ({
     showKeyboardShortcutsHelp: () => undefined,
     showFeedbackModal: () => undefined,
     telemetryService: NOOP_TELEMETRY_SERVICE,
+    telemetryRecorder: noOpTelemetryRecorder,
 })
 
 const OpenByDefaultWrapper: React.FunctionComponent<{

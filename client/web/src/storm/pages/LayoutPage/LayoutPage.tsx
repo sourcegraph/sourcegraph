@@ -189,7 +189,10 @@ export const Layout: React.FC<LegacyLayoutProps> = props => {
                 />
             )}
 
-            <GlobalAlerts authenticatedUser={props.authenticatedUser} />
+            <GlobalAlerts
+                authenticatedUser={props.authenticatedUser}
+                telemetryRecorder={props.platformContext.telemetryRecorder}
+            />
             {!isSiteInit && !isSignInOrUp && !props.isSourcegraphDotCom && !disableFeedbackSurvey && (
                 <SurveyToast
                     authenticatedUser={props.authenticatedUser}
@@ -218,6 +221,7 @@ export const Layout: React.FC<LegacyLayoutProps> = props => {
                     isRepositoryRelatedPage={isRepositoryRelatedPage}
                     showKeyboardShortcutsHelp={showKeyboardShortcutsHelp}
                     showFeedbackModal={showFeedbackModal}
+                    telemetryRecorder={props.platformContext.telemetryRecorder}
                 />
             )}
             {needsSiteInit && !isSiteInit && <Navigate replace={true} to="/site-admin/init" />}
