@@ -2576,8 +2576,10 @@ type SettingsExperimentalFeatures struct {
 	// ShowMultilineSearchConsole description: Enables the multiline search console at search/console
 	ShowMultilineSearchConsole *bool `json:"showMultilineSearchConsole,omitempty"`
 	// SymbolKindTags description: Show the initial letter of the symbol kind instead of icons.
-	SymbolKindTags bool           `json:"symbolKindTags,omitempty"`
-	Additional     map[string]any `json:"-"` // additionalProperties not explicitly defined in the schema
+	SymbolKindTags bool `json:"symbolKindTags,omitempty"`
+	// SyntacticIndexing description: Whether syntactic indexing is enabled
+	SyntacticIndexing bool           `json:"syntacticIndexing,omitempty"`
+	Additional        map[string]any `json:"-"` // additionalProperties not explicitly defined in the schema
 }
 
 func (v SettingsExperimentalFeatures) MarshalJSON() ([]byte, error) {
@@ -2638,6 +2640,7 @@ func (v *SettingsExperimentalFeatures) UnmarshalJSON(data []byte) error {
 	delete(m, "showCodeMonitoringLogs")
 	delete(m, "showMultilineSearchConsole")
 	delete(m, "symbolKindTags")
+	delete(m, "syntacticIndexing")
 	if len(m) > 0 {
 		v.Additional = make(map[string]any, len(m))
 	}
