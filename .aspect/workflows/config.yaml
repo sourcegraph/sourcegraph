@@ -33,6 +33,7 @@ tasks:
   - delivery:
       auto_deliver: true
       icon: 'ship'
+      stamp_flags: ['--stamp', '--workspace_status_command=./dev/bazel_stamp_vars.sh']
       rules:
         - deliverable: 'attr(tags, "docs-deliverable", //doc/...)'
           condition:
@@ -42,6 +43,6 @@ tasks:
         - deliverable: 'attr(tags, "msp-deliverable", //cmd/...)'
           condition:
             branches:
-              - '^main$'
+              - '^jac/stamp$'
   - finalization:
       queue: aspect-small
