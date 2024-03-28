@@ -5,7 +5,7 @@
 This guide documents how to set up [Cody Gateway](https://handbook.sourcegraph.com/departments/engineering/teams/cody/cody-gateway/) locally for development.
 
 To get started, Cody Gateway is included in the standard `dotcom` run set.
-Since Cody Gateway cucrently depends on Sourcegraph.com, there's not much point running any other run set.
+Since Cody Gateway currently depends on Sourcegraph.com, there's not much point running any other run set.
 
 ```sh
 sg start dotcom
