@@ -136,7 +136,8 @@ func newGitHubSource(
 	}
 
 	for _, r := range c.Exclude {
-		rule := ex.AddRule().
+		// Either Name OR ID must match, or pattern if set.
+		rule := NewRule().
 			Exact(r.Name).
 			Exact(r.Id).
 			Pattern(r.Pattern)
@@ -162,6 +163,8 @@ func newGitHubSource(
 		if r.Forks {
 			rule.Generic(excludeFork)
 		}
+
+		ex.AddRule(rule)
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

@@ -87,9 +87,10 @@ func newAWSCodeCommitSource(svc *types.ExternalService, c *schema.AWSCodeCommitC
 
 	var ex repoExcluder
 	for _, r := range c.Exclude {
-		ex.AddRule().
+		// Either Name OR ID must match.
+		ex.AddRule(NewRule().
 			Exact(r.Name).
-			Exact(r.Id)
+			Exact(r.Id))
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

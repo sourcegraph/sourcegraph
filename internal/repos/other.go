@@ -63,9 +63,9 @@ func NewOtherSource(ctx context.Context, svc *types.ExternalService, cf *httpcli
 
 	var ex repoExcluder
 	for _, r := range c.Exclude {
-		ex.AddRule().
+		ex.AddRule(NewRule().
 			Exact(r.Name).
-			Pattern(r.Pattern)
+			Pattern(r.Pattern))
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

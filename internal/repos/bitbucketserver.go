@@ -66,14 +66,15 @@ func newBitbucketServerSource(logger log.Logger, svc *types.ExternalService, c *
 
 	var ex repoExcluder
 	for _, r := range c.Exclude {
-		rule := ex.AddRule()
-		rule.
+		rule := NewRule().
 			Exact(r.Name).
 			Pattern(r.Pattern)
 
 		if r.Id != 0 {
 			rule.Exact(strconv.Itoa(r.Id))
 		}
+
+		ex.AddRule(rule)
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

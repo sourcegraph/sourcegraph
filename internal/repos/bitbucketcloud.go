@@ -57,10 +57,11 @@ func newBitbucketCloudSource(logger log.Logger, svc *types.ExternalService, c *s
 
 	var ex repoExcluder
 	for _, r := range c.Exclude {
-		ex.AddRule().
+		// Either Name OR UUID must match, or the pattern.
+		ex.AddRule(NewRule().
 			Exact(r.Name).
 			Exact(r.Uuid).
-			Pattern(r.Pattern)
+			Pattern(r.Pattern))
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

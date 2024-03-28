@@ -92,7 +92,7 @@ func newGitLabSource(logger log.Logger, svc *types.ExternalService, c *schema.Gi
 
 	var ex repoExcluder
 	for _, r := range c.Exclude {
-		rule := ex.AddRule().
+		rule := NewRule().
 			Exact(r.Name).
 			Pattern(r.Pattern)
 
@@ -108,6 +108,8 @@ func newGitLabSource(logger log.Logger, svc *types.ExternalService, c *schema.Gi
 				return false
 			})
 		}
+
+		ex.AddRule(rule)
 	}
 	if err := ex.RuleErrors(); err != nil {
 		return nil, err

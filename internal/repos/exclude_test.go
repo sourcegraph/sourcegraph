@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -14,10 +15,10 @@ import (
 func TestRepoExcluderRuleErrors(t *testing.T) {
 	var ex repoExcluder
 
-	ex.AddRule().Pattern("valid")
+	ex.AddRule(NewRule().Pattern("valid"))
 	require.NoError(t, ex.RuleErrors())
 
-	ex.AddRule().Pattern("[\\\\")
+	ex.AddRule(NewRule().Pattern("[\\\\"))
 	require.Error(t, ex.RuleErrors())
 }
 
@@ -36,10 +37,18 @@ func TestRuleExcludes(t *testing.T) {
 		assert.Equal(t, true, r.Excludes("foobar"))
 		assert.Equal(t, false, r.Excludes("barfoo"))
 
-		// Only one exact value can exist
+		r = &rule{}
 		r.Exact("barfoo")
 		assert.Equal(t, false, r.Excludes("foobar"))
 		assert.Equal(t, true, r.Excludes("barfoo"))
+
+		// Multiple values are OR'd together.
+		r = &rule{}
+		r.Exact("foobar")
+		r.Exact("barfoo")
+		assert.Equal(t, true, r.Excludes("foobar"))
+		assert.Equal(t, true, r.Excludes("barfoo"))
+		assert.Equal(t, false, r.Excludes("f00baz"))
 	})
 
 	t.Run("Pattern", func(t *testing.T) {
@@ -61,9 +70,11 @@ func TestRuleExcludes(t *testing.T) {
 	t.Run("multiple conditions", func(t *testing.T) {
 		r := &rule{}
 		r.Exact("foobar")
+		r.Exact("foobar2")
 		r.Pattern("^foo.*")
 
 		assert.Equal(t, true, r.Excludes("foobar"))
+		assert.Equal(t, true, r.Excludes("foobar2"))
 		assert.Equal(t, false, r.Excludes("barfoo"))
 
 		r.Generic(startsWithFoo)
@@ -207,4 +218,23 @@ func TestGitHubStarsAndSize(t *testing.T) {
 		// Greater than 100 stars, less than 1 GB
 		assertExcluded(t, rule, github.Repository{StargazerCount: 101, DiskUsageKibibytes: 500}, false)
 	})
+}
+
+func BenchmarkExcludeExact(b *testing.B) {
+	// First, we build an excluder with 10,000 exact match rules.
+	var ex repoExcluder
+	for i := range 10_000 {
+		ex.AddRule(NewRule().Exact(fmt.Sprintf("repo-%d", i)))
+	}
+	require.NoError(b, ex.RuleErrors())
+
+	b.ResetTimer()
+
+	// Now, we check if the excluder excludes a repo that doesn't match any of the rules.
+	// That is, so that we have to do the most effort possible.
+	for i := 0; i < b.N; i++ {
+		ex.ShouldExclude("repo-notfound")
+	}
+
+	b.ReportAllocs()
 }

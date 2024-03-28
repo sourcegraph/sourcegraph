@@ -24,10 +24,17 @@ type excludeFunc func(input any) bool
 // repo should be excluded. In that call, all the rules are OR'd together. If
 // one rule excludes, the repo is excluded.
 type repoExcluder struct {
-	rules []*rule
+	exactRules map[string]struct{}
+	rules      []*rule
 }
 
 func (e *repoExcluder) ShouldExclude(input any) bool {
+	if inputString, ok := input.(string); ok {
+		if _, exists := e.exactRules[strings.ToLower(inputString)]; exists {
+			return true
+		}
+	}
+
 	for _, r := range e.rules {
 		if r.Excludes(input) {
 			return true
@@ -37,10 +44,23 @@ func (e *repoExcluder) ShouldExclude(input any) bool {
 	return false
 }
 
-func (e *repoExcluder) AddRule() *rule {
-	r := &rule{}
+func (e *repoExcluder) AddRule(r *rule) {
+	// Optimization: For rules that only have exact matches, we inline them
+	// into one map for faster lookups.
+	if len(r.exact) > 0 && len(r.patterns) == 0 && len(r.generic) == 0 {
+		if e.exactRules == nil {
+			e.exactRules = make(map[string]struct{})
+		}
+		for _, exact := range r.exact {
+			e.exactRules[exact] = struct{}{}
+		}
+		return
+	}
 	e.rules = append(e.rules, r)
-	return r
+}
+
+func NewRule() *rule {
+	return &rule{}
 }
 
 func (e *repoExcluder) RuleErrors() error {
@@ -54,7 +74,7 @@ func (e *repoExcluder) RuleErrors() error {
 // rule represents a single exclusion, whose conditions must all be bet in
 // order to exclude a repository.
 type rule struct {
-	exact    string
+	exact    []string
 	patterns []*regexp.Regexp
 	generic  []excludeFunc
 
@@ -66,11 +86,12 @@ type rule struct {
 // the input of the `Excludes` method.
 //
 // If the input is an empty string, it will be ignored.
+// Multiple calls to exact will be OR'd together.
 func (r *rule) Exact(name string) *rule {
 	if name == "" {
 		return r
 	}
-	r.exact = strings.ToLower(name)
+	r.exact = append(r.exact, strings.ToLower(name))
 	return r
 }
 
@@ -105,8 +126,15 @@ func (r *rule) Excludes(input any) bool {
 	exclude := false
 
 	if inputString, ok := input.(string); ok {
-		if r.exact == strings.ToLower(inputString) {
-			exclude = true
+		// If any of the exacts match, that's a match.
+		for _, exact := range r.exact {
+			if exact == strings.ToLower(inputString) {
+				exclude = true
+			}
+		}
+		// Otherwise not all conditions have been met yet, return false.
+		if len(r.exact) > 0 && !exclude {
+			return false
 		}
 
 		for _, re := range r.patterns {
