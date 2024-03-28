@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"unsafe"
 
 	"github.com/keegancsmith/sqlf"
 	"github.com/lib/pq"
@@ -619,7 +620,12 @@ func (s *searchContextsStore) GetAllRevisionsForRepos(ctx context.Context, repoI
 
 	q := sqlf.Sprintf(
 		getAllRevisionsForReposFmtStr,
-		pq.Array(repoIDs),
+		// We use this trick to convert the []api.RepoID to []int32 (the underlying
+		// type of api.RepoID). This is safe because the underlying type of api.RepoID
+		// is always int32.
+		// When passing an []api.RepoID to pq.Array directly, a more costly
+		// conversion when Value is called is required.
+		pq.Array(*(*[]int32)(unsafe.Pointer(&repoIDs))),
 	)
 
 	rows, err := s.Query(ctx, q)

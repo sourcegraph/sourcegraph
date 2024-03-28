@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/keegancsmith/sqlf"
 	"github.com/lib/pq"
@@ -411,7 +412,18 @@ WHERE r.name = ANY (%s)
 func (s *gitserverRepoStore) GetByNames(ctx context.Context, names ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
 	repos := make(map[api.RepoName]*types.GitserverRepo, len(names))
 
-	rows, err := s.Query(ctx, sqlf.Sprintf(getByNamesQueryTemplate, pq.Array(names)))
+	rows, err := s.Query(
+		ctx,
+		sqlf.Sprintf(
+			getByNamesQueryTemplate,
+			// We use this trick to convert the []api.RepoName to []string (the underlying
+			// type of api.RepoName). This is safe because the underlying type of api.RepoName
+			// is always string.
+			// When passing an []api.RepoName to pq.Array directly, a more costly
+			// conversion when Value is called is required.
+			pq.Array(*(*[]string)(unsafe.Pointer(&names))),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}

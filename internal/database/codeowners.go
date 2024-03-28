@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"unsafe"
 
 	"github.com/jackc/pgconn"
 	"github.com/keegancsmith/sqlf"
@@ -180,7 +181,15 @@ LIMIT 1
 func (s *codeownersStore) DeleteCodeownersForRepos(ctx context.Context, ids ...api.RepoID) error {
 	return s.WithTransact(ctx, func(tx CodeownersStore) error {
 		conds := []*sqlf.Query{
-			sqlf.Sprintf("repo_id = ANY (%s)", pq.Array(ids)),
+			sqlf.Sprintf(
+				"repo_id = ANY (%s)",
+				// We use this trick to convert the []api.RepoID to []int32 (the underlying
+				// type of api.RepoID). This is safe because the underlying type of api.RepoID
+				// is always int32.
+				// When passing an []api.RepoID to pq.Array directly, a more costly
+				// conversion when Value is called is required.
+				pq.Array(*(*[]int32)(unsafe.Pointer(&ids))),
+			),
 		}
 
 		q := sqlf.Sprintf(deleteCodeownersFileQueryFmtStr, sqlf.Join(conds, "AND"))

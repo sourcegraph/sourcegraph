@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/grafana/regexp"
 	regexpsyntax "github.com/grafana/regexp/syntax"
@@ -1010,7 +1011,18 @@ func (s *repoStore) listSQL(ctx context.Context, tr trace.Trace, opt ReposListOp
 	}
 
 	if len(opt.IDs) > 0 {
-		where = append(where, sqlf.Sprintf("id = ANY (%s)", pq.Array(opt.IDs)))
+		where = append(
+			where,
+			sqlf.Sprintf(
+				"id = ANY (%s)",
+				// We use this trick to convert the []api.RepoID to []int32 (the underlying
+				// type of api.RepoID). This is safe because the underlying type of api.RepoID
+				// is always int32.
+				// When passing an []api.RepoID to pq.Array directly, a more costly
+				// conversion when Value is called is required.
+				pq.Array(*(*[]int32)(unsafe.Pointer(&opt.IDs))),
+			),
+		)
 	}
 
 	if len(opt.ExternalRepos) > 0 {
