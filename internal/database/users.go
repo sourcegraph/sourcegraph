@@ -353,7 +353,7 @@ func (u *userStore) CreateInTransaction(ctx context.Context, info NewUser, spec 
 	var siteAdmin bool
 	err = u.QueryRow(
 		ctx,
-		sqlf.Sprintf("INSERT INTO users(username, display_name, avatar_url, created_at, updated_at, passwd, invalidated_sessions_at, tos_accepted, site_admin) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s AND NOT EXISTS(SELECT * FROM users)) RETURNING id, site_admin",
+		sqlf.Sprintf("INSERT INTO users(username, display_name, avatar_url, created_at, updated_at, passwd, invalidated_sessions_at, tos_accepted, site_admin) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s AND NOT EXISTS(SELECT 1 FROM users)) RETURNING id, site_admin",
 			info.Username, info.DisplayName, avatarURL, createdAt, updatedAt, passwd, invalidatedSessionsAt, info.TosAccepted, !alreadyInitialized)).Scan(&id, &siteAdmin)
 	if err != nil {
 		var e *pgconn.PgError
@@ -1340,7 +1340,7 @@ SELECT u.id,
 	u.avatar_url,
 	u.created_at,
 	u.updated_at,
-	u.site_admin,
+	is_user_site_admin(u.id) AS site_admin,
 	u.passwd IS NOT NULL,
 	u.invalidated_sessions_at,
 	u.tos_accepted,
@@ -1388,7 +1388,7 @@ SELECT u.id,
        u.created_at,
        u.updated_at,
 	   u.deleted_at,
-       u.site_admin,
+       is_user_site_admin(u.id) AS site_admin,
        u.passwd IS NOT NULL,
        u.invalidated_sessions_at,
        u.tos_accepted,

@@ -86,6 +86,7 @@ func (s *UsersStats) makeQueryParameters() ([]*sqlf.Query, error) {
 		conds = append(conds, sqlf.Sprintf("(username ILIKE %s OR display_name ILIKE %s OR primary_email ILIKE %s)", query, query, query))
 	}
 	if s.Filters.SiteAdmin != nil {
+		// this is referring to the site_admin field returned from the CTE and not necessarily users.site_admin
 		conds = append(conds, sqlf.Sprintf("site_admin = %s", *s.Filters.SiteAdmin))
 	}
 	if s.Filters.Username != nil {
@@ -151,7 +152,7 @@ var (
 			users.created_at,
 			stats.user_last_active_at AS last_active_at,
 			users.deleted_at,
-			users.site_admin,
+			is_user_site_admin(users.id) AS site_admin,
             (SELECT COUNT(user_id) FROM user_external_accounts WHERE user_id=users.id AND service_type = 'scim') >= 1 AS scim_controlled,
 			COALESCE(stats.user_events_count, 0) AS events_count
 		FROM users

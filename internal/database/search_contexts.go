@@ -69,7 +69,7 @@ const searchContextsPermissionsConditionFmtStr = `(
     -- Private org contexts are available only to its members
     OR (namespace_org_id IS NOT NULL AND EXISTS (SELECT FROM org_members om WHERE om.org_id = namespace_org_id AND om.user_id = %d))
     -- Private instance-level contexts are available only to site-admins
-    OR (namespace_user_id IS NULL AND namespace_org_id IS NULL AND EXISTS (SELECT FROM users u WHERE u.id = %d AND u.site_admin))
+    OR (namespace_user_id IS NULL AND namespace_org_id IS NULL AND EXISTS (SELECT FROM users u WHERE u.id = %d AND is_user_site_admin(u.id)))
 )`
 
 func searchContextsPermissionsCondition(ctx context.Context) *sqlf.Query {

@@ -1468,7 +1468,7 @@ WHERE
 
 func (s *permsStore) CountUsersWithNoPerms(ctx context.Context) (int, error) {
 	// By default, site admins can access any repo
-	filterSiteAdmins := sqlf.Sprintf("users.site_admin = FALSE")
+	filterSiteAdmins := sqlf.Sprintf("NOT is_user_site_admin(users.id)")
 	// Unless we enforce it in config
 	if conf.Get().AuthzEnforceForSiteAdmins {
 		filterSiteAdmins = sqlf.Sprintf("TRUE")
@@ -1558,7 +1558,7 @@ AND rp.user_id IS NULL
 
 func (s *permsStore) UserIDsWithNoPerms(ctx context.Context) ([]int32, error) {
 	// By default, site admins can access any repo
-	filterSiteAdmins := sqlf.Sprintf("users.site_admin = FALSE")
+	filterSiteAdmins := sqlf.Sprintf("NOT is_user_site_admin(users.id)")
 	// Unless we enforce it in config
 	if conf.Get().AuthzEnforceForSiteAdmins {
 		filterSiteAdmins = sqlf.Sprintf("TRUE")
@@ -2058,7 +2058,7 @@ func (s *permsStore) ListRepoPermissions(ctx context.Context, repoID api.RepoID,
 		} else {
 			if !authzParams.AuthzEnforceForSiteAdmins {
 				// include all site admins
-				permsQueryConditions = append(permsQueryConditions, sqlf.Sprintf("users.site_admin"))
+				permsQueryConditions = append(permsQueryConditions, sqlf.Sprintf("is_user_site_admin(users.id)"))
 			}
 
 			permsQueryConditions = append(permsQueryConditions, sqlf.Sprintf(`urp.repo_id = %d`, repoID))
@@ -2169,7 +2169,7 @@ SELECT
 	users.avatar_url,
 	users.created_at,
 	users.updated_at,
-	users.site_admin,
+	is_user_site_admin(users.id),
 	users.passwd IS NOT NULL,
 	users.invalidated_sessions_at,
 	users.tos_accepted,

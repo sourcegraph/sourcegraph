@@ -611,11 +611,7 @@ const executorSecretsAuthzQueryCondsFmtstr = `
 	OR
 	(
 		-- actor is site admin
-		EXISTS (
-			SELECT 1
-			FROM users
-			WHERE site_admin = TRUE AND id = %s  -- actor user ID
-		)
+		is_user_site_admin(%s)
 	)
 )
 `

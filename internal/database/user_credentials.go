@@ -535,11 +535,7 @@ const userCredentialsAuthzQueryCondsFmtstr = `
 	OR
 	(
 		%s  -- negated authz.enforceForSiteAdmins site config setting
-		AND EXISTS (
-			SELECT 1
-			FROM users
-			WHERE site_admin = TRUE AND id = %s  -- actor user ID
-		)
+		AND is_user_site_admin(%s)
 	)
 )
 `

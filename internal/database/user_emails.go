@@ -92,7 +92,7 @@ func (s *userEmailsStore) GetInitialSiteAdminInfo(ctx context.Context) (email st
 	if init, err := GlobalStateWith(s).SiteInitialized(ctx); err != nil || !init {
 		return "", false, err
 	}
-	if err := s.Handle().QueryRowContext(ctx, "SELECT email, tos_accepted FROM user_emails JOIN users ON user_emails.user_id=users.id WHERE users.site_admin AND users.deleted_at IS NULL ORDER BY users.id ASC LIMIT 1").Scan(&email, &tosAccepted); err != nil {
+	if err := s.Handle().QueryRowContext(ctx, "SELECT email, tos_accepted FROM user_emails JOIN users ON user_emails.user_id=users.id WHERE is_user_site_admin(users.id) AND users.deleted_at IS NULL ORDER BY users.id ASC LIMIT 1").Scan(&email, &tosAccepted); err != nil {
 		return "", false, errors.New("initial site admin email not found")
 	}
 	return email, tosAccepted, nil
