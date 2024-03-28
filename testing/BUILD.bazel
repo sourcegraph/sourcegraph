@@ -1,4 +1,4 @@
-load(":defs.bzl", "server_integration_test")
+load(":defs.bzl", "migration_test_binary", "server_integration_test")
 
 server_integration_test(
     name = "e2e_test",

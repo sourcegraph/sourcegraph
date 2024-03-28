@@ -94,6 +94,7 @@ oci_tarball(
     name = "image_tarball",
     image = ":image",
     repo_tags = ["migrator:candidate"],
+    visibility = ["//visibility:public"],
 )
 
 container_structure_test(

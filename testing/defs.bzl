@@ -32,3 +32,14 @@ def server_integration_test(name, port, runner_src, **kwargs):
         tags = tags,
         **kwargs
     )
+
+def migration_test_binary(target_version):
+    native.sh_binary(
+        name = "migration_test_{}".format(target_version),
+        srcs = [":migration_test.sh"],
+        args = [
+            "$(location //cmd/migrator:image_tarball)",
+            target_version,
+        ],
+        data = ["//cmd/migrator:image_tarball"]
+    )
