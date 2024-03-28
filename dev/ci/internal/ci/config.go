@@ -23,7 +23,7 @@ type Config struct {
 	RunType runtype.RunType
 
 	// Build metadata
-	Time        time.Time
+	Time     time.Time
 	Branch      string
 	Version     string
 	Commit      string
