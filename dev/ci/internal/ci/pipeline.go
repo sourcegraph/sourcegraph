@@ -4,8 +4,10 @@ package ci
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"slices"
 	"strconv"
 	"strings"
@@ -69,6 +71,13 @@ func GeneratePipeline(c Config) (*bk.Pipeline, error) {
 		"CI_BUILDEVENT_DATASET": "buildkite",
 	}
 	bk.FeatureFlags.ApplyEnv(env)
+
+	zoektVersion, err := getZoektVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	env["ZOEKT_VERSION"] = zoektVersion
 
 	// On release branches Percy must compare to the previous commit of the release branch, not main.
 	if c.RunType.Is(runtype.ReleaseBranch, runtype.TaggedRelease, runtype.InternalRelease) {
@@ -450,4 +459,19 @@ func BazelOpsSet(buildOptions bk.BuildOptions, opts CoreTestOperationsOptions, e
 	)
 	ops.Append(extra...)
 	return ops
+}
+
+func getZoektVersion() (string, error) {
+	var stdout bytes.Buffer
+	cmd := exec.Command("go", "list", "-m", "github.com/sourcegraph/zoekt")
+	cmd.Stdout = &stdout
+	if err := cmd.Run(); errors.Is(err, exec.ErrNotFound) {
+		cmd = exec.Command("bazel", "run", "@go_sdk//:bin/go", "--", "list", "-m", "github.com/sourcegraph/zoekt")
+		cmd.Stdout = &stdout
+		if err := cmd.Run(); err != nil {
+			return "", err
+		}
+	}
+
+	return strings.Split(stdout.String(), " ")[1], nil
 }

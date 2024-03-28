@@ -1,0 +1,76 @@
+diff --git a/cmd/zoekt-archive-index/BUILD.bazel b/cmd/zoekt-archive-index/BUILD.bazel
+index f5553ff..81b0b8f 100644
+--- a/cmd/zoekt-archive-index/BUILD.bazel
++++ b/cmd/zoekt-archive-index/BUILD.bazel
+@@ -20,4 +20,7 @@ go_binary(
+     name = "zoekt-archive-index",
+     embed = [":zoekt-archive-index_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
+diff --git a/cmd/zoekt-git-index/BUILD.bazel b/cmd/zoekt-git-index/BUILD.bazel
+index d924f9e..ca53c74 100644
+--- a/cmd/zoekt-git-index/BUILD.bazel
++++ b/cmd/zoekt-git-index/BUILD.bazel
+@@ -17,4 +17,7 @@ go_binary(
+     name = "zoekt-git-index",
+     embed = [":zoekt-git-index_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
+diff --git a/cmd/zoekt-indexserver/BUILD.bazel b/cmd/zoekt-indexserver/BUILD.bazel
+index 761009d..9bd68b6 100644
+--- a/cmd/zoekt-indexserver/BUILD.bazel
++++ b/cmd/zoekt-indexserver/BUILD.bazel
+@@ -19,4 +19,7 @@ go_binary(
+     name = "zoekt-indexserver",
+     embed = [":zoekt-indexserver_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
+diff --git a/cmd/zoekt-merge-index/BUILD.bazel b/cmd/zoekt-merge-index/BUILD.bazel
+index 7ce9022..11d2cc5 100644
+--- a/cmd/zoekt-merge-index/BUILD.bazel
++++ b/cmd/zoekt-merge-index/BUILD.bazel
+@@ -12,6 +12,9 @@ go_binary(
+     name = "zoekt-merge-index",
+     embed = [":zoekt-merge-index_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
+
+ go_test(
+diff --git a/cmd/zoekt-sourcegraph-indexserver/BUILD.bazel b/cmd/zoekt-sourcegraph-indexserver/BUILD.bazel
+index 0e817fe..4b2e50c 100644
+--- a/cmd/zoekt-sourcegraph-indexserver/BUILD.bazel
++++ b/cmd/zoekt-sourcegraph-indexserver/BUILD.bazel
+@@ -53,6 +53,9 @@ go_binary(
+     name = "zoekt-sourcegraph-indexserver",
+     embed = [":zoekt-sourcegraph-indexserver_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
+
+ go_test(
+diff --git a/cmd/zoekt-webserver/BUILD.bazel b/cmd/zoekt-webserver/BUILD.bazel
+index c826c9a..912a7f7 100644
+--- a/cmd/zoekt-webserver/BUILD.bazel
++++ b/cmd/zoekt-webserver/BUILD.bazel
+@@ -93,4 +93,7 @@ go_binary(
+     name = "zoekt-webserver",
+     embed = [":zoekt-webserver_lib"],
+     visibility = ["//visibility:public"],
++    x_defs = {
++        "github.com/sourcegraph/zoekt.Version": "{ZOEKT_VERSION}",
++    },
+ )
