@@ -12,13 +12,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^18.16.1",
+    "@types/node": "18.19.26",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "node-fetch": "^2.6.5",
     "typescript": "^5.0.4",
-    "@types/node": "^18.16.1"
+    "@types/node": "18.19.26"
   }
 }
