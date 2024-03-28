@@ -181,7 +181,7 @@ func (r *queryRunner) Handle(ctx context.Context, logger log.Logger, triggerJob 
 	ctx = actor.WithActor(ctx, actor.FromUser(m.UserID))
 	ctx = featureflag.WithFlags(ctx, r.db.FeatureFlags())
 
-	results, searchErr := codemonitors.Search(ctx, logger, r.db, q.QueryString, m.ID)
+	results, searchErr := codemonitors.Search(ctx, logger, r.db, q.QueryString, m.ID, triggerJob.ID)
 
 	// Log next_run and latest_result to table cm_queries.
 	newLatestResult := latestResultTime(q.LatestResult, results, searchErr)

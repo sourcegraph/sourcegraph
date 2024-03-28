@@ -150,7 +150,8 @@ func TestCodeMonitorHook(t *testing.T) {
 		require.Equal(t, args.Revisions, []string{"hash1", "hash2"})
 		return nil
 	}
-	err := hookWithID(ctx, db, gs, fixtures.Monitor.ID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
+	triggerJobID := int32(1)
+	err := hookWithID(ctx, logger, db, gs, fixtures.Monitor.ID, triggerJobID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
 	require.NoError(t, err)
 
 	// The next time, doSearch should receive the new resolved hashes plus the
@@ -159,14 +160,14 @@ func TestCodeMonitorHook(t *testing.T) {
 		require.Equal(t, args.Revisions, []string{"hash3", "hash4", "^hash1", "^hash2"})
 		return nil
 	}
-	err = hookWithID(ctx, db, gs, fixtures.Monitor.ID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
+	err = hookWithID(ctx, logger, db, gs, fixtures.Monitor.ID, triggerJobID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
 	require.NoError(t, err)
 
 	t.Run("deadline exceeded is propagated", func(t *testing.T) {
 		doSearch = func(args *gitprotocol.SearchRequest) error {
 			return context.DeadlineExceeded
 		}
-		err := hookWithID(ctx, db, gs, fixtures.Monitor.ID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
+		err := hookWithID(ctx, logger, db, gs, fixtures.Monitor.ID, triggerJobID, fixtures.Repo.ID, &gitprotocol.SearchRequest{Revisions: []string{"rev1", "rev2"}}, doSearch)
 		require.ErrorContains(t, err, "some commits may be skipped")
 	})
 }

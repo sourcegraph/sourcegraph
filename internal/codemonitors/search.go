@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
+	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	gitprotocol "github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/client"
@@ -24,7 +25,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
-func Search(ctx context.Context, logger log.Logger, db database.DB, query string, monitorID int64) (_ []*result.CommitMatch, err error) {
+func Search(ctx context.Context, logger log.Logger, db database.DB, query string, monitorID int64, triggerID int32) (_ []*result.CommitMatch, err error) {
 	searchClient := client.New(logger, db, gitserver.NewClient("monitors.search"))
 	inputs, err := searchClient.Plan(
 		ctx,
@@ -39,7 +40,7 @@ func Search(ctx context.Context, logger log.Logger, db database.DB, query string
 		return nil, errcode.MakeNonRetryable(err)
 	}
 
-	// Inline job creation so we can mutate the commit job before running it
+	// Inline job creation, so we can mutate the commit job before running it
 	clients := searchClient.JobClients()
 	planJob, err := jobutil.NewPlanJob(inputs, inputs.Plan)
 	if err != nil {
@@ -47,7 +48,7 @@ func Search(ctx context.Context, logger log.Logger, db database.DB, query string
 	}
 
 	hook := func(ctx context.Context, db database.DB, gs commit.GitserverClient, args *gitprotocol.SearchRequest, repoID api.RepoID, doSearch commit.DoSearchFunc) error {
-		return hookWithID(ctx, db, gs, monitorID, repoID, args, doSearch)
+		return hookWithID(ctx, logger, db, gs, monitorID, triggerID, repoID, args, doSearch)
 	}
 	planJob, err = addCodeMonitorHook(planJob, hook)
 	if err != nil {
@@ -108,12 +109,18 @@ func Snapshot(ctx context.Context, logger log.Logger, db database.DB, query stri
 
 	hook := func(ctx context.Context, db database.DB, gs commit.GitserverClient, args *gitprotocol.SearchRequest, repoID api.RepoID, _ commit.DoSearchFunc) error {
 		for _, rev := range args.Revisions {
-			// Fail early for context cancelation.
+			// Fail early for context cancellation.
 			if err := ctx.Err(); err != nil {
 				return ctx.Err()
 			}
 
 			res, err := gs.ResolveRevision(ctx, args.Repo, rev, gitserver.ResolveRevisionOptions{NoEnsureRevision: true})
+			// We don't want to fail the snapshot if a revision is not found. We log missing
+			// revisions when the job executes.
+			var revErr *gitdomain.RevisionNotFoundError
+			if errors.As(err, &revErr) {
+				continue
+			}
 			if err != nil {
 				return err
 			}
@@ -169,9 +176,11 @@ func addCodeMonitorHook(in job.Job, hook commit.CodeMonitorHook) (_ job.Job, err
 
 func hookWithID(
 	ctx context.Context,
+	logger log.Logger,
 	db database.DB,
 	gs commit.GitserverClient,
 	monitorID int64,
+	triggerID int32,
 	repoID api.RepoID,
 	args *gitprotocol.SearchRequest,
 	doSearch commit.DoSearchFunc,
@@ -181,12 +190,25 @@ func hookWithID(
 	// Resolve the requested revisions into a static set of commit hashes
 	commitHashes := make([]string, 0, len(args.Revisions))
 	for _, rev := range args.Revisions {
-		// Fail early for context cancelation.
+		// Fail early for context cancellation.
 		if err := ctx.Err(); err != nil {
 			return ctx.Err()
 		}
 
 		res, err := gs.ResolveRevision(ctx, args.Repo, rev, gitserver.ResolveRevisionOptions{NoEnsureRevision: true})
+		// If the revision is not found, update the trigger job with the error message
+		// and continue. This can happen for empty repos.
+		var revErr *gitdomain.RevisionNotFoundError
+		if errors.As(err, &revErr) {
+			if err1 := db.CodeMonitors().UpdateTriggerJobWithLogs(
+				ctx,
+				triggerID,
+				database.TriggerJobLogs{Message: err.Error()},
+			); err1 != nil {
+				logger.Error("Error updating trigger job with log", log.String("log", err.Error()), log.Error(err1))
+			}
+			continue
+		}
 		if err != nil {
 			return err
 		}

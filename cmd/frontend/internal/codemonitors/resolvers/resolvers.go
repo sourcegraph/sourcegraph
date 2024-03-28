@@ -3,6 +3,7 @@ package resolvers
 import (
 	"context"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/graph-gophers/graphql-go"
@@ -994,7 +995,16 @@ func (m *monitorTriggerEvent) ResultCount() int32 {
 }
 
 func (m *monitorTriggerEvent) Message() *string {
-	return m.FailureMessage
+	// Print failure message first
+	var msg string
+	if m.FailureMessage != nil {
+		msg = *m.FailureMessage + "\n"
+	}
+	for _, log := range m.Logs {
+		msg += log.Message + "\n"
+	}
+	msg = strings.TrimSpace(msg)
+	return &msg
 }
 
 func (m *monitorTriggerEvent) Timestamp() (gqlutil.DateTime, error) {

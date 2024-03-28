@@ -52,6 +52,7 @@ type CodeMonitorStore interface {
 
 	UpdateTriggerJobWithResults(ctx context.Context, triggerJobID int32, queryString string, results []*result.CommitMatch) error
 	DeleteOldTriggerJobs(ctx context.Context, retentionInDays int) error
+	UpdateTriggerJobWithLogs(ctx context.Context, triggerJobID int32, entry TriggerJobLogs) error
 
 	UpdateEmailAction(_ context.Context, id int64, _ *EmailActionArgs) (*EmailAction, error)
 	CreateEmailAction(ctx context.Context, monitorID int64, _ *EmailActionArgs) (*EmailAction, error)

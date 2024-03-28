@@ -3,14 +3,17 @@ package database
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"strconv"
 	"time"
 
 	"github.com/keegancsmith/sqlf"
+	"github.com/lib/pq"
 
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/search/result"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 type TriggerJob struct {
@@ -30,7 +33,24 @@ type TriggerJob struct {
 	ProcessAfter   *time.Time
 	NumResets      int32
 	NumFailures    int32
-	LogContents    *string
+	Logs           []TriggerJobLogs
+}
+
+type TriggerJobLogs struct {
+	Message string
+}
+
+func (e *TriggerJobLogs) Scan(value any) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.Errorf("value is not []byte: %T", value)
+	}
+
+	return json.Unmarshal(b, &e)
+}
+
+func (e *TriggerJobLogs) Value() (driver.Value, error) {
+	return json.Marshal(e)
 }
 
 func (r *TriggerJob) RecordID() int {
@@ -88,6 +108,16 @@ func (s *codeMonitorStore) UpdateTriggerJobWithResults(ctx context.Context, trig
 		return err
 	}
 	return s.Store.Exec(ctx, sqlf.Sprintf(logSearchFmtStr, queryString, resultsJSON, triggerJobID))
+}
+
+const updateTriggerJobLogsFmtStr = `
+UPDATE cm_trigger_jobs
+SET logs = logs || %s::json
+WHERE id = %s
+`
+
+func (s *codeMonitorStore) UpdateTriggerJobWithLogs(ctx context.Context, triggerJobID int32, entry TriggerJobLogs) error {
+	return s.Store.Exec(ctx, sqlf.Sprintf(updateTriggerJobLogsFmtStr, entry, triggerJobID))
 }
 
 const deleteOldJobLogsFmtStr = `
@@ -179,6 +209,7 @@ func scanTriggerJobs(rows *sql.Rows) ([]*TriggerJob, error) {
 
 func ScanTriggerJob(scanner dbutil.Scanner) (*TriggerJob, error) {
 	var resultsJSON []byte
+	var logs []TriggerJobLogs
 	m := &TriggerJob{}
 	err := scanner.Scan(
 		&m.ID,
@@ -192,11 +223,13 @@ func ScanTriggerJob(scanner dbutil.Scanner) (*TriggerJob, error) {
 		&m.ProcessAfter,
 		&m.NumResets,
 		&m.NumFailures,
-		&m.LogContents,
+		pq.Array(&logs),
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	m.Logs = append(m.Logs, logs...)
 
 	if len(resultsJSON) > 0 {
 		if err := json.Unmarshal(resultsJSON, &m.SearchResults); err != nil {
@@ -219,5 +252,5 @@ var TriggerJobsColumns = []*sqlf.Query{
 	sqlf.Sprintf("cm_trigger_jobs.process_after"),
 	sqlf.Sprintf("cm_trigger_jobs.num_resets"),
 	sqlf.Sprintf("cm_trigger_jobs.num_failures"),
-	sqlf.Sprintf("cm_trigger_jobs.log_contents"),
+	sqlf.Sprintf("cm_trigger_jobs.logs"),
 }
