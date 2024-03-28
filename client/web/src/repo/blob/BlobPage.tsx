@@ -12,7 +12,7 @@ import type { Optional } from 'utility-types'
 
 import type { StreamingSearchResultsListProps } from '@sourcegraph/branded'
 import { TabbedPanelContent } from '@sourcegraph/branded/src/components/panel/TabbedPanelContent'
-import { NoopEditor } from '@sourcegraph/cody-shared/dist/editor'
+import { NoopEditor } from '@sourcegraph/cody-shared'
 import { asError, type ErrorLike, isErrorLike, basename } from '@sourcegraph/common'
 import {
     createActiveSpan,

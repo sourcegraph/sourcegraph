@@ -48,6 +48,8 @@ ts_config(
         "//client/build-config:tsconfig",
         "//client/client-api:tsconfig",
         "//client/codeintellify:tsconfig",
+        "//client/cody-shared:tsconfig",
+        "//client/cody-ui:tsconfig",
         "//client/common:tsconfig",
         "//client/extension-api-types:tsconfig",
         "//client/http-client:tsconfig",

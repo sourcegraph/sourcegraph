@@ -24,6 +24,12 @@
       "path": "../codeintellify",
     },
     {
+      "path": "../cody-shared",
+    },
+    {
+      "path": "../cody-ui",
+    },
+    {
       "path": "../common",
     },
     {

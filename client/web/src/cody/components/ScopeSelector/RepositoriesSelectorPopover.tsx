@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { mdiChevronUp, mdiChevronDown, mdiMinusCircleOutline, mdiCheck, mdiCloseCircle } from '@mdi/js'
 import classNames from 'classnames'
 
-import type { TranscriptJSON } from '@sourcegraph/cody-shared/dist/chat/transcript'
+import type { TranscriptJSON } from '@sourcegraph/cody-shared'
 import { useLazyQuery } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'

@@ -28,6 +28,8 @@
     },
     { "path": "client/jetbrains" },
     { "path": "client/observability-client" },
-    { "path": "client/observability-server" }
+    { "path": "client/observability-server" },
+    { "path": "client/cody-shared" },
+    { "path": "client/cody-ui" }
   ]
 }

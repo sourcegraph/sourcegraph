@@ -1,12 +1,12 @@
 import type { EditorView } from '@codemirror/view'
 
 import type {
+    Editor,
     ActiveTextEditor,
     ActiveTextEditorDiagnostic,
     ActiveTextEditorSelection,
     ActiveTextEditorVisibleContent,
-    Editor,
-} from '@sourcegraph/cody-shared/dist/editor'
+} from '@sourcegraph/cody-shared'
 
 export interface EditorStore {
     filename: string

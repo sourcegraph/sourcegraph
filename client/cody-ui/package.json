@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "name": "@sourcegraph/cody-ui",
+  "version": "0.0.7",
+  "description": "Cody UI shared library",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@mdi/js": "^7.2.96",
+    "classnames": "^2.3.2",
+    "@sourcegraph/cody-shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc --build && cp -R src/* dist/",
+    "lint": "pnpm run lint:js",
+    "lint:js": "eslint --cache '**/*.[tj]s?(x)'",
+    "test": "vitest"
+  }
+}

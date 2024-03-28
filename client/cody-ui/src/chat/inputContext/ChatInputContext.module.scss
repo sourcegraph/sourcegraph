@@ -1,0 +1,41 @@
+.container {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    user-select: none;
+}
+
+.codebase,
+.file {
+    font-size: var(--vscode-editor-font-size, inherit);
+    margin: 0;
+}
+
+.codebase {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: normal;
+}
+
+.codebase-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.file,
+.codebase-label {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.error-color {
+    color: var(--vscode-errorForeground, inherit);
+}
+
+.warning-color {
+    display: inline;
+    color: var(--vscode-list-warningForeground, inherit);
+}

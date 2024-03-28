@@ -6,7 +6,7 @@ import classNames from 'classnames'
 import { CircularProgressbar } from 'react-circular-progressbar'
 
 import { ModalVideo } from '@sourcegraph/branded'
-import { AskCodyIcon } from '@sourcegraph/cody-ui/dist/icons/AskCodyIcon'
+import { AskCodyIcon } from '@sourcegraph/cody-ui'
 import { TourIcon, type TourTaskStepType, type TourTaskType } from '@sourcegraph/shared/src/settings/temporary'
 import { Button, Icon, Link, Text } from '@sourcegraph/wildcard'
 

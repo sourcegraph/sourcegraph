@@ -20,8 +20,8 @@ import {
     type ChatUITextAreaProps,
     type EditButtonProps,
     type FeedbackButtonsProps,
-} from '@sourcegraph/cody-ui/dist/Chat'
-import type { FileLinkProps } from '@sourcegraph/cody-ui/dist/chat/ContextFiles'
+    type FileLinkProps,
+} from '@sourcegraph/cody-ui'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, Icon, TextArea, Link, Tooltip, Alert, Text, H2 } from '@sourcegraph/wildcard'

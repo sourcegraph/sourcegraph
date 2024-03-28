@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { mdiClose, mdiHistory, mdiPlus, mdiDelete } from '@mdi/js'
 import classNames from 'classnames'
 
-import { CodyLogo } from '@sourcegraph/cody-ui/dist/icons/CodyLogo'
+import { CodyLogo } from '@sourcegraph/cody-ui'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Button, Icon, Tooltip, Badge } from '@sourcegraph/wildcard'

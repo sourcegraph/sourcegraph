@@ -1,0 +1,132 @@
+:root {
+    --spacing: 1rem;
+}
+
+.row {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing);
+}
+
+/* Additional padding for the stop-generating button */
+.row-in-progress {
+    padding-bottom: calc(var(--spacing) * 2);
+}
+
+.row::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 0.1rem;
+    height: 100%;
+
+    content: '';
+}
+
+.assistant-row::before {
+    background-image: linear-gradient(to bottom, #b200f8, #ff5543, #00cbec);
+}
+
+.row:hover > .header-container {
+    visibility: visible;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 var(--spacing) 0;
+}
+
+.content {
+    word-break: break-word;
+    line-height: 150%;
+}
+
+.content p {
+    word-break: break-word;
+}
+
+.content pre {
+    padding: calc(var(--spacing) * 0.5);
+    overflow-x: auto;
+}
+
+.content > div:first-child > *:first-child {
+    margin-top: 0;
+}
+
+.content > div:first-child > *:last-child {
+    margin-bottom: 0;
+}
+
+.header-container {
+    position: absolute;
+    right: var(--spacing);
+    top: calc(var(--spacing) / 4);
+
+    visibility: hidden;
+}
+
+.editing-container {
+    position: absolute;
+    right: var(--spacing);
+    top: var(--spacing);
+
+    visibility: visible;
+}
+
+.editing-label {
+    margin: 0;
+    padding-top: 0.1rem;
+    padding-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.footer-container {
+    padding-top: calc(var(--spacing) / 2);
+}
+
+.feedback-edit-buttons-container {
+    display: flex;
+    gap: 0.25rem;
+
+    margin: 0;
+    padding: 0 var(--spacing) var(--spacing) var(--spacing);
+
+    font-size: 0.8rem;
+}
+
+.feedback-edit-buttons {
+    display: flex;
+    margin: 0;
+}
+
+.text-area-container {
+    position: relative;
+}
+
+.chat-input {
+    width: 100%;
+    height: 100%;
+    resize: none;
+}
+
+.submit-button {
+    position: absolute;
+    right: 0;
+    bottom: 0.125rem;
+    fill: currentColor;
+    opacity: 0.8;
+    margin: 0.25rem !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    height: 2rem;
+    width: 2rem;
+}
+
+.submit-button:hover {
+    opacity: 1;
+}

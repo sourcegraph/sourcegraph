@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { TranscriptJSON } from '@sourcegraph/cody-shared/dist/chat/transcript'
+import type { TranscriptJSON } from '@sourcegraph/cody-shared'
 import { useQuery } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 
@@ -60,7 +60,6 @@ const DEFAULT_OPTS: UseRepoSuggestionsOpts = {
  *
  * Repositories can be omitted from the suggestions (for example, repositories that are
  * already added to the context scope) by passing them as `opts.omitSuggestions.`
- *
  * @param transcriptHistory the current user's chat transcript history from the store
  * @param authenticatedUser the current authenticated user
  * @param opts any options for further configuring the suggestions

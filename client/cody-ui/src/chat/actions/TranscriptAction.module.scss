@@ -1,0 +1,65 @@
+.container {
+    display: inline-block;
+    padding: 0.4rem;
+    font-size: 0.9rem;
+    min-width: calc(100% - 1.1rem);
+}
+
+.container-open {
+    padding-bottom: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 0.5rem;
+}
+
+.open-close-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    cursor: pointer;
+    width: 100%;
+    padding: 0;
+    appearance: none;
+    background: none;
+    border: none;
+    outline: none;
+    color: currentColor;
+    font-family: inherit;
+    justify-content: space-between;
+}
+
+.open-close-icon {
+    opacity: 0.8;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+}
+
+.step-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    opacity: 0.5;
+    flex-shrink: 0;
+    margin-right: 0.3rem;
+}
+
+.step-object {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 1;
+}

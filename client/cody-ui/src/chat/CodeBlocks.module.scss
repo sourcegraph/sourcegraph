@@ -1,0 +1,26 @@
+.container {
+    position: relative;
+    overflow: visible;
+}
+
+.container > pre {
+    margin-top: 0;
+}
+
+.buttons {
+    position: absolute;
+    top: 0;
+    right: 0;
+    visibility: hidden;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.container:hover .buttons {
+    visibility: visible;
+}
+
+.copy-button,
+.insert-button {
+    cursor: pointer;
+}

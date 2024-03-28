@@ -1,0 +1,16 @@
+.cursor::before {
+    content: '▋';
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        visibility: visible;
+    }
+    50% {
+        visibility: hidden;
+    }
+    100% {
+        visibility: hidden;
+    }
+}

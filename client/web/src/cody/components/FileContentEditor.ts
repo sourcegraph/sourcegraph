@@ -4,7 +4,7 @@ import type {
     ActiveTextEditorSelection,
     ActiveTextEditorVisibleContent,
     Editor,
-} from '@sourcegraph/cody-shared/dist/editor'
+} from '@sourcegraph/cody-shared'
 
 export interface EditorStore {
     filePath: string

@@ -1214,6 +1214,73 @@ importers:
         specifier: workspace:*
         version: link:../testing
 
+  client/cody-shared:
+    dependencies:
+      '@microsoft/fetch-event-source':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@opentelemetry/api':
+        specifier: ^1.7.0
+        version: 1.8.0
+      date-fns:
+        specifier: ^2.30.0
+        version: 2.30.0
+      dompurify:
+        specifier: ^3.0.4
+        version: 3.0.6
+      highlight.js:
+        specifier: ^10.7.3
+        version: 10.7.3
+      isomorphic-fetch:
+        specifier: ^3.0.0
+        version: 3.0.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+      marked:
+        specifier: ^4.0.16
+        version: 4.0.16
+      vscode-uri:
+        specifier: ^3.0.7
+        version: 3.0.7
+      x2js:
+        specifier: ^3.4.4
+        version: 3.4.4
+    devDependencies:
+      '@types/dompurify':
+        specifier: ^3.0.2
+        version: 3.0.5
+      '@types/highlight.js':
+        specifier: ^9.12.4
+        version: 9.12.4
+      '@types/isomorphic-fetch':
+        specifier: ^0.0.39
+        version: 0.0.39
+      '@types/lodash':
+        specifier: ^4.14.195
+        version: 4.17.0
+      '@types/marked':
+        specifier: ^5.0.0
+        version: 5.0.2
+      '@types/node-fetch':
+        specifier: ^2.6.4
+        version: 2.6.11
+      '@types/vscode':
+        specifier: ^1.80.0
+        version: 1.87.0
+
+  client/cody-ui:
+    dependencies:
+      '@mdi/js':
+        specifier: ^7.2.96
+        version: 7.2.96
+      '@sourcegraph/cody-shared':
+        specifier: workspace:*
+        version: link:../cody-shared
+      classnames:
+        specifier: ^2.3.2
+        version: 2.3.2
+
   client/common:
     devDependencies:
       '@sourcegraph/extension-api-types':
@@ -1397,11 +1464,11 @@ importers:
         specifier: workspace:*
         version: link:../codeintellify
       '@sourcegraph/cody-shared':
-        specifier: ^0.0.9
-        version: 0.0.9
+        specifier: workspace:*
+        version: link:../cody-shared
       '@sourcegraph/cody-ui':
-        specifier: ^0.0.7
-        version: 0.0.7
+        specifier: workspace:*
+        version: link:../cody-ui
       '@sourcegraph/common':
         specifier: workspace:*
         version: link:../common
@@ -6170,6 +6237,11 @@ packages:
     engines: {node: '>=8.0.0'}
     dev: false
 
+  /@opentelemetry/api@1.8.0:
+    resolution: { integrity: sha512-I/s6F7yKUDdtMsoBWXJe8Qz40Tui5vsuKCWJEWVL+5q9sSWRzzx6v2KeNsOBEwd94j0eWkpWCH4yB6rZg9Mf0w== }
+    engines: { node: '>=8.0.0' }
+    dev: false
+
   /@opentelemetry/context-zone-peer-dep@1.9.1(@opentelemetry/api@1.4.0)(zone.js@0.11.6):
     resolution: {integrity: sha512-4qaNi2noNMlT3DhOzXN4qKDiyZFjowj2vnfdtcAHZUwpIP0MQlpE3JYCr+2w7zKGJDfEOp2hg2A9Dkn8TqvzSw==}
     engines: {node: '>=14'}
@@ -8381,46 +8453,6 @@ packages:
       '@sourcegraph/codemod-toolkit-ts': 1.0.1
     dev: true
 
-  /@sourcegraph/cody-shared@0.0.5:
-    resolution: {integrity: sha512-xwNHKsE9NPEUcQoEqJMYuU86D3NRqBn/V6Fjc09FlkgNQUcouJhGZuVntpOuBa3g8aEqOVT+bI/QcX0Oy1QGfQ==}
-    dependencies:
-      '@microsoft/fetch-event-source': 2.0.1
-      dompurify: 3.0.6
-      highlight.js: 10.7.3
-      isomorphic-fetch: 3.0.0
-      lodash: 4.17.21
-      marked: 4.0.16
-      vscode-uri: 3.0.7
-      x2js: 3.4.4
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  /@sourcegraph/cody-shared@0.0.9:
-    resolution: {integrity: sha512-8FIHCi8nzn+scqGJmZsgIoo08RJGV5Q2uhznIQb4RwHdw914mzYqAkmc/xrBQ+l9kMDJbMS7pnzKwBlu378EFA==}
-    dependencies:
-      '@microsoft/fetch-event-source': 2.0.1
-      dompurify: 3.0.6
-      highlight.js: 10.7.3
-      isomorphic-fetch: 3.0.0
-      lodash: 4.17.21
-      marked: 4.0.16
-      vscode-uri: 3.0.7
-      x2js: 3.4.4
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  /@sourcegraph/cody-ui@0.0.7:
-    resolution: {integrity: sha512-JhPcZppe01jMAWSUqYeCfGoy0Eq6W0+wgeAHjxBADDXmeNlswODgyTtNA4OBD5/8Rw6bYvsxEjnV2u9iWRCsZw==}
-    dependencies:
-      '@mdi/js': 7.2.96
-      '@sourcegraph/cody-shared': 0.0.5
-      classnames: 2.3.2
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
   /@sourcegraph/eslint-config@0.37.1(@testing-library/dom@8.13.0)(eslint@8.57.0)(typescript@5.4.2):
     resolution: {integrity: sha512-3G0d3OUgifaADfd27Bdk/kSpECj21BfQ6srbYMY/HVWOv/N8AVuFWNwUMT4Y4slt026RXO5XcwoZhfnaskr5hQ==}
     dependencies:
@@ -9182,7 +9214,7 @@ packages:
       '@storybook/preview-api': 7.2.0
       '@storybook/theming': 7.2.0(react-dom@18.1.0)(react@18.1.0)
       '@storybook/types': 7.2.0
-      '@types/lodash': 4.14.167
+      '@types/lodash': 4.17.0
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
@@ -9220,7 +9252,7 @@ packages:
       '@storybook/preview-api': 7.4.6
       '@storybook/theming': 7.4.6(react-dom@18.1.0)(react@18.1.0)
       '@storybook/types': 7.4.6
-      '@types/lodash': 4.14.167
+      '@types/lodash': 4.17.0
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
@@ -9258,7 +9290,7 @@ packages:
       '@storybook/preview-api': 7.6.17
       '@storybook/theming': 7.6.17(react-dom@18.1.0)(react@18.1.0)
       '@storybook/types': 7.6.17
-      '@types/lodash': 4.14.167
+      '@types/lodash': 4.17.0
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
@@ -11016,6 +11048,12 @@ packages:
       '@types/trusted-types': 2.0.3
     dev: true
 
+  /@types/dompurify@3.0.5:
+    resolution: { integrity: sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg== }
+    dependencies:
+      '@types/trusted-types': 2.0.3
+    dev: true
+
   /@types/ejs@3.1.2:
     resolution: {integrity: sha512-ZmiaE3wglXVWBM9fyVC17aGPkLo/UgaOjEiI2FXQfyczrCefORPxIe+2dVmnmk3zkVIbizjrlQzmPGhSYGXG5g==}
     dev: true
@@ -11145,6 +11183,10 @@ packages:
     resolution: {integrity: sha512-ulw4d+vW1HKn4oErSmNN2HYEcHGq0N1C5exlrMM0CRqX1UUpFhGb5lwiom5j9KN3LBJJDLRmYIZz1ghm7FIzZw==}
     dev: true
 
+  /@types/isomorphic-fetch@0.0.39:
+    resolution: { integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw== }
+    dev: true
+
   /@types/istanbul-lib-coverage@2.0.6:
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -11204,8 +11246,8 @@ packages:
     resolution: {integrity: sha512-w7tQPjARrvdeBkX/Rwg95S592JwxqOjmms3zWQ0XZgSyxSLdzWaYH3vErBhdVS/lRBX7F8aBYcYJYTr5TMGOzw==}
     dev: true
 
-  /@types/lodash@4.14.182:
-    resolution: {integrity: sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==}
+  /@types/lodash@4.17.0:
+    resolution: { integrity: sha512-t7dhREVv6dbNj0q17X12j7yDG4bD/DHYX7o5/DbDxobP0HnGPgpRz2Ej77aL7TZT3DSw13fqUTj8J4mMnqa7WA== }
 
   /@types/lru-cache@5.1.1:
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
@@ -11221,6 +11263,10 @@ packages:
 
   /@types/marked@4.0.3:
     resolution: {integrity: sha512-HnMWQkLJEf/PnxZIfbm0yGJRRZYYMhb++O9M36UCTA9z53uPvVoSlAwJr3XOpDEryb7Hwl1qAx/MV6YIW1RXxg==}
+    dev: true
+
+  /@types/marked@5.0.2:
+    resolution: { integrity: sha512-OucS4KMHhFzhz27KxmWg7J+kIYqyqoW5kdIEI319hqARQQUTqhao3M/F+uFnDXD0Rg72iDDZxZNxq5gvctmLlg== }
     dev: true
 
   /@types/mdx@2.0.5:
@@ -12049,7 +12095,7 @@ packages:
       react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@types/lodash': 4.14.182
+      '@types/lodash': 4.17.0
       '@types/react': 18.0.8
       lodash: 4.17.21
       prop-types: 15.8.1
@@ -12074,7 +12120,7 @@ packages:
     dependencies:
       '@types/d3-path': 1.0.9
       '@types/d3-shape': 1.3.2
-      '@types/lodash': 4.14.182
+      '@types/lodash': 4.17.0
       '@types/react': 18.0.8
       '@visx/curve': 2.1.0
       '@visx/group': 2.10.0(react@18.1.0)
@@ -12094,7 +12140,7 @@ packages:
     dependencies:
       '@types/d3-path': 1.0.9
       '@types/d3-shape': 1.3.2
-      '@types/lodash': 4.14.182
+      '@types/lodash': 4.17.0
       '@types/react': 18.0.8
       '@visx/curve': 2.1.0
       '@visx/group': 2.10.0(react@18.1.0)
@@ -12112,7 +12158,7 @@ packages:
     peerDependencies:
       react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
     dependencies:
-      '@types/lodash': 4.14.182
+      '@types/lodash': 4.17.0
       '@types/react': 18.0.8
       classnames: 2.3.2
       lodash: 4.17.21
@@ -14145,7 +14191,7 @@ packages:
     hasBin: true
     dependencies:
       chalk: 4.1.2
-      date-fns: 2.29.3
+      date-fns: 2.30.0
       lodash: 4.17.21
       rxjs: 7.8.1
       shell-quote: 1.8.1
@@ -14598,10 +14644,11 @@ packages:
     resolution: {integrity: sha512-8YnDaaf7N3k/q5HnTJVuzSyLETjoZjVmHc4AeKAzOvKHEFQKcn64OKBfzHYtE9zGjctNM7V9I0MfnUVLpi7M5g==}
     dev: true
 
-  /date-fns@2.29.3:
-    resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
+  /date-fns@2.30.0:
+    resolution: { integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw== }
     engines: {node: '>=0.11'}
-    dev: true
+    dependencies:
+      '@babel/runtime': 7.24.0
 
   /date-fns@3.3.1:
     resolution: {integrity: sha512-y8e109LYGgoQDveiEBD3DYXKba1jWf5BA8YU1FL5Tvm0BTdEfy54WLCwnuYWZNnzzvALy/QQ4Hov+Q9RVRv+Zw==}
@@ -18880,7 +18927,7 @@ packages:
     hasBin: true
     dependencies:
       '@types/json-schema': 7.0.15
-      '@types/lodash': 4.14.182
+      '@types/lodash': 4.17.0
       '@types/prettier': 2.7.2
       cli-color: 2.0.0
       glob: 7.2.3

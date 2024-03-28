@@ -1,0 +1,72 @@
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("//client/shared/dev:tools.bzl", "module_style_typings")
+load("//dev:defs.bzl", "npm_package", "sass", "ts_project")
+load("//dev:eslint.bzl", "eslint_config_and_lint_root")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
+
+# gazelle:js_resolve **/*.module.scss :module_style_typings
+# gazelle:js_ignore_imports **/global-styles/index.scss
+
+npm_link_all_packages(name = "node_modules")
+
+eslint_config_and_lint_root()
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
+    visibility = ["//client:__subpackages__"],
+    deps = [
+        "//:tsconfig",
+        "//client/cody-shared:tsconfig",
+    ],
+)
+
+module_style_typings(
+    name = "module_style_typings",
+)
+
+sass(
+    name = "module_styles",
+    srcs = glob(["src/**/*.module.scss"]),
+)
+
+npm_package(
+    name = "cody-ui_pkg",
+    srcs = [
+        "package.json",
+        ":cody-ui_lib",
+        ":module_styles",  #keep
+    ],
+)
+
+ts_project(
+    name = "cody-ui_lib",
+    srcs = [
+        "src/Chat.tsx",
+        "src/chat/BlinkingCursor.tsx",
+        "src/chat/CodeBlocks.tsx",
+        "src/chat/ContextFiles.tsx",
+        "src/chat/Transcript.tsx",
+        "src/chat/TranscriptItem.tsx",
+        "src/chat/actions/TranscriptAction.tsx",
+        "src/chat/fixtures.ts",
+        "src/chat/inputContext/ChatInputContext.tsx",
+        "src/globals.d.ts",
+        "src/icons/AskCodyIcon.tsx",
+        "src/icons/CodyLogo.tsx",
+        "src/index.ts",
+        "src/terms.ts",
+        "src/utils/Icon.tsx",
+        "src/utils/icons.tsx",
+    ],
+    tsconfig = ":tsconfig",
+    deps = [
+        ":module_style_typings",
+        ":node_modules/@mdi/js",
+        ":node_modules/@sourcegraph/cody-shared",
+        ":node_modules/classnames",
+        "//:node_modules/@types/classnames",
+        "//:node_modules/@types/react",
+        "//:node_modules/react",
+    ],
+)

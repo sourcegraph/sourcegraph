@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useCallback } from 'react'
 
 import classNames from 'classnames'
 
-import type { TranscriptJSON } from '@sourcegraph/cody-shared/dist/chat/transcript'
-import type { CodyClientScope } from '@sourcegraph/cody-shared/dist/chat/useClient'
+import type { TranscriptJSON, CodyClientScope } from '@sourcegraph/cody-shared'
 import { useLazyQuery } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import { Text } from '@sourcegraph/wildcard'

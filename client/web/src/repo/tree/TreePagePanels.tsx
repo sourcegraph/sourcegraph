@@ -4,7 +4,7 @@ import { mdiFileDocumentOutline, mdiFolderOutline } from '@mdi/js'
 import classNames from 'classnames'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
-import { NoopEditor } from '@sourcegraph/cody-shared/dist/editor'
+import { NoopEditor } from '@sourcegraph/cody-shared'
 import { basename } from '@sourcegraph/common'
 import { gql } from '@sourcegraph/http-client'
 import type { TreeFields } from '@sourcegraph/shared/src/graphql-operations'

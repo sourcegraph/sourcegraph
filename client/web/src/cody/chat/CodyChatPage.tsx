@@ -13,7 +13,7 @@ import {
 import classNames from 'classnames'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { CodyLogo } from '@sourcegraph/cody-ui/dist/icons/CodyLogo'
+import { CodyLogo } from '@sourcegraph/cody-ui'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'

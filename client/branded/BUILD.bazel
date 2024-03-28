@@ -2,10 +2,9 @@ load("@npm//:defs.bzl", "npm_link_all_packages")
 load("//client/shared/dev:tools.bzl", "module_style_typings")
 load("//dev:defs.bzl", "npm_package", "sass", "ts_project", "vitest_test")
 load("//dev:eslint.bzl", "eslint_config_and_lint_root")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 
 # gazelle:js_resolve **/*.module.scss :module_style_typings
-
-load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 
 npm_link_all_packages(name = "node_modules")
 
