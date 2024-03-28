@@ -177,7 +177,9 @@ To learn more about how the Sourcegraph team operates managed SMTP internally, r
 
 Cody is an AI coding assistant that lives in your editor that can find, explain, and write code. Cody uses a combination of Large Language Models (LLMs), Sourcegraph search, and Sourcegraph code intelligence to provide answers that eliminate toil and keep human programmers in flow. You can think of Cody as your programmer buddy who has read through all the code in open source, all the questions on StackOverflow, and all your organization's private code, and is always there to answer questions you might have or suggest ways of doing something based on prior knowledge. Learn more from [Cody documentation](../cody/overview/index.md) about how Cody can help you.
 
-On Cloud, Cody can be enabled by contacting your Sourcegraph account team. Once Cody has been enabled by us, you can follow the instruction below to try it out.
+On Cloud, Cody can be enabled by contacting your Sourcegraph account team. Once Cody has been enabled by us, please [create an Embeddings Policy](../cody/explanations/policies) for the best experience.
+
+To use Cody from VS Code, you can follow the instruction below to try it out. If you have any questions, please feel free to reach out to your Sourcegraph account team. 
 
 #### Step 1: Configure the VS Code extension
 
