@@ -136,6 +136,7 @@ func newExternalClientFactory(cache bool, testOpt bool, middleware ...Middleware
 		ContextErrorMiddleware,
 		HeadersMiddleware("User-Agent", "Sourcegraph-Bot"),
 		redisLoggerMiddleware(),
+		externalRequestCountMetricsMiddleware,
 	}
 	mw = append(mw, middleware...)
 
@@ -563,6 +564,43 @@ var metricRetry = promauto.NewCounter(prometheus.CounterOpts{
 	Name: "src_httpcli_retry_total",
 	Help: "Total number of times we retry HTTP requests.",
 })
+
+var metricExternalRequestCount = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "src_http_client_external_request_count",
+	Help: "Count of external HTTP requests made by the Sourcegraph HTTP client.",
+}, []string{"host", "method", "status_code"})
+
+func externalRequestCountMetricsMiddleware(next Doer) Doer {
+	return doExternalRequestCountMetricsMiddleware(next, func(host, method string, statusCode int) {
+		code := strconv.Itoa(statusCode)
+		metricExternalRequestCount.WithLabelValues(host, method, code).Inc()
+	})
+}
+
+func doExternalRequestCountMetricsMiddleware(next Doer, observe func(host, method string, statusCode int)) Doer {
+	return DoerFunc(func(req *http.Request) (*http.Response, error) {
+		host := "<unknown>"
+		if req.Host != "" {
+			host = req.Host
+		} else if u := req.URL; u != nil && u.Host != "" {
+			host = u.Host
+		}
+
+		method := req.Method
+
+		var statusCode int
+
+		resp, err := next.Do(req)
+		if err != nil {
+			statusCode = -1 // -1 indicates unknown status code if an error occurred
+		} else {
+			statusCode = resp.StatusCode
+		}
+
+		observe(host, method, statusCode)
+		return resp, err
+	})
+}
 
 // A regular expression to match the error returned by net/http when the
 // configured number of redirects is exhausted. This error isn't typed
