@@ -19,11 +19,3 @@ go_binary(
     embed = [":clear_lib"],
     visibility = ["//visibility:public"],
 )
-
-go_cross_binary(
-    name = "clear-darwin-arm64",
-    platform = "@io_bazel_rules_go//go/toolchain:darwin_arm64",
-    tags = ["manual"],
-    target = ":clear",
-    visibility = ["//testing:__pkg__"],
-)

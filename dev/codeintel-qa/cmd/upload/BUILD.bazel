@@ -20,11 +20,3 @@ go_binary(
     embed = [":upload_lib"],
     visibility = ["//visibility:public"],
 )
-
-go_cross_binary(
-    name = "upload-darwin-arm64",
-    platform = "@io_bazel_rules_go//go/toolchain:darwin_arm64",
-    tags = ["manual"],
-    target = ":upload",
-    visibility = ["//testing:__pkg__"],
-)

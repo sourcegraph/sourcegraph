@@ -19,11 +19,3 @@ go_binary(
     embed = [":clone-and-index_lib"],
     visibility = ["//visibility:public"],
 )
-
-go_cross_binary(
-    name = "clone-and-index-darwin-arm64",
-    platform = "@io_bazel_rules_go//go/toolchain:darwin_arm64",
-    tags = ["manual"],
-    target = ":clone-and-index",
-    visibility = ["//testing:__pkg__"],
-)
