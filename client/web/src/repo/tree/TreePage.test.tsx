@@ -13,12 +13,18 @@ import { type RepositoryFields, RepositoryType } from '../../graphql-operations'
 
 import { type Props, TreePage } from './TreePage'
 
+// TreePage has a dependency on the `perforceChangelistMapping` experimental feature
+// in order to build an appropriately-worded Commits button.
+// The feature needs to be present to avoid errors.
+window.context = window.context || {}
+window.context.experimentalFeatures = { perforceChangelistMapping: 'disabled' }
+
 describe('TreePage', () => {
     afterEach(cleanup)
 
     const repoDefaults = (): RepositoryFields => ({
         id: 'repo-id',
-        name: 'repo name',
+        name: 'repo-name',
         sourceType: RepositoryType.GIT_REPOSITORY,
         url: 'http://repo.url.example.com',
         description: 'Awesome for testing',
@@ -39,7 +45,7 @@ describe('TreePage', () => {
 
     const treePagePropsDefaults = (repositoryFields: RepositoryFields): Props => ({
         repo: repositoryFields,
-        repoName: 'test repo',
+        repoName: 'test-repo',
         filePath: '',
         commitID: 'asdf1234',
         revision: 'asdf1234',
@@ -75,7 +81,6 @@ describe('TreePage', () => {
     describe('repo page', () => {
         it('displays a page that is not a fork', () => {
             const repo = repoDefaults()
-            repo.isFork = false
             const props = treePagePropsDefaults(repo)
             const result = renderWithBrandedContext(
                 <MockedProvider>
@@ -85,6 +90,58 @@ describe('TreePage', () => {
             expect(result.queryByTestId('repo-fork-badge')).not.toBeInTheDocument()
             // check for validity that repo header renders
             expect(result.queryByTestId('repo-header')).toBeInTheDocument()
+
+            // confirm that the Commits button exists
+            expect(screen.queryByText('Commits')).toBeInTheDocument()
+            // and links to commits in the correct revision
+            expect(result.queryByRole('link', { name: 'Commits' })).toHaveAttribute(
+                'href',
+                '/repo-name@asdf1234/-/commits'
+            )
+        })
+
+        it('displays a Perforce repository with Perforce language in the Commits button', () => {
+            // enable the feature that affects how the Commits button renders
+            window.context.experimentalFeatures = { perforceChangelistMapping: 'enabled' }
+            const repo = repoDefaults()
+            repo.sourceType = RepositoryType.PERFORCE_DEPOT
+            const props = treePagePropsDefaults(repo)
+            const render = renderWithBrandedContext(
+                <MockedProvider>
+                    <TreePage {...props} />
+                </MockedProvider>
+            )
+            // when `perforceChangelistMapping` is enabled,
+            // Perforce depots should display the Commits button using Perforce-centric language.
+            expect(render.queryByText('Changelists')).toBeInTheDocument()
+            expect(render.queryByText('Commits')).not.toBeInTheDocument()
+            // and link to "changelists" instead of to "commits"
+            expect(render.queryByRole('link', { name: 'Changelists' })).toHaveAttribute(
+                'href',
+                '/repo-name@asdf1234/-/changelists'
+            )
+        })
+
+        it('displays a Perforce repository with Git language in the Commits button', () => {
+            // enable the feature that affects how the Commits button renders
+            window.context.experimentalFeatures = { perforceChangelistMapping: 'disabled' }
+            const repo = repoDefaults()
+            repo.sourceType = RepositoryType.PERFORCE_DEPOT
+            const props = treePagePropsDefaults(repo)
+            const render = renderWithBrandedContext(
+                <MockedProvider>
+                    <TreePage {...props} />
+                </MockedProvider>
+            )
+            // when `perforceChangelistMapping` is disabled,
+            // Perforce depots should display the Commits button using the same langauge as Git repos.
+            expect(render.queryByText('Commits')).toBeInTheDocument()
+            expect(render.queryByText('Changelists')).not.toBeInTheDocument()
+            // and link to "commits" like any other Git repo
+            expect(render.queryByRole('link', { name: 'Commits' })).toHaveAttribute(
+                'href',
+                '/repo-name@asdf1234/-/commits'
+            )
         })
 
         it('displays a page that is a fork', () => {
@@ -99,7 +156,7 @@ describe('TreePage', () => {
             expect(result.queryByTestId('repo-fork-badge')).toHaveTextContent('Fork')
         })
 
-        it('Should displays cody CTA', () => {
+        it('Should display cody CTA', () => {
             const repo = repoDefaults()
             const props = treePagePropsDefaults(repo)
             window.context = window.context || {}

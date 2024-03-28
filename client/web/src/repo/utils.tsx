@@ -1,3 +1,6 @@
+import { encodeURIPathComponent } from '@sourcegraph/common'
+import { Button, Icon, Link, Tooltip } from '@sourcegraph/wildcard'
+
 import { type GitCommitFields, RepositoryType } from '../graphql-operations'
 
 import { CodeHostType } from './constants'
@@ -44,4 +47,37 @@ export const stringToCodeHostType = (codeHostType: string): CodeHostType => {
             return CodeHostType.OTHER
         }
     }
+}
+
+interface RepoCommitsButtonProps {
+    repoName: string
+    repoType: string
+    revision: string
+    filePath: string
+    svgPath: string
+    className: string
+}
+
+export const RepoCommitsButton: React.FunctionComponent<React.PropsWithChildren<RepoCommitsButtonProps>> = props => {
+    const { repoName, repoType, revision, filePath, svgPath, className } = props
+    const isRepoPerforce = isPerforceChangelistMappingEnabled() && repoType === RepositoryType.PERFORCE_DEPOT
+    const tooltip = isRepoPerforce ? 'Perforce changelists' : 'Git commits'
+    const title = isRepoPerforce ? 'Changelists' : 'Commits'
+    const revisionPath = isRepoPerforce ? 'changelists' : 'commits'
+    return (
+        <Tooltip content={tooltip}>
+            <Button
+                as={Link}
+                name={title}
+                className="flex-shrink-0"
+                to={`/${encodeURIPathComponent(repoName)}${
+                    revision && `@${encodeURIPathComponent(revision)}`
+                }/-/${revisionPath}${filePath && `/${encodeURIPathComponent(filePath)}`}`}
+                variant="secondary"
+                outline={true}
+            >
+                <Icon aria-hidden={true} svgPath={svgPath} /> <span className={className}>{title}</span>
+            </Button>
+        </Tooltip>
+    )
 }

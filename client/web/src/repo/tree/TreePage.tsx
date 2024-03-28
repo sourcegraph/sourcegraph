@@ -56,6 +56,7 @@ import type { OwnConfigProps } from '../../own/OwnConfigProps'
 import { TryCodyWidget } from '../components/TryCodyWidget/TryCodyWidget'
 import { FilePathBreadcrumbs } from '../FilePathBreadcrumbs'
 import { isPackageServiceType } from '../packages/isPackageServiceType'
+import { RepoCommitsButton } from '../utils'
 
 import { TreePageContent } from './TreePageContent'
 import { treeHistoryFragment } from './TreePagePanels'
@@ -232,18 +233,14 @@ export const TreePage: FC<Props> = ({
             </div>
             <div className={styles.menu}>
                 <ButtonGroup>
-                    <Tooltip content="Git commits">
-                        <Button
-                            className="flex-shrink-0"
-                            to={`/${encodeURIPathComponent(repoName)}/-/commits`}
-                            variant="secondary"
-                            outline={true}
-                            as={Link}
-                        >
-                            <Icon aria-hidden={true} svgPath={mdiSourceCommit} />{' '}
-                            <span className={styles.text}>Commits</span>
-                        </Button>
-                    </Tooltip>
+                    <RepoCommitsButton
+                        repoName={repo?.name || ''}
+                        repoType={repo?.sourceType || ''}
+                        revision={revision}
+                        filePath={filePath}
+                        svgPath={mdiSourceCommit}
+                        className={styles.text}
+                    />
                     {!isPackage && (
                         <Tooltip content="Git branches">
                             <Button
