@@ -15,13 +15,31 @@ requirements:
 
   # #bolaji-release-testing
   # https://start.1password.com/open/i?a=HEDEDSLHPBFGRBTKAKJWE23XX4&v=isv4abynddpox72wwbhaamo76e&i=7zjax5rm5hlilbgrzeb257i62i&h=team-sourcegraph.1password.com
-  - name: "Slack Webhook URL"
-    env: SLACK_WEBHOOK_URL
+  # - name: "Slack Webhook URL"
+  #   env: SLACK_WEBHOOK_URL
 
 internal:
   create:
     steps:
       patch:
+        - name: "git:branch"
+          cmd: |
+            set -eu
+
+            export exit_code=0
+            git rev-parse --verify refs/heads/{{git.branch}} --exit-code || exit_code=$?
+            if [ $exit_code -eq 0  ]; then
+              git checkout "{{git.branch}}"
+            else
+              exit 0
+              echo "---- TEMPORARY ----"
+              git checkout -b "{{git.branch}}"
+              echo "--------------------"
+              echo "❌ Branch '{{git.branch}}' does not exist"
+              exit 1
+            fi
+
+            git push -u origin "{{git.branch}}    "
         - name: "buildkite"
           cmd: |
             echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
@@ -31,7 +49,7 @@ internal:
                 "message": "Internal release build for {{version}}",
                 "env": {
                   "RELEASE_INTERNAL": "true",
-                  "VERSION": "{{tag}}"
+                  "VERSION": "qa-{{tag}}"
                 }
               }')
             exit_code=$?
@@ -51,6 +69,14 @@ internal:
       - name: "Register on release registry"
         cmd: |
           echo "pretending to call release registry api"
+      - name: "notifications"
+        cmd: |
+          set -eu
+
+          # Post an annotation.
+          cat << EOF | buildkite-agent annotate --style info
+          Internal release is ready for promotion under the branch [\`{{git.branch}}\`](https://github.com/sourcegraph/sourcegraph/tree/$branch).
+          EOF
 
 test:
   steps:
@@ -73,7 +99,7 @@ promoteToPublic:
               "env": {
                 "DISABLE_ASPECT_WORKFLOWS": "true",
                 "RELEASE_PUBLIC": "true",
-                "VERSION": "{{tag}}"
+                "VERSION": "qa-{{tag}}"
               }
             }')
           exit_code=$?
@@ -93,26 +119,34 @@ promoteToPublic:
       - name: "Promote on release registry"
         cmd: |
           echo "pretending to call release registry api"
-
+      - name: "git:tag"
+        cmd: |
+          git tag qa-{{version}}
+          git push origin {{git.branch}} --tags
+          #
+          # Annotate build
+          cat << EOF | buildkite-agent annotate --style info
+          Promoted release is **publicly available** through a git tag at [\`{{version}}\`](https://github.com/sourcegraph/sourcegraph/tree/{{version}}).
+          EOF
       # tag is usually in the format `5.3.2`
       # while version is usually the tag prepended with a v, `v5.3.2`
-      - name: "Slack notification (#announce-engineering)"
-        cmd: |
-          echo "Posting slack notification for release"
-          tag="{{tag}}"
-          changelog_version="${tag//./}"
-          body=$(curl -s --fail-with-body -X POST "$SLACK_WEBHOOK_URL" -H "Content-Type: application/json" -d '{
-            "type": "mrkdwn"
-            "text": "*Sourcegraph {{tag}} has been published*\n\n• <https://sourcegraph.com/docs/CHANGELOG#${changelog_version} | Changelog>\n• <https://github.com/sourcegraph/sourcegraph/releases/tag/{{version}} | GitHub release>"
-          }')
-          exit_code=$?
-
-          if [ $exit_code != 0 ]; then
-            echo "❌ Unable to post message to slack, got:"
-            echo "--- raw body ---"
-            echo $body
-            echo "--- raw body ---"
-            exit $exit_code
-          else
-            echo "Posted to slack."
-          fi
+      # - name: "Slack notification (#announce-engineering)"
+      #   cmd: |
+      #     echo "Posting slack notification for release"
+      #     tag="{{tag}}"
+      #     changelog_version="${tag//./}"
+      #     body=$(curl -s --fail-with-body -X POST "$SLACK_WEBHOOK_URL" -H "Content-Type: application/json" -d '{
+      #       "type": "mrkdwn"
+      #       "text": "*Sourcegraph {{tag}} has been published*\n\n• <https://sourcegraph.com/docs/CHANGELOG#${changelog_version} | Changelog>\n• <https://github.com/sourcegraph/sourcegraph/releases/tag/{{version}} | GitHub release>"
+      #     }')
+      #     exit_code=$?
+      #
+      #     if [ $exit_code != 0 ]; then
+      #       echo "❌ Unable to post message to slack, got:"
+      #       echo "--- raw body ---"
+      #       echo $body
+      #       echo "--- raw body ---"
+      #       exit $exit_code
+      #     else
+      #       echo "Posted to slack."
+      #     fi
