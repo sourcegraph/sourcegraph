@@ -161,6 +161,7 @@ lazy_static::lazy_static! {
             (Matlab, "matlab"),
             (Nickel, "nickel"),
             (Perl, "perl"),
+            (Pkl, "pkl"),
             (Pod, "pod"),
             (Python, "python"),
             (Ruby, "ruby"),

@@ -11,6 +11,7 @@ use syntect::parsing::{SyntaxReference, SyntaxSet};
 
 pub mod tree_sitter;
 use crate::highlighting::syntect_html::ClassedTableGenerator;
+use tree_sitter_all_languages::ParserId;
 
 #[derive(Default)]
 pub struct FileInfo<'a> {
@@ -167,11 +168,13 @@ struct SublimeLanguageName {
 impl SublimeLanguageName {
     fn into_tree_sitter_name(self, file_info: &FileInfo<'_>) -> TreeSitterLanguageName {
         if self.raw.is_empty() || self.raw.to_lowercase() == "plain text" {
-            #[allow(clippy::single_match)]
-            match file_info.extension() {
-                Some("ncl") => return TreeSitterLanguageName::new("nickel"),
-                _ => {}
-            };
+            let extension = file_info.extension().unwrap_or("");
+            if extension != "" {
+                match ParserId::from_file_extension(extension) {
+                    Some(parser_id) => return TreeSitterLanguageName::new(parser_id.name()),
+                    _ => {}
+                }
+            }
         }
 
         // Written in an unusual style so that we can:

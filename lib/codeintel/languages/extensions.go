@@ -56,6 +56,10 @@ var overrideAmbiguousExtensionsMap = map[string]string{
 	// ".yml" is not included here in parallel to ".yaml"
 	// as it is the first extension for 'YAML' and not the first
 	// for other variants of YAML, hence only 'YAML' is picked by enry.
+
+	// Pkl is also used for the binary pickle file format from Python.
+	// But we intent it to mean the Apple configuration code language
+	".pkl": "Pkl",
 }
 
 // Source: https://github.com/sindresorhus/binary-extensions/blob/main/binary-extensions.json

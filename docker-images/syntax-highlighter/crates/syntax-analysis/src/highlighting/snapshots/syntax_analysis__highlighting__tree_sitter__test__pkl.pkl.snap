@@ -1,0 +1,97 @@
+---
+source: crates/syntax-analysis/src/highlighting/tree_sitter.rs
+expression: "snapshot_treesitter_syntax_kinds(&document, &contents)"
+---
+  import "pigeon1.pkl"
+//^^^^^^ Keyword
+//       ^^^^^^^^^^^^^ StringLiteral
+  amends "pigeon2.pkl"
+//^^^^^^ Identifier
+//        ^^^^^^^ Identifier
+//               ^ PunctuationDelimiter
+//                ^^^ Identifier
+  
+  name = "Great green macaw"
+//^^^^ Identifier
+//     ^ IdentifierOperator
+//       ^^^^^^^^^^^^^^^^^^^ StringLiteral
+  
+  parrot = (pigeon) {
+//^^^^^^ Identifier
+//       ^ IdentifierOperator
+//          ^^^^^^ Identifier
+    name = "Great green macaw"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^^^^^^^^^^^^^ StringLiteral
+    diet = "Berries"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^^^ StringLiteral
+    taxonomy {
+//  ^^^^^^^^ Identifier
+      species = "Ara ambiguus"
+//    ^^^^^^^ Identifier
+//            ^ IdentifierOperator
+//              ^^^^^^^^^^^^^^ StringLiteral
+    }
+  }
+  
+  woodPigeon {
+//^^^^^^^^^^ Identifier
+    name = "Common wood pigeon"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^^^^^^^^^^^^^^ StringLiteral
+    diet = "Seeds"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^ StringLiteral
+    taxonomy {
+//  ^^^^^^^^ Identifier
+      species = "Columba palumbus"
+//    ^^^^^^^ Identifier
+//            ^ IdentifierOperator
+//              ^^^^^^^^^^^^^^^^^^ StringLiteral
+    }
+  }
+  stockPigeon {
+//^^^^^^^^^^^ Identifier
+    name = "Stock pigeon"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^^^^^^^^ StringLiteral
+    diet = "Seeds"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^ StringLiteral
+    taxonomy {
+//  ^^^^^^^^ Identifier
+      species = "Columba oenas"
+//    ^^^^^^^ Identifier
+//            ^ IdentifierOperator
+//              ^^^^^^^^^^^^^^^ StringLiteral
+    }
+  }
+  dodo {
+//^^^^ Identifier
+    name = "Dodo"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^ StringLiteral
+    diet = "Seeds"
+//  ^^^^ Identifier
+//       ^ IdentifierOperator
+//         ^^^^^^^ StringLiteral
+    extinct = true
+//  ^^^^^^^ Identifier
+//          ^ IdentifierOperator
+//            ^^^^ IdentifierBuiltin
+    taxonomy {
+//  ^^^^^^^^ Identifier
+      species = "Raphus cucullatus"
+//    ^^^^^^^ Identifier
+//            ^ IdentifierOperator
+//              ^^^^^^^^^^^^^^^^^^^ StringLiteral
+    }
+  }

@@ -1,0 +1,35 @@
+import "pigeon1.pkl"
+amends "pigeon2.pkl"
+
+name = "Great green macaw"
+
+parrot = (pigeon) {
+  name = "Great green macaw"
+  diet = "Berries"
+  taxonomy {
+    species = "Ara ambiguus"
+  }
+}
+
+woodPigeon {
+  name = "Common wood pigeon"
+  diet = "Seeds"
+  taxonomy {
+    species = "Columba palumbus"
+  }
+}
+stockPigeon {
+  name = "Stock pigeon"
+  diet = "Seeds"
+  taxonomy {
+    species = "Columba oenas"
+  }
+}
+dodo {
+  name = "Dodo"
+  diet = "Seeds"
+  extinct = true
+  taxonomy {
+    species = "Raphus cucullatus"
+  }
+}
