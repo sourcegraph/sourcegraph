@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/sourcegraph/log"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/sourcegraph/sourcegraph/internal/rcache"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
-	"github.com/stretchr/testify/assert"
 )
 
 // TestLoggerAndReaderHappyPaths tests pretty much everything in the happy path of both the logger and the log reader.
@@ -15,7 +16,7 @@ func TestLoggerAndReaderHappyPaths(t *testing.T) {
 	rcache.SetupForTest(t)
 
 	// Create logger
-	c := rcache.NewWithTTL(keyPrefix, 1)
+	c := rcache.NewWithTTL(keyPrefix, 1, false)
 	recorder := New(log.NoOp(), "test", c)
 
 	// Create routines

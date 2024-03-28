@@ -58,10 +58,10 @@ func NewLockoutStore(failedThreshold int, lockoutPeriod, consecutivePeriod time.
 
 	return &lockoutStore{
 		failedThreshold: failedThreshold,
-		lockouts:        rcache.NewWithTTL("account_lockout", int(lockoutPeriod.Seconds())),
-		failedAttempts:  rcache.NewWithTTL("account_failed_attempts", int(consecutivePeriod.Seconds())),
-		unlockToken:     rcache.NewWithTTL("account_unlock_token", int(lockoutPeriod.Seconds())),
-		unlockEmailSent: rcache.NewWithTTL("account_lockout_email_sent", int(lockoutPeriod.Seconds())),
+		lockouts:        rcache.NewWithTTL("account_lockout", int(lockoutPeriod.Seconds()), false),
+		failedAttempts:  rcache.NewWithTTL("account_failed_attempts", int(consecutivePeriod.Seconds()), false),
+		unlockToken:     rcache.NewWithTTL("account_unlock_token", int(lockoutPeriod.Seconds()), false),
+		unlockEmailSent: rcache.NewWithTTL("account_lockout_email_sent", int(lockoutPeriod.Seconds()), false),
 		sendEmail:       sendEmailF,
 	}
 }

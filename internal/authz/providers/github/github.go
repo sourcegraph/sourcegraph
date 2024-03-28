@@ -70,7 +70,7 @@ func NewProvider(urn string, opts ProviderOptions) *Provider {
 	if opts.GroupsCacheTTL >= 0 {
 		cg = &cachedGroups{
 			cache: rcache.NewWithTTL(
-				fmt.Sprintf("gh_groups_perms:%s:%s", codeHost.ServiceID, urn), int(opts.GroupsCacheTTL.Seconds()),
+				fmt.Sprintf("gh_groups_perms:%s:%s", codeHost.ServiceID, urn), int(opts.GroupsCacheTTL.Seconds()), false,
 			),
 		}
 	}

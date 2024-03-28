@@ -178,7 +178,7 @@ func (p *ClientProvider) NewClient(a auth.Authenticator) *Client {
 		tokenHash = a.Hash()
 		key += tokenHash
 	}
-	projCache := rcache.NewWithTTL(key, int(cacheTTL/time.Second))
+	projCache := rcache.NewWithTTL(key, int(cacheTTL/time.Second), false)
 
 	rl := ratelimit.NewInstrumentedLimiter(p.urn, ratelimit.NewGlobalRateLimiter(log.Scoped("GitLabClient"), p.urn))
 	rlm := ratelimit.DefaultMonitorRegistry.GetOrSet(p.baseURL.String(), tokenHash, "rest", &ratelimit.Monitor{})

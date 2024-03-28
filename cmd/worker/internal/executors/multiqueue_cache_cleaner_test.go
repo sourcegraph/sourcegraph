@@ -77,7 +77,7 @@ func Test_multiqueueCacheCleaner_Handle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rcache.SetupForTest(t)
 			m := &multiqueueCacheCleaner{
-				cache:      rcache.New(executortypes.DequeueCachePrefix),
+				cache:      rcache.New(executortypes.DequeueCachePrefix, false),
 				windowSize: executortypes.DequeueTtl,
 			}
 			timeNow = func() time.Time {

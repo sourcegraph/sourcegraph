@@ -23,7 +23,7 @@ import (
 var MockCountGoImporters func(ctx context.Context, repo api.RepoName) (int, error)
 
 var (
-	goImportersCountCache = rcache.NewWithTTL("go-importers-count", 14400) // 4 hours
+	goImportersCountCache = rcache.NewWithTTL("go-importers-count", 14400, false) // 4 hours
 )
 
 // CountGoImporters returns the number of Go importers for the repository's Go subpackages. This is

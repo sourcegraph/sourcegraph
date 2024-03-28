@@ -146,12 +146,12 @@ func Main(ctx context.Context, obctx *observation.Context, ready service.ReadyFu
 		sources.Add(
 			productsubscription.NewSource(
 				obctx.Logger,
-				rcache.NewWithTTL(fmt.Sprintf("product-subscriptions:%s", productsubscription.SourceVersion), int(cfg.SourcesCacheTTL.Seconds())),
+				rcache.NewWithTTL(fmt.Sprintf("product-subscriptions:%s", productsubscription.SourceVersion), int(cfg.SourcesCacheTTL.Seconds()), false),
 				dotcomClient,
 				cfg.Dotcom.InternalMode,
 				cfg.ActorConcurrencyLimit,
 			),
-			dotcomuser.NewSource(obctx.Logger, rcache.NewWithTTL(fmt.Sprintf("dotcom-users:%s", dotcomuser.SourceVersion), int(cfg.SourcesCacheTTL.Seconds())), dotcomClient, cfg.ActorConcurrencyLimit, rs, cfg.Dotcom.ActorRefreshCoolDownInterval),
+			dotcomuser.NewSource(obctx.Logger, rcache.NewWithTTL(fmt.Sprintf("dotcom-users:%s", dotcomuser.SourceVersion), int(cfg.SourcesCacheTTL.Seconds()), false), dotcomClient, cfg.ActorConcurrencyLimit, rs, cfg.Dotcom.ActorRefreshCoolDownInterval),
 		)
 	} else {
 		obctx.Logger.Warn("CODY_GATEWAY_DOTCOM_ACCESS_TOKEN is not set, dotcom-based actor sources are disabled")

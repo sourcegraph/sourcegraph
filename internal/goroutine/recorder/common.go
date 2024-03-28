@@ -74,7 +74,7 @@ const (
 const ttlSeconds = 604800 // 7 days
 
 func GetCache() *rcache.Cache {
-	return rcache.NewWithTTL(keyPrefix, ttlSeconds)
+	return rcache.NewWithTTL(keyPrefix, ttlSeconds, false)
 }
 
 // mergeStats returns the given stats updated with the given run data.
