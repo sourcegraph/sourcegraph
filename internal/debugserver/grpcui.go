@@ -6,14 +6,16 @@ import (
 
 	"github.com/fullstorydev/grpcui/standalone"
 	"github.com/sourcegraph/log"
-	"github.com/sourcegraph/sourcegraph/internal/env"
 	"google.golang.org/grpc"
 
+	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/grpc/defaults"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-var envEnableGRPCWebUI = env.MustGetBool("GRPC_WEB_UI_ENABLED", false, "Enable the gRPC Web UI to debug and explore gRPC services")
+const envEnableGRPCWebUIName = "GRPC_WEB_UI_ENABLED"
+
+var envEnableGRPCWebUI = env.MustGetBool(envEnableGRPCWebUIName, false, "Enable the gRPC Web UI to debug and explore gRPC services")
 
 const gRPCWebUIPath = "/debug/grpcui"
 
@@ -54,7 +56,7 @@ type grpcHandler struct {
 
 func (g *grpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !envEnableGRPCWebUI {
-		http.Error(w, "gRPC Web UI is disabled", http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("gRPC Web UI is disabled, set %s=true to enable it", envEnableGRPCWebUIName), http.StatusNotFound)
 		return
 	}
 
@@ -69,7 +71,28 @@ func (g *grpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer cc.Close()
 
-	handler, err := standalone.HandlerViaReflection(ctx, cc, g.target)
+	// examples, err := standalone.WithExamples(standalone.Example{
+	// 	Name:        "Fetch repo",
+	// 	Description: "Fetches a given repository from the remote",
+	// 	Service:     "gitserver",
+	// 	Method:      "FetchRepo",
+	// 	Request: standalone.ExampleRequest{
+	// 		Data: []byte(`{"repo": "github.com/sourcegraph/sourcegraph"}`),
+	// 	},
+	// })
+	// if err != nil {
+	// 	err = errors.Wrap(err, "initializing examples")
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	handler, err := standalone.HandlerViaReflection(
+		ctx,
+		cc,
+		g.target,
+		standalone.AddJS("sg-binary.js", []byte("")),
+		// examples,
+	)
 	if err != nil {
 		err = errors.Wrap(err, "initializing standalone GRPCUI handler")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
