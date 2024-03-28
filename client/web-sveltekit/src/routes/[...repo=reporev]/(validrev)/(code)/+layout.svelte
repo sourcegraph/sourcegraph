@@ -150,13 +150,7 @@
                 </TabPanel>
             </Tabs>
             {#if latestCommit}
-                <LastCommit
-                    commitURL={latestCommit.canonicalURL}
-                    avatarURL={latestCommit.author.person.avatarURL}
-                    displayName={latestCommit.author.person.displayName}
-                    commitMessage={latestCommit.subject}
-                    commitDate={latestCommit.author.date}
-                />
+                <LastCommit latestCommit={latestCommit} />
             {:else}
                 <LoadingSpinner inline />
             {/if}

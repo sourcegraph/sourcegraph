@@ -10,12 +10,13 @@
 
     import { page } from '$app/stores'
     import { scrollIntoView } from '$lib/actions'
+    import Avatar from '$lib/Avatar.svelte'
     import Icon from '$lib/Icon.svelte'
     import LoadingSpinner from '$lib/LoadingSpinner.svelte'
     import Scroller, { type Capture as ScrollerCapture } from '$lib/Scroller.svelte'
-    import Tooltip from '$lib/Tooltip.svelte'
-    import Avatar from '$lib/Avatar.svelte'
     import Timestamp from '$lib/Timestamp.svelte'
+    import Tooltip from '$lib/Tooltip.svelte'
+
     import type { HistoryPanel_HistoryConnection } from './HistoryPanel.gql'
 
     export let history: HistoryPanel_HistoryConnection | null
@@ -28,6 +29,7 @@
             scroller: scroller?.capture(),
         }
     }
+    $: console.log(history)
 
     export async function restore(data: Capture) {
         if (data.scroller) {

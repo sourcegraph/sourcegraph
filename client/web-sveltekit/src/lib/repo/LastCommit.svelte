@@ -4,17 +4,28 @@
     import type { Avatar_User } from '$lib/Avatar.gql'
     import Avatar from '$lib/Avatar.svelte'
 
-    export let commitURL: string
-    export let avatarURL: string | null
-    export let displayName: string
-    export let commitMessage: string
-    export let commitDate: string
+    export let latestCommit: LastCommitProps
+
+    interface LastCommitProps {
+        id: string
+        abbreviatedOID: string
+        subject: string
+        canonicalURL: string
+        author: {
+            date: string
+            person: {
+                avatarURL: string | null
+                displayName: string
+                name: string
+            }
+        }
+    }
 
     let avatar: Avatar_User = {
         __typename: 'User',
-        avatarURL: avatarURL,
-        displayName: displayName,
-        username: displayName,
+        avatarURL: latestCommit.author.person.avatarURL,
+        displayName: latestCommit.author.person.displayName,
+        username: latestCommit.author.person.name,
     }
 
     function getFirstNameAndLastInitial(name: string): string {
@@ -43,29 +54,29 @@
     }
 
     function truncateIfNeeded(cm: string): string {
-        cm = extractCommitMessage(commitMessage)
+        cm = extractCommitMessage(cm)
         return cm.length > 23 ? cm.substring(0, 23) + '...' : cm
     }
 
-    $: commitMessageNoSHA = truncateIfNeeded(commitMessage)
-    $: PRNumber = extractPRNumber(commitMessage)
+    $: commitMessageNoSHA = truncateIfNeeded(latestCommit.subject)
+    $: PRNumber = extractPRNumber(latestCommit.subject)
 </script>
 
 <div class="latest-commit">
     <div class="user-info">
         <Avatar {avatar} />
         <div class="display-name">
-            <small>{getFirstNameAndLastInitial(displayName)}</small>
+            <small>{getFirstNameAndLastInitial(latestCommit.author.person.displayName)}</small>
         </div>
     </div>
 
     <div class="commit-message">
         <small>{commitMessageNoSHA}</small>
-        (<a href={commitURL}><small>{PRNumber}</small></a>)
+        (<a href={latestCommit.canonicalURL}><small>{PRNumber}</small></a>)
     </div>
 
     <div class="commit-date">
-        <small>{convertToElapsedTime(commitDate)}</small>
+        <small>{convertToElapsedTime(latestCommit.author.date)}</small>
     </div>
 </div>
 
