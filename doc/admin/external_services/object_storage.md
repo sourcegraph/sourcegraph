@@ -30,6 +30,10 @@ To target an S3 bucket you've already provisioned, set the following environment
 
 To target a GCS bucket you've already provisioned, set the following environment variables. Authentication is done through a service account key, supplied as either a path to a volume-mounted file, or the contents read in as an environment variable payload.
 
+> WARNING: Your IAM policy should grant the service account the Storage Object Admin (`roles/storage.objectAdmin`) role in order to upload, view, and delete objects in the GCS bucket. If you would like Sourcegraph to provision buckets on your behave, you will need to grant additional permissions to allow creation and update of buckets.
+
+> NOTE: If your compute instance has service account enabled, or your GKE cluster has [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) enabled, you may offload authentication to metadata server by leaving `PRECISE_CODE_INTEL_UPLOAD_GOOGLE_APPLICATION_CREDENTIALS_FILE` and `PRECISE_CODE_INTEL_UPLOAD_GOOGLE_APPLICATION_CREDENTIALS_FILE_CONTENT` empty.
+
 - `PRECISE_CODE_INTEL_UPLOAD_BACKEND=GCS`
 - `PRECISE_CODE_INTEL_UPLOAD_BUCKET=<my bucket name>`
 - `PRECISE_CODE_INTEL_UPLOAD_GCP_PROJECT_ID=<my project id>`
