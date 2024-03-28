@@ -1,0 +1,70 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library")
+
+go_library(
+    name = "upgradetest_lib",
+    srcs = [
+        "main.go",
+        "tests.go",
+        "tests-util.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/testing/tools/upgradetest",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//lib/errors",
+        "@com_github_lib_pq//:pq",
+        "@com_github_masterminds_semver//:semver",
+        "@com_github_sourcegraph_conc//pool",
+        "@com_github_sourcegraph_run//:run",
+        "@com_github_urfave_cli_v2//:cli",
+        "@io_k8s_utils//strings/slices",
+    ],
+)
+
+go_binary(
+    name = "go_upgradetest",
+    args = ["-h"],
+    data = ["//cmd/migrator:image_tarball"],
+    embed = [":upgradetest_lib"],
+    visibility = ["//visibility:public"],
+)
+
+# Run with bazel test //testing/tools/upgradetest:sh_upgradetest
+sh_test(
+    name = "sh_upgradetest",
+    timeout = "eternal",
+    srcs = ["test.sh"],
+    args = [
+        "$(location :go_upgradetest)",
+        "$(location //cmd/migrator:image_tarball)",
+        "$(location //cmd/frontend:image_tarball)",
+        "$(locations //internal/database:generate_schemas)",
+    ],
+    data = [
+        ":go_upgradetest",
+        "//cmd/frontend:image_tarball",
+        "//cmd/migrator:image_tarball",
+        "//internal/database:generate_schemas",
+    ],
+    tags = [
+        "no-sandbox",
+        "requires-network",
+    ],
+)
+
+# bazel run //testing/tools/upgradetest:sh_upgradetest_run
+sh_binary(
+    name = "sh_upgradetest_run",
+    srcs = ["test.sh"],
+    args = [
+        "$(location :go_upgradetest)",
+        "$(location //cmd/migrator:image_tarball)",
+        "$(location //cmd/frontend:image_tarball)",
+        "$(locations //internal/database:generate_schemas)",
+    ],
+    data = [
+        ":go_upgradetest",
+        "//cmd/frontend:image_tarball",
+        "//cmd/migrator:image_tarball",
+        "//internal/database:generate_schemas",
+    ],
+)

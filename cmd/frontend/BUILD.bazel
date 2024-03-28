@@ -69,6 +69,7 @@ oci_tarball(
     name = "image_tarball",
     image = ":image",
     repo_tags = ["frontend:candidate"],
+    visibility = ["//testing/tools/upgradetest:__pkg__"],
 )
 
 container_structure_test(
