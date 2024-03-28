@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "storage",
+    srcs = ["storageclass.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/k8s/resource/storage",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/maps",
+        "//lib/pointers",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//storage/v1:storage",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+    ],
+)
+
+go_test(
+    name = "storage_test",
+    srcs = [
+        "example_test.go",
+        "storageclass_test.go",
+    ],
+    embed = [":storage"],
+    deps = [
+        "//lib/pointers",
+        "@com_github_google_go_cmp//cmp",
+        "@io_k8s_api//core/v1:core",
+        "@io_k8s_api//storage/v1:storage",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:meta",
+        "@io_k8s_sigs_yaml//:yaml",
+    ],
+)
