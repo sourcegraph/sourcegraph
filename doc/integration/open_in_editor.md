@@ -20,14 +20,14 @@ set up.
 
 If you haven’t used the feature, find this button on the right side of your screen:
 
-<img src="img/open-in-editor.svg" width="20" height="20" alt="Open in Editor icon" style="margin:0 5px;" /> 
+<img src="img/open-in-editor.svg" width="20" height="20" alt="Open in Editor icon" style="margin:0 5px;" />
 
 When you click it, a small popup appears where you’ll need to set two things: a projects path and your editor.
 
 - The **projects path** is the folder where you store your projects. Enter any Linux, Windows, or macOS absolute path.
   - Example: If your projects path is `/home/username/projects`, one of your repos
     is https://github.com/sourcegraph/sourcegraph/, and you want to open `README.md` in the root folder of the repo,
-    then the feature will look for the file at `/home/username/project/sourcegraph/README.md`.
+    then the feature will look for the file at `/home/username/projects/sourcegraph/README.md`.
 - Then choose your **preferred editor** from the list. We support VS Code, Atom, Sublime Text, and JetBrains IDEs (
   AppCode, CLion, GoLand, IntelliJ IDEA, PhpStorm, PyCharm, Rider, RubyMine, WebStorm, and all new IDEs that JetBrains
   releases). If you use a different editor, check out “Advanced config” below.
