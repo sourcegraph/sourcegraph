@@ -205,9 +205,8 @@ func (s DockerStep) Value() (driver.Value, error) {
 }
 
 type DirtyRepository struct {
-	RepositoryID   int
-	RepositoryName string
-	DirtyToken     int
+	RepositoryID int
+	DirtyToken   int
 }
 
 type GetIndexersOptions struct {

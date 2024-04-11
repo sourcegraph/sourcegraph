@@ -76,7 +76,8 @@ func (h *handler) Handle(ctx context.Context, logger log.Logger, record *bgrepo.
 	)
 
 	fetcher := &revisionFetcher{
-		repo:      repo.Name,
+		repo:      repo.ID,
+		repoName:  repo.Name,
 		revision:  record.Revision,
 		gitserver: h.gitserverClient,
 	}
@@ -235,7 +236,8 @@ func getFileFilterPathPatterns(embeddingsConfig *conftypes.EmbeddingsConfig) (in
 }
 
 type revisionFetcher struct {
-	repo      api.RepoName
+	repo      api.RepoID
+	repoName  api.RepoName
 	revision  api.CommitID
 	gitserver gitserver.Client
 }
@@ -320,7 +322,7 @@ func (r *revisionFetcher) validateRevision(ctx context.Context) error {
 
 		// We likely had an empty repo at the time of scheduling this job.
 		// The repo can be processed once it's resubmitted with a non-empty revision.
-		return errors.Newf("could not get latest commit for repo %s", r.repo)
+		return errors.Newf("could not get latest commit for repo %s", r.repoName)
 	}
 	return nil
 }

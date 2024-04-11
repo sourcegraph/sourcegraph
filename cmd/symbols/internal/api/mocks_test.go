@@ -55,7 +55,7 @@ func NewMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		LogReverseEachFunc: &GitserverClientLogReverseEachFunc{
-			defaultHook: func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) (r0 error) {
+			defaultHook: func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) (r0 error) {
 				return
 			},
 		},
@@ -65,7 +65,7 @@ func NewMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		RevListFunc: &GitserverClientRevListFunc{
-			defaultHook: func(context.Context, string, string, func(commit string) (bool, error)) (r0 error) {
+			defaultHook: func(context.Context, api.RepoID, string, func(commit string) (bool, error)) (r0 error) {
 				return
 			},
 		},
@@ -87,7 +87,7 @@ func NewStrictMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		LogReverseEachFunc: &GitserverClientLogReverseEachFunc{
-			defaultHook: func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error {
+			defaultHook: func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error {
 				panic("unexpected invocation of MockGitserverClient.LogReverseEach")
 			},
 		},
@@ -97,7 +97,7 @@ func NewStrictMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		RevListFunc: &GitserverClientRevListFunc{
-			defaultHook: func(context.Context, string, string, func(commit string) (bool, error)) error {
+			defaultHook: func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error {
 				panic("unexpected invocation of MockGitserverClient.RevList")
 			},
 		},
@@ -359,15 +359,15 @@ func (c GitserverClientGitDiffFuncCall) Results() []interface{} {
 // LogReverseEach method of the parent MockGitserverClient instance is
 // invoked.
 type GitserverClientLogReverseEachFunc struct {
-	defaultHook func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error
-	hooks       []func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error
+	defaultHook func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error
+	hooks       []func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error
 	history     []GitserverClientLogReverseEachFuncCall
 	mutex       sync.Mutex
 }
 
 // LogReverseEach delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockGitserverClient) LogReverseEach(v0 context.Context, v1 string, v2 string, v3 int, v4 func(entry gitdomain.LogEntry) error) error {
+func (m *MockGitserverClient) LogReverseEach(v0 context.Context, v1 api.RepoID, v2 string, v3 int, v4 func(entry gitdomain.LogEntry) error) error {
 	r0 := m.LogReverseEachFunc.nextHook()(v0, v1, v2, v3, v4)
 	m.LogReverseEachFunc.appendCall(GitserverClientLogReverseEachFuncCall{v0, v1, v2, v3, v4, r0})
 	return r0
@@ -376,7 +376,7 @@ func (m *MockGitserverClient) LogReverseEach(v0 context.Context, v1 string, v2 s
 // SetDefaultHook sets function that is called when the LogReverseEach
 // method of the parent MockGitserverClient instance is invoked and the hook
 // queue is empty.
-func (f *GitserverClientLogReverseEachFunc) SetDefaultHook(hook func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error) {
+func (f *GitserverClientLogReverseEachFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error) {
 	f.defaultHook = hook
 }
 
@@ -384,7 +384,7 @@ func (f *GitserverClientLogReverseEachFunc) SetDefaultHook(hook func(context.Con
 // LogReverseEach method of the parent MockGitserverClient instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *GitserverClientLogReverseEachFunc) PushHook(hook func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error) {
+func (f *GitserverClientLogReverseEachFunc) PushHook(hook func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -393,19 +393,19 @@ func (f *GitserverClientLogReverseEachFunc) PushHook(hook func(context.Context, 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *GitserverClientLogReverseEachFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *GitserverClientLogReverseEachFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error {
+	f.PushHook(func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error {
 		return r0
 	})
 }
 
-func (f *GitserverClientLogReverseEachFunc) nextHook() func(context.Context, string, string, int, func(entry gitdomain.LogEntry) error) error {
+func (f *GitserverClientLogReverseEachFunc) nextHook() func(context.Context, api.RepoID, string, int, func(entry gitdomain.LogEntry) error) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -444,7 +444,7 @@ type GitserverClientLogReverseEachFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 string
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string
@@ -583,15 +583,15 @@ func (c GitserverClientNewFileReaderFuncCall) Results() []interface{} {
 // GitserverClientRevListFunc describes the behavior when the RevList method
 // of the parent MockGitserverClient instance is invoked.
 type GitserverClientRevListFunc struct {
-	defaultHook func(context.Context, string, string, func(commit string) (bool, error)) error
-	hooks       []func(context.Context, string, string, func(commit string) (bool, error)) error
+	defaultHook func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error
+	hooks       []func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error
 	history     []GitserverClientRevListFuncCall
 	mutex       sync.Mutex
 }
 
 // RevList delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockGitserverClient) RevList(v0 context.Context, v1 string, v2 string, v3 func(commit string) (bool, error)) error {
+func (m *MockGitserverClient) RevList(v0 context.Context, v1 api.RepoID, v2 string, v3 func(commit string) (bool, error)) error {
 	r0 := m.RevListFunc.nextHook()(v0, v1, v2, v3)
 	m.RevListFunc.appendCall(GitserverClientRevListFuncCall{v0, v1, v2, v3, r0})
 	return r0
@@ -600,7 +600,7 @@ func (m *MockGitserverClient) RevList(v0 context.Context, v1 string, v2 string, 
 // SetDefaultHook sets function that is called when the RevList method of
 // the parent MockGitserverClient instance is invoked and the hook queue is
 // empty.
-func (f *GitserverClientRevListFunc) SetDefaultHook(hook func(context.Context, string, string, func(commit string) (bool, error)) error) {
+func (f *GitserverClientRevListFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error) {
 	f.defaultHook = hook
 }
 
@@ -608,7 +608,7 @@ func (f *GitserverClientRevListFunc) SetDefaultHook(hook func(context.Context, s
 // RevList method of the parent MockGitserverClient instance invokes the
 // hook at the front of the queue and discards it. After the queue is empty,
 // the default hook function is invoked for any future action.
-func (f *GitserverClientRevListFunc) PushHook(hook func(context.Context, string, string, func(commit string) (bool, error)) error) {
+func (f *GitserverClientRevListFunc) PushHook(hook func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -617,19 +617,19 @@ func (f *GitserverClientRevListFunc) PushHook(hook func(context.Context, string,
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *GitserverClientRevListFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, string, string, func(commit string) (bool, error)) error {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *GitserverClientRevListFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, string, string, func(commit string) (bool, error)) error {
+	f.PushHook(func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error {
 		return r0
 	})
 }
 
-func (f *GitserverClientRevListFunc) nextHook() func(context.Context, string, string, func(commit string) (bool, error)) error {
+func (f *GitserverClientRevListFunc) nextHook() func(context.Context, api.RepoID, string, func(commit string) (bool, error)) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -667,7 +667,7 @@ type GitserverClientRevListFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 string
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string

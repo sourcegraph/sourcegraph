@@ -58,7 +58,7 @@ func NewMatcher(
 // commit date.
 //
 // A subset of all commits can be returned by passing in any number of commit revhash strings.
-func (m *Matcher) CommitsDescribedByPolicy(ctx context.Context, repositoryID int, repoName api.RepoName, policies []shared.ConfigurationPolicy, now time.Time, filterCommits ...string) (map[string][]PolicyMatch, error) {
+func (m *Matcher) CommitsDescribedByPolicy(ctx context.Context, repositoryID int, policies []shared.ConfigurationPolicy, now time.Time, filterCommits ...string) (map[string][]PolicyMatch, error) {
 	if len(policies) == 0 && !m.includeTipOfDefaultBranch {
 		return nil, nil
 	}
@@ -71,14 +71,13 @@ func (m *Matcher) CommitsDescribedByPolicy(ctx context.Context, repositoryID int
 	// mutable context
 	mContext := matcherContext{
 		repositoryID:   repositoryID,
-		repo:           repoName,
 		policies:       policies,
 		patterns:       patterns,
 		commitMap:      map[string][]PolicyMatch{},
 		branchRequests: map[string]branchRequestMeta{},
 	}
 
-	refDescriptions, err := m.gitserverClient.RefDescriptions(ctx, repoName, filterCommits...)
+	refDescriptions, err := m.gitserverClient.RefDescriptions(ctx, api.RepoID(repositoryID), filterCommits...)
 	if err != nil {
 		return nil, errors.Wrap(err, "gitserver.RefDescriptions")
 	}
@@ -113,8 +112,6 @@ func (m *Matcher) CommitsDescribedByPolicy(ctx context.Context, repositoryID int
 type matcherContext struct {
 	// repositoryID is the repository identifier used in requests to gitserver.
 	repositoryID int
-
-	repo api.RepoName
 
 	// policies is the full set (global and repository-specific) policies that apply to the given repository.
 	policies []shared.ConfigurationPolicy
@@ -213,7 +210,7 @@ func (m *Matcher) matchCommitsOnBranch(ctx context.Context, context matcherConte
 
 		commitDates, err := m.gitserverClient.CommitsUniqueToBranch(
 			ctx,
-			context.repo,
+			api.RepoID(context.repositoryID),
 			branchRequestMeta.commitID,
 			branchRequestMeta.isDefaultBranch,
 			maxCommitAge,
@@ -259,7 +256,7 @@ func (m *Matcher) matchCommitsOnBranch(ctx context.Context, context matcherConte
 func (m *Matcher) matchCommitPolicies(ctx context.Context, context matcherContext, now time.Time) error {
 	for _, policy := range context.policies {
 		if policy.Type == shared.GitObjectTypeCommit {
-			commit, err := m.gitserverClient.GetCommit(ctx, context.repo, api.CommitID(policy.Pattern))
+			commit, err := m.gitserverClient.GetCommit(ctx, api.RepoID(context.repositoryID), api.CommitID(policy.Pattern))
 			if err != nil {
 				if errors.HasType(err, &gitdomain.RevisionNotFoundError{}) {
 					continue

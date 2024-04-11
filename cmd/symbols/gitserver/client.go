@@ -31,11 +31,11 @@ type GitserverClient interface {
 	NewFileReader(ctx context.Context, repoCommitPath types.RepoCommitPath) (io.ReadCloser, error)
 
 	// LogReverseEach runs git log in reverse order and calls the given callback for each entry.
-	LogReverseEach(ctx context.Context, repo string, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error
+	LogReverseEach(ctx context.Context, repo api.RepoID, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error
 
 	// RevList makes a git rev-list call and iterates through the resulting commits, calling the provided
 	// onCommit function for each.
-	RevList(ctx context.Context, repo string, commit string, onCommit func(commit string) (shouldContinue bool, err error)) error
+	RevList(ctx context.Context, repo api.RepoID, commit string, onCommit func(commit string) (shouldContinue bool, err error)) error
 }
 
 // Changes are added, deleted, and modified paths.
@@ -97,11 +97,11 @@ func (c *gitserverClient) NewFileReader(ctx context.Context, repoCommitPath type
 	return c.innerClient.NewFileReader(ctx, api.RepoName(repoCommitPath.Repo), api.CommitID(repoCommitPath.Commit), repoCommitPath.Path)
 }
 
-func (c *gitserverClient) LogReverseEach(ctx context.Context, repo string, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error {
+func (c *gitserverClient) LogReverseEach(ctx context.Context, repo api.RepoID, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error {
 	return c.innerClient.LogReverseEach(ctx, repo, commit, n, onLogEntry)
 }
 
-func (c *gitserverClient) RevList(ctx context.Context, repo string, commit string, onCommit func(commit string) (shouldContinue bool, err error)) error {
+func (c *gitserverClient) RevList(ctx context.Context, repo api.RepoID, commit string, onCommit func(commit string) (shouldContinue bool, err error)) error {
 	return c.innerClient.RevList(ctx, repo, commit, onCommit)
 }
 

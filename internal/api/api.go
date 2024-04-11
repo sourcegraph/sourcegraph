@@ -3,6 +3,7 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,10 @@ import (
 
 // RepoID is the unique identifier for a repository.
 type RepoID int32
+
+func (r RepoID) Attr() attribute.KeyValue {
+	return attribute.String("repoID", strconv.Itoa(int(r)))
+}
 
 // RepoName is the name of a repository, consisting of one or more "/"-separated path components.
 //

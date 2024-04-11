@@ -89,7 +89,7 @@ func (f *repoFilter) getFilter(repos []types.RepoIDName, logger log.Logger) ([]t
 	ctx := actor.WithInternalActor(context.Background())
 	for _, repo := range repos {
 
-		_, commit, err := f.client.GetDefaultBranch(ctx, repo.Name, true)
+		_, commit, err := f.client.GetDefaultBranch(ctx, repo.ID, true)
 		if err != nil {
 			logger.Warn("repoContextFilter: couldn't get default branch, removing repo", log.Int32("repo", int32(repo.ID)), log.Error(err))
 			continue

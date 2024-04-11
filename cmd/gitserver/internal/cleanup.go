@@ -32,7 +32,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/diskusage"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/env"
-	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
 	"github.com/sourcegraph/sourcegraph/internal/hostname"
@@ -46,8 +45,7 @@ type JanitorConfig struct {
 	JanitorInterval time.Duration
 	ShardID         string
 
-	DesiredPercentFree             int
-	DisableDeleteReposOnWrongShard bool
+	DesiredPercentFree int
 }
 
 func NewJanitor(ctx context.Context, cfg JanitorConfig, db database.DB, fs gitserverfs.FS, rcf *wrexec.RecordingCommandFactory, logger log.Logger) goroutine.BackgroundRoutine {
@@ -86,7 +84,6 @@ func NewJanitor(ctx context.Context, cfg JanitorConfig, db database.DB, fs gitse
 				}()
 			}
 
-			gitserverAddrs := gitserver.NewGitserverAddresses(conf.Get())
 			// TODO: Should this return an error?
 			cleanupRepos(ctx, logger, db, fs, rcf, cfg.ShardID, gitserverAddrs, cfg.DisableDeleteReposOnWrongShard)
 
@@ -97,17 +94,6 @@ func NewJanitor(ctx context.Context, cfg JanitorConfig, db database.DB, fs gitse
 		goroutine.WithInterval(cfg.JanitorInterval),
 	)
 }
-
-var (
-	wrongShardReposTotal = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "src_gitserver_repo_wrong_shard",
-		Help: "The number of repos that are on disk on the wrong shard",
-	})
-	wrongShardReposDeletedCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "src_gitserver_repo_wrong_shard_deleted",
-		Help: "The number of repos on the wrong shard that we deleted",
-	})
-)
 
 //go:embed sg_maintenance.sh
 var sgMaintenanceScript string
@@ -183,9 +169,6 @@ var sgmLogExpire = env.MustGetDuration("SRC_GIT_LOG_FILE_EXPIRY", 24*time.Hour, 
 // sure that changes here are reflected in sgmLogHeader, too.
 var sgmRetries, _ = strconv.Atoi(env.Get("SRC_SGM_RETRIES", "3", "the maximum number of times we retry sg maintenance before triggering a reclone."))
 
-// Controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB. Defaults to false.
-var removeNonExistingRepos, _ = strconv.ParseBool(env.Get("SRC_REMOVE_NON_EXISTING_REPOS", "false", "controls if gitserver cleanup tries to remove repos from disk which are not defined in the DB"))
-
 var (
 	reposRemoved = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "src_gitserver_repos_removed",
@@ -219,10 +202,6 @@ var (
 		Name:    "src_gitserver_janitor_duration_seconds",
 		Help:    "Duration of gitserver janitor background job",
 		Buckets: []float64{0.1, 1, 10, 60, 300, 3600, 7200},
-	})
-	nonExistingReposRemoved = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "src_gitserver_non_existing_repos_removed",
-		Help: "number of non existing repos removed during cleanup",
 	})
 )
 
@@ -261,72 +240,6 @@ func cleanupRepos(
 		janitorTimer.Observe(time.Since(janitorStart).Seconds())
 	}()
 
-	knownGitServerShard := false
-	for _, addr := range gitServerAddrs.Addresses {
-		if hostnameMatch(shardID, addr) {
-			knownGitServerShard = true
-			break
-		}
-	}
-	if !knownGitServerShard {
-		logger.Warn("current shard is not included in the list of known gitserver shards, will not delete repos", log.String("current-hostname", shardID), log.Strings("all-shards", gitServerAddrs.Addresses))
-	}
-
-	repoToSize := make(map[api.RepoName]int64)
-	var wrongShardRepoCount int64
-	defer func() {
-		// We want to set the gauge only at the end when we know the total
-		wrongShardReposTotal.Set(float64(wrongShardRepoCount))
-	}()
-
-	var wrongShardReposDeleted int64
-	defer func() {
-		// We want to set the gauge only when wrong shard clean-up is enabled
-		if disableDeleteReposOnWrongShard {
-			wrongShardReposDeletedCounter.Add(float64(wrongShardReposDeleted))
-		}
-	}()
-
-	maybeDeleteWrongShardRepos := func(repoName api.RepoName, dir common.GitDir) (done bool, err error) {
-		// Record the number of repos that should not belong on this instance and
-		// remove up to SRC_WRONG_SHARD_DELETE_LIMIT in a single Janitor run.
-		addr := gitServerAddrs.AddrForRepo(ctx, repoName)
-
-		if hostnameMatch(shardID, addr) {
-			return false, nil
-		}
-
-		wrongShardRepoCount++
-
-		// If we're on a shard not currently known, basically every repo would
-		// be considered on the wrong shard. This is probably a configuration
-		// error and we don't want to completely empty our disk in that case,
-		// so skip.
-		if !knownGitServerShard {
-			return false, nil
-		}
-
-		// Check that wrong shard deletion has not been disabled.
-		if disableDeleteReposOnWrongShard {
-			return false, nil
-		}
-
-		logger.Info(
-			"removing repo cloned on the wrong shard",
-			log.String("dir", string(dir)),
-			log.String("target-shard", addr),
-			log.String("current-shard", shardID),
-		)
-		if err := fs.RemoveRepo(repoName); err != nil {
-			return true, err
-		}
-
-		wrongShardReposDeleted++
-
-		// Note: We just deleted the repo. So we're done with any further janitor tasks!
-		return true, nil
-	}
-
 	collectSize := func(repoName api.RepoName, dir common.GitDir) (done bool, err error) {
 		backend := gitcli.NewBackend(logger, rcf, dir, repoName)
 		last, err := getLastSizeCalculation(ctx, backend.Config())
@@ -344,61 +257,21 @@ func cleanupRepos(
 			return false, errors.Wrap(err, "calculating repo size")
 		}
 		repoToSize[repoName] = size
+		// TODO: Should reuse this debounce logic for the optimization endpoint.
 
 		return false, setLastSizeCalculation(ctx, backend.Config())
 	}
 
-	maybeRemoveCorrupt := func(repoName api.RepoName, dir common.GitDir) (done bool, _ error) {
-		corrupt, reason, err := checkRepoDirCorrupt(rcf, repoName, dir)
-		if !corrupt || err != nil {
-			return false, err
-		}
+	checkCorrupt := func(repoName api.RepoName, dir common.GitDir) (done bool, _ error) {
+		backend := gitcli.NewBackend(logger, rcf, dir, repoName)
 
-		err = db.GitserverRepos().LogCorruption(ctx, repoName, fmt.Sprintf("sourcegraph detected corrupt repo: %s", reason), shardID)
-		if err != nil {
-			logger.Warn("failed to log repo corruption", log.String("repo", string(repoName)), log.Error(err))
-		}
-
-		logger.Info("removing corrupt repo", log.String("repo", string(dir)), log.String("reason", reason))
-		if err := fs.RemoveRepo(repoName); err != nil {
+		corrupt, _, err := checkRepoDirCorrupt(ctx, backend, rcf, repoName, dir)
+		if corrupt || err != nil {
+			// When corrupt, we don't want to proceed - all effort would be wasted.
 			return true, err
 		}
-		reposRemoved.WithLabelValues(reason).Inc()
 
-		// Set as not_cloned in the database.
-		if err := db.GitserverRepos().SetCloneStatus(ctx, repoName, types.CloneStatusNotCloned, shardID); err != nil {
-			return true, errors.Wrap(err, "failed to update clone status")
-		}
-
-		return true, nil
-	}
-
-	maybeRemoveNonExisting := func(repoName api.RepoName, dir common.GitDir) (bool, error) {
-		if !removeNonExistingRepos {
-			return false, nil
-		}
-
-		_, err := db.GitserverRepos().GetByName(ctx, repoName)
-		// Repo still exists, nothing to do.
-		if err == nil {
-			return false, nil
-		}
-
-		// Failed to talk to DB, skip this repo.
-		if !errcode.IsNotFound(err) {
-			logger.Warn("failed to look up repo", log.Error(err), log.String("repo", string(repoName)))
-			return false, nil
-		}
-
-		// The repo does not exist in the DB (or is soft-deleted), continue deleting it.
-		// TODO: For soft-deleted, it might be nice to attempt to update the clone status,
-		// but that can only work when we can map a repo on disk back to a repo in DB
-		// when the name has been modified to have the DELETED- prefix.
-		err = fs.RemoveRepo(repoName)
-		if err == nil {
-			nonExistingReposRemoved.Inc()
-		}
-		return true, err
+		return false, nil
 	}
 
 	ensureGitAttributes := func(repoName api.RepoName, dir common.GitDir) (done bool, err error) {
@@ -566,14 +439,8 @@ func cleanupRepos(
 		Do   func(api.RepoName, common.GitDir) (bool, error)
 	}
 	cleanups := []cleanupFn{
-		// First, check if we should even be having this repo on disk anymore,
-		// maybe there's been a resharding event and we can actually remove it
-		// and not spend further CPU cycles fixing it.
-		{"delete wrong shard repos", maybeDeleteWrongShardRepos},
 		// Do some sanity checks on the repository.
-		{"maybe remove corrupt", maybeRemoveCorrupt},
-		// Remove repo if DB does not contain it anymore
-		{"maybe remove non existing", maybeRemoveNonExisting},
+		{"check corrupt", checkCorrupt},
 		// If git is interrupted it can leave lock files lying around. It does not clean
 		// these up, and instead fails commands.
 		{"remove stale locks", removeStaleLocks},
@@ -621,7 +488,7 @@ func cleanupRepos(
 
 	reposCleaned := 0
 
-	err := fs.ForEachRepo(func(repo api.RepoName, gitDir common.GitDir) (done bool) {
+	err := fs.ForEachRepo(func(repo gitserverfs.GitserverRepo, gitDir common.GitDir) (done bool) {
 		for _, cfn := range cleanups {
 			// Check if context has been canceled, if so skip the rest of the repos.
 			select {
@@ -632,7 +499,7 @@ func cleanupRepos(
 			}
 
 			start := time.Now()
-			done, err := cfn.Do(repo, gitDir)
+			done, err := cfn.Do(api.RepoName(repo.Name), gitDir)
 			if err != nil {
 				logger.Error("error running cleanup command",
 					log.String("name", cfn.Name),
@@ -658,17 +525,10 @@ func cleanupRepos(
 		logger.Error("error iterating over repositories", log.Error(err))
 	}
 
-	if len(repoToSize) > 0 {
-		_, err := db.GitserverRepos().UpdateRepoSizes(ctx, logger, shardID, repoToSize)
-		if err != nil {
-			logger.Error("setting repo sizes", log.Error(err))
-		}
-	}
-
 	logger.Info("Janitor run finished", log.String("duration", time.Since(start).String()))
 }
 
-func checkRepoDirCorrupt(rcf *wrexec.RecordingCommandFactory, repoName api.RepoName, dir common.GitDir) (bool, string, error) {
+func checkRepoDirCorrupt(ctx context.Context, backend git.GitBackend, rcf *wrexec.RecordingCommandFactory, repoName api.RepoName, dir common.GitDir) (bool, string, error) {
 	// We treat repositories missing HEAD to be corrupt. Both our cloning
 	// and fetching ensure there is a HEAD file.
 	if _, err := os.Stat(dir.Path("HEAD")); os.IsNotExist(err) {
@@ -685,6 +545,15 @@ func checkRepoDirCorrupt(rcf *wrexec.RecordingCommandFactory, repoName api.RepoN
 	// to remove now than try a safe reclone.
 	if gitIsNonBareBestEffort(rcf, repoName, dir) {
 		return true, "non-bare", nil
+	}
+
+	maybeCorrupt, err := backend.Config().Get(ctx, gitConfigMaybeCorrupt)
+	if err != nil {
+		return false, "", err
+	}
+
+	if maybeCorrupt != "" {
+		return true, fmt.Sprintf("git-config:%s", maybeCorrupt), nil
 	}
 
 	return false, "", nil
@@ -761,19 +630,19 @@ func freeUpSpace(ctx context.Context, logger log.Logger, db database.DB, fs gits
 		default:
 		}
 
-		repoName := fs.ResolveRepoName(d)
+		repo := fs.ResolveRepo(d)
 
-		delta, err := fs.DirSize(d.Path())
+		delta, err := fs.DirSize(repo)
 		if err != nil {
 			logger.Warn("failed to get dir size", log.String("dir", string(d)), log.Error(err))
 			continue
 		}
-		if err := fs.RemoveRepo(repoName); err != nil {
+		if err := fs.RemoveRepo(repo); err != nil {
 			logger.Warn("failed to remove least recently used repo", log.String("dir", string(d)), log.Error(err))
 			continue
 		}
 		// Set as not_cloned in the database.
-		if err := db.GitserverRepos().SetCloneStatus(ctx, repoName, types.CloneStatusNotCloned, shardID); err != nil {
+		if err := db.GitserverRepos().SetCloneStatus(ctx, api.RepoName(repo.Name), types.CloneStatusNotCloned, shardID); err != nil {
 			logger.Warn("failed to update clone status", log.Error(err))
 		}
 		spaceFreed += delta
@@ -815,7 +684,7 @@ func gitDirModTime(d common.GitDir) (time.Time, error) {
 // findGitDirs collects the GitDirs of all repos in the FS.
 func findGitDirs(fs gitserverfs.FS) ([]common.GitDir, error) {
 	var dirs []common.GitDir
-	return dirs, fs.ForEachRepo(func(_ api.RepoName, dir common.GitDir) (done bool) {
+	return dirs, fs.ForEachRepo(func(_ gitserverfs.GitserverRepo, dir common.GitDir) (done bool) {
 		dirs = append(dirs, dir)
 		return false
 	})
@@ -1205,10 +1074,6 @@ func removeFileOlderThan(logger log.Logger, path string, maxAge time.Duration) (
 		return true, err
 	}
 	return true, nil
-}
-
-func mockRemoveNonExistingReposConfig(value bool) {
-	removeNonExistingRepos = value
 }
 
 const (

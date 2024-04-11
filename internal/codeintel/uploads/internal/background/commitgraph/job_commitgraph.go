@@ -58,7 +58,6 @@ func (s *commitGraphUpdater) UpdateAllDirtyCommitGraphs(ctx context.Context, max
 		if err := s.lockAndUpdateUploadsVisibleToCommits(
 			ctx,
 			dirtyRepository.RepositoryID,
-			dirtyRepository.RepositoryName,
 			dirtyRepository.DirtyToken,
 			maxAgeForNonStaleBranches,
 			maxAgeForNonStaleTags,
@@ -76,7 +75,7 @@ func (s *commitGraphUpdater) UpdateAllDirtyCommitGraphs(ctx context.Context, max
 
 // lockAndUpdateUploadsVisibleToCommits will call UpdateUploadsVisibleToCommits while holding an advisory lock to give exclusive access to the
 // update procedure for this repository. If the lock is already held, this method will simply do nothing.
-func (s *commitGraphUpdater) lockAndUpdateUploadsVisibleToCommits(ctx context.Context, repositoryID int, repositoryName string, dirtyToken int, maxAgeForNonStaleBranches time.Duration, maxAgeForNonStaleTags time.Duration) (err error) {
+func (s *commitGraphUpdater) lockAndUpdateUploadsVisibleToCommits(ctx context.Context, repositoryID int, dirtyToken int, maxAgeForNonStaleBranches time.Duration, maxAgeForNonStaleTags time.Duration) (err error) {
 	ok, unlock, err := s.locker.Lock(ctx, int32(repositoryID), false)
 	if err != nil || !ok {
 		return errors.Wrap(err, "locker.Lock")
@@ -84,8 +83,6 @@ func (s *commitGraphUpdater) lockAndUpdateUploadsVisibleToCommits(ctx context.Co
 	defer func() {
 		err = unlock(err)
 	}()
-
-	repo := api.RepoName(repositoryName)
 
 	// The following process pulls the commit graph for the given repository from gitserver, pulls the set of LSIF
 	// upload objects for the given repository from Postgres, and correlates them into a visibility
@@ -96,12 +93,12 @@ func (s *commitGraphUpdater) lockAndUpdateUploadsVisibleToCommits(ctx context.Co
 	// the update completes.
 
 	// Construct a view of the git graph that we will later decorate with upload information.
-	commitGraph, err := s.getCommitGraph(ctx, repositoryID, repo)
+	commitGraph, err := s.getCommitGraph(ctx, repositoryID)
 	if err != nil {
 		return err
 	}
 
-	refDescriptions, err := s.gitserverClient.RefDescriptions(ctx, repo)
+	refDescriptions, err := s.gitserverClient.RefDescriptions(ctx, api.RepoID(repositoryID))
 	if err != nil {
 		return errors.Wrap(err, "gitserver.RefDescriptions")
 	}
@@ -127,7 +124,7 @@ func (s *commitGraphUpdater) lockAndUpdateUploadsVisibleToCommits(ctx context.Co
 // The number of commits pulled back here should not grow over time unless the repo is growing at an
 // accelerating rate, as we routinely expire old information for active repositories in a janitor
 // process.
-func (s *commitGraphUpdater) getCommitGraph(ctx context.Context, repositoryID int, repo api.RepoName) (*gitdomain.CommitGraph, error) {
+func (s *commitGraphUpdater) getCommitGraph(ctx context.Context, repositoryID int) (*gitdomain.CommitGraph, error) {
 	commitDate, ok, err := s.store.GetOldestCommitDate(ctx, repositoryID)
 	if err != nil {
 		return nil, err
@@ -142,7 +139,7 @@ func (s *commitGraphUpdater) getCommitGraph(ctx context.Context, repositoryID in
 	// back any more data than we wanted.
 	commitDate = commitDate.Add(-time.Second)
 
-	commitGraph, err := s.gitserverClient.CommitGraph(ctx, repo, gitserver.CommitGraphOptions{
+	commitGraph, err := s.gitserverClient.CommitGraph(ctx, api.RepoID(repositoryID), gitserver.CommitGraphOptions{
 		AllRefs: true,
 		Since:   &commitDate,
 	})

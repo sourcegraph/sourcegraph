@@ -5,12 +5,9 @@ import (
 	"database/sql"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,7 +18,6 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/phabricator"
-	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/purge"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/repoupdater"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/scheduler"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
@@ -60,7 +56,6 @@ var stateHTMLTemplate string
 
 type LazyDebugserverEndpoint struct {
 	repoUpdaterStateEndpoint http.HandlerFunc
-	manualPurgeEndpoint      http.HandlerFunc
 }
 
 func Main(ctx context.Context, observationCtx *observation.Context, ready service.ReadyFunc, debugserverEndpoints *LazyDebugserverEndpoint) error {
@@ -149,15 +144,6 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 		routines = append(routines, server.ChangesetSyncRegistry)
 	}
 
-	// git-server repos purging thread
-	// Temporary escape hatch if this feature proves to be dangerous
-	// TODO: Move to config.
-	if disabled, _ := strconv.ParseBool(os.Getenv("DISABLE_REPO_PURGE")); disabled {
-		logger.Info("repository purger is disabled via env DISABLE_REPO_PURGE")
-	} else {
-		routines = append(routines, purge.NewRepositoryPurgeWorker(ctx, log.Scoped("repoPurgeWorker"), db, conf.DefaultClient()))
-	}
-
 	// Register recorder in all routines that support it.
 	recorderCache := recorder.GetCache()
 	rec := recorder.New(observationCtx.Logger, env.MyName, recorderCache)
@@ -173,7 +159,6 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 	debugDumpers := make(map[string]debugserver.Dumper)
 	debugDumpers["repos"] = updateScheduler
 	debugserverEndpoints.repoUpdaterStateEndpoint = repoUpdaterStatsHandler(debugDumpers)
-	debugserverEndpoints.manualPurgeEndpoint = manualPurgeHandler(db)
 
 	// We mark the service as ready now AFTER assigning the additional endpoints in
 	// the debugserver constructed at the top of this function. This ensures we don't
@@ -211,44 +196,6 @@ func makeGRPCServer(logger log.Logger, server *repoupdater.Server) goroutine.Bac
 	reflection.Register(grpcServer)
 
 	return grpcserver.NewFromAddr(logger.Scoped("repo-updater.grpcserver"), addr, grpcServer)
-}
-
-func manualPurgeHandler(db database.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		limit, err := strconv.Atoi(r.FormValue("limit"))
-		if err != nil {
-			http.Error(w, fmt.Sprintf("invalid limit: %v", err), http.StatusBadRequest)
-			return
-		}
-		if limit <= 0 {
-			http.Error(w, "limit must be greater than 0", http.StatusBadRequest)
-			return
-		}
-		if limit > 10000 {
-			http.Error(w, "limit must be less than 10000", http.StatusBadRequest)
-			return
-		}
-		perSecond := 1.0 // Default value
-		perSecondParam := r.FormValue("perSecond")
-		if perSecondParam != "" {
-			perSecond, err = strconv.ParseFloat(perSecondParam, 64)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("invalid per second rate limit: %v", err), http.StatusBadRequest)
-				return
-			}
-			// Set a sane lower bound
-			if perSecond <= 0.1 {
-				http.Error(w, fmt.Sprintf("invalid per second rate limit. Must be > 0.1, got %f", perSecond), http.StatusBadRequest)
-				return
-			}
-		}
-		err = purge.PurgeOldestRepos(log.Scoped("PurgeOldestRepos"), db, limit, perSecond)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("starting manual purge: %v", err), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "manual purge started with limit of %d and rate of %f", limit, perSecond)
-	}
 }
 
 func repoUpdaterStatsHandler(debugDumpers map[string]debugserver.Dumper) http.HandlerFunc {

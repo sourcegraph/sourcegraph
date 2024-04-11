@@ -6,12 +6,8 @@ import (
 	"log" //nolint:logging // TODO move all logging to sourcegraph/log
 	"net/http"
 	"os"
-	"reflect"
-	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 	"github.com/graph-gophers/graphql-go"
 	sglog "github.com/sourcegraph/log"
 	"golang.org/x/oauth2/clientcredentials"
@@ -298,22 +294,6 @@ func RegisterInternalServices(
 	m.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("API no route: %s %s from %s", r.Method, r.URL, r.Referer())
 		http.Error(w, "no route", http.StatusNotFound)
-	})
-}
-
-var schemaDecoder = schema.NewDecoder()
-
-func init() {
-	schemaDecoder.IgnoreUnknownKeys(true)
-
-	// Register a converter for unix timestamp strings -> time.Time values
-	// (needed for Appdash PageLoadEvent type).
-	schemaDecoder.RegisterConverter(time.Time{}, func(s string) reflect.Value {
-		ms, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return reflect.ValueOf(err)
-		}
-		return reflect.ValueOf(time.Unix(0, ms*int64(time.Millisecond)))
 	})
 }
 

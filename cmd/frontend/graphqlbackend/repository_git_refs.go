@@ -60,7 +60,7 @@ func (r *RepositoryResolver) GitRefs(ctx context.Context, args *refsArgs) (*gitR
 		if args.OrderBy != nil && *args.OrderBy == gitRefOrderAuthoredOrCommittedAt {
 			// Sort branches by most recently committed.
 
-			branchCommits, ok, err := fetchBranchCommits(ctx, r.gitserverClient, r.RepoName(), args.Interactive, branches)
+			branchCommits, ok, err := fetchBranchCommits(ctx, r.gitserverClient, r.id, args.Interactive, branches)
 			if err != nil {
 				return nil, err
 			}
@@ -141,7 +141,7 @@ func (r *RepositoryResolver) GitRefs(ctx context.Context, args *refsArgs) (*gitR
 	}, nil
 }
 
-func fetchBranchCommits(ctx context.Context, gitserverClient gitserver.Client, repo api.RepoName, interactive bool, branches []*gitdomain.Branch) (m map[gitdomain.Branch]*gitdomain.Commit, ok bool, err error) {
+func fetchBranchCommits(ctx context.Context, gitserverClient gitserver.Client, repo api.RepoID, interactive bool, branches []*gitdomain.Branch) (m map[gitdomain.Branch]*gitdomain.Commit, ok bool, err error) {
 	parentCtx := ctx
 	if interactive {
 		if len(branches) > 1000 {

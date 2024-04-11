@@ -57,7 +57,7 @@ func (r *recentContributorsIndexer) indexRepo(ctx context.Context, repoId api.Re
 	if err != nil {
 		return errors.Wrap(err, "repoStore.Get")
 	}
-	commitLog, err := r.client.CommitLog(ctx, repo.Name, time.Now().AddDate(0, 0, -90))
+	commitLog, err := r.client.CommitLog(ctx, repo.ID, time.Now().AddDate(0, 0, -90))
 	if err != nil {
 		return errors.Wrap(err, "CommitLog")
 	}

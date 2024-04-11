@@ -322,7 +322,7 @@ func (r *schemaResolver) CheckMirrorRepositoryConnection(ctx context.Context, ar
 	}
 
 	var result checkMirrorRepositoryConnectionResult
-	if err := r.gitserverClient.IsRepoCloneable(ctx, repo.Name); err != nil {
+	if err := r.gitserverClient.IsRepoCloneable(ctx, repo.ID); err != nil {
 		result.errorMessage = err.Error()
 	}
 	return &result, nil

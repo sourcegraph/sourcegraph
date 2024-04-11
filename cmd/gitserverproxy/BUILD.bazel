@@ -1,0 +1,66 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+
+go_library(
+    name = "gitserverproxy_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/gitserverproxy",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cmd/gitserverproxy/shared",
+        "//internal/sanitycheck",
+        "//internal/service/svcmain",
+    ],
+)
+
+go_binary(
+    name = "gitserverproxy",
+    embed = [":gitserverproxy_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "tar_gitserverproxy",
+    srcs = [":gitserverproxy"],
+)
+
+oci_image(
+    name = "image",
+    base = "@wolfi_gitserverproxy_base",
+    entrypoint = [
+        "/sbin/tini",
+        "--",
+        "/gitserverproxy",
+    ],
+    tars = [
+        ":tar_gitserverproxy",
+    ],
+    user = "sourcegraph",
+    workdir = "/",
+)
+
+oci_tarball(
+    name = "image_tarball",
+    image = ":image",
+    repo_tags = ["gitserverproxy:candidate"],
+)
+
+container_structure_test(
+    name = "image_test",
+    timeout = "short",
+    configs = ["image_test.yaml"],
+    driver = "docker",
+    image = ":image",
+    tags = [
+        "exclusive",
+        "requires-network",
+    ],
+)
+
+oci_push(
+    name = "candidate_push",
+    image = ":image",
+    repository = image_repository("gitserverproxy"),
+)

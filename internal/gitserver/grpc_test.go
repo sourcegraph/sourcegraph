@@ -105,7 +105,7 @@ func TestClient_AddrForRepo_UsesConfToRead_PinnedRepos(t *testing.T) {
 		map[string]string{"repo1": "gitserver2"},
 	)
 
-	conns.update(cfg)
+	Conns.update(cfg)
 
 	ctx := context.Background()
 	addr := client.AddrForRepo(ctx, "repo1")
@@ -116,7 +116,7 @@ func TestClient_AddrForRepo_UsesConfToRead_PinnedRepos(t *testing.T) {
 		[]string{"gitserver1", "gitserver2"},
 		map[string]string{"repo1": "gitserver1"},
 	)
-	conns.update(cfg)
+	Conns.update(cfg)
 
 	require.Equal(t, "gitserver1", client.AddrForRepo(ctx, "repo1"))
 }

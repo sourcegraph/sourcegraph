@@ -98,7 +98,7 @@ func NewRepositoryComparison(ctx context.Context, db database.DB, client gitserv
 		rangeType = "..."
 		// Find the common merge-base for the diff. That's the revision the diff applies to,
 		// not the baseRevspec.
-		mergeBaseCommit, err := client.MergeBase(ctx, r.RepoName(), baseRevspec, headRevspec)
+		mergeBaseCommit, err := client.MergeBase(ctx, r.id, baseRevspec, headRevspec)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +243,7 @@ func computeRepositoryComparisonDiff(cmp *RepositoryComparisonResolver) ComputeD
 
 			var iter *gitserver.DiffFileIterator
 			iter, err = cmp.gitserverClient.Diff(ctx, gitserver.DiffOptions{
-				Repo:      cmp.repo.RepoName(),
+				Repo:      cmp.repo.id,
 				Base:      base,
 				Head:      string(cmp.head.OID()),
 				RangeType: cmp.rangeType,

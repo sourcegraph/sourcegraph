@@ -429,7 +429,7 @@ func repoToRepoRevisionWithDefaultBranch(ctx context.Context, gitserverClient gi
 	tr, ctx := trace.New(ctx, "repoToRepoRevision")
 	defer tr.EndWithErr(&err)
 
-	branch, commit, err := gitserverClient.GetDefaultBranch(ctx, repo.Name, false)
+	branch, commit, err := gitserverClient.GetDefaultBranch(ctx, repo.ID, false)
 	if err != nil {
 		return nil, err
 	}

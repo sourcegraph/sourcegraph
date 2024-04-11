@@ -2471,7 +2471,7 @@ type MockInferenceService struct {
 func NewMockInferenceService() *MockInferenceService {
 	return &MockInferenceService{
 		InferIndexJobsFunc: &InferenceServiceInferIndexJobsFunc{
-			defaultHook: func(context.Context, api.RepoName, string, string) (r0 *shared.InferenceResult, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, string, string) (r0 *shared.InferenceResult, r1 error) {
 				return
 			},
 		},
@@ -2483,7 +2483,7 @@ func NewMockInferenceService() *MockInferenceService {
 func NewStrictMockInferenceService() *MockInferenceService {
 	return &MockInferenceService{
 		InferIndexJobsFunc: &InferenceServiceInferIndexJobsFunc{
-			defaultHook: func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error) {
+			defaultHook: func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error) {
 				panic("unexpected invocation of MockInferenceService.InferIndexJobs")
 			},
 		},
@@ -2505,15 +2505,15 @@ func NewMockInferenceServiceFrom(i InferenceService) *MockInferenceService {
 // InferIndexJobs method of the parent MockInferenceService instance is
 // invoked.
 type InferenceServiceInferIndexJobsFunc struct {
-	defaultHook func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error)
-	hooks       []func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error)
+	defaultHook func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error)
+	hooks       []func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error)
 	history     []InferenceServiceInferIndexJobsFuncCall
 	mutex       sync.Mutex
 }
 
 // InferIndexJobs delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockInferenceService) InferIndexJobs(v0 context.Context, v1 api.RepoName, v2 string, v3 string) (*shared.InferenceResult, error) {
+func (m *MockInferenceService) InferIndexJobs(v0 context.Context, v1 api.RepoID, v2 string, v3 string) (*shared.InferenceResult, error) {
 	r0, r1 := m.InferIndexJobsFunc.nextHook()(v0, v1, v2, v3)
 	m.InferIndexJobsFunc.appendCall(InferenceServiceInferIndexJobsFuncCall{v0, v1, v2, v3, r0, r1})
 	return r0, r1
@@ -2522,7 +2522,7 @@ func (m *MockInferenceService) InferIndexJobs(v0 context.Context, v1 api.RepoNam
 // SetDefaultHook sets function that is called when the InferIndexJobs
 // method of the parent MockInferenceService instance is invoked and the
 // hook queue is empty.
-func (f *InferenceServiceInferIndexJobsFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error)) {
+func (f *InferenceServiceInferIndexJobsFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error)) {
 	f.defaultHook = hook
 }
 
@@ -2530,7 +2530,7 @@ func (f *InferenceServiceInferIndexJobsFunc) SetDefaultHook(hook func(context.Co
 // InferIndexJobs method of the parent MockInferenceService instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *InferenceServiceInferIndexJobsFunc) PushHook(hook func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error)) {
+func (f *InferenceServiceInferIndexJobsFunc) PushHook(hook func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -2539,19 +2539,19 @@ func (f *InferenceServiceInferIndexJobsFunc) PushHook(hook func(context.Context,
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *InferenceServiceInferIndexJobsFunc) SetDefaultReturn(r0 *shared.InferenceResult, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *InferenceServiceInferIndexJobsFunc) PushReturn(r0 *shared.InferenceResult, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error) {
+	f.PushHook(func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error) {
 		return r0, r1
 	})
 }
 
-func (f *InferenceServiceInferIndexJobsFunc) nextHook() func(context.Context, api.RepoName, string, string) (*shared.InferenceResult, error) {
+func (f *InferenceServiceInferIndexJobsFunc) nextHook() func(context.Context, api.RepoID, string, string) (*shared.InferenceResult, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -2590,7 +2590,7 @@ type InferenceServiceInferIndexJobsFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 api.RepoName
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string

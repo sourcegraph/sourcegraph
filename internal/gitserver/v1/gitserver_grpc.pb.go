@@ -19,6 +19,631 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	GitService_MergeBase_FullMethodName = "/gitserver.v1.GitService/MergeBase"
+)
+
+// GitServiceClient is the client API for GitService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type GitServiceClient interface {
+	MergeBase(ctx context.Context, in *MergeBaseRequest, opts ...grpc.CallOption) (*MergeBaseResponse, error)
+}
+
+type gitServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGitServiceClient(cc grpc.ClientConnInterface) GitServiceClient {
+	return &gitServiceClient{cc}
+}
+
+func (c *gitServiceClient) MergeBase(ctx context.Context, in *MergeBaseRequest, opts ...grpc.CallOption) (*MergeBaseResponse, error) {
+	out := new(MergeBaseResponse)
+	err := c.cc.Invoke(ctx, GitService_MergeBase_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GitServiceServer is the server API for GitService service.
+// All implementations must embed UnimplementedGitServiceServer
+// for forward compatibility
+type GitServiceServer interface {
+	MergeBase(context.Context, *MergeBaseRequest) (*MergeBaseResponse, error)
+	mustEmbedUnimplementedGitServiceServer()
+}
+
+// UnimplementedGitServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedGitServiceServer struct {
+}
+
+func (UnimplementedGitServiceServer) MergeBase(context.Context, *MergeBaseRequest) (*MergeBaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MergeBase not implemented")
+}
+func (UnimplementedGitServiceServer) mustEmbedUnimplementedGitServiceServer() {}
+
+// UnsafeGitServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GitServiceServer will
+// result in compilation errors.
+type UnsafeGitServiceServer interface {
+	mustEmbedUnimplementedGitServiceServer()
+}
+
+func RegisterGitServiceServer(s grpc.ServiceRegistrar, srv GitServiceServer) {
+	s.RegisterService(&GitService_ServiceDesc, srv)
+}
+
+func _GitService_MergeBase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MergeBaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitServiceServer).MergeBase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitService_MergeBase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitServiceServer).MergeBase(ctx, req.(*MergeBaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// GitService_ServiceDesc is the grpc.ServiceDesc for GitService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GitService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gitserver.v1.GitService",
+	HandlerType: (*GitServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "MergeBase",
+			Handler:    _GitService_MergeBase_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gitserver.proto",
+}
+
+const (
+	PerforceService_IsPerforcePathCloneable_FullMethodName  = "/gitserver.v1.PerforceService/IsPerforcePathCloneable"
+	PerforceService_CheckPerforceCredentials_FullMethodName = "/gitserver.v1.PerforceService/CheckPerforceCredentials"
+	PerforceService_PerforceUsers_FullMethodName            = "/gitserver.v1.PerforceService/PerforceUsers"
+	PerforceService_PerforceProtectsForUser_FullMethodName  = "/gitserver.v1.PerforceService/PerforceProtectsForUser"
+	PerforceService_PerforceProtectsForDepot_FullMethodName = "/gitserver.v1.PerforceService/PerforceProtectsForDepot"
+	PerforceService_PerforceGroupMembers_FullMethodName     = "/gitserver.v1.PerforceService/PerforceGroupMembers"
+	PerforceService_IsPerforceSuperUser_FullMethodName      = "/gitserver.v1.PerforceService/IsPerforceSuperUser"
+	PerforceService_PerforceGetChangelist_FullMethodName    = "/gitserver.v1.PerforceService/PerforceGetChangelist"
+)
+
+// PerforceServiceClient is the client API for PerforceService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PerforceServiceClient interface {
+	IsPerforcePathCloneable(ctx context.Context, in *IsPerforcePathCloneableRequest, opts ...grpc.CallOption) (*IsPerforcePathCloneableResponse, error)
+	CheckPerforceCredentials(ctx context.Context, in *CheckPerforceCredentialsRequest, opts ...grpc.CallOption) (*CheckPerforceCredentialsResponse, error)
+	PerforceUsers(ctx context.Context, in *PerforceUsersRequest, opts ...grpc.CallOption) (*PerforceUsersResponse, error)
+	PerforceProtectsForUser(ctx context.Context, in *PerforceProtectsForUserRequest, opts ...grpc.CallOption) (*PerforceProtectsForUserResponse, error)
+	PerforceProtectsForDepot(ctx context.Context, in *PerforceProtectsForDepotRequest, opts ...grpc.CallOption) (*PerforceProtectsForDepotResponse, error)
+	PerforceGroupMembers(ctx context.Context, in *PerforceGroupMembersRequest, opts ...grpc.CallOption) (*PerforceGroupMembersResponse, error)
+	IsPerforceSuperUser(ctx context.Context, in *IsPerforceSuperUserRequest, opts ...grpc.CallOption) (*IsPerforceSuperUserResponse, error)
+	PerforceGetChangelist(ctx context.Context, in *PerforceGetChangelistRequest, opts ...grpc.CallOption) (*PerforceGetChangelistResponse, error)
+}
+
+type perforceServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPerforceServiceClient(cc grpc.ClientConnInterface) PerforceServiceClient {
+	return &perforceServiceClient{cc}
+}
+
+func (c *perforceServiceClient) IsPerforcePathCloneable(ctx context.Context, in *IsPerforcePathCloneableRequest, opts ...grpc.CallOption) (*IsPerforcePathCloneableResponse, error) {
+	out := new(IsPerforcePathCloneableResponse)
+	err := c.cc.Invoke(ctx, PerforceService_IsPerforcePathCloneable_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) CheckPerforceCredentials(ctx context.Context, in *CheckPerforceCredentialsRequest, opts ...grpc.CallOption) (*CheckPerforceCredentialsResponse, error) {
+	out := new(CheckPerforceCredentialsResponse)
+	err := c.cc.Invoke(ctx, PerforceService_CheckPerforceCredentials_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) PerforceUsers(ctx context.Context, in *PerforceUsersRequest, opts ...grpc.CallOption) (*PerforceUsersResponse, error) {
+	out := new(PerforceUsersResponse)
+	err := c.cc.Invoke(ctx, PerforceService_PerforceUsers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) PerforceProtectsForUser(ctx context.Context, in *PerforceProtectsForUserRequest, opts ...grpc.CallOption) (*PerforceProtectsForUserResponse, error) {
+	out := new(PerforceProtectsForUserResponse)
+	err := c.cc.Invoke(ctx, PerforceService_PerforceProtectsForUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) PerforceProtectsForDepot(ctx context.Context, in *PerforceProtectsForDepotRequest, opts ...grpc.CallOption) (*PerforceProtectsForDepotResponse, error) {
+	out := new(PerforceProtectsForDepotResponse)
+	err := c.cc.Invoke(ctx, PerforceService_PerforceProtectsForDepot_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) PerforceGroupMembers(ctx context.Context, in *PerforceGroupMembersRequest, opts ...grpc.CallOption) (*PerforceGroupMembersResponse, error) {
+	out := new(PerforceGroupMembersResponse)
+	err := c.cc.Invoke(ctx, PerforceService_PerforceGroupMembers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) IsPerforceSuperUser(ctx context.Context, in *IsPerforceSuperUserRequest, opts ...grpc.CallOption) (*IsPerforceSuperUserResponse, error) {
+	out := new(IsPerforceSuperUserResponse)
+	err := c.cc.Invoke(ctx, PerforceService_IsPerforceSuperUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *perforceServiceClient) PerforceGetChangelist(ctx context.Context, in *PerforceGetChangelistRequest, opts ...grpc.CallOption) (*PerforceGetChangelistResponse, error) {
+	out := new(PerforceGetChangelistResponse)
+	err := c.cc.Invoke(ctx, PerforceService_PerforceGetChangelist_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PerforceServiceServer is the server API for PerforceService service.
+// All implementations must embed UnimplementedPerforceServiceServer
+// for forward compatibility
+type PerforceServiceServer interface {
+	IsPerforcePathCloneable(context.Context, *IsPerforcePathCloneableRequest) (*IsPerforcePathCloneableResponse, error)
+	CheckPerforceCredentials(context.Context, *CheckPerforceCredentialsRequest) (*CheckPerforceCredentialsResponse, error)
+	PerforceUsers(context.Context, *PerforceUsersRequest) (*PerforceUsersResponse, error)
+	PerforceProtectsForUser(context.Context, *PerforceProtectsForUserRequest) (*PerforceProtectsForUserResponse, error)
+	PerforceProtectsForDepot(context.Context, *PerforceProtectsForDepotRequest) (*PerforceProtectsForDepotResponse, error)
+	PerforceGroupMembers(context.Context, *PerforceGroupMembersRequest) (*PerforceGroupMembersResponse, error)
+	IsPerforceSuperUser(context.Context, *IsPerforceSuperUserRequest) (*IsPerforceSuperUserResponse, error)
+	PerforceGetChangelist(context.Context, *PerforceGetChangelistRequest) (*PerforceGetChangelistResponse, error)
+	mustEmbedUnimplementedPerforceServiceServer()
+}
+
+// UnimplementedPerforceServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedPerforceServiceServer struct {
+}
+
+func (UnimplementedPerforceServiceServer) IsPerforcePathCloneable(context.Context, *IsPerforcePathCloneableRequest) (*IsPerforcePathCloneableResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsPerforcePathCloneable not implemented")
+}
+func (UnimplementedPerforceServiceServer) CheckPerforceCredentials(context.Context, *CheckPerforceCredentialsRequest) (*CheckPerforceCredentialsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckPerforceCredentials not implemented")
+}
+func (UnimplementedPerforceServiceServer) PerforceUsers(context.Context, *PerforceUsersRequest) (*PerforceUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerforceUsers not implemented")
+}
+func (UnimplementedPerforceServiceServer) PerforceProtectsForUser(context.Context, *PerforceProtectsForUserRequest) (*PerforceProtectsForUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerforceProtectsForUser not implemented")
+}
+func (UnimplementedPerforceServiceServer) PerforceProtectsForDepot(context.Context, *PerforceProtectsForDepotRequest) (*PerforceProtectsForDepotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerforceProtectsForDepot not implemented")
+}
+func (UnimplementedPerforceServiceServer) PerforceGroupMembers(context.Context, *PerforceGroupMembersRequest) (*PerforceGroupMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerforceGroupMembers not implemented")
+}
+func (UnimplementedPerforceServiceServer) IsPerforceSuperUser(context.Context, *IsPerforceSuperUserRequest) (*IsPerforceSuperUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsPerforceSuperUser not implemented")
+}
+func (UnimplementedPerforceServiceServer) PerforceGetChangelist(context.Context, *PerforceGetChangelistRequest) (*PerforceGetChangelistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PerforceGetChangelist not implemented")
+}
+func (UnimplementedPerforceServiceServer) mustEmbedUnimplementedPerforceServiceServer() {}
+
+// UnsafePerforceServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PerforceServiceServer will
+// result in compilation errors.
+type UnsafePerforceServiceServer interface {
+	mustEmbedUnimplementedPerforceServiceServer()
+}
+
+func RegisterPerforceServiceServer(s grpc.ServiceRegistrar, srv PerforceServiceServer) {
+	s.RegisterService(&PerforceService_ServiceDesc, srv)
+}
+
+func _PerforceService_IsPerforcePathCloneable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsPerforcePathCloneableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).IsPerforcePathCloneable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_IsPerforcePathCloneable_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).IsPerforcePathCloneable(ctx, req.(*IsPerforcePathCloneableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_CheckPerforceCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckPerforceCredentialsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).CheckPerforceCredentials(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_CheckPerforceCredentials_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).CheckPerforceCredentials(ctx, req.(*CheckPerforceCredentialsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_PerforceUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerforceUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).PerforceUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_PerforceUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).PerforceUsers(ctx, req.(*PerforceUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_PerforceProtectsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerforceProtectsForUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).PerforceProtectsForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_PerforceProtectsForUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).PerforceProtectsForUser(ctx, req.(*PerforceProtectsForUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_PerforceProtectsForDepot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerforceProtectsForDepotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).PerforceProtectsForDepot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_PerforceProtectsForDepot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).PerforceProtectsForDepot(ctx, req.(*PerforceProtectsForDepotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_PerforceGroupMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerforceGroupMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).PerforceGroupMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_PerforceGroupMembers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).PerforceGroupMembers(ctx, req.(*PerforceGroupMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_IsPerforceSuperUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsPerforceSuperUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).IsPerforceSuperUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_IsPerforceSuperUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).IsPerforceSuperUser(ctx, req.(*IsPerforceSuperUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PerforceService_PerforceGetChangelist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerforceGetChangelistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PerforceServiceServer).PerforceGetChangelist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PerforceService_PerforceGetChangelist_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PerforceServiceServer).PerforceGetChangelist(ctx, req.(*PerforceGetChangelistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PerforceService_ServiceDesc is the grpc.ServiceDesc for PerforceService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PerforceService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gitserver.v1.PerforceService",
+	HandlerType: (*PerforceServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IsPerforcePathCloneable",
+			Handler:    _PerforceService_IsPerforcePathCloneable_Handler,
+		},
+		{
+			MethodName: "CheckPerforceCredentials",
+			Handler:    _PerforceService_CheckPerforceCredentials_Handler,
+		},
+		{
+			MethodName: "PerforceUsers",
+			Handler:    _PerforceService_PerforceUsers_Handler,
+		},
+		{
+			MethodName: "PerforceProtectsForUser",
+			Handler:    _PerforceService_PerforceProtectsForUser_Handler,
+		},
+		{
+			MethodName: "PerforceProtectsForDepot",
+			Handler:    _PerforceService_PerforceProtectsForDepot_Handler,
+		},
+		{
+			MethodName: "PerforceGroupMembers",
+			Handler:    _PerforceService_PerforceGroupMembers_Handler,
+		},
+		{
+			MethodName: "IsPerforceSuperUser",
+			Handler:    _PerforceService_IsPerforceSuperUser_Handler,
+		},
+		{
+			MethodName: "PerforceGetChangelist",
+			Handler:    _PerforceService_PerforceGetChangelist_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gitserver.proto",
+}
+
+const ()
+
+// GitserverService2Client is the client API for GitserverService2 service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type GitserverService2Client interface {
+}
+
+type gitserverService2Client struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGitserverService2Client(cc grpc.ClientConnInterface) GitserverService2Client {
+	return &gitserverService2Client{cc}
+}
+
+// GitserverService2Server is the server API for GitserverService2 service.
+// All implementations must embed UnimplementedGitserverService2Server
+// for forward compatibility
+type GitserverService2Server interface {
+	mustEmbedUnimplementedGitserverService2Server()
+}
+
+// UnimplementedGitserverService2Server must be embedded to have forward compatible implementations.
+type UnimplementedGitserverService2Server struct {
+}
+
+func (UnimplementedGitserverService2Server) mustEmbedUnimplementedGitserverService2Server() {}
+
+// UnsafeGitserverService2Server may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GitserverService2Server will
+// result in compilation errors.
+type UnsafeGitserverService2Server interface {
+	mustEmbedUnimplementedGitserverService2Server()
+}
+
+func RegisterGitserverService2Server(s grpc.ServiceRegistrar, srv GitserverService2Server) {
+	s.RegisterService(&GitserverService2_ServiceDesc, srv)
+}
+
+// GitserverService2_ServiceDesc is the grpc.ServiceDesc for GitserverService2 service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GitserverService2_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gitserver.v1.GitserverService2",
+	HandlerType: (*GitserverService2Server)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams:     []grpc.StreamDesc{},
+	Metadata:    "gitserver.proto",
+}
+
+const (
+	GitserverProxyService_ListGitserverRepoJobs_FullMethodName = "/gitserver.v1.GitserverProxyService/ListGitserverRepoJobs"
+	GitserverProxyService_ListGitserverRepos_FullMethodName    = "/gitserver.v1.GitserverProxyService/ListGitserverRepos"
+)
+
+// GitserverProxyServiceClient is the client API for GitserverProxyService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type GitserverProxyServiceClient interface {
+	ListGitserverRepoJobs(ctx context.Context, in *ListGitserverRepoJobsRequest, opts ...grpc.CallOption) (*ListGitserverRepoJobsResponse, error)
+	// Ask the scheduler to expedite the next job for a repo.
+	// This should be called when a user explicitly requests a fetch, or when a an
+	// event has happened that definitely requires a fetch, like a repo push webhook.
+	// rpc PrioritizeRepoFetch(PrioritizeRepoFetchRequest) returns (PrioritizeRepoFetchResponse) {}
+	ListGitserverRepos(ctx context.Context, in *ListGitserverReposRequest, opts ...grpc.CallOption) (*ListGitserverReposResponse, error)
+}
+
+type gitserverProxyServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGitserverProxyServiceClient(cc grpc.ClientConnInterface) GitserverProxyServiceClient {
+	return &gitserverProxyServiceClient{cc}
+}
+
+func (c *gitserverProxyServiceClient) ListGitserverRepoJobs(ctx context.Context, in *ListGitserverRepoJobsRequest, opts ...grpc.CallOption) (*ListGitserverRepoJobsResponse, error) {
+	out := new(ListGitserverRepoJobsResponse)
+	err := c.cc.Invoke(ctx, GitserverProxyService_ListGitserverRepoJobs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gitserverProxyServiceClient) ListGitserverRepos(ctx context.Context, in *ListGitserverReposRequest, opts ...grpc.CallOption) (*ListGitserverReposResponse, error) {
+	out := new(ListGitserverReposResponse)
+	err := c.cc.Invoke(ctx, GitserverProxyService_ListGitserverRepos_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GitserverProxyServiceServer is the server API for GitserverProxyService service.
+// All implementations must embed UnimplementedGitserverProxyServiceServer
+// for forward compatibility
+type GitserverProxyServiceServer interface {
+	ListGitserverRepoJobs(context.Context, *ListGitserverRepoJobsRequest) (*ListGitserverRepoJobsResponse, error)
+	// Ask the scheduler to expedite the next job for a repo.
+	// This should be called when a user explicitly requests a fetch, or when a an
+	// event has happened that definitely requires a fetch, like a repo push webhook.
+	// rpc PrioritizeRepoFetch(PrioritizeRepoFetchRequest) returns (PrioritizeRepoFetchResponse) {}
+	ListGitserverRepos(context.Context, *ListGitserverReposRequest) (*ListGitserverReposResponse, error)
+	mustEmbedUnimplementedGitserverProxyServiceServer()
+}
+
+// UnimplementedGitserverProxyServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedGitserverProxyServiceServer struct {
+}
+
+func (UnimplementedGitserverProxyServiceServer) ListGitserverRepoJobs(context.Context, *ListGitserverRepoJobsRequest) (*ListGitserverRepoJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListGitserverRepoJobs not implemented")
+}
+func (UnimplementedGitserverProxyServiceServer) ListGitserverRepos(context.Context, *ListGitserverReposRequest) (*ListGitserverReposResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListGitserverRepos not implemented")
+}
+func (UnimplementedGitserverProxyServiceServer) mustEmbedUnimplementedGitserverProxyServiceServer() {}
+
+// UnsafeGitserverProxyServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GitserverProxyServiceServer will
+// result in compilation errors.
+type UnsafeGitserverProxyServiceServer interface {
+	mustEmbedUnimplementedGitserverProxyServiceServer()
+}
+
+func RegisterGitserverProxyServiceServer(s grpc.ServiceRegistrar, srv GitserverProxyServiceServer) {
+	s.RegisterService(&GitserverProxyService_ServiceDesc, srv)
+}
+
+func _GitserverProxyService_ListGitserverRepoJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGitserverRepoJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverProxyServiceServer).ListGitserverRepoJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverProxyService_ListGitserverRepoJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverProxyServiceServer).ListGitserverRepoJobs(ctx, req.(*ListGitserverRepoJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GitserverProxyService_ListGitserverRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGitserverReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverProxyServiceServer).ListGitserverRepos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverProxyService_ListGitserverRepos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverProxyServiceServer).ListGitserverRepos(ctx, req.(*ListGitserverReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// GitserverProxyService_ServiceDesc is the grpc.ServiceDesc for GitserverProxyService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var GitserverProxyService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "gitserver.v1.GitserverProxyService",
+	HandlerType: (*GitserverProxyServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListGitserverRepoJobs",
+			Handler:    _GitserverProxyService_ListGitserverRepoJobs_Handler,
+		},
+		{
+			MethodName: "ListGitserverRepos",
+			Handler:    _GitserverProxyService_ListGitserverRepos_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gitserver.proto",
+}
+
+const (
 	GitserverService_CreateCommitFromPatchBinary_FullMethodName = "/gitserver.v1.GitserverService/CreateCommitFromPatchBinary"
 	GitserverService_DiskInfo_FullMethodName                    = "/gitserver.v1.GitserverService/DiskInfo"
 	GitserverService_Exec_FullMethodName                        = "/gitserver.v1.GitserverService/Exec"
@@ -44,6 +669,7 @@ const (
 	GitserverService_ReadFile_FullMethodName                    = "/gitserver.v1.GitserverService/ReadFile"
 	GitserverService_GetCommit_FullMethodName                   = "/gitserver.v1.GitserverService/GetCommit"
 	GitserverService_ResolveRevision_FullMethodName             = "/gitserver.v1.GitserverService/ResolveRevision"
+	GitserverService_ListRepos_FullMethodName                   = "/gitserver.v1.GitserverService/ListRepos"
 )
 
 // GitserverServiceClient is the client API for GitserverService service.
@@ -143,6 +769,7 @@ type GitserverServiceClient interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(ctx context.Context, in *ResolveRevisionRequest, opts ...grpc.CallOption) (*ResolveRevisionResponse, error)
+	ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error)
 }
 
 type gitserverServiceClient struct {
@@ -518,6 +1145,15 @@ func (c *gitserverServiceClient) ResolveRevision(ctx context.Context, in *Resolv
 	return out, nil
 }
 
+func (c *gitserverServiceClient) ListRepos(ctx context.Context, in *ListReposRequest, opts ...grpc.CallOption) (*ListReposResponse, error) {
+	out := new(ListReposResponse)
+	err := c.cc.Invoke(ctx, GitserverService_ListRepos_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GitserverServiceServer is the server API for GitserverService service.
 // All implementations must embed UnimplementedGitserverServiceServer
 // for forward compatibility
@@ -615,6 +1251,7 @@ type GitserverServiceServer interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a NotFound
 	// error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error)
+	ListRepos(context.Context, *ListReposRequest) (*ListReposResponse, error)
 	mustEmbedUnimplementedGitserverServiceServer()
 }
 
@@ -696,6 +1333,9 @@ func (UnimplementedGitserverServiceServer) GetCommit(context.Context, *GetCommit
 }
 func (UnimplementedGitserverServiceServer) ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveRevision not implemented")
+}
+func (UnimplementedGitserverServiceServer) ListRepos(context.Context, *ListReposRequest) (*ListReposResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRepos not implemented")
 }
 func (UnimplementedGitserverServiceServer) mustEmbedUnimplementedGitserverServiceServer() {}
 
@@ -1183,6 +1823,24 @@ func _GitserverService_ResolveRevision_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitserverService_ListRepos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReposRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverServiceServer).ListRepos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverService_ListRepos_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverServiceServer).ListRepos(ctx, req.(*ListReposRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GitserverService_ServiceDesc is the grpc.ServiceDesc for GitserverService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1265,6 +1923,10 @@ var GitserverService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveRevision",
 			Handler:    _GitserverService_ResolveRevision_Handler,
+		},
+		{
+			MethodName: "ListRepos",
+			Handler:    _GitserverService_ListRepos_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

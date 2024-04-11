@@ -22,7 +22,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
-	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
@@ -46,7 +45,6 @@ type service interface {
 func NewGRPCServer(server *Server) proto.GitserverServiceServer {
 	return &grpcServer{
 		logger:         server.logger,
-		db:             server.db,
 		hostname:       server.hostname,
 		subRepoChecker: authz.DefaultSubRepoPermsChecker,
 		locker:         server.locker,
@@ -58,7 +56,6 @@ func NewGRPCServer(server *Server) proto.GitserverServiceServer {
 
 type grpcServer struct {
 	logger         log.Logger
-	db             database.DB
 	hostname       string
 	subRepoChecker authz.SubRepoPermissionChecker
 	locker         RepositoryLocker
@@ -430,14 +427,27 @@ func (gs *grpcServer) RepoCloneProgress(_ context.Context, req *proto.RepoCloneP
 	return progress.ToProto(), nil
 }
 
+func verifyGitserverRepository(r *proto.GitserverRepository) error {
+	if r == nil {
+		return status.New(codes.InvalidArgument, "repo must be specified").Err()
+	}
+	if r.GetUid() == "" {
+		return status.New(codes.InvalidArgument, "repo UID must be specified").Err()
+	}
+	if r.GetPath() == "" {
+		return status.New(codes.InvalidArgument, "repo path must be specified").Err()
+	}
+	return nil
+}
+
 func (gs *grpcServer) RepoDelete(ctx context.Context, req *proto.RepoDeleteRequest) (*proto.RepoDeleteResponse, error) {
-	if req.GetRepo() == "" {
-		return nil, status.New(codes.InvalidArgument, "repo must be specified").Err()
+	if err := verifyGitserverRepository(req.GetRepo()); err != nil {
+		return nil, err
 	}
 
-	repoName := api.RepoName(req.GetRepo())
+	repoName := api.RepoName(req.GetRepo().GetName())
 
-	if err := deleteRepo(ctx, gs.db, gs.hostname, gs.fs, repoName); err != nil {
+	if err := deleteRepo(ctx, gs.hostname, gs.fs, repoName); err != nil {
 		gs.logger.Error("failed to delete repository", log.String("repo", string(repoName)), log.Error(err))
 		return &proto.RepoDeleteResponse{}, status.Errorf(codes.Internal, "failed to delete repository %s: %s", repoName, err)
 	}
@@ -1215,6 +1225,7 @@ func (gs *grpcServer) checkRepoExists(ctx context.Context, repo api.RepoName) er
 
 	cloneProgress, cloneInProgress := gs.locker.Status(repo)
 
+	// TODO: Remove clone status fields maybe?
 	return newRepoNotFoundError(repo, cloneInProgress, cloneProgress)
 }
 

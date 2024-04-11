@@ -138,7 +138,7 @@ func getFileContributors(ctx context.Context, client gitserver.Client, fm *resul
 		Range: string(fm.CommitID),
 		Path:  fm.Path,
 	}
-	contributors, err := client.ContributorCount(ctx, fm.Repo.Name, opts)
+	contributors, err := client.ContributorCount(ctx, fm.Repo.ID, opts)
 
 	if err != nil {
 		return nil, err

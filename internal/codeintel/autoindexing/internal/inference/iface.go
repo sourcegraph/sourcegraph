@@ -16,8 +16,8 @@ type SandboxService interface {
 }
 
 type GitService interface {
-	LsFiles(ctx context.Context, repo api.RepoName, commit string, pathspecs ...gitdomain.Pathspec) ([]string, error)
-	Archive(ctx context.Context, repo api.RepoName, opts gitserver.ArchiveOptions) (io.ReadCloser, error)
+	LsFiles(ctx context.Context, repo api.RepoID, commit string, pathspecs ...gitdomain.Pathspec) ([]string, error)
+	Archive(ctx context.Context, repo api.RepoID, opts gitserver.ArchiveOptions) (io.ReadCloser, error)
 }
 
 type gitService struct {
@@ -36,11 +36,10 @@ func NewDefaultGitService(checker authz.SubRepoPermissionChecker) GitService {
 	}
 }
 
-func (s *gitService) LsFiles(ctx context.Context, repo api.RepoName, commit string, pathspecs ...gitdomain.Pathspec) ([]string, error) {
+func (s *gitService) LsFiles(ctx context.Context, repo api.RepoID, commit string, pathspecs ...gitdomain.Pathspec) ([]string, error) {
 	return s.client.LsFiles(ctx, repo, api.CommitID(commit), pathspecs...)
 }
 
-func (s *gitService) Archive(ctx context.Context, repo api.RepoName, opts gitserver.ArchiveOptions) (io.ReadCloser, error) {
-	// Note: the sub-repo perms checker is nil here because all paths were already checked via a previous call to s.ListFiles
+func (s *gitService) Archive(ctx context.Context, repo api.RepoID, opts gitserver.ArchiveOptions) (io.ReadCloser, error) {
 	return s.client.ArchiveReader(ctx, repo, opts)
 }

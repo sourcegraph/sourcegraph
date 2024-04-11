@@ -89,7 +89,7 @@ func (s *Service) InferIndexConfiguration(ctx context.Context, repositoryID int,
 	}
 
 	if commit == "" {
-		_, commitSHA, err := s.gitserverClient.GetDefaultBranch(ctx, repo.Name, false)
+		_, commitSHA, err := s.gitserverClient.GetDefaultBranch(ctx, repo.ID, false)
 		if err != nil {
 			return nil, errors.Wrapf(err, "gitserver.GetDefaultBranch: error resolving HEAD for %d", repositoryID)
 		}
@@ -100,7 +100,7 @@ func (s *Service) InferIndexConfiguration(ctx context.Context, repositoryID int,
 		commit = string(commitSHA)
 	} else {
 		// Verify that the commit exists.
-		_, err := s.gitserverClient.GetCommit(ctx, repo.Name, api.CommitID(commit))
+		_, err := s.gitserverClient.GetCommit(ctx, repo.ID, api.CommitID(commit))
 		if errors.HasType(err, &gitdomain.RevisionNotFoundError{}) {
 			return nil, errors.Newf("revision %s not found for %d", commit, repositoryID)
 		}

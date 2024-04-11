@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -286,10 +287,22 @@ func (rc *cmdReader) trace() {
 		}
 	}
 
-	rc.tr.SetAttributes(attribute.Int("exitCode", rc.cmd.Unwrap().ProcessState.ExitCode()))
+	ps := rc.cmd.Unwrap().ProcessState
+	var rusage syscall.Rusage
+	if su, ok := ps.SysUsage().(*syscall.Rusage); ok {
+		rusage = *su
+	}
+
+	rc.tr.SetAttributes(attribute.Int("exitCode", ps.ExitCode()))
 	rc.tr.SetAttributes(attribute.Int64("cmd_duration_ms", duration.Milliseconds()))
-	rc.tr.SetAttributes(attribute.Int64("user_time_ms", rc.cmd.Unwrap().ProcessState.UserTime().Milliseconds()))
-	rc.tr.SetAttributes(attribute.Int64("system_time_ms", rc.cmd.Unwrap().ProcessState.SystemTime().Milliseconds()))
+	rc.tr.SetAttributes(attribute.Int64("user_time_ms", ps.UserTime().Milliseconds()))
+	rc.tr.SetAttributes(attribute.Int64("system_time_ms", ps.SystemTime().Milliseconds()))
+	// Track the maximum resident set size of the process during its lifetime.
+	rc.tr.SetAttributes(attribute.Int64("max_rss", rusage.Maxrss))
+	// Track the number of times the filesystem had to perform input.
+	rc.tr.SetAttributes(attribute.Int64("inblock", rusage.Inblock))
+	// Track the number of times the filesystem had to perform output.
+	rc.tr.SetAttributes(attribute.Int64("oublock", rusage.Oublock))
 }
 
 const maxStderrCapture = 1024

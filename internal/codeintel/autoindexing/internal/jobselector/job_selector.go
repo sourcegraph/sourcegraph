@@ -72,7 +72,7 @@ func (s *JobSelector) InferIndexJobsFromRepositoryStructure(ctx context.Context,
 		return nil, nil
 	}
 
-	result, err := s.inferenceSvc.InferIndexJobs(ctx, repo.Name, commit, script)
+	result, err := s.inferenceSvc.InferIndexJobs(ctx, repo.ID, commit, script)
 	if err != nil {
 		return nil, err
 	}

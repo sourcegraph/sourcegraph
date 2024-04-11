@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,7 +15,7 @@ import (
 )
 
 type SearchRequest struct {
-	Repo                 api.RepoName
+	Repo                 api.RepoID
 	Revisions            []string
 	Query                Node
 	IncludeDiff          bool
@@ -28,7 +29,9 @@ func (r *SearchRequest) ToProto() *proto.SearchRequest {
 		revs = append(revs, &proto.RevisionSpecifier{RevSpec: rev})
 	}
 	return &proto.SearchRequest{
-		Repo:                 string(r.Repo),
+		Repo: &proto.GitserverRepository{
+			Uid: strconv.Itoa(int(r.Repo)),
+		},
 		Revisions:            revs,
 		Query:                r.Query.ToProto(),
 		IncludeDiff:          r.IncludeDiff,
@@ -49,7 +52,7 @@ func SearchRequestFromProto(p *proto.SearchRequest) (*SearchRequest, error) {
 	}
 
 	return &SearchRequest{
-		Repo:                 api.RepoName(p.GetRepo()),
+		Repo:                 api.RepoID(p.GetRepo()),
 		Revisions:            revisions,
 		Query:                query,
 		IncludeDiff:          p.GetIncludeDiff(),
@@ -226,7 +229,6 @@ type ExecRequest struct {
 
 // RepoUpdateRequest is a request to update the contents of a given repo, or clone it if it doesn't exist.
 type RepoUpdateRequest struct {
-	// Repo identifies URL for repo.
 	Repo api.RepoName `json:"repo"`
 }
 

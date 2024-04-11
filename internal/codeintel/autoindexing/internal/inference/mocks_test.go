@@ -35,12 +35,12 @@ type MockGitService struct {
 func NewMockGitService() *MockGitService {
 	return &MockGitService{
 		ArchiveFunc: &GitServiceArchiveFunc{
-			defaultHook: func(context.Context, api.RepoName, gitserver.ArchiveOptions) (r0 io.ReadCloser, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, gitserver.ArchiveOptions) (r0 io.ReadCloser, r1 error) {
 				return
 			},
 		},
 		LsFilesFunc: &GitServiceLsFilesFunc{
-			defaultHook: func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) (r0 []string, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) (r0 []string, r1 error) {
 				return
 			},
 		},
@@ -52,12 +52,12 @@ func NewMockGitService() *MockGitService {
 func NewStrictMockGitService() *MockGitService {
 	return &MockGitService{
 		ArchiveFunc: &GitServiceArchiveFunc{
-			defaultHook: func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error) {
+			defaultHook: func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error) {
 				panic("unexpected invocation of MockGitService.Archive")
 			},
 		},
 		LsFilesFunc: &GitServiceLsFilesFunc{
-			defaultHook: func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error) {
+			defaultHook: func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error) {
 				panic("unexpected invocation of MockGitService.LsFiles")
 			},
 		},
@@ -80,15 +80,15 @@ func NewMockGitServiceFrom(i GitService) *MockGitService {
 // GitServiceArchiveFunc describes the behavior when the Archive method of
 // the parent MockGitService instance is invoked.
 type GitServiceArchiveFunc struct {
-	defaultHook func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error)
-	hooks       []func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error)
+	defaultHook func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error)
+	hooks       []func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error)
 	history     []GitServiceArchiveFuncCall
 	mutex       sync.Mutex
 }
 
 // Archive delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockGitService) Archive(v0 context.Context, v1 api.RepoName, v2 gitserver.ArchiveOptions) (io.ReadCloser, error) {
+func (m *MockGitService) Archive(v0 context.Context, v1 api.RepoID, v2 gitserver.ArchiveOptions) (io.ReadCloser, error) {
 	r0, r1 := m.ArchiveFunc.nextHook()(v0, v1, v2)
 	m.ArchiveFunc.appendCall(GitServiceArchiveFuncCall{v0, v1, v2, r0, r1})
 	return r0, r1
@@ -97,7 +97,7 @@ func (m *MockGitService) Archive(v0 context.Context, v1 api.RepoName, v2 gitserv
 // SetDefaultHook sets function that is called when the Archive method of
 // the parent MockGitService instance is invoked and the hook queue is
 // empty.
-func (f *GitServiceArchiveFunc) SetDefaultHook(hook func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error)) {
+func (f *GitServiceArchiveFunc) SetDefaultHook(hook func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error)) {
 	f.defaultHook = hook
 }
 
@@ -105,7 +105,7 @@ func (f *GitServiceArchiveFunc) SetDefaultHook(hook func(context.Context, api.Re
 // Archive method of the parent MockGitService instance invokes the hook at
 // the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *GitServiceArchiveFunc) PushHook(hook func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error)) {
+func (f *GitServiceArchiveFunc) PushHook(hook func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -114,19 +114,19 @@ func (f *GitServiceArchiveFunc) PushHook(hook func(context.Context, api.RepoName
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *GitServiceArchiveFunc) SetDefaultReturn(r0 io.ReadCloser, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *GitServiceArchiveFunc) PushReturn(r0 io.ReadCloser, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error) {
+	f.PushHook(func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitServiceArchiveFunc) nextHook() func(context.Context, api.RepoName, gitserver.ArchiveOptions) (io.ReadCloser, error) {
+func (f *GitServiceArchiveFunc) nextHook() func(context.Context, api.RepoID, gitserver.ArchiveOptions) (io.ReadCloser, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -164,7 +164,7 @@ type GitServiceArchiveFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 api.RepoName
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 gitserver.ArchiveOptions
@@ -191,15 +191,15 @@ func (c GitServiceArchiveFuncCall) Results() []interface{} {
 // GitServiceLsFilesFunc describes the behavior when the LsFiles method of
 // the parent MockGitService instance is invoked.
 type GitServiceLsFilesFunc struct {
-	defaultHook func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error)
-	hooks       []func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error)
+	defaultHook func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error)
+	hooks       []func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error)
 	history     []GitServiceLsFilesFuncCall
 	mutex       sync.Mutex
 }
 
 // LsFiles delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockGitService) LsFiles(v0 context.Context, v1 api.RepoName, v2 string, v3 ...gitdomain.Pathspec) ([]string, error) {
+func (m *MockGitService) LsFiles(v0 context.Context, v1 api.RepoID, v2 string, v3 ...gitdomain.Pathspec) ([]string, error) {
 	r0, r1 := m.LsFilesFunc.nextHook()(v0, v1, v2, v3...)
 	m.LsFilesFunc.appendCall(GitServiceLsFilesFuncCall{v0, v1, v2, v3, r0, r1})
 	return r0, r1
@@ -208,7 +208,7 @@ func (m *MockGitService) LsFiles(v0 context.Context, v1 api.RepoName, v2 string,
 // SetDefaultHook sets function that is called when the LsFiles method of
 // the parent MockGitService instance is invoked and the hook queue is
 // empty.
-func (f *GitServiceLsFilesFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error)) {
+func (f *GitServiceLsFilesFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error)) {
 	f.defaultHook = hook
 }
 
@@ -216,7 +216,7 @@ func (f *GitServiceLsFilesFunc) SetDefaultHook(hook func(context.Context, api.Re
 // LsFiles method of the parent MockGitService instance invokes the hook at
 // the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *GitServiceLsFilesFunc) PushHook(hook func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error)) {
+func (f *GitServiceLsFilesFunc) PushHook(hook func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -225,19 +225,19 @@ func (f *GitServiceLsFilesFunc) PushHook(hook func(context.Context, api.RepoName
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *GitServiceLsFilesFunc) SetDefaultReturn(r0 []string, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *GitServiceLsFilesFunc) PushReturn(r0 []string, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error) {
+	f.PushHook(func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitServiceLsFilesFunc) nextHook() func(context.Context, api.RepoName, string, ...gitdomain.Pathspec) ([]string, error) {
+func (f *GitServiceLsFilesFunc) nextHook() func(context.Context, api.RepoID, string, ...gitdomain.Pathspec) ([]string, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -275,7 +275,7 @@ type GitServiceLsFilesFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 api.RepoName
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string

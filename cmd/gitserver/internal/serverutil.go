@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/sourcegraph/log"
@@ -75,19 +74,4 @@ func mapToLoggerField(m map[string]any) []log.Field {
 	}
 
 	return LogFields
-}
-
-// hostnameMatch checks whether the hostname matches the given address.
-// If we don't find an exact match, we look at the initial prefix.
-func hostnameMatch(shardID, addr string) bool {
-	if !strings.HasPrefix(addr, shardID) {
-		return false
-	}
-	if addr == shardID {
-		return true
-	}
-	// We know that shardID is shorter than addr so we can safely check the next
-	// char
-	next := addr[len(shardID)]
-	return next == '.' || next == ':'
 }

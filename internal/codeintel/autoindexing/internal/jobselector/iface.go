@@ -8,5 +8,5 @@ import (
 )
 
 type InferenceService interface {
-	InferIndexJobs(ctx context.Context, repo api.RepoName, commit, overrideScript string) (*shared.InferenceResult, error)
+	InferIndexJobs(ctx context.Context, repo api.RepoID, commit, overrideScript string) (*shared.InferenceResult, error)
 }

@@ -173,24 +173,12 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 		httpserver.NewFromAddr(config.ListenAddress, &http.Server{
 			Handler: handler,
 		}),
-		server.NewRepoStateSyncer(
-			ctx,
-			logger,
-			db,
-			locker,
-			hostname,
-			fs,
-			config.SyncRepoStateInterval,
-			config.SyncRepoStateBatchSize,
-			config.SyncRepoStateUpdatePerSecond,
-		),
 		server.NewJanitor(
 			ctx,
 			server.JanitorConfig{
-				ShardID:                        hostname,
-				JanitorInterval:                config.JanitorInterval,
-				DesiredPercentFree:             config.JanitorReposDesiredPercentFree,
-				DisableDeleteReposOnWrongShard: config.JanitorDisableDeleteReposOnWrongShard,
+				ShardID:            hostname,
+				JanitorInterval:    config.JanitorInterval,
+				DesiredPercentFree: config.JanitorReposDesiredPercentFree,
 			},
 			db,
 			fs,

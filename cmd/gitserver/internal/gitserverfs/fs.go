@@ -1,6 +1,7 @@
 package gitserverfs
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -17,25 +18,28 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/diskusage"
 	du "github.com/sourcegraph/sourcegraph/internal/diskusage"
 	"github.com/sourcegraph/sourcegraph/internal/fileutil"
-	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/metrics"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
-	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
+
+type GitserverRepo struct {
+	UID  string `json:"uid"`
+	Name string `json:"name"`
+	Path string `json:"-"` // Not stored on disk, added at runtime.
+}
 
 type FS interface {
 	// Initialize creates all the necessary directory structures used by gitserverfs.
 	Initialize() error
-	DirSize(string) (int64, error)
-	RepoDir(api.RepoName) common.GitDir
-	ResolveRepoName(common.GitDir) api.RepoName
+	DirSize(GitserverRepo) (int64, error)
+	RepoDir(GitserverRepo) common.GitDir
+	ResolveRepo(common.GitDir) GitserverRepo
 	TempDir(prefix string) (string, error)
 	IgnorePath(string) bool
 	P4HomeDir() (string, error)
-	VisitRepos(func(api.RepoName, common.GitDir) (done bool, _ error)) error
-	RepoCloned(api.RepoName) (bool, error)
-	RemoveRepo(api.RepoName) error
-	ForEachRepo(func(api.RepoName, common.GitDir) (done bool)) error
+	RepoCloned(GitserverRepo) (bool, error)
+	RemoveRepo(GitserverRepo) error
+	ForEachRepo(func(GitserverRepo, common.GitDir) (done bool)) error
 	DiskUsage() (diskusage.DiskUsage, error)
 }
 
@@ -68,14 +72,11 @@ func (r *realGitserverFS) Initialize() error {
 	return nil
 }
 
-func (r *realGitserverFS) DirSize(dir string) (int64, error) {
-	if !filepath.IsAbs(dir) {
-		return 0, errors.New("dir must be absolute")
-	}
-	return dirSize(dir)
+func (r *realGitserverFS) DirSize(repo GitserverRepo) (int64, error) {
+	return dirSize(r.RepoDir(repo).Path())
 }
 
-func (r *realGitserverFS) RepoDir(name api.RepoName) common.GitDir {
+func (r *realGitserverFS) RepoDir(name GitserverRepo) common.GitDir {
 	// We need to use api.UndeletedRepoName(repo) for the name, as this is a name
 	// transformation done on the database side that gitserver cannot know about.
 	dir := repoDirFromName(r.reposDir, api.UndeletedRepoName(name))
@@ -86,7 +87,7 @@ func (r *realGitserverFS) RepoDir(name api.RepoName) common.GitDir {
 	return dir
 }
 
-func (r *realGitserverFS) ResolveRepoName(dir common.GitDir) api.RepoName {
+func (r *realGitserverFS) ResolveRepoName(dir common.GitDir) GitserverRepo {
 	return repoNameFromDir(r.reposDir, dir)
 }
 
@@ -102,7 +103,7 @@ func (r *realGitserverFS) P4HomeDir() (string, error) {
 	return makeP4HomeDir(r.reposDir)
 }
 
-func (r *realGitserverFS) VisitRepos(visit func(api.RepoName, common.GitDir) (done bool, _ error)) error {
+func (r *realGitserverFS) VisitRepos(visit func(GitserverRepo, common.GitDir) (done bool, _ error)) error {
 	return nil
 }
 
@@ -175,10 +176,6 @@ func (r *realGitserverFS) ForEachRepo(visit func(api.RepoName, common.GitDir) bo
 	})
 }
 
-func (r *realGitserverFS) DiskUsage() (diskusage.DiskUsage, error) {
-	return du.New(r.reposDir)
-}
-
 var realGitserverFSMetricsRegisterer sync.Once
 
 func (r *realGitserverFS) registerMetrics() {
@@ -241,18 +238,18 @@ const tempDirName = ".tmp"
 // and where it will store cache data.
 const p4HomeName = ".p4home"
 
-func repoDirFromName(reposDir string, name api.RepoName) common.GitDir {
-	p := string(protocol.NormalizeRepo(name))
-	return common.GitDir(filepath.Join(reposDir, filepath.FromSlash(p), ".git"))
+func repoDirFromRepo(reposDir string, repo GitserverRepo) common.GitDir {
+	// p := string(protocol.NormalizeRepo(name))
+	return common.GitDir(filepath.Join(reposDir, filepath.FromSlash(repo.Path), ".git"))
 }
 
-func repoNameFromDir(reposDir string, dir common.GitDir) api.RepoName {
-	// dir == ${s.ReposDir}/${name}/.git
-	parent := filepath.Dir(string(dir))                   // remove suffix "/.git"
-	name := strings.TrimPrefix(parent, reposDir)          // remove prefix "${s.ReposDir}"
-	name = strings.Trim(name, string(filepath.Separator)) // remove /
-	name = filepath.ToSlash(name)                         // filepath -> path
-	return protocol.NormalizeRepo(api.RepoName(name))
+func repoFromDir(reposDir string, dir common.GitDir) (GitserverRepo, error) {
+	f, err := os.ReadFile(dir.Path("sg-repo.json"))
+	if err != nil {
+		return GitserverRepo{}, err
+	}
+	var repo GitserverRepo
+	return repo, json.Unmarshal(f, &repo)
 }
 
 // tempDir is a wrapper around os.MkdirTemp, but using the given reposDir

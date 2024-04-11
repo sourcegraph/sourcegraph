@@ -37,7 +37,7 @@ type invocationContext struct {
 	sandbox    *luasandbox.Sandbox
 	printSink  io.Writer
 	gitService GitService
-	repo       api.RepoName
+	repo       api.RepoID
 	commit     string
 	invocationFunctionTable
 }
@@ -78,7 +78,7 @@ func newService(
 // is assumed to be a table of recognizer instances. Keys conflicting with the default recognizers
 // will overwrite them (to disable or change default behavior). Each recognizer's generate function
 // is invoked and the resulting index jobs are combined into a flattened list.
-func (s *Service) InferIndexJobs(ctx context.Context, repo api.RepoName, commit, overrideScript string) (_ *shared.InferenceResult, err error) {
+func (s *Service) InferIndexJobs(ctx context.Context, repo api.RepoID, commit, overrideScript string) (_ *shared.InferenceResult, err error) {
 	ctx, _, endObservation := s.operations.inferIndexJobs.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
 		repo.Attr(),
 		attribute.String("commit", commit),
@@ -111,7 +111,7 @@ func (s *Service) InferIndexJobs(ctx context.Context, repo api.RepoName, commit,
 // for concrete implementations of the given function table.
 func (s *Service) inferIndexJobs(
 	ctx context.Context,
-	repo api.RepoName,
+	repo api.RepoID,
 	commit string,
 	overrideScript string,
 	invocationContextMethods invocationFunctionTable,

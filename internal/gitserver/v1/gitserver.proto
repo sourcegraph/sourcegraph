@@ -7,6 +7,105 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/sourcegraph/sourcegraph/internal/gitserver/v1";
 
+message GitserverRepository {
+  // An opaque identifier used by gitserver to uniquely identify the repository.
+  string uid = 1;
+  // The path on disk where the repository is stored.
+  string path = 2;
+  // name is optional and only used for logging purposes.
+  string name = 3;
+}
+
+
+// GitService exposes APIs that consumers of Gitserver might be interested in.
+service GitService {
+  rpc MergeBase(MergeBaseRequest) returns (MergeBaseResponse) {}
+}
+
+// This is an extension to provide access to Perforce data. Gitserver can run the
+// P4 CLI to talk to a Perforce server.
+service PerforceService {
+  rpc IsPerforcePathCloneable(IsPerforcePathCloneableRequest) returns (IsPerforcePathCloneableResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc CheckPerforceCredentials(CheckPerforceCredentialsRequest) returns (CheckPerforceCredentialsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PerforceUsers(PerforceUsersRequest) returns (PerforceUsersResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PerforceProtectsForUser(PerforceProtectsForUserRequest) returns (PerforceProtectsForUserResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PerforceProtectsForDepot(PerforceProtectsForDepotRequest) returns (PerforceProtectsForDepotResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PerforceGroupMembers(PerforceGroupMembersRequest) returns (PerforceGroupMembersResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc IsPerforceSuperUser(IsPerforceSuperUserRequest) returns (IsPerforceSuperUserResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc PerforceGetChangelist(PerforceGetChangelistRequest) returns (PerforceGetChangelistResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+// GitserverService exposes internal APIs that are meant to be consumed by the GitserverProxy.
+service GitserverService2 {
+  // rpc DeleteRepository(DeleteRepositoryRequest) returns (DeleteRepositoryResponse) {}
+}
+
+// GitserverProxyService exposes APIs to be consumed by the application to retrieve
+// debugging information, trigger some background work, and to provide hints to the
+// schedulers for fetches etc.
+service GitserverProxyService {
+  rpc ListGitserverRepoJobs(ListGitserverRepoJobsRequest) returns (ListGitserverRepoJobsResponse) {}
+  // Ask the scheduler to expedite the next job for a repo.
+  // This should be called when a user explicitly requests a fetch, or when a an
+  // event has happened that definitely requires a fetch, like a repo push webhook.
+  // rpc PrioritizeRepoFetch(PrioritizeRepoFetchRequest) returns (PrioritizeRepoFetchResponse) {}
+  rpc ListGitserverRepos(ListGitserverReposRequest) returns (ListGitserverReposResponse) {}
+}
+
+message ListGitserverRepoJobsRequest {
+  // If not set, 100 entries are returned.
+  int32 page_size = 1;
+  string page_token = 2;
+  // The repo for which to list jobs. If unset, returns jobs for all repos.
+  optional GitserverRepository repo = 3;
+  // Allowed fields to order by: id, created_at.
+  string order_by = 4;
+}
+
+message RepoJob {
+
+}
+
+message ListGitserverRepoJobsResponse {
+  repeated RepoJob repo_jobs = 1;
+  string next_page_token = 2;
+}
+
+message ListGitserverReposRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  // Optionally provide UIDs to filter by.
+  repeated string uids = 3;
+}
+
+message GitserverListRepo {
+  GitserverRepository repo = 1;
+  google.protobuf.Timestamp last_fetched = 2;
+  google.protobuf.Timestamp last_changed = 3;
+  bool maybe_corrupt = 4;
+}
+
+message ListGitserverReposResponse {
+  repeated GitserverListRepo repos = 1; // TODO: The naming here is poor.
+  string next_page_token = 2;
+}
+
 service GitserverService {
   rpc CreateCommitFromPatchBinary(stream CreateCommitFromPatchBinaryRequest) returns (CreateCommitFromPatchBinaryResponse) {}
   rpc DiskInfo(DiskInfoRequest) returns (DiskInfoResponse) {
@@ -145,6 +244,26 @@ service GitserverService {
   rpc ResolveRevision(ResolveRevisionRequest) returns (ResolveRevisionResponse) {
     option idempotency_level = IDEMPOTENT;
   }
+  rpc ListRepos(ListReposRequest) returns (ListReposResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+message ListReposRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListRepo {
+  GitserverRepository repo = 1;
+  google.protobuf.Timestamp last_fetched = 2;
+  google.protobuf.Timestamp last_changed = 3;
+  bool maybe_corrupt = 4;
+}
+
+message ListReposResponse {
+  repeated ListRepo repos = 1;
+  string next_page_token = 2;
 }
 
 message ResolveRevisionRequest {
@@ -167,6 +286,7 @@ message ResolveRevisionResponse {
 }
 
 message GetCommitRequest {
+  GitserverRepository repo = 1;
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
   string repo_name = 2;
@@ -195,6 +315,7 @@ message BlameRequest {
   reserved 6, 7;
   reserved "start_line", "end_line";
 
+  GitserverRepository repo = 1;
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
   string repo_name = 2;
@@ -238,6 +359,7 @@ message PreviousCommit {
 }
 
 message DefaultBranchRequest {
+  GitserverRepository repo = 1;
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
   string repo_name = 2;
@@ -250,6 +372,7 @@ message DefaultBranchResponse {
 }
 
 message ReadFileRequest {
+  GitserverRepository repo = 1;
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
   string repo_name = 2;
@@ -309,8 +432,8 @@ message PushConfig {
 // creating the simulated staging area git object for a repo.
 message CreateCommitFromPatchBinaryRequest {
   message Metadata {
-    // repo is the name of the repo to be updated
-    string repo = 1;
+    // repo is the repo to be updated
+    GitserverRepository repo = 1;
     // base_commit is the revision that the staging area object is based on
     string base_commit = 2;
     // target_ref is the ref that will be created for this patch
@@ -406,8 +529,7 @@ message UnauthorizedPayload {
 }
 
 message SearchRequest {
-  // repo is the name of the repo to be searched
-  string repo = 1;
+  GitserverRepository repo = 1;
   // revisions is the list of git revision to be searched. They are all passed
   // to the same underlying git command, so the searched commits will be the
   // union of all revisions listed.
@@ -570,8 +692,7 @@ enum ArchiveFormat {
 
 // ArchiveRequest is set of parameters for the Archive RPC.
 message ArchiveRequest {
-  // repo is the name of the repo to be archived.
-  string repo = 1;
+  GitserverRepository repo = 1;
   // treeish is the tree or commit to produce an archive for.
   string treeish = 2;
   // format is the format of the resulting archive (either ZIP or TAR).
@@ -589,8 +710,7 @@ message ArchiveResponse {
 
 // IsRepoCloneableRequest is a request to check if a repository is cloneable.
 message IsRepoCloneableRequest {
-  // repo is the name of the repo to check.
-  string repo = 1;
+  GitserverRepository repo = 1;
 }
 
 // IsRepoCloneableResponse is the response from the IsCloneable RPC.
@@ -609,6 +729,8 @@ message RepoCloneProgressRequest {
   reserved 1;
   reserved "repos";
 
+  GitserverRepository repo = 3;
+
   // repo_name is the name of the repo to get the progress for.
   string repo_name = 2;
 }
@@ -626,8 +748,8 @@ message RepoCloneProgressResponse {
 
 // RepoDeleteRequest is a request to delete a repository.
 message RepoDeleteRequest {
-  // repo is the name of the repo to delete.
-  string repo = 1;
+  // repo is the repo to delete.
+  GitserverRepository repo = 1;
 }
 
 // RepoDeleteResponse is the response from the RepoDelete RPC.
@@ -637,8 +759,8 @@ message RepoDeleteResponse {}
 message RepoUpdateRequest {
   // RepoUpdateRequest used to have an unused clone_from_shard field.
   reserved 3;
-  // repo is the name of the repo to update.
-  string repo = 1;
+  // repo is the repo to update.
+  GitserverRepository repo = 1;
   // since is the debounce interval for queries, used only with
   // request-repo-update.
   // This field has now been deprecated and is no longer respected.
@@ -680,8 +802,7 @@ message ListGitoliteResponse {
 
 // GetObjectRequest is a request to get a git object.
 message GetObjectRequest {
-  // repo is the name of the repo to get the object from.
-  string repo = 1;
+  GitserverRepository repo = 1;
   // object_name is the name of the object to get.
   string object_name = 2;
 }
@@ -839,6 +960,7 @@ message PerforceUser {
 
 // MergeBaseRequest is a request to find the merge base of two revspecs.
 message MergeBaseRequest {
+  GitserverRepository repo = 1;
   // repo_name is the name of the repo to get the merge base for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
   string repo_name = 2;

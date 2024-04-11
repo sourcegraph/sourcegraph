@@ -14,7 +14,6 @@ import (
 
 	uuid "github.com/google/uuid"
 	sqlf "github.com/keegancsmith/sqlf"
-	log "github.com/sourcegraph/log"
 	api "github.com/sourcegraph/sourcegraph/internal/api"
 	authz "github.com/sourcegraph/sourcegraph/internal/authz"
 	conf "github.com/sourcegraph/sourcegraph/internal/conf"
@@ -37596,9 +37595,6 @@ type MockGitserverRepoStore struct {
 	// GetByNameFunc is an instance of a mock function object controlling
 	// the behavior of the method GetByName.
 	GetByNameFunc *GitserverRepoStoreGetByNameFunc
-	// GetByNamesFunc is an instance of a mock function object controlling
-	// the behavior of the method GetByNames.
-	GetByNamesFunc *GitserverRepoStoreGetByNamesFunc
 	// GetGitserverGitDirSizeFunc is an instance of a mock function object
 	// controlling the behavior of the method GetGitserverGitDirSize.
 	GetGitserverGitDirSizeFunc *GitserverRepoStoreGetGitserverGitDirSizeFunc
@@ -37608,13 +37604,6 @@ type MockGitserverRepoStore struct {
 	// HandleFunc is an instance of a mock function object controlling the
 	// behavior of the method Handle.
 	HandleFunc *GitserverRepoStoreHandleFunc
-	// IterateRepoGitserverStatusFunc is an instance of a mock function
-	// object controlling the behavior of the method
-	// IterateRepoGitserverStatus.
-	IterateRepoGitserverStatusFunc *GitserverRepoStoreIterateRepoGitserverStatusFunc
-	// ListPurgeableReposFunc is an instance of a mock function object
-	// controlling the behavior of the method ListPurgeableRepos.
-	ListPurgeableReposFunc *GitserverRepoStoreListPurgeableReposFunc
 	// ListReposWithLastErrorFunc is an instance of a mock function object
 	// controlling the behavior of the method ListReposWithLastError.
 	ListReposWithLastErrorFunc *GitserverRepoStoreListReposWithLastErrorFunc
@@ -37643,9 +37632,6 @@ type MockGitserverRepoStore struct {
 	// UpdateFunc is an instance of a mock function object controlling the
 	// behavior of the method Update.
 	UpdateFunc *GitserverRepoStoreUpdateFunc
-	// UpdateRepoSizesFunc is an instance of a mock function object
-	// controlling the behavior of the method UpdateRepoSizes.
-	UpdateRepoSizesFunc *GitserverRepoStoreUpdateRepoSizesFunc
 	// WithFunc is an instance of a mock function object controlling the
 	// behavior of the method With.
 	WithFunc *GitserverRepoStoreWithFunc
@@ -37666,11 +37652,6 @@ func NewMockGitserverRepoStore() *MockGitserverRepoStore {
 				return
 			},
 		},
-		GetByNamesFunc: &GitserverRepoStoreGetByNamesFunc{
-			defaultHook: func(context.Context, ...api.RepoName) (r0 map[api.RepoName]*types.GitserverRepo, r1 error) {
-				return
-			},
-		},
 		GetGitserverGitDirSizeFunc: &GitserverRepoStoreGetGitserverGitDirSizeFunc{
 			defaultHook: func(context.Context) (r0 int64, r1 error) {
 				return
@@ -37683,16 +37664,6 @@ func NewMockGitserverRepoStore() *MockGitserverRepoStore {
 		},
 		HandleFunc: &GitserverRepoStoreHandleFunc{
 			defaultHook: func() (r0 basestore.TransactableHandle) {
-				return
-			},
-		},
-		IterateRepoGitserverStatusFunc: &GitserverRepoStoreIterateRepoGitserverStatusFunc{
-			defaultHook: func(context.Context, database.IterateRepoGitserverStatusOptions) (r0 []types.RepoGitserverStatus, r1 int, r2 error) {
-				return
-			},
-		},
-		ListPurgeableReposFunc: &GitserverRepoStoreListPurgeableReposFunc{
-			defaultHook: func(context.Context, database.ListPurgableReposOptions) (r0 []api.RepoName, r1 error) {
 				return
 			},
 		},
@@ -37741,11 +37712,6 @@ func NewMockGitserverRepoStore() *MockGitserverRepoStore {
 				return
 			},
 		},
-		UpdateRepoSizesFunc: &GitserverRepoStoreUpdateRepoSizesFunc{
-			defaultHook: func(context.Context, log.Logger, string, map[api.RepoName]int64) (r0 int, r1 error) {
-				return
-			},
-		},
 		WithFunc: &GitserverRepoStoreWithFunc{
 			defaultHook: func(basestore.ShareableStore) (r0 database.GitserverRepoStore) {
 				return
@@ -37769,11 +37735,6 @@ func NewStrictMockGitserverRepoStore() *MockGitserverRepoStore {
 				panic("unexpected invocation of MockGitserverRepoStore.GetByName")
 			},
 		},
-		GetByNamesFunc: &GitserverRepoStoreGetByNamesFunc{
-			defaultHook: func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
-				panic("unexpected invocation of MockGitserverRepoStore.GetByNames")
-			},
-		},
 		GetGitserverGitDirSizeFunc: &GitserverRepoStoreGetGitserverGitDirSizeFunc{
 			defaultHook: func(context.Context) (int64, error) {
 				panic("unexpected invocation of MockGitserverRepoStore.GetGitserverGitDirSize")
@@ -37787,16 +37748,6 @@ func NewStrictMockGitserverRepoStore() *MockGitserverRepoStore {
 		HandleFunc: &GitserverRepoStoreHandleFunc{
 			defaultHook: func() basestore.TransactableHandle {
 				panic("unexpected invocation of MockGitserverRepoStore.Handle")
-			},
-		},
-		IterateRepoGitserverStatusFunc: &GitserverRepoStoreIterateRepoGitserverStatusFunc{
-			defaultHook: func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error) {
-				panic("unexpected invocation of MockGitserverRepoStore.IterateRepoGitserverStatus")
-			},
-		},
-		ListPurgeableReposFunc: &GitserverRepoStoreListPurgeableReposFunc{
-			defaultHook: func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error) {
-				panic("unexpected invocation of MockGitserverRepoStore.ListPurgeableRepos")
 			},
 		},
 		ListReposWithLastErrorFunc: &GitserverRepoStoreListReposWithLastErrorFunc{
@@ -37844,11 +37795,6 @@ func NewStrictMockGitserverRepoStore() *MockGitserverRepoStore {
 				panic("unexpected invocation of MockGitserverRepoStore.Update")
 			},
 		},
-		UpdateRepoSizesFunc: &GitserverRepoStoreUpdateRepoSizesFunc{
-			defaultHook: func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error) {
-				panic("unexpected invocation of MockGitserverRepoStore.UpdateRepoSizes")
-			},
-		},
 		WithFunc: &GitserverRepoStoreWithFunc{
 			defaultHook: func(basestore.ShareableStore) database.GitserverRepoStore {
 				panic("unexpected invocation of MockGitserverRepoStore.With")
@@ -37868,9 +37814,6 @@ func NewMockGitserverRepoStoreFrom(i database.GitserverRepoStore) *MockGitserver
 		GetByNameFunc: &GitserverRepoStoreGetByNameFunc{
 			defaultHook: i.GetByName,
 		},
-		GetByNamesFunc: &GitserverRepoStoreGetByNamesFunc{
-			defaultHook: i.GetByNames,
-		},
 		GetGitserverGitDirSizeFunc: &GitserverRepoStoreGetGitserverGitDirSizeFunc{
 			defaultHook: i.GetGitserverGitDirSize,
 		},
@@ -37879,12 +37822,6 @@ func NewMockGitserverRepoStoreFrom(i database.GitserverRepoStore) *MockGitserver
 		},
 		HandleFunc: &GitserverRepoStoreHandleFunc{
 			defaultHook: i.Handle,
-		},
-		IterateRepoGitserverStatusFunc: &GitserverRepoStoreIterateRepoGitserverStatusFunc{
-			defaultHook: i.IterateRepoGitserverStatus,
-		},
-		ListPurgeableReposFunc: &GitserverRepoStoreListPurgeableReposFunc{
-			defaultHook: i.ListPurgeableRepos,
 		},
 		ListReposWithLastErrorFunc: &GitserverRepoStoreListReposWithLastErrorFunc{
 			defaultHook: i.ListReposWithLastError,
@@ -37912,9 +37849,6 @@ func NewMockGitserverRepoStoreFrom(i database.GitserverRepoStore) *MockGitserver
 		},
 		UpdateFunc: &GitserverRepoStoreUpdateFunc{
 			defaultHook: i.Update,
-		},
-		UpdateRepoSizesFunc: &GitserverRepoStoreUpdateRepoSizesFunc{
-			defaultHook: i.UpdateRepoSizes,
 		},
 		WithFunc: &GitserverRepoStoreWithFunc{
 			defaultHook: i.With,
@@ -38135,122 +38069,6 @@ func (c GitserverRepoStoreGetByNameFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitserverRepoStoreGetByNameFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0, c.Result1}
-}
-
-// GitserverRepoStoreGetByNamesFunc describes the behavior when the
-// GetByNames method of the parent MockGitserverRepoStore instance is
-// invoked.
-type GitserverRepoStoreGetByNamesFunc struct {
-	defaultHook func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error)
-	hooks       []func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error)
-	history     []GitserverRepoStoreGetByNamesFuncCall
-	mutex       sync.Mutex
-}
-
-// GetByNames delegates to the next hook function in the queue and stores
-// the parameter and result values of this invocation.
-func (m *MockGitserverRepoStore) GetByNames(v0 context.Context, v1 ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
-	r0, r1 := m.GetByNamesFunc.nextHook()(v0, v1...)
-	m.GetByNamesFunc.appendCall(GitserverRepoStoreGetByNamesFuncCall{v0, v1, r0, r1})
-	return r0, r1
-}
-
-// SetDefaultHook sets function that is called when the GetByNames method of
-// the parent MockGitserverRepoStore instance is invoked and the hook queue
-// is empty.
-func (f *GitserverRepoStoreGetByNamesFunc) SetDefaultHook(hook func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error)) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// GetByNames method of the parent MockGitserverRepoStore instance invokes
-// the hook at the front of the queue and discards it. After the queue is
-// empty, the default hook function is invoked for any future action.
-func (f *GitserverRepoStoreGetByNamesFunc) PushHook(hook func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error)) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *GitserverRepoStoreGetByNamesFunc) SetDefaultReturn(r0 map[api.RepoName]*types.GitserverRepo, r1 error) {
-	f.SetDefaultHook(func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
-		return r0, r1
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *GitserverRepoStoreGetByNamesFunc) PushReturn(r0 map[api.RepoName]*types.GitserverRepo, r1 error) {
-	f.PushHook(func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
-		return r0, r1
-	})
-}
-
-func (f *GitserverRepoStoreGetByNamesFunc) nextHook() func(context.Context, ...api.RepoName) (map[api.RepoName]*types.GitserverRepo, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *GitserverRepoStoreGetByNamesFunc) appendCall(r0 GitserverRepoStoreGetByNamesFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of GitserverRepoStoreGetByNamesFuncCall
-// objects describing the invocations of this function.
-func (f *GitserverRepoStoreGetByNamesFunc) History() []GitserverRepoStoreGetByNamesFuncCall {
-	f.mutex.Lock()
-	history := make([]GitserverRepoStoreGetByNamesFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// GitserverRepoStoreGetByNamesFuncCall is an object that describes an
-// invocation of method GetByNames on an instance of MockGitserverRepoStore.
-type GitserverRepoStoreGetByNamesFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is a slice containing the values of the variadic arguments
-	// passed to this method invocation.
-	Arg1 []api.RepoName
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 map[api.RepoName]*types.GitserverRepo
-	// Result1 is the value of the 2nd result returned from this method
-	// invocation.
-	Result1 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation. The variadic slice argument is flattened in this array such
-// that one positional argument and three variadic arguments would result in
-// a slice of four, not two.
-func (c GitserverRepoStoreGetByNamesFuncCall) Args() []interface{} {
-	trailing := []interface{}{}
-	for _, val := range c.Arg1 {
-		trailing = append(trailing, val)
-	}
-
-	return append([]interface{}{c.Arg0}, trailing...)
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c GitserverRepoStoreGetByNamesFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
@@ -38574,233 +38392,6 @@ func (c GitserverRepoStoreHandleFuncCall) Args() []interface{} {
 // invocation.
 func (c GitserverRepoStoreHandleFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
-}
-
-// GitserverRepoStoreIterateRepoGitserverStatusFunc describes the behavior
-// when the IterateRepoGitserverStatus method of the parent
-// MockGitserverRepoStore instance is invoked.
-type GitserverRepoStoreIterateRepoGitserverStatusFunc struct {
-	defaultHook func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error)
-	hooks       []func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error)
-	history     []GitserverRepoStoreIterateRepoGitserverStatusFuncCall
-	mutex       sync.Mutex
-}
-
-// IterateRepoGitserverStatus delegates to the next hook function in the
-// queue and stores the parameter and result values of this invocation.
-func (m *MockGitserverRepoStore) IterateRepoGitserverStatus(v0 context.Context, v1 database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error) {
-	r0, r1, r2 := m.IterateRepoGitserverStatusFunc.nextHook()(v0, v1)
-	m.IterateRepoGitserverStatusFunc.appendCall(GitserverRepoStoreIterateRepoGitserverStatusFuncCall{v0, v1, r0, r1, r2})
-	return r0, r1, r2
-}
-
-// SetDefaultHook sets function that is called when the
-// IterateRepoGitserverStatus method of the parent MockGitserverRepoStore
-// instance is invoked and the hook queue is empty.
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) SetDefaultHook(hook func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error)) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// IterateRepoGitserverStatus method of the parent MockGitserverRepoStore
-// instance invokes the hook at the front of the queue and discards it.
-// After the queue is empty, the default hook function is invoked for any
-// future action.
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) PushHook(hook func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error)) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) SetDefaultReturn(r0 []types.RepoGitserverStatus, r1 int, r2 error) {
-	f.SetDefaultHook(func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error) {
-		return r0, r1, r2
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) PushReturn(r0 []types.RepoGitserverStatus, r1 int, r2 error) {
-	f.PushHook(func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error) {
-		return r0, r1, r2
-	})
-}
-
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) nextHook() func(context.Context, database.IterateRepoGitserverStatusOptions) ([]types.RepoGitserverStatus, int, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) appendCall(r0 GitserverRepoStoreIterateRepoGitserverStatusFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of
-// GitserverRepoStoreIterateRepoGitserverStatusFuncCall objects describing
-// the invocations of this function.
-func (f *GitserverRepoStoreIterateRepoGitserverStatusFunc) History() []GitserverRepoStoreIterateRepoGitserverStatusFuncCall {
-	f.mutex.Lock()
-	history := make([]GitserverRepoStoreIterateRepoGitserverStatusFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// GitserverRepoStoreIterateRepoGitserverStatusFuncCall is an object that
-// describes an invocation of method IterateRepoGitserverStatus on an
-// instance of MockGitserverRepoStore.
-type GitserverRepoStoreIterateRepoGitserverStatusFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is the value of the 2nd argument passed to this method
-	// invocation.
-	Arg1 database.IterateRepoGitserverStatusOptions
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 []types.RepoGitserverStatus
-	// Result1 is the value of the 2nd result returned from this method
-	// invocation.
-	Result1 int
-	// Result2 is the value of the 3rd result returned from this method
-	// invocation.
-	Result2 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c GitserverRepoStoreIterateRepoGitserverStatusFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c GitserverRepoStoreIterateRepoGitserverStatusFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0, c.Result1, c.Result2}
-}
-
-// GitserverRepoStoreListPurgeableReposFunc describes the behavior when the
-// ListPurgeableRepos method of the parent MockGitserverRepoStore instance
-// is invoked.
-type GitserverRepoStoreListPurgeableReposFunc struct {
-	defaultHook func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error)
-	hooks       []func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error)
-	history     []GitserverRepoStoreListPurgeableReposFuncCall
-	mutex       sync.Mutex
-}
-
-// ListPurgeableRepos delegates to the next hook function in the queue and
-// stores the parameter and result values of this invocation.
-func (m *MockGitserverRepoStore) ListPurgeableRepos(v0 context.Context, v1 database.ListPurgableReposOptions) ([]api.RepoName, error) {
-	r0, r1 := m.ListPurgeableReposFunc.nextHook()(v0, v1)
-	m.ListPurgeableReposFunc.appendCall(GitserverRepoStoreListPurgeableReposFuncCall{v0, v1, r0, r1})
-	return r0, r1
-}
-
-// SetDefaultHook sets function that is called when the ListPurgeableRepos
-// method of the parent MockGitserverRepoStore instance is invoked and the
-// hook queue is empty.
-func (f *GitserverRepoStoreListPurgeableReposFunc) SetDefaultHook(hook func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error)) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// ListPurgeableRepos method of the parent MockGitserverRepoStore instance
-// invokes the hook at the front of the queue and discards it. After the
-// queue is empty, the default hook function is invoked for any future
-// action.
-func (f *GitserverRepoStoreListPurgeableReposFunc) PushHook(hook func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error)) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *GitserverRepoStoreListPurgeableReposFunc) SetDefaultReturn(r0 []api.RepoName, r1 error) {
-	f.SetDefaultHook(func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error) {
-		return r0, r1
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *GitserverRepoStoreListPurgeableReposFunc) PushReturn(r0 []api.RepoName, r1 error) {
-	f.PushHook(func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error) {
-		return r0, r1
-	})
-}
-
-func (f *GitserverRepoStoreListPurgeableReposFunc) nextHook() func(context.Context, database.ListPurgableReposOptions) ([]api.RepoName, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *GitserverRepoStoreListPurgeableReposFunc) appendCall(r0 GitserverRepoStoreListPurgeableReposFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of
-// GitserverRepoStoreListPurgeableReposFuncCall objects describing the
-// invocations of this function.
-func (f *GitserverRepoStoreListPurgeableReposFunc) History() []GitserverRepoStoreListPurgeableReposFuncCall {
-	f.mutex.Lock()
-	history := make([]GitserverRepoStoreListPurgeableReposFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// GitserverRepoStoreListPurgeableReposFuncCall is an object that describes
-// an invocation of method ListPurgeableRepos on an instance of
-// MockGitserverRepoStore.
-type GitserverRepoStoreListPurgeableReposFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is the value of the 2nd argument passed to this method
-	// invocation.
-	Arg1 database.ListPurgableReposOptions
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 []api.RepoName
-	// Result1 is the value of the 2nd result returned from this method
-	// invocation.
-	Result1 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c GitserverRepoStoreListPurgeableReposFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c GitserverRepoStoreListPurgeableReposFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0, c.Result1}
 }
 
 // GitserverRepoStoreListReposWithLastErrorFunc describes the behavior when
@@ -39807,123 +39398,6 @@ func (c GitserverRepoStoreUpdateFuncCall) Args() []interface{} {
 // invocation.
 func (c GitserverRepoStoreUpdateFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
-}
-
-// GitserverRepoStoreUpdateRepoSizesFunc describes the behavior when the
-// UpdateRepoSizes method of the parent MockGitserverRepoStore instance is
-// invoked.
-type GitserverRepoStoreUpdateRepoSizesFunc struct {
-	defaultHook func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error)
-	hooks       []func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error)
-	history     []GitserverRepoStoreUpdateRepoSizesFuncCall
-	mutex       sync.Mutex
-}
-
-// UpdateRepoSizes delegates to the next hook function in the queue and
-// stores the parameter and result values of this invocation.
-func (m *MockGitserverRepoStore) UpdateRepoSizes(v0 context.Context, v1 log.Logger, v2 string, v3 map[api.RepoName]int64) (int, error) {
-	r0, r1 := m.UpdateRepoSizesFunc.nextHook()(v0, v1, v2, v3)
-	m.UpdateRepoSizesFunc.appendCall(GitserverRepoStoreUpdateRepoSizesFuncCall{v0, v1, v2, v3, r0, r1})
-	return r0, r1
-}
-
-// SetDefaultHook sets function that is called when the UpdateRepoSizes
-// method of the parent MockGitserverRepoStore instance is invoked and the
-// hook queue is empty.
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) SetDefaultHook(hook func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error)) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// UpdateRepoSizes method of the parent MockGitserverRepoStore instance
-// invokes the hook at the front of the queue and discards it. After the
-// queue is empty, the default hook function is invoked for any future
-// action.
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) PushHook(hook func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error)) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) SetDefaultReturn(r0 int, r1 error) {
-	f.SetDefaultHook(func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error) {
-		return r0, r1
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) PushReturn(r0 int, r1 error) {
-	f.PushHook(func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error) {
-		return r0, r1
-	})
-}
-
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) nextHook() func(context.Context, log.Logger, string, map[api.RepoName]int64) (int, error) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) appendCall(r0 GitserverRepoStoreUpdateRepoSizesFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of GitserverRepoStoreUpdateRepoSizesFuncCall
-// objects describing the invocations of this function.
-func (f *GitserverRepoStoreUpdateRepoSizesFunc) History() []GitserverRepoStoreUpdateRepoSizesFuncCall {
-	f.mutex.Lock()
-	history := make([]GitserverRepoStoreUpdateRepoSizesFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// GitserverRepoStoreUpdateRepoSizesFuncCall is an object that describes an
-// invocation of method UpdateRepoSizes on an instance of
-// MockGitserverRepoStore.
-type GitserverRepoStoreUpdateRepoSizesFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 context.Context
-	// Arg1 is the value of the 2nd argument passed to this method
-	// invocation.
-	Arg1 log.Logger
-	// Arg2 is the value of the 3rd argument passed to this method
-	// invocation.
-	Arg2 string
-	// Arg3 is the value of the 4th argument passed to this method
-	// invocation.
-	Arg3 map[api.RepoName]int64
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 int
-	// Result1 is the value of the 2nd result returned from this method
-	// invocation.
-	Result1 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c GitserverRepoStoreUpdateRepoSizesFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c GitserverRepoStoreUpdateRepoSizesFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0, c.Result1}
 }
 
 // GitserverRepoStoreWithFunc describes the behavior when the With method of

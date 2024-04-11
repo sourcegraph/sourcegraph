@@ -36,7 +36,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/limiter"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
-	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -396,18 +395,6 @@ func setLastFetched(ctx context.Context, db database.DB, shardID string, dir com
 	})
 }
 
-// setLastErrorNonFatal will set the last_error column for the repo in the gitserver table.
-func (s *Server) setLastErrorNonFatal(ctx context.Context, name api.RepoName, err error) {
-	var errString string
-	if err != nil {
-		errString = err.Error()
-	}
-
-	if err := s.db.GitserverRepos().SetLastError(ctx, name, errString, s.hostname); err != nil {
-		s.logger.Warn("Setting last error in DB", log.Error(err))
-	}
-}
-
 func (s *Server) LogIfCorrupt(ctx context.Context, repo api.RepoName, err error) {
 	var corruptErr common.ErrRepoCorrupted
 	if errors.As(err, &corruptErr) {
@@ -438,16 +425,7 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName) (err error) {
 	// We may be attempting to clone a private repo so we need an internal actor.
 	ctx = actor.WithInternalActor(ctx)
 
-	syncer, err := func() (_ vcssyncer.VCSSyncer, err error) {
-		defer func() {
-			if err != nil {
-				serverCtx, cancel := s.serverContext()
-				defer cancel()
-
-				s.setLastErrorNonFatal(serverCtx, repo, err)
-			}
-		}()
-
+	syncer, remoteURL, err := func() (_ vcssyncer.VCSSyncer, _ *vcs.URL, err error) {
 		syncer, err := s.getVCSSyncer(ctx, repo)
 		if err != nil {
 			return nil, errors.Wrap(err, "get VCS syncer")
@@ -491,12 +469,30 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName) (err error) {
 	serverCtx, cancel := s.serverContext()
 	defer cancel()
 
-	// Use caller context, if the caller is not interested anymore before we
-	// start cloning, we can skip the clone altogether.
-	_, cancel, err = s.acquireCloneLimiter(ctx)
-	if err != nil {
-		lock.Release()
-		return err
+		// Use caller context, if the caller is not interested anymore before we
+		// start cloning, we can skip the clone altogether.
+		_, cancel, err := s.acquireCloneLimiter(ctx)
+		if err != nil {
+			lock.Release()
+			return "", err
+		}
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+
+			err = errors.Wrapf(s.doClone(serverCtx, repo, dir, syncer, lock, opts), "failed to clone %s", repo)
+		}()
+
+		select {
+		case <-done:
+			return "", err
+		case <-ctx.Done():
+			// If the caller is not interested anymore, we finish the clone anyways,
+			// but let the caller live on.
+			return "", ctx.Err()
+		}
 	}
 	defer cancel()
 
@@ -559,32 +555,6 @@ func (s *Server) doClone(
 	}
 	defer os.RemoveAll(tmpDir)
 	tmpPath := filepath.Join(tmpDir, ".git")
-
-	cloned, err := s.fs.RepoCloned(repo)
-	if err != nil {
-		return errors.Wrap(err, "checking if repo is cloned")
-	}
-
-	// It may already be cloned
-	if !cloned {
-		if err := s.db.GitserverRepos().SetCloneStatus(ctx, repo, types.CloneStatusCloning, s.hostname); err != nil {
-			s.logger.Error("Setting clone status in DB", log.Error(err))
-		}
-	}
-	defer func() {
-		cloned, err := s.fs.RepoCloned(repo)
-		if err != nil {
-			s.logger.Error("failed to check if repo is cloned", log.Error(err))
-		} else if err := s.db.GitserverRepos().SetCloneStatus(
-			// Use a background context to ensure we still update the DB even if we time out
-			context.Background(),
-			repo,
-			cloneStatus(cloned, false),
-			s.hostname,
-		); err != nil {
-			s.logger.Error("Setting clone status in DB", log.Error(err))
-		}
-	}()
 
 	logger.Info("cloning repo", log.String("tmp", tmpDir), log.String("dst", dstPath))
 
@@ -905,7 +875,6 @@ func (s *Server) doRepoUpdate(ctx context.Context, repo api.RepoName, revspec st
 				// The repo update might have failed due to the repo being corrupt
 				s.LogIfCorrupt(serverCtx, repo, err)
 			}
-			s.setLastErrorNonFatal(serverCtx, repo, err)
 		})
 	}()
 

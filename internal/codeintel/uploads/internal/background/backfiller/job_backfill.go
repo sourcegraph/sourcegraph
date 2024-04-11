@@ -48,7 +48,7 @@ func (s *backfiller) BackfillCommittedAtBatch(ctx context.Context, batchSize int
 
 		for _, sourcedCommits := range batch {
 			for _, commit := range sourcedCommits.Commits {
-				commitDateString, err := s.getCommitDate(ctx, sourcedCommits.RepositoryName, commit)
+				commitDateString, err := s.getCommitDate(ctx, sourcedCommits.RepositoryID, commit)
 				if err != nil {
 					return err
 				}
@@ -69,8 +69,8 @@ func (s *backfiller) BackfillCommittedAtBatch(ctx context.Context, batchSize int
 	})
 }
 
-func (s *backfiller) getCommitDate(ctx context.Context, repositoryName, commitID string) (string, error) {
-	commit, err := s.gitserverClient.GetCommit(ctx, api.RepoName(repositoryName), api.CommitID(commitID))
+func (s *backfiller) getCommitDate(ctx context.Context, repositoryID int, commitID string) (string, error) {
+	commit, err := s.gitserverClient.GetCommit(ctx, api.RepoID(repositoryID), api.CommitID(commitID))
 	if err != nil {
 		if errors.HasType(err, &gitdomain.RevisionNotFoundError{}) {
 			// Set a value here that we'll filter out on the query side so that we don't

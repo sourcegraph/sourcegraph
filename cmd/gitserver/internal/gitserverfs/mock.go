@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	common "github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
-	api "github.com/sourcegraph/sourcegraph/internal/api"
 	diskusage "github.com/sourcegraph/sourcegraph/internal/diskusage"
 )
 
@@ -45,15 +44,12 @@ type MockFS struct {
 	// RepoDirFunc is an instance of a mock function object controlling the
 	// behavior of the method RepoDir.
 	RepoDirFunc *FSRepoDirFunc
-	// ResolveRepoNameFunc is an instance of a mock function object
-	// controlling the behavior of the method ResolveRepoName.
-	ResolveRepoNameFunc *FSResolveRepoNameFunc
+	// ResolveRepoFunc is an instance of a mock function object controlling
+	// the behavior of the method ResolveRepo.
+	ResolveRepoFunc *FSResolveRepoFunc
 	// TempDirFunc is an instance of a mock function object controlling the
 	// behavior of the method TempDir.
 	TempDirFunc *FSTempDirFunc
-	// VisitReposFunc is an instance of a mock function object controlling
-	// the behavior of the method VisitRepos.
-	VisitReposFunc *FSVisitReposFunc
 }
 
 // NewMockFS creates a new mock of the FS interface. All methods return zero
@@ -61,7 +57,7 @@ type MockFS struct {
 func NewMockFS() *MockFS {
 	return &MockFS{
 		DirSizeFunc: &FSDirSizeFunc{
-			defaultHook: func(string) (r0 int64, r1 error) {
+			defaultHook: func(GitserverRepo) (r0 int64, r1 error) {
 				return
 			},
 		},
@@ -71,7 +67,7 @@ func NewMockFS() *MockFS {
 			},
 		},
 		ForEachRepoFunc: &FSForEachRepoFunc{
-			defaultHook: func(func(api.RepoName, common.GitDir) bool) (r0 error) {
+			defaultHook: func(func(GitserverRepo, common.GitDir) bool) (r0 error) {
 				return
 			},
 		},
@@ -91,32 +87,27 @@ func NewMockFS() *MockFS {
 			},
 		},
 		RemoveRepoFunc: &FSRemoveRepoFunc{
-			defaultHook: func(api.RepoName) (r0 error) {
+			defaultHook: func(GitserverRepo) (r0 error) {
 				return
 			},
 		},
 		RepoClonedFunc: &FSRepoClonedFunc{
-			defaultHook: func(api.RepoName) (r0 bool, r1 error) {
+			defaultHook: func(GitserverRepo) (r0 bool, r1 error) {
 				return
 			},
 		},
 		RepoDirFunc: &FSRepoDirFunc{
-			defaultHook: func(api.RepoName) (r0 common.GitDir) {
+			defaultHook: func(GitserverRepo) (r0 common.GitDir) {
 				return
 			},
 		},
-		ResolveRepoNameFunc: &FSResolveRepoNameFunc{
-			defaultHook: func(common.GitDir) (r0 api.RepoName) {
+		ResolveRepoFunc: &FSResolveRepoFunc{
+			defaultHook: func(common.GitDir) (r0 GitserverRepo) {
 				return
 			},
 		},
 		TempDirFunc: &FSTempDirFunc{
 			defaultHook: func(string) (r0 string, r1 error) {
-				return
-			},
-		},
-		VisitReposFunc: &FSVisitReposFunc{
-			defaultHook: func(func(api.RepoName, common.GitDir) (bool, error)) (r0 error) {
 				return
 			},
 		},
@@ -128,7 +119,7 @@ func NewMockFS() *MockFS {
 func NewStrictMockFS() *MockFS {
 	return &MockFS{
 		DirSizeFunc: &FSDirSizeFunc{
-			defaultHook: func(string) (int64, error) {
+			defaultHook: func(GitserverRepo) (int64, error) {
 				panic("unexpected invocation of MockFS.DirSize")
 			},
 		},
@@ -138,7 +129,7 @@ func NewStrictMockFS() *MockFS {
 			},
 		},
 		ForEachRepoFunc: &FSForEachRepoFunc{
-			defaultHook: func(func(api.RepoName, common.GitDir) bool) error {
+			defaultHook: func(func(GitserverRepo, common.GitDir) bool) error {
 				panic("unexpected invocation of MockFS.ForEachRepo")
 			},
 		},
@@ -158,33 +149,28 @@ func NewStrictMockFS() *MockFS {
 			},
 		},
 		RemoveRepoFunc: &FSRemoveRepoFunc{
-			defaultHook: func(api.RepoName) error {
+			defaultHook: func(GitserverRepo) error {
 				panic("unexpected invocation of MockFS.RemoveRepo")
 			},
 		},
 		RepoClonedFunc: &FSRepoClonedFunc{
-			defaultHook: func(api.RepoName) (bool, error) {
+			defaultHook: func(GitserverRepo) (bool, error) {
 				panic("unexpected invocation of MockFS.RepoCloned")
 			},
 		},
 		RepoDirFunc: &FSRepoDirFunc{
-			defaultHook: func(api.RepoName) common.GitDir {
+			defaultHook: func(GitserverRepo) common.GitDir {
 				panic("unexpected invocation of MockFS.RepoDir")
 			},
 		},
-		ResolveRepoNameFunc: &FSResolveRepoNameFunc{
-			defaultHook: func(common.GitDir) api.RepoName {
-				panic("unexpected invocation of MockFS.ResolveRepoName")
+		ResolveRepoFunc: &FSResolveRepoFunc{
+			defaultHook: func(common.GitDir) GitserverRepo {
+				panic("unexpected invocation of MockFS.ResolveRepo")
 			},
 		},
 		TempDirFunc: &FSTempDirFunc{
 			defaultHook: func(string) (string, error) {
 				panic("unexpected invocation of MockFS.TempDir")
-			},
-		},
-		VisitReposFunc: &FSVisitReposFunc{
-			defaultHook: func(func(api.RepoName, common.GitDir) (bool, error)) error {
-				panic("unexpected invocation of MockFS.VisitRepos")
 			},
 		},
 	}
@@ -221,14 +207,11 @@ func NewMockFSFrom(i FS) *MockFS {
 		RepoDirFunc: &FSRepoDirFunc{
 			defaultHook: i.RepoDir,
 		},
-		ResolveRepoNameFunc: &FSResolveRepoNameFunc{
-			defaultHook: i.ResolveRepoName,
+		ResolveRepoFunc: &FSResolveRepoFunc{
+			defaultHook: i.ResolveRepo,
 		},
 		TempDirFunc: &FSTempDirFunc{
 			defaultHook: i.TempDir,
-		},
-		VisitReposFunc: &FSVisitReposFunc{
-			defaultHook: i.VisitRepos,
 		},
 	}
 }
@@ -236,15 +219,15 @@ func NewMockFSFrom(i FS) *MockFS {
 // FSDirSizeFunc describes the behavior when the DirSize method of the
 // parent MockFS instance is invoked.
 type FSDirSizeFunc struct {
-	defaultHook func(string) (int64, error)
-	hooks       []func(string) (int64, error)
+	defaultHook func(GitserverRepo) (int64, error)
+	hooks       []func(GitserverRepo) (int64, error)
 	history     []FSDirSizeFuncCall
 	mutex       sync.Mutex
 }
 
 // DirSize delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockFS) DirSize(v0 string) (int64, error) {
+func (m *MockFS) DirSize(v0 GitserverRepo) (int64, error) {
 	r0, r1 := m.DirSizeFunc.nextHook()(v0)
 	m.DirSizeFunc.appendCall(FSDirSizeFuncCall{v0, r0, r1})
 	return r0, r1
@@ -252,7 +235,7 @@ func (m *MockFS) DirSize(v0 string) (int64, error) {
 
 // SetDefaultHook sets function that is called when the DirSize method of
 // the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSDirSizeFunc) SetDefaultHook(hook func(string) (int64, error)) {
+func (f *FSDirSizeFunc) SetDefaultHook(hook func(GitserverRepo) (int64, error)) {
 	f.defaultHook = hook
 }
 
@@ -260,7 +243,7 @@ func (f *FSDirSizeFunc) SetDefaultHook(hook func(string) (int64, error)) {
 // DirSize method of the parent MockFS instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *FSDirSizeFunc) PushHook(hook func(string) (int64, error)) {
+func (f *FSDirSizeFunc) PushHook(hook func(GitserverRepo) (int64, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -269,19 +252,19 @@ func (f *FSDirSizeFunc) PushHook(hook func(string) (int64, error)) {
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *FSDirSizeFunc) SetDefaultReturn(r0 int64, r1 error) {
-	f.SetDefaultHook(func(string) (int64, error) {
+	f.SetDefaultHook(func(GitserverRepo) (int64, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *FSDirSizeFunc) PushReturn(r0 int64, r1 error) {
-	f.PushHook(func(string) (int64, error) {
+	f.PushHook(func(GitserverRepo) (int64, error) {
 		return r0, r1
 	})
 }
 
-func (f *FSDirSizeFunc) nextHook() func(string) (int64, error) {
+func (f *FSDirSizeFunc) nextHook() func(GitserverRepo) (int64, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -316,7 +299,7 @@ func (f *FSDirSizeFunc) History() []FSDirSizeFuncCall {
 type FSDirSizeFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
-	Arg0 string
+	Arg0 GitserverRepo
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 int64
@@ -441,15 +424,15 @@ func (c FSDiskUsageFuncCall) Results() []interface{} {
 // FSForEachRepoFunc describes the behavior when the ForEachRepo method of
 // the parent MockFS instance is invoked.
 type FSForEachRepoFunc struct {
-	defaultHook func(func(api.RepoName, common.GitDir) bool) error
-	hooks       []func(func(api.RepoName, common.GitDir) bool) error
+	defaultHook func(func(GitserverRepo, common.GitDir) bool) error
+	hooks       []func(func(GitserverRepo, common.GitDir) bool) error
 	history     []FSForEachRepoFuncCall
 	mutex       sync.Mutex
 }
 
 // ForEachRepo delegates to the next hook function in the queue and stores
 // the parameter and result values of this invocation.
-func (m *MockFS) ForEachRepo(v0 func(api.RepoName, common.GitDir) bool) error {
+func (m *MockFS) ForEachRepo(v0 func(GitserverRepo, common.GitDir) bool) error {
 	r0 := m.ForEachRepoFunc.nextHook()(v0)
 	m.ForEachRepoFunc.appendCall(FSForEachRepoFuncCall{v0, r0})
 	return r0
@@ -457,7 +440,7 @@ func (m *MockFS) ForEachRepo(v0 func(api.RepoName, common.GitDir) bool) error {
 
 // SetDefaultHook sets function that is called when the ForEachRepo method
 // of the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSForEachRepoFunc) SetDefaultHook(hook func(func(api.RepoName, common.GitDir) bool) error) {
+func (f *FSForEachRepoFunc) SetDefaultHook(hook func(func(GitserverRepo, common.GitDir) bool) error) {
 	f.defaultHook = hook
 }
 
@@ -465,7 +448,7 @@ func (f *FSForEachRepoFunc) SetDefaultHook(hook func(func(api.RepoName, common.G
 // ForEachRepo method of the parent MockFS instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *FSForEachRepoFunc) PushHook(hook func(func(api.RepoName, common.GitDir) bool) error) {
+func (f *FSForEachRepoFunc) PushHook(hook func(func(GitserverRepo, common.GitDir) bool) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -474,19 +457,19 @@ func (f *FSForEachRepoFunc) PushHook(hook func(func(api.RepoName, common.GitDir)
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *FSForEachRepoFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(func(api.RepoName, common.GitDir) bool) error {
+	f.SetDefaultHook(func(func(GitserverRepo, common.GitDir) bool) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *FSForEachRepoFunc) PushReturn(r0 error) {
-	f.PushHook(func(func(api.RepoName, common.GitDir) bool) error {
+	f.PushHook(func(func(GitserverRepo, common.GitDir) bool) error {
 		return r0
 	})
 }
 
-func (f *FSForEachRepoFunc) nextHook() func(func(api.RepoName, common.GitDir) bool) error {
+func (f *FSForEachRepoFunc) nextHook() func(func(GitserverRepo, common.GitDir) bool) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -521,7 +504,7 @@ func (f *FSForEachRepoFunc) History() []FSForEachRepoFuncCall {
 type FSForEachRepoFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
-	Arg0 func(api.RepoName, common.GitDir) bool
+	Arg0 func(GitserverRepo, common.GitDir) bool
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -842,15 +825,15 @@ func (c FSP4HomeDirFuncCall) Results() []interface{} {
 // FSRemoveRepoFunc describes the behavior when the RemoveRepo method of the
 // parent MockFS instance is invoked.
 type FSRemoveRepoFunc struct {
-	defaultHook func(api.RepoName) error
-	hooks       []func(api.RepoName) error
+	defaultHook func(GitserverRepo) error
+	hooks       []func(GitserverRepo) error
 	history     []FSRemoveRepoFuncCall
 	mutex       sync.Mutex
 }
 
 // RemoveRepo delegates to the next hook function in the queue and stores
 // the parameter and result values of this invocation.
-func (m *MockFS) RemoveRepo(v0 api.RepoName) error {
+func (m *MockFS) RemoveRepo(v0 GitserverRepo) error {
 	r0 := m.RemoveRepoFunc.nextHook()(v0)
 	m.RemoveRepoFunc.appendCall(FSRemoveRepoFuncCall{v0, r0})
 	return r0
@@ -858,7 +841,7 @@ func (m *MockFS) RemoveRepo(v0 api.RepoName) error {
 
 // SetDefaultHook sets function that is called when the RemoveRepo method of
 // the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSRemoveRepoFunc) SetDefaultHook(hook func(api.RepoName) error) {
+func (f *FSRemoveRepoFunc) SetDefaultHook(hook func(GitserverRepo) error) {
 	f.defaultHook = hook
 }
 
@@ -866,7 +849,7 @@ func (f *FSRemoveRepoFunc) SetDefaultHook(hook func(api.RepoName) error) {
 // RemoveRepo method of the parent MockFS instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *FSRemoveRepoFunc) PushHook(hook func(api.RepoName) error) {
+func (f *FSRemoveRepoFunc) PushHook(hook func(GitserverRepo) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -875,19 +858,19 @@ func (f *FSRemoveRepoFunc) PushHook(hook func(api.RepoName) error) {
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *FSRemoveRepoFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(api.RepoName) error {
+	f.SetDefaultHook(func(GitserverRepo) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *FSRemoveRepoFunc) PushReturn(r0 error) {
-	f.PushHook(func(api.RepoName) error {
+	f.PushHook(func(GitserverRepo) error {
 		return r0
 	})
 }
 
-func (f *FSRemoveRepoFunc) nextHook() func(api.RepoName) error {
+func (f *FSRemoveRepoFunc) nextHook() func(GitserverRepo) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -922,7 +905,7 @@ func (f *FSRemoveRepoFunc) History() []FSRemoveRepoFuncCall {
 type FSRemoveRepoFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
-	Arg0 api.RepoName
+	Arg0 GitserverRepo
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -943,15 +926,15 @@ func (c FSRemoveRepoFuncCall) Results() []interface{} {
 // FSRepoClonedFunc describes the behavior when the RepoCloned method of the
 // parent MockFS instance is invoked.
 type FSRepoClonedFunc struct {
-	defaultHook func(api.RepoName) (bool, error)
-	hooks       []func(api.RepoName) (bool, error)
+	defaultHook func(GitserverRepo) (bool, error)
+	hooks       []func(GitserverRepo) (bool, error)
 	history     []FSRepoClonedFuncCall
 	mutex       sync.Mutex
 }
 
 // RepoCloned delegates to the next hook function in the queue and stores
 // the parameter and result values of this invocation.
-func (m *MockFS) RepoCloned(v0 api.RepoName) (bool, error) {
+func (m *MockFS) RepoCloned(v0 GitserverRepo) (bool, error) {
 	r0, r1 := m.RepoClonedFunc.nextHook()(v0)
 	m.RepoClonedFunc.appendCall(FSRepoClonedFuncCall{v0, r0, r1})
 	return r0, r1
@@ -959,7 +942,7 @@ func (m *MockFS) RepoCloned(v0 api.RepoName) (bool, error) {
 
 // SetDefaultHook sets function that is called when the RepoCloned method of
 // the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSRepoClonedFunc) SetDefaultHook(hook func(api.RepoName) (bool, error)) {
+func (f *FSRepoClonedFunc) SetDefaultHook(hook func(GitserverRepo) (bool, error)) {
 	f.defaultHook = hook
 }
 
@@ -967,7 +950,7 @@ func (f *FSRepoClonedFunc) SetDefaultHook(hook func(api.RepoName) (bool, error))
 // RepoCloned method of the parent MockFS instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *FSRepoClonedFunc) PushHook(hook func(api.RepoName) (bool, error)) {
+func (f *FSRepoClonedFunc) PushHook(hook func(GitserverRepo) (bool, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -976,19 +959,19 @@ func (f *FSRepoClonedFunc) PushHook(hook func(api.RepoName) (bool, error)) {
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *FSRepoClonedFunc) SetDefaultReturn(r0 bool, r1 error) {
-	f.SetDefaultHook(func(api.RepoName) (bool, error) {
+	f.SetDefaultHook(func(GitserverRepo) (bool, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *FSRepoClonedFunc) PushReturn(r0 bool, r1 error) {
-	f.PushHook(func(api.RepoName) (bool, error) {
+	f.PushHook(func(GitserverRepo) (bool, error) {
 		return r0, r1
 	})
 }
 
-func (f *FSRepoClonedFunc) nextHook() func(api.RepoName) (bool, error) {
+func (f *FSRepoClonedFunc) nextHook() func(GitserverRepo) (bool, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1023,7 +1006,7 @@ func (f *FSRepoClonedFunc) History() []FSRepoClonedFuncCall {
 type FSRepoClonedFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
-	Arg0 api.RepoName
+	Arg0 GitserverRepo
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 bool
@@ -1047,15 +1030,15 @@ func (c FSRepoClonedFuncCall) Results() []interface{} {
 // FSRepoDirFunc describes the behavior when the RepoDir method of the
 // parent MockFS instance is invoked.
 type FSRepoDirFunc struct {
-	defaultHook func(api.RepoName) common.GitDir
-	hooks       []func(api.RepoName) common.GitDir
+	defaultHook func(GitserverRepo) common.GitDir
+	hooks       []func(GitserverRepo) common.GitDir
 	history     []FSRepoDirFuncCall
 	mutex       sync.Mutex
 }
 
 // RepoDir delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockFS) RepoDir(v0 api.RepoName) common.GitDir {
+func (m *MockFS) RepoDir(v0 GitserverRepo) common.GitDir {
 	r0 := m.RepoDirFunc.nextHook()(v0)
 	m.RepoDirFunc.appendCall(FSRepoDirFuncCall{v0, r0})
 	return r0
@@ -1063,7 +1046,7 @@ func (m *MockFS) RepoDir(v0 api.RepoName) common.GitDir {
 
 // SetDefaultHook sets function that is called when the RepoDir method of
 // the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSRepoDirFunc) SetDefaultHook(hook func(api.RepoName) common.GitDir) {
+func (f *FSRepoDirFunc) SetDefaultHook(hook func(GitserverRepo) common.GitDir) {
 	f.defaultHook = hook
 }
 
@@ -1071,7 +1054,7 @@ func (f *FSRepoDirFunc) SetDefaultHook(hook func(api.RepoName) common.GitDir) {
 // RepoDir method of the parent MockFS instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *FSRepoDirFunc) PushHook(hook func(api.RepoName) common.GitDir) {
+func (f *FSRepoDirFunc) PushHook(hook func(GitserverRepo) common.GitDir) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1080,19 +1063,19 @@ func (f *FSRepoDirFunc) PushHook(hook func(api.RepoName) common.GitDir) {
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *FSRepoDirFunc) SetDefaultReturn(r0 common.GitDir) {
-	f.SetDefaultHook(func(api.RepoName) common.GitDir {
+	f.SetDefaultHook(func(GitserverRepo) common.GitDir {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *FSRepoDirFunc) PushReturn(r0 common.GitDir) {
-	f.PushHook(func(api.RepoName) common.GitDir {
+	f.PushHook(func(GitserverRepo) common.GitDir {
 		return r0
 	})
 }
 
-func (f *FSRepoDirFunc) nextHook() func(api.RepoName) common.GitDir {
+func (f *FSRepoDirFunc) nextHook() func(GitserverRepo) common.GitDir {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1127,7 +1110,7 @@ func (f *FSRepoDirFunc) History() []FSRepoDirFuncCall {
 type FSRepoDirFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
-	Arg0 api.RepoName
+	Arg0 GitserverRepo
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 common.GitDir
@@ -1145,35 +1128,34 @@ func (c FSRepoDirFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 
-// FSResolveRepoNameFunc describes the behavior when the ResolveRepoName
-// method of the parent MockFS instance is invoked.
-type FSResolveRepoNameFunc struct {
-	defaultHook func(common.GitDir) api.RepoName
-	hooks       []func(common.GitDir) api.RepoName
-	history     []FSResolveRepoNameFuncCall
+// FSResolveRepoFunc describes the behavior when the ResolveRepo method of
+// the parent MockFS instance is invoked.
+type FSResolveRepoFunc struct {
+	defaultHook func(common.GitDir) GitserverRepo
+	hooks       []func(common.GitDir) GitserverRepo
+	history     []FSResolveRepoFuncCall
 	mutex       sync.Mutex
 }
 
-// ResolveRepoName delegates to the next hook function in the queue and
-// stores the parameter and result values of this invocation.
-func (m *MockFS) ResolveRepoName(v0 common.GitDir) api.RepoName {
-	r0 := m.ResolveRepoNameFunc.nextHook()(v0)
-	m.ResolveRepoNameFunc.appendCall(FSResolveRepoNameFuncCall{v0, r0})
+// ResolveRepo delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockFS) ResolveRepo(v0 common.GitDir) GitserverRepo {
+	r0 := m.ResolveRepoFunc.nextHook()(v0)
+	m.ResolveRepoFunc.appendCall(FSResolveRepoFuncCall{v0, r0})
 	return r0
 }
 
-// SetDefaultHook sets function that is called when the ResolveRepoName
-// method of the parent MockFS instance is invoked and the hook queue is
-// empty.
-func (f *FSResolveRepoNameFunc) SetDefaultHook(hook func(common.GitDir) api.RepoName) {
+// SetDefaultHook sets function that is called when the ResolveRepo method
+// of the parent MockFS instance is invoked and the hook queue is empty.
+func (f *FSResolveRepoFunc) SetDefaultHook(hook func(common.GitDir) GitserverRepo) {
 	f.defaultHook = hook
 }
 
 // PushHook adds a function to the end of hook queue. Each invocation of the
-// ResolveRepoName method of the parent MockFS instance invokes the hook at
-// the front of the queue and discards it. After the queue is empty, the
-// default hook function is invoked for any future action.
-func (f *FSResolveRepoNameFunc) PushHook(hook func(common.GitDir) api.RepoName) {
+// ResolveRepo method of the parent MockFS instance invokes the hook at the
+// front of the queue and discards it. After the queue is empty, the default
+// hook function is invoked for any future action.
+func (f *FSResolveRepoFunc) PushHook(hook func(common.GitDir) GitserverRepo) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1181,20 +1163,20 @@ func (f *FSResolveRepoNameFunc) PushHook(hook func(common.GitDir) api.RepoName) 
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *FSResolveRepoNameFunc) SetDefaultReturn(r0 api.RepoName) {
-	f.SetDefaultHook(func(common.GitDir) api.RepoName {
+func (f *FSResolveRepoFunc) SetDefaultReturn(r0 GitserverRepo) {
+	f.SetDefaultHook(func(common.GitDir) GitserverRepo {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *FSResolveRepoNameFunc) PushReturn(r0 api.RepoName) {
-	f.PushHook(func(common.GitDir) api.RepoName {
+func (f *FSResolveRepoFunc) PushReturn(r0 GitserverRepo) {
+	f.PushHook(func(common.GitDir) GitserverRepo {
 		return r0
 	})
 }
 
-func (f *FSResolveRepoNameFunc) nextHook() func(common.GitDir) api.RepoName {
+func (f *FSResolveRepoFunc) nextHook() func(common.GitDir) GitserverRepo {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1207,43 +1189,43 @@ func (f *FSResolveRepoNameFunc) nextHook() func(common.GitDir) api.RepoName {
 	return hook
 }
 
-func (f *FSResolveRepoNameFunc) appendCall(r0 FSResolveRepoNameFuncCall) {
+func (f *FSResolveRepoFunc) appendCall(r0 FSResolveRepoFuncCall) {
 	f.mutex.Lock()
 	f.history = append(f.history, r0)
 	f.mutex.Unlock()
 }
 
-// History returns a sequence of FSResolveRepoNameFuncCall objects
-// describing the invocations of this function.
-func (f *FSResolveRepoNameFunc) History() []FSResolveRepoNameFuncCall {
+// History returns a sequence of FSResolveRepoFuncCall objects describing
+// the invocations of this function.
+func (f *FSResolveRepoFunc) History() []FSResolveRepoFuncCall {
 	f.mutex.Lock()
-	history := make([]FSResolveRepoNameFuncCall, len(f.history))
+	history := make([]FSResolveRepoFuncCall, len(f.history))
 	copy(history, f.history)
 	f.mutex.Unlock()
 
 	return history
 }
 
-// FSResolveRepoNameFuncCall is an object that describes an invocation of
-// method ResolveRepoName on an instance of MockFS.
-type FSResolveRepoNameFuncCall struct {
+// FSResolveRepoFuncCall is an object that describes an invocation of method
+// ResolveRepo on an instance of MockFS.
+type FSResolveRepoFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
 	Arg0 common.GitDir
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 api.RepoName
+	Result0 GitserverRepo
 }
 
 // Args returns an interface slice containing the arguments of this
 // invocation.
-func (c FSResolveRepoNameFuncCall) Args() []interface{} {
+func (c FSResolveRepoFuncCall) Args() []interface{} {
 	return []interface{}{c.Arg0}
 }
 
 // Results returns an interface slice containing the results of this
 // invocation.
-func (c FSResolveRepoNameFuncCall) Results() []interface{} {
+func (c FSResolveRepoFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 
@@ -1349,105 +1331,4 @@ func (c FSTempDirFuncCall) Args() []interface{} {
 // invocation.
 func (c FSTempDirFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
-}
-
-// FSVisitReposFunc describes the behavior when the VisitRepos method of the
-// parent MockFS instance is invoked.
-type FSVisitReposFunc struct {
-	defaultHook func(func(api.RepoName, common.GitDir) (bool, error)) error
-	hooks       []func(func(api.RepoName, common.GitDir) (bool, error)) error
-	history     []FSVisitReposFuncCall
-	mutex       sync.Mutex
-}
-
-// VisitRepos delegates to the next hook function in the queue and stores
-// the parameter and result values of this invocation.
-func (m *MockFS) VisitRepos(v0 func(api.RepoName, common.GitDir) (bool, error)) error {
-	r0 := m.VisitReposFunc.nextHook()(v0)
-	m.VisitReposFunc.appendCall(FSVisitReposFuncCall{v0, r0})
-	return r0
-}
-
-// SetDefaultHook sets function that is called when the VisitRepos method of
-// the parent MockFS instance is invoked and the hook queue is empty.
-func (f *FSVisitReposFunc) SetDefaultHook(hook func(func(api.RepoName, common.GitDir) (bool, error)) error) {
-	f.defaultHook = hook
-}
-
-// PushHook adds a function to the end of hook queue. Each invocation of the
-// VisitRepos method of the parent MockFS instance invokes the hook at the
-// front of the queue and discards it. After the queue is empty, the default
-// hook function is invoked for any future action.
-func (f *FSVisitReposFunc) PushHook(hook func(func(api.RepoName, common.GitDir) (bool, error)) error) {
-	f.mutex.Lock()
-	f.hooks = append(f.hooks, hook)
-	f.mutex.Unlock()
-}
-
-// SetDefaultReturn calls SetDefaultHook with a function that returns the
-// given values.
-func (f *FSVisitReposFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(func(api.RepoName, common.GitDir) (bool, error)) error {
-		return r0
-	})
-}
-
-// PushReturn calls PushHook with a function that returns the given values.
-func (f *FSVisitReposFunc) PushReturn(r0 error) {
-	f.PushHook(func(func(api.RepoName, common.GitDir) (bool, error)) error {
-		return r0
-	})
-}
-
-func (f *FSVisitReposFunc) nextHook() func(func(api.RepoName, common.GitDir) (bool, error)) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	if len(f.hooks) == 0 {
-		return f.defaultHook
-	}
-
-	hook := f.hooks[0]
-	f.hooks = f.hooks[1:]
-	return hook
-}
-
-func (f *FSVisitReposFunc) appendCall(r0 FSVisitReposFuncCall) {
-	f.mutex.Lock()
-	f.history = append(f.history, r0)
-	f.mutex.Unlock()
-}
-
-// History returns a sequence of FSVisitReposFuncCall objects describing the
-// invocations of this function.
-func (f *FSVisitReposFunc) History() []FSVisitReposFuncCall {
-	f.mutex.Lock()
-	history := make([]FSVisitReposFuncCall, len(f.history))
-	copy(history, f.history)
-	f.mutex.Unlock()
-
-	return history
-}
-
-// FSVisitReposFuncCall is an object that describes an invocation of method
-// VisitRepos on an instance of MockFS.
-type FSVisitReposFuncCall struct {
-	// Arg0 is the value of the 1st argument passed to this method
-	// invocation.
-	Arg0 func(api.RepoName, common.GitDir) (bool, error)
-	// Result0 is the value of the 1st result returned from this method
-	// invocation.
-	Result0 error
-}
-
-// Args returns an interface slice containing the arguments of this
-// invocation.
-func (c FSVisitReposFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0}
-}
-
-// Results returns an interface slice containing the results of this
-// invocation.
-func (c FSVisitReposFuncCall) Results() []interface{} {
-	return []interface{}{c.Result0}
 }

@@ -177,7 +177,7 @@ func createLogFields(upload uploadsshared.Upload) []attribute.KeyValue {
 }
 
 // defaultBranchContains tells if the default branch contains the given commit ID.
-func (c *handler) defaultBranchContains(ctx context.Context, repo api.RepoName, commit string) (bool, error) {
+func (c *handler) defaultBranchContains(ctx context.Context, repo api.RepoID, commit string) (bool, error) {
 	// Determine default branch name.
 	defaultBranchName, _, err := c.gitserverClient.GetDefaultBranch(ctx, repo, true)
 	if err != nil {
@@ -210,7 +210,7 @@ func (h *handler) HandleRawUpload(ctx context.Context, logger log.Logger, upload
 	}
 
 	// Determine if the upload is for the default Git branch.
-	isDefaultBranch, err := h.defaultBranchContains(ctx, repo.Name, upload.Commit)
+	isDefaultBranch, err := h.defaultBranchContains(ctx, repo.ID, upload.Commit)
 	if err != nil {
 		return false, errors.Wrap(err, "gitserver.DefaultBranchContains")
 	}
@@ -218,7 +218,7 @@ func (h *handler) HandleRawUpload(ctx context.Context, logger log.Logger, upload
 	trace.AddEvent("TODO Domain Owner", attribute.Bool("defaultBranch", isDefaultBranch))
 
 	getChildren := func(ctx context.Context, dirnames []string) (map[string][]string, error) {
-		directoryChildren, err := h.gitserverClient.ListDirectoryChildren(ctx, repo.Name, api.CommitID(upload.Commit), dirnames)
+		directoryChildren, err := h.gitserverClient.ListDirectoryChildren(ctx, repo.ID, api.CommitID(upload.Commit), dirnames)
 		if err != nil {
 			return nil, errors.Wrap(err, "gitserverClient.DirectoryChildren")
 		}
@@ -240,7 +240,7 @@ func (h *handler) HandleRawUpload(ctx context.Context, logger log.Logger, upload
 		// database (if not already present). We need to have the commit data of every processed upload
 		// for a repository when calculating the commit graph (triggered at the end of this handler).
 
-		commit, err := h.gitserverClient.GetCommit(ctx, repo.Name, api.CommitID(upload.Commit))
+		commit, err := h.gitserverClient.GetCommit(ctx, repo.ID, api.CommitID(upload.Commit))
 		if err != nil {
 			if errors.HasType(err, &gitdomain.RevisionNotFoundError{}) {
 				return errCommitDoesNotExist

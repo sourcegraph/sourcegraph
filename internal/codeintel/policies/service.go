@@ -5,7 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/policies/internal/store"
 	policiesshared "github.com/sourcegraph/sourcegraph/internal/codeintel/policies/shared"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
@@ -128,12 +127,7 @@ func (s *Service) GetRetentionPolicyOverview(ctx context.Context, upload shared.
 		return nil, 0, err
 	}
 
-	repo, err := s.repoStore.Get(ctx, api.RepoID(upload.RepositoryID))
-	if err != nil {
-		return nil, 0, err
-	}
-
-	matchingPolicies, err := policyMatcher.CommitsDescribedByPolicy(ctx, upload.RepositoryID, repo.Name, configPolicies, time.Now(), visibleCommits...)
+	matchingPolicies, err := policyMatcher.CommitsDescribedByPolicy(ctx, upload.RepositoryID, configPolicies, time.Now(), visibleCommits...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -222,16 +216,10 @@ func (s *Service) GetPreviewGitObjectFilter(
 	ctx, _, endObservation := s.operations.getPreviewGitObjectFilter.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
-	repo, err := s.repoStore.Get(ctx, api.RepoID(repositoryID))
-	if err != nil {
-		return nil, 0, nil, err
-	}
-
 	policyMatcher := s.getPolicyMatcherFromFactory(NoopExtractor, false, false)
 	policyMatches, err := policyMatcher.CommitsDescribedByPolicy(
 		ctx,
 		repositoryID,
-		repo.Name,
 		[]policiesshared.ConfigurationPolicy{{Type: gitObjectType, Pattern: pattern}},
 		timeutil.Now(),
 	)

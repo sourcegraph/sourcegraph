@@ -95,7 +95,7 @@ func SetDerivedState(ctx context.Context, repoStore database.RepoStore, client g
 	// Now we can update fields that are invalidated when the sync state
 	// changes.
 	if !oldState.Equals(newState) {
-		if stat, err := computeDiffStat(ctx, client, c, repo.Name); err != nil {
+		if stat, err := computeDiffStat(ctx, client, c, repo.ID); err != nil {
 			logger.Warn("Computing diffstat", log.Error(err))
 		} else {
 			c.SetDiffStat(stat)
@@ -788,7 +788,7 @@ func selectReviewState(states map[btypes.ChangesetReviewState]bool) btypes.Chang
 
 // computeDiffStat computes the up to date diffstat for the changeset, based on
 // the values in c.SyncState.
-func computeDiffStat(ctx context.Context, client gitserver.Client, c *btypes.Changeset, repo api.RepoName) (*diff.Stat, error) {
+func computeDiffStat(ctx context.Context, client gitserver.Client, c *btypes.Changeset, repo api.RepoID) (*diff.Stat, error) {
 	//Code hosts that don't push to branches (like Gerrit), can just skip this.
 	if c.SyncState.BaseRefOid == c.SyncState.HeadRefOid {
 		return c.DiffStat(), nil

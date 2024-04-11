@@ -148,7 +148,7 @@ func (s *Service) InferClosestUploads(ctx context.Context, repositoryID int, com
 	// and try to link it with what we have in the database. Then mark the repository's commit
 	// graph as dirty so it's updated for subsequent requests.
 
-	graph, err := s.gitserverClient.CommitGraph(ctx, repo.Name, gitserver.CommitGraphOptions{
+	graph, err := s.gitserverClient.CommitGraph(ctx, repo.ID, gitserver.CommitGraphOptions{
 		Commit: commit,
 		Limit:  numAncestors,
 	})

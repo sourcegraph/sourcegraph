@@ -1,0 +1,11 @@
+include: ./sourcegraph-base.yaml
+
+contents:
+  packages:
+    # Included by existing SG base image
+    - tini
+    - mailcap
+
+work-dir: /
+
+# MANUAL REBUILD: Wed Oct 11 09:59:22 BST 2023

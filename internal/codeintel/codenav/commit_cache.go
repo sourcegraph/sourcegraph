@@ -89,23 +89,6 @@ func (c *commitCache) ExistsBatch(ctx context.Context, commits []RepositoryCommi
 // commitsExist determines if the given commits exists in the given repositories. This method returns a
 // slice of the same size as the input slice, true indicating that the commit at the symmetric index exists.
 func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryCommit) (_ []bool, err error) {
-	repositoryIDMap := map[int]struct{}{}
-	for _, rc := range commits {
-		repositoryIDMap[rc.RepositoryID] = struct{}{}
-	}
-	repositoryIDs := make([]api.RepoID, 0, len(repositoryIDMap))
-	for repositoryID := range repositoryIDMap {
-		repositoryIDs = append(repositoryIDs, api.RepoID(repositoryID))
-	}
-	repos, err := c.repoStore.GetReposSetByIDs(ctx, repositoryIDs...)
-	if err != nil {
-		return nil, err
-	}
-	repositoryNames := make(map[int]api.RepoName, len(repos))
-	for _, v := range repos {
-		repositoryNames[int(v.ID)] = v.Name
-	}
-
 	// Build the batch request to send to gitserver. Because we only add repo/commit
 	// pairs that are resolvable to a repo name, we may end up skipping inputs for an
 	// unresolvable repo. We also ensure that we only represent each repo/commit pair
@@ -116,14 +99,6 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 	commitsRepresentedInInput := map[int]map[string]int{} // used to populate index mapping
 
 	for i, rc := range commits {
-		repoName, ok := repositoryNames[rc.RepositoryID]
-		if !ok {
-			// insert a sentinel value we explicitly check below for any repositories
-			// that we're unable to resolve
-			indexMapping[i] = -1
-			continue
-		}
-
 		// Ensure our second-level mapping exists
 		if _, ok := commitsRepresentedInInput[rc.RepositoryID]; !ok {
 			commitsRepresentedInInput[rc.RepositoryID] = map[string]int{}
@@ -140,7 +115,7 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 			commitsRepresentedInInput[rc.RepositoryID][rc.Commit] = n
 
 			repoCommits = append(repoCommits, repoCommit{
-				repoName: repoName,
+				repoID:   api.RepoID(rc.RepositoryID),
 				commitID: api.CommitID(rc.Commit),
 			})
 		}
@@ -148,7 +123,7 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 
 	exists := make([]bool, len(commits))
 	for i, rc := range repoCommits {
-		_, err := c.gitserverClient.GetCommit(ctx, rc.repoName, rc.commitID)
+		_, err := c.gitserverClient.GetCommit(ctx, rc.repoID, rc.commitID)
 		if err != nil {
 			if errors.HasType(err, &gitdomain.RevisionNotFoundError{}) {
 				exists[i] = false
@@ -173,7 +148,7 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 }
 
 type repoCommit struct {
-	repoName api.RepoName
+	repoID   api.RepoID
 	commitID api.CommitID
 }
 

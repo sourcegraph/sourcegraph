@@ -106,7 +106,7 @@ func (s *repositoryContributorConnectionStore) compute(ctx context.Context) ([]*
 		if s.args.AfterDate != nil {
 			opt.After = *s.args.AfterDate
 		}
-		s.results, s.err = client.ContributorCount(ctx, s.repo.RepoName(), opt)
+		s.results, s.err = client.ContributorCount(ctx, s.repo.id, opt)
 	})
 	return s.results, s.err
 }

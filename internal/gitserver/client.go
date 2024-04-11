@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -39,8 +40,8 @@ var ClientMocks, emptyClientMocks struct {
 	LocalGitCommandReposDir string
 }
 
-// conns is the global variable holding a reference to the gitserver connections.
-var conns = &atomicGitServerConns{}
+// Conns is the global variable holding a reference to the gitserver connections.
+var Conns = &atomicGitServerConns{}
 
 // ResetClientMocks clears the mock functions set on Mocks (so that subsequent
 // tests don't inadvertently use them).
@@ -72,7 +73,7 @@ func NewClient(scope string) Client {
 		logger:              logger,
 		scope:               scope,
 		operations:          getOperations(),
-		clientSource:        conns,
+		clientSource:        Conns,
 		subRepoPermsChecker: authz.DefaultSubRepoPermsChecker,
 	}
 }
@@ -282,9 +283,9 @@ func (o *ArchiveOptions) FromProto(x *proto.ArchiveRequest) {
 	}
 }
 
-func (o *ArchiveOptions) ToProto(repo string) *proto.ArchiveRequest {
+func (o *ArchiveOptions) ToProto(repo api.RepoID) *proto.ArchiveRequest {
 	return &proto.ArchiveRequest{
-		Repo:    repo,
+		Repo:    &proto.GitserverRepository{Uid: strconv.Itoa(int(repo))},
 		Treeish: o.Treeish,
 		Format:  o.Format.ToProto(),
 		Paths:   o.Paths,
@@ -305,13 +306,13 @@ type Client interface {
 	Scoped(scope string) Client
 
 	// AddrForRepo returns the gitserver address to use for the given repo name.
-	AddrForRepo(ctx context.Context, repoName api.RepoName) string
+	AddrForRepo(ctx context.Context, repo api.RepoID) string
 
 	// ArchiveReader streams back the file contents of an archived git repo.
-	ArchiveReader(ctx context.Context, repo api.RepoName, options ArchiveOptions) (io.ReadCloser, error)
+	ArchiveReader(ctx context.Context, repo api.RepoID, options ArchiveOptions) (io.ReadCloser, error)
 
 	// StreamBlameFile returns Git blame information about a file in a streaming fashion.
-	StreamBlameFile(ctx context.Context, repo api.RepoName, path string, opt *BlameOptions) (HunkReader, error)
+	StreamBlameFile(ctx context.Context, repo api.RepoID, path string, opt *BlameOptions) (HunkReader, error)
 
 	// CreateCommitFromPatch will attempt to create a commit from a patch
 	// If possible, the error returned will be of type protocol.CreateCommitFromPatchError
@@ -323,31 +324,28 @@ type Client interface {
 	//
 	// If the repository is empty or currently being cloned, empty values and no
 	// error are returned.
-	GetDefaultBranch(ctx context.Context, repo api.RepoName, short bool) (refName string, commit api.CommitID, err error)
+	GetDefaultBranch(ctx context.Context, repo api.RepoID, short bool) (refName string, commit api.CommitID, err error)
 
 	// GetObject fetches git object data in the supplied repo
-	GetObject(ctx context.Context, repo api.RepoName, objectName string) (*gitdomain.GitObject, error)
+	GetObject(ctx context.Context, repo api.RepoID, objectName string) (*gitdomain.GitObject, error)
 
 	// HasCommitAfter indicates the staleness of a repository. It returns a boolean indicating if a repository
 	// contains a commit past a specified date.
-	HasCommitAfter(ctx context.Context, repo api.RepoName, date string, revspec string) (bool, error)
+	HasCommitAfter(ctx context.Context, repo api.RepoID, date string, revspec string) (bool, error)
 
 	// IsRepoCloneable returns nil if the repository is cloneable.
-	IsRepoCloneable(context.Context, api.RepoName) error
+	IsRepoCloneable(context.Context, api.RepoID) error
 
 	// ListRefs returns a list of all refs in the repository.
-	ListRefs(ctx context.Context, repo api.RepoName) ([]gitdomain.Ref, error)
+	ListRefs(ctx context.Context, repo api.RepoID) ([]gitdomain.Ref, error)
 
 	// ListBranches returns a list of all branches in the repository.
-	ListBranches(ctx context.Context, repo api.RepoName) ([]*gitdomain.Branch, error)
+	ListBranches(ctx context.Context, repo api.RepoID) ([]*gitdomain.Branch, error)
 
 	// MergeBase returns the merge base commit sha for the specified revspecs.
-	MergeBase(ctx context.Context, repo api.RepoName, base, head string) (api.CommitID, error)
+	MergeBase(ctx context.Context, repo api.RepoID, base, head string) (api.CommitID, error)
 
-	// Remove removes the repository clone from gitserver.
-	Remove(context.Context, api.RepoName) error
-
-	RepoCloneProgress(context.Context, api.RepoName) (*protocol.RepoCloneProgress, error)
+	RepoCloneProgress(context.Context, api.RepoID) (*protocol.RepoCloneProgress, error)
 
 	// ResolveRevision will return the absolute commit for a commit-ish spec. If spec is empty, HEAD is
 	// used.
@@ -357,14 +355,7 @@ type Client interface {
 	// * Commit does not exist: gitdomain.RevisionNotFoundError
 	// * Empty repository: gitdomain.RevisionNotFoundError
 	// * Other unexpected errors.
-	ResolveRevision(ctx context.Context, repo api.RepoName, spec string, opt ResolveRevisionOptions) (api.CommitID, error)
-
-	// RequestRepoUpdate is the new protocol endpoint for synchronous requests
-	// with more detailed responses. Do not use this if you are not repo-updater.
-	//
-	// Repo updates are not guaranteed to occur. If a repo has been updated
-	// recently, the update won't happen.
-	RequestRepoUpdate(context.Context, api.RepoName) (*protocol.RepoUpdateResponse, error)
+	ResolveRevision(ctx context.Context, repo api.RepoID, spec string, opt ResolveRevisionOptions) (api.CommitID, error)
 
 	// Search executes a search as specified by args, streaming the results as
 	// it goes by calling onMatches with each set of results it receives in
@@ -372,14 +363,14 @@ type Client interface {
 	Search(_ context.Context, _ *protocol.SearchRequest, onMatches func([]protocol.CommitMatch)) (limitHit bool, _ error)
 
 	// Stat returns a FileInfo describing the named file at commit.
-	Stat(ctx context.Context, repo api.RepoName, commit api.CommitID, path string) (fs.FileInfo, error)
+	Stat(ctx context.Context, repo api.RepoID, commit api.CommitID, path string) (fs.FileInfo, error)
 
 	// DiffPath returns a position-ordered slice of changes (additions or deletions)
 	// of the given path between the given source and target commits.
-	DiffPath(ctx context.Context, repo api.RepoName, sourceCommit, targetCommit, path string) ([]*diff.Hunk, error)
+	DiffPath(ctx context.Context, repo api.RepoID, sourceCommit, targetCommit, path string) ([]*diff.Hunk, error)
 
 	// ReadDir reads the contents of the named directory at commit.
-	ReadDir(ctx context.Context, repo api.RepoName, commit api.CommitID, path string, recurse bool) ([]fs.FileInfo, error)
+	ReadDir(ctx context.Context, repo api.RepoID, commit api.CommitID, path string, recurse bool) ([]fs.FileInfo, error)
 
 	// NewFileReader returns an io.ReadCloser reading from the named file at commit.
 	// The caller should always close the reader after use.
@@ -394,24 +385,24 @@ type Client interface {
 	// (ie. io.EOF is returned immediately).
 	//
 	// If the specified commit does not exist, a RevisionNotFoundError is returned.
-	NewFileReader(ctx context.Context, repo api.RepoName, commit api.CommitID, name string) (io.ReadCloser, error)
+	NewFileReader(ctx context.Context, repo api.RepoID, commit api.CommitID, name string) (io.ReadCloser, error)
 
 	// DiffSymbols performs a diff command which is expected to be parsed by our symbols package
-	DiffSymbols(ctx context.Context, repo api.RepoName, commitA, commitB api.CommitID) ([]byte, error)
+	DiffSymbols(ctx context.Context, repo api.RepoID, commitA, commitB api.CommitID) ([]byte, error)
 
 	// Commits returns all commits matching the options.
-	Commits(ctx context.Context, repo api.RepoName, opt CommitsOptions) ([]*gitdomain.Commit, error)
+	Commits(ctx context.Context, repo api.RepoID, opt CommitsOptions) ([]*gitdomain.Commit, error)
 
 	// FirstEverCommit returns the first commit ever made to the repository.
-	FirstEverCommit(ctx context.Context, repo api.RepoName) (*gitdomain.Commit, error)
+	FirstEverCommit(ctx context.Context, repo api.RepoID) (*gitdomain.Commit, error)
 
 	// ListTags returns a list of all tags in the repository. If commitObjs is non-empty, only all tags pointing at those commits are returned.
-	ListTags(ctx context.Context, repo api.RepoName, commitObjs ...string) ([]*gitdomain.Tag, error)
+	ListTags(ctx context.Context, repo api.RepoID, commitObjs ...string) ([]*gitdomain.Tag, error)
 
 	// ListDirectoryChildren fetches the list of children under the given directory
 	// names. The result is a map keyed by the directory names with the list of files
 	// under each.
-	ListDirectoryChildren(ctx context.Context, repo api.RepoName, commit api.CommitID, dirnames []string) (map[string][]string, error)
+	ListDirectoryChildren(ctx context.Context, repo api.RepoID, commit api.CommitID, dirnames []string) (map[string][]string, error)
 
 	// Diff returns an iterator that can be used to access the diff between two
 	// commits on a per-file basis. The iterator must be closed with Close when no
@@ -422,22 +413,22 @@ type Client interface {
 	// each branch containing the given commit.
 	// The returned branches will be in short form (e.g. "master" instead of
 	// "refs/heads/master").
-	BranchesContaining(ctx context.Context, repo api.RepoName, commit api.CommitID) ([]string, error)
+	BranchesContaining(ctx context.Context, repo api.RepoID, commit api.CommitID) ([]string, error)
 
 	// RefDescriptions returns a map from commits to descriptions of the tip of each
 	// branch and tag of the given repository.
-	RefDescriptions(ctx context.Context, repo api.RepoName, gitObjs ...string) (map[string][]gitdomain.RefDescription, error)
+	RefDescriptions(ctx context.Context, repo api.RepoID, gitObjs ...string) (map[string][]gitdomain.RefDescription, error)
 
 	// CommitGraph returns the commit graph for the given repository as a mapping
 	// from a commit to its parents. If a commit is supplied, the returned graph will
 	// be rooted at the given commit. If a non-zero limit is supplied, at most that
 	// many commits will be returned.
-	CommitGraph(ctx context.Context, repo api.RepoName, opts CommitGraphOptions) (_ *gitdomain.CommitGraph, err error)
+	CommitGraph(ctx context.Context, repo api.RepoID, opts CommitGraphOptions) (_ *gitdomain.CommitGraph, err error)
 
 	// CommitLog returns the repository commit log, including the file paths that were changed. The general approach to parsing
 	// is to separate the first line (the metadata line) from the remaining lines (the files), and then parse the metadata line
 	// into component parts separately.
-	CommitLog(ctx context.Context, repo api.RepoName, after time.Time) ([]CommitLog, error)
+	CommitLog(ctx context.Context, repo api.RepoID, after time.Time) ([]CommitLog, error)
 
 	// CommitsUniqueToBranch returns a map from commits that exist on a particular
 	// branch in the given repository to their committer date. This set of commits is
@@ -445,28 +436,28 @@ type Client interface {
 	// commits on {branchName} not also on the tip of the default branch. If the
 	// supplied branch name is the default branch, then this method instead returns
 	// all commits reachable from HEAD.
-	CommitsUniqueToBranch(ctx context.Context, repo api.RepoName, branchName string, isDefaultBranch bool, maxAge *time.Time) (map[string]time.Time, error)
+	CommitsUniqueToBranch(ctx context.Context, repo api.RepoID, branchName string, isDefaultBranch bool, maxAge *time.Time) (map[string]time.Time, error)
 
 	// LsFiles returns the output of `git ls-files`.
-	LsFiles(ctx context.Context, repo api.RepoName, commit api.CommitID, pathspecs ...gitdomain.Pathspec) ([]string, error)
+	LsFiles(ctx context.Context, repo api.RepoID, commit api.CommitID, pathspecs ...gitdomain.Pathspec) ([]string, error)
 
 	// GetCommit returns the commit with the given commit ID, or RevisionNotFoundError if no such commit
 	// exists.
-	GetCommit(ctx context.Context, repo api.RepoName, id api.CommitID) (*gitdomain.Commit, error)
+	GetCommit(ctx context.Context, repo api.RepoID, id api.CommitID) (*gitdomain.Commit, error)
 
 	// GetBehindAhead returns the behind/ahead commit counts information for right vs. left (both Git
 	// revspecs).
-	GetBehindAhead(ctx context.Context, repo api.RepoName, left, right string) (*gitdomain.BehindAhead, error)
+	GetBehindAhead(ctx context.Context, repo api.RepoID, left, right string) (*gitdomain.BehindAhead, error)
 
 	// ContributorCount returns the number of commits grouped by contributor
-	ContributorCount(ctx context.Context, repo api.RepoName, opt ContributorOptions) ([]*gitdomain.ContributorCount, error)
+	ContributorCount(ctx context.Context, repo api.RepoID, opt ContributorOptions) ([]*gitdomain.ContributorCount, error)
 
 	// LogReverseEach runs git log in reverse order and calls the given callback for each entry.
-	LogReverseEach(ctx context.Context, repo string, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error
+	LogReverseEach(ctx context.Context, repo api.RepoID, commit string, n int, onLogEntry func(entry gitdomain.LogEntry) error) error
 
 	// RevList makes a git rev-list call and iterates through the resulting commits, calling the provided
 	// onCommit function for each.
-	RevList(ctx context.Context, repo string, commit string, onCommit func(commit string) (bool, error)) error
+	RevList(ctx context.Context, repo api.RepoID, commit string, onCommit func(commit string) (bool, error)) error
 
 	// SystemsInfo returns information about all gitserver instances associated with a Sourcegraph instance.
 	SystemsInfo(ctx context.Context) ([]protocol.SystemInfo, error)
@@ -699,35 +690,6 @@ func (c *clientImplementor) gitCommand(repo api.RepoName, arg ...string) GitComm
 	}
 }
 
-func (c *clientImplementor) RequestRepoUpdate(ctx context.Context, repo api.RepoName) (_ *protocol.RepoUpdateResponse, err error) {
-	ctx, _, endObservation := c.operations.requestRepoUpdate.With(ctx, &err, observation.Args{
-		MetricLabelValues: []string{c.scope},
-		Attrs: []attribute.KeyValue{
-			repo.Attr(),
-		},
-	})
-	defer endObservation(1, observation.Args{})
-
-	req := &protocol.RepoUpdateRequest{
-		Repo: repo,
-	}
-
-	client, err := c.ClientForRepo(ctx, repo)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.RepoUpdate(ctx, req.ToProto())
-	if err != nil {
-		return nil, err
-	}
-
-	var info protocol.RepoUpdateResponse
-	info.FromProto(resp)
-
-	return &info, nil
-}
-
 // MockIsRepoCloneable mocks (*Client).IsRepoCloneable for tests.
 var MockIsRepoCloneable func(api.RepoName) error
 
@@ -824,25 +786,6 @@ func (c *clientImplementor) RepoCloneProgress(ctx context.Context, repo api.Repo
 	rcp.FromProto(res)
 
 	return &rcp, nil
-}
-
-func (c *clientImplementor) Remove(ctx context.Context, repo api.RepoName) (err error) {
-	ctx, _, endObservation := c.operations.remove.With(ctx, &err, observation.Args{
-		MetricLabelValues: []string{c.scope},
-		Attrs: []attribute.KeyValue{
-			repo.Attr(),
-		},
-	})
-	defer endObservation(1, observation.Args{})
-
-	client, err := c.ClientForRepo(ctx, repo)
-	if err != nil {
-		return err
-	}
-	_, err = client.RepoDelete(ctx, &proto.RepoDeleteRequest{
-		Repo: string(repo),
-	})
-	return err
 }
 
 func (c *clientImplementor) IsPerforcePathCloneable(ctx context.Context, conn protocol.PerforceConnectionDetails, depotPath string) (err error) {

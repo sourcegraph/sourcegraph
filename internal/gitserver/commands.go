@@ -41,7 +41,7 @@ import (
 )
 
 type DiffOptions struct {
-	Repo api.RepoName
+	Repo api.RepoID
 
 	// These fields must be valid <commit> inputs as defined by gitrevisions(7).
 	Base string

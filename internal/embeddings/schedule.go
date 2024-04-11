@@ -30,7 +30,7 @@ func ScheduleRepositories(
 			return err
 		}
 
-		refName, latestRevision, err := gitserverClient.GetDefaultBranch(ctx, r.Name, false)
+		refName, latestRevision, err := gitserverClient.GetDefaultBranch(ctx, r.ID, false)
 		if err != nil || refName == "" {
 			return err
 		}
@@ -75,7 +75,7 @@ func ScheduleRepositoriesForPolicy(
 	}
 
 	for _, r := range repos {
-		refName, latestRevision, err := gitserverClient.GetDefaultBranch(ctx, r.Name, false)
+		refName, latestRevision, err := gitserverClient.GetDefaultBranch(ctx, r.ID, false)
 		// enqueue with an empty revision and let handler determine whether job can execute
 		if err != nil || refName == "" {
 			latestRevision = ""

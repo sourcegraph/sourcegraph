@@ -56,8 +56,6 @@ type GitCommitResolver struct {
 	// oid MUST be specified and a 40-character Git SHA.
 	oid GitObjectID
 
-	gitRepo api.RepoName
-
 	// commit should not be accessed directly since it might not be initialized.
 	// Use the resolver methods instead.
 	commit     *gitdomain.Commit
@@ -69,17 +67,15 @@ type GitCommitResolver struct {
 // commit will be loaded lazily as needed by the resolver. Pass in a commit when
 // you have batch-loaded a bunch of them and already have them at hand.
 func NewGitCommitResolver(db database.DB, gsClient gitserver.Client, repo *RepositoryResolver, id api.CommitID, commit *gitdomain.Commit) *GitCommitResolver {
-	repoName := repo.RepoName()
 	return &GitCommitResolver{
 		logger: log.Scoped("gitCommitResolver").With(
-			log.String("repo", string(repoName)),
+			log.String("repo", string(repo.name)),
 			log.String("commitID", string(id)),
 		),
 		db:              db,
 		gitserverClient: gsClient,
 		repoResolver:    repo,
 		includeUserInfo: true,
-		gitRepo:         repoName,
 		oid:             GitObjectID(id),
 		commit:          commit,
 	}
@@ -91,15 +87,15 @@ func (r *GitCommitResolver) resolveCommit(ctx context.Context) (*gitdomain.Commi
 			return
 		}
 
-		r.commit, r.commitErr = r.gitserverClient.GetCommit(ctx, r.gitRepo, api.CommitID(r.oid))
+		r.commit, r.commitErr = r.gitserverClient.GetCommit(ctx, r.repoResolver.id, api.CommitID(r.oid))
 		if r.commitErr != nil && errors.HasType(r.commitErr, &gitdomain.RevisionNotFoundError{}) {
 			// If the commit is not found, attempt to do a ensure revision call.
-			_, err := r.gitserverClient.ResolveRevision(ctx, r.gitRepo, string(r.oid), gitserver.ResolveRevisionOptions{EnsureRevision: true})
+			_, err := r.gitserverClient.ResolveRevision(ctx, r.repoResolver.id, string(r.oid), gitserver.ResolveRevisionOptions{EnsureRevision: true})
 			if err != nil {
 				r.logger.Error("failed to resolve commit", log.Error(err), log.String("oid", string(r.oid)))
 			} else {
 				// Try again to resolve the commit.
-				r.commit, r.commitErr = r.gitserverClient.GetCommit(ctx, r.gitRepo, api.CommitID(r.oid))
+				r.commit, r.commitErr = r.gitserverClient.GetCommit(ctx, r.repoResolver.id, api.CommitID(r.oid))
 			}
 		}
 	})
@@ -288,7 +284,7 @@ func (r *GitCommitResolver) path(ctx context.Context, path string, validate func
 	tr, ctx := trace.New(ctx, "GitCommitResolver.path", attribute.String("path", path))
 	defer tr.EndWithErr(&err)
 
-	stat, err := r.gitserverClient.Stat(ctx, r.gitRepo, api.CommitID(r.oid), path)
+	stat, err := r.gitserverClient.Stat(ctx, r.repoResolver.id, api.CommitID(r.oid), path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -320,7 +316,7 @@ func (*rootTreeFileInfo) Size() int64        { return 0 }
 func (*rootTreeFileInfo) Sys() any           { return nil }
 
 func (r *GitCommitResolver) FileNames(ctx context.Context) ([]string, error) {
-	return r.gitserverClient.LsFiles(ctx, r.gitRepo, api.CommitID(r.oid))
+	return r.gitserverClient.LsFiles(ctx, r.repoResolver.id, api.CommitID(r.oid))
 }
 
 func (r *GitCommitResolver) Languages(ctx context.Context) ([]string, error) {
@@ -394,7 +390,7 @@ func (r *GitCommitResolver) Diff(ctx context.Context, args *struct {
 func (r *GitCommitResolver) BehindAhead(ctx context.Context, args *struct {
 	Revspec string
 }) (*behindAheadCountsResolver, error) {
-	counts, err := r.gitserverClient.GetBehindAhead(ctx, r.gitRepo, args.Revspec, string(r.oid))
+	counts, err := r.gitserverClient.GetBehindAhead(ctx, r.repoResolver.id, args.Revspec, string(r.oid))
 	if err != nil {
 		return nil, err
 	}
