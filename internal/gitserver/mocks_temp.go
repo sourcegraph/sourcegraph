@@ -417,7 +417,7 @@ func NewMockClient() *MockClient {
 			},
 		},
 		StreamBlameFileFunc: &ClientStreamBlameFileFunc{
-			defaultHook: func(context.Context, api.RepoName, string, *BlameOptions) (r0 HunkReader, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, string, *BlameOptions) (r0 HunkReader, r1 error) {
 				return
 			},
 		},
@@ -674,7 +674,7 @@ func NewStrictMockClient() *MockClient {
 			},
 		},
 		StreamBlameFileFunc: &ClientStreamBlameFileFunc{
-			defaultHook: func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error) {
+			defaultHook: func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error) {
 				panic("unexpected invocation of MockClient.StreamBlameFile")
 			},
 		},
@@ -6065,15 +6065,15 @@ func (c ClientStatFuncCall) Results() []interface{} {
 // ClientStreamBlameFileFunc describes the behavior when the StreamBlameFile
 // method of the parent MockClient instance is invoked.
 type ClientStreamBlameFileFunc struct {
-	defaultHook func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error)
-	hooks       []func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error)
+	defaultHook func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error)
+	hooks       []func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error)
 	history     []ClientStreamBlameFileFuncCall
 	mutex       sync.Mutex
 }
 
 // StreamBlameFile delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockClient) StreamBlameFile(v0 context.Context, v1 api.RepoName, v2 string, v3 *BlameOptions) (HunkReader, error) {
+func (m *MockClient) StreamBlameFile(v0 context.Context, v1 api.RepoID, v2 string, v3 *BlameOptions) (HunkReader, error) {
 	r0, r1 := m.StreamBlameFileFunc.nextHook()(v0, v1, v2, v3)
 	m.StreamBlameFileFunc.appendCall(ClientStreamBlameFileFuncCall{v0, v1, v2, v3, r0, r1})
 	return r0, r1
@@ -6082,7 +6082,7 @@ func (m *MockClient) StreamBlameFile(v0 context.Context, v1 api.RepoName, v2 str
 // SetDefaultHook sets function that is called when the StreamBlameFile
 // method of the parent MockClient instance is invoked and the hook queue is
 // empty.
-func (f *ClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error)) {
+func (f *ClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error)) {
 	f.defaultHook = hook
 }
 
@@ -6090,7 +6090,7 @@ func (f *ClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Context, ap
 // StreamBlameFile method of the parent MockClient instance invokes the hook
 // at the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *ClientStreamBlameFileFunc) PushHook(hook func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error)) {
+func (f *ClientStreamBlameFileFunc) PushHook(hook func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -6099,19 +6099,19 @@ func (f *ClientStreamBlameFileFunc) PushHook(hook func(context.Context, api.Repo
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *ClientStreamBlameFileFunc) SetDefaultReturn(r0 HunkReader, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *ClientStreamBlameFileFunc) PushReturn(r0 HunkReader, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error) {
+	f.PushHook(func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error) {
 		return r0, r1
 	})
 }
 
-func (f *ClientStreamBlameFileFunc) nextHook() func(context.Context, api.RepoName, string, *BlameOptions) (HunkReader, error) {
+func (f *ClientStreamBlameFileFunc) nextHook() func(context.Context, api.RepoID, string, *BlameOptions) (HunkReader, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -6149,7 +6149,7 @@ type ClientStreamBlameFileFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 api.RepoName
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string

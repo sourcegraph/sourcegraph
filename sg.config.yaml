@@ -50,6 +50,7 @@ env:
       { "Name": "frontend", "Host": "127.0.0.1:6063" },
       { "Name": "gitserver-0", "Host": "127.0.0.1:3551" },
       { "Name": "gitserver-1", "Host": "127.0.0.1:3552" },
+      { "Name": "gitserver-coordinator", "Host": "127.0.0.1:3559" },
       { "Name": "searcher", "Host": "127.0.0.1:6069" },
       { "Name": "symbols", "Host": "127.0.0.1:6071" },
       { "Name": "repo-updater", "Host": "127.0.0.1:6074" },
@@ -171,6 +172,23 @@ commands:
       - lib
       - internal
       - cmd/frontend
+
+  gitserver-coordinator:
+    cmd: .bin/gitserver-coordinator
+    install: |
+      if [ -n "$DELVE" ]; then
+        export GCFLAGS='all=-N -l'
+      fi
+      go build -gcflags="$GCFLAGS" -o .bin/gitserver-coordinator github.com/sourcegraph/sourcegraph/cmd/gitserver-coordinator
+    checkBinary: .bin/gitserver-coordinator
+    env:
+      GITSERVER_COORDINATOR_ADDR: 127.0.0.1:3199
+      GITSERVER_COORDINATOR_HTTP_CLONE_ADDR: 127.0.0.1:3213
+      SRC_PROF_HTTP: 127.0.0.1:3559
+    watch:
+      - lib
+      - internal
+      - cmd/gitserver-coordinator
 
   gitserver-template: &gitserver_template
     cmd: .bin/gitserver

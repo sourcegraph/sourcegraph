@@ -124,6 +124,11 @@ func NewServer(logger log.Logger, additionalOpts ...grpc.ServerOption) *grpc.Ser
 	return s
 }
 
+func NewServerNoReflect(logger log.Logger, additionalOpts ...grpc.ServerOption) *grpc.Server {
+	s := grpc.NewServer(ServerOptions(logger, additionalOpts...)...)
+	return s
+}
+
 // NewPublicServer creates a new *grpc.Server with the options tailored for
 // public-facing gRPC services. Most in-Sourcegraph services should use
 // NewServer instead.

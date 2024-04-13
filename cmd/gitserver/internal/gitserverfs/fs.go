@@ -28,6 +28,7 @@ type FS interface {
 	Initialize() error
 	DirSize(string) (int64, error)
 	RepoDir(api.RepoName) common.GitDir
+	RepoDirForPath(string) common.GitDir
 	ResolveRepoName(common.GitDir) api.RepoName
 	TempDir(prefix string) (string, error)
 	IgnorePath(string) bool
@@ -79,6 +80,15 @@ func (r *realGitserverFS) RepoDir(name api.RepoName) common.GitDir {
 	// We need to use api.UndeletedRepoName(repo) for the name, as this is a name
 	// transformation done on the database side that gitserver cannot know about.
 	dir := repoDirFromName(r.reposDir, api.UndeletedRepoName(name))
+	// dir is expected to be cleaned, ie. it doesn't allow `..`.
+	if !strings.HasPrefix(dir.Path(), r.reposDir) {
+		panic("dir is outside of repos dir")
+	}
+	return dir
+}
+
+func (r *realGitserverFS) RepoDirForPath(p string) common.GitDir {
+	dir := common.GitDir(filepath.Join(r.reposDir, filepath.FromSlash(p)))
 	// dir is expected to be cleaned, ie. it doesn't allow `..`.
 	if !strings.HasPrefix(dir.Path(), r.reposDir) {
 		panic("dir is outside of repos dir")

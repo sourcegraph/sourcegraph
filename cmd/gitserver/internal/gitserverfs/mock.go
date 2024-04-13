@@ -45,6 +45,9 @@ type MockFS struct {
 	// RepoDirFunc is an instance of a mock function object controlling the
 	// behavior of the method RepoDir.
 	RepoDirFunc *FSRepoDirFunc
+	// RepoDirForPathFunc is an instance of a mock function object
+	// controlling the behavior of the method RepoDirForPath.
+	RepoDirForPathFunc *FSRepoDirForPathFunc
 	// ResolveRepoNameFunc is an instance of a mock function object
 	// controlling the behavior of the method ResolveRepoName.
 	ResolveRepoNameFunc *FSResolveRepoNameFunc
@@ -102,6 +105,11 @@ func NewMockFS() *MockFS {
 		},
 		RepoDirFunc: &FSRepoDirFunc{
 			defaultHook: func(api.RepoName) (r0 common.GitDir) {
+				return
+			},
+		},
+		RepoDirForPathFunc: &FSRepoDirForPathFunc{
+			defaultHook: func(string) (r0 common.GitDir) {
 				return
 			},
 		},
@@ -172,6 +180,11 @@ func NewStrictMockFS() *MockFS {
 				panic("unexpected invocation of MockFS.RepoDir")
 			},
 		},
+		RepoDirForPathFunc: &FSRepoDirForPathFunc{
+			defaultHook: func(string) common.GitDir {
+				panic("unexpected invocation of MockFS.RepoDirForPath")
+			},
+		},
 		ResolveRepoNameFunc: &FSResolveRepoNameFunc{
 			defaultHook: func(common.GitDir) api.RepoName {
 				panic("unexpected invocation of MockFS.ResolveRepoName")
@@ -220,6 +233,9 @@ func NewMockFSFrom(i FS) *MockFS {
 		},
 		RepoDirFunc: &FSRepoDirFunc{
 			defaultHook: i.RepoDir,
+		},
+		RepoDirForPathFunc: &FSRepoDirForPathFunc{
+			defaultHook: i.RepoDirForPath,
 		},
 		ResolveRepoNameFunc: &FSResolveRepoNameFunc{
 			defaultHook: i.ResolveRepoName,
@@ -1142,6 +1158,108 @@ func (c FSRepoDirFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c FSRepoDirFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// FSRepoDirForPathFunc describes the behavior when the RepoDirForPath
+// method of the parent MockFS instance is invoked.
+type FSRepoDirForPathFunc struct {
+	defaultHook func(string) common.GitDir
+	hooks       []func(string) common.GitDir
+	history     []FSRepoDirForPathFuncCall
+	mutex       sync.Mutex
+}
+
+// RepoDirForPath delegates to the next hook function in the queue and
+// stores the parameter and result values of this invocation.
+func (m *MockFS) RepoDirForPath(v0 string) common.GitDir {
+	r0 := m.RepoDirForPathFunc.nextHook()(v0)
+	m.RepoDirForPathFunc.appendCall(FSRepoDirForPathFuncCall{v0, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the RepoDirForPath
+// method of the parent MockFS instance is invoked and the hook queue is
+// empty.
+func (f *FSRepoDirForPathFunc) SetDefaultHook(hook func(string) common.GitDir) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// RepoDirForPath method of the parent MockFS instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *FSRepoDirForPathFunc) PushHook(hook func(string) common.GitDir) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *FSRepoDirForPathFunc) SetDefaultReturn(r0 common.GitDir) {
+	f.SetDefaultHook(func(string) common.GitDir {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *FSRepoDirForPathFunc) PushReturn(r0 common.GitDir) {
+	f.PushHook(func(string) common.GitDir {
+		return r0
+	})
+}
+
+func (f *FSRepoDirForPathFunc) nextHook() func(string) common.GitDir {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *FSRepoDirForPathFunc) appendCall(r0 FSRepoDirForPathFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of FSRepoDirForPathFuncCall objects describing
+// the invocations of this function.
+func (f *FSRepoDirForPathFunc) History() []FSRepoDirForPathFuncCall {
+	f.mutex.Lock()
+	history := make([]FSRepoDirForPathFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// FSRepoDirForPathFuncCall is an object that describes an invocation of
+// method RepoDirForPath on an instance of MockFS.
+type FSRepoDirForPathFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 string
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 common.GitDir
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c FSRepoDirForPathFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c FSRepoDirForPathFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 

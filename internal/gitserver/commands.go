@@ -781,23 +781,23 @@ func (c *clientImplementor) LogReverseEach(ctx context.Context, repo string, com
 }
 
 // StreamBlameFile returns Git blame information about a file.
-func (c *clientImplementor) StreamBlameFile(ctx context.Context, repo api.RepoName, path string, opt *BlameOptions) (_ HunkReader, err error) {
+func (c *clientImplementor) StreamBlameFile(ctx context.Context, repo api.RepoID, path string, opt *BlameOptions) (_ HunkReader, err error) {
 	ctx, _, endObservation := c.operations.streamBlameFile.With(ctx, &err, observation.Args{
 		MetricLabelValues: []string{c.scope},
 		Attrs: append([]attribute.KeyValue{
-			repo.Attr(),
+			attribute.Int("repo", int(repo)),
 			attribute.String("path", path),
 		}, opt.Attrs()...),
 	})
 
-	client, err := c.clientSource.ClientForRepo(ctx, repo)
+	client, err := c.clientSource.ClientForRepo(ctx, "doesn'tmatterwetalktocoordinator")
 	if err != nil {
 		endObservation(1, observation.Args{})
 		return nil, err
 	}
 
 	req := &proto.BlameRequest{
-		RepoName:         string(repo),
+		Repo:             protoRepoForID(repo),
 		Commit:           string(opt.NewestCommit),
 		Path:             path,
 		IgnoreWhitespace: opt.IgnoreWhitespace,
@@ -859,6 +859,12 @@ func (c *clientImplementor) StreamBlameFile(ctx context.Context, repo api.RepoNa
 		cancel:         cancel,
 		endObservation: func() { endObservation(1, observation.Args{}) },
 	}, nil
+}
+
+func protoRepoForID(repo api.RepoID) *proto.GitserverRepository {
+	return &proto.GitserverRepository{
+		Uid: strconv.Itoa(int(repo)),
+	}
 }
 
 type grpcBlameHunkReader struct {

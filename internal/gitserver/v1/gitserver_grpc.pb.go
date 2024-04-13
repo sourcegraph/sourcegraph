@@ -148,6 +148,16 @@ type GitserverServiceClient interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a
 	// NotFound error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(ctx context.Context, in *ResolveRevisionRequest, opts ...grpc.CallOption) (*ResolveRevisionResponse, error)
+	// RevAtTime looks up the OID of the nearest ancestor of `spec` that has a
+	// commit time before the given time. To simplify the logic, it only follows
+	// the first parent of merge commits to linearize the commit history. The
+	// intent is to return the state of a branch at a given time.
+	//
+	// If the revision cannot be resolved an error with RevisionNotFoundPayload is
+	// returned.
+	//
+	// If the revision exists, but there is no commit in its ancestry before
+	// the requested time, an empty string is returned for the commit SHA.
 	RevAtTime(ctx context.Context, in *RevAtTimeRequest, opts ...grpc.CallOption) (*RevAtTimeResponse, error)
 }
 
@@ -634,6 +644,16 @@ type GitserverServiceServer interface {
 	// If the given repo is not cloned, it will be enqueued for cloning and a
 	// NotFound error will be returned, with a RepoNotFoundPayload in the details.
 	ResolveRevision(context.Context, *ResolveRevisionRequest) (*ResolveRevisionResponse, error)
+	// RevAtTime looks up the OID of the nearest ancestor of `spec` that has a
+	// commit time before the given time. To simplify the logic, it only follows
+	// the first parent of merge commits to linearize the commit history. The
+	// intent is to return the state of a branch at a given time.
+	//
+	// If the revision cannot be resolved an error with RevisionNotFoundPayload is
+	// returned.
+	//
+	// If the revision exists, but there is no commit in its ancestry before
+	// the requested time, an empty string is returned for the commit SHA.
 	RevAtTime(context.Context, *RevAtTimeRequest) (*RevAtTimeResponse, error)
 	mustEmbedUnimplementedGitserverServiceServer()
 }

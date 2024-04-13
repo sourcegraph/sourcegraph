@@ -311,7 +311,7 @@ type Client interface {
 	ArchiveReader(ctx context.Context, repo api.RepoName, options ArchiveOptions) (io.ReadCloser, error)
 
 	// StreamBlameFile returns Git blame information about a file in a streaming fashion.
-	StreamBlameFile(ctx context.Context, repo api.RepoName, path string, opt *BlameOptions) (HunkReader, error)
+	StreamBlameFile(ctx context.Context, repo api.RepoID, path string, opt *BlameOptions) (HunkReader, error)
 
 	// CreateCommitFromPatch will attempt to create a commit from a patch
 	// If possible, the error returned will be of type protocol.CreateCommitFromPatchError

@@ -1,0 +1,69 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("//wolfi-images:defs.bzl", "wolfi_base")
+
+go_library(
+    name = "gitserver-coordinator_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/gitserver-coordinator",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cmd/gitserver-coordinator/shared",
+        "//internal/sanitycheck",
+        "//internal/service/svcmain",
+    ],
+)
+
+go_binary(
+    name = "gitserver-coordinator",
+    embed = [":gitserver-coordinator_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "tar_gitserver-coordinator",
+    srcs = [":gitserver-coordinator"],
+)
+
+oci_image(
+    name = "image",
+    base = ":base_image",
+    entrypoint = [
+        "/sbin/tini",
+        "--",
+        "/gitserver-coordinator",
+    ],
+    tars = [
+        ":tar_gitserver-coordinator",
+    ],
+    user = "sourcegraph",
+    workdir = "/",
+)
+
+oci_tarball(
+    name = "image_tarball",
+    image = ":image",
+    repo_tags = ["gitserver-coordinator:candidate"],
+)
+
+container_structure_test(
+    name = "image_test",
+    timeout = "short",
+    configs = ["image_test.yaml"],
+    driver = "docker",
+    image = ":image",
+    tags = [
+        "exclusive",
+        "requires-network",
+    ],
+)
+
+oci_push(
+    name = "candidate_push",
+    image = ":image",
+    repository = image_repository("gitserver-coordinator"),
+)
+
+wolfi_base()

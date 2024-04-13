@@ -65,7 +65,7 @@ func setupMockGSClient(t *testing.T, wantRev api.CommitID, returnErr error, hunk
 	gsClient.StreamBlameFileFunc.SetDefaultHook(
 		func(
 			ctx context.Context,
-			repo api.RepoName,
+			repo api.RepoID,
 			path string,
 			opts *gitserver.BlameOptions,
 		) (gitserver.HunkReader, error) {

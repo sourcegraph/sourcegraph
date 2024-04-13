@@ -1969,7 +1969,7 @@ func TestClient_StreamBlameFile(t *testing.T) {
 
 		c := NewTestClient(t).WithClientSource(source)
 
-		hr, err := c.StreamBlameFile(context.Background(), "repo", "file", &BlameOptions{})
+		hr, err := c.StreamBlameFile(context.Background(), 1, "file", &BlameOptions{})
 		require.NoError(t, err)
 
 		// This chunk comes from the memoized first message.
@@ -2002,7 +2002,7 @@ func TestClient_StreamBlameFile(t *testing.T) {
 
 		c := NewTestClient(t).WithClientSource(source)
 
-		_, err := c.StreamBlameFile(context.Background(), "repo", "file", &BlameOptions{})
+		_, err := c.StreamBlameFile(context.Background(), 1, "file", &BlameOptions{})
 		require.Error(t, err)
 		require.True(t, os.IsNotExist(err))
 	})
@@ -2021,7 +2021,7 @@ func TestClient_StreamBlameFile(t *testing.T) {
 
 		c := NewTestClient(t).WithClientSource(source)
 
-		_, err := c.StreamBlameFile(context.Background(), "repo", "file", &BlameOptions{})
+		_, err := c.StreamBlameFile(context.Background(), 1, "file", &BlameOptions{})
 		require.Error(t, err)
 		require.True(t, errors.HasType(err, &gitdomain.RevisionNotFoundError{}))
 	})
@@ -2040,7 +2040,7 @@ func TestClient_StreamBlameFile(t *testing.T) {
 
 		c := NewTestClient(t).WithClientSource(source)
 
-		_, err := c.StreamBlameFile(context.Background(), "repo", "file", &BlameOptions{})
+		_, err := c.StreamBlameFile(context.Background(), 1, "file", &BlameOptions{})
 		require.Error(t, err)
 		require.True(t, os.IsNotExist(err))
 	})
@@ -2057,7 +2057,7 @@ func TestClient_StreamBlameFile(t *testing.T) {
 
 		c := NewTestClient(t).WithClientSource(source)
 
-		r, err := c.StreamBlameFile(context.Background(), "repo", "file", &BlameOptions{})
+		r, err := c.StreamBlameFile(context.Background(), 1, "file", &BlameOptions{})
 		require.NoError(t, err)
 		h, err := r.Read()
 		require.Equal(t, io.EOF, err)

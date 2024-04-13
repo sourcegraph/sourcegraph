@@ -32,7 +32,7 @@ func (r *GitTreeEntryResolver) Blame(ctx context.Context, args *GitTreeEntryBlam
 		}
 	}
 
-	hr, err := r.gitserverClient.StreamBlameFile(ctx, r.commit.repoResolver.RepoName(), r.Path(), opts)
+	hr, err := r.gitserverClient.StreamBlameFile(ctx, r.commit.repoResolver.id, r.Path(), opts)
 	if err != nil {
 		return nil, err
 	}

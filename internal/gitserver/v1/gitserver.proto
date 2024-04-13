@@ -4,8 +4,25 @@ package gitserver.v1;
 
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/descriptor.proto";
 
 option go_package = "github.com/sourcegraph/sourcegraph/internal/gitserver/v1";
+
+extend google.protobuf.FieldOptions {
+  // target_repository is used to mark target repository.
+  bool target_repository = 94321;
+  // old_string_repository is used to temporarily mark the repository name string.
+  bool old_string_repository = 94322;
+}
+
+message GitserverRepository {
+  // An opaque identifier used by gitserver to uniquely identify the repository.
+  string uid = 1;
+  // The path on disk where the repository is stored.
+  string path = 2;
+  // name is optional and only used for logging purposes.
+  string name = 3;
+}
 
 service GitserverService {
   rpc CreateCommitFromPatchBinary(stream CreateCommitFromPatchBinaryRequest) returns (CreateCommitFromPatchBinaryResponse) {}
@@ -166,9 +183,11 @@ service GitserverService {
 }
 
 message ResolveRevisionRequest {
+  // repo is the repo to run the blame operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   // The rev spec to resolve. I.e., HEAD, deadbeefdeadbeefdeadbeefdeadbeef, or
   // refs/heads/main.
   bytes rev_spec = 3;
@@ -186,9 +205,11 @@ message ResolveRevisionResponse {
 }
 
 message RevAtTimeRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to run the operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
 
   // rev_spec is the starting revision for the search. We iterate
   // through its --first-parent ancestors looking for the first ancestor
@@ -207,9 +228,11 @@ message RevAtTimeResponse {
 }
 
 message GetCommitRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   string commit = 3;
 }
 
@@ -235,9 +258,11 @@ message BlameRequest {
   reserved 6, 7;
   reserved "start_line", "end_line";
 
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to run the blame operation in.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   // commit is the commit sha to start the blame operation at.
   string commit = 3;
   string path = 4;
@@ -278,9 +303,11 @@ message PreviousCommit {
 }
 
 message DefaultBranchRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   bool short_ref = 3;
 }
 
@@ -290,9 +317,11 @@ message DefaultBranchResponse {
 }
 
 message ReadFileRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to get the default branch for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   string commit = 3;
   string path = 4;
 }
@@ -350,7 +379,7 @@ message PushConfig {
 message CreateCommitFromPatchBinaryRequest {
   message Metadata {
     // repo is the name of the repo to be updated
-    string repo = 1;
+    string repo = 1 [(old_string_repository)=true];
     // base_commit is the revision that the staging area object is based on
     string base_commit = 2;
     // target_ref is the ref that will be created for this patch
@@ -378,6 +407,9 @@ message CreateCommitFromPatchBinaryRequest {
     Metadata metadata = 1;
     Patch patch = 2;
   }
+
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 9 [(target_repository)=true];
 }
 
 message CreateCommitFromPatchError {
@@ -404,7 +436,9 @@ message CreateCommitFromPatchBinaryResponse {
 }
 
 message ExecRequest {
-  string repo = 1;
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 6 [(target_repository)=true];
+  string repo = 1 [(old_string_repository)=true];
   bytes ensure_revision = 2 [deprecated = true];
   repeated bytes args = 3;
   bytes stdin = 4 [deprecated = true];
@@ -447,8 +481,10 @@ message UnauthorizedPayload {
 }
 
 message SearchRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 7 [(target_repository)=true];
   // repo is the name of the repo to be searched
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
   // revisions is the list of git revision to be searched. They are all passed
   // to the same underlying git command, so the searched commits will be the
   // union of all revisions listed.
@@ -611,8 +647,10 @@ enum ArchiveFormat {
 
 // ArchiveRequest is set of parameters for the Archive RPC.
 message ArchiveRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 5 [(target_repository)=true];
   // repo is the name of the repo to be archived.
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
   // treeish is the tree or commit to produce an archive for.
   string treeish = 2;
   // format is the format of the resulting archive (either ZIP or TAR).
@@ -630,8 +668,10 @@ message ArchiveResponse {
 
 // IsRepoCloneableRequest is a request to check if a repository is cloneable.
 message IsRepoCloneableRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 2 [(target_repository)=true];
   // repo is the name of the repo to check.
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
 }
 
 // IsRepoCloneableResponse is the response from the IsCloneable RPC.
@@ -650,8 +690,10 @@ message RepoCloneProgressRequest {
   reserved 1;
   reserved "repos";
 
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 3 [(target_repository)=true];
   // repo_name is the name of the repo to get the progress for.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
 }
 
 // RepoCloneProgressResponse is the response to a repository clone progress
@@ -667,8 +709,10 @@ message RepoCloneProgressResponse {
 
 // RepoDeleteRequest is a request to delete a repository.
 message RepoDeleteRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 2 [(target_repository)=true];
   // repo is the name of the repo to delete.
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
 }
 
 // RepoDeleteResponse is the response from the RepoDelete RPC.
@@ -678,8 +722,10 @@ message RepoDeleteResponse {}
 message RepoUpdateRequest {
   // RepoUpdateRequest used to have an unused clone_from_shard field.
   reserved 3;
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 4 [(target_repository)=true];
   // repo is the name of the repo to update.
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
   // since is the debounce interval for queries, used only with
   // request-repo-update.
   // This field has now been deprecated and is no longer respected.
@@ -721,8 +767,10 @@ message ListGitoliteResponse {
 
 // GetObjectRequest is a request to get a git object.
 message GetObjectRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo_new = 3 [(target_repository)=true];
   // repo is the name of the repo to get the object from.
-  string repo = 1;
+  string repo = 1 [(old_string_repository)=true];
   // object_name is the name of the object to get.
   string object_name = 2;
 }
@@ -887,9 +935,11 @@ message PerforceUser {
 
 // MergeBaseRequest is a request to find the merge base of two revspecs.
 message MergeBaseRequest {
+  // repo is the repo to run the operation in.
+  GitserverRepository repo = 1 [(target_repository)=true];
   // repo_name is the name of the repo to get the merge base for.
   // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
-  string repo_name = 2;
+  string repo_name = 2 [(old_string_repository)=true];
   // base is a revspec, for now, we allow non-utf8 revspecs.
   bytes base = 3;
   // head is a revspec, for now, we allow non-utf8 revspecs.

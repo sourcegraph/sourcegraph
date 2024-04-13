@@ -207,7 +207,7 @@ type GitserverConns struct {
 
 func (g *GitserverConns) ConnForRepo(ctx context.Context, repo api.RepoName) (*grpc.ClientConn, error) {
 	addr := g.AddrForRepo(ctx, repo)
-	ce, ok := g.grpcConns[addr]
+	ce, ok := g.grpcConns["127.0.0.1:3199"]
 	if !ok {
 		return nil, errors.Newf("no gRPC connection found for address %q", addr)
 	}
@@ -335,6 +335,12 @@ func (a *atomicGitServerConns) update(cfg *conf.Unified) {
 		)
 		after.grpcConns[addr] = connAndErr{conn: conn, err: err}
 	}
+
+	conn, err := defaults.Dial(
+		"127.0.0.1:3199",
+		clientLogger,
+	)
+	after.grpcConns["127.0.0.1:3199"] = connAndErr{conn: conn, err: err}
 
 	a.conns.Store(&after)
 

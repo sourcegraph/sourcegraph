@@ -11373,7 +11373,7 @@ func NewMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		StreamBlameFileFunc: &GitserverClientStreamBlameFileFunc{
-			defaultHook: func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (r0 gitserver.HunkReader, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (r0 gitserver.HunkReader, r1 error) {
 				return
 			},
 		},
@@ -11630,7 +11630,7 @@ func NewStrictMockGitserverClient() *MockGitserverClient {
 			},
 		},
 		StreamBlameFileFunc: &GitserverClientStreamBlameFileFunc{
-			defaultHook: func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
+			defaultHook: func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
 				panic("unexpected invocation of MockGitserverClient.StreamBlameFile")
 			},
 		},
@@ -17109,15 +17109,15 @@ func (c GitserverClientStatFuncCall) Results() []interface{} {
 // StreamBlameFile method of the parent MockGitserverClient instance is
 // invoked.
 type GitserverClientStreamBlameFileFunc struct {
-	defaultHook func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)
-	hooks       []func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)
+	defaultHook func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)
+	hooks       []func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)
 	history     []GitserverClientStreamBlameFileFuncCall
 	mutex       sync.Mutex
 }
 
 // StreamBlameFile delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockGitserverClient) StreamBlameFile(v0 context.Context, v1 api.RepoName, v2 string, v3 *gitserver.BlameOptions) (gitserver.HunkReader, error) {
+func (m *MockGitserverClient) StreamBlameFile(v0 context.Context, v1 api.RepoID, v2 string, v3 *gitserver.BlameOptions) (gitserver.HunkReader, error) {
 	r0, r1 := m.StreamBlameFileFunc.nextHook()(v0, v1, v2, v3)
 	m.StreamBlameFileFunc.appendCall(GitserverClientStreamBlameFileFuncCall{v0, v1, v2, v3, r0, r1})
 	return r0, r1
@@ -17126,7 +17126,7 @@ func (m *MockGitserverClient) StreamBlameFile(v0 context.Context, v1 api.RepoNam
 // SetDefaultHook sets function that is called when the StreamBlameFile
 // method of the parent MockGitserverClient instance is invoked and the hook
 // queue is empty.
-func (f *GitserverClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)) {
+func (f *GitserverClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)) {
 	f.defaultHook = hook
 }
 
@@ -17134,7 +17134,7 @@ func (f *GitserverClientStreamBlameFileFunc) SetDefaultHook(hook func(context.Co
 // StreamBlameFile method of the parent MockGitserverClient instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *GitserverClientStreamBlameFileFunc) PushHook(hook func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)) {
+func (f *GitserverClientStreamBlameFileFunc) PushHook(hook func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -17143,19 +17143,19 @@ func (f *GitserverClientStreamBlameFileFunc) PushHook(hook func(context.Context,
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *GitserverClientStreamBlameFileFunc) SetDefaultReturn(r0 gitserver.HunkReader, r1 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *GitserverClientStreamBlameFileFunc) PushReturn(r0 gitserver.HunkReader, r1 error) {
-	f.PushHook(func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
+	f.PushHook(func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitserverClientStreamBlameFileFunc) nextHook() func(context.Context, api.RepoName, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
+func (f *GitserverClientStreamBlameFileFunc) nextHook() func(context.Context, api.RepoID, string, *gitserver.BlameOptions) (gitserver.HunkReader, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -17194,7 +17194,7 @@ type GitserverClientStreamBlameFileFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 api.RepoName
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string

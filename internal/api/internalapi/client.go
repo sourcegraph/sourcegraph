@@ -18,7 +18,9 @@ import (
 
 var frontendInternal = func() *url.URL {
 	rawURL := env.Get("SRC_FRONTEND_INTERNAL", "sourcegraph-frontend-internal", "HTTP address for internal frontend HTTP API.")
-	return mustParseSourcegraphInternalURL(rawURL)
+	u := mustParseSourcegraphInternalURL(rawURL)
+	println(u.String())
+	return u
 }()
 
 type internalClient struct {

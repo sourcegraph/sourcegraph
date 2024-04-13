@@ -1,0 +1,14 @@
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: "binary is runnable"
+    command: "/gitserver-coordinator"
+    envVars:
+      - key: "SANITY_CHECK"
+        value: "true"
+  - name: "not running as root"
+    command: "/usr/bin/id"
+    args:
+      - -u
+    excludedOutput: ["^0"]
+    exitCode: 0
