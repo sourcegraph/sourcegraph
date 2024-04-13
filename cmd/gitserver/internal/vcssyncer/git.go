@@ -104,7 +104,7 @@ var TestRepositoryPostFetchCorruptionFunc func(ctx context.Context, dir common.G
 // via the progressWriter.
 // We "clone" a repository by first creating a bare repo and then fetching the
 // configured refs into it from the remote.
-func (s *gitRepoSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
+func (s *gitRepoSyncer) Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) (err error) {
 	dir := common.GitDir(tmpPath)
 
 	// First, make sure the tmpPath exists.
@@ -207,42 +207,43 @@ func (s *gitRepoSyncer) runFetchCommand(ctx context.Context, repoName api.RepoNa
 
 	var cmd *exec.Cmd
 
-	configRemoteOpts := true
+	refspecs := []string{
+		// Normal git refs
+		"+refs/heads/*:refs/heads/*", "+refs/tags/*:refs/tags/*",
+		// GitHub pull requests
+		"+refs/pull/*:refs/pull/*",
+		// GitLab merge requests
+		"+refs/merge-requests/*:refs/merge-requests/*",
+		// Bitbucket pull requests
+		"+refs/pull-requests/*:refs/pull-requests/*",
+		// Gerrit changesets
+		"+refs/changes/*:refs/changes/*",
+		// Possibly deprecated refs for sourcegraph zap experiment?
+		"+refs/sourcegraph/*:refs/sourcegraph/*",
+	}
+
+	var backend git.GitBackend
+
+	r, err := backend.Fetch(ctx, git.FetchOptions{
+		RemoteURL: remoteURL,
+		Refspecs:  refspecs,
+	})
+	if err != nil {
+		return -1, err
+	}
+
 	if customCmd := customFetchCmd(ctx, remoteURL); customCmd != nil {
 		cmd = customCmd
-		configRemoteOpts = false
+		// see issue #7322: skip LFS content in repositories with Git LFS configured.
+		cmd.Env = append(cmd.Env, "GIT_LFS_SKIP_SMUDGE=1")
+		// Set the working directory for the command.
+		dir.Set(cmd)
 	} else if useRefspecOverrides() {
-		cmd = refspecOverridesFetchCmd(ctx, remoteURL)
-	} else {
-		cmd = exec.CommandContext(ctx, "git", "fetch",
-			"--progress", "--prune", remoteURL.String(),
-			// Normal git refs
-			"+refs/heads/*:refs/heads/*", "+refs/tags/*:refs/tags/*",
-			// GitHub pull requests
-			"+refs/pull/*:refs/pull/*",
-			// GitLab merge requests
-			"+refs/merge-requests/*:refs/merge-requests/*",
-			// Bitbucket pull requests
-			"+refs/pull-requests/*:refs/pull-requests/*",
-			// Gerrit changesets
-			"+refs/changes/*:refs/changes/*",
-			// Possibly deprecated refs for sourcegraph zap experiment?
-			"+refs/sourcegraph/*:refs/sourcegraph/*")
+		refspecs = refspecOverrides()
 	}
 
 	if cmd.Env == nil {
 		cmd.Env = os.Environ()
-	}
-
-	// see issue #7322: skip LFS content in repositories with Git LFS configured.
-	cmd.Env = append(cmd.Env, "GIT_LFS_SKIP_SMUDGE=1")
-
-	// Set the working directory for the command.
-	dir.Set(cmd)
-
-	if configRemoteOpts {
-		// Configure the command to be able to talk to a remote.
-		executil.ConfigureRemoteGitCommand(cmd, remoteURL)
 	}
 
 	redactor := urlredactor.New(remoteURL)

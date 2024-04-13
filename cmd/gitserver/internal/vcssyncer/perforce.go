@@ -87,7 +87,7 @@ func (s *perforceDepotSyncer) IsCloneable(ctx context.Context, repoName api.Repo
 
 // Clone writes a Perforce depot into tmpPath, using a Perforce-to-git-conversion.
 // It reports redacted progress logs via the progressWriter.
-func (s *perforceDepotSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
+func (s *perforceDepotSyncer) Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) (err error) {
 	source, err := s.getRemoteURLSource(ctx, repo)
 	if err != nil {
 		return errors.Wrap(err, "getting remote URL source")

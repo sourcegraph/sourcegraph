@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -46,9 +47,6 @@ type VCSSyncer interface {
 	// up in tmpPath is expected to be a valid Git repository and should be initially
 	// optimized (repacked, commit-graph written, etc).
 	//
-	// targetDir is passed for reporting purposes, but should not be written to
-	// during this process.
-	//
 	// Progress can be reported by writing to the progressWriter.
 	// 🚨 SECURITY:
 	// Content written to this writer should NEVER contain sensitive information.
@@ -56,7 +54,7 @@ type VCSSyncer interface {
 	// sensitive data like secrets.
 	// Progress reported through the progressWriter will be streamed line-by-line
 	// with both LF and CR being valid line terminators.
-	Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error
+	Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) error
 	// Fetch tries to fetch updates from the remote to given directory.
 	// 🚨 SECURITY:
 	// Output returned from this function should NEVER contain sensitive information.
@@ -66,6 +64,8 @@ type VCSSyncer interface {
 	// with both LF and CR being valid line terminators.
 	Fetch(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error
 }
+
+type Backender func(common.GitDir, api.RepoName) git.GitBackend
 
 type NewVCSSyncerOpts struct {
 	ExternalServiceStore    database.ExternalServiceStore
@@ -77,6 +77,9 @@ type NewVCSSyncerOpts struct {
 	Logger                  log.Logger
 	FS                      gitserverfs.FS
 	GetRemoteURLSource      func(ctx context.Context, repo api.RepoName) (RemoteURLSource, error)
+	// GetBackendFunc is a function which returns the git backend for a
+	// repository.
+	GetBackendFunc Backender
 }
 
 func NewVCSSyncer(ctx context.Context, opts *NewVCSSyncerOpts) (VCSSyncer, error) {

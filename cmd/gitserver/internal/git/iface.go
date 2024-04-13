@@ -7,6 +7,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
+	"github.com/sourcegraph/sourcegraph/internal/vcs"
 )
 
 // GitBackend is the interface through which operations on a git repository can
@@ -90,6 +91,12 @@ type GitBackend interface {
 	// Aggregations are done by email address.
 	// If range does not exist, a RevisionNotFoundError is returned.
 	ContributorCounts(ctx context.Context, opt ContributorCountsOpts) ([]*gitdomain.ContributorCount, error)
+	// Fetch fetches the configured revspecs from the remote repository using the
+	// given URL.
+	// The returned iterator can be used to read all the ref updates in a structured
+	// way.
+	// The returned Reader can be used to read the progress of the fetch operation.
+	Fetch(ctx context.Context, opt FetchOptions) (_ RefUpdateIterator, progress io.Reader, _ error)
 
 	// Exec is a temporary helper to run arbitrary git commands from the exec endpoint.
 	// No new usages of it should be introduced and once the migration is done we will
@@ -193,3 +200,65 @@ type ContributorCountsOpts struct {
 	// (e.g., "foo/bar/").
 	Path string
 }
+
+// FetchOptions are options for the Fetch method. All options must be specified.
+type FetchOptions struct {
+	// RemoteURL is the URL of the remote to fetch from. It may contain credentials
+	// in the User field.
+	RemoteURL *vcs.URL
+	// Refspecs specifies which refs to fetch and update.
+	// Example format: {"+refs/heads/*:refs/heads/*", "+refs/tags/*:refs/tags/*"}.
+	Refspecs []string
+	// TLSConfig, if set, contains additional information about certificate settings
+	// to pass to git.
+	TLSConfig GitTLSConfig
+}
+
+type GitTLSConfig struct {
+	// Whether to not verify the SSL certificate when fetching or pushing over
+	// HTTPS.
+	//
+	// https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpsslVerify
+	SSLNoVerify bool
+
+	// File containing the certificates to verify the peer with when fetching
+	// or pushing over HTTPS.
+	//
+	// https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpsslCAInfo
+	SSLCAInfo string
+}
+
+// RefUpdateIterator is an interface that allows iterating over a set of RefUpdates.
+type RefUpdateIterator interface {
+	// Next returns the next RefUpdate.
+	Next() (RefUpdate, error)
+	// Close releases resources associated with the iterator.
+	Close() error
+}
+
+type RefUpdate struct {
+	Type           RefUpdateType
+	OldSHA         api.CommitID
+	NewSHA         api.CommitID
+	LocalReference string
+}
+
+// RefUpdateType indicates what kind of update has been made.
+type RefUpdateType byte
+
+const (
+	// for a successfully fetched fast-forward
+	RefUpdateTypeFastForwardUpdate RefUpdateType = ' '
+	// for a successful forced update
+	RefUpdateTypeForcedUpdate RefUpdateType = '+'
+	// for a successfully pruned ref
+	RefUpdateTypePruned RefUpdateType = '-'
+	// for a successful tag update
+	RefUpdateTypeTagUpdate RefUpdateType = 't'
+	// for a successfully fetched new ref
+	RefUpdateTypeNewRef RefUpdateType = '*'
+	// for a ref that was rejected or failed to update
+	RefUpdateTypeFailed RefUpdateType = '!'
+	// for a ref that was up to date and did not need fetching
+	RefUpdateTypeUnchanged RefUpdateType = '='
+)

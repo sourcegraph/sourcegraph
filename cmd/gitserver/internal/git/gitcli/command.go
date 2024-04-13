@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -48,8 +49,11 @@ var (
 
 type commandOpts struct {
 	arguments []string
+	addtlEnv  []string
+	redactor  func(string) string
 
-	stdin io.Reader
+	stdin  io.Reader
+	stderr io.Writer
 }
 
 func optsFromFuncs(optFns ...CommandOptionFunc) commandOpts {
@@ -69,10 +73,35 @@ func WithArguments(args ...string) CommandOptionFunc {
 	}
 }
 
+// WithEnv sets the given environment variables on the command. os.Environ()
+// is always passed, the additional env vars passed here will be appended.
+func WithEnv(env ...string) CommandOptionFunc {
+	return func(o *commandOpts) {
+		o.addtlEnv = append(o.addtlEnv, env...)
+	}
+}
+
 // WithStdin specifies the reader to use for the command's stdin input.
 func WithStdin(stdin io.Reader) CommandOptionFunc {
 	return func(o *commandOpts) {
 		o.stdin = stdin
+	}
+}
+
+// WithStderr sets the stderr writer for the command. When set, stderr will be
+// written to the passed writer, and also tracked internally for corruption detection
+// and error reporting using a io.MultiWriter.
+func WithStderr(stderr io.Writer) CommandOptionFunc {
+	return func(o *commandOpts) {
+		o.stderr = stderr
+	}
+}
+
+// WithOutputRedactor sets the command recorder redactor function to use for the command,
+// and best-effort redacts any outputs from stdout/stderr.
+func WithOutputRedactor(f func(string) string) CommandOptionFunc {
+	return func(o *commandOpts) {
+		o.redactor = f
 	}
 }
 
@@ -117,9 +146,22 @@ func (g *gitCLIBackend) NewCommand(ctx context.Context, optFns ...CommandOptionF
 	g.dir.Set(cmd)
 
 	stderr, stderrBuf := stderrBuffer()
-	cmd.Stderr = stderr
+	stderrWriter := stderr
+	if opts.stderr != nil {
+		stderrWriter = io.MultiWriter(stderrBuf, opts.stderr)
+	}
+	cmd.Stderr = stderrWriter
+
+	if cmd.Env == nil {
+		cmd.Env = os.Environ()
+	}
+	cmd.Env = append(cmd.Env, opts.addtlEnv...)
 
 	wrappedCmd := g.rcf.WrapWithRepoName(ctx, logger, g.repoName, cmd)
+
+	if opts.redactor != nil {
+		wrappedCmd = wrappedCmd.WithRedactorFunc(opts.redactor)
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -152,6 +194,7 @@ func (g *gitCLIBackend) NewCommand(ctx context.Context, optFns ...CommandOptionF
 		logger:     logger,
 		git:        g,
 		tr:         tr,
+		redactor:   opts.redactor,
 	}, nil
 }
 
@@ -202,6 +245,7 @@ type cmdReader struct {
 	closed    bool
 	tr        trace.Trace
 	err       error
+	redactor  func(string) string
 }
 
 func (rc *cmdReader) Read(p []byte) (n int, err error) {
@@ -243,10 +287,14 @@ func (rc *cmdReader) waitCmd() (err error) {
 	rc.err = rc.cmd.Wait()
 
 	if rc.err != nil {
-		if checkMaybeCorruptRepo(rc.ctx, rc.logger, rc.git, rc.repoName, rc.stderr.String()) {
-			rc.err = common.ErrRepoCorrupted{Reason: rc.stderr.String()}
+		redactedStderr := rc.stderr.String()
+		if rc.redactor != nil {
+			redactedStderr = rc.redactor(rc.stderr.String())
+		}
+		if checkMaybeCorruptRepo(rc.ctx, rc.logger, rc.git, rc.repoName, redactedStderr) {
+			rc.err = common.ErrRepoCorrupted{Reason: redactedStderr}
 		} else {
-			rc.err = commandFailedError(rc.ctx, err, rc.cmd, rc.stderr.Bytes())
+			rc.err = commandFailedError(rc.ctx, err, rc.cmd, []byte(redactedStderr))
 		}
 	}
 

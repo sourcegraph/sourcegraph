@@ -130,6 +130,9 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 
 					}), nil
 				},
+				GetBackendFunc: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
+					return git.NewObservableBackend(gitcli.NewBackend(logger, recordingCommandFactory, dir, repoName))
+				},
 			})
 		},
 		FS:                      fs,

@@ -80,9 +80,9 @@ func (i *instrumentedSyncer) IsCloneable(ctx context.Context, repoName api.RepoN
 	return i.base.IsCloneable(ctx, repoName)
 }
 
-func (i *instrumentedSyncer) Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
+func (i *instrumentedSyncer) Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) (err error) {
 	if !i.shouldObserve() {
-		return i.base.Clone(ctx, repo, targetDir, tmpPath, progressWriter)
+		return i.base.Clone(ctx, repo, tmpPath, progressWriter)
 	}
 
 	start := time.Now()
@@ -93,7 +93,7 @@ func (i *instrumentedSyncer) Clone(ctx context.Context, repo api.RepoName, targe
 		metricCloneDuration.WithLabelValues(i.formattedTypeLabel, strconv.FormatBool(succeeded)).Observe(duration)
 	}()
 
-	return i.base.Clone(ctx, repo, targetDir, tmpPath, progressWriter)
+	return i.base.Clone(ctx, repo, tmpPath, progressWriter)
 }
 
 func (i *instrumentedSyncer) Fetch(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) (err error) {

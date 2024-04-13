@@ -39,7 +39,7 @@ type MockVCSSyncer struct {
 func NewMockVCSSyncer() *MockVCSSyncer {
 	return &MockVCSSyncer{
 		CloneFunc: &VCSSyncerCloneFunc{
-			defaultHook: func(context.Context, api.RepoName, common.GitDir, string, io.Writer) (r0 error) {
+			defaultHook: func(context.Context, api.RepoName, string, io.Writer) (r0 error) {
 				return
 			},
 		},
@@ -66,7 +66,7 @@ func NewMockVCSSyncer() *MockVCSSyncer {
 func NewStrictMockVCSSyncer() *MockVCSSyncer {
 	return &MockVCSSyncer{
 		CloneFunc: &VCSSyncerCloneFunc{
-			defaultHook: func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error {
+			defaultHook: func(context.Context, api.RepoName, string, io.Writer) error {
 				panic("unexpected invocation of MockVCSSyncer.Clone")
 			},
 		},
@@ -110,23 +110,23 @@ func NewMockVCSSyncerFrom(i VCSSyncer) *MockVCSSyncer {
 // VCSSyncerCloneFunc describes the behavior when the Clone method of the
 // parent MockVCSSyncer instance is invoked.
 type VCSSyncerCloneFunc struct {
-	defaultHook func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error
-	hooks       []func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error
+	defaultHook func(context.Context, api.RepoName, string, io.Writer) error
+	hooks       []func(context.Context, api.RepoName, string, io.Writer) error
 	history     []VCSSyncerCloneFuncCall
 	mutex       sync.Mutex
 }
 
 // Clone delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockVCSSyncer) Clone(v0 context.Context, v1 api.RepoName, v2 common.GitDir, v3 string, v4 io.Writer) error {
-	r0 := m.CloneFunc.nextHook()(v0, v1, v2, v3, v4)
-	m.CloneFunc.appendCall(VCSSyncerCloneFuncCall{v0, v1, v2, v3, v4, r0})
+func (m *MockVCSSyncer) Clone(v0 context.Context, v1 api.RepoName, v2 string, v3 io.Writer) error {
+	r0 := m.CloneFunc.nextHook()(v0, v1, v2, v3)
+	m.CloneFunc.appendCall(VCSSyncerCloneFuncCall{v0, v1, v2, v3, r0})
 	return r0
 }
 
 // SetDefaultHook sets function that is called when the Clone method of the
 // parent MockVCSSyncer instance is invoked and the hook queue is empty.
-func (f *VCSSyncerCloneFunc) SetDefaultHook(hook func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error) {
+func (f *VCSSyncerCloneFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string, io.Writer) error) {
 	f.defaultHook = hook
 }
 
@@ -134,7 +134,7 @@ func (f *VCSSyncerCloneFunc) SetDefaultHook(hook func(context.Context, api.RepoN
 // Clone method of the parent MockVCSSyncer instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *VCSSyncerCloneFunc) PushHook(hook func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error) {
+func (f *VCSSyncerCloneFunc) PushHook(hook func(context.Context, api.RepoName, string, io.Writer) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -143,19 +143,19 @@ func (f *VCSSyncerCloneFunc) PushHook(hook func(context.Context, api.RepoName, c
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *VCSSyncerCloneFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error {
+	f.SetDefaultHook(func(context.Context, api.RepoName, string, io.Writer) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *VCSSyncerCloneFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error {
+	f.PushHook(func(context.Context, api.RepoName, string, io.Writer) error {
 		return r0
 	})
 }
 
-func (f *VCSSyncerCloneFunc) nextHook() func(context.Context, api.RepoName, common.GitDir, string, io.Writer) error {
+func (f *VCSSyncerCloneFunc) nextHook() func(context.Context, api.RepoName, string, io.Writer) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -196,13 +196,10 @@ type VCSSyncerCloneFuncCall struct {
 	Arg1 api.RepoName
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
-	Arg2 common.GitDir
+	Arg2 string
 	// Arg3 is the value of the 4th argument passed to this method
 	// invocation.
-	Arg3 string
-	// Arg4 is the value of the 5th argument passed to this method
-	// invocation.
-	Arg4 io.Writer
+	Arg3 io.Writer
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -211,7 +208,7 @@ type VCSSyncerCloneFuncCall struct {
 // Args returns an interface slice containing the arguments of this
 // invocation.
 func (c VCSSyncerCloneFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4}
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3}
 }
 
 // Results returns an interface slice containing the results of this
