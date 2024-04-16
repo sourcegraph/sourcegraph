@@ -198,7 +198,12 @@ func (r *externalServiceResolver) WebhookURL(ctx context.Context) (*string, erro
 			r.webhookErr = errors.Wrap(err, "parsing external service config")
 			return
 		}
-		u, err := extsvc.WebhookURL(r.externalService.Kind, r.externalService.ID, parsed, conf.ExternalURL())
+		extURL, err := conf.ExternalURL()
+		if err != nil {
+			r.webhookErr = errors.Wrap(err, "getting external URL")
+			return
+		}
+		u, err := extsvc.WebhookURL(r.externalService.Kind, r.externalService.ID, parsed, extURL)
 		if err != nil {
 			r.webhookErr = errors.Wrap(err, "building webhook URL")
 		}

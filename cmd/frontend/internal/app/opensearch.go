@@ -7,7 +7,8 @@ import (
 
 	"github.com/inconshreveable/log15" //nolint:logging // TODO move all logging to sourcegraph/log
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 var openSearchDescription = template.Must(template.New("").Parse(`
@@ -26,7 +27,11 @@ func openSearch(w http.ResponseWriter, r *http.Request) {
 		BaseURL   string
 		SearchURL string
 	}
-	externalURL := globals.ExternalURL()
+
+	externalURL, err := conf.ExternalURL()
+	if err != nil {
+		http.Error(w, errors.Wrap(err, "failed to get external URL").Error(), http.StatusInternalServerError)
+	}
 	externalURLStr := externalURL.String()
 	data := vars{
 		BaseURL:   externalURLStr,

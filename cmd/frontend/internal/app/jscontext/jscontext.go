@@ -347,13 +347,19 @@ func NewJSContextFromRequest(req *http.Request, db database.DB) JSContext {
 
 	codyEnabled, _ := cody.IsCodyEnabled(ctx, db)
 
+	extURL, err := conf.ExternalURL()
+	var extURLStr string
+	if err == nil {
+		extURLStr = extURL.String()
+	}
+
 	// 🚨 SECURITY: This struct is sent to all users regardless of whether or
 	// not they are logged in, for example on an auth.public=false private
 	// server. Including secret fields here is OK if it is based on the user's
 	// authentication above, but do not include e.g. hard-coded secrets about
 	// the server instance here as they would be sent to anonymous users.
 	context := JSContext{
-		ExternalURL:         globals.ExternalURL().String(),
+		ExternalURL:         extURLStr,
 		XHRHeaders:          headers,
 		UserAgentIsBot:      isBot(req.UserAgent()),
 		AssetsRoot:          assetsutil.URL("").String(),

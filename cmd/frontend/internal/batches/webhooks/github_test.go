@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -178,6 +179,9 @@ func testGitHubWebhook(db database.DB, userID int32) func(*testing.T) {
 			t.Fatal(err)
 		}
 
+		extURL, err := url.Parse("https://example.com/")
+		require.NoError(t, err)
+
 		for _, fixtureFile := range fixtureFiles {
 			_, name := path.Split(fixtureFile)
 			name = strings.TrimSuffix(name, ".json")
@@ -196,7 +200,7 @@ func testGitHubWebhook(db database.DB, userID int32) func(*testing.T) {
 						}
 						hook.Register(handler.Router)
 
-						u, err := extsvc.WebhookURL(extsvc.TypeGitHub, extSvc.ID, nil, "https://example.com/")
+						u, err := extsvc.WebhookURL(extsvc.TypeGitHub, extSvc.ID, nil, extURL)
 						if err != nil {
 							t.Fatal(err)
 						}

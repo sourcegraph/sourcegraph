@@ -9,9 +9,9 @@ import (
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
@@ -61,8 +61,8 @@ func unmarshalBatchChangesCredentialID(id graphql.ID) (credentialID int64, isSit
 }
 
 func commentSSHKey(ssh auth.AuthenticatorWithSSH) string {
-	url := globals.ExternalURL()
-	if url != nil && url.Host != "" {
+	url,err := conf.ExternalURL()
+	if err == nil && url != nil && url.Host != "" {
 		return strings.TrimRight(ssh.SSHPublicKey(), "\n") + " Sourcegraph " + url.Host
 	}
 	return ssh.SSHPublicKey()

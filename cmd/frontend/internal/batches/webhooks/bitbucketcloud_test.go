@@ -6,12 +6,14 @@ import (
 	"database/sql"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/log/logtest"
 
@@ -50,7 +52,8 @@ func testBitbucketCloudWebhook(db *sql.DB) func(*testing.T) {
 		cfg := &schema.BitbucketCloudConnection{
 			WebhookSecret: "secretsecret",
 		}
-		esURL := bitbucketCloudExternalServiceURL
+		esURL, err := url.Parse(bitbucketCloudExternalServiceURL)
+		require.NoError(t, err)
 
 		gsClient := gitserver.NewMockClient()
 
@@ -128,7 +131,10 @@ func testBitbucketCloudWebhook(db *sql.DB) func(*testing.T) {
 				store := bitbucketCloudTestSetup(t, db)
 				h := NewBitbucketCloudWebhook(store, gsClient, logger)
 
-				u, err := extsvc.WebhookURL(extsvc.KindBitbucketCloud, 12345, cfg, "https://bitbucket.org/")
+				extURL, err := url.Parse("https://bitbucket.org/")
+				require.NoError(t, err)
+
+				u, err := extsvc.WebhookURL(extsvc.KindBitbucketCloud, 12345, cfg, extURL)
 				assert.Nil(t, err)
 
 				req, err := http.NewRequest("POST", u, nil)

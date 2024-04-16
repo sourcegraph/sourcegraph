@@ -6,7 +6,6 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/auth/userpasswd"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
@@ -41,6 +40,10 @@ func ResetPasswordURL(ctx context.Context, db database.DB, logger log.Logger, us
 		return nil, errors.Wrap(err, msg)
 	}
 
-	ru := globals.ExternalURL().ResolveReference(resetURL).String()
+	extURL, err := conf.ExternalURL()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get external URL")
+	}
+	ru := extURL.ResolveReference(resetURL).String()
 	return &ru, nil
 }

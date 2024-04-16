@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -37,6 +38,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 
+var testExternalURL, _ = url.Parse("https://example.com/")
+
 func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 	return func(t *testing.T) {
 		logger := logtest.Scoped(t)
@@ -50,7 +53,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				store := gitLabTestSetup(t, db)
 				h := NewGitLabWebhook(store, gsClient, logger)
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, 12345, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, 12345, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -72,7 +75,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				store := gitLabTestSetup(t, db)
 				h := NewGitLabWebhook(store, gsClient, logger)
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, 12345, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, 12345, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -98,7 +101,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -123,7 +126,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -149,7 +152,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -175,7 +178,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -202,7 +205,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -228,7 +231,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				h := NewGitLabWebhook(store, gsClient, logger)
 				es := createGitLabExternalService(t, ctx, store.ExternalServices())
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -264,7 +267,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 				changeset := createGitLabChangeset(t, ctx, store, repo)
 				body := createMergeRequestPayload(t, repo, changeset, "close")
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -303,7 +306,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 						changeset := createGitLabChangeset(t, ctx, store, repo)
 						body := createMergeRequestPayload(t, repo, changeset, "approved")
 
-						u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+						u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -353,7 +356,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 						changeset := createGitLabChangeset(t, ctx, store, repo)
 						body := createMergeRequestPayload(t, repo, changeset, action)
 
-						u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+						u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -390,7 +393,7 @@ func testGitLabWebhook(db *sql.DB) func(*testing.T) {
 					Status: gitlab.PipelineStatusSuccess,
 				})
 
-				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, "https://example.com/")
+				u, err := extsvc.WebhookURL(extsvc.TypeGitLab, es.ID, nil, testExternalURL)
 				if err != nil {
 					t.Fatal(err)
 				}

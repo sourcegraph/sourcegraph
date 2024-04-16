@@ -3,6 +3,7 @@ package conf
 import (
 	"encoding/hex"
 	"log" //nolint:logging // TODO move all logging to sourcegraph/log
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/license"
 	srccli "github.com/sourcegraph/sourcegraph/internal/src-cli"
 	"github.com/sourcegraph/sourcegraph/internal/version"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
@@ -352,10 +354,6 @@ func ProductResearchPageEnabled() bool {
 		return *enabled
 	}
 	return true
-}
-
-func ExternalURL() string {
-	return Get().ExternalURL
 }
 
 func UsingExternalURL() bool {
@@ -1306,4 +1304,12 @@ func Branding() *schema.Branding {
 		br = &bcopy
 	}
 	return br
+}
+
+func ExternalURL() (*url.URL, error) {
+	v := Get().ExternalURL
+	if v == "" {
+		return nil, errors.New("externalURL is not set in site config")
+	}
+	return url.Parse(v)
 }

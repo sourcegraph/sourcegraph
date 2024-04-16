@@ -483,7 +483,7 @@ const IDParam = "externalServiceID"
 
 // WebhookURL returns an endpoint URL for the given external service. If the kind
 // of external service does not support webhooks it returns an empty string.
-func WebhookURL(kind string, externalServiceID int64, cfg any, externalURL string) (string, error) {
+func WebhookURL(kind string, externalServiceID int64, cfg any, externalURL *url.URL) (string, error) {
 	variant, err := VariantValueOf(kind)
 	if err != nil {
 		return "", errors.Errorf("unknown external service kind %q", kind)
@@ -495,10 +495,7 @@ func WebhookURL(kind string, externalServiceID int64, cfg any, externalURL strin
 		return "", nil
 	}
 
-	u, err := url.Parse(externalURL)
-	if err != nil {
-		return "", err
-	}
+	u := *externalURL
 	u.Path = ".api/" + path
 	q := u.Query()
 	q.Set(IDParam, strconv.FormatInt(externalServiceID, 10))

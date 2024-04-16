@@ -513,12 +513,21 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 	// Used for cases where large pings objects might otherwise fail silently.
 	logFuncWarn := scopedLog.Warn
 
+	extURL, err := conf.ExternalURL()
+	if err != nil {
+		logFuncWarn("unable to get external URL", log.Error(err))
+	}
+	var extURLStr string
+	if extURL != nil {
+		extURLStr = extURL.String()
+	}
+
 	r := &pingRequest{
 		ClientSiteID:                  siteid.Get(db),
 		DeployType:                    deploy.Type(),
 		ClientVersionString:           version.Version(),
 		LicenseKey:                    conf.Get().LicenseKey,
-		ExternalURL:                   conf.ExternalURL(),
+		ExternalURL:                   extURLStr,
 		CodeIntelUsage:                []byte("{}"),
 		NewCodeIntelUsage:             []byte("{}"),
 		SearchUsage:                   []byte("{}"),

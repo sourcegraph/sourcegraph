@@ -1,6 +1,7 @@
 package extsvc
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -430,7 +431,9 @@ func TestUniqueCodeHostIdentifier(t *testing.T) {
 
 func TestWebhookURL(t *testing.T) {
 	const externalServiceID = 42
-	const externalURL = "https://sourcegraph.com"
+	const externalURLStr = "https://sourcegraph.com"
+	externalURL, err := url.Parse(externalURLStr)
+	require.NoError(t, err)
 
 	t.Run("unknown kind", func(t *testing.T) {
 		u, err := WebhookURL(KindOther, externalServiceID, nil, externalURL)
@@ -440,9 +443,9 @@ func TestWebhookURL(t *testing.T) {
 
 	t.Run("basic kinds", func(t *testing.T) {
 		for kind, want := range map[string]string{
-			KindGitHub:          externalURL + "/.api/github-webhooks?externalServiceID=42",
-			KindBitbucketServer: externalURL + "/.api/bitbucket-server-webhooks?externalServiceID=42",
-			KindGitLab:          externalURL + "/.api/gitlab-webhooks?externalServiceID=42",
+			KindGitHub:          externalURLStr + "/.api/github-webhooks?externalServiceID=42",
+			KindBitbucketServer: externalURLStr + "/.api/bitbucket-server-webhooks?externalServiceID=42",
+			KindGitLab:          externalURLStr + "/.api/gitlab-webhooks?externalServiceID=42",
 		} {
 			t.Run(kind, func(t *testing.T) {
 				// Note the use of a nil configuration here: these kinds do not
@@ -476,7 +479,7 @@ func TestWebhookURL(t *testing.T) {
 				externalURL,
 			)
 			assert.Nil(t, err)
-			assert.Equal(t, externalURL+"/.api/bitbucket-cloud-webhooks?externalServiceID=42&secret=foo+bar", have)
+			assert.Equal(t, externalURLStr+"/.api/bitbucket-cloud-webhooks?externalServiceID=42&secret=foo+bar", have)
 		})
 	})
 }

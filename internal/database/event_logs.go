@@ -195,7 +195,14 @@ func SanitizeEventURL(raw string) string {
 
 	// Check if the URL belongs to the current site
 	normalized := u.String()
-	if strings.HasPrefix(normalized, conf.ExternalURL()) || strings.HasSuffix(u.Host, "sourcegraph.com") {
+	extURL, err := conf.ExternalURL()
+	if err != nil {
+		// If the URL cannot be parsed, or isn't set, we rather return an empty
+		// string than redacting too little.
+		return ""
+	}
+
+	if strings.HasPrefix(normalized, extURL.String()) || strings.HasSuffix(u.Host, "sourcegraph.com") {
 		return normalized
 	}
 	return ""

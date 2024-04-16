@@ -9,7 +9,6 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/auth/userpasswd"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -23,12 +22,16 @@ type randomizeUserPasswordResult struct {
 	emailSent bool
 }
 
-func (r *randomizeUserPasswordResult) ResetPasswordURL() *string {
+func (r *randomizeUserPasswordResult) ResetPasswordURL() (*string, error) {
 	if r.resetURL == nil {
-		return nil
+		return nil, nil
 	}
-	urlStr := globals.ExternalURL().ResolveReference(r.resetURL).String()
-	return &urlStr
+	extURL, err := conf.ExternalURL()
+	if err != nil {
+		return nil, err
+	}
+	urlStr := extURL.ResolveReference(r.resetURL).String()
+	return &urlStr,nil
 }
 
 func (r *randomizeUserPasswordResult) EmailSent() bool { return r.emailSent }

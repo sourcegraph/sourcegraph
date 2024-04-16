@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,6 +158,9 @@ func TestGithubWebhookExternalServices(t *testing.T) {
 		},
 	}
 
+	extURL, err := url.Parse("https://example.com/")
+	require.NoError(t, err)
+
 	var called bool
 	hook.Register(func(ctx context.Context, db database.DB, urn extsvc.CodeHostBaseURL, payload any) error {
 		evt, ok := payload.(*gh.PublicEvent)
@@ -170,7 +174,7 @@ func TestGithubWebhookExternalServices(t *testing.T) {
 		return nil
 	}, extsvc.KindGitHub, "public")
 
-	u, err := extsvc.WebhookURL(extsvc.TypeGitHub, extSvc.ID, nil, "https://example.com/")
+	u, err := extsvc.WebhookURL(extsvc.TypeGitHub, extSvc.ID, nil, extURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +202,7 @@ func TestGithubWebhookExternalServices(t *testing.T) {
 	}
 
 	t.Run("missing service", func(t *testing.T) {
-		u, err := extsvc.WebhookURL(extsvc.TypeGitHub, 99, nil, "https://example.com/")
+		u, err := extsvc.WebhookURL(extsvc.TypeGitHub, 99, nil, extURL)
 		if err != nil {
 			t.Fatal(err)
 		}

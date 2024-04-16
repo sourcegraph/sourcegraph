@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/log/logtest"
 
@@ -184,6 +186,9 @@ func testBitbucketServerWebhook(db database.DB, userID int32) func(*testing.T) {
 			t.Fatal(err)
 		}
 
+		extURL, err := url.Parse("https://example.com/")
+		require.NoError(t, err)
+
 		for _, fixtureFile := range fixtureFiles {
 			_, name := path.Split(fixtureFile)
 			name = strings.TrimSuffix(name, ".json")
@@ -195,7 +200,7 @@ func testBitbucketServerWebhook(db database.DB, userID int32) func(*testing.T) {
 				// Send all events twice to ensure we are idempotent
 				for range 2 {
 					for _, event := range tc.Payloads {
-						u, err := extsvc.WebhookURL(extsvc.TypeBitbucketServer, extSvc.ID, nil, "https://example.com/")
+						u, err := extsvc.WebhookURL(extsvc.TypeBitbucketServer, extSvc.ID, nil, extURL)
 						if err != nil {
 							t.Fatal(err)
 						}

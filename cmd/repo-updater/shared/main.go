@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/globals"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/phabricator"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/purge"
 	"github.com/sourcegraph/sourcegraph/cmd/repo-updater/internal/repoupdater"
@@ -125,7 +124,6 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 		server.ChangesetSyncRegistry = syncRegistry
 	}
 
-	go globals.WatchExternalURL()
 	go watchAuthzProviders(ctx, db)
 	go watchSyncer(ctx, logger, syncer, updateScheduler, server.ChangesetSyncRegistry)
 
