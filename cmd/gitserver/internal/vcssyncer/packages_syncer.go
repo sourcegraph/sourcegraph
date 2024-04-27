@@ -81,7 +81,7 @@ func (s *vcsPackagesSyncer) Type() string {
 // Clone writes a package and all requested versions of it into a synthetic git
 // repo at tmpPath by creating one head per version.
 // It reports redacted progress logs via the progressWriter.
-func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
+func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) (err error) {
 	// First, make sure the tmpPath exists.
 	if err := os.MkdirAll(tmpPath, os.ModePerm); err != nil {
 		return errors.Wrapf(err, "clone failed to create tmp dir")

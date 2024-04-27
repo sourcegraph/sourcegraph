@@ -1142,7 +1142,7 @@ func TestServer_IsRepoCloneable_InternalActor(t *testing.T) {
 type mockVCSSyncer struct {
 	mockTypeFunc    func() string
 	mockIsCloneable func(ctx context.Context, repoName api.RepoName) error
-	mockClone       func(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error
+	mockClone       func(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) error
 	mockFetch       func(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error
 }
 
@@ -1162,9 +1162,9 @@ func (m *mockVCSSyncer) IsCloneable(ctx context.Context, repoName api.RepoName) 
 	return errors.New("no mock for IsCloneable() is set")
 }
 
-func (m *mockVCSSyncer) Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error {
+func (m *mockVCSSyncer) Clone(ctx context.Context, repo api.RepoName, tmpPath string, progressWriter io.Writer) error {
 	if m.mockClone != nil {
-		return m.mockClone(ctx, repo, targetDir, tmpPath, progressWriter)
+		return m.mockClone(ctx, repo, tmpPath, progressWriter)
 	}
 
 	return errors.New("no mock for Clone() is set")

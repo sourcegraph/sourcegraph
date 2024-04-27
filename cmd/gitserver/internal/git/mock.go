@@ -299,6 +299,9 @@ type MockGitBackend struct {
 	// ExecFunc is an instance of a mock function object controlling the
 	// behavior of the method Exec.
 	ExecFunc *GitBackendExecFunc
+	// FetchFunc is an instance of a mock function object controlling the
+	// behavior of the method Fetch.
+	FetchFunc *GitBackendFetchFunc
 	// GetCommitFunc is an instance of a mock function object controlling
 	// the behavior of the method GetCommit.
 	GetCommitFunc *GitBackendGetCommitFunc
@@ -357,6 +360,11 @@ func NewMockGitBackend() *MockGitBackend {
 		},
 		ExecFunc: &GitBackendExecFunc{
 			defaultHook: func(context.Context, ...string) (r0 io.ReadCloser, r1 error) {
+				return
+			},
+		},
+		FetchFunc: &GitBackendFetchFunc{
+			defaultHook: func(context.Context, FetchOptions) (r0 io.ReadCloser, r1 error) {
 				return
 			},
 		},
@@ -442,6 +450,11 @@ func NewStrictMockGitBackend() *MockGitBackend {
 				panic("unexpected invocation of MockGitBackend.Exec")
 			},
 		},
+		FetchFunc: &GitBackendFetchFunc{
+			defaultHook: func(context.Context, FetchOptions) (io.ReadCloser, error) {
+				panic("unexpected invocation of MockGitBackend.Fetch")
+			},
+		},
 		GetCommitFunc: &GitBackendGetCommitFunc{
 			defaultHook: func(context.Context, api.CommitID, bool) (*GitCommitWithFiles, error) {
 				panic("unexpected invocation of MockGitBackend.GetCommit")
@@ -513,6 +526,9 @@ func NewMockGitBackendFrom(i GitBackend) *MockGitBackend {
 		},
 		ExecFunc: &GitBackendExecFunc{
 			defaultHook: i.Exec,
+		},
+		FetchFunc: &GitBackendFetchFunc{
+			defaultHook: i.Fetch,
 		},
 		GetCommitFunc: &GitBackendGetCommitFunc{
 			defaultHook: i.GetCommit,
@@ -1092,6 +1108,113 @@ func (c GitBackendExecFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitBackendExecFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitBackendFetchFunc describes the behavior when the Fetch method of the
+// parent MockGitBackend instance is invoked.
+type GitBackendFetchFunc struct {
+	defaultHook func(context.Context, FetchOptions) (io.ReadCloser, error)
+	hooks       []func(context.Context, FetchOptions) (io.ReadCloser, error)
+	history     []GitBackendFetchFuncCall
+	mutex       sync.Mutex
+}
+
+// Fetch delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitBackend) Fetch(v0 context.Context, v1 FetchOptions) (io.ReadCloser, error) {
+	r0, r1 := m.FetchFunc.nextHook()(v0, v1)
+	m.FetchFunc.appendCall(GitBackendFetchFuncCall{v0, v1, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the Fetch method of the
+// parent MockGitBackend instance is invoked and the hook queue is empty.
+func (f *GitBackendFetchFunc) SetDefaultHook(hook func(context.Context, FetchOptions) (io.ReadCloser, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Fetch method of the parent MockGitBackend instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendFetchFunc) PushHook(hook func(context.Context, FetchOptions) (io.ReadCloser, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendFetchFunc) SetDefaultReturn(r0 io.ReadCloser, r1 error) {
+	f.SetDefaultHook(func(context.Context, FetchOptions) (io.ReadCloser, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendFetchFunc) PushReturn(r0 io.ReadCloser, r1 error) {
+	f.PushHook(func(context.Context, FetchOptions) (io.ReadCloser, error) {
+		return r0, r1
+	})
+}
+
+func (f *GitBackendFetchFunc) nextHook() func(context.Context, FetchOptions) (io.ReadCloser, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendFetchFunc) appendCall(r0 GitBackendFetchFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendFetchFuncCall objects describing
+// the invocations of this function.
+func (f *GitBackendFetchFunc) History() []GitBackendFetchFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendFetchFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendFetchFuncCall is an object that describes an invocation of
+// method Fetch on an instance of MockGitBackend.
+type GitBackendFetchFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 FetchOptions
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 io.ReadCloser
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendFetchFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendFetchFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
