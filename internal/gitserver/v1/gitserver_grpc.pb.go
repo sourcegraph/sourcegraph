@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	GitserverRepositoryService_DeleteRepository_FullMethodName = "/gitserver.v1.GitserverRepositoryService/DeleteRepository"
-	GitserverRepositoryService_FetchRepository_FullMethodName  = "/gitserver.v1.GitserverRepositoryService/FetchRepository"
-	GitserverRepositoryService_ListRepositories_FullMethodName = "/gitserver.v1.GitserverRepositoryService/ListRepositories"
+	GitserverRepositoryService_DeleteRepository_FullMethodName     = "/gitserver.v1.GitserverRepositoryService/DeleteRepository"
+	GitserverRepositoryService_FetchRepository_FullMethodName      = "/gitserver.v1.GitserverRepositoryService/FetchRepository"
+	GitserverRepositoryService_ListRepositories_FullMethodName     = "/gitserver.v1.GitserverRepositoryService/ListRepositories"
+	GitserverRepositoryService_RepositoryStatistics_FullMethodName = "/gitserver.v1.GitserverRepositoryService/RepositoryStatistics"
+	GitserverRepositoryService_OptimizeRepository_FullMethodName   = "/gitserver.v1.GitserverRepositoryService/OptimizeRepository"
 )
 
 // GitserverRepositoryServiceClient is the client API for GitserverRepositoryService service.
@@ -36,6 +38,8 @@ type GitserverRepositoryServiceClient interface {
 	FetchRepository(ctx context.Context, in *FetchRepositoryRequest, opts ...grpc.CallOption) (*FetchRepositoryResponse, error)
 	// ListRepositories returns a list of all repositories on disk.
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
+	RepositoryStatistics(ctx context.Context, in *RepositoryStatisticsRequest, opts ...grpc.CallOption) (*RepositoryStatisticsResponse, error)
+	OptimizeRepository(ctx context.Context, in *OptimizeRepositoryRequest, opts ...grpc.CallOption) (*OptimizeRepositoryResponse, error)
 }
 
 type gitserverRepositoryServiceClient struct {
@@ -73,6 +77,24 @@ func (c *gitserverRepositoryServiceClient) ListRepositories(ctx context.Context,
 	return out, nil
 }
 
+func (c *gitserverRepositoryServiceClient) RepositoryStatistics(ctx context.Context, in *RepositoryStatisticsRequest, opts ...grpc.CallOption) (*RepositoryStatisticsResponse, error) {
+	out := new(RepositoryStatisticsResponse)
+	err := c.cc.Invoke(ctx, GitserverRepositoryService_RepositoryStatistics_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gitserverRepositoryServiceClient) OptimizeRepository(ctx context.Context, in *OptimizeRepositoryRequest, opts ...grpc.CallOption) (*OptimizeRepositoryResponse, error) {
+	out := new(OptimizeRepositoryResponse)
+	err := c.cc.Invoke(ctx, GitserverRepositoryService_OptimizeRepository_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GitserverRepositoryServiceServer is the server API for GitserverRepositoryService service.
 // All implementations must embed UnimplementedGitserverRepositoryServiceServer
 // for forward compatibility
@@ -85,6 +107,8 @@ type GitserverRepositoryServiceServer interface {
 	FetchRepository(context.Context, *FetchRepositoryRequest) (*FetchRepositoryResponse, error)
 	// ListRepositories returns a list of all repositories on disk.
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
+	RepositoryStatistics(context.Context, *RepositoryStatisticsRequest) (*RepositoryStatisticsResponse, error)
+	OptimizeRepository(context.Context, *OptimizeRepositoryRequest) (*OptimizeRepositoryResponse, error)
 	mustEmbedUnimplementedGitserverRepositoryServiceServer()
 }
 
@@ -100,6 +124,12 @@ func (UnimplementedGitserverRepositoryServiceServer) FetchRepository(context.Con
 }
 func (UnimplementedGitserverRepositoryServiceServer) ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRepositories not implemented")
+}
+func (UnimplementedGitserverRepositoryServiceServer) RepositoryStatistics(context.Context, *RepositoryStatisticsRequest) (*RepositoryStatisticsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RepositoryStatistics not implemented")
+}
+func (UnimplementedGitserverRepositoryServiceServer) OptimizeRepository(context.Context, *OptimizeRepositoryRequest) (*OptimizeRepositoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OptimizeRepository not implemented")
 }
 func (UnimplementedGitserverRepositoryServiceServer) mustEmbedUnimplementedGitserverRepositoryServiceServer() {
 }
@@ -169,6 +199,42 @@ func _GitserverRepositoryService_ListRepositories_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GitserverRepositoryService_RepositoryStatistics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RepositoryStatisticsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverRepositoryServiceServer).RepositoryStatistics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverRepositoryService_RepositoryStatistics_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverRepositoryServiceServer).RepositoryStatistics(ctx, req.(*RepositoryStatisticsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GitserverRepositoryService_OptimizeRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OptimizeRepositoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GitserverRepositoryServiceServer).OptimizeRepository(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GitserverRepositoryService_OptimizeRepository_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GitserverRepositoryServiceServer).OptimizeRepository(ctx, req.(*OptimizeRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GitserverRepositoryService_ServiceDesc is the grpc.ServiceDesc for GitserverRepositoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -187,6 +253,14 @@ var GitserverRepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRepositories",
 			Handler:    _GitserverRepositoryService_ListRepositories_Handler,
+		},
+		{
+			MethodName: "RepositoryStatistics",
+			Handler:    _GitserverRepositoryService_RepositoryStatistics_Handler,
+		},
+		{
+			MethodName: "OptimizeRepository",
+			Handler:    _GitserverRepositoryService_OptimizeRepository_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

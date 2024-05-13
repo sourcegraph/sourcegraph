@@ -40,6 +40,12 @@ func TestConfigDefaults(t *testing.T) {
 	if have, want := config.JanitorDisableDeleteReposOnWrongShard, false; have != want {
 		t.Errorf("invalid value for JanitorDisableDeleteReposOnWrongShard: have=%t want=%t", have, want)
 	}
+	if have, want := config.EnableExperimentalJanitor, false; have != want {
+		t.Errorf("invalid value for EnableExperimentalJanitor: have=%t want=%t", have, want)
+	}
+	if have, want := config.ExperimentalJanitorConcurrency, 1; have != want {
+		t.Errorf("invalid value for ExperimentalJanitorConcurrency: have=%t want=%t", have, want)
+	}
 }
 
 func TestConfig_PercentFree(t *testing.T) {

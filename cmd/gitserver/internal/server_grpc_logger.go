@@ -1190,6 +1190,60 @@ func fetchRepositoryRequestToLogFields(req *proto.FetchRepositoryRequest) []log.
 	}
 }
 
+func (l *loggingRepositoryServiceServer) OptimizeRepository(ctx context.Context, request *proto.OptimizeRepositoryRequest) (resp *proto.OptimizeRepositoryResponse, err error) {
+	start := time.Now()
+
+	defer func() {
+		elapsed := time.Since(start)
+
+		doLog(
+			l.logger,
+
+			proto.GitserverRepositoryService_OptimizeRepository_FullMethodName,
+			status.Code(err),
+			trace.Context(ctx).TraceID,
+			elapsed,
+
+			optimizeRepositoryRequestToLogFields(request)...,
+		)
+	}()
+
+	return l.base.OptimizeRepository(ctx, request)
+}
+
+func optimizeRepositoryRequestToLogFields(req *proto.OptimizeRepositoryRequest) []log.Field {
+	return []log.Field{
+		log.String("repoName", req.GetRepoName()),
+	}
+}
+
+func (l *loggingRepositoryServiceServer) RepositoryStatistics(ctx context.Context, request *proto.RepositoryStatisticsRequest) (resp *proto.RepositoryStatisticsResponse, err error) {
+	start := time.Now()
+
+	defer func() {
+		elapsed := time.Since(start)
+
+		doLog(
+			l.logger,
+
+			proto.GitserverRepositoryService_RepositoryStatistics_FullMethodName,
+			status.Code(err),
+			trace.Context(ctx).TraceID,
+			elapsed,
+
+			repositoryStatisticsRequestToLogFields(request)...,
+		)
+	}()
+
+	return l.base.RepositoryStatistics(ctx, request)
+}
+
+func repositoryStatisticsRequestToLogFields(req *proto.RepositoryStatisticsRequest) []log.Field {
+	return []log.Field{
+		log.String("repoName", req.GetRepoName()),
+	}
+}
+
 func (l *loggingRepositoryServiceServer) ListRepositories(ctx context.Context, request *proto.ListRepositoriesRequest) (resp *proto.ListRepositoriesResponse, err error) {
 	start := time.Now()
 

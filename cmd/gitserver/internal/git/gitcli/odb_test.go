@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -17,10 +18,13 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcegraph/log/logtest"
+
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/fileutil"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
+	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -868,4 +872,47 @@ func TestGitCLIBackend_ReadDir(t *testing.T) {
 
 func TestLogPartsPerCommitInSync(t *testing.T) {
 	require.Equal(t, partsPerCommit-1, strings.Count(logFormatWithoutRefs, "%x00"))
+}
+
+func TestGitCLIBackend_PruneObjects(t *testing.T) {
+	// We create a simple repo and leave an unreachable object behind.
+	// This test is simply meant to verify that the command runs without error.
+	rcf := wrexec.NewNoOpRecordingCommandFactory()
+	dir := RepoWithCommands(
+		t,
+		"echo 'hello world' > foo.txt",
+		"git add foo.txt",
+		"echo 'hello world 2' > foo.txt",
+		// Adding the file again with different content but never committing it
+		// will create a lose object.
+		"git add foo.txt",
+		"git commit -m foo --author='Foo Author <foo@sourcegraph.com>'",
+	)
+
+	backend := NewBackend(logtest.Scoped(t), rcf, dir, api.RepoName(t.Name()))
+
+	assertObjectCount := func(count int) {
+		t.Helper()
+		cmd := exec.Command("git", "count-objects", "-v")
+		dir.Set(cmd)
+		out, err := cmd.CombinedOutput()
+		require.NoError(t, err)
+		require.Contains(t, string(out), fmt.Sprintf("count: %d", count))
+	}
+
+	// Commit, tree, blob, v2 of blob:
+	assertObjectCount(4)
+
+	ctx := context.Background()
+	// Time in the past should mean no objects get expired, since they just became
+	// unreachable.
+	err := backend.PruneObjects(ctx, time.Now().Add(-24*time.Hour))
+	require.NoError(t, err)
+	assertObjectCount(4)
+
+	// Now expire objects
+	err = backend.PruneObjects(ctx, time.Now().Add(24*time.Hour))
+	require.NoError(t, err)
+	// The unreachable blob object should be gone.
+	assertObjectCount(3)
 }

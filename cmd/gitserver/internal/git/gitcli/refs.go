@@ -152,3 +152,13 @@ func (g *gitCLIBackend) RefHash(ctx context.Context) ([]byte, error) {
 	hex.Encode(hash, hasher.Sum(nil))
 	return hash, nil
 }
+
+func (g *gitCLIBackend) PackRefs(ctx context.Context) error {
+	r, err := g.NewCommand(ctx, WithArguments("pack-refs", "--all"))
+	if err != nil {
+		return err
+	}
+	// There is no interesting output on stdout, so just discard it.
+	_, err = io.Copy(io.Discard, r)
+	return errors.Append(err, r.Close())
+}

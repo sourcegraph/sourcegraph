@@ -591,6 +591,18 @@ type MockGitBackend struct {
 	// MergeBaseFunc is an instance of a mock function object controlling
 	// the behavior of the method MergeBase.
 	MergeBaseFunc *GitBackendMergeBaseFunc
+	// PackObjectsFunc is an instance of a mock function object controlling
+	// the behavior of the method PackObjects.
+	PackObjectsFunc *GitBackendPackObjectsFunc
+	// PackRefsFunc is an instance of a mock function object controlling the
+	// behavior of the method PackRefs.
+	PackRefsFunc *GitBackendPackRefsFunc
+	// PruneObjectsFunc is an instance of a mock function object controlling
+	// the behavior of the method PruneObjects.
+	PruneObjectsFunc *GitBackendPruneObjectsFunc
+	// PrunePackedFunc is an instance of a mock function object controlling
+	// the behavior of the method PrunePacked.
+	PrunePackedFunc *GitBackendPrunePackedFunc
 	// RawDiffFunc is an instance of a mock function object controlling the
 	// behavior of the method RawDiff.
 	RawDiffFunc *GitBackendRawDiffFunc
@@ -603,6 +615,9 @@ type MockGitBackend struct {
 	// RefHashFunc is an instance of a mock function object controlling the
 	// behavior of the method RefHash.
 	RefHashFunc *GitBackendRefHashFunc
+	// RepackFunc is an instance of a mock function object controlling the
+	// behavior of the method Repack.
+	RepackFunc *GitBackendRepackFunc
 	// ResolveRevisionFunc is an instance of a mock function object
 	// controlling the behavior of the method ResolveRevision.
 	ResolveRevisionFunc *GitBackendResolveRevisionFunc
@@ -618,6 +633,9 @@ type MockGitBackend struct {
 	// SymbolicRefHeadFunc is an instance of a mock function object
 	// controlling the behavior of the method SymbolicRefHead.
 	SymbolicRefHeadFunc *GitBackendSymbolicRefHeadFunc
+	// WriteCommitGraphFunc is an instance of a mock function object
+	// controlling the behavior of the method WriteCommitGraph.
+	WriteCommitGraphFunc *GitBackendWriteCommitGraphFunc
 }
 
 // NewMockGitBackend creates a new mock of the GitBackend interface. All
@@ -694,6 +712,26 @@ func NewMockGitBackend() *MockGitBackend {
 				return
 			},
 		},
+		PackObjectsFunc: &GitBackendPackObjectsFunc{
+			defaultHook: func(context.Context) (r0 error) {
+				return
+			},
+		},
+		PackRefsFunc: &GitBackendPackRefsFunc{
+			defaultHook: func(context.Context) (r0 error) {
+				return
+			},
+		},
+		PruneObjectsFunc: &GitBackendPruneObjectsFunc{
+			defaultHook: func(context.Context, time.Time) (r0 error) {
+				return
+			},
+		},
+		PrunePackedFunc: &GitBackendPrunePackedFunc{
+			defaultHook: func(context.Context) (r0 error) {
+				return
+			},
+		},
 		RawDiffFunc: &GitBackendRawDiffFunc{
 			defaultHook: func(context.Context, string, string, GitDiffComparisonType, ...string) (r0 io.ReadCloser, r1 error) {
 				return
@@ -711,6 +749,11 @@ func NewMockGitBackend() *MockGitBackend {
 		},
 		RefHashFunc: &GitBackendRefHashFunc{
 			defaultHook: func(context.Context) (r0 []byte, r1 error) {
+				return
+			},
+		},
+		RepackFunc: &GitBackendRepackFunc{
+			defaultHook: func(context.Context, RepackOptions) (r0 error) {
 				return
 			},
 		},
@@ -736,6 +779,11 @@ func NewMockGitBackend() *MockGitBackend {
 		},
 		SymbolicRefHeadFunc: &GitBackendSymbolicRefHeadFunc{
 			defaultHook: func(context.Context, bool) (r0 string, r1 error) {
+				return
+			},
+		},
+		WriteCommitGraphFunc: &GitBackendWriteCommitGraphFunc{
+			defaultHook: func(context.Context, bool) (r0 error) {
 				return
 			},
 		},
@@ -816,6 +864,26 @@ func NewStrictMockGitBackend() *MockGitBackend {
 				panic("unexpected invocation of MockGitBackend.MergeBase")
 			},
 		},
+		PackObjectsFunc: &GitBackendPackObjectsFunc{
+			defaultHook: func(context.Context) error {
+				panic("unexpected invocation of MockGitBackend.PackObjects")
+			},
+		},
+		PackRefsFunc: &GitBackendPackRefsFunc{
+			defaultHook: func(context.Context) error {
+				panic("unexpected invocation of MockGitBackend.PackRefs")
+			},
+		},
+		PruneObjectsFunc: &GitBackendPruneObjectsFunc{
+			defaultHook: func(context.Context, time.Time) error {
+				panic("unexpected invocation of MockGitBackend.PruneObjects")
+			},
+		},
+		PrunePackedFunc: &GitBackendPrunePackedFunc{
+			defaultHook: func(context.Context) error {
+				panic("unexpected invocation of MockGitBackend.PrunePacked")
+			},
+		},
 		RawDiffFunc: &GitBackendRawDiffFunc{
 			defaultHook: func(context.Context, string, string, GitDiffComparisonType, ...string) (io.ReadCloser, error) {
 				panic("unexpected invocation of MockGitBackend.RawDiff")
@@ -834,6 +902,11 @@ func NewStrictMockGitBackend() *MockGitBackend {
 		RefHashFunc: &GitBackendRefHashFunc{
 			defaultHook: func(context.Context) ([]byte, error) {
 				panic("unexpected invocation of MockGitBackend.RefHash")
+			},
+		},
+		RepackFunc: &GitBackendRepackFunc{
+			defaultHook: func(context.Context, RepackOptions) error {
+				panic("unexpected invocation of MockGitBackend.Repack")
 			},
 		},
 		ResolveRevisionFunc: &GitBackendResolveRevisionFunc{
@@ -859,6 +932,11 @@ func NewStrictMockGitBackend() *MockGitBackend {
 		SymbolicRefHeadFunc: &GitBackendSymbolicRefHeadFunc{
 			defaultHook: func(context.Context, bool) (string, error) {
 				panic("unexpected invocation of MockGitBackend.SymbolicRefHead")
+			},
+		},
+		WriteCommitGraphFunc: &GitBackendWriteCommitGraphFunc{
+			defaultHook: func(context.Context, bool) error {
+				panic("unexpected invocation of MockGitBackend.WriteCommitGraph")
 			},
 		},
 	}
@@ -910,6 +988,18 @@ func NewMockGitBackendFrom(i GitBackend) *MockGitBackend {
 		MergeBaseFunc: &GitBackendMergeBaseFunc{
 			defaultHook: i.MergeBase,
 		},
+		PackObjectsFunc: &GitBackendPackObjectsFunc{
+			defaultHook: i.PackObjects,
+		},
+		PackRefsFunc: &GitBackendPackRefsFunc{
+			defaultHook: i.PackRefs,
+		},
+		PruneObjectsFunc: &GitBackendPruneObjectsFunc{
+			defaultHook: i.PruneObjects,
+		},
+		PrunePackedFunc: &GitBackendPrunePackedFunc{
+			defaultHook: i.PrunePacked,
+		},
 		RawDiffFunc: &GitBackendRawDiffFunc{
 			defaultHook: i.RawDiff,
 		},
@@ -921,6 +1011,9 @@ func NewMockGitBackendFrom(i GitBackend) *MockGitBackend {
 		},
 		RefHashFunc: &GitBackendRefHashFunc{
 			defaultHook: i.RefHash,
+		},
+		RepackFunc: &GitBackendRepackFunc{
+			defaultHook: i.Repack,
 		},
 		ResolveRevisionFunc: &GitBackendResolveRevisionFunc{
 			defaultHook: i.ResolveRevision,
@@ -936,6 +1029,9 @@ func NewMockGitBackendFrom(i GitBackend) *MockGitBackend {
 		},
 		SymbolicRefHeadFunc: &GitBackendSymbolicRefHeadFunc{
 			defaultHook: i.SymbolicRefHead,
+		},
+		WriteCommitGraphFunc: &GitBackendWriteCommitGraphFunc{
+			defaultHook: i.WriteCommitGraph,
 		},
 	}
 }
@@ -2469,6 +2565,417 @@ func (c GitBackendMergeBaseFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
+// GitBackendPackObjectsFunc describes the behavior when the PackObjects
+// method of the parent MockGitBackend instance is invoked.
+type GitBackendPackObjectsFunc struct {
+	defaultHook func(context.Context) error
+	hooks       []func(context.Context) error
+	history     []GitBackendPackObjectsFuncCall
+	mutex       sync.Mutex
+}
+
+// PackObjects delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitBackend) PackObjects(v0 context.Context) error {
+	r0 := m.PackObjectsFunc.nextHook()(v0)
+	m.PackObjectsFunc.appendCall(GitBackendPackObjectsFuncCall{v0, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the PackObjects method
+// of the parent MockGitBackend instance is invoked and the hook queue is
+// empty.
+func (f *GitBackendPackObjectsFunc) SetDefaultHook(hook func(context.Context) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// PackObjects method of the parent MockGitBackend instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendPackObjectsFunc) PushHook(hook func(context.Context) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendPackObjectsFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendPackObjectsFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context) error {
+		return r0
+	})
+}
+
+func (f *GitBackendPackObjectsFunc) nextHook() func(context.Context) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendPackObjectsFunc) appendCall(r0 GitBackendPackObjectsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendPackObjectsFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendPackObjectsFunc) History() []GitBackendPackObjectsFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendPackObjectsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendPackObjectsFuncCall is an object that describes an invocation
+// of method PackObjects on an instance of MockGitBackend.
+type GitBackendPackObjectsFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendPackObjectsFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendPackObjectsFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// GitBackendPackRefsFunc describes the behavior when the PackRefs method of
+// the parent MockGitBackend instance is invoked.
+type GitBackendPackRefsFunc struct {
+	defaultHook func(context.Context) error
+	hooks       []func(context.Context) error
+	history     []GitBackendPackRefsFuncCall
+	mutex       sync.Mutex
+}
+
+// PackRefs delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitBackend) PackRefs(v0 context.Context) error {
+	r0 := m.PackRefsFunc.nextHook()(v0)
+	m.PackRefsFunc.appendCall(GitBackendPackRefsFuncCall{v0, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the PackRefs method of
+// the parent MockGitBackend instance is invoked and the hook queue is
+// empty.
+func (f *GitBackendPackRefsFunc) SetDefaultHook(hook func(context.Context) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// PackRefs method of the parent MockGitBackend instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendPackRefsFunc) PushHook(hook func(context.Context) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendPackRefsFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendPackRefsFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context) error {
+		return r0
+	})
+}
+
+func (f *GitBackendPackRefsFunc) nextHook() func(context.Context) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendPackRefsFunc) appendCall(r0 GitBackendPackRefsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendPackRefsFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendPackRefsFunc) History() []GitBackendPackRefsFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendPackRefsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendPackRefsFuncCall is an object that describes an invocation of
+// method PackRefs on an instance of MockGitBackend.
+type GitBackendPackRefsFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendPackRefsFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendPackRefsFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// GitBackendPruneObjectsFunc describes the behavior when the PruneObjects
+// method of the parent MockGitBackend instance is invoked.
+type GitBackendPruneObjectsFunc struct {
+	defaultHook func(context.Context, time.Time) error
+	hooks       []func(context.Context, time.Time) error
+	history     []GitBackendPruneObjectsFuncCall
+	mutex       sync.Mutex
+}
+
+// PruneObjects delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitBackend) PruneObjects(v0 context.Context, v1 time.Time) error {
+	r0 := m.PruneObjectsFunc.nextHook()(v0, v1)
+	m.PruneObjectsFunc.appendCall(GitBackendPruneObjectsFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the PruneObjects method
+// of the parent MockGitBackend instance is invoked and the hook queue is
+// empty.
+func (f *GitBackendPruneObjectsFunc) SetDefaultHook(hook func(context.Context, time.Time) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// PruneObjects method of the parent MockGitBackend instance invokes the
+// hook at the front of the queue and discards it. After the queue is empty,
+// the default hook function is invoked for any future action.
+func (f *GitBackendPruneObjectsFunc) PushHook(hook func(context.Context, time.Time) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendPruneObjectsFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, time.Time) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendPruneObjectsFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, time.Time) error {
+		return r0
+	})
+}
+
+func (f *GitBackendPruneObjectsFunc) nextHook() func(context.Context, time.Time) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendPruneObjectsFunc) appendCall(r0 GitBackendPruneObjectsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendPruneObjectsFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendPruneObjectsFunc) History() []GitBackendPruneObjectsFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendPruneObjectsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendPruneObjectsFuncCall is an object that describes an invocation
+// of method PruneObjects on an instance of MockGitBackend.
+type GitBackendPruneObjectsFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 time.Time
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendPruneObjectsFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendPruneObjectsFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// GitBackendPrunePackedFunc describes the behavior when the PrunePacked
+// method of the parent MockGitBackend instance is invoked.
+type GitBackendPrunePackedFunc struct {
+	defaultHook func(context.Context) error
+	hooks       []func(context.Context) error
+	history     []GitBackendPrunePackedFuncCall
+	mutex       sync.Mutex
+}
+
+// PrunePacked delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitBackend) PrunePacked(v0 context.Context) error {
+	r0 := m.PrunePackedFunc.nextHook()(v0)
+	m.PrunePackedFunc.appendCall(GitBackendPrunePackedFuncCall{v0, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the PrunePacked method
+// of the parent MockGitBackend instance is invoked and the hook queue is
+// empty.
+func (f *GitBackendPrunePackedFunc) SetDefaultHook(hook func(context.Context) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// PrunePacked method of the parent MockGitBackend instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendPrunePackedFunc) PushHook(hook func(context.Context) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendPrunePackedFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendPrunePackedFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context) error {
+		return r0
+	})
+}
+
+func (f *GitBackendPrunePackedFunc) nextHook() func(context.Context) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendPrunePackedFunc) appendCall(r0 GitBackendPrunePackedFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendPrunePackedFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendPrunePackedFunc) History() []GitBackendPrunePackedFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendPrunePackedFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendPrunePackedFuncCall is an object that describes an invocation
+// of method PrunePacked on an instance of MockGitBackend.
+type GitBackendPrunePackedFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendPrunePackedFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendPrunePackedFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
 // GitBackendRawDiffFunc describes the behavior when the RawDiff method of
 // the parent MockGitBackend instance is invoked.
 type GitBackendRawDiffFunc struct {
@@ -2921,6 +3428,110 @@ func (c GitBackendRefHashFuncCall) Args() []interface{} {
 // invocation.
 func (c GitBackendRefHashFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitBackendRepackFunc describes the behavior when the Repack method of the
+// parent MockGitBackend instance is invoked.
+type GitBackendRepackFunc struct {
+	defaultHook func(context.Context, RepackOptions) error
+	hooks       []func(context.Context, RepackOptions) error
+	history     []GitBackendRepackFuncCall
+	mutex       sync.Mutex
+}
+
+// Repack delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitBackend) Repack(v0 context.Context, v1 RepackOptions) error {
+	r0 := m.RepackFunc.nextHook()(v0, v1)
+	m.RepackFunc.appendCall(GitBackendRepackFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the Repack method of the
+// parent MockGitBackend instance is invoked and the hook queue is empty.
+func (f *GitBackendRepackFunc) SetDefaultHook(hook func(context.Context, RepackOptions) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Repack method of the parent MockGitBackend instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendRepackFunc) PushHook(hook func(context.Context, RepackOptions) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendRepackFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, RepackOptions) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendRepackFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, RepackOptions) error {
+		return r0
+	})
+}
+
+func (f *GitBackendRepackFunc) nextHook() func(context.Context, RepackOptions) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendRepackFunc) appendCall(r0 GitBackendRepackFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendRepackFuncCall objects describing
+// the invocations of this function.
+func (f *GitBackendRepackFunc) History() []GitBackendRepackFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendRepackFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendRepackFuncCall is an object that describes an invocation of
+// method Repack on an instance of MockGitBackend.
+type GitBackendRepackFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 RepackOptions
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendRepackFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendRepackFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
 }
 
 // GitBackendResolveRevisionFunc describes the behavior when the
@@ -3463,6 +4074,111 @@ func (c GitBackendSymbolicRefHeadFuncCall) Args() []interface{} {
 // invocation.
 func (c GitBackendSymbolicRefHeadFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitBackendWriteCommitGraphFunc describes the behavior when the
+// WriteCommitGraph method of the parent MockGitBackend instance is invoked.
+type GitBackendWriteCommitGraphFunc struct {
+	defaultHook func(context.Context, bool) error
+	hooks       []func(context.Context, bool) error
+	history     []GitBackendWriteCommitGraphFuncCall
+	mutex       sync.Mutex
+}
+
+// WriteCommitGraph delegates to the next hook function in the queue and
+// stores the parameter and result values of this invocation.
+func (m *MockGitBackend) WriteCommitGraph(v0 context.Context, v1 bool) error {
+	r0 := m.WriteCommitGraphFunc.nextHook()(v0, v1)
+	m.WriteCommitGraphFunc.appendCall(GitBackendWriteCommitGraphFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the WriteCommitGraph
+// method of the parent MockGitBackend instance is invoked and the hook
+// queue is empty.
+func (f *GitBackendWriteCommitGraphFunc) SetDefaultHook(hook func(context.Context, bool) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// WriteCommitGraph method of the parent MockGitBackend instance invokes the
+// hook at the front of the queue and discards it. After the queue is empty,
+// the default hook function is invoked for any future action.
+func (f *GitBackendWriteCommitGraphFunc) PushHook(hook func(context.Context, bool) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendWriteCommitGraphFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, bool) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendWriteCommitGraphFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, bool) error {
+		return r0
+	})
+}
+
+func (f *GitBackendWriteCommitGraphFunc) nextHook() func(context.Context, bool) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendWriteCommitGraphFunc) appendCall(r0 GitBackendWriteCommitGraphFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendWriteCommitGraphFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendWriteCommitGraphFunc) History() []GitBackendWriteCommitGraphFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendWriteCommitGraphFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendWriteCommitGraphFuncCall is an object that describes an
+// invocation of method WriteCommitGraph on an instance of MockGitBackend.
+type GitBackendWriteCommitGraphFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 bool
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendWriteCommitGraphFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendWriteCommitGraphFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
 }
 
 // MockGitConfigBackend is a mock implementation of the GitConfigBackend
