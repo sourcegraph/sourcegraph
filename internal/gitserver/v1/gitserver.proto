@@ -15,7 +15,7 @@ service GitserverRepositoryService {
   rpc DeleteRepository(DeleteRepositoryRequest) returns (DeleteRepositoryResponse) {}
   // FetchRepository fetches a repository from a remote. If the repository is not
   // yet cloned, it will be cloned. Otherwise, it will be updated.
-  rpc FetchRepository(FetchRepositoryRequest) returns (FetchRepositoryResponse) {
+  rpc FetchRepository(FetchRepositoryRequest) returns (stream FetchRepositoryResponse) {
     option idempotency_level = IDEMPOTENT;
   }
 }
@@ -35,10 +35,21 @@ message FetchRepositoryRequest {
 }
 
 message FetchRepositoryResponse {
-  // last_fetched is the time the repository was last fetched.
-  google.protobuf.Timestamp last_fetched = 1;
-  // last_changed is the time the repository was last changed.
-  google.protobuf.Timestamp last_changed = 2;
+  message FetchDone {
+    // last_fetched is the time the repository was last fetched.
+    google.protobuf.Timestamp last_fetched = 1;
+    // last_changed is the time the repository was last changed.
+    google.protobuf.Timestamp last_changed = 2;
+  }
+
+  message FetchProgress {
+    bytes output = 1;
+  }
+
+  oneof payload {
+    FetchProgress progress = 1;
+    FetchDone done = 2;
+  }
 }
 
 service GitserverService {

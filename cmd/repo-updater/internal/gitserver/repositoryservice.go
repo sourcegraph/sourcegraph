@@ -2,6 +2,7 @@ package gitserver
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -36,13 +37,33 @@ func (c *repositoryServiceClient) FetchRepository(ctx context.Context, repo api.
 	if err != nil {
 		return lastFetched, lastChanged, err
 	}
-	resp, err := cc.FetchRepository(ctx, &proto.FetchRepositoryRequest{
+	req, err := cc.FetchRepository(ctx, &proto.FetchRepositoryRequest{
 		RepoName: string(repo),
 	})
 	if err != nil {
 		return lastFetched, lastChanged, err
 	}
-	return resp.GetLastFetched().AsTime(), resp.GetLastChanged().AsTime(), nil
+
+	lastProgress := ""
+
+	for {
+		resp, err := req.Recv()
+		if err != nil {
+			return lastFetched, lastChanged, err
+		}
+
+		if done := resp.GetDone(); done != nil {
+			return done.GetLastFetched().AsTime(), done.GetLastChanged().AsTime(), nil
+		}
+
+		if pr := resp.GetProgress(); pr != nil {
+			progress := string(pr.GetOutput())
+			if progress != "" && progress != lastProgress {
+				fmt.Printf("progress fetching repo %s: %s\n", repo, string(pr.GetOutput()))
+			}
+			lastProgress = progress
+		}
+	}
 }
 
 func (c *repositoryServiceClient) clientForRepo(ctx context.Context, repo api.RepoName) (proto.GitserverRepositoryServiceClient, error) {

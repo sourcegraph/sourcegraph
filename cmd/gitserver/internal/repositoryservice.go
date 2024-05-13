@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/sourcegraph/log"
 	"google.golang.org/grpc/codes"
@@ -26,6 +28,7 @@ func NewRepositoryServiceServer(server *Server, config *GRPCRepositoryServiceCon
 		hostname: server.hostname,
 		svc:      server,
 		fs:       server.fs,
+		locker:   server.locker,
 	}
 
 	if config.ExhaustiveRequestLoggingEnabled {
@@ -46,6 +49,7 @@ type repositoryServiceServer struct {
 	hostname string
 	fs       gitserverfs.FS
 	svc      service
+	locker   RepositoryLocker
 
 	proto.UnimplementedGitserverRepositoryServiceServer
 }
@@ -78,20 +82,57 @@ func (s *repositoryServiceServer) DeleteRepository(ctx context.Context, req *pro
 	return &proto.DeleteRepositoryResponse{}, nil
 }
 
-func (s *repositoryServiceServer) FetchRepository(ctx context.Context, req *proto.FetchRepositoryRequest) (*proto.FetchRepositoryResponse, error) {
+func (s *repositoryServiceServer) FetchRepository(req *proto.FetchRepositoryRequest, ss proto.GitserverRepositoryService_FetchRepositoryServer) error {
 	if req.GetRepoName() == "" {
-		return nil, status.New(codes.InvalidArgument, "repo_name must be specified").Err()
+		return status.New(codes.InvalidArgument, "repo_name must be specified").Err()
 	}
 
 	repoName := api.RepoName(req.GetRepoName())
 
-	lastFetched, lastChanged, err := s.svc.FetchRepository(ctx, repoName)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	done := make(chan struct{})
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-time.After(time.Second):
+			}
+			status, locked := s.locker.Status(repoName)
+			if locked {
+				err := ss.Send(&proto.FetchRepositoryResponse{
+					Payload: &proto.FetchRepositoryResponse_Progress{
+						Progress: &proto.FetchRepositoryResponse_FetchProgress{
+							Output: []byte(status),
+						},
+					},
+				})
+				if err != nil {
+					s.logger.Error("failed to send progress event", log.Error(err), log.String("repo", string(repoName)))
+				}
+			}
+		}
+
+	}()
+
+	lastFetched, lastChanged, err := s.svc.FetchRepository(ss.Context(), repoName)
 	if err != nil {
-		return nil, status.New(codes.Internal, errors.Wrap(err, "failed to fetch repository").Error()).Err()
+		return status.New(codes.Internal, errors.Wrap(err, "failed to fetch repository").Error()).Err()
 	}
 
-	return &proto.FetchRepositoryResponse{
-		LastFetched: timestamppb.New(lastFetched),
-		LastChanged: timestamppb.New(lastChanged),
-	}, nil
+	close(done)
+	wg.Wait()
+
+	return ss.Send(&proto.FetchRepositoryResponse{
+		Payload: &proto.FetchRepositoryResponse_Done{
+			Done: &proto.FetchRepositoryResponse_FetchDone{
+				LastFetched: timestamppb.New(lastFetched),
+				LastChanged: timestamppb.New(lastChanged),
+			},
+		},
+	})
 }

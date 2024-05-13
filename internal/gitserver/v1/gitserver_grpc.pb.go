@@ -32,7 +32,7 @@ type GitserverRepositoryServiceClient interface {
 	DeleteRepository(ctx context.Context, in *DeleteRepositoryRequest, opts ...grpc.CallOption) (*DeleteRepositoryResponse, error)
 	// FetchRepository fetches a repository from a remote. If the repository is not
 	// yet cloned, it will be cloned. Otherwise, it will be updated.
-	FetchRepository(ctx context.Context, in *FetchRepositoryRequest, opts ...grpc.CallOption) (*FetchRepositoryResponse, error)
+	FetchRepository(ctx context.Context, in *FetchRepositoryRequest, opts ...grpc.CallOption) (GitserverRepositoryService_FetchRepositoryClient, error)
 }
 
 type gitserverRepositoryServiceClient struct {
@@ -52,13 +52,36 @@ func (c *gitserverRepositoryServiceClient) DeleteRepository(ctx context.Context,
 	return out, nil
 }
 
-func (c *gitserverRepositoryServiceClient) FetchRepository(ctx context.Context, in *FetchRepositoryRequest, opts ...grpc.CallOption) (*FetchRepositoryResponse, error) {
-	out := new(FetchRepositoryResponse)
-	err := c.cc.Invoke(ctx, GitserverRepositoryService_FetchRepository_FullMethodName, in, out, opts...)
+func (c *gitserverRepositoryServiceClient) FetchRepository(ctx context.Context, in *FetchRepositoryRequest, opts ...grpc.CallOption) (GitserverRepositoryService_FetchRepositoryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &GitserverRepositoryService_ServiceDesc.Streams[0], GitserverRepositoryService_FetchRepository_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &gitserverRepositoryServiceFetchRepositoryClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type GitserverRepositoryService_FetchRepositoryClient interface {
+	Recv() (*FetchRepositoryResponse, error)
+	grpc.ClientStream
+}
+
+type gitserverRepositoryServiceFetchRepositoryClient struct {
+	grpc.ClientStream
+}
+
+func (x *gitserverRepositoryServiceFetchRepositoryClient) Recv() (*FetchRepositoryResponse, error) {
+	m := new(FetchRepositoryResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // GitserverRepositoryServiceServer is the server API for GitserverRepositoryService service.
@@ -70,7 +93,7 @@ type GitserverRepositoryServiceServer interface {
 	DeleteRepository(context.Context, *DeleteRepositoryRequest) (*DeleteRepositoryResponse, error)
 	// FetchRepository fetches a repository from a remote. If the repository is not
 	// yet cloned, it will be cloned. Otherwise, it will be updated.
-	FetchRepository(context.Context, *FetchRepositoryRequest) (*FetchRepositoryResponse, error)
+	FetchRepository(*FetchRepositoryRequest, GitserverRepositoryService_FetchRepositoryServer) error
 	mustEmbedUnimplementedGitserverRepositoryServiceServer()
 }
 
@@ -81,8 +104,8 @@ type UnimplementedGitserverRepositoryServiceServer struct {
 func (UnimplementedGitserverRepositoryServiceServer) DeleteRepository(context.Context, *DeleteRepositoryRequest) (*DeleteRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRepository not implemented")
 }
-func (UnimplementedGitserverRepositoryServiceServer) FetchRepository(context.Context, *FetchRepositoryRequest) (*FetchRepositoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FetchRepository not implemented")
+func (UnimplementedGitserverRepositoryServiceServer) FetchRepository(*FetchRepositoryRequest, GitserverRepositoryService_FetchRepositoryServer) error {
+	return status.Errorf(codes.Unimplemented, "method FetchRepository not implemented")
 }
 func (UnimplementedGitserverRepositoryServiceServer) mustEmbedUnimplementedGitserverRepositoryServiceServer() {
 }
@@ -116,22 +139,25 @@ func _GitserverRepositoryService_DeleteRepository_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GitserverRepositoryService_FetchRepository_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FetchRepositoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _GitserverRepositoryService_FetchRepository_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(FetchRepositoryRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(GitserverRepositoryServiceServer).FetchRepository(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: GitserverRepositoryService_FetchRepository_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GitserverRepositoryServiceServer).FetchRepository(ctx, req.(*FetchRepositoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(GitserverRepositoryServiceServer).FetchRepository(m, &gitserverRepositoryServiceFetchRepositoryServer{stream})
+}
+
+type GitserverRepositoryService_FetchRepositoryServer interface {
+	Send(*FetchRepositoryResponse) error
+	grpc.ServerStream
+}
+
+type gitserverRepositoryServiceFetchRepositoryServer struct {
+	grpc.ServerStream
+}
+
+func (x *gitserverRepositoryServiceFetchRepositoryServer) Send(m *FetchRepositoryResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // GitserverRepositoryService_ServiceDesc is the grpc.ServiceDesc for GitserverRepositoryService service.
@@ -145,12 +171,14 @@ var GitserverRepositoryService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DeleteRepository",
 			Handler:    _GitserverRepositoryService_DeleteRepository_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "FetchRepository",
-			Handler:    _GitserverRepositoryService_FetchRepository_Handler,
+			StreamName:    "FetchRepository",
+			Handler:       _GitserverRepositoryService_FetchRepository_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "gitserver.proto",
 }
 
