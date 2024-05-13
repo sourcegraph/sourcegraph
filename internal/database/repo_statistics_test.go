@@ -683,8 +683,19 @@ func queryGitserverReposStatisticsCount(t *testing.T, ctx context.Context, s *re
 
 func setCloneStatus(t *testing.T, db DB, repoName api.RepoName, shard string, status types.CloneStatus) {
 	t.Helper()
-	if err := db.GitserverRepos().SetCloneStatus(context.Background(), repoName, status, shard); err != nil {
-		t.Fatalf("failed to set clone status for repo %s: %s", repoName, err)
+	switch status {
+	case types.CloneStatusCloned:
+		if err := db.GitserverRepos().SetCloned(context.Background(), repoName, shard); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", repoName, err)
+		}
+	case types.CloneStatusCloning:
+		if err := db.GitserverRepos().SetCloning(context.Background(), repoName, shard); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", repoName, err)
+		}
+	case types.CloneStatusNotCloned:
+		if err := db.GitserverRepos().SetNotCloned(context.Background(), repoName); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", repoName, err)
+		}
 	}
 }
 

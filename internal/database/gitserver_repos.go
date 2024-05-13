@@ -38,10 +38,15 @@ type GitserverRepoStore interface {
 	// LogCorruption sets the corrupted at value and logs the corruption reason. Reason will be truncated if it exceeds
 	// MaxReasonSizeInMB
 	LogCorruption(ctx context.Context, name api.RepoName, reason string, shardID string) error
-	// SetCloneStatus will attempt to update ONLY the clone status of a
-	// GitServerRepo. If a matching row does not yet exist a new one will be created.
-	// If the status value hasn't changed, the row will not be updated.
-	SetCloneStatus(ctx context.Context, name api.RepoName, status types.CloneStatus, shardID string) error
+	// SetCloning will attempt to bring the gitserver repo record into a pristine
+	// state, and mark it as cloning.
+	SetCloning(ctx context.Context, name api.RepoName, shardID string) error
+	// SetNotCloned will attempt to bring the gitserver repo record into a pristine
+	// state, and mark it as not cloned.
+	SetNotCloned(ctx context.Context, name api.RepoName) error
+	// SetCloned will attempt to bring the gitserver repo record into a pristine
+	// state, and mark it as cloned.
+	SetCloned(ctx context.Context, name api.RepoName, shardID string) error
 	// SetLastError will attempt to update ONLY the last error of a GitServerRepo. If
 	// a matching row does not yet exist a new one will be created.
 	// If the error value hasn't changed, the row will not be updated.
@@ -473,6 +478,65 @@ WHERE
 	return nil
 }
 
+func (s *gitserverRepoStore) SetNotCloned(ctx context.Context, name api.RepoName) error {
+	q := sqlf.Sprintf(gitserverReposSetNotClonedQueryFmtstr, types.CloneStatusNotCloned, name)
+
+	return errors.Wrap(s.Exec(ctx, q), "setting gitserver repo to not cloned")
+}
+
+const gitserverReposSetNotClonedQueryFmtstr = `
+UPDATE gitserver_repos
+SET
+	corrupted_at = NULL,
+	clone_status = %s,
+	shard_id = '',
+	last_error = NULL,
+	updated_at = NOW(),
+	repo_size_bytes = NULL,
+	corrupted_at = NULL
+WHERE
+	repo_id = (SELECT id FROM repo WHERE name = %s)
+`
+
+func (s *gitserverRepoStore) SetCloned(ctx context.Context, name api.RepoName, shardID string) error {
+	q := sqlf.Sprintf(gitserverReposSetClonedQueryFmtstr, types.CloneStatusCloned, shardID, name)
+
+	return errors.Wrap(s.Exec(ctx, q), "setting gitserver repo to cloned")
+}
+
+const gitserverReposSetClonedQueryFmtstr = `
+UPDATE gitserver_repos
+SET
+	corrupted_at = NULL,
+	clone_status = %s,
+	shard_id = %s,
+	last_error = NULL,
+	updated_at = NOW(),
+	corrupted_at = NULL
+WHERE
+	repo_id = (SELECT id FROM repo WHERE name = %s)
+`
+
+func (s *gitserverRepoStore) SetCloning(ctx context.Context, name api.RepoName, shardID string) error {
+	q := sqlf.Sprintf(gitserverReposSetCloningQueryFmtstr, types.CloneStatusCloning, shardID, name)
+
+	return errors.Wrap(s.Exec(ctx, q), "setting gitserver repo to cloning")
+}
+
+const gitserverReposSetCloningQueryFmtstr = `
+UPDATE gitserver_repos
+SET
+	corrupted_at = NULL,
+	clone_status = %s,
+	shard_id = %s,
+	last_error = NULL,
+	updated_at = NOW(),
+	repo_size_bytes = NULL,
+	corrupted_at = NULL
+WHERE
+	repo_id = (SELECT id FROM repo WHERE name = %s)
+`
+
 func (s *gitserverRepoStore) SetLastError(ctx context.Context, name api.RepoName, error, shardID string) error {
 	ns := dbutil.NewNullString(sanitizeToUTF8(error))
 
@@ -553,13 +617,12 @@ UPDATE gitserver_repos
 SET
 	repo_size_bytes = %s,
 	shard_id = %s,
-	clone_status = %s,
 	updated_at = NOW()
 WHERE
 	repo_id = (SELECT id FROM repo WHERE name = %s)
 	AND
 	repo_size_bytes IS DISTINCT FROM %s
-	`, size, shardID, types.CloneStatusCloned, name, size))
+	`, size, shardID, name, size))
 	if err != nil {
 		return errors.Wrap(err, "setting repo size")
 	}

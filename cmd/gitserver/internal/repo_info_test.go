@@ -92,7 +92,7 @@ func testDeleteRepo(t *testing.T, deletedInDB bool) {
 	}
 
 	// Now we can delete it
-	require.NoError(t, deleteRepo(ctx, db, "", s.fs, dbRepo.Name))
+	require.NoError(t, deleteRepo(ctx, db, s.fs, dbRepo.Name))
 
 	size, err = s.fs.DirSize(string(s.fs.RepoDir(repoName)))
 	require.NoError(t, err)

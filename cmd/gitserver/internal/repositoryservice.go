@@ -72,7 +72,7 @@ func (s *repositoryServiceServer) DeleteRepository(ctx context.Context, req *pro
 		return nil, status.New(codes.NotFound, "repository not found").Err()
 	}
 
-	if err := deleteRepo(ctx, s.db, s.hostname, s.fs, repoName); err != nil {
+	if err := deleteRepo(ctx, s.db, s.fs, repoName); err != nil {
 		s.logger.Error("failed to delete repository", log.String("repo", string(repoName)), log.Error(err))
 		return &proto.DeleteRepositoryResponse{}, status.Errorf(codes.Internal, "failed to delete repository %s: %s", repoName, err)
 	}
@@ -121,6 +121,8 @@ func (s *repositoryServiceServer) FetchRepository(req *proto.FetchRepositoryRequ
 
 	lastFetched, lastChanged, err := s.svc.FetchRepository(ss.Context(), repoName)
 	if err != nil {
+		s.svc.LogIfCorrupt(context.Background(), repoName, err)
+
 		return status.New(codes.Internal, errors.Wrap(err, "failed to fetch repository").Error()).Err()
 	}
 

@@ -741,8 +741,19 @@ func TestRepositories_Integration(t *testing.T) {
 		if err := gitserverRepos.SetRepoSize(ctx, rsc.repo.Name, rsc.size, "shard-1"); err != nil {
 			t.Fatal(err)
 		}
-		if err := gitserverRepos.SetCloneStatus(ctx, rsc.repo.Name, rsc.cloneStatus, "shard-1"); err != nil {
-			t.Fatal(err)
+		switch rsc.cloneStatus {
+		case types.CloneStatusCloned:
+			if err := gitserverRepos.SetCloned(ctx, rsc.repo.Name, "shard-1"); err != nil {
+				t.Fatal(err)
+			}
+		case types.CloneStatusCloning:
+			if err := gitserverRepos.SetCloning(ctx, rsc.repo.Name, "shard-1"); err != nil {
+				t.Fatal(err)
+			}
+		case types.CloneStatusNotCloned:
+			if err := gitserverRepos.SetNotCloned(ctx, rsc.repo.Name); err != nil {
+				t.Fatal(err)
+			}
 		}
 
 		if rsc.indexed {

@@ -29,7 +29,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
-	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	proto "github.com/sourcegraph/sourcegraph/internal/gitserver/v1"
 	internalgrpc "github.com/sourcegraph/sourcegraph/internal/grpc"
 	"github.com/sourcegraph/sourcegraph/internal/grpc/defaults"
@@ -44,9 +43,8 @@ var root string
 // This is a default gitserver test client currently used for RequestRepoUpdate
 // gitserver calls during invocation of MakeGitRepository function
 var (
-	testGitserverClient gitserver.Client
-	GitserverAddresses  []string
-	testServer          *server.Server
+	GitserverAddresses []string
+	testServer         *server.Server
 )
 
 func InitGitserver() {
@@ -135,8 +133,6 @@ func InitGitserver() {
 	}()
 
 	serverAddress := l.Addr().String()
-	source := gitserver.NewTestClientSource(&t, []string{serverAddress})
-	testGitserverClient = gitserver.NewTestClient(&t).WithClientSource(source)
 	GitserverAddresses = []string{serverAddress}
 	testServer = s
 }

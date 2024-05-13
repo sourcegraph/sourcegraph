@@ -720,7 +720,7 @@ func TestLogCorruption(t *testing.T) {
 		repo, _ := createTestRepo(ctx, t, db, "github.com/sourcegraph/repo7")
 
 		// Mark it as cloned on shard-1
-		err := db.GitserverRepos().SetCloneStatus(ctx, repo.Name, types.CloneStatusCloned, "shard-1")
+		err := db.GitserverRepos().SetCloned(ctx, repo.Name, "shard-1")
 		require.NoError(t, err)
 
 		// Log corruption on shard-2
@@ -1225,7 +1225,7 @@ func TestGitserverRepos_GetGitserverGitDirSize(t *testing.T) {
 	assertSize(700)
 
 	// Now mark the repo as uncloned, that should exclude it from statistics.
-	require.NoError(t, db.GitserverRepos().SetCloneStatus(ctx, repo.Name, types.CloneStatusNotCloned, "test-gitserver"))
+	require.NoError(t, db.GitserverRepos().SetNotCloned(ctx, repo.Name))
 
 	// only repo2 which is 500 bytes should cont now.
 	assertSize(500)

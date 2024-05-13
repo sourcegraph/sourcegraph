@@ -37105,9 +37105,12 @@ type MockGitserverRepoStore struct {
 	// LogCorruptionFunc is an instance of a mock function object
 	// controlling the behavior of the method LogCorruption.
 	LogCorruptionFunc *GitserverRepoStoreLogCorruptionFunc
-	// SetCloneStatusFunc is an instance of a mock function object
-	// controlling the behavior of the method SetCloneStatus.
-	SetCloneStatusFunc *GitserverRepoStoreSetCloneStatusFunc
+	// SetClonedFunc is an instance of a mock function object controlling
+	// the behavior of the method SetCloned.
+	SetClonedFunc *GitserverRepoStoreSetClonedFunc
+	// SetCloningFunc is an instance of a mock function object controlling
+	// the behavior of the method SetCloning.
+	SetCloningFunc *GitserverRepoStoreSetCloningFunc
 	// SetLastErrorFunc is an instance of a mock function object controlling
 	// the behavior of the method SetLastError.
 	SetLastErrorFunc *GitserverRepoStoreSetLastErrorFunc
@@ -37117,6 +37120,9 @@ type MockGitserverRepoStore struct {
 	// SetLastOutputFunc is an instance of a mock function object
 	// controlling the behavior of the method SetLastOutput.
 	SetLastOutputFunc *GitserverRepoStoreSetLastOutputFunc
+	// SetNotClonedFunc is an instance of a mock function object controlling
+	// the behavior of the method SetNotCloned.
+	SetNotClonedFunc *GitserverRepoStoreSetNotClonedFunc
 	// SetRepoSizeFunc is an instance of a mock function object controlling
 	// the behavior of the method SetRepoSize.
 	SetRepoSizeFunc *GitserverRepoStoreSetRepoSizeFunc
@@ -37190,8 +37196,13 @@ func NewMockGitserverRepoStore() *MockGitserverRepoStore {
 				return
 			},
 		},
-		SetCloneStatusFunc: &GitserverRepoStoreSetCloneStatusFunc{
-			defaultHook: func(context.Context, api.RepoName, types.CloneStatus, string) (r0 error) {
+		SetClonedFunc: &GitserverRepoStoreSetClonedFunc{
+			defaultHook: func(context.Context, api.RepoName, string) (r0 error) {
+				return
+			},
+		},
+		SetCloningFunc: &GitserverRepoStoreSetCloningFunc{
+			defaultHook: func(context.Context, api.RepoName, string) (r0 error) {
 				return
 			},
 		},
@@ -37207,6 +37218,11 @@ func NewMockGitserverRepoStore() *MockGitserverRepoStore {
 		},
 		SetLastOutputFunc: &GitserverRepoStoreSetLastOutputFunc{
 			defaultHook: func(context.Context, api.RepoName, string) (r0 error) {
+				return
+			},
+		},
+		SetNotClonedFunc: &GitserverRepoStoreSetNotClonedFunc{
+			defaultHook: func(context.Context, api.RepoName) (r0 error) {
 				return
 			},
 		},
@@ -37293,9 +37309,14 @@ func NewStrictMockGitserverRepoStore() *MockGitserverRepoStore {
 				panic("unexpected invocation of MockGitserverRepoStore.LogCorruption")
 			},
 		},
-		SetCloneStatusFunc: &GitserverRepoStoreSetCloneStatusFunc{
-			defaultHook: func(context.Context, api.RepoName, types.CloneStatus, string) error {
-				panic("unexpected invocation of MockGitserverRepoStore.SetCloneStatus")
+		SetClonedFunc: &GitserverRepoStoreSetClonedFunc{
+			defaultHook: func(context.Context, api.RepoName, string) error {
+				panic("unexpected invocation of MockGitserverRepoStore.SetCloned")
+			},
+		},
+		SetCloningFunc: &GitserverRepoStoreSetCloningFunc{
+			defaultHook: func(context.Context, api.RepoName, string) error {
+				panic("unexpected invocation of MockGitserverRepoStore.SetCloning")
 			},
 		},
 		SetLastErrorFunc: &GitserverRepoStoreSetLastErrorFunc{
@@ -37311,6 +37332,11 @@ func NewStrictMockGitserverRepoStore() *MockGitserverRepoStore {
 		SetLastOutputFunc: &GitserverRepoStoreSetLastOutputFunc{
 			defaultHook: func(context.Context, api.RepoName, string) error {
 				panic("unexpected invocation of MockGitserverRepoStore.SetLastOutput")
+			},
+		},
+		SetNotClonedFunc: &GitserverRepoStoreSetNotClonedFunc{
+			defaultHook: func(context.Context, api.RepoName) error {
+				panic("unexpected invocation of MockGitserverRepoStore.SetNotCloned")
 			},
 		},
 		SetRepoSizeFunc: &GitserverRepoStoreSetRepoSizeFunc{
@@ -37376,8 +37402,11 @@ func NewMockGitserverRepoStoreFrom(i database.GitserverRepoStore) *MockGitserver
 		LogCorruptionFunc: &GitserverRepoStoreLogCorruptionFunc{
 			defaultHook: i.LogCorruption,
 		},
-		SetCloneStatusFunc: &GitserverRepoStoreSetCloneStatusFunc{
-			defaultHook: i.SetCloneStatus,
+		SetClonedFunc: &GitserverRepoStoreSetClonedFunc{
+			defaultHook: i.SetCloned,
+		},
+		SetCloningFunc: &GitserverRepoStoreSetCloningFunc{
+			defaultHook: i.SetCloning,
 		},
 		SetLastErrorFunc: &GitserverRepoStoreSetLastErrorFunc{
 			defaultHook: i.SetLastError,
@@ -37387,6 +37416,9 @@ func NewMockGitserverRepoStoreFrom(i database.GitserverRepoStore) *MockGitserver
 		},
 		SetLastOutputFunc: &GitserverRepoStoreSetLastOutputFunc{
 			defaultHook: i.SetLastOutput,
+		},
+		SetNotClonedFunc: &GitserverRepoStoreSetNotClonedFunc{
+			defaultHook: i.SetNotCloned,
 		},
 		SetRepoSizeFunc: &GitserverRepoStoreSetRepoSizeFunc{
 			defaultHook: i.SetRepoSize,
@@ -38510,37 +38542,35 @@ func (c GitserverRepoStoreLogCorruptionFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 
-// GitserverRepoStoreSetCloneStatusFunc describes the behavior when the
-// SetCloneStatus method of the parent MockGitserverRepoStore instance is
-// invoked.
-type GitserverRepoStoreSetCloneStatusFunc struct {
-	defaultHook func(context.Context, api.RepoName, types.CloneStatus, string) error
-	hooks       []func(context.Context, api.RepoName, types.CloneStatus, string) error
-	history     []GitserverRepoStoreSetCloneStatusFuncCall
+// GitserverRepoStoreSetClonedFunc describes the behavior when the SetCloned
+// method of the parent MockGitserverRepoStore instance is invoked.
+type GitserverRepoStoreSetClonedFunc struct {
+	defaultHook func(context.Context, api.RepoName, string) error
+	hooks       []func(context.Context, api.RepoName, string) error
+	history     []GitserverRepoStoreSetClonedFuncCall
 	mutex       sync.Mutex
 }
 
-// SetCloneStatus delegates to the next hook function in the queue and
-// stores the parameter and result values of this invocation.
-func (m *MockGitserverRepoStore) SetCloneStatus(v0 context.Context, v1 api.RepoName, v2 types.CloneStatus, v3 string) error {
-	r0 := m.SetCloneStatusFunc.nextHook()(v0, v1, v2, v3)
-	m.SetCloneStatusFunc.appendCall(GitserverRepoStoreSetCloneStatusFuncCall{v0, v1, v2, v3, r0})
+// SetCloned delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockGitserverRepoStore) SetCloned(v0 context.Context, v1 api.RepoName, v2 string) error {
+	r0 := m.SetClonedFunc.nextHook()(v0, v1, v2)
+	m.SetClonedFunc.appendCall(GitserverRepoStoreSetClonedFuncCall{v0, v1, v2, r0})
 	return r0
 }
 
-// SetDefaultHook sets function that is called when the SetCloneStatus
-// method of the parent MockGitserverRepoStore instance is invoked and the
-// hook queue is empty.
-func (f *GitserverRepoStoreSetCloneStatusFunc) SetDefaultHook(hook func(context.Context, api.RepoName, types.CloneStatus, string) error) {
+// SetDefaultHook sets function that is called when the SetCloned method of
+// the parent MockGitserverRepoStore instance is invoked and the hook queue
+// is empty.
+func (f *GitserverRepoStoreSetClonedFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string) error) {
 	f.defaultHook = hook
 }
 
 // PushHook adds a function to the end of hook queue. Each invocation of the
-// SetCloneStatus method of the parent MockGitserverRepoStore instance
-// invokes the hook at the front of the queue and discards it. After the
-// queue is empty, the default hook function is invoked for any future
-// action.
-func (f *GitserverRepoStoreSetCloneStatusFunc) PushHook(hook func(context.Context, api.RepoName, types.CloneStatus, string) error) {
+// SetCloned method of the parent MockGitserverRepoStore instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *GitserverRepoStoreSetClonedFunc) PushHook(hook func(context.Context, api.RepoName, string) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -38548,20 +38578,20 @@ func (f *GitserverRepoStoreSetCloneStatusFunc) PushHook(hook func(context.Contex
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitserverRepoStoreSetCloneStatusFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, api.RepoName, types.CloneStatus, string) error {
+func (f *GitserverRepoStoreSetClonedFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, api.RepoName, string) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitserverRepoStoreSetCloneStatusFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, api.RepoName, types.CloneStatus, string) error {
+func (f *GitserverRepoStoreSetClonedFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, api.RepoName, string) error {
 		return r0
 	})
 }
 
-func (f *GitserverRepoStoreSetCloneStatusFunc) nextHook() func(context.Context, api.RepoName, types.CloneStatus, string) error {
+func (f *GitserverRepoStoreSetClonedFunc) nextHook() func(context.Context, api.RepoName, string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -38574,27 +38604,26 @@ func (f *GitserverRepoStoreSetCloneStatusFunc) nextHook() func(context.Context, 
 	return hook
 }
 
-func (f *GitserverRepoStoreSetCloneStatusFunc) appendCall(r0 GitserverRepoStoreSetCloneStatusFuncCall) {
+func (f *GitserverRepoStoreSetClonedFunc) appendCall(r0 GitserverRepoStoreSetClonedFuncCall) {
 	f.mutex.Lock()
 	f.history = append(f.history, r0)
 	f.mutex.Unlock()
 }
 
-// History returns a sequence of GitserverRepoStoreSetCloneStatusFuncCall
-// objects describing the invocations of this function.
-func (f *GitserverRepoStoreSetCloneStatusFunc) History() []GitserverRepoStoreSetCloneStatusFuncCall {
+// History returns a sequence of GitserverRepoStoreSetClonedFuncCall objects
+// describing the invocations of this function.
+func (f *GitserverRepoStoreSetClonedFunc) History() []GitserverRepoStoreSetClonedFuncCall {
 	f.mutex.Lock()
-	history := make([]GitserverRepoStoreSetCloneStatusFuncCall, len(f.history))
+	history := make([]GitserverRepoStoreSetClonedFuncCall, len(f.history))
 	copy(history, f.history)
 	f.mutex.Unlock()
 
 	return history
 }
 
-// GitserverRepoStoreSetCloneStatusFuncCall is an object that describes an
-// invocation of method SetCloneStatus on an instance of
-// MockGitserverRepoStore.
-type GitserverRepoStoreSetCloneStatusFuncCall struct {
+// GitserverRepoStoreSetClonedFuncCall is an object that describes an
+// invocation of method SetCloned on an instance of MockGitserverRepoStore.
+type GitserverRepoStoreSetClonedFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
 	Arg0 context.Context
@@ -38603,10 +38632,7 @@ type GitserverRepoStoreSetCloneStatusFuncCall struct {
 	Arg1 api.RepoName
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
-	Arg2 types.CloneStatus
-	// Arg3 is the value of the 4th argument passed to this method
-	// invocation.
-	Arg3 string
+	Arg2 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -38614,13 +38640,122 @@ type GitserverRepoStoreSetCloneStatusFuncCall struct {
 
 // Args returns an interface slice containing the arguments of this
 // invocation.
-func (c GitserverRepoStoreSetCloneStatusFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3}
+func (c GitserverRepoStoreSetClonedFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
 }
 
 // Results returns an interface slice containing the results of this
 // invocation.
-func (c GitserverRepoStoreSetCloneStatusFuncCall) Results() []interface{} {
+func (c GitserverRepoStoreSetClonedFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// GitserverRepoStoreSetCloningFunc describes the behavior when the
+// SetCloning method of the parent MockGitserverRepoStore instance is
+// invoked.
+type GitserverRepoStoreSetCloningFunc struct {
+	defaultHook func(context.Context, api.RepoName, string) error
+	hooks       []func(context.Context, api.RepoName, string) error
+	history     []GitserverRepoStoreSetCloningFuncCall
+	mutex       sync.Mutex
+}
+
+// SetCloning delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitserverRepoStore) SetCloning(v0 context.Context, v1 api.RepoName, v2 string) error {
+	r0 := m.SetCloningFunc.nextHook()(v0, v1, v2)
+	m.SetCloningFunc.appendCall(GitserverRepoStoreSetCloningFuncCall{v0, v1, v2, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the SetCloning method of
+// the parent MockGitserverRepoStore instance is invoked and the hook queue
+// is empty.
+func (f *GitserverRepoStoreSetCloningFunc) SetDefaultHook(hook func(context.Context, api.RepoName, string) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// SetCloning method of the parent MockGitserverRepoStore instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *GitserverRepoStoreSetCloningFunc) PushHook(hook func(context.Context, api.RepoName, string) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitserverRepoStoreSetCloningFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, api.RepoName, string) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitserverRepoStoreSetCloningFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, api.RepoName, string) error {
+		return r0
+	})
+}
+
+func (f *GitserverRepoStoreSetCloningFunc) nextHook() func(context.Context, api.RepoName, string) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitserverRepoStoreSetCloningFunc) appendCall(r0 GitserverRepoStoreSetCloningFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitserverRepoStoreSetCloningFuncCall
+// objects describing the invocations of this function.
+func (f *GitserverRepoStoreSetCloningFunc) History() []GitserverRepoStoreSetCloningFuncCall {
+	f.mutex.Lock()
+	history := make([]GitserverRepoStoreSetCloningFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitserverRepoStoreSetCloningFuncCall is an object that describes an
+// invocation of method SetCloning on an instance of MockGitserverRepoStore.
+type GitserverRepoStoreSetCloningFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 api.RepoName
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 string
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitserverRepoStoreSetCloningFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitserverRepoStoreSetCloningFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 
@@ -38956,6 +39091,113 @@ func (c GitserverRepoStoreSetLastOutputFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitserverRepoStoreSetLastOutputFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// GitserverRepoStoreSetNotClonedFunc describes the behavior when the
+// SetNotCloned method of the parent MockGitserverRepoStore instance is
+// invoked.
+type GitserverRepoStoreSetNotClonedFunc struct {
+	defaultHook func(context.Context, api.RepoName) error
+	hooks       []func(context.Context, api.RepoName) error
+	history     []GitserverRepoStoreSetNotClonedFuncCall
+	mutex       sync.Mutex
+}
+
+// SetNotCloned delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitserverRepoStore) SetNotCloned(v0 context.Context, v1 api.RepoName) error {
+	r0 := m.SetNotClonedFunc.nextHook()(v0, v1)
+	m.SetNotClonedFunc.appendCall(GitserverRepoStoreSetNotClonedFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the SetNotCloned method
+// of the parent MockGitserverRepoStore instance is invoked and the hook
+// queue is empty.
+func (f *GitserverRepoStoreSetNotClonedFunc) SetDefaultHook(hook func(context.Context, api.RepoName) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// SetNotCloned method of the parent MockGitserverRepoStore instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *GitserverRepoStoreSetNotClonedFunc) PushHook(hook func(context.Context, api.RepoName) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitserverRepoStoreSetNotClonedFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, api.RepoName) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitserverRepoStoreSetNotClonedFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, api.RepoName) error {
+		return r0
+	})
+}
+
+func (f *GitserverRepoStoreSetNotClonedFunc) nextHook() func(context.Context, api.RepoName) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitserverRepoStoreSetNotClonedFunc) appendCall(r0 GitserverRepoStoreSetNotClonedFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitserverRepoStoreSetNotClonedFuncCall
+// objects describing the invocations of this function.
+func (f *GitserverRepoStoreSetNotClonedFunc) History() []GitserverRepoStoreSetNotClonedFuncCall {
+	f.mutex.Lock()
+	history := make([]GitserverRepoStoreSetNotClonedFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitserverRepoStoreSetNotClonedFuncCall is an object that describes an
+// invocation of method SetNotCloned on an instance of
+// MockGitserverRepoStore.
+type GitserverRepoStoreSetNotClonedFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 api.RepoName
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitserverRepoStoreSetNotClonedFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitserverRepoStoreSetNotClonedFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 

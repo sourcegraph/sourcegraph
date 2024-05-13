@@ -97,8 +97,19 @@ func mustCreate(ctx context.Context, t *testing.T, db DB, repo *types.Repo) *typ
 func setGitserverRepoCloneStatus(t *testing.T, db DB, name api.RepoName, s types.CloneStatus) {
 	t.Helper()
 
-	if err := db.GitserverRepos().SetCloneStatus(context.Background(), name, s, shardID); err != nil {
-		t.Fatal(err)
+	switch s {
+	case types.CloneStatusCloned:
+		if err := db.GitserverRepos().SetCloned(context.Background(), name, shardID); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", name, err)
+		}
+	case types.CloneStatusCloning:
+		if err := db.GitserverRepos().SetCloning(context.Background(), name, shardID); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", name, err)
+		}
+	case types.CloneStatusNotCloned:
+		if err := db.GitserverRepos().SetNotCloned(context.Background(), name); err != nil {
+			t.Fatalf("failed to set clone status for repo %s: %s", name, err)
+		}
 	}
 }
 

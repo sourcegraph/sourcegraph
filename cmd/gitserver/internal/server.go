@@ -35,7 +35,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
 	"github.com/sourcegraph/sourcegraph/internal/limiter"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
-	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -468,21 +467,21 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, lock Reposito
 	defer os.RemoveAll(tmpDir)
 	tmpPath := filepath.Join(tmpDir, ".git")
 
-	if err := s.db.GitserverRepos().SetCloneStatus(ctx, repo, types.CloneStatusCloning, s.hostname); err != nil {
+	// Mark as cloning in the DB.
+	if err := s.db.GitserverRepos().SetCloning(ctx, repo, s.hostname); err != nil {
 		s.logger.Error("Setting clone status in DB", log.Error(err))
 	}
 	defer func() {
-		cloned, err := s.fs.RepoCloned(repo)
-		if err != nil {
-			s.logger.Error("failed to check if repo is cloned", log.Error(err))
-		} else if err := s.db.GitserverRepos().SetCloneStatus(
-			// Use a background context to ensure we still update the DB even if we time out
-			context.Background(),
-			repo,
-			cloneStatus(cloned, false),
-			s.hostname,
-		); err != nil {
-			s.logger.Error("Setting clone status in DB", log.Error(err))
+		// If the clone was a success, mark the repo as cloned in the DB.
+		if err == nil {
+			if err := s.db.GitserverRepos().SetCloned(
+				// Use a background context to ensure we still update the DB even if we time out
+				context.Background(),
+				repo,
+				s.hostname,
+			); err != nil {
+				s.logger.Error("Setting clone status in DB", log.Error(err))
+			}
 		}
 	}()
 

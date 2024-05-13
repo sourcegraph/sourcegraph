@@ -26,7 +26,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/ratelimit"
-	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/vcs"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 )
@@ -104,9 +103,10 @@ func TestClone(t *testing.T) {
 	mockassert.CalledOnce(t, lock.ReleaseFunc)
 
 	// Check it was set to cloning first, then cloned.
-	mockassert.CalledN(t, gsStore.SetCloneStatusFunc, 2)
-	mockassert.CalledWith(t, gsStore.SetCloneStatusFunc, mockassert.Values(mockassert.Skip, repo, types.CloneStatusCloning, "test-shard"))
-	mockassert.CalledWith(t, gsStore.SetCloneStatusFunc, mockassert.Values(mockassert.Skip, repo, types.CloneStatusCloned, "test-shard"))
+	mockassert.CalledN(t, gsStore.SetCloningFunc, 1)
+	mockassert.CalledN(t, gsStore.SetClonedFunc, 1)
+	mockassert.CalledWith(t, gsStore.SetCloningFunc, mockassert.Values(mockassert.Skip, repo, "test-shard"))
+	mockassert.CalledWith(t, gsStore.SetClonedFunc, mockassert.Values(mockassert.Skip, repo, "test-shard"))
 
 	// Last output should have been stored for the repo.
 	mockrequire.CalledOnce(t, gsStore.SetLastOutputFunc)
@@ -212,7 +212,9 @@ func TestClone_Fail(t *testing.T) {
 	require.Contains(t, gsStore.SetLastErrorFunc.History()[0].Arg2, "exit status 128")
 
 	// And no other DB activity has happened.
-	mockassert.NotCalled(t, gsStore.SetCloneStatusFunc)
+	mockassert.NotCalled(t, gsStore.SetClonedFunc)
+	mockassert.NotCalled(t, gsStore.SetCloningFunc)
+	mockassert.NotCalled(t, gsStore.SetNotClonedFunc)
 	mockassert.NotCalled(t, gsStore.SetLastOutputFunc)
 
 	// ===================
@@ -246,9 +248,10 @@ func TestClone_Fail(t *testing.T) {
 	mockassert.CalledN(t, lock.ReleaseFunc, 2)
 
 	// Check it was set to cloning first, then uncloned again (since clone failed).
-	mockassert.CalledN(t, gsStore.SetCloneStatusFunc, 2)
-	mockassert.CalledWith(t, gsStore.SetCloneStatusFunc, mockassert.Values(mockassert.Skip, repo, types.CloneStatusCloning, "test-shard"))
-	mockassert.CalledWith(t, gsStore.SetCloneStatusFunc, mockassert.Values(mockassert.Skip, repo, types.CloneStatusNotCloned, "test-shard"))
+	mockassert.CalledN(t, gsStore.SetCloningFunc, 1)
+	mockassert.CalledN(t, gsStore.SetNotClonedFunc, 1)
+	mockassert.CalledWith(t, gsStore.SetCloningFunc, mockassert.Values(mockassert.Skip, repo, "test-shard"))
+	mockassert.CalledWith(t, gsStore.SetNotClonedFunc, mockassert.Values(mockassert.Skip, repo))
 
 	// Last output should have been stored for the repo.
 	mockrequire.CalledOnce(t, gsStore.SetLastOutputFunc)

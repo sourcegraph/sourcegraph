@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/keegancsmith/sqlf"
+
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 
 	"github.com/google/go-cmp/cmp"
@@ -887,9 +889,9 @@ func TestSyncRepoState(t *testing.T) {
 
 	t.Run("sync deleted repo", func(t *testing.T) {
 		// Fake setting an incorrect status
-		if err := db.GitserverRepos().SetCloneStatus(ctx, dbRepo.Name, types.CloneStatusUnknown, hostname); err != nil {
-			t.Fatal(err)
-		}
+		q := sqlf.Sprintf("UPDATE gitserver_repos SET clone_status = %s WHERE repo_id = (SELECT id FROM repo where name = %s)", "unknown", dbRepo.Name)
+		_, err := db.ExecContext(ctx, q.Query(sqlf.PostgresBindVar), q.Args()...)
+		require.NoError(t, err)
 
 		// We should continue to sync deleted repos
 		if err := db.Repos().Delete(ctx, dbRepo.ID); err != nil {

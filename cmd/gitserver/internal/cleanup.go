@@ -37,7 +37,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/goroutine"
 	"github.com/sourcegraph/sourcegraph/internal/hostname"
 	"github.com/sourcegraph/sourcegraph/internal/lazyregexp"
-	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/internal/wrexec"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -78,7 +77,7 @@ func NewJanitor(ctx context.Context, cfg JanitorConfig, db database.DB, fs gitse
 
 					toFree := howManyBytesToFree(logger, usage, cfg.DesiredPercentFree)
 
-					if err := freeUpSpace(ctx, logger, db, fs, cfg.ShardID, usage, cfg.DesiredPercentFree, toFree); err != nil {
+					if err := freeUpSpace(ctx, logger, db, fs, usage, cfg.DesiredPercentFree, toFree); err != nil {
 						logger.Error("error freeing up space", log.Error(err))
 					}
 
@@ -366,7 +365,7 @@ func cleanupRepos(
 		reposRemoved.WithLabelValues(reason).Inc()
 
 		// Set as not_cloned in the database.
-		if err := db.GitserverRepos().SetCloneStatus(ctx, repoName, types.CloneStatusNotCloned, shardID); err != nil {
+		if err := db.GitserverRepos().SetNotCloned(ctx, repoName); err != nil {
 			return true, errors.Wrap(err, "failed to update clone status")
 		}
 
@@ -486,7 +485,7 @@ func cleanupRepos(
 			return true, errors.Wrap(err, "failed to remove repo")
 		}
 		// Set as not_cloned in the database.
-		if err := db.GitserverRepos().SetCloneStatus(ctx, repoName, types.CloneStatusNotCloned, shardID); err != nil {
+		if err := db.GitserverRepos().SetNotCloned(ctx, repoName); err != nil {
 			return true, errors.Wrap(err, "failed to update clone status")
 		}
 
@@ -716,7 +715,7 @@ func howManyBytesToFree(logger log.Logger, usage diskusage.DiskUsage, desiredPer
 
 // freeUpSpace removes git directories under the fs, in order from least
 // recently to most recently used, until it has freed howManyBytesToFree.
-func freeUpSpace(ctx context.Context, logger log.Logger, db database.DB, fs gitserverfs.FS, shardID string, usage diskusage.DiskUsage, desiredPercentFree int, howManyBytesToFree int64) error {
+func freeUpSpace(ctx context.Context, logger log.Logger, db database.DB, fs gitserverfs.FS, usage diskusage.DiskUsage, desiredPercentFree int, howManyBytesToFree int64) error {
 	if howManyBytesToFree <= 0 {
 		return nil
 	}
@@ -773,7 +772,7 @@ func freeUpSpace(ctx context.Context, logger log.Logger, db database.DB, fs gits
 			continue
 		}
 		// Set as not_cloned in the database.
-		if err := db.GitserverRepos().SetCloneStatus(ctx, repoName, types.CloneStatusNotCloned, shardID); err != nil {
+		if err := db.GitserverRepos().SetNotCloned(ctx, repoName); err != nil {
 			logger.Warn("failed to update clone status", log.Error(err))
 		}
 		spaceFreed += delta

@@ -215,10 +215,10 @@ func TestGetEmbeddableRepos(t *testing.T) {
 
 	// Clone the repos
 	gitserverStore := db.GitserverRepos()
-	err = gitserverStore.SetCloneStatus(ctx, firstRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, firstRepo.Name, "test")
 	require.NoError(t, err)
 
-	err = gitserverStore.SetCloneStatus(ctx, secondRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, secondRepo.Name, "test")
 	require.NoError(t, err)
 
 	// Create a embeddings policy that applies to all repos
@@ -258,10 +258,10 @@ func TestEmbeddingsPolicyWithFailures(t *testing.T) {
 
 	// Clone the repos
 	gitserverStore := db.GitserverRepos()
-	err = gitserverStore.SetCloneStatus(ctx, firstRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, firstRepo.Name, "test")
 	require.NoError(t, err)
 
-	err = gitserverStore.SetCloneStatus(ctx, secondRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, secondRepo.Name, "test")
 	require.NoError(t, err)
 
 	// Create a embeddings policy that applies to all repos
@@ -301,10 +301,10 @@ func TestGetEmbeddableReposLimit(t *testing.T) {
 
 	// Clone the repos
 	gitserverStore := db.GitserverRepos()
-	err = gitserverStore.SetCloneStatus(ctx, firstRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, firstRepo.Name, "test")
 	require.NoError(t, err)
 
-	err = gitserverStore.SetCloneStatus(ctx, secondRepo.Name, types.CloneStatusCloned, "test")
+	err = gitserverStore.SetCloned(ctx, secondRepo.Name, "test")
 	require.NoError(t, err)
 
 	// Create an embeddings policy that applies to all repos

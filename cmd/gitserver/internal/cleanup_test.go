@@ -811,12 +811,12 @@ func TestFreeUpSpace(t *testing.T) {
 	fs := gitserverfs.New(observation.TestContextTB(t), root)
 	require.NoError(t, fs.Initialize())
 	t.Run("no error if no space requested and no repos", func(t *testing.T) {
-		if err := freeUpSpace(context.Background(), logger, newMockedGitserverDB(), fs, "test-gitserver", &fakeDiskUsage{}, 10, 0); err != nil {
+		if err := freeUpSpace(context.Background(), logger, newMockedGitserverDB(), fs, &fakeDiskUsage{}, 10, 0); err != nil {
 			t.Fatal(err)
 		}
 	})
 	t.Run("error if space requested and no repos", func(t *testing.T) {
-		if err := freeUpSpace(context.Background(), logger, newMockedGitserverDB(), fs, "test-gitserver", &fakeDiskUsage{}, 10, 1); err == nil {
+		if err := freeUpSpace(context.Background(), logger, newMockedGitserverDB(), fs, &fakeDiskUsage{}, 10, 1); err == nil {
 			t.Fatal("want error")
 		}
 	})
@@ -843,7 +843,7 @@ func TestFreeUpSpace(t *testing.T) {
 		gr := dbmocks.NewMockGitserverRepoStore()
 		db.GitserverReposFunc.SetDefaultReturn(gr)
 		// Run.
-		if err := freeUpSpace(context.Background(), logger, db, fs, "test-gitserver", &fakeDiskUsage{}, 10, 1000); err != nil {
+		if err := freeUpSpace(context.Background(), logger, db, fs, &fakeDiskUsage{}, 10, 1000); err != nil {
 			t.Fatal(err)
 		}
 
@@ -860,10 +860,9 @@ func TestFreeUpSpace(t *testing.T) {
 			t.Errorf("repo dir size is %d, want no more than %d", rds, wantSize)
 		}
 
-		if len(gr.SetCloneStatusFunc.History()) == 0 {
-			t.Fatal("expected gitserverRepos.SetCloneStatus to be called, but wasn't")
+		if len(gr.SetNotClonedFunc.History()) == 0 {
+			t.Fatal("expected gitserverRepos.SetNotCloned to be called, but wasn't")
 		}
-		require.Equal(t, gr.SetCloneStatusFunc.History()[0].Arg2, types.CloneStatusNotCloned)
 	})
 }
 

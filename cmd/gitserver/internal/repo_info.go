@@ -7,7 +7,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
-	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -35,7 +34,6 @@ func repoCloneProgress(fs gitserverfs.FS, locker RepositoryLocker, repo api.Repo
 func deleteRepo(
 	ctx context.Context,
 	db database.DB,
-	shardID string,
 	fs gitserverfs.FS,
 	repo api.RepoName,
 ) error {
@@ -44,7 +42,7 @@ func deleteRepo(
 		return errors.Wrap(err, "removing repo directory")
 	}
 
-	err = db.GitserverRepos().SetCloneStatus(ctx, repo, types.CloneStatusNotCloned, shardID)
+	err = db.GitserverRepos().SetNotCloned(ctx, repo)
 	if err != nil {
 		return errors.Wrap(err, "setting clone status after delete")
 	}
