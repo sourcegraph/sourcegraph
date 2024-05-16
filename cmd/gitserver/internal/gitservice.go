@@ -1,11 +1,12 @@
 package internal
 
 import (
-	"context"
+	"compress/gzip"
+	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,12 +17,13 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/accesslog"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/internal/trace"
-	"github.com/sourcegraph/sourcegraph/lib/gitservice"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 var (
@@ -39,7 +41,7 @@ var (
 
 // NewHTTPHandler returns a HTTP handler that serves a git upload pack server,
 // plus a few other endpoints.
-func NewHTTPHandler(logger log.Logger, fs gitserverfs.FS) http.Handler {
+func NewHTTPHandler(logger log.Logger, fs gitserverfs.FS, backendSource git.GitBackendSource) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/ping", trace.WithRouteName("ping", func(w http.ResponseWriter, _ *http.Request) {
@@ -54,14 +56,137 @@ func NewHTTPHandler(logger log.Logger, fs gitserverfs.FS) http.Handler {
 	// scaling events and the new destination gitserver replica can directly clone from
 	// the gitserver replica which hosts the repository currently.
 	mux.HandleFunc("/git/", trace.WithRouteName("git", accesslog.HTTPMiddleware(
-		logger.Scoped("git.accesslog"),
+		logger.Scoped("gitserver.gitservice"),
 		conf.DefaultClient(),
 		func(rw http.ResponseWriter, r *http.Request) {
-			http.StripPrefix("/git", gitServiceHandler(logger.Scoped("gitServiceHandler"), fs)).ServeHTTP(rw, r)
+			logger := logger.Scoped("gitUploadPack")
+
+			// Only support clones and fetches (git upload-pack). /info/refs sets the
+			// service field.
+			if svcQ := r.URL.Query().Get("service"); svcQ != "" && svcQ != "git-upload-pack" {
+				http.Error(rw, "only support service git-upload-pack", http.StatusBadRequest)
+				return
+			}
+
+			var repo, svc string
+			for _, suffix := range []string{"/info/refs", "/git-upload-pack"} {
+				if strings.HasSuffix(r.URL.Path, suffix) {
+					svc = suffix
+					repo = strings.TrimSuffix(r.URL.Path, suffix)
+					repo = strings.TrimPrefix(repo, "/git")
+					repo = strings.TrimPrefix(repo, "/")
+					break
+				}
+			}
+			if repo == "" {
+				http.Error(rw, "no repo specified", http.StatusBadRequest)
+				return
+			}
+
+			repoName := api.RepoName(repo)
+			protocol := r.Header.Get("Git-Protocol")
+
+			// Log which which actor is accessing the repo.
+			accesslog.Record(r.Context(), repo,
+				log.String("svc", svc),
+				log.String("protocol", protocol),
+			)
+
+			dir := fs.RepoDir(repoName)
+			cloned, err := fs.RepoCloned(repoName)
+			if err != nil {
+				http.Error(rw, "failed to check if repo is cloned: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if !cloned {
+				http.Error(rw, fmt.Sprintf("repository %q not found", repoName), http.StatusNotFound)
+				return
+			}
+
+			backend := backendSource(dir, repoName)
+
+			body := r.Body
+			defer body.Close()
+
+			if r.Header.Get("Content-Encoding") == "gzip" {
+				gzipReader, err := gzip.NewReader(body)
+				if err != nil {
+					http.Error(rw, "malformed payload: "+err.Error(), http.StatusBadRequest)
+					return
+				}
+				defer gzipReader.Close()
+
+				body = gzipReader
+			}
+
+			start := time.Now()
+			metricServiceRunning.WithLabelValues(svc).Inc()
+
+			finalizeMetrics := func(err error) {
+				errLabel := strconv.FormatBool(err != nil)
+				metricServiceRunning.WithLabelValues(svc).Dec()
+				metricServiceDuration.WithLabelValues(svc, errLabel).Observe(time.Since(start).Seconds())
+
+				fields := []log.Field{
+					log.String("svc", svc),
+					log.String("repo", repo),
+					log.String("protocol", protocol),
+					log.Duration("duration", time.Since(start)),
+				}
+
+				if err != nil {
+					logger.Error("gitservice.ServeHTTP", append(fields, log.Error(err))...)
+				} else if traceLogs {
+					logger.Debug("gitservice.ServeHTTP", fields...)
+				}
+			}
+
+			advertiseRefs := false
+			switch svc {
+			case "/info/refs":
+				rw.Header().Set("Content-Type", "application/x-git-upload-pack-advertisement")
+				_, _ = rw.Write(packetWrite("# service=git-upload-pack\n"))
+				_, _ = rw.Write([]byte("0000"))
+				advertiseRefs = true
+			case "/git-upload-pack":
+				rw.Header().Set("Content-Type", "application/x-git-upload-pack-result")
+			default:
+				err = errors.Errorf("unexpected subpath (want /info/refs or /git-upload-pack): %q", svc)
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				finalizeMetrics(err)
+				return
+			}
+
+			uploadPackReader, err := backend.UploadPack(r.Context(), body, protocol, advertiseRefs)
+			if err != nil {
+				err = errors.Wrap(err, "gitserver: failed to run git command")
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				finalizeMetrics(err)
+				return
+			}
+
+			w := flowrateWriter(logger, rw)
+			_, err = io.Copy(w, uploadPackReader)
+			if err != nil {
+				err = errors.Wrap(err, "failed to run git upload pack")
+				logger.Error("git-service error", log.Error(err))
+				_, _ = w.Write([]byte("\n" + err.Error() + "\n"))
+			}
+
+			_ = uploadPackReader.Close()
+			finalizeMetrics(err)
 		},
 	)))
 
 	return mux
+}
+
+func packetWrite(str string) []byte {
+	s := strconv.FormatInt(int64(len(str)+4), 16)
+	if len(s)%4 != 0 {
+		s = strings.Repeat("0", 4-len(s)%4) + s
+	}
+	return []byte(s + str)
 }
 
 // getGitServiceMaxEgressBytesPerSecond parses envGitServiceMaxEgressBytesPerSecond once
@@ -81,7 +206,7 @@ func getGitServiceMaxEgressBytesPerSecond(logger log.Logger) int64 {
 	return gitServiceMaxEgressBytesPerSecond
 }
 
-// flowrateWriter limits the write rate of w to 1 Gbps.
+// flowrateWriter limits the write rate of w to 10 Gbps.
 //
 // We are cloning repositories from within the same network from another
 // Sourcegraph service (zoekt-indexserver). This can end up being so fast that
@@ -99,53 +224,6 @@ func flowrateWriter(logger log.Logger, w io.Writer) io.Writer {
 		return flowrate.NewWriter(w, limit)
 	}
 	return w
-}
-
-func gitServiceHandler(logger log.Logger, fs gitserverfs.FS) *gitservice.Handler {
-	return &gitservice.Handler{
-		Dir: func(d string) string {
-			return string(fs.RepoDir(api.RepoName(d)))
-		},
-
-		ErrorHook: func(err error, stderr string) {
-			logger.Error("git-service error", log.Error(err), log.String("stderr", stderr))
-		},
-
-		// Limit rate of stdout from git.
-		CommandHook: func(cmd *exec.Cmd) {
-			cmd.Stdout = flowrateWriter(logger, cmd.Stdout)
-		},
-
-		Trace: func(ctx context.Context, svc, repo, protocol string) func(error) {
-			start := time.Now()
-			metricServiceRunning.WithLabelValues(svc).Inc()
-
-			// Log which which actor is accessing the repo.
-			accesslog.Record(ctx, repo,
-				log.String("svc", svc),
-				log.String("protocol", protocol),
-			)
-
-			return func(err error) {
-				errLabel := strconv.FormatBool(err != nil)
-				metricServiceRunning.WithLabelValues(svc).Dec()
-				metricServiceDuration.WithLabelValues(svc, errLabel).Observe(time.Since(start).Seconds())
-
-				fields := []log.Field{
-					log.String("svc", svc),
-					log.String("repo", repo),
-					log.String("protocol", protocol),
-					log.Duration("duration", time.Since(start)),
-				}
-
-				if err != nil {
-					logger.Error("gitservice.ServeHTTP", append(fields, log.Error(err))...)
-				} else if traceLogs {
-					logger.Debug("gitservice.ServeHTTP", fields...)
-				}
-			}
-		},
-	}
 }
 
 var (

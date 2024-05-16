@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
@@ -47,8 +48,8 @@ var (
 
 type commandOpts struct {
 	arguments []Argument
-
-	stdin io.Reader
+	env       []string
+	stdin     io.Reader
 }
 
 func optsFromFuncs(optFns ...CommandOptionFunc) commandOpts {
@@ -133,6 +134,14 @@ func WithStdin(stdin io.Reader) CommandOptionFunc {
 	}
 }
 
+// WithEnv specifies the additional env vars to be passed to the command, IN
+// ADDITION to the env vars of the current process.
+func WithEnv(env ...string) CommandOptionFunc {
+	return func(o *commandOpts) {
+		o.env = env
+	}
+}
+
 const gitCommandDefaultTimeout = time.Minute
 
 func (g *gitCLIBackend) NewCommand(ctx context.Context, subcommand string, optFns ...CommandOptionFunc) (_ io.ReadCloser, err error) {
@@ -167,6 +176,9 @@ func (g *gitCLIBackend) NewCommand(ctx context.Context, subcommand string, optFn
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
 	g.dir.Set(cmd)
+	if len(opts.env) > 0 {
+		cmd.Env = append(os.Environ(), opts.env...)
+	}
 
 	if cmd.SysProcAttr == nil {
 		cmd.SysProcAttr = &syscall.SysProcAttr{}

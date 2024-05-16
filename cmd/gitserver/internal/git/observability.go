@@ -480,6 +480,35 @@ func (b *observableBackend) RefHash(ctx context.Context) (_ []byte, err error) {
 	return b.backend.RefHash(ctx)
 }
 
+func (b *observableBackend) UploadPack(ctx context.Context, input io.Reader, protocol string, advertiseRefs bool) (_ io.ReadCloser, err error) {
+	ctx, errCollector, endObservation := b.operations.uploadPack.WithErrors(ctx, &err, observation.Args{
+		Attrs: []attribute.KeyValue{
+			attribute.Bool("advertiseRefs", advertiseRefs),
+			attribute.String("protocol", protocol),
+		},
+	})
+	ctx, cancel := context.WithCancel(ctx)
+	endObservation.OnCancel(ctx, 1, observation.Args{})
+
+	concurrentOps.WithLabelValues("UploadPack").Inc()
+
+	r, err := b.backend.UploadPack(ctx, input, protocol, advertiseRefs)
+	if err != nil {
+		concurrentOps.WithLabelValues("UploadPack").Dec()
+		cancel()
+		return nil, err
+	}
+
+	return &observableReadCloser{
+		inner: r,
+		endObservation: func(err error) {
+			concurrentOps.WithLabelValues("UploadPack").Dec()
+			errCollector.Collect(&err)
+			cancel()
+		},
+	}, nil
+}
+
 type operations struct {
 	configGet             *observation.Operation
 	configSet             *observation.Operation
@@ -505,6 +534,7 @@ type operations struct {
 	readDir               *observation.Operation
 	latestCommitTimestamp *observation.Operation
 	refHash               *observation.Operation
+	uploadPack            *observation.Operation
 }
 
 func newOperations(observationCtx *observation.Context) *operations {
@@ -557,6 +587,7 @@ func newOperations(observationCtx *observation.Context) *operations {
 		readDir:               op("read-dir"),
 		latestCommitTimestamp: op("latest-commit-timestamp"),
 		refHash:               op("ref-hash"),
+		uploadPack:            op("upload-pack"),
 	}
 }
 

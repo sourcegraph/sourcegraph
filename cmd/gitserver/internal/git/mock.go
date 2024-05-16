@@ -351,6 +351,9 @@ type MockGitBackend struct {
 	// SymbolicRefHeadFunc is an instance of a mock function object
 	// controlling the behavior of the method SymbolicRefHead.
 	SymbolicRefHeadFunc *GitBackendSymbolicRefHeadFunc
+	// UploadPackFunc is an instance of a mock function object controlling
+	// the behavior of the method UploadPack.
+	UploadPackFunc *GitBackendUploadPackFunc
 }
 
 // NewMockGitBackend creates a new mock of the GitBackend interface. All
@@ -464,6 +467,11 @@ func NewMockGitBackend() *MockGitBackend {
 		},
 		SymbolicRefHeadFunc: &GitBackendSymbolicRefHeadFunc{
 			defaultHook: func(context.Context, bool) (r0 string, r1 error) {
+				return
+			},
+		},
+		UploadPackFunc: &GitBackendUploadPackFunc{
+			defaultHook: func(context.Context, io.Reader, string, bool) (r0 io.ReadCloser, r1 error) {
 				return
 			},
 		},
@@ -584,6 +592,11 @@ func NewStrictMockGitBackend() *MockGitBackend {
 				panic("unexpected invocation of MockGitBackend.SymbolicRefHead")
 			},
 		},
+		UploadPackFunc: &GitBackendUploadPackFunc{
+			defaultHook: func(context.Context, io.Reader, string, bool) (io.ReadCloser, error) {
+				panic("unexpected invocation of MockGitBackend.UploadPack")
+			},
+		},
 	}
 }
 
@@ -656,6 +669,9 @@ func NewMockGitBackendFrom(i GitBackend) *MockGitBackend {
 		},
 		SymbolicRefHeadFunc: &GitBackendSymbolicRefHeadFunc{
 			defaultHook: i.SymbolicRefHead,
+		},
+		UploadPackFunc: &GitBackendUploadPackFunc{
+			defaultHook: i.UploadPack,
 		},
 	}
 }
@@ -3074,6 +3090,120 @@ func (c GitBackendSymbolicRefHeadFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c GitBackendSymbolicRefHeadFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// GitBackendUploadPackFunc describes the behavior when the UploadPack
+// method of the parent MockGitBackend instance is invoked.
+type GitBackendUploadPackFunc struct {
+	defaultHook func(context.Context, io.Reader, string, bool) (io.ReadCloser, error)
+	hooks       []func(context.Context, io.Reader, string, bool) (io.ReadCloser, error)
+	history     []GitBackendUploadPackFuncCall
+	mutex       sync.Mutex
+}
+
+// UploadPack delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockGitBackend) UploadPack(v0 context.Context, v1 io.Reader, v2 string, v3 bool) (io.ReadCloser, error) {
+	r0, r1 := m.UploadPackFunc.nextHook()(v0, v1, v2, v3)
+	m.UploadPackFunc.appendCall(GitBackendUploadPackFuncCall{v0, v1, v2, v3, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the UploadPack method of
+// the parent MockGitBackend instance is invoked and the hook queue is
+// empty.
+func (f *GitBackendUploadPackFunc) SetDefaultHook(hook func(context.Context, io.Reader, string, bool) (io.ReadCloser, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// UploadPack method of the parent MockGitBackend instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *GitBackendUploadPackFunc) PushHook(hook func(context.Context, io.Reader, string, bool) (io.ReadCloser, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *GitBackendUploadPackFunc) SetDefaultReturn(r0 io.ReadCloser, r1 error) {
+	f.SetDefaultHook(func(context.Context, io.Reader, string, bool) (io.ReadCloser, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *GitBackendUploadPackFunc) PushReturn(r0 io.ReadCloser, r1 error) {
+	f.PushHook(func(context.Context, io.Reader, string, bool) (io.ReadCloser, error) {
+		return r0, r1
+	})
+}
+
+func (f *GitBackendUploadPackFunc) nextHook() func(context.Context, io.Reader, string, bool) (io.ReadCloser, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *GitBackendUploadPackFunc) appendCall(r0 GitBackendUploadPackFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of GitBackendUploadPackFuncCall objects
+// describing the invocations of this function.
+func (f *GitBackendUploadPackFunc) History() []GitBackendUploadPackFuncCall {
+	f.mutex.Lock()
+	history := make([]GitBackendUploadPackFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// GitBackendUploadPackFuncCall is an object that describes an invocation of
+// method UploadPack on an instance of MockGitBackend.
+type GitBackendUploadPackFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 io.Reader
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 string
+	// Arg3 is the value of the 4th argument passed to this method
+	// invocation.
+	Arg3 bool
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 io.ReadCloser
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c GitBackendUploadPackFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c GitBackendUploadPackFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 

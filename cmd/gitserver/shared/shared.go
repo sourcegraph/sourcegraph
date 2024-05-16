@@ -159,7 +159,7 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 
 	internal.RegisterEchoMetric(logger.Scoped("echoMetricReporter"))
 
-	handler := internal.NewHTTPHandler(logger, fs)
+	handler := internal.NewHTTPHandler(logger, fs, backendSource)
 	handler = actor.HTTPMiddleware(logger, handler)
 	handler = requestclient.InternalHTTPMiddleware(handler)
 	handler = requestinteraction.HTTPMiddleware(handler)

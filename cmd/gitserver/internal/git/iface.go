@@ -161,6 +161,10 @@ type GitBackend interface {
 	// This value can be used to determine if a repository changed since the last
 	// time the hash has been computed.
 	RefHash(ctx context.Context) ([]byte, error)
+
+	// UploadPack returns a git-upload-pack stream for the given repository.
+	// This can be used to expose the Git HTTP smart protocol over HTTP.
+	UploadPack(ctx context.Context, input io.Reader, protocol string, advertiseRefs bool) (io.ReadCloser, error)
 }
 
 type GitDiffComparisonType int
