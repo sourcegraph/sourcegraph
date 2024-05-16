@@ -14,7 +14,7 @@ func (g *gitCLIBackend) Config() git.GitConfigBackend {
 }
 
 func (g *gitCLIBackend) Get(ctx context.Context, key string) (string, error) {
-	r, err := g.NewCommand(ctx, WithArguments("config", "--get", key))
+	r, err := g.NewCommand(ctx, "config", WithArguments(FlagArgument{"--get"}, SpecSafeValueArgument{key}))
 	if err != nil {
 		return "", err
 	}
@@ -35,7 +35,7 @@ func (g *gitCLIBackend) Get(ctx context.Context, key string) (string, error) {
 }
 
 func (g *gitCLIBackend) Set(ctx context.Context, key, value string) error {
-	r, err := g.NewCommand(ctx, WithArguments("config", key, value))
+	r, err := g.NewCommand(ctx, "config", WithArguments(SpecSafeValueArgument{key}, SpecSafeValueArgument{value}))
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func (g *gitCLIBackend) Set(ctx context.Context, key, value string) error {
 }
 
 func (g *gitCLIBackend) Unset(ctx context.Context, key string) error {
-	r, err := g.NewCommand(ctx, WithArguments("config", "--unset-all", key))
+	r, err := g.NewCommand(ctx, "config", WithArguments(FlagArgument{"--unset-all"}, SpecSafeValueArgument{key}))
 	if err != nil {
 		return err
 	}

@@ -8,10 +8,6 @@ import (
 )
 
 func (g *gitCLIBackend) ArchiveReader(ctx context.Context, format git.ArchiveFormat, treeish string, paths []string) (io.ReadCloser, error) {
-	if err := checkSpecArgSafety(treeish); err != nil {
-		return nil, err
-	}
-
 	// Verify the tree-ish exists, if it doesn't this will return a RevisionNotFoundError:
 	_, err := g.getObjectType(ctx, treeish)
 	if err != nil {
@@ -20,19 +16,23 @@ func (g *gitCLIBackend) ArchiveReader(ctx context.Context, format git.ArchiveFor
 
 	archiveArgs := buildArchiveArgs(format, treeish, paths)
 
-	return g.NewCommand(ctx, WithArguments(archiveArgs...))
+	return g.NewCommand(ctx, "archive", WithArguments(archiveArgs...))
 }
 
-func buildArchiveArgs(format git.ArchiveFormat, treeish string, paths []string) []string {
-	args := []string{"archive", "--worktree-attributes", "--format=" + string(format)}
-
-	if format == git.ArchiveFormatZip {
-		args = append(args, "-0")
+func buildArchiveArgs(format git.ArchiveFormat, treeish string, paths []string) []Argument {
+	args := []Argument{
+		FlagArgument{"--worktree-attributes"},
+		ValueFlagArgument{Flag: "--format", Value: string(format)},
 	}
 
-	args = append(args, treeish, "--")
+	if format == git.ArchiveFormatZip {
+		args = append(args, FlagArgument{"-0"})
+	}
+
+	args = append(args, SpecSafeValueArgument{treeish}, FlagArgument{"--"})
 	for _, p := range paths {
-		args = append(args, pathspecLiteral(p))
+		// We use flag argument here because we're past the `--` separator.
+		args = append(args, FlagArgument{pathspecLiteral(p)})
 	}
 
 	return args

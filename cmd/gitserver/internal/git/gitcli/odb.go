@@ -25,13 +25,9 @@ import (
 )
 
 func (g *gitCLIBackend) GetCommit(ctx context.Context, commit api.CommitID, includeModifiedFiles bool) (*git.GitCommitWithFiles, error) {
-	if err := checkSpecArgSafety(string(commit)); err != nil {
-		return nil, err
-	}
-
 	args := buildGetCommitArgs(commit, includeModifiedFiles)
 
-	r, err := g.NewCommand(ctx, WithArguments(args...))
+	r, err := g.NewCommand(ctx, "log", WithArguments(args...))
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +53,12 @@ func (g *gitCLIBackend) GetCommit(ctx context.Context, commit api.CommitID, incl
 	return c, nil
 }
 
-func buildGetCommitArgs(commit api.CommitID, includeModifiedFiles bool) []string {
-	args := []string{"log", logFormatWithoutRefs, "-n", "1"}
+func buildGetCommitArgs(commit api.CommitID, includeModifiedFiles bool) []Argument {
+	args := []Argument{FlagArgument{logFormatWithoutRefs}, FlagArgument{"-n"}, FlagArgument{"1"}}
 	if includeModifiedFiles {
-		args = append(args, "--name-only")
+		args = append(args, FlagArgument{"--name-only"})
 	}
-	args = append(args, string(commit))
+	args = append(args, SpecSafeValueArgument{string(commit)})
 	return args
 }
 
@@ -154,13 +150,13 @@ func (g *gitCLIBackend) ReadFile(ctx context.Context, commit api.CommitID, path 
 		return nil, err
 	}
 
-	return g.NewCommand(ctx, WithArguments("cat-file", "-p", string(blobOID)))
+	return g.NewCommand(ctx, "cat-file", WithArguments(FlagArgument{"-p"}, SpecSafeValueArgument{string(blobOID)}))
 }
 
 var errIsSubmodule = errors.New("blob is a submodule")
 
 func (g *gitCLIBackend) getBlobOID(ctx context.Context, commit api.CommitID, path string) (api.CommitID, error) {
-	out, err := g.NewCommand(ctx, WithArguments("ls-tree", string(commit), "--", path))
+	out, err := g.NewCommand(ctx, "ls-tree", WithArguments(SpecSafeValueArgument{string(commit)}, FlagArgument{"--"}, SpecSafeValueArgument{path}))
 	if err != nil {
 		return "", err
 	}
@@ -198,13 +194,6 @@ func (g *gitCLIBackend) getBlobOID(ctx context.Context, commit api.CommitID, pat
 }
 
 func (g *gitCLIBackend) BehindAhead(ctx context.Context, left, right string) (*gitdomain.BehindAhead, error) {
-	if err := checkSpecArgSafety(left); err != nil {
-		return nil, err
-	}
-	if err := checkSpecArgSafety(right); err != nil {
-		return nil, err
-	}
-
 	if left == "" {
 		left = "HEAD"
 	}
@@ -213,7 +202,12 @@ func (g *gitCLIBackend) BehindAhead(ctx context.Context, left, right string) (*g
 		right = "HEAD"
 	}
 
-	rc, err := g.NewCommand(ctx, WithArguments("rev-list", "--count", "--left-right", fmt.Sprintf("%s...%s", left, right)))
+	args := []Argument{
+		FlagArgument{"--count"},
+		FlagArgument{"--left-right"},
+		SpecSafeValueArgument{fmt.Sprintf("%s...%s", left, right)},
+	}
+	rc, err := g.NewCommand(ctx, "rev-list", WithArguments(args...))
 	if err != nil {
 		return nil, errors.Wrap(err, "running git rev-list")
 	}
@@ -250,7 +244,13 @@ func (g *gitCLIBackend) BehindAhead(ctx context.Context, left, right string) (*g
 }
 
 func (g *gitCLIBackend) FirstEverCommit(ctx context.Context) (api.CommitID, error) {
-	rc, err := g.NewCommand(ctx, WithArguments("rev-list", "--reverse", "--date-order", "--max-parents=0", "HEAD"))
+	args := []Argument{
+		FlagArgument{"--reverse"},
+		FlagArgument{"--date-order"},
+		ValueFlagArgument{Flag: "--max-parents", Value: "0"},
+		FlagArgument{"HEAD"},
+	}
+	rc, err := g.NewCommand(ctx, "rev-list", WithArguments(args...))
 	if err != nil {
 		return "", err
 	}
@@ -286,10 +286,6 @@ func (g *gitCLIBackend) FirstEverCommit(ctx context.Context) (api.CommitID, erro
 const revListUsageString = `usage: git rev-list [<options>] <commit>... [--] [<path>...]`
 
 func (g *gitCLIBackend) Stat(ctx context.Context, commit api.CommitID, path string) (_ fs.FileInfo, err error) {
-	if err := checkSpecArgSafety(string(commit)); err != nil {
-		return nil, err
-	}
-
 	path = filepath.Clean(rel(path))
 
 	// Special case root, which is not returned by `git ls-tree`.
@@ -331,10 +327,6 @@ func (g *gitCLIBackend) Stat(ctx context.Context, commit api.CommitID, path stri
 }
 
 func (g *gitCLIBackend) ReadDir(ctx context.Context, commit api.CommitID, path string, recursive bool) (git.ReadDirIterator, error) {
-	if err := checkSpecArgSafety(string(commit)); err != nil {
-		return nil, err
-	}
-
 	if path != "" {
 		// Trailing slash is necessary to ls-tree under the dir (not just
 		// to list the dir's tree entry in its parent dir).
@@ -348,23 +340,22 @@ func (g *gitCLIBackend) lsTree(ctx context.Context, commit api.CommitID, path st
 	// Note: We don't call filepath.Clean(path) because ReadDir needs to pass
 	// path with a trailing slash.
 
-	args := []string{
-		"ls-tree",
-		"--long", // show size
-		"--full-name",
-		"-z",
-		string(commit),
+	args := []Argument{
+		FlagArgument{"--long"}, // show size
+		FlagArgument{"--full-name"},
+		FlagArgument{"-z"},
+		SpecSafeValueArgument{string(commit)},
 	}
 	if recurse {
-		args = append(args, "-r", "-t") // -t: Show tree entries even when going to recurse them.
+		args = append(args, FlagArgument{"-r"}, FlagArgument{"-t"}) // -t: Show tree entries even when going to recurse them.
 	}
 	if path != "" {
 		// Note: We need to use :(literal) here to prevent glob expansion which
 		// would lead to incorrect results.
-		args = append(args, "--", pathspecLiteral(filepath.ToSlash(path)))
+		args = append(args, FlagArgument{"--"}, SpecSafeValueArgument{pathspecLiteral(filepath.ToSlash(path))})
 	}
 
-	r, err := g.NewCommand(ctx, WithArguments(args...))
+	r, err := g.NewCommand(ctx, "ls-tree", WithArguments(args...))
 	if err != nil {
 		return nil, err
 	}

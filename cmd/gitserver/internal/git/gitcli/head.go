@@ -25,12 +25,14 @@ func (g *gitCLIBackend) SymbolicRefHead(ctx context.Context, short bool) (refNam
 	}
 
 	// If our optimized version didn't work, fall back to asking git directly.
-	args := []string{"symbolic-ref", "HEAD"}
+	args := []Argument{
+		FlagArgument{"HEAD"},
+	}
 	if short {
-		args = append(args, "--short")
+		args = append(args, FlagArgument{"--short"})
 	}
 
-	r, err := g.NewCommand(ctx, WithArguments(args...))
+	r, err := g.NewCommand(ctx, "symbolic-ref", WithArguments(args...))
 	if err != nil {
 		return "", err
 	}
@@ -52,9 +54,9 @@ func (g *gitCLIBackend) RevParseHead(ctx context.Context) (sha api.CommitID, err
 	}
 
 	// If our optimized version didn't work, fall back to asking git directly.
-	args := []string{"rev-parse", "HEAD"}
+	args := []Argument{FlagArgument{"HEAD"}}
 
-	r, err := g.NewCommand(ctx, WithArguments(args...))
+	r, err := g.NewCommand(ctx, "rev-parse", WithArguments(args...))
 	if err != nil {
 		return "", err
 	}

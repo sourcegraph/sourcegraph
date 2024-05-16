@@ -13,10 +13,21 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 func (g *gitCLIBackend) Exec(ctx context.Context, args ...string) (io.ReadCloser, error) {
-	return g.NewCommand(ctx, WithArguments(args...))
+	arguments := []Argument{}
+	cmd := args[0]
+	// Verify that the command sent is part of our allow list.
+	if _, ok := gitCmdAllowlist[cmd]; !ok {
+		return nil, errors.Errorf("git command %q not allowed", cmd)
+	}
+	for _, arg := range args[1:] {
+		// All arguments from the exec endpoint are potentially risky.
+		arguments = append(arguments, SpecSafeValueArgument{arg})
+	}
+	return g.NewCommand(ctx, cmd, WithArguments(arguments...))
 }
 
 var (
@@ -28,40 +39,19 @@ var (
 		"remote":    {"-v"},
 		"diff":      append([]string{}, gitCommonAllowlist...),
 		"diff-tree": append([]string{"--root"}, gitCommonAllowlist...),
-		"blame":     {"--root", "--incremental", "-w", "-p", "--porcelain", "--"},
+		"blame":     {},
 		"branch":    {"-r", "-a", "--contains", "--merged", "--format"},
 
 		"rev-parse":    {"--abbrev-ref", "--symbolic-full-name", "--glob", "--exclude"},
-		"rev-list":     {"--first-parent", "--max-parents", "--reverse", "--max-count", "--count", "--after", "--before", "--", "-n", "--date-order", "--skip", "--left-right", "--timestamp", "--all"},
-		"ls-remote":    {"--get-url"},
-		"symbolic-ref": {"--short"},
 		"archive":      {"--worktree-attributes", "--format", "-0", "HEAD", "--"},
 		"ls-tree":      {"--name-only", "HEAD", "--long", "--full-name", "--object-only", "--", "-z", "-r", "-t"},
 		"ls-files":     {"--with-tree", "-z"},
-		"for-each-ref": {"--format", "--points-at", "--contains", "--sort", "-creatordate", "-refname", "-HEAD"},
+		"for-each-ref": {"--points-at", "--contains"},
 		"tag":          {"--list", "--sort", "-creatordate", "--format", "--points-at"},
 		"merge-base":   {"--"},
 		"show-ref":     {"--heads"},
 		"shortlog":     {"--summary", "--numbered", "--email", "--no-merges", "--after", "--before"},
 		"cat-file":     {"-p", "-t"},
-		"lfs":          {},
-
-		// Commands used by GitConfigStore:
-		"config": {"--get", "--unset-all"},
-
-		// Commands used by Batch Changes when publishing changesets.
-		"init":       {},
-		"reset":      {"-q"},
-		"commit":     {"-m"},
-		"push":       {"--force"},
-		"update-ref": {},
-		"apply":      {"--cached", "-p0"},
-
-		// Used in tests to simulate errors with runCommand in handleExec of gitserver.
-		"testcommand": {},
-		"testerror":   {},
-		"testecho":    {},
-		"testcat":     {},
 	}
 
 	// `git log`, `git show`, `git diff`, etc., share a large common set of allowed args.
@@ -70,7 +60,6 @@ var (
 		"--patch", "--unified", "-S", "-G", "--pickaxe-all", "--pickaxe-regex", "--function-context", "--branches", "--source", "--src-prefix", "--dst-prefix", "--no-prefix",
 		"--regexp-ignore-case", "--glob", "--cherry", "-z", "--reverse", "--ignore-submodules",
 		"--until", "--since", "--author", "--committer",
-		"--all-match", "--invert-grep", "--extended-regexp",
 		"--no-color", "--decorate", "--no-patch", "--exclude",
 		"--no-merges",
 		"--no-renames",
@@ -81,7 +70,6 @@ var (
 		"--no-abbrev",
 		"--inter-hunk-context",
 		"--after",
-		"--date.order",
 		"-s",
 		"-100",
 	}
@@ -170,12 +158,11 @@ func isAllowedDiffPathArg(arg string, repoDir common.GitDir) bool {
 //
 // TODO: This should be unexported and solely be a concern of the CLI package,
 // as other backends should do their own validation passes.
-func IsAllowedGitCmd(logger log.Logger, args []string, dir common.GitDir) bool {
+func IsAllowedGitCmd(logger log.Logger, cmd string, args []string, dir common.GitDir) bool {
 	if len(args) == 0 || len(gitCmdAllowlist) == 0 {
 		return false
 	}
 
-	cmd := args[0]
 	allowedArgs, ok := gitCmdAllowlist[cmd]
 	if !ok {
 		// Command not allowed
@@ -201,11 +188,6 @@ func IsAllowedGitCmd(logger log.Logger, args []string, dir common.GitDir) bool {
 			// would be no way to safely express a query that began with a '-' character.
 			// (Same for `git show`, where the flag has the same meaning.)
 			if (cmd == "log" || cmd == "show") && (strings.HasPrefix(arg, "-S") || strings.HasPrefix(arg, "-G")) {
-				continue // this arg is OK
-			}
-
-			// Special case handling of commands like `git blame -L15,60`.
-			if cmd == "blame" && strings.HasPrefix(arg, "-L") {
 				continue // this arg is OK
 			}
 

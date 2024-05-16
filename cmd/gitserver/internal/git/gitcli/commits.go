@@ -13,7 +13,12 @@ import (
 )
 
 func (g *gitCLIBackend) LatestCommitTimestamp(ctx context.Context) (time.Time, error) {
-	r, err := g.NewCommand(ctx, WithArguments("rev-list", "--all", "--timestamp", "-n", "1"))
+	r, err := g.NewCommand(ctx, "rev-list", WithArguments(
+		FlagArgument{"--all"},
+		FlagArgument{"--timestamp"},
+		FlagArgument{"-n"},
+		FlagArgument{"1"},
+	))
 	if err != nil {
 		return time.Time{}, err
 	}

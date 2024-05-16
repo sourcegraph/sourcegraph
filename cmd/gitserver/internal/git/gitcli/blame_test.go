@@ -146,43 +146,25 @@ func TestBuildBlameArgs(t *testing.T) {
 	path := "foo.txt"
 
 	t.Run("default options", func(t *testing.T) {
-		want := []string{"blame", "--porcelain", "--incremental", commit, "--", "foo.txt"}
+		want := []Argument{FlagArgument{"--porcelain"}, FlagArgument{"--incremental"}, SpecSafeValueArgument{commit}, FlagArgument{"--"}, SpecSafeValueArgument{"foo.txt"}}
 		opt := git.BlameOptions{}
 		got := buildBlameArgs(api.CommitID(commit), path, opt)
-		if !equalSlice(got, want) {
-			t.Errorf("unexpected args:\ngot: %v\nwant: %v", got, want)
-		}
+		require.Equal(t, want, got)
 	})
 
 	t.Run("with ignore whitespace", func(t *testing.T) {
-		want := []string{"blame", "--porcelain", "--incremental", "-w", commit, "--", "foo.txt"}
+		want := []Argument{FlagArgument{"--porcelain"}, FlagArgument{"--incremental"}, FlagArgument{"-w"}, SpecSafeValueArgument{commit}, FlagArgument{"--"}, SpecSafeValueArgument{"foo.txt"}}
 		opt := git.BlameOptions{IgnoreWhitespace: true}
 		got := buildBlameArgs(api.CommitID(commit), path, opt)
-		if !equalSlice(got, want) {
-			t.Errorf("unexpected args:\ngot: %v\nwant: %v", got, want)
-		}
+		require.Equal(t, want, got)
 	})
 
 	t.Run("with line range", func(t *testing.T) {
-		want := []string{"blame", "--porcelain", "--incremental", "-L5,10", commit, "--", "foo.txt"}
+		want := []Argument{FlagArgument{"--porcelain"}, FlagArgument{"--incremental"}, FlagArgument{"-L5,10"}, SpecSafeValueArgument{commit}, FlagArgument{"--"}, SpecSafeValueArgument{"foo.txt"}}
 		opt := git.BlameOptions{Range: &git.BlameRange{StartLine: 5, EndLine: 10}}
 		got := buildBlameArgs(api.CommitID(commit), path, opt)
-		if !equalSlice(got, want) {
-			t.Errorf("unexpected args:\ngot: %v\nwant: %v", got, want)
-		}
+		require.Equal(t, want, got)
 	})
-}
-
-func equalSlice(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 // testGitBlameOutputIncremental is produced by running

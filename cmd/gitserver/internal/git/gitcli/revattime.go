@@ -3,11 +3,11 @@ package gitcli
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
+	"strconv"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2"
+	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 )
@@ -37,13 +37,15 @@ func (g *gitCLIBackend) RevAtTime(ctx context.Context, spec string, t time.Time)
 		return entry, nil
 	}
 
-	r, err := g.NewCommand(ctx, WithArguments(
-		"log",
-		"--format=format:%H", // only hash
-		"--first-parent",     // linearize history
-		fmt.Sprintf("--before=%d", t.Unix()),
-		"--max-count=1", // only one commit
-		string(sha),
+	r, err := g.NewCommand(ctx, "log", WithArguments(
+		// only hash
+		ValueFlagArgument{Flag: "--format", Value: "format:%H"},
+		// linearize history
+		FlagArgument{"--first-parent"},
+		ValueFlagArgument{Flag: "--before", Value: strconv.Itoa(int(t.Unix()))},
+		// only one commit
+		ValueFlagArgument{Flag: "--max-count", Value: "1"},
+		SpecSafeValueArgument{string(sha)},
 	))
 	if err != nil {
 		return "", err

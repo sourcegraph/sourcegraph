@@ -13,7 +13,12 @@ import (
 func (g *gitCLIBackend) MergeBase(ctx context.Context, baseRevspec, headRevspec string) (api.CommitID, error) {
 	out, err := g.NewCommand(
 		ctx,
-		WithArguments("merge-base", "--", baseRevspec, headRevspec),
+		"merge-base",
+		WithArguments(
+			FlagArgument{"--"},
+			SpecSafeValueArgument{baseRevspec},
+			SpecSafeValueArgument{headRevspec},
+		),
 	)
 	if err != nil {
 		return "", err

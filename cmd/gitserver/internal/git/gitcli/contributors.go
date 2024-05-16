@@ -19,26 +19,22 @@ func (g *gitCLIBackend) ContributorCounts(ctx context.Context, opt git.Contribut
 	if opt.Range == "" {
 		opt.Range = "HEAD"
 	}
-	if err := checkSpecArgSafety(opt.Range); err != nil {
-		return nil, err
-	}
 
-	args := []string{
-		"shortlog",
-		"--summary",
-		"--numbered",
-		"--email",
-		"--no-merges",
+	args := []Argument{
+		FlagArgument{"--summary"},
+		FlagArgument{"--numbered"},
+		FlagArgument{"--email"},
+		FlagArgument{"--no-merges"},
 	}
 	if !opt.After.IsZero() {
-		args = append(args, fmt.Sprintf("--after=%d", opt.After.Unix()))
+		args = append(args, FlagArgument{fmt.Sprintf("--after=%d", opt.After.Unix())})
 	}
-	args = append(args, opt.Range, "--")
+	args = append(args, SpecSafeValueArgument{opt.Range}, FlagArgument{"--"})
 	if opt.Path != "" {
-		args = append(args, opt.Path)
+		args = append(args, SpecSafeValueArgument{opt.Path})
 	}
 
-	r, err := g.NewCommand(ctx, WithArguments(args...))
+	r, err := g.NewCommand(ctx, "shortlog", WithArguments(args...))
 	if err != nil {
 		return nil, err
 	}

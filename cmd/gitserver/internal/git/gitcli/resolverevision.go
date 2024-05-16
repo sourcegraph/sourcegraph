@@ -25,15 +25,11 @@ func (g *gitCLIBackend) ResolveRevision(ctx context.Context, spec string) (api.C
 		spec = spec + "^0"
 	}
 
-	if err := checkSpecArgSafety(spec); err != nil {
-		return "", err
-	}
-
 	return g.revParse(ctx, spec)
 }
 
 func (g *gitCLIBackend) revParse(ctx context.Context, spec string) (api.CommitID, error) {
-	r, err := g.NewCommand(ctx, WithArguments("rev-parse", spec, "--"))
+	r, err := g.NewCommand(ctx, "rev-parse", WithArguments(SpecSafeValueArgument{spec}, FlagArgument{"--"}))
 	if err != nil {
 		return "", err
 	}

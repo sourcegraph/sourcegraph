@@ -12,10 +12,6 @@ import (
 )
 
 func (g *gitCLIBackend) GetObject(ctx context.Context, objectName string) (*gitdomain.GitObject, error) {
-	if err := checkSpecArgSafety(objectName); err != nil {
-		return nil, err
-	}
-
 	sha, err := g.revParse(ctx, objectName)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting object ID")
@@ -39,7 +35,11 @@ func (g *gitCLIBackend) GetObject(ctx context.Context, objectName string) (*gitd
 
 // getObjectType returns the object type given an objectID.
 func (g *gitCLIBackend) getObjectType(ctx context.Context, objectID string) (gitdomain.ObjectType, error) {
-	r, err := g.NewCommand(ctx, WithArguments("cat-file", "-t", "--", objectID))
+	r, err := g.NewCommand(ctx, "cat-file", WithArguments(
+		FlagArgument{"-t"},
+		FlagArgument{"--"},
+		SpecSafeValueArgument{objectID},
+	))
 	if err != nil {
 		return "", err
 	}

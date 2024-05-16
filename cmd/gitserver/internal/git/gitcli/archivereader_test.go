@@ -48,17 +48,17 @@ func readFileContentsFromZip(t *testing.T, zr *zip.Reader, name string) string {
 func TestBuildArchiveArgs(t *testing.T) {
 	t.Run("no paths", func(t *testing.T) {
 		args := buildArchiveArgs(git.ArchiveFormatTar, "HEAD", nil)
-		require.Equal(t, []string{"archive", "--worktree-attributes", "--format=tar", "HEAD", "--"}, args)
+		require.Equal(t, []Argument{FlagArgument{"--worktree-attributes"}, ValueFlagArgument{Flag: "--format", Value: "tar"}, SpecSafeValueArgument{"HEAD"}, FlagArgument{"--"}}, args)
 	})
 
 	t.Run("with paths", func(t *testing.T) {
 		args := buildArchiveArgs(git.ArchiveFormatTar, "HEAD", []string{"file1", "file2"})
-		require.Equal(t, []string{"archive", "--worktree-attributes", "--format=tar", "HEAD", "--", ":(literal)file1", ":(literal)file2"}, args)
+		require.Equal(t, []Argument{FlagArgument{"--worktree-attributes"}, ValueFlagArgument{Flag: "--format", Value: "tar"}, SpecSafeValueArgument{"HEAD"}, FlagArgument{"--"}, FlagArgument{":(literal)file1"}, FlagArgument{":(literal)file2"}}, args)
 	})
 
 	t.Run("zip adds -0", func(t *testing.T) {
 		args := buildArchiveArgs(git.ArchiveFormatZip, "HEAD", nil)
-		require.Equal(t, []string{"archive", "--worktree-attributes", "--format=zip", "-0", "HEAD", "--"}, args)
+		require.Equal(t, []Argument{FlagArgument{"--worktree-attributes"}, ValueFlagArgument{Flag: "--format", Value: "zip"}, FlagArgument{"-0"}, SpecSafeValueArgument{"HEAD"}, FlagArgument{"--"}}, args)
 	})
 }
 

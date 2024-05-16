@@ -23,10 +23,10 @@ func (g *gitCLIBackend) RawDiff(ctx context.Context, base string, head string, t
 		return nil, err
 	}
 
-	return g.NewCommand(ctx, WithArguments(buildRawDiffArgs(baseOID, headOID, typ, paths)...))
+	return g.NewCommand(ctx, "diff", WithArguments(buildRawDiffArgs(baseOID, headOID, typ, paths)...))
 }
 
-func buildRawDiffArgs(base, head api.CommitID, typ git.GitDiffComparisonType, paths []string) []string {
+func buildRawDiffArgs(base, head api.CommitID, typ git.GitDiffComparisonType, paths []string) []Argument {
 	var rangeType string
 	switch typ {
 	case git.GitDiffComparisonTypeIntersection:
@@ -36,27 +36,30 @@ func buildRawDiffArgs(base, head api.CommitID, typ git.GitDiffComparisonType, pa
 	}
 	rangeSpec := string(base) + rangeType + string(head)
 
-	return append([]string{
-		"diff",
-		"--find-renames",
-		"--full-index",
-		"--inter-hunk-context=3",
-		"--no-prefix",
-		rangeSpec,
-		"--",
-	}, paths...)
+	args := []Argument{
+		FlagArgument{"--find-renames"},
+		FlagArgument{"--full-index"},
+		FlagArgument{"--inter-hunk-context=3"},
+		FlagArgument{"--no-prefix"},
+		SpecSafeValueArgument{rangeSpec},
+		FlagArgument{"--"},
+	}
+	for _, path := range paths {
+		args = append(args, SpecSafeValueArgument{path})
+	}
+
+	return args
 }
 
 func (g *gitCLIBackend) ChangedFiles(ctx context.Context, base, head string) (git.ChangedFilesIterator, error) {
-	args := []string{
-		"diff-tree",
-		"-r",
-		"--root",
-		"--format=format:",
-		"--no-prefix",
-		"--name-status",
-		"--no-renames",
-		"-z",
+	args := []Argument{
+		FlagArgument{"-r"},
+		FlagArgument{"--root"},
+		ValueFlagArgument{Flag: "--format", Value: "format:"},
+		FlagArgument{"--no-prefix"},
+		FlagArgument{"--name-status"},
+		FlagArgument{"--no-renames"},
+		FlagArgument{"-z"},
 	}
 
 	if base != "" {
@@ -65,7 +68,7 @@ func (g *gitCLIBackend) ChangedFiles(ctx context.Context, base, head string) (gi
 			return nil, errors.Wrapf(err, "failed to resolve base commit %q", base)
 		}
 
-		args = append(args, string(baseOID))
+		args = append(args, SpecSafeValueArgument{string(baseOID)})
 	}
 
 	headOID, err := g.revParse(ctx, head)
@@ -73,9 +76,9 @@ func (g *gitCLIBackend) ChangedFiles(ctx context.Context, base, head string) (gi
 		return nil, errors.Wrapf(err, "failed to resolve head commit %q", head)
 	}
 
-	args = append(args, string(headOID))
+	args = append(args, SpecSafeValueArgument{string(headOID)})
 
-	rc, err := g.NewCommand(ctx, WithArguments(args...))
+	rc, err := g.NewCommand(ctx, "diff-tree", WithArguments(args...))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run git diff-tree command")
 	}

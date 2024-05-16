@@ -46,7 +46,7 @@ var (
 )
 
 type commandOpts struct {
-	arguments []string
+	arguments []Argument
 
 	stdin io.Reader
 }
@@ -59,10 +59,68 @@ func optsFromFuncs(optFns ...CommandOptionFunc) commandOpts {
 	return opts
 }
 
+type unexportedArgumentDoNotImplement struct{}
+
+type Argument interface {
+	// Make sure some outside package doesn't implement this type by creating
+	// a lowercase method on the interface.
+	// Argument needs to be supported in the logic further down in this file
+	// where []Argument is turned into the string slice of arguments to pass to
+	// exec.Command.
+	internalArgumentDoNotImplement() unexportedArgumentDoNotImplement
+}
+
+// FlagArgument is a string that is safe to pass to exec.Command without
+// further sanitization. Use this type ONLY for strings we fully control like
+// hardcoded flags.
+type FlagArgument struct {
+	string
+}
+
+func (FlagArgument) internalArgumentDoNotImplement() unexportedArgumentDoNotImplement {
+	return unexportedArgumentDoNotImplement{}
+}
+
+// SpecSafeValueArgument is a string that is meant to be passed to git as an argument.
+// Values of this type must not start with a `-` so they are not interpreted as a
+// flag. This value will be verified when building the command.
+type SpecSafeValueArgument struct {
+	string
+}
+
+func (SpecSafeValueArgument) internalArgumentDoNotImplement() unexportedArgumentDoNotImplement {
+	return unexportedArgumentDoNotImplement{}
+}
+
+// ValueFlagArgument is a flag that takes a value. The value is passed to git
+// as a flag and the value joined with a `=`. Use this type ONLY for flag names we
+// fully control like hardcoded strings `--points-at`.
+type ValueFlagArgument struct {
+	Flag  string
+	Value string
+}
+
+func (ValueFlagArgument) internalArgumentDoNotImplement() unexportedArgumentDoNotImplement {
+	return unexportedArgumentDoNotImplement{}
+}
+
+// ConfigArgument is a git config flag. Config flags must precede the subcommand
+// specified, and are passed to git with the `-c` flag. The ordering will be handled
+// by NewCommand.
+// Ordering of ConfigArguments is guaranteed to be maintained.
+type ConfigArgument struct {
+	Key   string
+	Value string
+}
+
+func (ConfigArgument) internalArgumentDoNotImplement() unexportedArgumentDoNotImplement {
+	return unexportedArgumentDoNotImplement{}
+}
+
 type CommandOptionFunc func(*commandOpts)
 
 // WithArguments sets the given arguments to the command arguments.
-func WithArguments(args ...string) CommandOptionFunc {
+func WithArguments(args ...Argument) CommandOptionFunc {
 	return func(o *commandOpts) {
 		o.arguments = args
 	}
@@ -77,11 +135,16 @@ func WithStdin(stdin io.Reader) CommandOptionFunc {
 
 const gitCommandDefaultTimeout = time.Minute
 
-func (g *gitCLIBackend) NewCommand(ctx context.Context, optFns ...CommandOptionFunc) (_ io.ReadCloser, err error) {
+func (g *gitCLIBackend) NewCommand(ctx context.Context, subcommand string, optFns ...CommandOptionFunc) (_ io.ReadCloser, err error) {
 	opts := optsFromFuncs(optFns...)
 
+	args, err := g.argsFromArguments(subcommand, opts.arguments)
+	if err != nil {
+		return nil, err
+	}
+
 	tr, ctx := trace.New(ctx, "gitcli.NewCommand",
-		attribute.StringSlice("args", opts.arguments),
+		attribute.StringSlice("args", args),
 		attribute.String("dir", g.dir.Path()),
 	)
 	defer func() {
@@ -92,27 +155,13 @@ func (g *gitCLIBackend) NewCommand(ctx context.Context, optFns ...CommandOptionF
 
 	logger := g.logger.WithTrace(trace.Context(ctx))
 
-	if !IsAllowedGitCmd(logger, opts.arguments, g.dir) {
-		blockedCommandExecutedCounter.Inc()
-		return nil, ErrBadGitCommand
-	}
-
-	if len(opts.arguments) == 0 {
-		// Technically can't happen because IsAllowedGitCmd catches this, but
-		// if someone ever touches that logic, let's be safe before we access
-		// args[0].
-		return nil, errors.New("provide arguments")
-	}
-
-	subCmd := opts.arguments[0]
-
 	// If no deadline is set, use the default git command timeout.
 	cancel := func() {}
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, cancel = context.WithTimeout(ctx, gitCommandDefaultTimeout)
 	}
 
-	cmd := exec.CommandContext(ctx, "git", opts.arguments...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Cancel = func() error {
 		// Send SIGKILL to the process group instead of just the process
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
@@ -159,23 +208,63 @@ func (g *gitCLIBackend) NewCommand(ctx context.Context, optFns ...CommandOptionF
 		return nil, errors.Wrap(err, "failed to start git process")
 	}
 
-	execRunning.WithLabelValues(subCmd).Inc()
+	execRunning.WithLabelValues(subcommand).Inc()
 
 	cr := &cmdReader{
-		ctx:       ctx,
-		subCmd:    subCmd,
-		ctxCancel: cancel,
-		cmdStart:  cmdStart,
-		stdout:    stdout,
-		cmd:       wrappedCmd,
-		stderr:    stderrBuf,
-		repoName:  g.repoName,
-		logger:    logger,
-		git:       g,
-		tr:        tr,
+		ctx:        ctx,
+		subcommand: subcommand,
+		ctxCancel:  cancel,
+		cmdStart:   cmdStart,
+		stdout:     stdout,
+		cmd:        wrappedCmd,
+		stderr:     stderrBuf,
+		repoName:   g.repoName,
+		logger:     logger,
+		git:        g,
+		tr:         tr,
 	}
 
 	return cr, nil
+}
+
+// argsFromArguments takes a slice of arguments and returns a slice of strings
+// that can be passed to exec.Command.
+// This method makes sure to sanitize the arguments to avoid injection attacks,
+// and makes some smart ordering decisions like putting ConfigArgument flags
+// always at the beginning.
+func (g *gitCLIBackend) argsFromArguments(subcommand string, args []Argument) ([]string, error) {
+	var configFlags []string
+	var flags []string
+
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case FlagArgument:
+			// Safe flags are required to be sanitized by the caller, thus we can
+			// just append them without further checking.
+			flags = append(flags, v.string)
+		case SpecSafeValueArgument:
+			if err := checkSpecArgSafety(v.string); err != nil {
+				return nil, err
+			}
+			flags = append(flags, v.string)
+		case ValueFlagArgument:
+			flags = append(flags, v.Flag+"="+v.Value)
+		case ConfigArgument:
+			configFlags = append(configFlags, "-c", v.Key+"="+v.Value)
+			continue
+		default:
+			return nil, errors.Newf("unknown argument type %T", v)
+		}
+	}
+
+	// The final command has to be of this form:
+	//   git [config flags] subcommand [flags]
+	out := make([]string, 0, len(configFlags)+1+len(flags))
+	out = append(out, configFlags...)
+	out = append(out, subcommand)
+	out = append(out, flags...)
+
+	return out, nil
 }
 
 // ErrBadGitCommand is returned from the git CLI backend if the arguments provided
@@ -211,20 +300,20 @@ func (e *CommandFailedError) Error() string {
 }
 
 type cmdReader struct {
-	stdout    io.Reader
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-	subCmd    string
-	cmdStart  time.Time
-	cmd       wrexec.Cmder
-	stderr    *bytes.Buffer
-	logger    log.Logger
-	git       git.GitBackend
-	repoName  api.RepoName
-	mu        sync.Mutex
-	tr        trace.Trace
-	err       error
-	waitOnce  sync.Once
+	stdout     io.Reader
+	ctx        context.Context
+	ctxCancel  context.CancelFunc
+	subcommand string
+	cmdStart   time.Time
+	cmd        wrexec.Cmder
+	stderr     *bytes.Buffer
+	logger     log.Logger
+	git        git.GitBackend
+	repoName   api.RepoName
+	mu         sync.Mutex
+	tr         trace.Trace
+	err        error
+	waitOnce   sync.Once
 }
 
 func (rc *cmdReader) Read(p []byte) (n int, err error) {
@@ -278,8 +367,8 @@ func (rc *cmdReader) waitCmd() error {
 func (rc *cmdReader) trace() {
 	duration := time.Since(rc.cmdStart)
 
-	execRunning.WithLabelValues(rc.subCmd).Dec()
-	execDuration.WithLabelValues(rc.subCmd).Observe(duration.Seconds())
+	execRunning.WithLabelValues(rc.subcommand).Dec()
+	execDuration.WithLabelValues(rc.subcommand).Observe(duration.Seconds())
 
 	processState := rc.cmd.Unwrap().ProcessState
 	var sysUsage syscall.Rusage
@@ -290,21 +379,21 @@ func (rc *cmdReader) trace() {
 
 	memUsage := rssToByteSize(sysUsage.Maxrss)
 
-	isSlow := duration > shortGitCommandSlow(rc.cmd.Unwrap().Args)
+	isSlow := duration > shortGitCommandSlow(rc.subcommand)
 	// TODO: Disabled until this also works on linux, this only works on macOS right now
 	// and causes noise.
 	isHighMem := false // memUsage > highMemoryUsageThreshold
 
 	if isHighMem {
-		highMemoryCounter.WithLabelValues(rc.subCmd).Inc()
+		highMemoryCounter.WithLabelValues(rc.subcommand).Inc()
 	}
 
 	if honey.Enabled() || isSlow || isHighMem {
 		act := actor.FromContext(rc.ctx)
 		ev := honey.NewEvent("gitserver-exec")
-		ev.SetSampleRate(HoneySampleRate(rc.subCmd, act))
+		ev.SetSampleRate(HoneySampleRate(rc.subcommand, act))
 		ev.AddField("repo", rc.repoName)
-		ev.AddField("cmd", rc.subCmd)
+		ev.AddField("cmd", rc.subcommand)
 		ev.AddField("args", rc.cmd.Unwrap().Args)
 		ev.AddField("actor", act.UIDString())
 		ev.AddField("exit_status", processState.ExitCode())
@@ -439,11 +528,8 @@ func stdErrIndicatesCorruption(stderr string) bool {
 // shortGitCommandSlow returns the threshold for regarding an git command as
 // slow. Some commands such as "git archive" are inherently slower than "git
 // rev-parse", so this will return an appropriate threshold given the command.
-func shortGitCommandSlow(args []string) time.Duration {
-	if len(args) < 1 {
-		return time.Second
-	}
-	switch args[0] {
+func shortGitCommandSlow(subcommand string) time.Duration {
+	switch subcommand {
 	case "archive":
 		return 1 * time.Minute
 

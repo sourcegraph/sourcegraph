@@ -16,17 +16,13 @@ import (
 )
 
 func (g *gitCLIBackend) Blame(ctx context.Context, startCommit api.CommitID, path string, opt git.BlameOptions) (git.BlameHunkReader, error) {
-	if err := checkSpecArgSafety(string(startCommit)); err != nil {
-		return nil, err
-	}
-
 	// Verify that the blob exists.
 	_, err := g.getBlobOID(ctx, startCommit, path)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := g.NewCommand(ctx, WithArguments(buildBlameArgs(startCommit, path, opt)...))
+	r, err := g.NewCommand(ctx, "blame", WithArguments(buildBlameArgs(startCommit, path, opt)...))
 	if err != nil {
 		return nil, err
 	}
@@ -34,15 +30,20 @@ func (g *gitCLIBackend) Blame(ctx context.Context, startCommit api.CommitID, pat
 	return newBlameHunkReader(r), nil
 }
 
-func buildBlameArgs(startCommit api.CommitID, path string, opt git.BlameOptions) []string {
-	args := []string{"blame", "--porcelain", "--incremental"}
+func buildBlameArgs(startCommit api.CommitID, path string, opt git.BlameOptions) []Argument {
+	args := []Argument{
+		FlagArgument{"--porcelain"},
+		FlagArgument{"--incremental"},
+	}
 	if opt.IgnoreWhitespace {
-		args = append(args, "-w")
+		args = append(args, FlagArgument{"-w"})
 	}
 	if opt.Range != nil {
-		args = append(args, fmt.Sprintf("-L%d,%d", opt.Range.StartLine, opt.Range.EndLine))
+		// We treat this as safe because the rendering of the flag is owned by us and we
+		// only print digits from user input.
+		args = append(args, FlagArgument{fmt.Sprintf("-L%d,%d", opt.Range.StartLine, opt.Range.EndLine)})
 	}
-	args = append(args, string(startCommit), "--", filepath.ToSlash(path))
+	args = append(args, SpecSafeValueArgument{string(startCommit)}, FlagArgument{"--"}, SpecSafeValueArgument{filepath.ToSlash(path)})
 	return args
 }
 

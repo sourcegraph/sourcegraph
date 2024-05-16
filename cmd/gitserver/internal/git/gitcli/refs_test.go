@@ -486,7 +486,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 	t.Run("default options", func(t *testing.T) {
 		args := buildListRefsArgs(git.ListRefsOpts{})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}},
 			args,
 		)
 	})
@@ -494,7 +494,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 	t.Run("heads only", func(t *testing.T) {
 		args := buildListRefsArgs(git.ListRefsOpts{HeadsOnly: true})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)", "--", "refs/heads/"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}, FlagArgument{"--"}, FlagArgument{"refs/heads/"}},
 			args,
 		)
 	})
@@ -502,7 +502,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 	t.Run("tags only", func(t *testing.T) {
 		args := buildListRefsArgs(git.ListRefsOpts{TagsOnly: true})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)", "--", "refs/tags/"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}, FlagArgument{"--"}, FlagArgument{"refs/tags/"}},
 			args,
 		)
 	})
@@ -510,7 +510,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 	t.Run("heads and tags only", func(t *testing.T) {
 		args := buildListRefsArgs(git.ListRefsOpts{HeadsOnly: true, TagsOnly: true})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)", "--", "refs/heads/", "refs/tags/"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}, FlagArgument{"--"}, FlagArgument{"refs/heads/"}, FlagArgument{"refs/tags/"}},
 			args,
 		)
 	})
@@ -519,7 +519,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 		commit := api.CommitID("f00ba4")
 		args := buildListRefsArgs(git.ListRefsOpts{PointsAtCommit: []api.CommitID{commit}})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)", "--points-at=f00ba4"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}, SpecSafeValueArgument{"--points-at=f00ba4"}},
 			args,
 		)
 	})
@@ -528,7 +528,7 @@ func TestBuildListRefsArgs(t *testing.T) {
 		commit := api.CommitID("f00ba4")
 		args := buildListRefsArgs(git.ListRefsOpts{Contains: []api.CommitID{commit}})
 		require.Equal(t,
-			[]string{"for-each-ref", "--sort", "-refname", "--sort", "-creatordate", "--sort", "-HEAD", "--format", "%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)", "--contains=f00ba4"},
+			[]Argument{FlagArgument{"--sort"}, FlagArgument{"-refname"}, FlagArgument{"--sort"}, FlagArgument{"-creatordate"}, FlagArgument{"--sort"}, FlagArgument{"-HEAD"}, FlagArgument{"--format"}, FlagArgument{"%(objecttype)%00%(HEAD)%00%(refname)%00%(refname:short)%00%(objectname)%00%(*objectname)%00%(creatordate:unix)"}, SpecSafeValueArgument{"--contains=f00ba4"}},
 			args,
 		)
 	})

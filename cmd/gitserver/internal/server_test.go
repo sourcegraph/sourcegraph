@@ -122,7 +122,7 @@ func TestExecRequest(t *testing.T) {
 		GitBackendSource: func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
 			backend := git.NewMockGitBackend()
 			backend.ExecFunc.SetDefaultHook(func(ctx context.Context, args ...string) (io.ReadCloser, error) {
-				if !gitcli.IsAllowedGitCmd(logtest.Scoped(t), args, fs.RepoDir(repoName)) {
+				if !gitcli.IsAllowedGitCmd(logtest.Scoped(t), args[0], args[1:], fs.RepoDir(repoName)) {
 					return nil, gitcli.ErrBadGitCommand
 				}
 
