@@ -573,3 +573,128 @@ func rel(path string) string {
 type objectInfo gitdomain.OID
 
 func (oid objectInfo) OID() gitdomain.OID { return gitdomain.OID(oid) }
+
+func (g *gitCLIBackend) PruneObjects(ctx context.Context, expiry time.Time) error {
+	r, err := g.NewCommand(ctx, WithArguments("prune", fmt.Sprintf("--expire=%s", expiry.Format(time.RFC3339))))
+	if err != nil {
+		return err
+	}
+	// There is no interesting output on stdout, so just discard it.
+	_, err = io.Copy(io.Discard, r)
+	return errors.Append(err, r.Close())
+}
+
+func (g *gitCLIBackend) PackObjects(ctx context.Context) error {
+	r, err := g.NewCommand(ctx, WithArguments(
+		"pack-objects",
+		// We ask git-pack-objects(1) to pack loose unreachable
+		// objects. This implies `--revs`, but as we don't supply
+		// any revisions via stdin all objects will be considered
+		// unreachable. The effect is that we simply pack all loose
+		// objects into a new packfile, regardless of whether they
+		// are reachable or not.
+		"--pack-loose-unreachable",
+		// Skip any objects which are part of an alternative object
+		// directory.
+		"--local",
+		// Only pack objects which are not yet part of a different,
+		// local pack.
+		"--incremental",
+		// Only create the packfile if it would contain at least one
+		// object.
+		"--non-empty",
+		// We don't care about any kind of progress meter.
+		"--quiet",
+		// We need to tell git-pack-objects(1) where to write the
+		// new packfile and what prefix it should have. We of course
+		// want to write it into the main object directory and have
+		// the same "pack-" prefix like normal packfiles would.
+		g.dir.Path("objects", "pack", "pack"),
+	))
+	if err != nil {
+		return err
+	}
+	// There is no interesting output on stdout, so just discard it.
+	_, err = io.Copy(io.Discard, r)
+	return errors.Append(err, r.Close())
+}
+
+func (g *gitCLIBackend) PrunePacked(ctx context.Context) error {
+	r, err := g.NewCommand(ctx, WithArguments("prune-packed", "--quiet"))
+	if err != nil {
+		return err
+	}
+	// There is no interesting output on stdout, so just discard it.
+	_, err = io.Copy(io.Discard, r)
+	return errors.Append(err, r.Close())
+}
+
+func (g *gitCLIBackend) Repack(ctx context.Context, opts git.RepackOptions) error {
+	args := []string{
+		"-c", "repack.useDeltaIslands=true",
+		"-c", fmt.Sprintf("repack.writeBitmaps=%s", strconv.FormatBool(opts.WriteBitmap)),
+		"-c", "pack.writeBitmapLookupTable=true",
+		"-c", "pack.island=r(e)fs/heads",
+		"-c", "pack.island=r(e)fs/tags",
+		"-c", "pack.islandCore=e",
+		"repack",
+	}
+
+	if opts.Geometric {
+		// We use a geometric factor `r`, which means that every successively larger
+		// packfile must have at least `r` times the number of objects.
+		//
+		// This factor ultimately determines how many packfiles there can be at a
+		// maximum in a repository for a given number of objects. The maximum number
+		// of objects with `n` packfiles and a factor `r` is `(1 - r^n) / (1 - r)`.
+		// E.g. with a factor of 4 and 10 packfiles, we can have at most 349,525
+		// objects, with 16 packfiles we can have 1,431,655,765 objects. Contrary to
+		// that, having a factor of 2 will translate to 1023 objects at 10 packfiles
+		// and 65535 objects at 16 packfiles at a maximum.
+		//
+		// So what we're effectively choosing here is how often we need to repack
+		// larger parts of the repository. The higher the factor the more we'll have
+		// to repack as the packfiles will be larger. On the other hand, having a
+		// smaller factor means we'll have to repack less objects as the slices we
+		// need to repack will have less objects.
+		//
+		// The end result is a hybrid approach between incremental repacks and full
+		// repacks: we won't typically repack the full repository, but only a subset
+		// of packfiles.
+		//
+		// For now, we choose a geometric factor of two. Large repositories nowadays
+		// typically have a few million objects, which would boil down to having at
+		// most 32 packfiles in the repository. This number is not scientifically
+		// chosen though any may be changed at a later point in time.
+		args = append(args, "--geometric", "2")
+	}
+
+	if opts.Local {
+		args = append(args, "-l")
+	}
+
+	if opts.DeleteLoose {
+		args = append(args, "-d")
+	}
+
+	if opts.Cruft {
+		args = append(args, "--cruft")
+		args = append(args, "--pack-kept-objects")
+	}
+
+	if !opts.CruftExpiration.IsZero() {
+		args = append(args, fmt.Sprintf("--cruft-expiration=%s", opts.CruftExpiration.Format(time.RFC3339)))
+	}
+
+	if opts.WriteMultiPackIndex {
+		args = append(args, "--write-midx")
+	}
+
+	r, err := g.NewCommand(ctx, WithArguments(args...))
+	if err != nil {
+		return err
+	}
+	// There is no interesting output on stdout, so just discard it.
+	_, err = io.Copy(io.Discard, r)
+	return errors.Append(err, r.Close())
+}

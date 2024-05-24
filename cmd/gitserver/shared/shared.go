@@ -25,6 +25,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git/gitcli"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/janitor"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/perforce"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/vcssyncer"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
@@ -185,7 +186,14 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 			config.SyncRepoStateBatchSize,
 			config.SyncRepoStateUpdatePerSecond,
 		),
-		server.NewJanitor(
+	}
+
+	if config.EnableExperimentalJanitor {
+		routines = append(routines, janitor.New(logger, config.ExperimentalJanitorConcurrency, fs, func(dir common.GitDir, repoName api.RepoName) git.GitBackend {
+			return git.NewObservableBackend(gitcli.NewBackend(logger, recordingCommandFactory, dir, repoName))
+		}))
+	} else {
+		routines = append(routines, server.NewJanitor(
 			ctx,
 			server.JanitorConfig{
 				ShardID:                        hostname,
@@ -198,7 +206,7 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 			backendSource,
 			recordingCommandFactory,
 			logger,
-		),
+		))
 	}
 
 	// Register recorder in all routines that support it.

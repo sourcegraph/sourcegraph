@@ -3,6 +3,7 @@ package gitcli
 import (
 	"context"
 	"io"
+	"os"
 	"runtime"
 	"testing"
 	"time"
@@ -575,4 +576,36 @@ func TestGitCLIBackend_RefHash(t *testing.T) {
 	third, err := backend.RefHash(ctx)
 	require.NoError(t, err)
 	require.Equal(t, first, third)
+}
+
+func TestGitCLIBackend_PackRefs(t *testing.T) {
+	// We create a simple repo with a few refs and then pack it.
+	// This test is simply meant to verify that the command runs without
+	// error and that the packed refs file is written to the expected location.
+	rcf := wrexec.NewNoOpRecordingCommandFactory()
+	dir := RepoWithCommands(
+		t,
+		"echo 'hello world' > foo.txt",
+		"git add foo.txt",
+		"git commit -m foo --author='Foo Author <foo@sourcegraph.com>'",
+		"git checkout -b branch1",
+		"echo 'hello world' > bar.txt",
+		"git add bar.txt",
+		"git commit -m foo --author='Foo Author <foo@sourcegraph.com>'",
+		"git checkout -b branch2",
+		"echo 'hello world' > foobar.txt",
+		"git add foobar.txt",
+		"git commit -m foo --author='Foo Author <foo@sourcegraph.com>'",
+	)
+
+	backend := NewBackend(logtest.Scoped(t), rcf, dir, api.RepoName(t.Name()))
+
+	ctx := context.Background()
+	err := backend.PackRefs(ctx)
+	require.NoError(t, err)
+
+	// Verify that the packed refs file exists.
+	packedRefsPath := dir.Path("packed-refs")
+	_, err = os.Stat(packedRefsPath)
+	require.NoError(t, err)
 }

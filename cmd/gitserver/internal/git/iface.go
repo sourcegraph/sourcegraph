@@ -167,6 +167,27 @@ type GitBackend interface {
 	// This value can be used to determine if a repository changed since the last
 	// time the hash has been computed.
 	RefHash(ctx context.Context) ([]byte, error)
+	WriteCommitGraph(ctx context.Context, replaceChain bool) error
+	PackRefs(ctx context.Context) error
+	// PruneObjects removes all unreachable objects that are older than the given
+	// expiry time.
+	PruneObjects(ctx context.Context, expiry time.Time) error
+
+	Repack(ctx context.Context, opts RepackOptions) error
+	PackObjects(ctx context.Context) error
+	PrunePacked(ctx context.Context) error
+}
+
+type RepackOptions struct {
+	WriteMultiPackIndex bool
+	WriteBitmap         bool
+	Geometric           bool
+
+	DeleteLoose bool
+	Local       bool
+
+	Cruft           bool
+	CruftExpiration time.Time
 }
 
 // CommitLogOrder is the order of the commits returned by CommitLog.

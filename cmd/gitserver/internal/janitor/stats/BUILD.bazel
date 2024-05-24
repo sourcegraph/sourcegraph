@@ -1,0 +1,25 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "stats",
+    srcs = [
+        "commit_graph.go",
+        "repository_info.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/janitor/stats",
+    visibility = ["//cmd/gitserver:__subpackages__"],
+    deps = [
+        "//cmd/gitserver/internal/common",
+        "//lib/errors",
+    ],
+)
+
+go_test(
+    name = "stats_test",
+    srcs = [
+        "commit_graph_test.go",
+        "repository_info_test.go",
+    ],
+    embed = [":stats"],
+)

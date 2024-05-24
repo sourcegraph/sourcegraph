@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "janitor",
+    srcs = [
+        "cleanup.go",
+        "objects.go",
+        "repair.go",
+        "repostats.go",
+        "routine.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/janitor",
+    visibility = ["//cmd/gitserver:__subpackages__"],
+    deps = [
+        "//cmd/gitserver/internal/common",
+        "//cmd/gitserver/internal/git",
+        "//cmd/gitserver/internal/gitserverfs",
+        "//cmd/gitserver/internal/janitor/stats",
+        "//internal/api",
+        "//internal/conf",
+        "//internal/goroutine",
+        "//lib/errors",
+        "@com_github_sourcegraph_conc//pool",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)

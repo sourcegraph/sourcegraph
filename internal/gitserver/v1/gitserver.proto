@@ -22,6 +22,48 @@ service GitserverRepositoryService {
   rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+  rpc RepositoryStatistics(RepositoryStatisticsRequest) returns (RepositoryStatisticsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc OptimizeRepository(OptimizeRepositoryRequest) returns (OptimizeRepositoryResponse) {
+    option idempotency_level = IDEMPOTENT;
+  }
+}
+
+message OptimizeRepositoryRequest {
+  // repo_name is the name of the repo to fetch.
+  // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
+  string repo_name = 2;
+}
+
+message OptimizeRepositoryResponse {
+  bool repacked_objects = 1;
+  bool pruned_objects = 2;
+  bool repacked_references = 3;
+  bool wrote_commit_graph = 4;
+}
+
+message RepositoryStatisticsRequest {
+  // repo_name is the name of the repo to fetch.
+  // Note: We use field ID 2 here to reserve 1 for a future repo int32 field.
+  string repo_name = 2;
+}
+
+message RepositoryStatisticsResponse {
+  // If true, the repository does not have a valid HEAD reference file.
+  // This most likely indicates the repository is corrupted.
+  bool missing_head = 1;
+  // If true, the repository has a worktree or some other condition for being bare
+  // failed. Gitserver requires repositories to be bare, so this is a fatal issue,
+  // and indicates corruption.
+  bool is_not_bare = 2;
+  // The repository's size on disk in bytes.
+  uint64 disk_size = 3;
+  // Gitserver analyzes errors returned from Git commands run for potential indicators
+  // of ODB corruption. If this field is true, this has been detected at least once
+  // since the repository was last cloned. Only a reclone of the repository will
+  // unset this property.
+  bool potential_corruption_detected = 4;
 }
 
 message ListRepositoriesRequest {
