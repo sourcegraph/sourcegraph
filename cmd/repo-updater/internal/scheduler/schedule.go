@@ -30,6 +30,10 @@ type schedule struct {
 }
 
 // upsert inserts or updates a repo in the schedule.
+// Called when the syncer sees a repo. Ie. when it is synced. This happens for added, modified, and unmodified repos.
+// In DB land, this means for non-dotcom all repos are part of the schedule. On dotcom,
+// repos managed by non-cloud-default external services and repos that are synced using SyncRepo will appear in here.
+// This likely includes RepoLookup repos, when they didn't exist previously.
 func (s *schedule) upsert(repo configuredRepo) (updated bool) {
 	if repo.ID == 0 {
 		panic("repo.id is zero")
@@ -54,6 +58,16 @@ func (s *schedule) upsert(repo configuredRepo) (updated bool) {
 	return false
 }
 
+// This method takes in a list of repos that were identified as uncloned and will
+// add all of them to the schedule with a 45s delay. If they were already scheduled but for later,
+// it will lower their time to next sync to 45s.
+// It is called by some logic that enumerates all uncloned repos occasionally.
+// Note: It only looks at repos known to the scheduler. On regular instances, that means
+// all repos. But on Dotcom, this means only repos that are somehow added to the scheduler.
+// This can get a bit annoying because that is all indexable, plus all that EnqueueRepoUpdate
+// has been called on. EnqueueRepoUpdate should set the priority to high if the repo is currently
+// not cloned.
+// TODO: Determine if there are other reasons a repo is added to the schedule.
 func (s *schedule) prioritiseUncloned(uncloned []types.MinimalRepo) {
 	// All non-cloned repos will be due for cloning as if they are newly added
 	// repos.
@@ -88,6 +102,10 @@ func (s *schedule) prioritiseUncloned(uncloned []types.MinimalRepo) {
 }
 
 // insertNew will insert repos only if they are not known to the scheduler
+// called by dotcom only, for repos that are Indexable :tm: and not yet cloned.
+// This should not matter if the enqueuer on dotcom will only ever consider indexable
+// repos. Manually triggered updates of dotcom repos should still be allowed, just
+// the scheduler should skip over those.
 func (s *schedule) insertNew(repos []types.MinimalRepo) {
 	configuredRepos := make([]configuredRepo, len(repos))
 	for i := range repos {
@@ -122,6 +140,7 @@ func (s *schedule) insertNew(repos []types.MinimalRepo) {
 
 // updateInterval updates the update interval of a repo in the schedule.
 // It does nothing if the repo is not in the schedule.
+// called after an update has been attempted.
 func (s *schedule) updateInterval(repo configuredRepo, interval time.Duration) {
 	if repo.ID == 0 {
 		panic("repo.id is zero")
@@ -167,6 +186,8 @@ func (s *schedule) getCurrentInterval(repo configuredRepo) (time.Duration, bool)
 }
 
 // remove removes a repo from the schedule.
+// Called in the scheduler when a repo is detected as removed by the syncer.
+// This will be handled by the fact that the enqueuer doesn't look at repos WHERE deleted_at IS NOT NULL.
 func (s *schedule) remove(repo configuredRepo) (removed bool) {
 	if repo.ID == 0 {
 		panic("repo.id is zero")
@@ -191,6 +212,10 @@ func (s *schedule) remove(repo configuredRepo) (removed bool) {
 // rescheduleTimer schedules the scheduler to wakeup
 // at the time that the next repo is due for an update.
 // The caller must hold the lock on s.mu.
+// Called when various operations on the schedule happen, triggers a wakeup
+// of the queue that puts repos from the schedule into the update queue.
+// For the DB scheduler, if it's not terribly slow, we can probably just trigger
+// the enqueuer every couple seconds and don't need this real-time mechanism.
 func (s *schedule) rescheduleTimer() {
 	if s.timer != nil {
 		s.timer.Stop()
@@ -204,6 +229,7 @@ func (s *schedule) rescheduleTimer() {
 	}
 }
 
+// Only called on shutdown, not required for DB.
 func (s *schedule) reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()

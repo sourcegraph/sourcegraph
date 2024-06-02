@@ -14,7 +14,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/batches/syncer"
-	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/repos"
 	"github.com/sourcegraph/sourcegraph/internal/repoupdater/protocol"
@@ -106,16 +105,10 @@ func (s *Server) EnqueueRepoUpdate(ctx context.Context, req *proto.EnqueueRepoUp
 		tr.End()
 	}()
 
-	rs, err := s.Store.RepoStore().List(ctx, database.ReposListOptions{Names: []string{string(req.Repo)}})
+	repo, err := s.Store.RepoStore().GetByName(ctx, api.RepoName(req.GetRepo()))
 	if err != nil {
 		return nil, errors.Wrap(err, "store.list-repos")
 	}
-
-	if len(rs) != 1 {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("repo %q not found in store", req.Repo))
-	}
-
-	repo := rs[0]
 
 	s.Scheduler.UpdateOnce(repo.ID, repo.Name)
 
@@ -168,9 +161,11 @@ func (s *Server) EnqueueChangesetSync(ctx context.Context, req *proto.EnqueueCha
 		return nil, status.Error(codes.Internal, "changeset syncer is not configured")
 	}
 
-	if len(req.Ids) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "no ids provided")
+	ids := req.GetIds()
+
+	if len(ids) == 0 {
+		return nil, nil
 	}
 
-	return &proto.EnqueueChangesetSyncResponse{}, s.ChangesetSyncRegistry.EnqueueChangesetSyncs(ctx, req.Ids)
+	return &proto.EnqueueChangesetSyncResponse{}, s.ChangesetSyncRegistry.EnqueueChangesetSyncs(ctx, ids)
 }

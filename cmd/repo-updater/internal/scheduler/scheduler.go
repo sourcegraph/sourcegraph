@@ -182,6 +182,25 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 				defer cancel()
 				defer s.updateQueue.remove(repo, true)
 
+				// When is a repo scheduled?
+				// Initially, every repo is scheduled for in 45s after startup. (Every repo managed by scheduler)
+				// Regardless of cloned or not cloned status.
+				// After an update request is done, the next schedule time is updated:
+				// All intervals are in the range of 45s and 8h. Some jitter is added to that,
+				// to prevent updating all repos at the same time. The various limiters in place
+				// should cover for that, and we can likely drop this.
+				// If a custom interval is defined for the repo, this interval is used.
+				// Custom intervals are defined in site config, where a pattern for name and a fixed interval is defined.
+				// The interval is always multiples of a minute.
+				// If no custom interval is defined, the interval is computed:
+				// If repo-updater failed talking to gitserver, we double the current interval.
+				// If the fetch failed, we also double the current interval.
+				// Otherwise, we use:
+				// (last_fetch_time - last_change_time) / 2
+				// In numbers:
+				// If the repo was fetched an hour ago, and last changed 24h ago,
+				// the new interval is 23h / 2 = 11.5h. (Rounded down to 8h).
+
 				// This is a blocking call since the repo will be cloned synchronously by gitserver
 				// if it doesn't exist or update it if it does. The timeout of this request depends
 				// on the value of conf.GitLongCommandTimeout() or if the passed context has a set
@@ -293,14 +312,12 @@ func (s *UpdateScheduler) UpdateFromDiff(diff types.RepoSyncDiff) {
 		s.upsert(r.Repo, r.Modified&types.RepoModifiedName == types.RepoModifiedName)
 	}
 
-	known := len(diff.Added) + len(diff.Modified)
 	for _, r := range diff.Unmodified {
 		if r.IsDeleted() {
 			s.remove(r)
 			continue
 		}
 
-		known++
 		s.upsert(r, false)
 	}
 }
@@ -508,3 +525,183 @@ var (
 	timeNow       = time.Now
 	timeAfterFunc = time.AfterFunc
 )
+
+//// SQL DUMP GROUND:
+
+// CREATE TABLE gitserver_repo_jobs (
+//     id BIGSERIAL PRIMARY KEY,
+//     creator_id integer REFERENCES users(id) ON DELETE SET NULL,
+//     repo_id integer NOT NULL REFERENCES repo(id) ON DELETE CASCADE DEFERRABLE, -- TODO: Want a trigger that deletes active jobs for repos that soft-deleted.
+//     job_type text NOT NULL, -- currently only fetch, maybe later this could include janitor?
+//     payload jsonb DEFAULT '{}'::jsonb CHECK (jsonb_typeof(payload) = 'object'::text), -- payload includes {rev: optional rev to fetch, reclone: bool, if true will clone again to a temp dir and do an atomic swap}
+//     initial_priority integer NOT NULL,
+
+//     state text NOT NULL DEFAULT 'queued'::text,
+//     failure_message text,
+//     started_at timestamp with time zone,
+//     finished_at timestamp with time zone,
+//     process_after timestamp with time zone,
+//     num_resets integer NOT NULL DEFAULT 0,
+//     num_failures integer NOT NULL DEFAULT 0,
+//     execution_logs json[],
+//     created_at timestamp with time zone NOT NULL DEFAULT now(),
+//     updated_at timestamp with time zone NOT NULL DEFAULT now(),
+//     worker_hostname text NOT NULL DEFAULT ''::text,
+//     last_heartbeat_at timestamp with time zone,
+//     queued_at timestamp with time zone DEFAULT now(),
+//     cancel boolean NOT NULL DEFAULT false
+//     -- TODO: Maybe: have a constraint that only one record can be state IN ('queued', 'processing', 'errored') per (repo_id, job_type) tuple?
+// );
+
+// CREATE INDEX gitserver_repo_jobs_state_idx ON gitserver_repo_jobs(state text_ops);
+
+// --- Adds high priority jobs for uncloned repos.
+// WITH repo_candidates AS (
+// 	SELECT r.id, gr.clone_status FROM repo r
+// 	JOIN gitserver_repos gr ON gr.repo_id = r.id
+// 	WHERE
+// 		-- We only want to update repos that are not deleted or blocked.
+// 		r.deleted_at IS NULL AND r.blocked IS NULL
+// 		-- Definitely enqueue all repos that are not cloned.
+// 		AND gr.clone_status = 'not_cloned'
+// 		-- Only enqueue a new job when there's no existing job yet.
+// 		AND NOT EXISTS (
+// 			SELECT 1 FROM gitserver_repo_jobs grj WHERE grj.repo_id = r.id AND grj.state IN ('queued', 'processing', 'errored')
+// 		)
+// 	ORDER BY
+// 		r.created_at ASC,
+// 		r.id ASC
+// )
+// -- Use a high priority as these repos are not yet cloned, we want to get them added ASAP.
+// SELECT id, clone_status, 1000 AS priority FROM repo_candidates;
+
+// --- Adds low priority jobs for cloned repos that have not updated recently.
+// WITH repo_candidates AS (
+// 	SELECT r.id as repo_id, gr.clone_status, top_grj.id AS most_recent_job_id FROM repo r
+// 	JOIN gitserver_repos gr ON gr.repo_id = r.id
+// 	LEFT JOIN gitserver_repo_jobs top_grj ON top_grj.repo_id = r.id
+// 	WHERE
+// 		-- We only want to update repos that are not deleted or blocked.
+// 		r.deleted_at IS NULL AND r.blocked IS NULL
+// 		-- In this query, we only look at repos that are cloned. We schedule updates here.
+// 		AND gr.clone_status = 'cloned'
+// 		-- Only enqueue a new job when there's no existing job yet.
+// 		AND NOT EXISTS (
+// 			SELECT 1 FROM gitserver_repo_jobs grj WHERE grj.repo_id = r.id AND grj.state IN ('queued', 'processing', 'errored')
+// 		)
+// 		-- Make sure top_grj only matches the most recently scheduled entry.
+// 		AND NOT EXISTS (
+// 			SELECT 1 FROM gitserver_repo_jobs grj WHERE grj.repo_id = r.id AND grj.created_at > top_grj.created_at
+// 		)
+// 		-- If there is no previous fetch, we do one now. Otherwise, we only fetch if the last fetch has not been scheduled in the last 2 minutes.
+// 		-- TODO: Add the backoff logic here.
+// 		AND (
+// 			top_grj.created_at IS NULL
+// 			OR
+// 			-- If the last fetch failed, we want to enqueue another sync, with exponential backoff.
+// 			(
+// 				top_grj.state = 'failed'
+// 				AND
+// 				-- TODO: Only consider records that are direct predecessors of the current one and failed. IE. FAIL, FAIL, SUCCESS, FAIL should count 2.
+// 				(top_grj.finished_at + interval '1 second' * (LEAST(GREATEST(45, 45 * POWER(2, (
+// 					-- SELECT COUNT(*) FROM gitserver_repo_jobs grj WHERE grj.repo_id = r.id AND state = 'failed'
+// with ordered_jobs AS (
+//     SELECT
+//         id,
+//         state,
+//         created_at,
+//         LEAD(state) OVER (ORDER BY created_at DESC) AS next_state
+//     FROM gitserver_repo_jobs where repo_id = r.id
+// )
+// ,consecutive_failures AS (
+//    SELECT
+//         id,
+//         state,
+//         created_at,
+//         CASE
+//             WHEN state = 'failed' AND (next_state = 'failed' OR next_state IS NULL) THEN 1
+//             ELSE 0
+//         END AS is_consecutive_failure
+//     FROM ordered_jobs
+// ),consecutive_failures_with_count AS (
+//     SELECT
+//         *,
+//         SUM(is_consecutive_failure) OVER (ORDER BY created_at DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS failure_count
+//     FROM consecutive_failures
+// ),filtered_failures AS (
+// 	SELECT
+// 		*
+// 	FROM
+// 		consecutive_failures_with_count
+//     WHERE state = 'failed' OR (state != 'failed' AND failure_count = 0)
+// )
+// SELECT
+//     CASE
+//         WHEN (SELECT state FROM ordered_jobs ORDER BY created_at DESC LIMIT 1) = 'failed'
+//         THEN (SELECT MAX(failure_count) FROM filtered_failures)
+//         ELSE 0
+//     END AS consecutive_failures_count
+// 				))), 60 * 60 * 8))) < NOW()
+// 			)
+// 			OR
+// 			(
+// 				top_grj.state = 'complete'
+// 				AND
+// 				(top_grj.finished_at + interval '1 second' * (LEAST(GREATEST(45, EXTRACT(EPOCH FROM (gr.last_fetched - gr.last_changed)) / 2), 60 * 60 * 8))) < NOW()
+// 			)
+// 		)
+// 	ORDER BY
+// 		r.created_at ASC,
+// 		r.id ASC
+// )
+// -- Use a low priority as these repos are already cloned, we want to get to them, but there's no critical SLA. Aging will eventually get them prioritized.
+// INSERT INTO gitserver_repo_jobs (repo_id, job_type)
+// SELECT repo_id, 'fetch' FROM repo_candidates;
+
+// SELECT repo_id, most_recent_job_id, clone_status, 1 AS priority FROM repo_candidates;
+
+// update gitserver_repos set last_fetched = now(), last_changed = now();
+// update gitserver_repo_jobs set state = 'failed';
+
+// select * from gitserver_repo_jobs;
+
+// select gr.repo_id, gr.last_fetched, gr.last_changed, (LEAST(GREATEST(45, EXTRACT(EPOCH FROM (gr.last_fetched - gr.last_changed)) / 2), 60 * 60 * 8)) AS seconds_until_update, NOW() + interval '1 second' * ((LEAST(GREATEST(45, EXTRACT(EPOCH FROM (gr.last_fetched - gr.last_changed)) / 2), 60 * 60 * 8))) AS when_update_at from gitserver_repos gr;
+
+// explain analyze
+// ;
+// with ordered_jobs AS (
+//     SELECT
+//         id,
+//         state,
+//         created_at,
+//         LEAD(state) OVER (ORDER BY created_at DESC) AS next_state
+//     FROM gitserver_repo_jobs where r.id
+// )
+// ,consecutive_failures AS (
+//    SELECT
+//         id,
+//         state,
+//         created_at,
+//         CASE
+//             WHEN state = 'failed' AND (next_state = 'failed' OR next_state IS NULL) THEN 1
+//             ELSE 0
+//         END AS is_consecutive_failure
+//     FROM ordered_jobs
+// ),consecutive_failures_with_count AS (
+//     SELECT
+//         *,
+//         SUM(is_consecutive_failure) OVER (ORDER BY created_at DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS failure_count
+//     FROM consecutive_failures
+// ),filtered_failures AS (
+// 	SELECT
+// 		*
+// 	FROM
+// 		consecutive_failures_with_count
+//     WHERE state = 'failed' OR (state != 'failed' AND failure_count = 0)
+// )
+// SELECT
+//     CASE
+//         WHEN (SELECT state FROM ordered_jobs ORDER BY created_at DESC LIMIT 1) = 'failed'
+//         THEN (SELECT MAX(failure_count) FROM filtered_failures)
+//         ELSE 0
+//     END AS consecutive_failures_count;

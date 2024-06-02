@@ -219,17 +219,6 @@ func newCommon(w http.ResponseWriter, r *http.Request, db database.DB, title str
 				serveError(w, r, db, err, http.StatusNotFound)
 				return nil, nil
 			}
-			if errors.HasType(err, &gitserver.RepoNotCloneableErr{}) {
-				if errcode.IsNotFound(err) {
-					// Repository is not found.
-					serveError(w, r, db, err, http.StatusNotFound)
-					return nil, nil
-				}
-
-				// Repository is not cloneable.
-				dangerouslyServeError(w, r, db, errors.New("repository could not be cloned"), http.StatusInternalServerError)
-				return nil, nil
-			}
 			if errcode.IsRepoDenied(err) {
 				serveError(w, r, db, err, http.StatusNotFound)
 				return nil, nil
