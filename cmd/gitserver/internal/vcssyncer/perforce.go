@@ -28,13 +28,7 @@ type perforceDepotSyncer struct {
 	logger                  log.Logger
 	recordingCommandFactory *wrexec.RecordingCommandFactory
 	fs                      gitserverfs.FS
-
-	// maxChanges indicates to only import at most n changes when possible.
-	maxChanges int
-
-	// p4Client configures the client to use with p4 and enables use of a client spec
-	// to find the list of interesting files in p4.
-	p4Client string
+	connection              *schema.PerforceConnection
 
 	// fusionConfig contains information about the experimental p4-fusion client.
 	fusionConfig fusionConfig
@@ -48,8 +42,7 @@ func NewPerforceDepotSyncer(logger log.Logger, r *wrexec.RecordingCommandFactory
 		logger:                  logger.Scoped("PerforceDepotSyncer"),
 		recordingCommandFactory: r,
 		fs:                      fs,
-		maxChanges:              int(connection.MaxChanges),
-		p4Client:                connection.P4Client,
+		connection:              connection,
 		fusionConfig:            configureFusionClient(connection),
 		getRemoteURLSource:      getRemoteURLSource,
 	}
@@ -86,21 +79,21 @@ func (s *perforceDepotSyncer) IsCloneable(ctx context.Context, repoName api.Repo
 }
 
 // Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100 --noColor true --noBaseCommit true
-func (s *perforceDepotSyncer) buildP4FusionCmd(ctx context.Context, depot, username, src, port string) *exec.Cmd {
+func buildP4FusionCmd(ctx context.Context, fusionConfig fusionConfig, depot, username, src, port string) *exec.Cmd {
 	return exec.CommandContext(ctx, "p4-fusion",
 		"--path", depot+"...",
-		"--client", s.fusionConfig.Client,
+		"--client", fusionConfig.Client,
 		"--user", username,
 		"--src", src,
-		"--networkThreads", strconv.Itoa(s.fusionConfig.NetworkThreads),
-		"--printBatch", strconv.Itoa(s.fusionConfig.PrintBatch),
+		"--networkThreads", strconv.Itoa(fusionConfig.NetworkThreads),
+		"--printBatch", strconv.Itoa(fusionConfig.PrintBatch),
 		"--port", port,
-		"--lookAhead", strconv.Itoa(s.fusionConfig.LookAhead),
-		"--retries", strconv.Itoa(s.fusionConfig.Retries),
-		"--refresh", strconv.Itoa(s.fusionConfig.Refresh),
-		"--maxChanges", strconv.Itoa(s.fusionConfig.MaxChanges),
-		"--includeBinaries", strconv.FormatBool(s.fusionConfig.IncludeBinaries),
-		"--fsyncEnable", strconv.FormatBool(s.fusionConfig.FsyncEnable),
+		"--lookAhead", strconv.Itoa(fusionConfig.LookAhead),
+		"--retries", strconv.Itoa(fusionConfig.Retries),
+		"--refresh", strconv.Itoa(fusionConfig.Refresh),
+		"--maxChanges", strconv.Itoa(fusionConfig.MaxChanges),
+		"--includeBinaries", strconv.FormatBool(fusionConfig.IncludeBinaries),
+		"--fsyncEnable", strconv.FormatBool(fusionConfig.FsyncEnable),
 		"--noColor", "true",
 		// We don't want an empty commit for a sane merge base across branches,
 		// since we don't use them and the empty commit breaks changelist parsing.
@@ -142,7 +135,7 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 		tryWrite(s.logger, progressWriter, "Converting depot using p4-fusion\n")
 		// Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100
 		root, _ := filepath.Split(string(dir))
-		cmd = s.buildP4FusionCmd(ctx, depot, p4user, root+".git", p4port)
+		cmd = buildP4FusionCmd(ctx, s.fusionConfig, depot, p4user, root+".git", p4port)
 	} else {
 		// TODO: This used to call the following for clone:
 		// tryWrite(s.logger, progressWriter, "Converting depot using git-p4\n")
@@ -152,10 +145,10 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 		// cmd = exec.CommandContext(ctx, "git", args...)
 		tryWrite(s.logger, progressWriter, "Converting depot using git-p4\n")
 		// Example: git p4 sync --max-changes 1000
-		args := append([]string{"p4", "sync"}, s.p4CommandOptions()...)
+		args := append([]string{"p4", "sync"}, p4CommandOptions(s.connection)...)
 		cmd = exec.CommandContext(ctx, "git", args...)
 	}
-	cmd.Env, err = s.p4CommandEnv(string(dir), p4port, p4user, p4passwd)
+	cmd.Env, err = p4CommandEnv(s.fs, string(dir), p4port, p4user, p4passwd, s.connection.P4Client)
 	if err != nil {
 		return errors.Wrap(err, "failed to build p4 command env")
 	}
@@ -205,18 +198,18 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 	return nil
 }
 
-func (s *perforceDepotSyncer) p4CommandOptions() []string {
+func p4CommandOptions(connection *schema.PerforceConnection) []string {
 	flags := []string{}
-	if s.maxChanges > 0 {
-		flags = append(flags, "--max-changes", strconv.Itoa(s.maxChanges))
+	if connection.MaxChanges > 0 {
+		flags = append(flags, "--max-changes", strconv.Itoa(int(connection.MaxChanges)))
 	}
-	if s.p4Client != "" {
+	if connection.P4Client != "" {
 		flags = append(flags, "--use-client-spec")
 	}
 	return flags
 }
 
-func (s *perforceDepotSyncer) p4CommandEnv(cmdCWD, p4port, p4user, p4passwd string) ([]string, error) {
+func p4CommandEnv(fs gitserverfs.FS, cmdCWD, p4port, p4user, p4passwd, p4Client string) ([]string, error) {
 	env := append(
 		os.Environ(),
 		"P4PORT="+p4port,
@@ -225,11 +218,11 @@ func (s *perforceDepotSyncer) p4CommandEnv(cmdCWD, p4port, p4user, p4passwd stri
 		"P4CLIENTPATH="+cmdCWD,
 	)
 
-	if s.p4Client != "" {
-		env = append(env, "P4CLIENT="+s.p4Client)
+	if p4Client != "" {
+		env = append(env, "P4CLIENT="+p4Client)
 	}
 
-	p4home, err := s.fs.P4HomeDir()
+	p4home, err := fs.P4HomeDir()
 	if err != nil {
 		return nil, err
 	}

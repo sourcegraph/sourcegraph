@@ -3,6 +3,8 @@ package vcssyncer
 import (
 	"context"
 	"io"
+	"os"
+	"os/exec"
 
 	jsoniter "github.com/json-iterator/go"
 
@@ -11,7 +13,10 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/executil"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/perforce"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/urlredactor"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
@@ -101,7 +106,124 @@ func NewVCSSyncer(ctx context.Context, opts *NewVCSSyncerOpts) (VCSSyncer, error
 				return nil, err
 			}
 
-			return NewPerforceDepotSyncer(opts.Logger, opts.RecordingCommandFactory, opts.FS, &c, opts.GetRemoteURLSource), nil
+			return NewGeneratingSyncer(
+				opts.Logger,
+				opts.RecordingCommandFactory,
+				opts.FS,
+				func(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error {
+					fusionConfig := configureFusionClient(&c)
+
+					source, err := opts.GetRemoteURLSource(ctx, repoName)
+					if err != nil {
+						return errors.Wrap(err, "getting remote URL source")
+					}
+
+					remoteURL, err := source.RemoteURL(ctx)
+					if err != nil {
+						return errors.Wrap(err, "getting remote URL") // This should never happen for Perforce
+					}
+
+					p4user, p4passwd, p4port, depot, err := perforce.DecomposePerforceRemoteURL(remoteURL)
+					if err != nil {
+						return errors.Wrap(err, "invalid perforce remote URL")
+					}
+
+					// First, do a quick check if we can reach the Perforce server.
+					tryWrite(opts.Logger, progressWriter, "Checking Perforce server connection\n")
+					err = perforce.P4TestWithTrust(ctx, opts.FS, perforce.P4TestWithTrustArguments{
+						P4Port:   p4port,
+						P4User:   p4user,
+						P4Passwd: p4passwd,
+					})
+					if err != nil {
+						return errors.Wrap(err, "verifying connection to perforce server")
+					}
+					tryWrite(opts.Logger, progressWriter, "Perforce server connection succeeded\n")
+
+					var cmd *exec.Cmd
+					if fusionConfig.Enabled {
+						tryWrite(opts.Logger, progressWriter, "Converting depot using p4-fusion\n")
+						// Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100
+						cmd = buildP4FusionCmd(ctx, fusionConfig, depot, p4user, string(dir), p4port)
+					} else {
+						// TODO: This used to call the following for clone:
+						// tryWrite(opts.Logger, progressWriter, "Converting depot using git-p4\n")
+						// // Example: git p4 clone --bare --max-changes 1000 //Sourcegraph/@all /tmp/clone-584194180/.git
+						// args := append([]string{"p4", "clone", "--bare"}, s.p4CommandOptions()...)
+						// args = append(args, depot+"@all", tmpPath)
+						// cmd = exec.CommandContext(ctx, "git", args...)
+						tryWrite(opts.Logger, progressWriter, "Converting depot using git-p4\n")
+						// Example: git p4 sync --max-changes 1000
+						args := append([]string{"p4", "sync"}, p4CommandOptions(&c)...)
+						cmd = exec.CommandContext(ctx, "git", args...)
+					}
+					cmd.Env, err = p4CommandEnv(opts.FS, string(dir), p4port, p4user, p4passwd, c.P4Client)
+					if err != nil {
+						return errors.Wrap(err, "failed to build p4 command env")
+					}
+					dir.Set(cmd)
+
+					// TODO(keegancsmith)(indradhanush) This is running a remote command and
+					// we have runRemoteGitCommand which sets TLS settings/etc. Do we need
+					// something for p4?
+					redactor := urlredactor.New(remoteURL)
+					wrCmd := opts.RecordingCommandFactory.WrapWithRepoName(ctx, opts.Logger, repoName, cmd).WithRedactorFunc(redactor.Redact)
+					// Note: Using RunCommandWriteOutput here does NOT store the output of the
+					// command as the command output of the wrexec command, because the pipes are
+					// already used.
+					exitCode, err := executil.RunCommandWriteOutput(ctx, wrCmd, progressWriter, redactor.Redact)
+					if err != nil {
+						return errors.Wrapf(err, "failed to run p4->git conversion: exit code %d", exitCode)
+					}
+
+					if !fusionConfig.Enabled {
+						p4home, err := opts.FS.P4HomeDir()
+						if err != nil {
+							return errors.Wrap(err, "failed to create p4home")
+						}
+
+						// Force update "master" to "refs/remotes/p4/master" where changes are synced into
+						cmd := wrexec.CommandContext(ctx, nil, "git", "branch", "-f", "master", "refs/remotes/p4/master")
+						cmd.Cmd.Env = append(os.Environ(),
+							"P4PORT="+p4port,
+							"P4USER="+p4user,
+							"P4PASSWD="+p4passwd,
+							"HOME="+p4home,
+						)
+						dir.Set(cmd.Cmd)
+						if output, err := cmd.CombinedOutput(); err != nil {
+							return errors.Wrapf(err, "failed to force update branch with output %q", string(output))
+						}
+					}
+
+					return nil
+				},
+				func(ctx context.Context, repoName api.RepoName) error {
+					source, err := opts.GetRemoteURLSource(ctx, repoName)
+					if err != nil {
+						return errors.Wrap(err, "getting remote URL source")
+					}
+
+					remoteURL, err := source.RemoteURL(ctx)
+					if err != nil {
+						return errors.Wrap(err, "getting remote URL") // This should never happen for Perforce
+					}
+
+					username, password, host, path, err := perforce.DecomposePerforceRemoteURL(remoteURL)
+					if err != nil {
+						return errors.Wrap(err, "invalid perforce remote URL")
+					}
+
+					return perforce.IsDepotPathCloneable(ctx, opts.FS, perforce.IsDepotPathCloneableArguments{
+						P4Port:   host,
+						P4User:   username,
+						P4Passwd: password,
+
+						DepotPath: path,
+					})
+				},
+				"perforce",
+			), nil
 		case extsvc.TypeJVMPackages:
 			var c schema.JVMPackagesConnection
 			if _, err := extractOptions(&c); err != nil {
