@@ -481,7 +481,22 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, lock Reposito
 	cloneCtx, cancel := context.WithTimeout(ctx, cloneTimeout)
 	defer cancel()
 
-	cloneErr := syncer.Clone(cloneCtx, repo, dir, tmpPath, progressWriter)
+	// Now we start the actual clone. This works by cloning to a temporary directory
+	// first, and then moving the contents into the right place in the FS once the
+	// clone is done. That prevents the repo from being accessed before it's ready
+	// for use.
+
+	// First, create a tmpPath directory to clone into.
+	if err := os.MkdirAll(tmpPath, os.ModePerm); err != nil {
+		return errors.Wrapf(err, "clone failed to create tmp dir")
+	}
+
+	// Next, initialize a bare repo in that tmp path.
+	if err := git.MakeBareRepo(ctx, tmpPath); err != nil {
+		return err
+	}
+
+	fetchErr := syncer.Fetch(cloneCtx, repo, common.GitDir(tmpPath), progressWriter)
 	progressWriter.Close()
 
 	if err := eg.Wait(); err != nil {
@@ -493,13 +508,13 @@ func (s *Server) cloneRepo(ctx context.Context, repo api.RepoName, lock Reposito
 		s.logger.Error("Setting last output in DB", log.Error(err))
 	}
 
-	if cloneErr != nil {
+	if fetchErr != nil {
 		if errors.Is(cloneCtx.Err(), context.DeadlineExceeded) {
 			return errors.Newf("failed to clone repo within deadline of %s", cloneTimeout)
 		}
 		// TODO: Should we really return the entire output here in an error?
 		// It could be a super big error string.
-		return errors.Wrapf(cloneErr, "clone failed. Output: %s", output.String())
+		return errors.Wrapf(fetchErr, "clone failed. Output: %s", output.String())
 	}
 
 	// Set a separate timeout for post repo fetch actions, otherwise git commands

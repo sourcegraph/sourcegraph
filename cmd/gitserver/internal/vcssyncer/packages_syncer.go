@@ -12,7 +12,6 @@ import (
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
-	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
@@ -76,31 +75,6 @@ func (s *vcsPackagesSyncer) IsCloneable(_ context.Context, _ api.RepoName) error
 
 func (s *vcsPackagesSyncer) Type() string {
 	return s.typ
-}
-
-// Clone writes a package and all requested versions of it into a synthetic git
-// repo at tmpPath by creating one head per version.
-// It reports redacted progress logs via the progressWriter.
-func (s *vcsPackagesSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
-	// First, make sure the tmpPath exists.
-	if err := os.MkdirAll(tmpPath, os.ModePerm); err != nil {
-		return errors.Wrapf(err, "clone failed to create tmp dir")
-	}
-
-	// Next, initialize a bare repo in that tmp path.
-	tryWrite(s.logger, progressWriter, "Creating bare repo\n")
-	if err := git.MakeBareRepo(ctx, tmpPath); err != nil {
-		return err
-	}
-	tryWrite(s.logger, progressWriter, "Created bare repo at %s\n", tmpPath)
-
-	// The Fetch method is responsible for cleaning up temporary directories.
-	// TODO: We should have more fine-grained progress reporting here.
-	if err := s.Fetch(ctx, repo, common.GitDir(tmpPath), progressWriter); err != nil {
-		return errors.Wrapf(err, "failed to fetch repo for %s", repo)
-	}
-
-	return nil
 }
 
 func (s *vcsPackagesSyncer) Fetch(ctx context.Context, repo api.RepoName, dir common.GitDir, progressWriter io.Writer) error {

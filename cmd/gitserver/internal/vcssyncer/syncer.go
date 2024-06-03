@@ -40,23 +40,6 @@ type VCSSyncer interface {
 	// All implementations should redact any sensitive information from the
 	// error message.
 	IsCloneable(ctx context.Context, repoName api.RepoName) error
-	// Clone should clone the repo onto disk into the given tmpPath.
-	//
-	// For now, regardless of the VCSSyncer implementation, the result that ends
-	// up in tmpPath is expected to be a valid Git repository and should be initially
-	// optimized (repacked, commit-graph written, etc).
-	//
-	// targetDir is passed for reporting purposes, but should not be written to
-	// during this process.
-	//
-	// Progress can be reported by writing to the progressWriter.
-	// 🚨 SECURITY:
-	// Content written to this writer should NEVER contain sensitive information.
-	// The VCSSyncer implementation is responsible of redacting potentially
-	// sensitive data like secrets.
-	// Progress reported through the progressWriter will be streamed line-by-line
-	// with both LF and CR being valid line terminators.
-	Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error
 	// Fetch tries to fetch updates from the remote to given directory.
 	// 🚨 SECURITY:
 	// Output returned from this function should NEVER contain sensitive information.

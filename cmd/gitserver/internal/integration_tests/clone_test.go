@@ -94,10 +94,10 @@ func TestClone(t *testing.T) {
 
 	// Should have acquired a lock.
 	mockassert.CalledOnce(t, locker.TryAcquireFunc)
-	// Should have reported status. 24 lines is the output git currently produces.
+	// Should have reported status. 22 lines is the output git currently produces.
 	// This number might need to be adjusted over time, but before doing so please
 	// check that the calls actually use the args you would expect them to use.
-	mockassert.CalledN(t, lock.SetStatusFunc, 24)
+	mockassert.CalledN(t, lock.SetStatusFunc, 22)
 	// Should have released the lock.
 	mockassert.CalledOnce(t, lock.ReleaseFunc)
 
@@ -109,8 +109,6 @@ func TestClone(t *testing.T) {
 	// Last output should have been stored for the repo.
 	mockrequire.CalledOnce(t, gsStore.SetLastOutputFunc)
 	haveLastOutput := gsStore.SetLastOutputFunc.History()[0].Arg2
-	require.Contains(t, haveLastOutput, "Creating bare repo\n")
-	require.Contains(t, haveLastOutput, "Created bare repo at ")
 	require.Contains(t, haveLastOutput, "Fetching remote contents\n")
 	// Ensure the path is properly redacted. The redactor just takes the whole
 	// remote URL as redacted so this is expected.
@@ -231,14 +229,14 @@ func TestClone_Fail(t *testing.T) {
 	// stage this time, not vcssyncer.IsCloneable.
 	_, _, err = s.FetchRepository(ctx, repo)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "failed to clone github.com/test/repo: clone failed. Output: Creating bare repo\nCreated bare repo at")
+	require.Contains(t, err.Error(), "failed to clone github.com/test/repo: clone failed. Output: ")
 
 	// Should have acquired a lock.
 	mockassert.CalledN(t, locker.TryAcquireFunc, 2)
-	// Should have reported status. 7 lines is the output git currently produces.
+	// Should have reported status. 5 lines is the output git currently produces.
 	// This number might need to be adjusted over time, but before doing so please
 	// check that the calls actually use the args you would expect them to use.
-	mockassert.CalledN(t, lock.SetStatusFunc, 7)
+	mockassert.CalledN(t, lock.SetStatusFunc, 5)
 	// Should have released the lock.
 	mockassert.CalledN(t, lock.ReleaseFunc, 2)
 
@@ -250,8 +248,6 @@ func TestClone_Fail(t *testing.T) {
 	// Last output should have been stored for the repo.
 	mockrequire.CalledOnce(t, gsStore.SetLastOutputFunc)
 	haveLastOutput := gsStore.SetLastOutputFunc.History()[0].Arg2
-	require.Contains(t, haveLastOutput, "Creating bare repo\n")
-	require.Contains(t, haveLastOutput, "Created bare repo at ")
 	require.Contains(t, haveLastOutput, "Fetching remote contents\n")
 	// Check that also git output made it here.
 	require.Contains(t, haveLastOutput, "does not appear to be a git repository\n")
@@ -260,8 +256,7 @@ func TestClone_Fail(t *testing.T) {
 	mockrequire.CalledOnce(t, gsStore.SetLastErrorFunc)
 	// And that it was called for the right repo, setting the last error to empty.
 	mockassert.CalledWith(t, gsStore.SetLastErrorFunc, mockassert.Values(mockassert.Skip, repo, mockassert.Skip, "test-shard"))
-	require.Contains(t, gsStore.SetLastErrorFunc.History()[0].Arg2, "Creating bare repo\n")
-	require.Contains(t, gsStore.SetLastErrorFunc.History()[0].Arg2, "failed to fetch: exit status 128")
+	require.Contains(t, gsStore.SetLastErrorFunc.History()[0].Arg2, "exit code: 128, failed to fetch")
 
 	// Check that no repo is in the expected location on disk.
 	_, err = os.Stat(fs.RepoDir(repo).Path())

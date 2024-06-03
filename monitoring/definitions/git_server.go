@@ -572,11 +572,6 @@ func GitServer() *monitoring.Dashboard {
 			},
 
 			genVCSMetricsGroup(vcsMetricsOptions{
-				operation:                 "clone",
-				metric:                    "vcssyncer_clone_duration_seconds",
-				interpretationDescription: "This is the time taken to clone a repository from the upstream source.",
-			}),
-			genVCSMetricsGroup(vcsMetricsOptions{
 				operation:                 "fetch",
 				metric:                    "vcssyncer_fetch_duration_seconds",
 				interpretationDescription: "This is the time taken to fetch a repository from the upstream source.",

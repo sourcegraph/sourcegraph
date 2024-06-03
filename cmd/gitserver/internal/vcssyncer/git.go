@@ -100,66 +100,6 @@ func (s *gitRepoSyncer) IsCloneable(ctx context.Context, repoName api.RepoName) 
 //	HEAD, zeroing it out, etc.)
 var TestRepositoryPostFetchCorruptionFunc func(ctx context.Context, dir common.GitDir)
 
-// Clone clones a Git repository into tmpPath, reporting redacted progress logs
-// via the progressWriter.
-// We "clone" a repository by first creating a bare repo and then fetching the
-// configured refs into it from the remote.
-func (s *gitRepoSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
-	dir := common.GitDir(tmpPath)
-
-	// First, make sure the tmpPath exists.
-	if err := os.MkdirAll(string(dir), os.ModePerm); err != nil {
-		return errors.Wrapf(err, "clone failed to create tmp dir")
-	}
-
-	// Next, initialize a bare repo in that tmp path.
-	{
-		tryWrite(s.logger, progressWriter, "Creating bare repo\n")
-
-		if err := git.MakeBareRepo(ctx, string(dir)); err != nil {
-			return err
-		}
-
-		tryWrite(s.logger, progressWriter, "Created bare repo at %s\n", string(dir))
-	}
-
-	source, err := s.getRemoteURLSource(ctx, repo)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get remote URL source for %q", repo)
-	}
-
-	// Now we build our fetch command. We don't actually clone, instead we init
-	// a bare repository and fetch all refs from remote once into local refs.
-	{
-		tryWrite(s.logger, progressWriter, "Fetching remote contents\n")
-
-		exitCode, err := s.runFetchCommand(ctx, repo, source, progressWriter, dir)
-		if err != nil {
-			return errors.Wrapf(err, "failed to fetch: exit status %d", exitCode)
-		}
-
-		tryWrite(s.logger, progressWriter, "Fetched remote contents\n")
-	}
-
-	if TestRepositoryPostFetchCorruptionFunc != nil {
-		TestRepositoryPostFetchCorruptionFunc(ctx, dir)
-	}
-
-	// Finally, set the local HEAD to the remote HEAD.
-	{
-		tryWrite(s.logger, progressWriter, "Setting local HEAD to remote HEAD\n")
-
-		err = s.setHEAD(ctx, repo, dir, source)
-		if err != nil {
-			return errors.Wrap(err, "failed to set local HEAD to remote HEAD")
-		}
-
-		tryWrite(s.logger, progressWriter, "Finished setting local HEAD to remote HEAD\n")
-	}
-
-	return nil
-}
-
 // Fetch tries to fetch updates of a Git repository.
 func (s *gitRepoSyncer) Fetch(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error {
 	source, err := s.getRemoteURLSource(ctx, repoName)
@@ -177,7 +117,6 @@ func (s *gitRepoSyncer) Fetch(ctx context.Context, repoName api.RepoName, dir co
 		}
 
 		tryWrite(s.logger, progressWriter, "Fetched remote contents\n")
-
 	}
 
 	if TestRepositoryPostFetchCorruptionFunc != nil {

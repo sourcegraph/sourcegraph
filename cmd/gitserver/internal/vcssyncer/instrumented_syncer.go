@@ -28,12 +28,6 @@ var (
 		Buckets: prometheus.DefBuckets,
 	}, []string{"type", "success"})
 
-	metricCloneDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "vcssyncer_clone_duration_seconds",
-		Help:    "Time taken to clone a repository",
-		Buckets: fetchBuckets,
-	}, []string{"type", "success"})
-
 	metricFetchDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "vcssyncer_fetch_duration_seconds",
 		Help:    "Time taken to fetch a repository",
@@ -78,22 +72,6 @@ func (i *instrumentedSyncer) IsCloneable(ctx context.Context, repoName api.RepoN
 	}()
 
 	return i.base.IsCloneable(ctx, repoName)
-}
-
-func (i *instrumentedSyncer) Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
-	if !i.shouldObserve() {
-		return i.base.Clone(ctx, repo, targetDir, tmpPath, progressWriter)
-	}
-
-	start := time.Now()
-	defer func() {
-		duration := time.Since(start).Seconds()
-		succeeded := err == nil
-
-		metricCloneDuration.WithLabelValues(i.formattedTypeLabel, strconv.FormatBool(succeeded)).Observe(duration)
-	}()
-
-	return i.base.Clone(ctx, repo, targetDir, tmpPath, progressWriter)
 }
 
 func (i *instrumentedSyncer) Fetch(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) (err error) {

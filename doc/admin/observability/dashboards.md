@@ -7037,200 +7037,6 @@ sum by (instance) (src_gitserver_search_running{instance=~`${shard:regex}`})
 
 <br />
 
-### Git Server: VCS Clone metrics
-
-#### gitserver: vcs_syncer_999_successful_clone_duration
-
-<p class="subtitle">99.9th percentile successful Clone duration over 1m</p>
-
-The 99.9th percentile duration for successful `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100400` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.999, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="true"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_99_successful_clone_duration
-
-<p class="subtitle">99th percentile successful Clone duration over 1m</p>
-
-The 99th percentile duration for successful `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100401` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.99, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="true"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_95_successful_clone_duration
-
-<p class="subtitle">95th percentile successful Clone duration over 1m</p>
-
-The 95th percentile duration for successful `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100402` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.95, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="true"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_successful_clone_rate
-
-<p class="subtitle">Rate of successful Clone VCS operations over 1m</p>
-
-The rate of successful `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100410` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-sum by (type) (rate(vcssyncer_clone_duration_seconds_count{type=~`${vcsSyncerType:regex}`, success="true"}[1m]))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_999_failed_clone_duration
-
-<p class="subtitle">99.9th percentile failed Clone duration over 1m</p>
-
-The 99.9th percentile duration for failed `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100420` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.999, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="false"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_99_failed_clone_duration
-
-<p class="subtitle">99th percentile failed Clone duration over 1m</p>
-
-The 99th percentile duration for failed `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100421` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.99, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="false"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_95_failed_clone_duration
-
-<p class="subtitle">95th percentile failed Clone duration over 1m</p>
-
-The 95th percentile duration for failed `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100422` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-histogram_quantile(0.95, sum by (type, le) (rate(vcssyncer_clone_duration_seconds_bucket{type=~`${vcsSyncerType:regex}`, success="false"}[1m])))
-```
-</details>
-
-<br />
-
-#### gitserver: vcs_syncer_failed_clone_rate
-
-<p class="subtitle">Rate of failed Clone VCS operations over 1m</p>
-
-The rate of failed `Clone` VCS operations. This is the time taken to clone a repository from the upstream source.
-
-This panel has no related alerts.
-
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100430` on your Sourcegraph instance.
-
-<sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
-
-<details>
-<summary>Technical details</summary>
-
-Query:
-
-```
-sum by (type) (rate(vcssyncer_clone_duration_seconds_count{type=~`${vcsSyncerType:regex}`, success="false"}[1m]))
-```
-</details>
-
-<br />
-
 ### Git Server: VCS Fetch metrics
 
 #### gitserver: vcs_syncer_999_successful_fetch_duration
@@ -7241,7 +7047,7 @@ The 99.9th percentile duration for successful `Fetch` VCS operations. This is th
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100500` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100400` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7265,7 +7071,7 @@ The 99th percentile duration for successful `Fetch` VCS operations. This is the 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100501` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100401` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7289,7 +7095,7 @@ The 95th percentile duration for successful `Fetch` VCS operations. This is the 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100502` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100402` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7313,7 +7119,7 @@ The rate of successful `Fetch` VCS operations. This is the time taken to fetch a
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100510` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100410` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7337,7 +7143,7 @@ The 99.9th percentile duration for failed `Fetch` VCS operations. This is the ti
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100520` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100420` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7361,7 +7167,7 @@ The 99th percentile duration for failed `Fetch` VCS operations. This is the time
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100521` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100421` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7385,7 +7191,7 @@ The 95th percentile duration for failed `Fetch` VCS operations. This is the time
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100522` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100422` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7409,7 +7215,7 @@ The rate of failed `Fetch` VCS operations. This is the time taken to fetch a rep
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100530` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100430` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7435,7 +7241,7 @@ The 99.9th percentile duration for successful `Is_cloneable` VCS operations. Thi
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100600` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100500` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7459,7 +7265,7 @@ The 99th percentile duration for successful `Is_cloneable` VCS operations. This 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100601` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100501` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7483,7 +7289,7 @@ The 95th percentile duration for successful `Is_cloneable` VCS operations. This 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100602` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100502` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7507,7 +7313,7 @@ The rate of successful `Is_cloneable` VCS operations. This is the time taken to 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100610` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100510` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7531,7 +7337,7 @@ The 99.9th percentile duration for failed `Is_cloneable` VCS operations. This is
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100620` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100520` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7555,7 +7361,7 @@ The 99th percentile duration for failed `Is_cloneable` VCS operations. This is t
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100621` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100521` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7579,7 +7385,7 @@ The 95th percentile duration for failed `Is_cloneable` VCS operations. This is t
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100622` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100522` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7603,7 +7409,7 @@ The rate of failed `Is_cloneable` VCS operations. This is the time taken to chec
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100630` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100530` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7629,7 +7435,7 @@ The number of requests that are currently being handled by gitserver backend lay
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100700` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100600` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7651,7 +7457,7 @@ src_gitserver_backend_concurrent_operations
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100710` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100610` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7673,7 +7479,7 @@ sum(increase(src_gitserver_backend_total{job=~"^gitserver.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100711` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100611` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7695,7 +7501,7 @@ sum  by (le)(rate(src_gitserver_backend_duration_seconds_bucket{job=~"^gitserver
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100712` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100612` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7717,7 +7523,7 @@ sum(increase(src_gitserver_backend_errors_total{job=~"^gitserver.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100713` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100613` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7739,7 +7545,7 @@ sum(increase(src_gitserver_backend_errors_total{job=~"^gitserver.*"}[5m])) / (su
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100720` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100620` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7761,7 +7567,7 @@ sum by (op)(increase(src_gitserver_backend_total{job=~"^gitserver.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100721` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100621` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7783,7 +7589,7 @@ histogram_quantile(0.99, sum  by (le,op)(rate(src_gitserver_backend_duration_sec
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100722` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100622` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7805,7 +7611,7 @@ sum by (op)(increase(src_gitserver_backend_errors_total{job=~"^gitserver.*"}[5m]
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100723` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100623` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7829,7 +7635,7 @@ sum by (op)(increase(src_gitserver_backend_errors_total{job=~"^gitserver.*"}[5m]
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100800` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100700` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7851,7 +7657,7 @@ sum(increase(src_gitserver_client_total{job=~"^*.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100801` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100701` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7873,7 +7679,7 @@ sum  by (le)(rate(src_gitserver_client_duration_seconds_bucket{job=~"^*.*"}[5m])
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100802` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100702` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7895,7 +7701,7 @@ sum(increase(src_gitserver_client_errors_total{job=~"^*.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100803` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100703` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7917,7 +7723,7 @@ sum(increase(src_gitserver_client_errors_total{job=~"^*.*"}[5m])) / (sum(increas
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100810` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100710` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7939,7 +7745,7 @@ sum by (op,scope)(increase(src_gitserver_client_total{job=~"^*.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100811` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100711` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7961,7 +7767,7 @@ histogram_quantile(0.99, sum  by (le,op,scope)(rate(src_gitserver_client_duratio
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100812` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100712` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -7983,7 +7789,7 @@ sum by (op,scope)(increase(src_gitserver_client_errors_total{job=~"^*.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100813` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100713` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8011,7 +7817,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100900` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100800` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8037,7 +7843,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100901` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100801` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8063,7 +7869,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100910` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100810` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8089,7 +7895,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100911` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100811` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8115,7 +7921,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100920` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100820` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8141,7 +7947,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100921` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100821` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8167,7 +7973,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100930` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100830` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8193,7 +7999,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100931` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100831` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8219,7 +8025,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100940` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100840` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8245,7 +8051,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100941` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100841` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8271,7 +8077,7 @@ Note: Disk statistics are per _device_, not per _service_. In certain environmen
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100950` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100850` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8297,7 +8103,7 @@ The number of gRPC requests received per second across all methods, aggregated a
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101000` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100900` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8321,7 +8127,7 @@ The number of gRPC requests received per second broken out per method, aggregate
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101001` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100901` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8345,7 +8151,7 @@ The percentage of gRPC requests that fail across all methods, aggregated across 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101010` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100910` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8369,7 +8175,7 @@ The percentage of gRPC requests that fail per method, aggregated across all inst
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101011` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100911` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8393,7 +8199,7 @@ The 99th percentile response time per method, aggregated across all instances.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101020` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100920` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8417,7 +8223,7 @@ The 90th percentile response time per method, aggregated across all instances.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101021` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100921` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8441,7 +8247,7 @@ The 75th percentile response time per method, aggregated across all instances.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101022` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100922` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8465,7 +8271,7 @@ The 99.9th percentile total per-RPC response size per method, aggregated across 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101030` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100930` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8489,7 +8295,7 @@ The 90th percentile total per-RPC response size per method, aggregated across al
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101031` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100931` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8513,7 +8319,7 @@ The 75th percentile total per-RPC response size per method, aggregated across al
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101032` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100932` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8537,7 +8343,7 @@ The 99.9th percentile size of every individual protocol buffer size sent by the 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101040` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100940` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8561,7 +8367,7 @@ The 90th percentile size of every individual protocol buffer size sent by the se
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101041` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100941` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8585,7 +8391,7 @@ The 75th percentile size of every individual protocol buffer size sent by the se
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101042` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100942` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8609,7 +8415,7 @@ The average number of response messages sent during a streaming RPC method, brok
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101050` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100950` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8633,7 +8439,7 @@ The rate of all generated gRPC response codes per method, aggregated across all 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101060` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=100960` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8659,7 +8465,7 @@ The percentage of gRPC requests that fail across all methods (regardless of whet
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101100` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101000` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8683,7 +8489,7 @@ The percentage of gRPC requests that fail per method (regardless of whether or n
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101101` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101001` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8707,7 +8513,7 @@ The rate of all generated gRPC response codes per method (regardless of whether 
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101102` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101002` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8737,7 +8543,7 @@ When debugging, knowing that a particular error comes from the grpc-go library i
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101110` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101010` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8767,7 +8573,7 @@ When debugging, knowing that a particular error comes from the grpc-go library i
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101111` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101011` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8797,7 +8603,7 @@ When debugging, knowing that a particular error comes from the grpc-go library i
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101112` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101012` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8823,7 +8629,7 @@ The percentage of gRPC requests that were retried across all methods, aggregated
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101200` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101100` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8847,7 +8653,7 @@ The percentage of gRPC requests that were retried aggregated across all "gitserv
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101201` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101101` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8871,7 +8677,7 @@ The count of gRPC requests that were retried aggregated across all "gitserver" c
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101202` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101102` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -8897,7 +8703,7 @@ The duration since the configuration client used by the "gitserver" service last
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101300` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101200` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Infrastructure Org team](https://handbook.sourcegraph.com/departments/engineering/infrastructure).*</sub>
 
@@ -8919,7 +8725,7 @@ src_conf_client_time_since_last_successful_update_seconds{job=~`.*gitserver`,ins
 
 Refer to the [alerts reference](./alerts.md#gitserver-gitserver-site-configuration-duration-since-last-successful-update-by-instance) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101301` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101201` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Infrastructure Org team](https://handbook.sourcegraph.com/departments/engineering/infrastructure).*</sub>
 
@@ -8943,7 +8749,7 @@ max(max_over_time(src_conf_client_time_since_last_successful_update_seconds{job=
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101400` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101300` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -8965,7 +8771,7 @@ sum(increase(src_codeintel_coursier_total{op!="RunCommand",job=~"^gitserver.*"}[
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101401` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101301` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -8987,7 +8793,7 @@ sum  by (le)(rate(src_codeintel_coursier_duration_seconds_bucket{op!="RunCommand
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101402` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101302` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9009,7 +8815,7 @@ sum(increase(src_codeintel_coursier_errors_total{op!="RunCommand",job=~"^gitserv
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101403` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101303` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9031,7 +8837,7 @@ sum(increase(src_codeintel_coursier_errors_total{op!="RunCommand",job=~"^gitserv
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101410` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101310` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9053,7 +8859,7 @@ sum by (op)(increase(src_codeintel_coursier_total{op!="RunCommand",job=~"^gitser
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101411` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101311` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9075,7 +8881,7 @@ histogram_quantile(0.99, sum  by (le,op)(rate(src_codeintel_coursier_duration_se
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101412` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101312` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9097,7 +8903,7 @@ sum by (op)(increase(src_codeintel_coursier_errors_total{op!="RunCommand",job=~"
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101413` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101313` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9121,7 +8927,7 @@ sum by (op)(increase(src_codeintel_coursier_errors_total{op!="RunCommand",job=~"
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101500` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101400` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9143,7 +8949,7 @@ sum(increase(src_codeintel_npm_total{op!="RunCommand",job=~"^gitserver.*"}[5m]))
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101501` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101401` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9165,7 +8971,7 @@ sum  by (le)(rate(src_codeintel_npm_duration_seconds_bucket{op!="RunCommand",job
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101502` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101402` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9187,7 +8993,7 @@ sum(increase(src_codeintel_npm_errors_total{op!="RunCommand",job=~"^gitserver.*"
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101503` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101403` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9209,7 +9015,7 @@ sum(increase(src_codeintel_npm_errors_total{op!="RunCommand",job=~"^gitserver.*"
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101510` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101410` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9231,7 +9037,7 @@ sum by (op)(increase(src_codeintel_npm_total{op!="RunCommand",job=~"^gitserver.*
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101511` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101411` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9253,7 +9059,7 @@ histogram_quantile(0.99, sum  by (le,op)(rate(src_codeintel_npm_duration_seconds
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101512` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101412` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9275,7 +9081,7 @@ sum by (op)(increase(src_codeintel_npm_errors_total{op!="RunCommand",job=~"^gits
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101513` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101413` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Code intelligence team](https://handbook.sourcegraph.com/departments/engineering/teams/code-intelligence).*</sub>
 
@@ -9301,7 +9107,7 @@ The number of healthy HTTP requests per second to internal HTTP api
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101600` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101500` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9325,7 +9131,7 @@ The number of unhealthy HTTP requests per second to internal HTTP api
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101601` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101501` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9349,7 +9155,7 @@ The number of HTTP requests per second by code
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101602` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101502` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9373,7 +9179,7 @@ The 95th percentile duration by route when the status code is 200
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101610` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101510` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9397,7 +9203,7 @@ The 95th percentile duration by route when the status code is not 200
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101611` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101511` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9421,7 +9227,7 @@ histogram_quantile(0.95, sum(rate(src_http_request_duration_seconds_bucket{app="
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101700` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101600` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9443,7 +9249,7 @@ sum by (app_name, db_name) (src_pgsql_conns_max_open{app_name="gitserver"})
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101701` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101601` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9465,7 +9271,7 @@ sum by (app_name, db_name) (src_pgsql_conns_open{app_name="gitserver"})
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101710` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101610` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9487,7 +9293,7 @@ sum by (app_name, db_name) (src_pgsql_conns_in_use{app_name="gitserver"})
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101711` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101611` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9509,7 +9315,7 @@ sum by (app_name, db_name) (src_pgsql_conns_idle{app_name="gitserver"})
 
 Refer to the [alerts reference](./alerts.md#gitserver-mean-blocked-seconds-per-conn-request) for 2 alerts related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101720` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101620` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9531,7 +9337,7 @@ sum by (app_name, db_name) (increase(src_pgsql_conns_blocked_seconds{app_name="g
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101730` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101630` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9553,7 +9359,7 @@ sum by (app_name, db_name) (increase(src_pgsql_conns_closed_max_idle{app_name="g
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101731` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101631` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9575,7 +9381,7 @@ sum by (app_name, db_name) (increase(src_pgsql_conns_closed_max_lifetime{app_nam
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101732` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101632` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9609,7 +9415,7 @@ value change independent of deployment events (such as an upgrade), it could ind
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101800` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101700` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9631,7 +9437,7 @@ count by(name) ((time() - container_last_seen{name=~"^gitserver.*"}) > 60)
 
 Refer to the [alerts reference](./alerts.md#gitserver-container-cpu-usage) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101801` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101701` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9653,7 +9459,7 @@ cadvisor_container_cpu_usage_percentage_total{name=~"^gitserver.*"}
 
 Refer to the [alerts reference](./alerts.md#gitserver-container-memory-usage) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101802` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101702` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9678,7 +9484,7 @@ When extremely high, this can indicate a resource usage problem, or can cause pr
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101803` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101703` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9702,7 +9508,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^gitserver.*"}[1h]) + rate(co
 
 Refer to the [alerts reference](./alerts.md#gitserver-provisioning-container-cpu-usage-long-term) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101900` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101800` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9726,7 +9532,7 @@ Git Server is expected to use up all the memory it is provided.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101901` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101801` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9748,7 +9554,7 @@ max_over_time(cadvisor_container_memory_usage_percentage_total{name=~"^gitserver
 
 Refer to the [alerts reference](./alerts.md#gitserver-provisioning-container-cpu-usage-short-term) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101910` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101810` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9772,7 +9578,7 @@ Git Server is expected to use up all the memory it is provided.
 
 This panel has no related alerts.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101911` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101811` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9797,7 +9603,7 @@ When it occurs frequently, it is an indicator of underprovisioning.
 
 Refer to the [alerts reference](./alerts.md#gitserver-container-oomkill-events-total) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101912` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101812` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9823,7 +9629,7 @@ A high value here indicates a possible goroutine leak.
 
 Refer to the [alerts reference](./alerts.md#gitserver-go-goroutines) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=102000` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101900` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9845,7 +9651,7 @@ max by(instance) (go_goroutines{job=~".*gitserver"})
 
 Refer to the [alerts reference](./alerts.md#gitserver-go-gc-duration-seconds) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=102001` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=101901` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 
@@ -9869,7 +9675,7 @@ max by(instance) (go_gc_duration_seconds{job=~".*gitserver"})
 
 Refer to the [alerts reference](./alerts.md#gitserver-pods-available-percentage) for 1 alert related to this panel.
 
-To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=102100` on your Sourcegraph instance.
+To see this panel, visit `/-/debug/grafana/d/gitserver/gitserver?viewPanel=102000` on your Sourcegraph instance.
 
 <sub>*Managed by the [Sourcegraph Source team](https://handbook.sourcegraph.com/departments/engineering/teams/source).*</sub>
 

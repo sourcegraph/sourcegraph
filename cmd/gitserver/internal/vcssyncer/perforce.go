@@ -85,105 +85,6 @@ func (s *perforceDepotSyncer) IsCloneable(ctx context.Context, repoName api.Repo
 	})
 }
 
-// Clone writes a Perforce depot into tmpPath, using a Perforce-to-git-conversion.
-// It reports redacted progress logs via the progressWriter.
-func (s *perforceDepotSyncer) Clone(ctx context.Context, repo api.RepoName, _ common.GitDir, tmpPath string, progressWriter io.Writer) (err error) {
-	source, err := s.getRemoteURLSource(ctx, repo)
-	if err != nil {
-		return errors.Wrap(err, "getting remote URL source")
-	}
-
-	remoteURL, err := source.RemoteURL(ctx)
-	if err != nil {
-		return errors.Wrap(err, "getting remote URL") // This should never happen for Perforce
-	}
-
-	// First, make sure the tmpPath exists.
-	if err := os.MkdirAll(tmpPath, os.ModePerm); err != nil {
-		return errors.Wrapf(err, "clone failed to create tmp dir")
-	}
-
-	p4user, p4passwd, p4port, depot, err := perforce.DecomposePerforceRemoteURL(remoteURL)
-	if err != nil {
-		return errors.Wrap(err, "invalid perforce remote URL")
-	}
-
-	// First, do a quick check if we can reach the Perforce server.
-	tryWrite(s.logger, progressWriter, "Checking Perforce server connection\n")
-	err = perforce.P4TestWithTrust(ctx, s.fs, perforce.P4TestWithTrustArguments{
-		P4Port:   p4port,
-		P4User:   p4user,
-		P4Passwd: p4passwd,
-	})
-	if err != nil {
-		return errors.Wrap(err, "verifying connection to perforce server")
-	}
-	tryWrite(s.logger, progressWriter, "Perforce server connection succeeded\n")
-
-	var cmd *exec.Cmd
-	if s.fusionConfig.Enabled {
-		tryWrite(s.logger, progressWriter, "Converting depot using p4-fusion\n")
-		cmd = s.buildP4FusionCmd(ctx, depot, p4user, tmpPath, p4port)
-	} else {
-		tryWrite(s.logger, progressWriter, "Converting depot using git-p4\n")
-		// Example: git p4 clone --bare --max-changes 1000 //Sourcegraph/@all /tmp/clone-584194180/.git
-		args := append([]string{"p4", "clone", "--bare"}, s.p4CommandOptions()...)
-		args = append(args, depot+"@all", tmpPath)
-		cmd = exec.CommandContext(ctx, "git", args...)
-	}
-	cmd.Env, err = s.p4CommandEnv(tmpPath, p4port, p4user, p4passwd)
-	if err != nil {
-		return errors.Wrap(err, "failed to build p4 command env")
-	}
-
-	redactor := urlredactor.New(remoteURL)
-	wrCmd := s.recordingCommandFactory.WrapWithRepoName(ctx, s.logger, repo, cmd).WithRedactorFunc(redactor.Redact)
-	// Note: Using RunCommandWriteOutput here does NOT store the output of the
-	// command as the command output of the wrexec command, because the pipes are
-	// already used.
-	exitCode, err := executil.RunCommandWriteOutput(ctx, wrCmd, progressWriter, redactor.Redact)
-	if err != nil {
-		return errors.Wrapf(err, "failed to run p4->git conversion: exit code %d", exitCode)
-	}
-
-	// Verify that p4-fusion generated a valid git repository.
-	tryWrite(s.logger, progressWriter, "Verifying integrity of converted repository\n")
-	fsck := exec.CommandContext(ctx, "git", "fsck", "--progress")
-	fsck.Dir = tmpPath
-	exitCode, err = executil.RunCommandWriteOutput(
-		ctx,
-		s.recordingCommandFactory.WrapWithRepoName(ctx, s.logger, repo, fsck).WithRedactorFunc(redactor.Redact),
-		progressWriter,
-		redactor.Redact,
-	)
-	if err != nil {
-		return errors.Wrapf(err, "failed to run git fsck: exit code %d", exitCode)
-	}
-	tryWrite(s.logger, progressWriter, "Converted repository is valid!\n")
-
-	// Repack all the loose objects p4-fusion created.
-	tryWrite(s.logger, progressWriter, "Repacking loose git objects for efficiency\n")
-	// Overview of arguments:
-	// -d to remove the unpacked objects
-	// --local passes --local to git-pack-objects. Not needed today but doesn't cost a penny and should we ever start deduping objects, this will keep objects from the alternative stores unpacked
-	// --window-memory to constrain the memory usage of delta-compression, success is more important than disk space efficiency
-	// --cruft --cruft-expiration=2.weeks.ago move unused objects into a cruft pack to have some evidence of something going wrong, also don't expire them just yet
-	repack := exec.CommandContext(ctx, "git", "repack", "-d", "--local", "--cruft", "--cruft-expiration=2.weeks.ago", "--write-bitmap-index", "--window-memory=100m")
-	repack.Dir = tmpPath
-	exitCode, err = executil.RunCommandWriteOutput(
-		ctx,
-		s.recordingCommandFactory.WrapWithRepoName(ctx, s.logger, repo, repack).WithRedactorFunc(redactor.Redact),
-		progressWriter,
-		redactor.Redact,
-	)
-	if err != nil {
-		return errors.Wrapf(err, "failed to run git repack: exit code %d", exitCode)
-	}
-	tryWrite(s.logger, progressWriter, "Repacked loose git objects!\n")
-
-	return nil
-}
-
 // Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100 --noColor true --noBaseCommit true
 func (s *perforceDepotSyncer) buildP4FusionCmd(ctx context.Context, depot, username, src, port string) *exec.Cmd {
 	return exec.CommandContext(ctx, "p4-fusion",
@@ -225,6 +126,7 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 	}
 
 	// First, do a quick check if we can reach the Perforce server.
+	tryWrite(s.logger, progressWriter, "Checking Perforce server connection\n")
 	err = perforce.P4TestWithTrust(ctx, s.fs, perforce.P4TestWithTrustArguments{
 		P4Port:   p4port,
 		P4User:   p4user,
@@ -233,30 +135,43 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 	if err != nil {
 		return errors.Wrap(err, "verifying connection to perforce server")
 	}
+	tryWrite(s.logger, progressWriter, "Perforce server connection succeeded\n")
 
-	var cmd *wrexec.Cmd
+	var cmd *exec.Cmd
 	if s.fusionConfig.Enabled {
+		tryWrite(s.logger, progressWriter, "Converting depot using p4-fusion\n")
 		// Example: p4-fusion --path //depot/... --user $P4USER --src clones/ --networkThreads 64 --printBatch 10 --port $P4PORT --lookAhead 2000 --retries 10 --refresh 100
 		root, _ := filepath.Split(string(dir))
-		cmd = wrexec.Wrap(ctx, nil, s.buildP4FusionCmd(ctx, depot, p4user, root+".git", p4port))
+		cmd = s.buildP4FusionCmd(ctx, depot, p4user, root+".git", p4port)
 	} else {
+		// TODO: This used to call the following for clone:
+		// tryWrite(s.logger, progressWriter, "Converting depot using git-p4\n")
+		// // Example: git p4 clone --bare --max-changes 1000 //Sourcegraph/@all /tmp/clone-584194180/.git
+		// args := append([]string{"p4", "clone", "--bare"}, s.p4CommandOptions()...)
+		// args = append(args, depot+"@all", tmpPath)
+		// cmd = exec.CommandContext(ctx, "git", args...)
+		tryWrite(s.logger, progressWriter, "Converting depot using git-p4\n")
 		// Example: git p4 sync --max-changes 1000
 		args := append([]string{"p4", "sync"}, s.p4CommandOptions()...)
-		cmd = wrexec.CommandContext(ctx, nil, "git", args...)
+		cmd = exec.CommandContext(ctx, "git", args...)
 	}
 	cmd.Env, err = s.p4CommandEnv(string(dir), p4port, p4user, p4passwd)
 	if err != nil {
 		return errors.Wrap(err, "failed to build p4 command env")
 	}
-	dir.Set(cmd.Cmd)
+	dir.Set(cmd)
 
 	// TODO(keegancsmith)(indradhanush) This is running a remote command and
 	// we have runRemoteGitCommand which sets TLS settings/etc. Do we need
 	// something for p4?
-	output, err := cmd.CombinedOutput()
-	tryWrite(s.logger, progressWriter, urlredactor.New(remoteURL).Redact(string(output)))
+	redactor := urlredactor.New(remoteURL)
+	wrCmd := s.recordingCommandFactory.WrapWithRepoName(ctx, s.logger, repoName, cmd).WithRedactorFunc(redactor.Redact)
+	// Note: Using RunCommandWriteOutput here does NOT store the output of the
+	// command as the command output of the wrexec command, because the pipes are
+	// already used.
+	exitCode, err := executil.RunCommandWriteOutput(ctx, wrCmd, progressWriter, redactor.Redact)
 	if err != nil {
-		return errors.Wrapf(err, "failed to update")
+		return errors.Wrapf(err, "failed to run p4->git conversion: exit code %d", exitCode)
 	}
 
 	if !s.fusionConfig.Enabled {
@@ -266,7 +181,7 @@ func (s *perforceDepotSyncer) Fetch(ctx context.Context, repoName api.RepoName, 
 		}
 
 		// Force update "master" to "refs/remotes/p4/master" where changes are synced into
-		cmd = wrexec.CommandContext(ctx, nil, "git", "branch", "-f", "master", "refs/remotes/p4/master")
+		cmd := wrexec.CommandContext(ctx, nil, "git", "branch", "-f", "master", "refs/remotes/p4/master")
 		cmd.Cmd.Env = append(os.Environ(),
 			"P4PORT="+p4port,
 			"P4USER="+p4user,

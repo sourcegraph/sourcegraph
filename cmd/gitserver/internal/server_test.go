@@ -462,7 +462,7 @@ func TestCloneRepoRecordsFailures(t *testing.T) {
 			name: "Failing clone",
 			getVCSSyncer: func(ctx context.Context, name api.RepoName) (vcssyncer.VCSSyncer, error) {
 				m := vcssyncer.NewMockVCSSyncer()
-				m.CloneFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName, _ common.GitDir, _ string, w io.Writer) error {
+				m.FetchFunc.SetDefaultHook(func(ctx context.Context, rn api.RepoName, gd common.GitDir, w io.Writer) error {
 					_, err := fmt.Fprint(w, "fatal: repository '/dev/null' does not exist")
 					require.NoError(t, err)
 					return &exec.ExitError{ProcessState: &os.ProcessState{}}
@@ -1139,7 +1139,6 @@ func TestServer_IsRepoCloneable_InternalActor(t *testing.T) {
 type mockVCSSyncer struct {
 	mockTypeFunc    func() string
 	mockIsCloneable func(ctx context.Context, repoName api.RepoName) error
-	mockClone       func(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error
 	mockFetch       func(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error
 }
 
@@ -1157,14 +1156,6 @@ func (m *mockVCSSyncer) IsCloneable(ctx context.Context, repoName api.RepoName) 
 	}
 
 	return errors.New("no mock for IsCloneable() is set")
-}
-
-func (m *mockVCSSyncer) Clone(ctx context.Context, repo api.RepoName, targetDir common.GitDir, tmpPath string, progressWriter io.Writer) error {
-	if m.mockClone != nil {
-		return m.mockClone(ctx, repo, targetDir, tmpPath, progressWriter)
-	}
-
-	return errors.New("no mock for Clone() is set")
 }
 
 func (m *mockVCSSyncer) Fetch(ctx context.Context, repoName api.RepoName, dir common.GitDir, progressWriter io.Writer) error {

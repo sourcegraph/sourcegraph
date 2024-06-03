@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/common"
+	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/gitserverfs"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/dependencies"
@@ -59,7 +60,11 @@ func TestVcsDependenciesSyncer_Fetch(t *testing.T) {
 	}
 
 	dir := common.GitDir(t.TempDir())
-	err := s.Clone(ctx, "repo", common.GitDir(dir), string(dir), io.Discard)
+	err := os.MkdirAll(string(dir), os.ModePerm)
+	require.NoError(t, err)
+	err = git.MakeBareRepo(ctx, string(dir))
+	require.NoError(t, err)
+	err = s.Fetch(ctx, "repo", dir, io.Discard)
 	require.NoError(t, err)
 
 	depsService.Add("foo@0.0.1")
@@ -344,7 +349,11 @@ func (f fakeVersionedPackage) Less(other reposource.VersionedPackage) bool {
 func (s *vcsPackagesSyncer) runCloneCommand(t *testing.T, bareGitDirectory string, dependencies []string) {
 
 	s.configDeps = dependencies
-	err := s.Clone(context.Background(), "repo", common.GitDir(bareGitDirectory), string(bareGitDirectory), io.Discard)
+	err := os.MkdirAll(bareGitDirectory, os.ModePerm)
+	require.NoError(t, err)
+	err = git.MakeBareRepo(context.Background(), bareGitDirectory)
+	require.NoError(t, err)
+	err = s.Fetch(context.Background(), "repo", common.GitDir(bareGitDirectory), io.Discard)
 	assert.Nil(t, err)
 }
 
