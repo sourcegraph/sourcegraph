@@ -64,6 +64,9 @@ func (c *completionsResolver) Completions(ctx context.Context, args graphqlbacke
 		completionsConfig.Endpoint,
 		completionsConfig.Provider,
 		completionsConfig.AccessToken,
+		completionsConfig.TokenRetrievalEndpoint,
+		completionsConfig.ClientId,
+		completionsConfig.ClientSecret,
 	)
 	if err != nil {
 		return "", errors.Wrap(err, "GetCompletionStreamClient")

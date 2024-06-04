@@ -2842,6 +2842,18 @@
           "description": "The user field for OpenAI config for both AzureOpenAI and OpenAI",
           "type": "string"
         },
+        "tokenRetrievalEndpoint": {
+          "description": "The azure field for the endpoint to retreive token from",
+          "type": "string"
+        },
+        "clientId": {
+          "description": "The clientId to be used as a request header for token retrieval",
+          "type": "string"
+        },
+        "clientSecret": {
+          "description": "The clientSecret to be used as a request header for token retrieval",
+          "type": "string"
+        },
         "fastChatModel": {
           "description": "The model used for fast chat completions. \n NOTE: The Anthropic messages API does not support model names like claude-2 or claude-instant-1 where only the major version is specified as they are retired. We recommend using a specific model identifier as specified here https://docs.anthropic.com/claude/docs/models-overview#model-comparison ",
           "type": "string",

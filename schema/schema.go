@@ -667,6 +667,10 @@ type Completions struct {
 	ChatModel string `json:"chatModel,omitempty"`
 	// ChatModelMaxTokens description: The maximum number of tokens to use as client when talking to chatModel. If not set, clients need to set their own limit. If smartContextWindow is enabled, this value will be overridden by the clients.
 	ChatModelMaxTokens int `json:"chatModelMaxTokens,omitempty"`
+	// ClientId description: The clientId to be used as a request header for token retrieval
+	ClientId string `json:"clientId,omitempty"`
+	// ClientSecret description: The clientSecret to be used as a request header for token retrieval
+	ClientSecret string `json:"clientSecret,omitempty"`
 	// CompletionModel description: The model used for code completion. If using the default provider 'sourcegraph', a reasonable default model will be set.
 	//  NOTE: The Anthropic messages API does not support model names like claude-2 or claude-instant-1 where only the major version is specified as they are retired. We recommend using a specific model identifier as specified here https://docs.anthropic.com/claude/docs/models-overview#model-comparison
 	CompletionModel string `json:"completionModel,omitempty"`
@@ -707,6 +711,8 @@ type Completions struct {
 	Provider string `json:"provider,omitempty"`
 	// SmartContextWindow description: Whether the maximum number of tokens should be automatically adjusted by the client based on the name of chatModel. If enabled, it will override the value set in chatModelMaxTokens.
 	SmartContextWindow string `json:"smartContextWindow,omitempty"`
+	// TokenRetrievalEndpoint description: The azure field for the endpoint to retreive token from
+	TokenRetrievalEndpoint string `json:"tokenRetrievalEndpoint,omitempty"`
 	// User description: The user field for OpenAI config for both AzureOpenAI and OpenAI
 	User string `json:"user,omitempty"`
 }

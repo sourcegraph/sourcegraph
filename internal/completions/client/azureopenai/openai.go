@@ -3,11 +3,14 @@ package azureopenai
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -37,6 +40,7 @@ var authProxyURL = os.Getenv("CODY_AZURE_OPENAI_IDENTITY_HTTP_PROXY")
 // The client will refresh the token as needed.
 
 var apiClient completionsClient
+var startTokenRefresherOnce sync.Once
 
 type completionsClient struct {
 	mu          sync.RWMutex
@@ -52,9 +56,87 @@ type CompletionsClient interface {
 	GetChatCompletionsStream(ctx context.Context, body azopenai.ChatCompletionsOptions, options *azopenai.GetChatCompletionsStreamOptions) (azopenai.GetChatCompletionsStreamResponse, error)
 }
 
-func GetAPIClient(endpoint, accessToken string) (CompletionsClient, error) {
+type TokenResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
+func getAccessToken(tokenRetrievalEndpoint, clientID, clientSecret string) (string, error) {
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequest("POST", tokenRetrievalEndpoint, strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", err
+	}
+
+	auth := base64.StdEncoding.EncodeToString([]byte(clientID + ":" + clientSecret))
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("failed to retrieve token, status code: " + resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var tokenResponse TokenResponse
+	err = json.Unmarshal(body, &tokenResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenResponse.AccessToken, nil
+}
+
+func startTokenRefresher(endpoint, tokenRetrievalEndpoint, clientID, clientSecret string, logger log.Logger) {
+	startTokenRefresherOnce.Do(func() {
+		ticker := time.NewTicker(20 * time.Minute)
+		go func() {
+			for {
+				<-ticker.C
+				refreshAccessToken(endpoint, tokenRetrievalEndpoint, clientID, clientSecret, logger)
+			}
+		}()
+	})
+}
+
+func refreshAccessToken(endpoint, tokenRetrievalEndpoint, clientID, clientSecret string, logger log.Logger) {
+	apiClient.mu.Lock()
+	defer apiClient.mu.Unlock()
+
+	accessToken, err := getAccessToken(tokenRetrievalEndpoint, clientID, clientSecret)
+	if err != nil {
+		logger.Warn("Failed to get the accessToken  %w", log.Error(err))
+		return
+	}
+
+	credential := azcore.NewKeyCredential(accessToken)
+	apiClient.client, err = azopenai.NewClientWithKeyCredential(endpoint, credential, &azopenai.ClientOptions{
+		ClientOptions: azcore.ClientOptions{
+			Transport: apiVersionClient("2023-05-15"),
+		},
+	})
+	if err != nil {
+		logger.Warn("Failed to reset Azure credentials %w", log.Error(err))
+		return
+	}
+	apiClient.endpoint = endpoint
+	apiClient.accessToken = accessToken
+}
+
+func GetAPIClient(endpoint, accessToken, tokenRetrievalEndpoint, clientId, clientSecret string, logger log.Logger) (CompletionsClient, error) {
 	apiClient.mu.RLock()
-	if apiClient.client != nil && apiClient.endpoint == endpoint && apiClient.accessToken == accessToken {
+	if apiClient.client != nil && apiClient.endpoint == endpoint && apiClient.accessToken != "" {
 		apiClient.mu.RUnlock()
 		return apiClient.client, nil
 	}
@@ -69,6 +151,14 @@ func GetAPIClient(endpoint, accessToken string) (CompletionsClient, error) {
 		},
 	}
 	var err error
+	if tokenRetrievalEndpoint != "" && accessToken == "" {
+		accessToken, err = getAccessToken(tokenRetrievalEndpoint, clientId, clientSecret)
+		if err != nil {
+			logger.Warn("Failed to get the accessToken  %w", log.Error(err))
+			return nil, err
+		}
+		startTokenRefresher(endpoint, tokenRetrievalEndpoint, clientId, clientSecret, logger)
+	}
 	if accessToken != "" {
 		credential := azcore.NewKeyCredential(accessToken)
 		apiClient.client, err = azopenai.NewClientWithKeyCredential(endpoint, credential, clientOpts)
@@ -86,6 +176,7 @@ func GetAPIClient(endpoint, accessToken string) (CompletionsClient, error) {
 
 		apiClient.client, err = azopenai.NewClient(endpoint, credential, clientOpts)
 	}
+
 	return apiClient.client, err
 
 }
@@ -109,10 +200,10 @@ func getCredentialOptions() (*azidentity.DefaultAzureCredentialOptions, error) {
 
 }
 
-type GetCompletionsAPIClientFunc func(accessToken, endpoint string) (CompletionsClient, error)
+type GetCompletionsAPIClientFunc func(endpoint, accessToken, tokenRetrievalEndpoint, clientId, clientSecret string, logger log.Logger) (CompletionsClient, error)
 
-func NewClient(getClient GetCompletionsAPIClientFunc, accessToken, endpoint string, tokenizer tokenusage.Manager) (types.CompletionsClient, error) {
-	client, err := getClient(accessToken, endpoint)
+func NewClient(getClient GetCompletionsAPIClientFunc, endpoint, accessToken, tokenRetrievalEndpoint, clientId, clientSecret string, tokenizer tokenusage.Manager, logger log.Logger) (types.CompletionsClient, error) {
+	client, err := getClient(endpoint, accessToken, tokenRetrievalEndpoint, clientId, clientSecret, logger)
 	if err != nil {
 		return nil, err
 	}

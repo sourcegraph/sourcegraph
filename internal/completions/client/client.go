@@ -23,15 +23,18 @@ func Get(
 	endpoint string,
 	provider conftypes.CompletionsProviderName,
 	accessToken string,
+	tokenRetrievalEndpoint string,
+	clientId string,
+	clientSecret string,
 ) (types.CompletionsClient, error) {
-	client, err := getBasic(endpoint, provider, accessToken)
+	client, err := getBasic(endpoint, provider, accessToken, tokenRetrievalEndpoint, clientId, clientSecret, logger)
 	if err != nil {
 		return nil, err
 	}
 	return newObservedClient(logger, events, client), nil
 }
 
-func getBasic(endpoint string, provider conftypes.CompletionsProviderName, accessToken string) (types.CompletionsClient, error) {
+func getBasic(endpoint string, provider conftypes.CompletionsProviderName, accessToken, tokenRetrievalEndpoint, clientId, clientSecret string, logger log.Logger) (types.CompletionsClient, error) {
 	tokenManager := tokenusage.NewManager()
 	switch provider {
 	case conftypes.CompletionsProviderNameAnthropic:
@@ -39,7 +42,7 @@ func getBasic(endpoint string, provider conftypes.CompletionsProviderName, acces
 	case conftypes.CompletionsProviderNameOpenAI:
 		return openai.NewClient(httpcli.UncachedExternalDoer, endpoint, accessToken, *tokenManager), nil
 	case conftypes.CompletionsProviderNameAzureOpenAI:
-		return azureopenai.NewClient(azureopenai.GetAPIClient, endpoint, accessToken, *tokenManager)
+		return azureopenai.NewClient(azureopenai.GetAPIClient, endpoint, accessToken, tokenRetrievalEndpoint, clientId, clientSecret, *tokenManager, logger)
 	case conftypes.CompletionsProviderNameSourcegraph:
 		return codygateway.NewClient(httpcli.CodyGatewayDoer, endpoint, accessToken, *tokenManager)
 	case conftypes.CompletionsProviderNameFireworks:

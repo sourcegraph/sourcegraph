@@ -227,6 +227,8 @@ var siteConfigSecrets = []struct {
 	{readPath: `completions.accessToken`, editPaths: []string{"completions", "accessToken"}},
 	{readPath: `app.dotcomAuthToken`, editPaths: []string{"app", "dotcomAuthToken"}},
 	{readPath: `attribution\.gateway.accessToken`, editPaths: []string{"attribution.gateway", "accessToken"}},
+	{readPath: `completions.clientId`, editPaths: []string{"completions", "clientId"}},
+	{readPath: `completions.clientSecret`, editPaths: []string{"completions", "clientSecret"}},
 	{readPath: `scim\.authToken`, editPaths: []string{"scim.authToken"}},
 }
 

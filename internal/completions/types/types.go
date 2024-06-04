@@ -55,17 +55,20 @@ type CompletionRequestParameters struct {
 	// Prompt exists only for backwards compatibility. Do not use it in new
 	// implementations. It will be removed once we are reasonably sure 99%
 	// of VSCode extension installations are upgraded to a new Cody version.
-	Prompt            string    `json:"prompt"`
-	Messages          []Message `json:"messages"`
-	MaxTokensToSample int       `json:"maxTokensToSample,omitempty"`
-	Temperature       float32   `json:"temperature,omitempty"`
-	StopSequences     []string  `json:"stopSequences,omitempty"`
-	TopK              int       `json:"topK,omitempty"`
-	TopP              float32   `json:"topP,omitempty"`
-	Model             string    `json:"model,omitempty"`
-	Stream            *bool     `json:"stream,omitempty"`
-	Logprobs          *uint8    `json:"logprobs"`
-	User              string    `json:"user,omitempty"`
+	Prompt                 string    `json:"prompt"`
+	Messages               []Message `json:"messages"`
+	MaxTokensToSample      int       `json:"maxTokensToSample,omitempty"`
+	Temperature            float32   `json:"temperature,omitempty"`
+	StopSequences          []string  `json:"stopSequences,omitempty"`
+	TopK                   int       `json:"topK,omitempty"`
+	TopP                   float32   `json:"topP,omitempty"`
+	Model                  string    `json:"model,omitempty"`
+	Stream                 *bool     `json:"stream,omitempty"`
+	Logprobs               *uint8    `json:"logprobs"`
+	User                   string    `json:"user,omitempty"`
+	TokenRetrievalEndpoint string    `json:"tokenRetrievalEndpoint,omitempty"`
+	ClientID               string    `json:"clientId,omitempty"`
+	ClientSecret           string    `json:"clientSecret,omitempty"`
 }
 
 // IsStream returns whether a streaming response is requested. For backwards

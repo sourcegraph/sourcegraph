@@ -44,8 +44,8 @@ func (c *mockAzureClient) GetChatCompletionsStream(ctx context.Context, body azo
 	return c.getChatCompletionsStream(ctx, body, options)
 }
 
-func getNewMockAzureAPIClient(mock *mockAzureClient) func(accessToken, endpoint string) (CompletionsClient, error) {
-	return func(accessToken, endpoint string) (CompletionsClient, error) {
+func getNewMockAzureAPIClient(mock *mockAzureClient) func(accessToken, endpoint, tokenRetrievalEndpoint, clientId, clientSecret string, logger log.Logger) (CompletionsClient, error) {
+	return func(accessToken, endpoint, tokenRetrievalEndpoint, clientId, clientSecret string, logger log.Logger) (CompletionsClient, error) {
 		return mock, nil
 	}
 }
@@ -78,7 +78,8 @@ func TestErrStatusNotOK(t *testing.T) {
 		},
 	})
 	tokenManager := tokenusage.NewManager()
-	mockClient, _ := NewClient(getAzureAPIClient, "", "", *tokenManager)
+	logger := log.Scoped("completions")
+	mockClient, _ := NewClient(getAzureAPIClient, "", "", "", "", "", *tokenManager, logger)
 	t.Run("Complete", func(t *testing.T) {
 		logger := log.Scoped("completions")
 		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
@@ -117,7 +118,8 @@ func TestGenericErr(t *testing.T) {
 		},
 	})
 	tokenManager := tokenusage.NewManager()
-	mockClient, _ := NewClient(getAzureAPIClient, "", "", *tokenManager)
+	logger := log.Scoped("completions")
+	mockClient, _ := NewClient(getAzureAPIClient, "", "", "", "", "", *tokenManager, logger)
 	t.Run("Complete", func(t *testing.T) {
 		logger := log.Scoped("completions")
 		resp, err := mockClient.Complete(context.Background(), types.CompletionsFeatureChat, types.CompletionsVersionLegacy, types.CompletionRequestParameters{}, logger)
