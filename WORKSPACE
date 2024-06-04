@@ -9,6 +9,13 @@ http_archive(
     ],
 )
 
+http_archive(
+    name = "bazel_features",
+    sha256 = "95fb3cfd11466b4cad6565e3647a76f89886d875556a4b827c021525cb2482bb",
+    strip_prefix = "bazel_features-1.10.0",
+    url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.10.0/bazel_features-v1.10.0.tar.gz",
+)
+
 load("@platforms//host:extension.bzl", "host_platform_repo")
 
 host_platform_repo(name = "host_platform")
@@ -106,13 +113,9 @@ http_archive(
 # Container rules
 http_archive(
     name = "rules_oci",
-    patch_args = ["-p1"],
-    patches = [
-        "//third_party/rules_oci:no_xattr.patch",
-    ],
-    sha256 = "d41d0ba7855f029ad0e5ee35025f882cbe45b0d5d570842c52704f7a47ba8668",
-    strip_prefix = "rules_oci-1.4.3",
-    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v1.4.3/rules_oci-v1.4.3.tar.gz",
+    sha256 = "e96d70faa4bace3e09fdb1d7d1441b838920f491588889ff9a7e2615afca5799",
+    strip_prefix = "rules_oci-2.0.0-alpha2",
+    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v2.0.0-alpha2/rules_oci-v2.0.0-alpha2.tar.gz",
 )
 
 http_archive(
@@ -392,22 +395,15 @@ load("@hermetic_cc_toolchain//toolchain:defs.bzl", zig_toolchains = "toolchains"
 
 zig_toolchains()
 
-# containers steup       ===============================
+# containers setup       ===============================
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 
 rules_oci_dependencies()
 
-load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
+load("@rules_oci//oci:repositories.bzl", "oci_register_toolchains")
 
-oci_register_toolchains(
-    name = "oci",
-    crane_version = LATEST_CRANE_VERSION,
-    # Uncommenting the zot toolchain will cause it to be used instead of crane for some tasks.
-    # Note that it does not support docker-format images.
-    # zot_version = LATEST_ZOT_VERSION,
-)
+oci_register_toolchains(name = "oci")
 
-# Optional, for oci_tarball rule
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 
 rules_pkg_dependencies()
