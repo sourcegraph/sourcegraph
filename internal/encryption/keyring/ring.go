@@ -125,6 +125,13 @@ func NewRing(ctx context.Context, keyConfig *schema.EncryptionKeys) (*Ring, erro
 		}
 	}
 
+	if keyConfig.OAuthProviderKey != nil {
+		r.OAuthProviderKey, err = NewKey(ctx, keyConfig.OAuthProviderKey, keyConfig)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &r, nil
 }
 
@@ -133,6 +140,7 @@ type Ring struct {
 	ExternalServiceKey        encryption.Key
 	GitHubAppKey              encryption.Key
 	OutboundWebhookKey        encryption.Key
+	OAuthProviderKey          encryption.Key
 	UserExternalAccountKey    encryption.Key
 	WebhookKey                encryption.Key
 	WebhookLogKey             encryption.Key

@@ -119,3 +119,8 @@ var searchJobSchema string
 //
 //go:embed telemetry.graphql
 var telemetrySchema string
+
+// oauthProviderSchema is the OAuth provider raw graqhql schema.
+//
+//go:embed oauthprovider.graphql
+var oauthProviderSchema string

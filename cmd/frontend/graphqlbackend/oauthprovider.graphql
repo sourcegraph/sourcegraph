@@ -1,0 +1,94 @@
+extend type Query {
+    """
+    A list of OAuth client applications configured to access Sourcegraph via OAuth 2.0.
+
+    Only site-admins may request this data.
+    """
+    oauthClientApplications(first: Int = 50, after: String): OAuthClientApplicationConnection!
+}
+
+extend type Mutation {
+    """
+    Creates a new OAuth client application.
+
+    Only site-admins may create new OAuth client applications.
+    """
+    createOAuthClientApplication(name: String!, description: String!, redirectURL: String!): OAuthClientApplication!
+    """
+    Updates an existing OAuth client application.
+
+    Only site-admins may update OAuth client applications.
+    """
+    updateOAuthClientApplication(
+        id: ID!
+        name: String
+        description: String
+        redirectURL: String
+    ): OAuthClientApplication!
+    """
+    Deletes an existing OAuth client application.
+
+    Only site-admins may delete OAuth client applications.
+    """
+    deleteOAuthClientApplication(id: ID!): EmptyResponse
+}
+
+"""
+A list of OAuth client applications.
+"""
+type OAuthClientApplicationConnection {
+    """
+    The nodes on the current page of the connection.
+    """
+    nodes: [OAuthClientApplication!]!
+    """
+    Pagination information.
+    """
+    pageInfo: PageInfo!
+    """
+    The total count of nodes in the connection.
+    """
+    totalCount: Int!
+}
+
+"""
+An OAuth client application.
+"""
+type OAuthClientApplication implements Node {
+    """
+    The ID of the OAuth client application. Opaque to the user.
+    """
+    id: ID!
+    """
+    The name of the OAuth client application.
+    """
+    name: String!
+    """
+    The description of the OAuth client application.
+    """
+    description: String!
+    """
+    The URL to redirect to after completing the OAuth flow.
+    """
+    redirectURL: String!
+    """
+    The client ID to use when requesting an access token.
+    """
+    clientID: String!
+    """
+    The client secret to use when requesting an access token.
+    """
+    clientSecret: String!
+    """
+    The user who created this client. Null if the user has been deleted.
+    """
+    creator: User
+    """
+    The date and time when this client was created.
+    """
+    createdAt: DateTime!
+    """
+    The date and time when this client was last updated.
+    """
+    updatedAt: DateTime!
+}

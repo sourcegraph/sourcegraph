@@ -103,6 +103,16 @@ var outboundWebhooksEncryptionConfig = encryptionConfig{
 	Limit:               5,
 }
 
+var oauthProviderClientApplicationsEncryptionConfig = encryptionConfig{
+	TableName:           "oauth_provider_client_applications",
+	IDFieldName:         "id",
+	KeyIDFieldName:      "encryption_key_id",
+	EncryptedFieldNames: []string{"client_secret"},
+	Scan:                basestore.NewMapScanner(scanEncryptedBytea),
+	Key:                 func() encryption.Key { return keyring.Default().OAuthProviderKey },
+	Limit:               5,
+}
+
 func scanEncryptedString(scanner dbutil.Scanner) (id int, e Encrypted, err error) {
 	e.Values = make([]string, 1)
 	err = scanner.Scan(&id, &e.KeyID, &e.Values[0])

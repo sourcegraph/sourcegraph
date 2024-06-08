@@ -381,3 +381,8 @@ func (r *NodeResolver) ToSearchJob() (SearchJobResolver, bool) {
 	n, ok := r.Node.(SearchJobResolver)
 	return n, ok
 }
+
+func (r *NodeResolver) ToOauthClientApplication() (OAuthClientApplicationResolver, bool) {
+	n, ok := r.Node.(OAuthClientApplicationResolver)
+	return n, ok
+}

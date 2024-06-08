@@ -368,6 +368,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.8.0 // indirect
 	github.com/fullstorydev/grpcurl v1.8.7 // indirect
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
+	github.com/go-oauth2/oauth2/v4 v4.5.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/goccy/go-json v0.10.2 // indirect

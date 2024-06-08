@@ -873,6 +873,7 @@ type EncryptionKeys struct {
 	// EnableCache description: enable LRU cache for decryption APIs
 	EnableCache            bool           `json:"enableCache,omitempty"`
 	ExecutorSecretKey      *EncryptionKey `json:"executorSecretKey,omitempty"`
+	OAuthProviderKey      *EncryptionKey `json:"oauthProviderKey,omitempty"`
 	ExternalServiceKey     *EncryptionKey `json:"externalServiceKey,omitempty"`
 	GitHubAppKey           *EncryptionKey `json:"gitHubAppKey,omitempty"`
 	OutboundWebhookKey     *EncryptionKey `json:"outboundWebhookKey,omitempty"`

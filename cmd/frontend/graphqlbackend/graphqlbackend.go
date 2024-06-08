@@ -625,6 +625,16 @@ func NewSchema(
 			resolver.TelemetryRootResolver = telemetryResolver
 			schemas = append(schemas, telemetrySchema)
 		}
+
+		if oAuthProviderResolver := optional.OAuthProviderResolver; oAuthProviderResolver != nil {
+			EnterpriseResolvers.oAuthProviderResolver = oAuthProviderResolver
+			resolver.OAuthProviderResolver = oAuthProviderResolver
+			schemas = append(schemas, oauthProviderSchema)
+			// Register NodeByID handlers.
+			for kind, res := range oAuthProviderResolver.NodeResolvers() {
+				resolver.nodeByIDFns[kind] = res
+			}
+		}
 	}
 
 	opts := []graphql.SchemaOpt{
@@ -678,6 +688,7 @@ type OptionalResolver struct {
 	SearchContextsResolver
 	WebhooksResolver
 	ContentLibraryResolver
+	OAuthProviderResolver
 	*TelemetryRootResolver
 }
 
@@ -800,6 +811,7 @@ var EnterpriseResolvers = struct {
 	webhooksResolver            WebhooksResolver
 	contentLibraryResolver      ContentLibraryResolver
 	telemetryResolver           *TelemetryRootResolver
+	oAuthProviderResolver       OAuthProviderResolver
 }{}
 
 // Root returns a new schemaResolver.
