@@ -1,23 +1,15 @@
 import React, { type FC, useState, useCallback, useRef, useEffect } from 'react'
 
+import classNames from 'classnames'
 import { noop } from 'lodash'
+import { useNavigate } from 'react-router-dom'
 
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
-import {
-    Alert,
-    Container,
-    Button,
-    Input,
-    Label,
-    Text,
-    PageHeader,
-    ButtonLink,
-    Checkbox,
-    Link,
-} from '@sourcegraph/wildcard'
+import { Alert, Container, Button, Input, Label, Text, PageHeader, Checkbox, Link } from '@sourcegraph/wildcard'
 
-import { GitHubAppDomain } from '../../graphql-operations'
+import type { AuthenticatedUser } from '../../auth'
+import type { GitHubAppDomain, GitHubAppKind } from '../../graphql-operations'
 import { PageTitle } from '../PageTitle'
 
 interface StateResponse {
@@ -51,6 +43,8 @@ export interface CreateGitHubAppPageProps extends TelemetryV2Props {
     headerAnnotation?: React.ReactNode
     /** The domain the new GitHub App is meant to be used for in Sourcegraph. */
     appDomain: GitHubAppDomain
+    /** The purpose of the GitHub App to be created. This is only applicable when the appDomain is BATCHES. */
+    appKind: GitHubAppKind
     /** The name to use for the new GitHub App. Defaults to "Sourcegraph". */
     defaultAppName?: string
     /*
@@ -63,6 +57,13 @@ export interface CreateGitHubAppPageProps extends TelemetryV2Props {
      * or a string with an error message reason if not.
      */
     validateURL?: (url: string) => true | string
+    /** The currently authenticated user */
+    authenticatedUser: AuthenticatedUser
+    /**
+     * Whether or not the page is being rendered in a minimized mode.
+     * Minimized mode is when this component is rendered in a modal.
+     */
+    minimizedMode?: boolean
 }
 
 /**
@@ -79,7 +80,11 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
     baseURL,
     validateURL,
     telemetryRecorder,
+    appKind,
+    authenticatedUser,
+    minimizedMode,
 }) => {
+    const navigate = useNavigate()
     const ref = useRef<HTMLFormElement>(null)
     const formInput = useRef<HTMLInputElement>(null)
     const [name, setName] = useState<string>(defaultAppName)
@@ -143,8 +148,14 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
     const createState = useCallback(async () => {
         setError(undefined)
         try {
+            // We encode the name and url here so that special characters like `#` are interpreted as
+            // part of the URL and not the fragment.
             const response = await fetch(
-                `/githubapp/new-app-state?appName=${name}&webhookURN=${url}&domain=${appDomain}&baseURL=${url}`
+                `/githubapp/new-app-state?appName=${encodeURIComponent(
+                    name
+                )}&webhookURN=${url}&domain=${appDomain}&baseURL=${encodeURIComponent(url)}&kind=${appKind}&userID=${
+                    authenticatedUser.id
+                }`
             )
             if (!response.ok) {
                 if (response.body instanceof ReadableStream) {
@@ -152,15 +163,15 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
                     throw new Error(error)
                 }
             }
-            const state = (await response.json()) as StateResponse
+            const jsonResponse = (await response.json()) as StateResponse
             let webhookURL: string | undefined
-            if (state.webhookUUID?.length) {
-                webhookURL = new URL(`/.api/webhooks/${state.webhookUUID}`, originURL).href
+            if (jsonResponse.webhookUUID?.length) {
+                webhookURL = new URL(`/.api/webhooks/${jsonResponse.webhookUUID}`, originURL).href
             }
-            if (!state.state?.length) {
+            if (!jsonResponse.state?.length) {
                 throw new Error('Response from server missing state parameter')
             }
-            submitForm({ state: state.state, webhookURL, name })
+            submitForm({ state: jsonResponse.state, webhookURL, name })
         } catch (error_) {
             if (error_ instanceof Error) {
                 setError(error_.message)
@@ -170,7 +181,7 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
                 setError('Unknown error occurred.')
             }
         }
-    }, [submitForm, name, appDomain, url, originURL])
+    }, [submitForm, name, appDomain, url, originURL, appKind, authenticatedUser.id])
 
     const handleNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setName(event.target.value)
@@ -207,34 +218,38 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
 
     const handleOrgChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => setOrg(event.target.value), [])
     const toggleIsPublic = useCallback(() => setIsPublic(isPublic => !isPublic), [])
-    const cancelUrl = `/site-admin/${appDomain === GitHubAppDomain.BATCHES ? 'batch-changes' : 'github-apps'}`
 
     return (
         <>
-            <PageTitle title={pageTitle} />
-            <PageHeader
-                path={[{ text: pageTitle }]}
-                headingElement="h2"
-                description={
-                    headerDescription || (
-                        <>
-                            Register a GitHub App to better manage GitHub code host connections.{' '}
-                            <Link to="/help/admin/external_service/github#using-a-github-app" target="_blank">
-                                See how GitHub App configuration works.
-                            </Link>
-                        </>
-                    )
-                }
-                annotation={headerAnnotation}
-                className="mb-3"
-            />
+            {!minimizedMode && (
+                <>
+                    <PageTitle title={pageTitle} />
+                    <PageHeader
+                        path={[{ text: pageTitle }]}
+                        headingElement="h2"
+                        description={
+                            headerDescription || (
+                                <>
+                                    Register a GitHub App to better manage GitHub code host connections.{' '}
+                                    <Link to="/help/admin/external_service/github#using-a-github-app" target="_blank">
+                                        See how GitHub App configuration works.
+                                    </Link>
+                                </>
+                            )
+                        }
+                        annotation={headerAnnotation}
+                        className="mb-3"
+                    />
+                </>
+            )}
+
             <Container className="mb-3">
                 {error && <Alert variant="danger">Error creating GitHub App: {error}</Alert>}
                 <Text>
                     Provide the details for a new GitHub App with the form below. Once you click "Create GitHub App",
-                    you will be routed to {baseURL || 'GitHub'} to create the App and choose which repositories to grant
-                    it access to. Once created on {baseURL || 'GitHub'}, you'll be redirected back here to finish
-                    connecting it to Sourcegraph.
+                    you will be routed to <strong>{baseURL || 'GitHub'}</strong> to create the App and choose which
+                    repositories to grant it access to. Once created on <strong>{baseURL || 'GitHub'}</strong>, you'll
+                    be redirected back here to finish connecting it to Sourcegraph.
                 </Text>
                 <Label className="w-100">
                     <Text alignment="left" className="mb-2">
@@ -320,13 +335,24 @@ export const CreateGitHubAppPage: FC<CreateGitHubAppPageProps> = ({
                     <input ref={formInput} name="manifest" onChange={noop} hidden={true} />
                 </form>
             </Container>
-            <div>
+            <div
+                className={classNames({
+                    'd-flex flex-row-reverse': minimizedMode,
+                })}
+            >
                 <Button variant="primary" onClick={createState} disabled={!!nameError || !!urlError}>
                     Create Github App
                 </Button>
-                <ButtonLink className="ml-2" to={cancelUrl} variant="secondary">
+                <Button
+                    className={classNames({
+                        'ml-2': !minimizedMode,
+                        'mr-2': minimizedMode,
+                    })}
+                    onClick={() => navigate(-1)}
+                    variant="secondary"
+                >
                     Cancel
-                </ButtonLink>
+                </Button>
             </div>
         </>
     )

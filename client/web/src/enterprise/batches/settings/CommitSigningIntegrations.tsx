@@ -16,11 +16,12 @@ import {
     SummaryContainer,
 } from '../../../components/FilteredConnection/ui'
 import { GitHubAppFailureAlert } from '../../../components/gitHubApps/GitHubAppFailureAlert'
-import type {
-    BatchChangesCodeHostFields,
-    GlobalBatchChangesCodeHostsResult,
-    Scalars,
-    UserBatchChangesCodeHostsResult,
+import {
+    type BatchChangesCodeHostFields,
+    GitHubAppKind,
+    type GlobalBatchChangesCodeHostsResult,
+    type Scalars,
+    type UserBatchChangesCodeHostsResult,
 } from '../../../graphql-operations'
 
 import { useGlobalBatchChangesCodeHostConnection, useUserBatchChangesCodeHostConnection } from './backend'
@@ -54,9 +55,11 @@ export const CommitSigningIntegrations: React.FunctionComponent<
     const { loading, hasNextPage, fetchMore, connection, error, refetchAll } = connectionResult
 
     const location = useLocation()
+    const kind = new URLSearchParams(location.search).get('kind')
     const success = new URLSearchParams(location.search).get('success') === 'true'
     const appName = new URLSearchParams(location.search).get('app_name')
     const setupError = new URLSearchParams(location.search).get('error')
+    const shouldShowError = !success && setupError && !readOnly && kind === GitHubAppKind.COMMIT_SIGNING
     return (
         <Container>
             <H3>
@@ -85,7 +88,7 @@ export const CommitSigningIntegrations: React.FunctionComponent<
                         GitHub App {appName?.length ? `"${appName}" ` : ''}successfully connected.
                     </DismissibleAlert>
                 )}
-                {!success && setupError && !readOnly && <GitHubAppFailureAlert error={setupError} />}
+                {shouldShowError && <GitHubAppFailureAlert error={setupError} />}
                 <ConnectionList as="ul" className="list-group" aria-label="commit signing integrations">
                     {connection?.nodes?.map(node =>
                         node.supportsCommitSigning ? (

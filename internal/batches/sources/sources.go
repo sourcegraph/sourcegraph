@@ -112,7 +112,7 @@ type Sourcer interface {
 	ForUser(ctx context.Context, tx SourcerStore, uid int32, repo *types.Repo) (ChangesetSource, error)
 	// ForExternalService returns a ChangesetSource based on the provided external service opts.
 	// It will be authenticated with the given authenticator.
-	ForExternalService(ctx context.Context, tx SourcerStore, au auth.Authenticator, opts store.GetExternalServiceIDsOpts) (ChangesetSource, error)
+	ForExternalService(ctx context.Context, tx SourcerStore, au auth.Authenticator, opts ForExternalServiceOpts, as AuthenticationStrategy) (ChangesetSource, error)
 }
 
 // NewSourcer returns a new Sourcer to be used in Batch Changes.
@@ -197,7 +197,7 @@ func (s *sourcer) ForChangeset(ctx context.Context, tx SourcerStore, ch *btypes.
 			}
 		}
 
-		return withGitHubAppAuthenticator(ctx, tx, css, extSvc, owner)
+		return withGitHubAppAuthenticator(ctx, tx, css, extSvc, owner, nil)
 	}
 
 	if ch.OwnedByBatchChangeID != 0 {
@@ -227,13 +227,23 @@ func (s *sourcer) ForUser(ctx context.Context, tx SourcerStore, uid int32, repo 
 	return withAuthenticatorForUser(ctx, tx, css, uid, repo)
 }
 
-func (s *sourcer) ForExternalService(ctx context.Context, tx SourcerStore, au auth.Authenticator, opts store.GetExternalServiceIDsOpts) (ChangesetSource, error) {
-	// Empty authenticators are not allowed.
+type ForExternalServiceOpts struct {
+	ExternalServiceID   string
+	ExternalServiceType string
+	GitHubAppAccount    string
+	GitHubAppKind       *types.GitHubAppKind
+}
+
+func (s *sourcer) ForExternalService(ctx context.Context, tx SourcerStore, au auth.Authenticator, opts ForExternalServiceOpts, as AuthenticationStrategy) (ChangesetSource, error) {
+	// Empty authenticators are not for non-GitHubApp authentication strategies.
 	if au == nil {
 		return nil, ErrMissingCredentials
 	}
 
-	extSvcIDs, err := tx.GetExternalServiceIDs(ctx, opts)
+	extSvcIDs, err := tx.GetExternalServiceIDs(ctx, store.GetExternalServiceIDsOpts{
+		ExternalServiceType: opts.ExternalServiceType,
+		ExternalServiceID:   opts.ExternalServiceID,
+	})
 	if err != nil {
 		return nil, errors.Wrap(err, "loading external service IDs")
 	}
@@ -248,6 +258,9 @@ func (s *sourcer) ForExternalService(ctx context.Context, tx SourcerStore, au au
 	css, err := s.newSource(ctx, tx, s.cf, extSvc)
 	if err != nil {
 		return nil, err
+	}
+	if as == AuthenticationStrategyGitHubApp {
+		return withGitHubAppAuthenticator(ctx, tx, css, extSvc, opts.GitHubAppAccount, opts.GitHubAppKind)
 	}
 	return css.WithAuthenticator(au)
 }
@@ -351,7 +364,7 @@ func loadBatchChange(ctx context.Context, tx getBatchChanger, id int64) (*btypes
 // App has been configured for it, ErrNoGitHubAppConfigured is returned. If a batches
 // domain GitHub App has been configured, but no installation exists for the given
 // account, ErrNoGitHubAppInstallation is returned.
-func withGitHubAppAuthenticator(ctx context.Context, tx SourcerStore, css ChangesetSource, extSvc *types.ExternalService, account string) (ChangesetSource, error) {
+func withGitHubAppAuthenticator(ctx context.Context, tx SourcerStore, css ChangesetSource, extSvc *types.ExternalService, account string, kind *types.GitHubAppKind) (ChangesetSource, error) {
 	if extSvc.Kind != extsvc.KindGitHub {
 		return nil, ErrExternalServiceNotGitHub
 	}
@@ -371,11 +384,13 @@ func withGitHubAppAuthenticator(ctx context.Context, tx SourcerStore, css Change
 	}
 	baseURL = extsvc.NormalizeBaseURL(baseURL)
 
-	app, err := tx.GitHubAppsStore().GetByDomain(ctx, types.BatchesGitHubAppDomain, baseURL.String())
+	fmt.Println(baseURL.String())
+	app, err := tx.GitHubAppsStore().GetByDomainAndKind(ctx, types.BatchesGitHubAppDomain, baseURL.String(), *kind)
 	if err != nil {
 		return nil, ErrNoGitHubAppConfigured
 	}
 
+	fmt.Println("app: ", app.AppID, "account: ", account)
 	installID, err := tx.GitHubAppsStore().GetInstallID(ctx, app.AppID, account)
 	if err != nil || installID == 0 {
 		return nil, ErrNoGitHubAppInstallation
@@ -503,7 +518,7 @@ func loadUserCredential(ctx context.Context, s SourcerStore, userID int32, repo 
 		return nil, err
 	}
 	if cred != nil {
-		return cred.Authenticator(ctx)
+		return cred.Authenticator(ctx, s)
 	}
 	return nil, nil
 }

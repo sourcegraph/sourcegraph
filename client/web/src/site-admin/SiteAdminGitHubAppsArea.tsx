@@ -11,6 +11,7 @@ import { LoadingSpinner, ErrorAlert } from '@sourcegraph/wildcard'
 
 import {
     GitHubAppDomain,
+    GitHubAppKind,
     type SiteExternalServiceConfigResult,
     type SiteExternalServiceConfigVariables,
 } from '../graphql-operations'
@@ -86,6 +87,7 @@ export const SiteAdminGitHubAppsArea: FC<Props> = props => {
                         defaultPermissions={DEFAULT_PERMISSIONS}
                         appDomain={GitHubAppDomain.REPOS}
                         telemetryRecorder={props.platformContext.telemetryRecorder}
+                        appKind={GitHubAppKind.REPO_SYNC}
                         {...props}
                     />
                 }

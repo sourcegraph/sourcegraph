@@ -980,7 +980,9 @@ CREATE TABLE batch_changes_site_credentials (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     credential bytea NOT NULL,
-    encryption_key_id text DEFAULT ''::text NOT NULL
+    encryption_key_id text DEFAULT ''::text NOT NULL,
+    github_app_id integer,
+    CONSTRAINT check_github_app_id_and_external_service_type CHECK (((github_app_id IS NULL) OR (external_service_type = 'github'::text)))
 );
 
 CREATE SEQUENCE batch_changes_site_credentials_id_seq
@@ -2717,7 +2719,8 @@ CREATE TABLE github_apps (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     app_url text DEFAULT ''::text NOT NULL,
     webhook_id integer,
-    domain text DEFAULT 'repos'::text NOT NULL
+    domain text DEFAULT 'repos'::text NOT NULL,
+    kind character varying(255) NOT NULL
 );
 
 CREATE SEQUENCE github_apps_id_seq
@@ -4783,7 +4786,9 @@ CREATE TABLE user_credentials (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     credential bytea NOT NULL,
     ssh_migration_applied boolean DEFAULT false NOT NULL,
-    encryption_key_id text DEFAULT ''::text NOT NULL
+    encryption_key_id text DEFAULT ''::text NOT NULL,
+    github_app_id integer,
+    CONSTRAINT check_github_app_id_and_external_service_type CHECK (((github_app_id IS NULL) OR (external_service_type = 'github'::text)))
 );
 
 CREATE SEQUENCE user_credentials_id_seq
@@ -6516,6 +6521,9 @@ ALTER TABLE ONLY batch_changes
 ALTER TABLE ONLY batch_changes
     ADD CONSTRAINT batch_changes_namespace_user_id_fkey FOREIGN KEY (namespace_user_id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE;
 
+ALTER TABLE ONLY batch_changes_site_credentials
+    ADD CONSTRAINT batch_changes_site_credentials_github_app_id_fkey FOREIGN KEY (github_app_id) REFERENCES github_apps(id);
+
 ALTER TABLE ONLY batch_spec_execution_cache_entries
     ADD CONSTRAINT batch_spec_execution_cache_entries_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE;
 
@@ -7013,6 +7021,9 @@ ALTER TABLE ONLY teams
 
 ALTER TABLE ONLY temporary_settings
     ADD CONSTRAINT temporary_settings_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+
+ALTER TABLE ONLY user_credentials
+    ADD CONSTRAINT user_credentials_github_app_id_fkey FOREIGN KEY (github_app_id) REFERENCES github_apps(id);
 
 ALTER TABLE ONLY user_credentials
     ADD CONSTRAINT user_credentials_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE DEFERRABLE;

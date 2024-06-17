@@ -10,7 +10,7 @@ import { UserCommitSigningIntegrations } from './CommitSigningIntegrations'
 import { RolloutWindowsConfiguration } from './RolloutWindowsConfiguration'
 
 export interface BatchChangesSettingsAreaProps {
-    user: Pick<UserAreaUserFields, 'id'>
+    user: UserAreaUserFields
 }
 
 /** The page area for all batch changes settings. It's shown in the user settings sidebar. */
@@ -23,7 +23,7 @@ export const BatchChangesSettingsArea: React.FunctionComponent<
         <RolloutWindowsConfiguration />
         <UserCodeHostConnections
             headerLine={<Text>Add access tokens to enable Batch Changes changeset creation on your code hosts.</Text>}
-            userID={props.user.id}
+            user={props.user}
         />
         <UserCommitSigningIntegrations userID={props.user.id} />
     </div>

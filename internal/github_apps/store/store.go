@@ -69,8 +69,8 @@ type GitHubAppsStore interface {
 	// GetBySlug retrieves a GitHub App from the database by slug and base url
 	GetBySlug(ctx context.Context, slug string, baseURL string) (*ghtypes.GitHubApp, error)
 
-	// GetByDomain retrieves a GitHub App from the database by domain and base url
-	GetByDomain(ctx context.Context, domain itypes.GitHubAppDomain, baseURL string) (*ghtypes.GitHubApp, error)
+	// GetByDomainAndKind retrieves a GitHub App from the database by domain and base url
+	GetByDomainAndKind(ctx context.Context, domain itypes.GitHubAppDomain, baseURL string, kind itypes.GitHubAppKind) (*ghtypes.GitHubApp, error)
 
 	// WithEncryptionKey sets encryption key on store. Returns a new GitHubAppsStore
 	WithEncryptionKey(key encryption.Key) GitHubAppsStore
@@ -126,24 +126,26 @@ func (s *gitHubAppsStore) Create(ctx context.Context, app *ghtypes.GitHubApp) (i
 		domain = itypes.ReposGitHubAppDomain
 	}
 
-	// We enforce that GitHub Apps created in the "batches" domain are for unique instance URLs.
-	if domain == itypes.BatchesGitHubAppDomain {
-		existingGHApp, err := s.GetByDomain(ctx, domain, baseURL.String())
+	kind := ghtypes.NormalizeGitHubAppKind(app)
+
+	// We enforce that GitHub Apps created in the "batches" domain and are used for commit signing are for unique instance URLs.
+	if domain == itypes.BatchesGitHubAppDomain && kind == itypes.CommitSigningGitHubAppKind {
+		existingGHApp, err := s.GetByDomainAndKind(ctx, domain, baseURL.String(), kind)
 		// An error is expected if no existing app was found, but we double check that
 		// we didn't get a different, unrelated error
 		if _, ok := err.(ErrNoGitHubAppFound); !ok {
-			return -1, errors.Wrap(err, "checking for existing batches app")
+			return -1, errors.Wrapf(err, "checking for existing batches app (kind: %s)", kind)
 		}
 		if existingGHApp != nil {
-			return -1, errors.New("GitHub App already exists for this GitHub instance in the batches domain")
+			return -1, errors.Newf("GitHub App already exists for this GitHub instance in the batches domain for %s", kind)
 		}
 	}
 
 	query := sqlf.Sprintf(`INSERT INTO
-	    github_apps (app_id, name, domain, slug, base_url, app_url, client_id, client_secret, private_key, encryption_key_id, logo)
-    	VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+	    github_apps (app_id, name, domain, slug, base_url, app_url, client_id, client_secret, private_key, encryption_key_id, logo, kind)
+    	VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 		RETURNING id`,
-		app.AppID, app.Name, domain, app.Slug, baseURL.String(), app.AppURL, app.ClientID, clientSecret, privateKey, keyID, app.Logo)
+		app.AppID, app.Name, domain, app.Slug, baseURL.String(), app.AppURL, app.ClientID, clientSecret, privateKey, keyID, app.Logo, kind)
 	id, _, err := basestore.ScanFirstInt(s.Query(ctx, query))
 	return id, err
 }
@@ -171,6 +173,7 @@ func scanGitHubApp(s dbutil.Scanner) (*ghtypes.GitHubApp, error) {
 		&app.PrivateKey,
 		&app.EncryptionKey,
 		&app.Logo,
+		&app.Kind,
 		&app.CreatedAt,
 		&app.UpdatedAt)
 	return &app, err
@@ -260,11 +263,13 @@ func (s *gitHubAppsStore) Update(ctx context.Context, id int, app *ghtypes.GitHu
 		return nil, err
 	}
 
+	kind := ghtypes.NormalizeGitHubAppKind(app)
+
 	query := sqlf.Sprintf(`UPDATE github_apps
-             SET app_id = %s, name = %s, domain = %s, slug = %s, base_url = %s, app_url = %s, client_id = %s, client_secret = %s, webhook_id = %d, private_key = %s, encryption_key_id = %s, logo = %s, updated_at = NOW()
+             SET app_id = %s, name = %s, domain = %s, slug = %s, base_url = %s, app_url = %s, client_id = %s, client_secret = %s, webhook_id = %d, private_key = %s, encryption_key_id = %s, logo = %s, kind = %s, updated_at = NOW()
              WHERE id = %s
-			 RETURNING id, app_id, name, domain, slug, base_url, app_url, client_id, client_secret, webhook_id, private_key, encryption_key_id, logo, created_at, updated_at`,
-		app.AppID, app.Name, app.Domain, app.Slug, app.BaseURL, app.AppURL, app.ClientID, clientSecret, app.WebhookID, privateKey, keyID, app.Logo, id)
+			 RETURNING id, app_id, name, domain, slug, base_url, app_url, client_id, client_secret, webhook_id, private_key, encryption_key_id, logo, kind, created_at, updated_at`,
+		app.AppID, app.Name, app.Domain, app.Slug, app.BaseURL, app.AppURL, app.ClientID, clientSecret, app.WebhookID, privateKey, keyID, app.Logo, kind, id)
 	app, ok, err := scanFirstGitHubApp(s.Query(ctx, query))
 	if err != nil {
 		return nil, err
@@ -340,6 +345,7 @@ func (s *gitHubAppsStore) get(ctx context.Context, where *sqlf.Query) (*ghtypes.
 		private_key,
 		encryption_key_id,
 		logo,
+		kind,
 		created_at,
 		updated_at
 	FROM github_apps
@@ -380,6 +386,7 @@ func (s *gitHubAppsStore) list(ctx context.Context, where *sqlf.Query) ([]*ghtyp
 		private_key,
 		encryption_key_id,
 		logo,
+		kind,
 		created_at,
 		updated_at
 	FROM github_apps
@@ -414,8 +421,8 @@ func (s *gitHubAppsStore) GetBySlug(ctx context.Context, slug string, baseURL st
 }
 
 // GetByDomain retrieves a GitHub App from the database by domain and base url
-func (s *gitHubAppsStore) GetByDomain(ctx context.Context, domain itypes.GitHubAppDomain, baseURL string) (*ghtypes.GitHubApp, error) {
-	return s.get(ctx, sqlf.Sprintf(`domain = %s AND %s`, domain, baseURLWhere(baseURL)))
+func (s *gitHubAppsStore) GetByDomainAndKind(ctx context.Context, domain itypes.GitHubAppDomain, baseURL string, kind itypes.GitHubAppKind) (*ghtypes.GitHubApp, error) {
+	return s.get(ctx, sqlf.Sprintf(`domain = %s AND %s AND kind = %s`, domain, baseURLWhere(baseURL), kind))
 }
 
 // List lists all GitHub Apps in the store

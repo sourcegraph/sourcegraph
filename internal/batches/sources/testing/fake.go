@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/sourcegraph/sourcegraph/internal/batches/sources"
-	"github.com/sourcegraph/sourcegraph/internal/batches/store"
 	btypes "github.com/sourcegraph/sourcegraph/internal/batches/types"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/protocol"
@@ -33,7 +32,7 @@ func (s *fakeSourcer) ForUser(ctx context.Context, tx sources.SourcerStore, uid 
 	return s.source, s.err
 }
 
-func (s *fakeSourcer) ForExternalService(ctx context.Context, tx sources.SourcerStore, au auth.Authenticator, opts store.GetExternalServiceIDsOpts) (sources.ChangesetSource, error) {
+func (s *fakeSourcer) ForExternalService(ctx context.Context, tx sources.SourcerStore, au auth.Authenticator, opts sources.ForExternalServiceOpts, as sources.AuthenticationStrategy) (sources.ChangesetSource, error) {
 	return s.source, s.err
 }
 

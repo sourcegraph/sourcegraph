@@ -36,7 +36,7 @@ func (e ErrBatchChangesDisabledForUser) Extensions() map[string]any {
 	return map[string]any{"code": "ErrBatchChangesDisabledForUser"}
 }
 
-type ErrBatchChangeInvalidName struct{ error }
+type ErrBatchChangeInvalidName struct{}
 
 func (e ErrBatchChangeInvalidName) Error() string {
 	return "The batch change name can only contain word characters, dots and dashes."
@@ -94,26 +94,4 @@ func (e ErrMatchingBatchChangeExists) Error() string {
 
 func (e ErrMatchingBatchChangeExists) Extensions() map[string]any {
 	return map[string]any{"code": "ErrMatchingBatchChangeExists"}
-}
-
-type ErrDuplicateCredential struct{}
-
-func (e ErrDuplicateCredential) Error() string {
-	return "a credential for this code host already exists"
-}
-
-func (e ErrDuplicateCredential) Extensions() map[string]any {
-	return map[string]any{"code": "ErrDuplicateCredential"}
-}
-
-type ErrVerifyCredentialFailed struct {
-	SourceErr error
-}
-
-func (e ErrVerifyCredentialFailed) Error() string {
-	return fmt.Sprintf("Failed to verify the credential:\n```\n%s\n```\n", e.SourceErr)
-}
-
-func (e ErrVerifyCredentialFailed) Extensions() map[string]any {
-	return map[string]any{"code": "ErrVerifyCredentialFailed"}
 }

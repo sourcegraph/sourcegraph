@@ -129,6 +129,25 @@ func parseDomain(s *string) (*itypes.GitHubAppDomain, error) {
 	}
 }
 
+func parseKind(s *string) (*itypes.GitHubAppKind, error) {
+	if s == nil {
+		return nil, nil
+	}
+	switch strings.ToUpper(*s) {
+	case "USER_CREDENTIAL":
+		kind := itypes.UserCredentialGitHubAppKind
+		return &kind, nil
+	case "COMMIT_SIGNING":
+		kind := itypes.CommitSigningGitHubAppKind
+		return &kind, nil
+	case "REPO_SYNC":
+		kind := itypes.RepoSyncGitHubAppKind
+		return &kind, nil
+	default:
+		return nil, errors.Errorf("unknown kind %q", *s)
+	}
+}
+
 func (r *resolver) GitHubApp(ctx context.Context, args *graphqlbackend.GitHubAppArgs) (graphqlbackend.GitHubAppResolver, error) {
 	// 🚨 SECURITY: Check whether user is site-admin
 	return r.gitHubAppByID(ctx, args.ID)

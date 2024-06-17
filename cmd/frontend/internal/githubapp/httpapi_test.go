@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 
 	"github.com/google/uuid"
@@ -75,7 +76,10 @@ func TestGenerateRedirectURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			url := generateRedirectURL(tc.domain, &tc.installationID, &tc.appID, &appName, tc.creationErr)
+			url := generateRedirectURL(gitHubAppStateDetails{
+				Domain: *tc.domain,
+				AppID:  tc.appID,
+			}, &tc.installationID, &appName, tc.creationErr)
 			require.Equal(t, tc.expectedURL, url)
 		})
 	}
@@ -193,7 +197,8 @@ func TestGithubAppHTTPAPI(t *testing.T) {
 		appName := "TestApp"
 		domain := "batches"
 		baseURL := "https://ghe.example.org"
-		req := httptest.NewRequest("GET", fmt.Sprintf("/githubapp/new-app-state?webhookURN=%s&appName=%s&domain=%s&baseURL=%s", webhookURN, appName, domain, baseURL), nil)
+		kind := types.CommitSigningGitHubAppKind.ToGraphQL()
+		req := httptest.NewRequest("GET", fmt.Sprintf("/githubapp/new-app-state?webhookURN=%s&appName=%s&domain=%s&baseURL=%s&kind=%s", webhookURN, appName, domain, baseURL, kind), nil)
 
 		t.Run("normal user", func(t *testing.T) {
 			req = req.WithContext(actor.WithActor(req.Context(), &actor.Actor{
@@ -433,6 +438,7 @@ func TestCreateGitHubApp(t *testing.T) {
 		handlerAssert func(t *testing.T) http.HandlerFunc
 		expected      *ghtypes.GitHubApp
 		expectedErr   error
+		kind          types.GitHubAppKind
 	}{
 		{
 			name:   "success",
@@ -463,6 +469,7 @@ func TestCreateGitHubApp(t *testing.T) {
 					require.NoError(t, err)
 				}
 			},
+			kind: types.CommitSigningGitHubAppKind,
 			expected: &ghtypes.GitHubApp{
 				AppID:         1,
 				Name:          "test",
@@ -475,11 +482,13 @@ func TestCreateGitHubApp(t *testing.T) {
 				AppURL:        "http://my-github-app.com/app",
 				Domain:        types.BatchesGitHubAppDomain,
 				Logo:          "http://my-github-app.com/identicons/app/app/test/github-app",
+				Kind:          types.CommitSigningGitHubAppKind,
 			},
 		},
 		{
 			name:   "unexpected status code",
 			domain: types.BatchesGitHubAppDomain,
+			kind:   types.CommitSigningGitHubAppKind,
 			handlerAssert: func(t *testing.T) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
@@ -490,6 +499,7 @@ func TestCreateGitHubApp(t *testing.T) {
 		{
 			name:   "server error",
 			domain: types.BatchesGitHubAppDomain,
+			kind:   types.CommitSigningGitHubAppKind,
 			handlerAssert: func(t *testing.T) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusInternalServerError)
@@ -500,6 +510,7 @@ func TestCreateGitHubApp(t *testing.T) {
 		{
 			name:   "invalid html url",
 			domain: types.BatchesGitHubAppDomain,
+			kind:   types.CommitSigningGitHubAppKind,
 			handlerAssert: func(t *testing.T) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusCreated)
@@ -517,7 +528,7 @@ func TestCreateGitHubApp(t *testing.T) {
 			srv := httptest.NewServer(test.handlerAssert(t))
 			defer srv.Close()
 
-			app, err := createGitHubApp(srv.URL, test.domain, httpcli.TestExternalClient)
+			app, err := createGitHubApp(srv.URL, test.domain, httpcli.TestExternalClient, test.kind)
 			if test.expectedErr != nil {
 				require.Error(t, err)
 				assert.EqualError(t, err, test.expectedErr.Error())

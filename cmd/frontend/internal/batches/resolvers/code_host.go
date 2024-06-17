@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	ghstore "github.com/sourcegraph/sourcegraph/internal/github_apps/store"
 	ghtypes "github.com/sourcegraph/sourcegraph/internal/github_apps/types"
+	"github.com/sourcegraph/sourcegraph/internal/types"
 	itypes "github.com/sourcegraph/sourcegraph/internal/types"
 )
 
@@ -43,7 +44,7 @@ func (c *batchChangesCodeHostResolver) CommitSigningConfiguration(ctx context.Co
 	case extsvc.TypeGitHub:
 		gstore := ghstore.GitHubAppsWith(c.store.Store)
 		domain := itypes.BatchesGitHubAppDomain
-		ghapp, err := gstore.GetByDomain(ctx, domain, c.codeHost.ExternalServiceID)
+		ghapp, err := gstore.GetByDomainAndKind(ctx, domain, c.codeHost.ExternalServiceID, types.CommitSigningGitHubAppKind)
 		if err != nil {
 			if _, ok := err.(ghstore.ErrNoGitHubAppFound); ok {
 				return nil, nil

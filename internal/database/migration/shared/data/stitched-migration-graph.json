@@ -11223,6 +11223,45 @@
 				"IndexMetadata": null
 			},
 			{
+				"ID": 1715799651,
+				"Name": "add_github_app_id_user_credentials",
+				"UpQuery": "ALTER TABLE IF EXISTS user_credentials\n    ADD COLUMN IF NOT EXISTS github_app_id INT NULL REFERENCES github_apps(id);\n\n-- We want to make sure that we never have a user_credential with a `github_app_id` with an `external_service_type`\n-- that isn't `github`.\nALTER TABLE IF EXISTS user_credentials\n    ADD CONSTRAINT check_github_app_id_and_external_service_type\n        CHECK ((github_app_id IS NULL) OR (external_service_type = 'github'));",
+				"DownQuery": "-- delete the constraints\nALTER TABLE IF EXISTS user_credentials DROP CONSTRAINT IF EXISTS check_github_app_id_and_external_service_type;\n\n-- delete the `github_app_id` column\nALTER TABLE IF EXISTS user_credentials DROP COLUMN IF EXISTS github_app_id;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1713958707
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
+			},
+			{
+				"ID": 1716992741,
+				"Name": "add_kind_column_github_app",
+				"UpQuery": "ALTER TABLE IF EXISTS github_apps\n    ADD COLUMN IF NOT EXISTS kind VARCHAR(255) NULL;\n\nUPDATE github_apps\n    SET kind = 'COMMIT_SIGNING'\n    WHERE domain = 'batches';\n\nUPDATE github_apps\n    SET kind = 'REPO_SYNC'\n    WHERE domain = 'repos';\n\nALTER TABLE IF EXISTS github_apps\n    ALTER COLUMN kind SET NOT NULL;",
+				"DownQuery": "ALTER TABLE IF EXISTS github_apps DROP COLUMN IF EXISTS kind;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1715799651
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
+			},
+			{
+				"ID": 1717539827,
+				"Name": "add_github_app_batch_changes_site_credential",
+				"UpQuery": "ALTER TABLE IF EXISTS batch_changes_site_credentials\n    ADD COLUMN IF NOT EXISTS github_app_id INT NULL REFERENCES github_apps(id);\n\n-- We want to make sure that we never have a user_credential with a `github_app_id` with an `external_service_type`\n-- that isn't `github`.\nALTER TABLE IF EXISTS batch_changes_site_credentials\n    ADD CONSTRAINT check_github_app_id_and_external_service_type\n        CHECK ((github_app_id IS NULL) OR (external_service_type = 'github'));",
+				"DownQuery": "-- delete the constraints\nALTER TABLE IF EXISTS batch_changes_site_credentials DROP CONSTRAINT IF EXISTS check_github_app_id_and_external_service_type;\n\n-- delete the `github_app_id` column\nALTER TABLE IF EXISTS batch_changes_site_credentials DROP COLUMN IF EXISTS github_app_id;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1716992741
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
+			},
+			{
 				"ID": 1717699555,
 				"Name": "Fix unique index for SCIM external account connection",
 				"UpQuery": "DROP INDEX IF EXISTS user_external_accounts_user_id_scim_service_type;\n\nCREATE UNIQUE INDEX\n    user_external_accounts_user_id_scim_service_type\nON\n    user_external_accounts (user_id, service_type)\nWHERE\n    service_type = 'scim'::text\n    AND deleted_at IS NULL;",
@@ -11494,6 +11533,7 @@
 			"v5.4.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
+					1717539827,
 					1717699555
 				],
 				"PreCreation": false

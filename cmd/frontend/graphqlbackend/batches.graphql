@@ -3557,6 +3557,11 @@ type BatchChangesCredential implements Node {
     Whether the configured credential is a site credential, that is available globally.
     """
     isSiteCredential: Boolean!
+
+    """
+    Whether the credential is tied to a GitHub App installation.
+    """
+    isGitHubApp: Boolean!
 }
 
 """

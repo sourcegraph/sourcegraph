@@ -13,7 +13,7 @@ import type {
     BatchChangesCodeHostFields,
     CheckBatchChangesCredentialResult,
     CheckBatchChangesCredentialVariables,
-    Scalars,
+    UserAreaUserFields,
 } from '../../../graphql-operations'
 
 import { AddCredentialModal } from './AddCredentialModal'
@@ -27,7 +27,7 @@ import styles from './CodeHostConnectionNode.module.scss'
 export interface CodeHostConnectionNodeProps {
     node: BatchChangesCodeHostFields
     refetchAll: () => void
-    userID: Scalars['ID'] | null
+    user: UserAreaUserFields | null
 }
 
 type OpenModal = 'add' | 'view' | 'delete'
@@ -35,7 +35,7 @@ type OpenModal = 'add' | 'view' | 'delete'
 export const CodeHostConnectionNode: React.FunctionComponent<React.PropsWithChildren<CodeHostConnectionNodeProps>> = ({
     node,
     refetchAll,
-    userID,
+    user,
 }) => {
     const [checkCredError, setCheckCredError] = useState<ApolloError | undefined>()
     const ExternalServiceIcon = defaultExternalServices[node.externalServiceKind].icon
@@ -55,7 +55,7 @@ export const CodeHostConnectionNode: React.FunctionComponent<React.PropsWithChil
         setOpenModal('add')
     }, [])
     const onClickCheck = useCallback<React.MouseEventHandler>(async () => {
-        await checkCred({ variables: { id: node?.credential?.id ?? '' } })
+        await checkCred({ variables: { id: node?.credential?.id ?? '', isGitHubApp: false } })
     }, [node, checkCred])
     const onClickRemove = useCallback<React.MouseEventHandler>(event => {
         event.preventDefault()
@@ -75,7 +75,7 @@ export const CodeHostConnectionNode: React.FunctionComponent<React.PropsWithChil
         refetchAll()
     }, [refetchAll, buttonReference])
 
-    const isEnabled = node.credential !== null && (userID === null || !node.credential.isSiteCredential)
+    const isEnabled = node.credential !== null && (user === null || !node.credential.isSiteCredential)
 
     const headingAriaLabel = `Sourcegraph ${
         isEnabled ? 'has credentials configured' : 'does not have credentials configured'
@@ -133,6 +133,16 @@ export const CodeHostConnectionNode: React.FunctionComponent<React.PropsWithChil
                             be created with a global token until a personal access token is added."
                             >
                                 Global token
+                            </Badge>
+                        )}
+                        {isEnabled && node.credential?.isGitHubApp && (
+                            <Badge
+                                variant="outlineSecondary"
+                                tooltip="This code host is using a GitHub App"
+                                className="ml-2"
+                                role="button"
+                            >
+                                GitHub App
                             </Badge>
                         )}
                     </H3>
@@ -203,7 +213,7 @@ export const CodeHostConnectionNode: React.FunctionComponent<React.PropsWithChil
                 <AddCredentialModal
                     onCancel={closeModal}
                     afterCreate={afterAction}
-                    userID={userID}
+                    user={user}
                     externalServiceKind={node.externalServiceKind}
                     externalServiceURL={node.externalServiceURL}
                     requiresSSH={node.requiresSSH}

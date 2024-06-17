@@ -10,6 +10,7 @@ import { SHOW_BUSINESS_FEATURES } from '../enterprise/dotcom/productSubscription
 import { OwnAnalyticsPage } from '../enterprise/own/admin-ui/OwnAnalyticsPage'
 import type { SiteAdminRolesPageProps } from '../enterprise/rbac/SiteAdminRolesPage'
 import type { RoleAssignmentModalProps } from '../enterprise/site-admin/UserManagement/components/RoleAssignmentModal'
+import { GitHubAppKind } from '../graphql-operations'
 import { checkRequestAccessAllowed } from '../util/checkRequestAccessAllowed'
 
 import { isPackagesEnabled } from './flags'
@@ -419,7 +420,13 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
     },
     {
         path: '/batch-changes/github-apps/new',
-        render: () => <BatchChangesCreateGitHubAppPage />,
+        render: ({ authenticatedUser }) => (
+            <BatchChangesCreateGitHubAppPage
+                minimizedMode={false}
+                authenticatedUser={authenticatedUser}
+                kind={GitHubAppKind.COMMIT_SIGNING}
+            />
+        ),
         condition: ({ batchChangesEnabled }) => batchChangesEnabled,
     },
     {

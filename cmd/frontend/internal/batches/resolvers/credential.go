@@ -88,7 +88,7 @@ func (c *batchChangesUserCredentialResolver) ExternalServiceURL() string {
 }
 
 func (c *batchChangesUserCredentialResolver) SSHPublicKey(ctx context.Context) (*string, error) {
-	a, err := c.credential.Authenticator(ctx)
+	a, err := c.credential.Authenticator(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "retrieving authenticator")
 	}
@@ -109,11 +109,19 @@ func (c *batchChangesUserCredentialResolver) IsSiteCredential() bool {
 }
 
 func (c *batchChangesUserCredentialResolver) authenticator(ctx context.Context) (auth.Authenticator, error) {
-	return c.credential.Authenticator(ctx)
+	return c.credential.Authenticator(ctx, nil)
+}
+
+func (c *batchChangesUserCredentialResolver) IsGitHubApp() bool {
+	return c.credential.GitHubAppID != 0
 }
 
 type batchChangesSiteCredentialResolver struct {
 	credential *btypes.SiteCredential
+}
+
+func (c *batchChangesUserCredentialResolver) GitHubAppID() int {
+	return c.credential.GitHubAppID
 }
 
 var _ graphqlbackend.BatchChangesCredentialResolver = &batchChangesSiteCredentialResolver{}
@@ -154,4 +162,12 @@ func (c *batchChangesSiteCredentialResolver) IsSiteCredential() bool {
 
 func (c *batchChangesSiteCredentialResolver) authenticator(ctx context.Context) (auth.Authenticator, error) {
 	return c.credential.Authenticator(ctx)
+}
+
+func (c *batchChangesSiteCredentialResolver) IsGitHubApp() bool {
+	return false
+}
+
+func (c *batchChangesSiteCredentialResolver) GitHubAppID() int {
+	return 0
 }

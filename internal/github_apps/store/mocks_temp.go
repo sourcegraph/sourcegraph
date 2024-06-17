@@ -34,9 +34,9 @@ type MockGitHubAppsStore struct {
 	// GetByAppIDFunc is an instance of a mock function object controlling
 	// the behavior of the method GetByAppID.
 	GetByAppIDFunc *GitHubAppsStoreGetByAppIDFunc
-	// GetByDomainFunc is an instance of a mock function object controlling
-	// the behavior of the method GetByDomain.
-	GetByDomainFunc *GitHubAppsStoreGetByDomainFunc
+	// GetByDomainAndKindFunc is an instance of a mock function object
+	// controlling the behavior of the method GetByDomainAndKind.
+	GetByDomainAndKindFunc *GitHubAppsStoreGetByDomainAndKindFunc
 	// GetByIDFunc is an instance of a mock function object controlling the
 	// behavior of the method GetByID.
 	GetByIDFunc *GitHubAppsStoreGetByIDFunc
@@ -91,8 +91,8 @@ func NewMockGitHubAppsStore() *MockGitHubAppsStore {
 				return
 			},
 		},
-		GetByDomainFunc: &GitHubAppsStoreGetByDomainFunc{
-			defaultHook: func(context.Context, types1.GitHubAppDomain, string) (r0 *types.GitHubApp, r1 error) {
+		GetByDomainAndKindFunc: &GitHubAppsStoreGetByDomainAndKindFunc{
+			defaultHook: func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (r0 *types.GitHubApp, r1 error) {
 				return
 			},
 		},
@@ -168,9 +168,9 @@ func NewStrictMockGitHubAppsStore() *MockGitHubAppsStore {
 				panic("unexpected invocation of MockGitHubAppsStore.GetByAppID")
 			},
 		},
-		GetByDomainFunc: &GitHubAppsStoreGetByDomainFunc{
-			defaultHook: func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error) {
-				panic("unexpected invocation of MockGitHubAppsStore.GetByDomain")
+		GetByDomainAndKindFunc: &GitHubAppsStoreGetByDomainAndKindFunc{
+			defaultHook: func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error) {
+				panic("unexpected invocation of MockGitHubAppsStore.GetByDomainAndKind")
 			},
 		},
 		GetByIDFunc: &GitHubAppsStoreGetByIDFunc{
@@ -238,8 +238,8 @@ func NewMockGitHubAppsStoreFrom(i GitHubAppsStore) *MockGitHubAppsStore {
 		GetByAppIDFunc: &GitHubAppsStoreGetByAppIDFunc{
 			defaultHook: i.GetByAppID,
 		},
-		GetByDomainFunc: &GitHubAppsStoreGetByDomainFunc{
-			defaultHook: i.GetByDomain,
+		GetByDomainAndKindFunc: &GitHubAppsStoreGetByDomainAndKindFunc{
+			defaultHook: i.GetByDomainAndKind,
 		},
 		GetByIDFunc: &GitHubAppsStoreGetByIDFunc{
 			defaultHook: i.GetByID,
@@ -707,35 +707,37 @@ func (c GitHubAppsStoreGetByAppIDFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
-// GitHubAppsStoreGetByDomainFunc describes the behavior when the
-// GetByDomain method of the parent MockGitHubAppsStore instance is invoked.
-type GitHubAppsStoreGetByDomainFunc struct {
-	defaultHook func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error)
-	hooks       []func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error)
-	history     []GitHubAppsStoreGetByDomainFuncCall
+// GitHubAppsStoreGetByDomainAndKindFunc describes the behavior when the
+// GetByDomainAndKind method of the parent MockGitHubAppsStore instance is
+// invoked.
+type GitHubAppsStoreGetByDomainAndKindFunc struct {
+	defaultHook func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error)
+	hooks       []func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error)
+	history     []GitHubAppsStoreGetByDomainAndKindFuncCall
 	mutex       sync.Mutex
 }
 
-// GetByDomain delegates to the next hook function in the queue and stores
-// the parameter and result values of this invocation.
-func (m *MockGitHubAppsStore) GetByDomain(v0 context.Context, v1 types1.GitHubAppDomain, v2 string) (*types.GitHubApp, error) {
-	r0, r1 := m.GetByDomainFunc.nextHook()(v0, v1, v2)
-	m.GetByDomainFunc.appendCall(GitHubAppsStoreGetByDomainFuncCall{v0, v1, v2, r0, r1})
+// GetByDomainAndKind delegates to the next hook function in the queue and
+// stores the parameter and result values of this invocation.
+func (m *MockGitHubAppsStore) GetByDomainAndKind(v0 context.Context, v1 types1.GitHubAppDomain, v2 string, v3 types1.GitHubAppKind) (*types.GitHubApp, error) {
+	r0, r1 := m.GetByDomainAndKindFunc.nextHook()(v0, v1, v2, v3)
+	m.GetByDomainAndKindFunc.appendCall(GitHubAppsStoreGetByDomainAndKindFuncCall{v0, v1, v2, v3, r0, r1})
 	return r0, r1
 }
 
-// SetDefaultHook sets function that is called when the GetByDomain method
-// of the parent MockGitHubAppsStore instance is invoked and the hook queue
-// is empty.
-func (f *GitHubAppsStoreGetByDomainFunc) SetDefaultHook(hook func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error)) {
+// SetDefaultHook sets function that is called when the GetByDomainAndKind
+// method of the parent MockGitHubAppsStore instance is invoked and the hook
+// queue is empty.
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) SetDefaultHook(hook func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error)) {
 	f.defaultHook = hook
 }
 
 // PushHook adds a function to the end of hook queue. Each invocation of the
-// GetByDomain method of the parent MockGitHubAppsStore instance invokes the
-// hook at the front of the queue and discards it. After the queue is empty,
-// the default hook function is invoked for any future action.
-func (f *GitHubAppsStoreGetByDomainFunc) PushHook(hook func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error)) {
+// GetByDomainAndKind method of the parent MockGitHubAppsStore instance
+// invokes the hook at the front of the queue and discards it. After the
+// queue is empty, the default hook function is invoked for any future
+// action.
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) PushHook(hook func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -743,20 +745,20 @@ func (f *GitHubAppsStoreGetByDomainFunc) PushHook(hook func(context.Context, typ
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitHubAppsStoreGetByDomainFunc) SetDefaultReturn(r0 *types.GitHubApp, r1 error) {
-	f.SetDefaultHook(func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error) {
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) SetDefaultReturn(r0 *types.GitHubApp, r1 error) {
+	f.SetDefaultHook(func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitHubAppsStoreGetByDomainFunc) PushReturn(r0 *types.GitHubApp, r1 error) {
-	f.PushHook(func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error) {
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) PushReturn(r0 *types.GitHubApp, r1 error) {
+	f.PushHook(func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitHubAppsStoreGetByDomainFunc) nextHook() func(context.Context, types1.GitHubAppDomain, string) (*types.GitHubApp, error) {
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) nextHook() func(context.Context, types1.GitHubAppDomain, string, types1.GitHubAppKind) (*types.GitHubApp, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -769,26 +771,27 @@ func (f *GitHubAppsStoreGetByDomainFunc) nextHook() func(context.Context, types1
 	return hook
 }
 
-func (f *GitHubAppsStoreGetByDomainFunc) appendCall(r0 GitHubAppsStoreGetByDomainFuncCall) {
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) appendCall(r0 GitHubAppsStoreGetByDomainAndKindFuncCall) {
 	f.mutex.Lock()
 	f.history = append(f.history, r0)
 	f.mutex.Unlock()
 }
 
-// History returns a sequence of GitHubAppsStoreGetByDomainFuncCall objects
-// describing the invocations of this function.
-func (f *GitHubAppsStoreGetByDomainFunc) History() []GitHubAppsStoreGetByDomainFuncCall {
+// History returns a sequence of GitHubAppsStoreGetByDomainAndKindFuncCall
+// objects describing the invocations of this function.
+func (f *GitHubAppsStoreGetByDomainAndKindFunc) History() []GitHubAppsStoreGetByDomainAndKindFuncCall {
 	f.mutex.Lock()
-	history := make([]GitHubAppsStoreGetByDomainFuncCall, len(f.history))
+	history := make([]GitHubAppsStoreGetByDomainAndKindFuncCall, len(f.history))
 	copy(history, f.history)
 	f.mutex.Unlock()
 
 	return history
 }
 
-// GitHubAppsStoreGetByDomainFuncCall is an object that describes an
-// invocation of method GetByDomain on an instance of MockGitHubAppsStore.
-type GitHubAppsStoreGetByDomainFuncCall struct {
+// GitHubAppsStoreGetByDomainAndKindFuncCall is an object that describes an
+// invocation of method GetByDomainAndKind on an instance of
+// MockGitHubAppsStore.
+type GitHubAppsStoreGetByDomainAndKindFuncCall struct {
 	// Arg0 is the value of the 1st argument passed to this method
 	// invocation.
 	Arg0 context.Context
@@ -798,6 +801,9 @@ type GitHubAppsStoreGetByDomainFuncCall struct {
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
 	Arg2 string
+	// Arg3 is the value of the 4th argument passed to this method
+	// invocation.
+	Arg3 types1.GitHubAppKind
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 *types.GitHubApp
@@ -808,13 +814,13 @@ type GitHubAppsStoreGetByDomainFuncCall struct {
 
 // Args returns an interface slice containing the arguments of this
 // invocation.
-func (c GitHubAppsStoreGetByDomainFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+func (c GitHubAppsStoreGetByDomainAndKindFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3}
 }
 
 // Results returns an interface slice containing the results of this
 // invocation.
-func (c GitHubAppsStoreGetByDomainFuncCall) Results() []interface{} {
+func (c GitHubAppsStoreGetByDomainAndKindFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 

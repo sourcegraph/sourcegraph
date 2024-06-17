@@ -25,8 +25,25 @@ type GitHubApp struct {
 	PrivateKey    string
 	EncryptionKey string
 	Logo          string
+	Kind          types.GitHubAppKind
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+}
+
+func NormalizeGitHubAppKind(app *GitHubApp) types.GitHubAppKind {
+	// currently GitHub apps with the repo domain are only used for repo syncing
+	// so we normalize them to repo syncing apps
+	if app.Domain == types.ReposGitHubAppDomain {
+		return types.RepoSyncGitHubAppKind
+	}
+
+	// If we fall into this block it means the `domain` is for BatchChanges
+	// and if the `kind` is unspecified we default to CommitSigning
+	if app.Kind == "" {
+		return types.CommitSigningGitHubAppKind
+	}
+
+	return app.Kind
 }
 
 // GitHubAppInstallation represents an installation of a GitHub App.

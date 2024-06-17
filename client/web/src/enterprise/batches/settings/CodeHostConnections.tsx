@@ -1,7 +1,10 @@
 import React from 'react'
 
+import { useLocation } from 'react-router-dom'
+
 import { Container, Link, H3, Text } from '@sourcegraph/wildcard'
 
+import { DismissibleAlert } from '../../../components/DismissibleAlert'
 import type { UseShowMorePaginationResult } from '../../../components/FilteredConnection/hooks/useShowMorePagination'
 import {
     ConnectionContainer,
@@ -12,11 +15,13 @@ import {
     ShowMoreButton,
     SummaryContainer,
 } from '../../../components/FilteredConnection/ui'
-import type {
-    BatchChangesCodeHostFields,
-    GlobalBatchChangesCodeHostsResult,
-    Scalars,
-    UserBatchChangesCodeHostsResult,
+import { GitHubAppFailureAlert } from '../../../components/gitHubApps/GitHubAppFailureAlert'
+import {
+    type BatchChangesCodeHostFields,
+    GitHubAppKind,
+    type GlobalBatchChangesCodeHostsResult,
+    type UserBatchChangesCodeHostsResult,
+    type UserAreaUserFields,
 } from '../../../graphql-operations'
 
 import { useGlobalBatchChangesCodeHostConnection, useUserBatchChangesCodeHostConnection } from './backend'
@@ -28,20 +33,24 @@ export interface GlobalCodeHostConnectionsProps {
 
 export const GlobalCodeHostConnections: React.FunctionComponent<
     React.PropsWithChildren<GlobalCodeHostConnectionsProps>
-> = props => (
-    <CodeHostConnections userID={null} connectionResult={useGlobalBatchChangesCodeHostConnection()} {...props} />
-)
+> = props => <CodeHostConnections user={null} connectionResult={useGlobalBatchChangesCodeHostConnection()} {...props} />
 
 export interface UserCodeHostConnectionsProps extends GlobalCodeHostConnectionsProps {
-    userID: Scalars['ID']
+    user: UserAreaUserFields
 }
 
 export const UserCodeHostConnections: React.FunctionComponent<
     React.PropsWithChildren<UserCodeHostConnectionsProps>
-> = props => <CodeHostConnections connectionResult={useUserBatchChangesCodeHostConnection(props.userID)} {...props} />
+> = ({ user, headerLine }) => (
+    <CodeHostConnections
+        connectionResult={useUserBatchChangesCodeHostConnection(user.id)}
+        headerLine={headerLine}
+        user={user}
+    />
+)
 
 interface CodeHostConnectionsProps extends GlobalCodeHostConnectionsProps {
-    userID: Scalars['ID'] | null
+    user: UserAreaUserFields | null
     connectionResult: UseShowMorePaginationResult<
         GlobalBatchChangesCodeHostsResult | UserBatchChangesCodeHostsResult,
         BatchChangesCodeHostFields
@@ -49,11 +58,17 @@ interface CodeHostConnectionsProps extends GlobalCodeHostConnectionsProps {
 }
 
 const CodeHostConnections: React.FunctionComponent<React.PropsWithChildren<CodeHostConnectionsProps>> = ({
-    userID,
+    user,
     headerLine,
     connectionResult,
 }) => {
     const { loading, hasNextPage, fetchMore, connection, error, refetchAll } = connectionResult
+    const location = useLocation()
+    const kind = new URLSearchParams(location.search).get('kind')
+    const success = new URLSearchParams(location.search).get('success') === 'true'
+    const appName = new URLSearchParams(location.search).get('app_name')
+    const setupError = new URLSearchParams(location.search).get('error')
+    const shouldShowError = !success && setupError && kind !== GitHubAppKind.COMMIT_SIGNING
     return (
         <Container className="mb-3">
             <H3>Code host tokens</H3>
@@ -61,13 +76,23 @@ const CodeHostConnections: React.FunctionComponent<React.PropsWithChildren<CodeH
             <ConnectionContainer className="mb-3">
                 {error && <ConnectionError errors={[error.message]} />}
                 {loading && !connection && <ConnectionLoading />}
+                {success && (
+                    <DismissibleAlert
+                        className="mb-3"
+                        variant="success"
+                        partialStorageKey="batch-changes-github-app-integration-success"
+                    >
+                        GitHub App {appName?.length ? `"${appName}" ` : ''}successfully connected.
+                    </DismissibleAlert>
+                )}
+                {shouldShowError && <GitHubAppFailureAlert error={setupError} />}
                 <ConnectionList as="ul" className="list-group" aria-label="code host connections">
                     {connection?.nodes?.map(node => (
                         <CodeHostConnectionNode
                             key={node.externalServiceURL}
                             node={node}
                             refetchAll={refetchAll}
-                            userID={userID}
+                            user={user}
                         />
                     ))}
                 </ConnectionList>

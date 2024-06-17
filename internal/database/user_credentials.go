@@ -16,6 +16,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/encryption"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/auth"
+
+	// ghappAuth "github.com/sourcegraph/sourcegraph/internal/github_apps/auth"
 	"github.com/sourcegraph/sourcegraph/internal/timeutil"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -34,7 +36,15 @@ type UserCredential struct {
 	// we should remove the credential and SSHMigrationApplied fields.
 	SSHMigrationApplied bool
 
+	// If the user credential is tied to a github app, this is the ID of the
+	// github app.
+	GitHubAppID int
+
 	Credential *EncryptableCredential
+}
+
+func (u *UserCredential) IsGitHubApp() bool {
+	return u.GitHubAppID == 0
 }
 
 type EncryptableCredential = encryption.Encryptable
@@ -51,8 +61,18 @@ func NewEncryptedCredential(cipher, keyID string, key encryption.Key) *Encryptab
 	return encryption.NewEncrypted(cipher, keyID, key)
 }
 
+type CredentialGetter interface {
+	UserCredentials() UserCredentialsStore
+}
+
 // Authenticator decrypts and creates the authenticator associated with the user credential.
-func (uc *UserCredential) Authenticator(ctx context.Context) (auth.Authenticator, error) {
+func (uc *UserCredential) Authenticator(ctx context.Context, tx CredentialGetter) (auth.Authenticator, error) {
+	if uc.GitHubAppID != 0 {
+		// uc.
+		// return ghappAuth.NewGitHubAppAuthenticator(0, nil)
+		return nil, nil
+	}
+
 	decrypted, err := uc.Credential.Decrypt(ctx)
 	if err != nil {
 		return nil, err
@@ -151,6 +171,7 @@ type UserCredentialScope struct {
 	UserID              int32
 	ExternalServiceType string
 	ExternalServiceID   string
+	GitHubAppID         int
 }
 
 // Create creates a new user credential based on the given scope and
@@ -176,6 +197,7 @@ func (s *userCredentialsStore) Create(ctx context.Context, scope UserCredentialS
 		scope.ExternalServiceID,
 		encryptedCredential, // N.B.: is already a []byte
 		keyID,
+		dbutil.NewNullInt(scope.GitHubAppID),
 		sqlf.Join(userCredentialsColumns, ", "),
 	)
 
@@ -209,6 +231,7 @@ func (s *userCredentialsStore) Update(ctx context.Context, credential *UserCrede
 		keyID,
 		credential.UpdatedAt,
 		credential.SSHMigrationApplied,
+		dbutil.NewNullInt(credential.GitHubAppID),
 		credential.ID,
 		authz,
 		sqlf.Join(userCredentialsColumns, ", "),
@@ -391,6 +414,7 @@ var userCredentialsColumns = []*sqlf.Query{
 	sqlf.Sprintf("created_at"),
 	sqlf.Sprintf("updated_at"),
 	sqlf.Sprintf("ssh_migration_applied"),
+	sqlf.Sprintf("github_app_id"),
 }
 
 // The more unwieldy queries are below rather than inline in the above methods
@@ -427,7 +451,8 @@ INSERT INTO
 		encryption_key_id,
 		created_at,
 		updated_at,
-		ssh_migration_applied
+		ssh_migration_applied,
+		github_app_id
 	)
 	VALUES (
 		%s,
@@ -438,7 +463,8 @@ INSERT INTO
 		%s,
 		NOW(),
 		NOW(),
-		TRUE
+		TRUE,
+		%s
 	)
 	RETURNING %s
 `
@@ -454,6 +480,7 @@ SET
 	encryption_key_id = %s,
 	updated_at = %s,
 	ssh_migration_applied = %s
+	github_app_id = %s
 WHERE
 	id = %s AND
 	%s -- authz query conds
@@ -482,6 +509,7 @@ func scanUserCredential(cred *UserCredential, key encryption.Key, s dbutil.Scann
 		&cred.CreatedAt,
 		&cred.UpdatedAt,
 		&cred.SSHMigrationApplied,
+		&dbutil.NullInt{N: &cred.GitHubAppID},
 	); err != nil {
 		return err
 	}

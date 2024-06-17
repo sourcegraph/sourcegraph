@@ -493,7 +493,7 @@ func TestSourcer_ForChangeset(t *testing.T) {
 
 		t.Run("with GH App", func(t *testing.T) {
 			ghaStore := ghastore.NewMockGitHubAppsStore()
-			ghaStore.GetByDomainFunc.SetDefaultHook(func(ctx context.Context, domain types.GitHubAppDomain, baseUrl string) (*ghatypes.GitHubApp, error) {
+			ghaStore.GetByDomainAndKindFunc.SetDefaultHook(func(ctx context.Context, domain types.GitHubAppDomain, baseUrl string, kind types.GitHubAppKind) (*ghatypes.GitHubApp, error) {
 				assert.EqualValues(t, types.BatchesGitHubAppDomain, domain)
 				assert.EqualValues(t, config.Url, baseUrl)
 				ghApp := &ghatypes.GitHubApp{
@@ -545,7 +545,7 @@ func TestSourcer_ForChangeset(t *testing.T) {
 		t.Run("with GH Ap (forked changeset)", func(t *testing.T) {
 			forkedRepoNamespace := "some-forked-org"
 			ghaStore := ghastore.NewMockGitHubAppsStore()
-			ghaStore.GetByDomainFunc.SetDefaultHook(func(ctx context.Context, domain types.GitHubAppDomain, baseUrl string) (*ghatypes.GitHubApp, error) {
+			ghaStore.GetByDomainAndKindFunc.SetDefaultHook(func(ctx context.Context, domain types.GitHubAppDomain, baseUrl string, kind types.GitHubAppKind) (*ghatypes.GitHubApp, error) {
 				assert.EqualValues(t, types.BatchesGitHubAppDomain, domain)
 				assert.EqualValues(t, config.Url, baseUrl)
 				ghApp := &ghatypes.GitHubApp{
