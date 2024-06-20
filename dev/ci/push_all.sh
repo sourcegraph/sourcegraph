@@ -5,6 +5,8 @@ set -eu
 echo "~~~ :aspect: :stethoscope: Agent Health check"
 /etc/aspect/workflows/bin/agent_health_check
 
+echo '--- Generating jobfile'
+
 aspectRC="/tmp/aspect-generated.bazelrc"
 rosetta bazelrc > "$aspectRC"
 bazelrc=(--bazelrc="$aspectRC" --bazelrc=.aspect/bazelrc/ci.sourcegraph.bazelrc)
@@ -50,21 +52,27 @@ function create_push_command() {
   repository="$2"
   target="$3"
   tags_args="$4"
+  runscriptdir="$5"
 
   # TODO(JH): https://github.com/sourcegraph/sourcegraph/issues/58442
   if [[ "$target" == "//docker-images/syntax-highlighter:scip-ctags_candidate_push" ]]; then
     repository="scip-ctags"
   fi
 
-  for registry in "${registries[@]}"; do
-    cmd="bazel \
-      ${bazelrc[*]} \
-      run \
-      $target \
-      --stamp \
-      --workspace_status_command=./dev/bazel_stamp_vars.sh"
+  for i in "${!registries[@]}"; do
+    registry="${registries[$i]}"
+    etarget="$(echo "$target" | sed 's/\//_/g')"
+    cmd="$runscriptdir/${etarget}_$i.sh"
 
-    echo "$cmd -- $tags_args --repository ${registry}/${repository} && $(echo_append_annotation "$repository" "$registry" "${tags_args[@]}")"
+    bazel \
+      "${bazelrc[@]}" \
+      run \
+      --script_path="$cmd" \
+      "$target" \
+      --stamp \
+      --workspace_status_command=./dev/bazel_stamp_vars.sh
+
+    echo "$cmd $tags_args --repository ${registry}/${repository} && $(echo_append_annotation "$repository" "$registry" "${tags_args[@]}")"
   done
 }
 
@@ -168,6 +176,7 @@ honeyvent=$(bazel "${bazelrc[@]}" build //dev/tools:honeyvent 2>/dev/null && baz
 images=$(bazel "${bazelrc[@]}" query 'kind("oci_push rule", //...)')
 
 job_file=$(mktemp)
+runscripts=$(mktemp -d)
 # shellcheck disable=SC2064
 trap "rm -rf $job_file" EXIT
 
@@ -176,10 +185,10 @@ for target in ${images[@]}; do
   [[ "$target" =~ ([A-Za-z0-9_.-]+): ]]
   name="${BASH_REMATCH[1]}"
   # Append push commands for dev registries
-  create_push_command "${dev_registries[*]}" "$name" "$target" "$dev_tags_args" >>"$job_file"
+  create_push_command "${dev_registries[*]}" "$name" "$target" "$dev_tags_args" "$runscripts" >>"$job_file"
   # Append push commands for prod registries
   if $push_prod; then
-    create_push_command "${prod_registries[*]}" "$name" "$target" "$prod_tags_args" >>"$job_file"
+    create_push_command "${prod_registries[*]}" "$name" "$target" "$prod_tags_args" "$runscripts" >>"$job_file"
   fi
 done
 
