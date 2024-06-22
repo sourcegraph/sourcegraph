@@ -75,7 +75,7 @@ func HandleResetPasswordInit(logger log.Logger, db database.DB) http.HandlerFunc
 			return
 		}
 
-		resetURL, err := backend.MakePasswordResetURL(ctx, db, usr.ID)
+		resetURL, err := backend.MakePasswordResetURL(ctx, db, usr.ID, formData.Email)
 		if err == database.ErrPasswordResetRateLimit {
 			httpLogError(logger.Warn, w, "Too many password reset requests. Try again in a few minutes.", http.StatusTooManyRequests, log.Error(err))
 			return

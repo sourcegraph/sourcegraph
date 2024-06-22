@@ -15,6 +15,7 @@ import { getReturnTo, PasswordInput } from './SignInSignUpCommon'
 
 interface Props extends TelemetryV2Props {
     onAuthError: (error: Error | null) => void
+    email: string | null
     context: Pick<
         SourcegraphContext,
         'allowSignup' | 'authProviders' | 'sourcegraphDotComMode' | 'xhrHeaders' | 'resetPasswordEnabled'
@@ -27,12 +28,15 @@ interface Props extends TelemetryV2Props {
  */
 export const UsernamePasswordSignInForm: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
     onAuthError,
+    email,
     className,
     context,
     telemetryRecorder,
 }) => {
     const location = useLocation()
-    const [usernameOrEmail, setUsernameOrEmail] = useState('')
+
+    // To populate the username/email text-box with the user's email value on sign-in screen after successful password change request
+    const [usernameOrEmail, setUsernameOrEmail] = useState(email || '')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
 

@@ -22,10 +22,12 @@ func TestHandleSetPasswordEmail(t *testing.T) {
 
 	defer func() { backend.MockMakePasswordResetURL = nil }()
 
-	backend.MockMakePasswordResetURL = func(context.Context, int32) (*url.URL, error) {
+	backend.MockMakePasswordResetURL = func(context.Context, int32, string) (*url.URL, error) {
 		query := url.Values{}
 		query.Set("userID", "1")
 		query.Set("code", "foo")
+		query.Set("email", "dummy@email.com")
+
 		return &url.URL{Path: "/password-reset", RawQuery: query.Encode()}, nil
 	}
 

@@ -34,7 +34,7 @@ func ResetPasswordURL(ctx context.Context, db database.DB, logger log.Logger, us
 		return &ru, nil
 	}
 
-	resetURL, err := backend.MakePasswordResetURL(ctx, db, user.ID)
+	resetURL, err := backend.MakePasswordResetURL(ctx, db, user.ID, email)
 	if err != nil {
 		msg := "failed to generate reset URL"
 		logger.Error(msg, log.Error(err))

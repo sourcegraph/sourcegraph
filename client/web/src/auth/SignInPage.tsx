@@ -45,6 +45,7 @@ export const SignInPage: React.FunctionComponent<React.PropsWithChildren<SignInP
     }, [props.telemetryRecorder])
 
     const location = useLocation()
+    const email = new URLSearchParams(location.search).get('email')
     const [error, setError] = useState<Error | null>(null)
     const [searchParams, setSearchParams] = useSearchParams()
     const isRequestAccessAllowed = checkRequestAccessAllowed(props.context)
@@ -143,6 +144,7 @@ export const SignInPage: React.FunctionComponent<React.PropsWithChildren<SignInP
                 {builtInAuthProvider && (showMoreProviders || thirdPartyAuthProviders.length === 0) && (
                     <UsernamePasswordSignInForm
                         {...props}
+                        email={email}
                         onAuthError={setError}
                         className={classNames({ 'mb-3': providers.length > 0 })}
                     />

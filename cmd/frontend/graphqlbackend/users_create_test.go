@@ -81,7 +81,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestCreateUserResetPasswordURL(t *testing.T) {
-	backend.MockMakePasswordResetURL = func(_ context.Context, _ int32) (*url.URL, error) {
+	backend.MockMakePasswordResetURL = func(_ context.Context, _ int32, _ string) (*url.URL, error) {
 		return url.Parse("/reset-url?code=foobar")
 	}
 	userpasswd.MockResetPasswordEnabled = func() bool { return true }
