@@ -37,9 +37,9 @@ oci_image(
         "JCLOUDS_KEYSTONE_PROJECT_DOMAIN_NAME": "",
         "JCLOUDS_FILESYSTEM_BASEDIR": "/data",
         # We don't use the secure endpoint, but these values must be set
-        "S3PROXY_SECURE_ENDPOINT": "https://0.0.0.0:9443",
-        "S3PROXY_KEYSTORE_PATH": "test-classes/keystore.jks",
-        "S3PROXY_KEYSTORE_PASSWORD": "password",
+        # "S3PROXY_SECURE_ENDPOINT": "https://0.0.0.0:9443",
+        # "S3PROXY_KEYSTORE_PATH": "test-classes/keystore.jks",
+        # "S3PROXY_KEYSTORE_PASSWORD": "password",
     },
     user = "sourcegraph",
 )
