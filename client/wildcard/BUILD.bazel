@@ -319,6 +319,8 @@ ts_project(
         "src/components/Popover/tether/services/tether-state.ts",
         "src/components/Popover/tether/services/types.ts",
         "src/components/Popover/types.ts",
+        "src/components/Progress/Progress.tsx",
+        "src/components/Progress/index.ts",
         "src/components/SourcegraphIcon/SourcegraphIcon.tsx",
         "src/components/SourcegraphIcon/index.ts",
         "src/components/Tabs/Tabs.tsx",
