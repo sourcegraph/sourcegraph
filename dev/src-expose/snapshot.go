@@ -13,10 +13,37 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func snapshot(logger *log.Logger, src, dst string) error {
-	name := filepath.Base(src)
+/*
+ * Create a gitignore file in ${GIT_DIR}/info/exclude
+ * if there are ignores defined in the configuration file.
+ * Returns `error` if the file could not be created or written to.
+ */
+func processIgnores(ignores []string, dst string) error {
+	if len(ignores) == 0 {
+		return nil
+	}
+		gitignorePath := filepath.Join(dst, "info", "exclude")
+		gitignoreFile, err := os.Create(gitignorePath)
+		if err != nil {
+			return err
+		}
+		for _, ignore := range ignores {
+			if _, err := gitignore_file.WriteString(ignore + "\n"); err != nil {
+				gitignore_file.Close()
+				return err
+			}
+		}
+		if err := gitignore_file.Close(); err != nil {
+			return nil
+		}
+	}
+	return nil
+}
 
-	dst = filepath.Join(dst, ".git")
+func snapshot(logger *log.Logger, dir *SyncDir) error {
+	name := filepath.Base(dir.Dir)
+
+	dst := filepath.Join(dir.Destination, ".git")
 	if err := os.MkdirAll(dst, 0755); err != nil {
 		return err
 	}
@@ -36,12 +63,17 @@ func snapshot(logger *log.Logger, src, dst string) error {
 		"GIT_AUTHOR_NAME=src-expose",
 		"GIT_AUTHOR_EMAIL=support@sourcegraph.com",
 		"GIT_DIR=" + dst,
-		"GIT_WORK_TREE=" + src,
+		"GIT_WORK_TREE=" + dir.Dir,
+	}
+
+	// pass the same path as is used for `GIT_DIR` in the environment
+	if err := processIgnores(dir.Ignore, dst); err != nil {
+		logger.Printf("Unable to set up ignoring files because %s", err)
 	}
 
 	cmd := exec.Command("git", "status", "--porcelain", "--no-renames")
 	cmd.Env = env
-	cmd.Dir = src
+	cmd.Dir = dir.Dir
 	n, err := run(logger, name, cmd)
 	if err != nil {
 		return err
@@ -67,7 +99,7 @@ func snapshot(logger *log.Logger, src, dst string) error {
 	for _, a := range cmds {
 		cmd := exec.Command(a[0], a[1:]...)
 		cmd.Env = env
-		cmd.Dir = src
+		cmd.Dir = dir.Dir
 		_, err := run(logger, name, cmd)
 		if err != nil {
 			return err
@@ -156,6 +188,9 @@ type SyncDir struct {
 
 	// MinDuration defines the minimum wait between syncs for Dir.
 	MinDuration time.Duration `yaml:",omitempty"`
+
+	// Ignore is a list of `gitignore` patterns identifying items in Dir to exclude.
+	Ignore []string `yaml:",omitempty"`
 
 	// last stores the time of the last sync. Compared against MinDuration to
 	// determine if we should run.
@@ -288,7 +323,7 @@ func (o *Snapshotter) Run(logger *log.Logger) error {
 			}
 		}
 
-		if err := snapshot(logger, s.Dir, s.Destination); err != nil {
+		if err := snapshot(logger, s); err != nil {
 			return err
 		}
 	}
