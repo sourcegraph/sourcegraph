@@ -107,7 +107,11 @@ export const AddExternalServicePage: FC<Props> = ({
                     telemetryService.log('AddExternalServiceSucceeded')
                     telemetryRecorder.recordEvent('admin.codeHostConnections.add', 'success')
                     refreshSiteFlags(client).catch((error: Error) => logger.error(error))
-                    navigate(`/site-admin/external-services/${data.addExternalService.id}`)
+
+                    // Only navigates to the new code host connection information page if the token is valid
+                    if (!data?.addExternalService?.warning) {
+                        navigate(`/site-admin/external-services/${data.addExternalService.id}`)
+                    }
                 },
                 onError: () => {
                     telemetryService.log('AddExternalServiceFailed')
