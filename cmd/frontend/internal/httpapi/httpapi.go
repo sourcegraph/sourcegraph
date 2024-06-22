@@ -119,6 +119,7 @@ func NewHandler(
 	m.Path("/graphql").Methods("POST").Handler(jsonHandler(serveGraphQL(logger, schema, rateLimiter, false)))
 
 	m.Path("/opencodegraph").Methods("POST").Handler(jsonHandler(serveOpenCodeGraph(logger)))
+	m.Path("/openctx/{provider}").Methods("POST").Handler(jsonHandler(serveOpenCtx(logger)))
 
 	// Webhooks
 	//
