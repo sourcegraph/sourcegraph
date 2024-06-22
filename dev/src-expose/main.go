@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -163,7 +164,9 @@ func main() {
 				return nil, &usageError{"requires at least 1 argument or --config to be specified."}
 			}
 			for _, dir := range args {
-				s.Dirs = append(s.Dirs, &SyncDir{Dir: dir})
+				// when specifying source directories naively on the command line (no config file),
+				// use the base name as the relative destination directory to avoid collisions
+				s.Dirs = append(s.Dirs, &SyncDir{Dir: dir, Destination: path.Base(dir)})
 			}
 		}
 
