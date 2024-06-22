@@ -1,13 +1,13 @@
 package:
   name: redis_exporter
-  version: 1.35.0
-  epoch: 3
+  version: 1.61.0
+  epoch: 0
   description: "Prometheus Exporter for Redis Metrics"
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - "*"
       attestation: 'Copyright (c) 2016 Oliver'
       license: 'MIT License'
   dependencies:
@@ -20,15 +20,16 @@ environment:
     keyring:
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
-      - wolfi-base
       - busybox
       - ca-certificates-bundle
+      - wolfi-base
 
 pipeline:
   - uses: fetch
     with:
       uri: https://github.com/oliver006/redis_exporter/archive/refs/tags/v${{package.version}}.tar.gz
-      expected-sha256: e634bbeaafec4505e23d14b43d85b588839abc7eccde53e3c3f833d2a98c1fb6
+      expected-sha256: d3e699381ad6715c37f16b41b5b18601a34b34e4d241741616b0dce4b903c42e
+
   - uses: go/build
     with:
       packages: main.go
