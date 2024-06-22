@@ -225,3 +225,22 @@ Example usage:
 ```bash
 go test ./path/to/package -run MyTestName -count 100
 ```
+## VCR Testing with codehosts
+
+<!-- need help with a blurb that will best define what golden and vcr tests are -->
+Golden and VCR tests, test package used for “testing .....”
+Golden- The test is compared to a known good snapshot
+VCR- External requests in the test are mocked using local snapshots of what the server returned last time
+
+
+To get started working with this type of test, you’ll need to confirm what environment variables need to be set to access the tests and test accounts. You can confirm this by searching for `os.Getenv` in the packages you're changing. Most tests will only require an access token on the code host be set.
+
+Once set, you're ready to update the applicable tests. You can do this by using an `-update` flag which takes a regex of test snapshots to be updated.
+
+Example: `go test ./enterprise/internal/batches/sources -update TestBitbucketServerSource_GetUserFork`
+
+You’ll notice that a number of these tests will require the code host to be in specific states to be updated successfully, you can find this detail commented out above the test you’re updating. Example: You may be updating a test that specifically needs the target repo to not be forked by the user the access token belongs to. 
+
+In order to best understand the state that is required, it is advised to work through one sub-test at a time, you can do this by commenting out the tests you are not working on and use the update option to get everything up to date one by one. 
+
+You can expect that several files in the `testdata` will be modified along with your changes. Push those updates along with whatever fixes you made to the tests.
