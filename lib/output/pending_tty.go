@@ -154,7 +154,8 @@ func (p *pendingTTY) write(message FancyLine) {
 	// we also add a newline if the line is truncated.
 	message.write(&buf, p.o.caps)
 
-	// FIXME: This doesn't account for escape codes right now, so we may
-	// truncate shorter than we mean to.
+	// Using runewidth.Truncate ensures that we're only truncating based on
+	// visible string width. I.e. escape codes are not counted towards the
+	// string width.
 	fmt.Fprint(p.o.w, runewidth.Truncate(buf.String(), p.o.caps.Width, "...\n"))
 }
