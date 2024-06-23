@@ -12,6 +12,7 @@ go_library(
         "//cmd/frontend/internal/auth/authutil",
         "//cmd/frontend/internal/auth/azureoauth",
         "//cmd/frontend/internal/auth/bitbucketcloudoauth",
+        "//cmd/frontend/internal/auth/bitbucketserveroauth",
         "//cmd/frontend/internal/auth/gerrit",
         "//cmd/frontend/internal/auth/githuboauth",
         "//cmd/frontend/internal/auth/gitlaboauth",

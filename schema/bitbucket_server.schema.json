@@ -209,44 +209,54 @@
       "description": "If non-null, enforces Bitbucket Server / Bitbucket Data Center repository permissions.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["identityProvider", "oauth"],
-      "properties": {
-        "identityProvider": {
-          "description": "The source of identity to use when computing permissions. This defines how to compute the Bitbucket Server / Bitbucket Data Center identity to use for a given Sourcegraph user. When 'username' is used, Sourcegraph assumes usernames are identical in Sourcegraph and Bitbucket Server / Bitbucket Data Center accounts and `auth.enableUsernameChanges` must be set to false for security reasons.",
-          "title": "BitbucketServerIdentityProvider",
-          "type": "object",
-          "required": ["type"],
+      "oneOf": [
+        {
+          "required": ["oauth2"],
           "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["username"]
-            }
-          },
-          "oneOf": [{ "$ref": "#/definitions/UsernameIdentity" }],
-          "!go": {
-            "taggedUnionType": true
+            "oauth2": { "type": "boolean" }
           }
         },
-        "oauth": {
-          "title": "BitbucketServerOAuth",
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["consumerKey", "signingKey"],
-          "description": "OAuth configuration specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication. Two Legged OAuth with 'ExecuteAs=admin' must be enabled as well as user impersonation.",
+        {
+          "required": ["identityProvider", "oauth"],
           "properties": {
-            "consumerKey": {
-              "description": "The OAuth consumer key specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication.",
-              "type": "string",
-              "minLength": 1
+            "identityProvider": {
+              "description": "The source of identity to use when computing permissions. This defines how to compute the Bitbucket Server / Bitbucket Data Center identity to use for a given Sourcegraph user. When 'username' is used, Sourcegraph assumes usernames are identical in Sourcegraph and Bitbucket Server / Bitbucket Data Center accounts and `auth.enableUsernameChanges` must be set to false for security reasons.",
+              "title": "BitbucketServerIdentityProvider",
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["username"]
+                }
+              },
+              "oneOf": [{ "$ref": "#/definitions/UsernameIdentity" }],
+              "!go": {
+                "taggedUnionType": true
+              }
             },
-            "signingKey": {
-              "description": "Base64 encoding of the OAuth PEM encoded RSA private key used to generate the public key specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication.",
-              "type": "string",
-              "minLength": 1
+            "oauth": {
+              "title": "BitbucketServerOAuth",
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["consumerKey", "signingKey"],
+              "description": "OAuth configuration specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication. Two Legged OAuth with 'ExecuteAs=admin' must be enabled as well as user impersonation.",
+              "properties": {
+                "consumerKey": {
+                  "description": "The OAuth consumer key specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication.",
+                  "type": "string",
+                  "minLength": 1
+                },
+                "signingKey": {
+                  "description": "Base64 encoding of the OAuth PEM encoded RSA private key used to generate the public key specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication.",
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
             }
           }
         }
-      }
+      ]
     }
   },
   "definitions": {

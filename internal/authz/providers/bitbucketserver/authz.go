@@ -1,13 +1,15 @@
 package bitbucketserver
 
 import (
+	"net/url"
+
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	atypes "github.com/sourcegraph/sourcegraph/internal/authz/types"
+	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/bitbucketserver"
 	"github.com/sourcegraph/sourcegraph/internal/licensing"
 	"github.com/sourcegraph/sourcegraph/internal/types"
-	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 
@@ -21,13 +23,33 @@ import (
 // desired, callers should use `(*Provider).ValidateConnection` directly to get warnings related
 // to connection issues.
 func NewAuthzProviders(
+	db database.DB,
 	conns []*types.BitbucketServerConnection,
+	authProviders []schema.AuthProviders,
 ) *atypes.ProviderInitResult {
 	initResults := &atypes.ProviderInitResult{}
+
+	oauthProviders := make(map[string]*schema.BitbucketServerAuthProvider)
+	for _, p := range authProviders {
+		if p.Bitbucketserver != nil {
+			var id string
+			bbURL, err := url.Parse(p.Bitbucketserver.Url)
+			if err != nil {
+				// error reporting for this should happen elsewhere, for now just use what is given
+				id = p.Bitbucketserver.Url
+			} else {
+				// use codehost normalized URL as ID
+				ch := extsvc.NewCodeHost(bbURL, p.Bitbucketserver.Type)
+				id = ch.ServiceID
+			}
+			oauthProviders[id] = p.Bitbucketserver
+		}
+	}
+
 	// Authorization (i.e., permissions) providers
 	for _, c := range conns {
 		pluginPerm := c.Plugin != nil && c.Plugin.Permissions == "enabled"
-		p, err := newAuthzProvider(c, pluginPerm)
+		p, err := newAuthzProvider(db, c, pluginPerm)
 		if err != nil {
 			initResults.InvalidConnections = append(initResults.InvalidConnections, extsvc.TypeBitbucketServer)
 			initResults.Problems = append(initResults.Problems, err.Error())
@@ -40,6 +62,7 @@ func NewAuthzProviders(
 }
 
 func newAuthzProvider(
+	db database.DB,
 	c *types.BitbucketServerConnection,
 	pluginPerm bool,
 ) (authz.Provider, error) {
@@ -47,32 +70,27 @@ func newAuthzProvider(
 		return nil, nil
 	}
 
-	if errLicense := licensing.Check(licensing.FeatureACLs); errLicense != nil {
-		return nil, errLicense
+	if err := licensing.Check(licensing.FeatureACLs); err != nil {
+		return nil, err
 	}
-
-	var errs error
 
 	cli, err := bitbucketserver.NewClient(c.URN, c.BitbucketServerConnection, nil)
 	if err != nil {
-		errs = errors.Append(errs, err)
-		return nil, errs
+		return nil, err
 	}
 
-	var p authz.Provider
 	switch idp := c.Authorization.IdentityProvider; {
 	case idp.Username != nil:
-		p = NewProvider(cli, c.URN, pluginPerm)
+		return NewProvider(cli, c.URN, pluginPerm), nil
 	default:
-		errs = errors.Append(errs, errors.Errorf("No identityProvider was specified"))
+		// The default is OAuth.
+		return NewOAuthProvider(db, c, ProviderOptions{BitbucketServerClient: cli}), nil
 	}
-
-	return p, errs
 }
 
 // ValidateAuthz validates the authorization fields of the given BitbucketServer external
 // service config.
 func ValidateAuthz(c *schema.BitbucketServerConnection) error {
-	_, err := newAuthzProvider(&types.BitbucketServerConnection{BitbucketServerConnection: c}, false)
+	_, err := newAuthzProvider(nil, &types.BitbucketServerConnection{BitbucketServerConnection: c}, false)
 	return err
 }
