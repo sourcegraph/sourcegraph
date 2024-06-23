@@ -409,6 +409,12 @@ const NeedsEmailVerificationNotice: React.FunctionComponent = React.memo(
 const CodyNotEnabledNotice: React.FunctionComponent = React.memo(function CodyNotEnabledNoticeContent() {
     const location = useLocation()
 
+    // default to false; only include UTM source if the link comes from a private instance and goes to dotcom.
+    const includeUTMSource: boolean = !window.context?.sourcegraphDotComMode || false
+    const dotcomCodyLink: string = `https://sourcegraph.com/cody${
+        includeUTMSource ? '?utm_source=private-sourcegraph-instance' : ''
+    }`
+
     return (
         <div className={classNames('p-3', styles.notEnabledBlock)}>
             <H2 className={classNames('d-flex gap-1 align-items-center mb-3', styles.codyMessageHeader)}>
@@ -420,13 +426,12 @@ const CodyNotEnabledNotice: React.FunctionComponent = React.memo(function CodyNo
                     {isSignInRequiredForCody() ? (
                         <>
                             <Link to={`/sign-in?returnTo=${location.pathname}`}>Sign in</Link> to get access to Cody.
-                            You can learn more about Cody{' '}
-                            <Link to="https://sourcegraph.com/cody?utm_source=server">here</Link>.
+                            You can learn more about Cody <Link to={dotcomCodyLink}>here</Link>.
                         </>
                     ) : (
                         <>
                             Cody isn't available on this instance, but you can learn more about Cody{' '}
-                            <Link to="https://sourcegraph.com/cody?utm_source=server">here</Link>.
+                            <Link to={dotcomCodyLink}>here</Link>.
                         </>
                     )}
                 </Text>
