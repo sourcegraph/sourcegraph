@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package gitserver.events.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/sourcegraph/sourcegraph/internal/gitserver/events/v1";
+
+service GitEventsService {
+  rpc ListGitEvents(ListGitEventsRequest) returns (ListGitEventsResponse);
+  // TODO: Do we need a stream endpoint?
+  rpc Stream(StreamRequest) returns (stream StreamEvent);
+}
+
+// Example: Zoekt wants to understand which indexes to update since it has last
+// checked.
+// { types: [REPO_CLONE, REPO_REF_UPDATE], after_time: "2020-01-01T00:00:00Z" }
+// It should then paginate through the whole result set.
+// For each event, it should check if the event metadata indicates to it that it
+// needs to update the search index.
+// For example, if the event is a REF_UPDATE event, it should check the event for
+// the ref name that has been changed. If the ref that changed does not match
+// any of the refs that should be search-indexed, the event can be skipped as well.
+// No results means no updates, so no work needs to be performed.
+// The page_token should contain base64(next_event_id, types, repo_uid, last_event_id_at_time_of_first_request).
+// Zoekt should remember the last create_time of the last event it processed, to
+// proceed later.
+// TODO: What happens when two events are created in the same second (or whatever
+// our granularity is gonna be)?
+//
+// Example: Auto indexing wants to understand which repos to index. After a successful
+// index, it will most likely not need reindexing unless some outer condition changes,
+// like the autoindexing configuration for a specific repo changes.
+//
+// Code monitors could benefit from this as well.
+//
+// Almost real-time Sourcegraph:
+// - Customer uses webhooks for code host updates.
+// - Sourcegraph informs gitserver of the webhook, a priority sync is triggered.
+// - Ideally, Gitserver can keep up with the fetch queue and will be able to immediately start the fetch.
+// - Once fetched, the corresponding events are filed.
+// - The next iteration of the Zoekt scheduler will pick up the events, and trigger a reindex immediately. Ideally, that can be incremental.
+// For most commits (assuming we're reasonably up-to-date), fetching will not take long. Maybe 5 seconds.
+// Plus some overhead from scheduling, webhook event delivery, etc., maybe 10 seconds.
+// Another 10 seconds for zoekt to poll new events.
+// Then another 15 seconds for a small incremental reindex.
+// -> 35 seconds response time for search to code changes.
+// TODO: What happens when the webhook event notification from Sourcegraph to Gitserver
+// fails?
+// - The solution could be that frontend _also_ keeps an event log like gitserver does,
+// so that gitserver can later reconcile with that state as well.
+//
+// We store all events in the database.
+// The database layout is roughly: [id int64, repo_uid string, type string, data bytea, created_at timestamptz].
+// Any record in the table is immutable after it has been created. If anything, we will drop old events
+// but we need to figure out how to signal to consumers that they might've missed events.
+// Through this append-only approach, the table should remain highly performant.
+// Lookups need to be able to filter by repo_uid and type. They need to be able
+// to sort by created_at ASC and id ASC.
+// Getting the newest event for a given filter must be fast, for cursor creation.
+//
+// TODO: What happens when the database is down? That would make us loose events.
+// We can keep unsubmitted events in memory, but at the latest when the service restarts
+// those events will be lost.
+// If the data can not be trusted to be complete, it's going to be hard to convince
+// consumers to stop polling.
+message ListGitEventsRequest {
+  // If set, only events for the given repo will be returned.
+  string repo_uid = 1;
+  // If set, only events of the given type will be returned.
+  repeated EventType types = 2;
+  // If set, only events after the given time will be returned.
+  google.protobuf.Timestamp after_time = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+message ListGitEventsResponse {
+  repeated StreamEvent events = 1;
+  string next_page_token = 2;
+}
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  REPO_CLONE = 1;
+  // ...
+}
+
+message StreamRequest {
+  // If set, only events for the given repo will be returned.
+  string repo_uid = 1;
+  // If set, only events of the given type will be returned.
+  EventType type = 2;
+  // If set, only events after the given time will be returned.
+  google.protobuf.Timestamp after_time = 3;
+}
+
+message StreamEvent {
+  oneof event {
+    RepoCloneEvent repo_clone = 1;
+    RepoDeleteEvent repo_delete = 2;
+    RepoFetchEvent repo_fetch = 3;
+    RepoRefUpdateEvent repo_ref_update = 4;
+  }
+}
+
+message RepoCloneEvent {
+  string repo_uid = 1;
+  google.protobuf.Timestamp create_time = 2;
+}
+
+message RepoDeleteEvent {
+  string repo_uid = 1;
+  google.protobuf.Timestamp create_time = 2;
+}
+
+message RepoFetchEvent {
+  string repo_uid = 1;
+  google.protobuf.Timestamp create_time = 2;
+}
+
+// TODO: Should this be one event or one per ref? If this is one event, filtering
+// will most likely be complicated.
+message RepoRefUpdateEvent {
+  message RefUpdate {
+    enum RefUpdateType {
+      REF_UPDATE_TYPE_UNSPECIFIED = 0;
+      FAST_FORWARD = 1;
+      FORCE_UPDATE = 2;
+      PRUNED = 3;
+      TAG_UPDATE = 4;
+      NEW_REF = 5;
+      UPDATE_FAILED = 6;
+      UP_TO_DATE = 7;
+    }
+    string ref_name = 1;
+    string from = 2;
+    string to = 3;
+  }
+
+  string repo_uid = 1;
+  google.protobuf.Timestamp create_time = 2;
+}
