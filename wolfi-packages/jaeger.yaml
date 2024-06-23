@@ -1,16 +1,13 @@
-# Melange-based replacement for Coursier
-# Previously packaged in the scip-java repo
-
 package:
   name: jaeger
-  version: 1.45.0 # Keep in sync with version in sg.config.yaml
-  epoch: 8
+  version: 1.58.1 # Keep in sync with version in sg.config.yaml
+  epoch: 0
   description: "Distributed Tracing Platform"
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - "*"
       attestation: 'Copyright The Jaeger Authors'
       license: 'Apache License 2.0'
   dependencies:
@@ -29,7 +26,7 @@ pipeline:
   - uses: fetch
     with:
       uri: https://github.com/jaegertracing/jaeger/releases/download/v${{package.version}}/jaeger-${{package.version}}-linux-amd64.tar.gz
-      expected-sha256: c139b7ec4b9e5b7ace2e3966e6187e1cb3292325192685793ab038c2c9c5d2e1
+      expected-sha256: 0581d1d3c59ea32d1c3d8a1a6783341ab99a050428abb5d29c717e468680c365
       extract: true
       strip-components: 0
 
@@ -46,6 +43,7 @@ subpackages:
           set -x
           mkdir -p "${{targets.subpkgdir}}/usr/local/bin/"
           cp "${{targets.destdir}}/usr/local/bin/jaeger-agent" "${{targets.subpkgdir}}/usr/local/bin/"
+
   - name: jaeger-all-in-one
     description: Jaeger All-In-One
     pipeline:
