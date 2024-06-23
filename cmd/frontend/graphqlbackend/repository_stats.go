@@ -34,7 +34,6 @@ func (r *repositoryStatsResolver) Embedded(ctx context.Context) (int32, error) {
 func (r *repositoryStatsResolver) GitDirBytes(ctx context.Context) (BigInt, error) {
 	gitDirBytes, err := r.db.GitserverRepos().GetGitserverGitDirSize(ctx)
 	return BigInt(gitDirBytes), err
-
 }
 
 func (r *repositoryStatsResolver) Indexed(ctx context.Context) (int32, error) {

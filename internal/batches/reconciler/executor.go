@@ -230,7 +230,7 @@ func (e *executor) pushChangesetPatch(ctx context.Context, triggerUpdateWebhook 
 		return afterDone, errors.Wrap(err, "running after commit routine")
 	}
 
-	if triggerUpdateWebhook && err == nil {
+	if triggerUpdateWebhook {
 		afterDone = func(store *store.Store) { e.enqueueWebhook(ctx, store, webhooks.ChangesetUpdate) }
 	}
 	return afterDone, err

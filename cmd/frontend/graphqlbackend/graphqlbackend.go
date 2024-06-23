@@ -936,19 +936,8 @@ func (r *schemaResolver) RepositoryRedirect(ctx context.Context, args *repositor
 	if args.Name != nil {
 		// Query by name
 		name = api.RepoName(*args.Name)
-	} else if args.CloneURL != nil {
-		// Query by git clone URL
-		var err error
-		name, err = cloneurls.RepoSourceCloneURLToRepoName(ctx, r.db, *args.CloneURL)
-		if err != nil {
-			return nil, err
-		}
-		if name == "" {
-			// Clone URL could not be mapped to a code host
-			return nil, nil
-		}
 	} else {
-		return nil, errors.New("neither name nor cloneURL given")
+		return nil, errors.New("no name given")
 	}
 
 	repo, err := backend.NewRepos(r.logger, r.db, r.gitserverClient).GetByName(ctx, name)

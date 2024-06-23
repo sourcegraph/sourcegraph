@@ -158,7 +158,6 @@ func testBitbucketServerWebhook(db database.DB, userID int32) func(*testing.T) {
 		// create the diffstat.
 		state := bt.MockChangesetSyncState(&protocol.RepoInfo{
 			Name: "repo",
-			VCS:  protocol.VCSInfo{URL: "https://example.com/repo/"},
 		})
 		defer state.Unmock()
 		gsClient := gitserver.NewMockClient()

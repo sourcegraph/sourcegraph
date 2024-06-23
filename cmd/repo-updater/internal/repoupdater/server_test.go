@@ -326,7 +326,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				},
 				Name:        "git-codecommit.us-west-1.amazonaws.com/stripe-go",
 				Description: "The stripe-go lib",
-				VCS:         protocol.VCSInfo{URL: "git@git-codecommit.us-west-1.amazonaws.com/v1/repos/stripe-go"},
 				Links: &protocol.RepoLinks{
 					Root:   "https://us-west-1.console.aws.amazon.com/codesuite/codecommit/repositories/stripe-go/browse",
 					Tree:   "https://us-west-1.console.aws.amazon.com/codesuite/codecommit/repositories/stripe-go/browse/{rev}/--/{path}",
@@ -354,7 +353,6 @@ func TestServer_RepoLookup(t *testing.T) {
 			result: &protocol.RepoLookupResult{Repo: &protocol.RepoInfo{
 				ExternalRepo: npmRepository.ExternalRepo,
 				Name:         npmRepository.Name,
-				VCS:          protocol.VCSInfo{URL: string(npmRepository.Name)},
 			}},
 			assert: typestest.AssertReposEqual(npmRepository),
 		},
@@ -373,7 +371,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				},
 				Name:        "github.com/foo/bar",
 				Description: "The description",
-				VCS:         protocol.VCSInfo{URL: "git@github.com:foo/bar.git"},
 				Links: &protocol.RepoLinks{
 					Root:   "github.com/foo/bar",
 					Tree:   "github.com/foo/bar/tree/{rev}/{path}",
@@ -398,7 +395,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				},
 				Name:        "github.com/foo/bar",
 				Description: "The description",
-				VCS:         protocol.VCSInfo{URL: "git@github.com:foo/bar.git"},
 				Links: &protocol.RepoLinks{
 					Root:   "github.com/foo/bar",
 					Tree:   "github.com/foo/bar/tree/{rev}/{path}",
@@ -451,9 +447,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				Description: "Gitaly is a Git RPC service for handling all the git calls made by GitLab",
 				Fork:        false,
 				Archived:    false,
-				VCS: protocol.VCSInfo{
-					URL: "https://gitlab.com/gitlab-org/gitaly.git",
-				},
 				Links: &protocol.RepoLinks{
 					Root:   "https://gitlab.com/gitlab-org/gitaly",
 					Tree:   "https://gitlab.com/gitlab-org/gitaly/tree/{rev}/{path}",
@@ -474,9 +467,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				Description: "Gitaly is a Git RPC service for handling all the git calls made by GitLab",
 				Fork:        false,
 				Archived:    false,
-				VCS: protocol.VCSInfo{
-					URL: "https://gitlab.com/gitlab-org/gitaly.git",
-				},
 				Links: &protocol.RepoLinks{
 					Root:   "https://gitlab.com/gitlab-org/gitaly",
 					Tree:   "https://gitlab.com/gitlab-org/gitaly/tree/{rev}/{path}",
@@ -514,7 +504,6 @@ func TestServer_RepoLookup(t *testing.T) {
 				},
 				Name:        "github.com/foo/bar",
 				Description: "The description",
-				VCS:         protocol.VCSInfo{URL: "git@github.com:foo/bar.git"},
 				Links: &protocol.RepoLinks{
 					Root:   "github.com/foo/bar",
 					Tree:   "github.com/foo/bar/tree/{rev}/{path}",

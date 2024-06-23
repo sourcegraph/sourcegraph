@@ -102,8 +102,8 @@ message RepoInfo {
   // whether this repository is private (from the external service)
   bool private = 6;
 
-  // VCS-related information (for cloning/updating)
-  VCSInfo vcs_info = 7;
+  reserved 7;
+  reserved "vcs_info";
 
   // link URLs related to this repository
   RepoLinks links = 8;
@@ -111,12 +111,6 @@ message RepoInfo {
   // ExternalRepo specifies this repository's ID on the external service where it resides (and the external
   // service itself).
   ExternalRepoSpec external_repo = 9;
-}
-
-// VCSInfo describes how to access an external repository's Git data (to clone or update it).
-message VCSInfo {
-  // the Git remote URL
-  string url = 1;
 }
 
 // RepoLinks contains URLs and URL patterns for objects in this repository.

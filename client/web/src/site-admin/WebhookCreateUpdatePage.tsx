@@ -76,7 +76,10 @@ export const WebhookCreateUpdatePage: FC<WebhookCreateUpdatePageProps> = ({ exis
                 }
                 const conf = parseJSONC(extSvc.config)
                 if (conf.url) {
-                    kindToUrlMap.set(extSvc.kind, (kindToUrlMap.get(extSvc.kind) || []).concat([conf.url]))
+                    // Deduplicate the URL while adding it.
+                    const urls = new Set<string>(kindToUrlMap.get(extSvc.kind) || [])
+                    urls.add(conf.url)
+                    kindToUrlMap.set(extSvc.kind, Array.from(urls))
                 }
             }
 

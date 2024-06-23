@@ -443,9 +443,6 @@ func (s *GitHubSource) makeRepo(r *github.Repository) *types.Repo {
 }
 
 // remoteURL returns the repository's Git remote URL
-//
-// note: this used to contain credentials but that is no longer the case
-// if you need to get an authenticated clone url use repos.CloneURL
 func (s *GitHubSource) remoteURL(repo *github.Repository) string {
 	if s.config.GitURLType == "ssh" {
 		assembledURL := fmt.Sprintf("git@%s:%s.git", s.originalHostname, repo.NameWithOwner)

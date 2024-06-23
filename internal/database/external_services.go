@@ -1591,7 +1591,6 @@ func (e *externalServiceStore) ListRepos(ctx context.Context, opt ExternalServic
 SELECT
 	external_service_id,
 	repo_id,
-	clone_url,
 	created_at
 FROM external_service_repos
 WHERE %s
@@ -1611,7 +1610,6 @@ func scanExternalServiceRepo(s dbutil.Scanner) (*types.ExternalServiceRepo, erro
 	if err := s.Scan(
 		&repo.ExternalServiceID,
 		&repo.RepoID,
-		&repo.CloneURL,
 		&repo.CreatedAt,
 	); err != nil {
 		return nil, err

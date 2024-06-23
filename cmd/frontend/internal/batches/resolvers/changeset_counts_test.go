@@ -125,7 +125,6 @@ func TestChangesetCountsOverTimeIntegration(t *testing.T) {
 
 	mockState := bt.MockChangesetSyncState(&protocol.RepoInfo{
 		Name: githubRepo.Name,
-		VCS:  protocol.VCSInfo{URL: githubRepo.URI},
 	})
 	defer mockState.Unmock()
 

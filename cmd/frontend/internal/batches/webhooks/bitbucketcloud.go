@@ -167,8 +167,8 @@ func (h *BitbucketCloudWebhook) parseEvent(r *http.Request) (interface{}, *types
 		}
 	}
 
-	if extSvc == nil || err != nil {
-		return nil, nil, &httpError{http.StatusUnauthorized, err}
+	if extSvc == nil {
+		return nil, nil, &httpError{http.StatusUnauthorized, errors.New("external service not found")}
 	}
 
 	e, err := bitbucketcloud.ParseWebhookEvent(r.Header.Get("X-Event-Key"), payload)

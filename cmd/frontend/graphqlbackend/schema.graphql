@@ -1455,12 +1455,6 @@ type Query {
         """
         name: String
         """
-        Query the repository by a Git clone URL (format documented here: https://git-scm.com/docs/git-clone_git_urls_a_id_urls_a)
-        by checking for a code host configuration that matches the clone URL.
-        Will not actually check the code host to see if the repository actually exists.
-        """
-        cloneURL: String
-        """
         Query the repository by hashed name.
         Hashed name is a SHA256 checksum of the absolute repo name in lower case,
         for example "github.com/sourcegraph/sourcegraph" -> "a6c905ceb7dec9a565945ceded8c7fa4154250df8b928fb40673b535d9a24c2f"

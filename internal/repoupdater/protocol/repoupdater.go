@@ -168,8 +168,6 @@ type RepoInfo struct {
 	Archived    bool   // whether this repository is archived (from the external service)
 	Private     bool   // whether this repository is private (from the external service)
 
-	VCS VCSInfo // VCS-related information (for cloning/updating)
-
 	Links *RepoLinks // link URLs related to this repository
 
 	// ExternalRepo specifies this repository's ID on the external service where it resides (and the external
@@ -189,7 +187,6 @@ func (r *RepoInfo) ToProto() *proto.RepoInfo {
 		Fork:        r.Fork,
 		Archived:    r.Archived,
 		Private:     r.Private,
-		VcsInfo:     r.VCS.ToProto(),
 		Links:       r.Links.ToProto(),
 		ExternalRepo: &proto.ExternalRepoSpec{
 			Id:          r.ExternalRepo.ID,
@@ -210,7 +207,6 @@ func RepoInfoFromProto(p *proto.RepoInfo) *RepoInfo {
 		Fork:        p.GetFork(),
 		Archived:    p.GetArchived(),
 		Private:     p.GetPrivate(),
-		VCS:         VCSInfoFromProto(p.GetVcsInfo()),
 		Links:       RepoLinksFromProto(p.GetLinks()),
 		ExternalRepo: api.ExternalRepoSpec{
 			ID:          p.GetExternalRepo().GetId(),
@@ -229,10 +225,6 @@ func NewRepoInfo(r *types.Repo) *RepoInfo {
 		Archived:     r.Archived,
 		Private:      r.Private,
 		ExternalRepo: r.ExternalRepo,
-	}
-
-	if urls := r.CloneURLs(); len(urls) > 0 {
-		info.VCS.URL = urls[0]
 	}
 
 	typ, _ := extsvc.ParseServiceType(r.ExternalRepo.ServiceType)
@@ -313,23 +305,6 @@ func pathAppend(base, p string) string {
 
 func (r *RepoInfo) String() string {
 	return fmt.Sprintf("RepoInfo{%s}", r.Name)
-}
-
-// VCSInfo describes how to access an external repository's Git data (to clone or update it).
-type VCSInfo struct {
-	URL string // the Git remote URL
-}
-
-func (i *VCSInfo) ToProto() *proto.VCSInfo {
-	return &proto.VCSInfo{
-		Url: i.URL,
-	}
-}
-
-func VCSInfoFromProto(p *proto.VCSInfo) VCSInfo {
-	return VCSInfo{
-		URL: p.GetUrl(),
-	}
 }
 
 // RepoLinks contains URLs and URL patterns for objects in this repository.

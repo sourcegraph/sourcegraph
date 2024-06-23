@@ -40,7 +40,6 @@ func TestReconcilerProcess_IntegrationTest(t *testing.T) {
 
 	state := bt.MockChangesetSyncState(&protocol.RepoInfo{
 		Name: repo.Name,
-		VCS:  protocol.VCSInfo{URL: repo.URI},
 	})
 	defer state.Unmock()
 
