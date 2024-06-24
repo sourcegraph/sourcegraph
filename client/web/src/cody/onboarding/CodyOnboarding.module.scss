@@ -8,11 +8,13 @@
         background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(244, 244, 244, 0.9) 100%);
         backdrop-filter: blur(7px);
     }
-}
 
-.modal {
-    width: 54rem;
-    border-radius: 6px;
+    --cody-padding-size: 1.125rem;
+    --cody-border-size: 0.375rem;
+    --cody-letter-spacing: -0.016rem;
+}
+%modal-common {
+    border-radius: var(--cody-border-size);
     background-image: repeating-conic-gradient(
         rgba(112, 72, 232, 0.5) 50%,
         rgba(0, 203, 236, 0.5) 75%,
@@ -54,6 +56,28 @@
         );
     }
 }
+%font-common-style {
+    line-height: 1.243rem;
+    font-weight: var(--font-weight-normal);
+    font-size: var(--font-size-base);
+}
+%font-hs-style-common {
+    line-height: 1.243rem;
+    font-size: var(--font-size-base);
+}
+%ide-link-common {
+    color: var(--primary);
+    @extend %font-common-style;
+    text-decoration: none;
+}
+.modal {
+    width: 54rem;
+    @extend %modal-common;
+}
+.modal-alt {
+    width: 59.563rem;
+    @extend %modal-common;
+}
 
 @keyframes modal-shadow {
     0% {
@@ -80,8 +104,71 @@
     }
 }
 
+.ide-container {
+    padding: 0.688rem;
+    padding-right: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--cody-border-size);
+    margin-top: 1.5rem;
+    width: 100%;
+    display: grid;
+    row-gap: 0.625rem;
+    height: fit-content;
+}
+
+.ide-link {
+    @extend %ide-link-common;
+}
+.ide-link-alt {
+    @extend %ide-link-common;
+    padding-right: 0.625rem;
+}
+.ide-guide {
+    padding: var(--cody-padding-size) 1.25rem var(--cody-padding-size);
+}
+.ide-or {
+    color: var(--text-muted);
+    @extend %font-common-style;
+}
+.ide-guide-rtb {
+    padding: var(--cody-padding-size) 1.25rem 0 0;
+}
+.ide-works {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.02rem;
+    padding: 1.5rem 0 0 1.5rem;
+}
+
 .release-stage {
     color: var(--gray-07);
+}
+%release-stage-common {
+    color: var(--gray-08);
+    width: min-content;
+    border-radius: 0.125rem;
+    padding: 0 0.25rem 0;
+    font-size: 0.688rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 0.974rem;
+    letter-spacing: 0.016rem;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+}
+.release-stage-vs {
+    @extend %release-stage-common;
+    background-color: var(--gray-03);
+}
+
+.release-stage-jetbrains {
+    @extend %release-stage-common;
+    background-color: var(--cyan);
+}
+
+.release-stage-neovim {
+    @extend %release-stage-common;
+    background-color: #f59f00;
 }
 
 /* Step section on instructions */
@@ -117,6 +204,66 @@
 
 .ide-name {
     font-size: 1rem;
+}
+.ide-name-alt {
+    font-size: var(--cody-padding-size);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1.406rem;
+    letter-spacing: var(--cody-letter-spacing);
+}
+.ide-header {
+    padding-bottom: 0.563rem;
+    margin-bottom: 1.063rem;
+}
+.ide-border-color {
+    border-bottom: 1px solid var(--border-color-2);
+}
+.ide-header-alt {
+    letter-spacing: var(--cody-letter-spacing) !important;
+}
+.ide-main-logo {
+    height: 5rem;
+}
+.ide-logo-container {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-gap: 1rem;
+    width: 12.181rem;
+    padding-top: 1.25rem;
+    padding-bottom: 1.534rem;
+}
+.ide-logo {
+    margin-right: 0.875rem;
+}
+.ide-positioning {
+    position: absolute;
+    right: 0;
+}
+.ide-positioning-alt {
+    position: absolute;
+    right: 0;
+    color: var(--icon-color) !important;
+    font-weight: 500;
+    @extend %font-hs-style-common;
+}
+.install {
+    @extend %font-hs-style-common;
+    font-weight: 500;
+}
+.ide-text-light {
+    @extend %font-common-style;
+}
+
+.editor-button {
+    border-radius: var(--cody-border-size);
+    padding: var(--cody-border-size) 0.75rem var(--cody-border-size);
+    font-weight: 500 !important;
+    letter-spacing: var(--cody-letter-spacing);
+    @extend %font-hs-style-common;
+}
+.editor-button-container {
+    padding-top: 0.125rem;
 }
 
 /* Initial welcome */

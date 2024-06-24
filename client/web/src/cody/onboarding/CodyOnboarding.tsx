@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
+import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
 
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
@@ -17,11 +18,15 @@ import styles from './CodyOnboarding.module.scss'
 
 export interface IEditor {
     id: number // a unique number identifier for telemetry
-    icon: string
+    icon?: string
     name: string
     publisher: string
+    width?: number
+    height?: number
     releaseStage: string
     docs?: string
+    textColor?: string
+    bgColor?: string
     instructions?: React.FC<{
         onBack?: () => void
         onClose: () => void
@@ -37,6 +42,9 @@ interface CodyOnboardingProps extends TelemetryV2Props {
 export function CodyOnboarding({ authenticatedUser, telemetryRecorder }: CodyOnboardingProps): JSX.Element | null {
     const [showEditorStep, setShowEditorStep] = useState(false)
     const [completed = false, setOnboardingCompleted] = useTemporarySetting('cody.onboarding.completed', false)
+    const [abTestSimplified, abTestSimplifiedStatus] = useFeatureFlag(
+        'ab-test-simplified-install-onboarding-flow-202405'
+    )
     const [signUpFlowEnabled, signUpFlowStatus] = useFeatureFlag('ab-shortened-install-first-signup-flow-cody-2024-04')
     // steps start from 0
     const [step = -1, setOnboardingStep] = useTemporarySetting('cody.onboarding.step', 0)
@@ -83,7 +91,7 @@ export function CodyOnboarding({ authenticatedUser, telemetryRecorder }: CodyOnb
         return null
     }
 
-    if (signUpFlowStatus !== 'loaded') {
+    if (signUpFlowStatus !== 'loaded' || abTestSimplifiedStatus !== 'loaded') {
         return null
     }
 
@@ -100,7 +108,7 @@ export function CodyOnboarding({ authenticatedUser, telemetryRecorder }: CodyOnb
             isOpen={true}
             position="center"
             aria-label="Cody Onboarding"
-            className={styles.modal}
+            className={classNames(showEditorStep && abTestSimplified ? styles.modalAlt : styles.modal)}
             containerClassName={styles.root}
         >
             {step === 0 && <WelcomeStep onNext={onNext} pro={enrollPro} telemetryRecorder={telemetryRecorder} />}
@@ -122,6 +130,7 @@ export function CodyOnboarding({ authenticatedUser, telemetryRecorder }: CodyOnb
                     }}
                     pro={enrollPro}
                     telemetryRecorder={telemetryRecorder}
+                    toggleView={abTestSimplified}
                 />
             )}
         </Modal>

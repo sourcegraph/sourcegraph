@@ -1,7 +1,7 @@
 import type { IEditor } from './onboarding/CodyOnboarding'
-import { JetBrainsInstructions } from './onboarding/instructions/JetBrains'
-import { NeoVimInstructions } from './onboarding/instructions/NeoVim'
-import { VSCodeInstructions } from './onboarding/instructions/VsCode'
+import { JetBrainsInstructions, JetBrainsTabInstructions } from './onboarding/instructions/JetBrains'
+import { NeoVimInstructions, NeoVimTabInstructions } from './onboarding/instructions/NeoVim'
+import { VSCodeInstructions, VSCodeTabInstructions } from './onboarding/instructions/VsCode'
 
 export const editorGroups: IEditor[][] = [
     [
@@ -91,4 +91,39 @@ export const editorGroups: IEditor[][] = [
             instructions: NeoVimInstructions,
         },
     ],
+]
+
+export const newEditorGroups: IEditor[] = [
+    {
+        id: 1,
+        icon: 'VsCode',
+        name: 'VSCode',
+        publisher: 'Microsoft',
+        releaseStage: 'GA',
+        width: 63,
+        height: 62,
+        docs: 'https://sourcegraph.com/docs/cody/clients/install-vscode',
+        instructions: VSCodeTabInstructions,
+    },
+    {
+        id: 2,
+        name: 'All editors',
+        publisher: 'JetBrains',
+        releaseStage: 'Beta',
+        width: 58,
+        height: 57.49,
+        docs: 'https://sourcegraph.com/docs/cody/clients/install-jetbrains',
+        instructions: JetBrainsTabInstructions,
+    },
+    {
+        id: 3,
+        icon: 'NeoVim',
+        name: 'Neovim',
+        publisher: 'Neovim Team',
+        releaseStage: 'Experimental',
+        width: 52.83,
+        height: 64.15,
+        docs: 'https://sourcegraph.com/docs/cody/clients/install-neovim',
+        instructions: NeoVimTabInstructions,
+    },
 ]
