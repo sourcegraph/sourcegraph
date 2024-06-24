@@ -1,7 +1,0 @@
-Where does sourcegraph convert lang filters to file extensions?	internal/search/query/helpers.go
-Where are the grafana dashboards defined for frontend search ranking?	monitoring/definitions/frontend.go
-In the sourcegraph repository, what does InternalDoer do?	internal/httpcli/client.go
-In my codebase, what does InternalDoer do?	internal/httpcli/client.go
-Is the crewjam/saml package used in my repository?	go.mod
-Where is the vscode Cody extension implemented?	client/cody/README.md
-Where in the code do we send Slack notifications for code monitoring?	internal/codemonitors/background/slack.go

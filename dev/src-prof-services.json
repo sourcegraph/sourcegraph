@@ -11,7 +11,6 @@
   { "Name": "executor-batches", "Host": "127.0.0.1:6093" },
   { "Name": "zoekt-indexserver-0", "Host": "127.0.0.1:6072" },
   { "Name": "zoekt-indexserver-1", "Host": "127.0.0.1:6073" },
-  { "Name": "embeddings", "Host": "127.0.0.1:6099" },
   { "Name": "zoekt-webserver-0", "Host": "127.0.0.1:3070", "DefaultPath": "/debug/requests/" },
   { "Name": "zoekt-webserver-1", "Host": "127.0.0.1:3071", "DefaultPath": "/debug/requests/" }
 ]

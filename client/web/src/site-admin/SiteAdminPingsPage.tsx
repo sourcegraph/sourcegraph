@@ -428,13 +428,6 @@ export const SiteAdminPingsPage: React.FunctionComponent<React.PropsWithChildren
                                     <li>Completion model (included only for "sourcegraph" provider)</li>
                                 </ul>
                             </li>
-                            <li>
-                                Embeddings
-                                <ul>
-                                    <li>Provider (e.g., "sourcegraph", "openai", "azure-openai", etc.)</li>
-                                    <li>Model</li>
-                                </ul>
-                            </li>
                         </ul>
                     </li>
                     <li>Whether Cody context filters are configured in the site config (true/false)</li>

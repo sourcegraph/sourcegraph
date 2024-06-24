@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/embeddings/embed"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/job"
 	"github.com/sourcegraph/sourcegraph/internal/search/query"
@@ -114,9 +113,30 @@ func getResultLimits(inputs *search.Inputs) (codeCount, textCount int) {
 	return
 }
 
+var textFileExtensions = map[string]struct{}{
+	"adoc":      {},
+	"asciidoc":  {},
+	"creole":    {},
+	"md":        {},
+	"markdown":  {},
+	"mediawiki": {},
+	"muse":      {},
+	"org":       {},
+	"pod":       {},
+	"pod6":      {},
+	"rest":      {},
+	"rdoc":      {},
+	"rst":       {},
+	"rmd":       {},
+	"textile":   {},
+	"txt":       {},
+	"wiki":      {},
+	"wikitext":  {},
+}
+
 var textFileFilter = func() string {
 	var extensions []string
-	for extension := range embed.TextFileExtensions {
+	for extension := range textFileExtensions {
 		extensions = append(extensions, extension)
 	}
 	return `(` + strings.Join(extensions, "|") + `)$`

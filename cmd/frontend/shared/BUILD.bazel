@@ -23,7 +23,6 @@ go_library(
         "//cmd/frontend/internal/contentlibrary",
         "//cmd/frontend/internal/context",
         "//cmd/frontend/internal/dotcom",
-        "//cmd/frontend/internal/embeddings",
         "//cmd/frontend/internal/executorqueue",
         "//cmd/frontend/internal/githubapp",
         "//cmd/frontend/internal/guardrails",

@@ -57,10 +57,6 @@ type GetConfigurationPoliciesOptions struct {
 	// be returned (or filtered).
 	ForSyntacticIndexing *bool
 
-	// ForEmbeddings indicates that configuration policies with embeddings enabled
-	// should be returned (or filtered).
-	ForEmbeddings *bool
-
 	// Limit indicates the number of results to take from the result set.
 	Limit int
 

@@ -584,12 +584,6 @@ func serviceConnections(logger log.Logger) conftypes.ServiceConnections {
 		logger.Error("failed to get zoekt endpoints for service connections", log.Error(err))
 	}
 
-	embeddingsMap := computeEmbeddingsEndpoints()
-	embeddingsAddrs, err := embeddingsMap.Endpoints()
-	if err != nil {
-		logger.Error("failed to get embeddings endpoints for service connections", log.Error(err))
-	}
-
 	return conftypes.ServiceConnections{
 		GitServers:           gitAddrs,
 		PostgresDSN:          serviceConnectionsVal.PostgresDSN,
@@ -597,7 +591,6 @@ func serviceConnections(logger log.Logger) conftypes.ServiceConnections {
 		CodeInsightsDSN:      serviceConnectionsVal.CodeInsightsDSN,
 		Searchers:            searcherAddrs,
 		Symbols:              symbolsAddrs,
-		Embeddings:           embeddingsAddrs,
 		Zoekts:               zoektAddrs,
 		ZoektListTTL:         indexedListTTL,
 	}
@@ -612,9 +605,6 @@ var (
 
 	indexedEndpointsOnce sync.Once
 	indexedEndpoints     *endpoint.Map
-
-	embeddingsURLsOnce sync.Once
-	embeddingsURLs     *endpoint.Map
 
 	indexedListTTL = func() time.Duration {
 		ttl, _ := time.ParseDuration(env.Get("SRC_INDEXED_SEARCH_LIST_CACHE_TTL", "", "Indexed search list cache TTL"))
@@ -654,33 +644,6 @@ func symbolsAddr(environ []string) (string, error) {
 
 	// Not set, use the default (non-service discovery on symbols)
 	return "http://symbols:3184", nil
-}
-
-func computeEmbeddingsEndpoints() *endpoint.Map {
-	embeddingsURLsOnce.Do(func() {
-		addr, err := embeddingsAddr(os.Environ())
-		if err != nil {
-			embeddingsURLs = endpoint.Empty(errors.Wrap(err, "failed to parse EMBEDDINGS_URL"))
-		} else {
-			embeddingsURLs = endpoint.New(addr)
-		}
-	})
-	return embeddingsURLs
-}
-
-func embeddingsAddr(environ []string) (string, error) {
-	const (
-		serviceName = "embeddings"
-		port        = "9991"
-	)
-
-	if addr, ok := getEnv(environ, "EMBEDDINGS_URL"); ok {
-		addrs, err := replicaAddrs(deploy.Type(), addr, serviceName, port)
-		return addrs, err
-	}
-
-	// Not set, use the default (non-service discovery on embeddings)
-	return "http://embeddings:9991", nil
 }
 
 func LoadConfig() {

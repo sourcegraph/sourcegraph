@@ -9,7 +9,6 @@ import PackageVariantIcon from 'mdi-react/PackageVariantIcon'
 import SourceRepositoryIcon from 'mdi-react/SourceRepositoryIcon'
 
 import { BatchChangesIcon } from '../batches/icons'
-import { CodyPageIcon } from '../cody/chat/CodyPageIcon'
 import { SHOW_BUSINESS_FEATURES } from '../enterprise/dotcom/productSubscriptions/features'
 import { checkRequestAccessAllowed } from '../util/checkRequestAccessAllowed'
 
@@ -281,24 +280,6 @@ const codeIntelGroup: SiteAdminSideBarGroup = {
     condition: ({ license }) => license.isCodeSearchEnabled,
 }
 
-export const codyGroup: SiteAdminSideBarGroup = {
-    header: { label: 'Cody', icon: CodyPageIcon },
-    items: [
-        {
-            label: 'Embeddings jobs',
-            to: '/site-admin/embeddings',
-            exact: true,
-            condition: () => window.context?.embeddingsEnabled,
-        },
-        {
-            label: 'Embeddings policies',
-            to: '/site-admin/embeddings/configuration',
-            condition: () => window.context?.embeddingsEnabled,
-        },
-    ],
-    condition: () => Boolean(window.context?.codyEnabled && window.context?.embeddingsEnabled),
-}
-
 const usersGroup: SiteAdminSideBarGroup = {
     header: {
         label: 'Users & auth',
@@ -381,7 +362,6 @@ export const siteAdminSidebarGroups: SiteAdminSideBarGroups = [
     configurationGroup,
     repositoriesGroup,
     codeIntelGroup,
-    codyGroup,
     usersGroup,
     executorsGroup,
     maintenanceGroup,

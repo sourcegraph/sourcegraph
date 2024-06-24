@@ -15,11 +15,9 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/backend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/externallink"
-	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	resolverstubs "github.com/sourcegraph/sourcegraph/internal/codeintel/resolvers"
-	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
@@ -111,22 +109,6 @@ func (r *RepositoryResolver) ID() graphql.ID {
 
 func (r *RepositoryResolver) IDInt32() api.RepoID {
 	return r.id
-}
-
-func (r *RepositoryResolver) EmbeddingExists(ctx context.Context) (bool, error) {
-	if !conf.EmbeddingsEnabled() {
-		return false, nil
-	}
-
-	return r.db.Repos().RepoEmbeddingExists(ctx, r.IDInt32())
-}
-
-func (r *RepositoryResolver) EmbeddingJobs(ctx context.Context, args ListRepoEmbeddingJobsArgs) (*graphqlutil.ConnectionResolver[RepoEmbeddingJobResolver], error) {
-	// Ensure that we only return jobs for this repository.
-	gqlID := r.ID()
-	args.Repo = &gqlID
-
-	return EnterpriseResolvers.embeddingsResolver.RepoEmbeddingJobs(ctx, args)
 }
 
 func MarshalRepositoryID(repo api.RepoID) graphql.ID { return relay.MarshalID("Repository", repo) }

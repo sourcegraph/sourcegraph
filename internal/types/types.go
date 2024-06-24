@@ -1059,7 +1059,6 @@ type CodyAggregatedUsage struct {
 // BigQuery, which requires the input match its schema exactly.
 type CodyProviders struct {
 	Completions *CodyCompletionProvider
-	Embeddings  *CodyEmbeddingsProvider
 }
 
 type CodyCompletionProvider struct {
@@ -1067,11 +1066,6 @@ type CodyCompletionProvider struct {
 	CompletionModel string
 	FastChatModel   string
 	Provider        conftypes.CompletionsProviderName
-}
-
-type CodyEmbeddingsProvider struct {
-	Model    string
-	Provider conftypes.EmbeddingsProviderName
 }
 
 // NOTE: DO NOT alter this struct without making a symmetric change

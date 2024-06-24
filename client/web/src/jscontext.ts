@@ -239,9 +239,6 @@ export interface SourcegraphContext extends Pick<Required<SiteConfiguration>, 'e
     /** Whether the own API is enabled on the Sourcegraph instance */
     ownEnabled: boolean
 
-    /** Whether embeddings are enabled on this site. */
-    embeddingsEnabled: boolean
-
     /** Authentication provider instances in site config. */
     authProviders: AuthProvider[]
 

@@ -23,7 +23,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
-	"github.com/sourcegraph/sourcegraph/internal/embeddings"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/licensing"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -105,9 +104,6 @@ func TestCodyIgnore(t *testing.T) {
 		}
 		return nil, os.ErrNotExist
 	})
-
-	mockEmbeddingsClient := embeddings.NewMockClient()
-	mockEmbeddingsClient.SearchFunc.SetDefaultReturn(nil, errors.New("embeddings should be disabled"))
 
 	lineRange := func(start, end uint32) []zoekt.ChunkMatch {
 		return []zoekt.ChunkMatch{{
@@ -195,7 +191,6 @@ func TestCodyIgnore(t *testing.T) {
 			contextClient := codycontext.NewCodyContextClient(
 				observationCtx,
 				db,
-				mockEmbeddingsClient,
 				searchClient,
 				mockGitserver,
 			)
@@ -330,9 +325,6 @@ func TestChunkSize(t *testing.T) {
 		return nil, os.ErrNotExist
 	})
 
-	mockEmbeddingsClient := embeddings.NewMockClient()
-	mockEmbeddingsClient.SearchFunc.SetDefaultReturn(nil, errors.New("embeddings should be disabled"))
-
 	lineRange := result.ChunkMatches{{
 		Ranges: result.Ranges{{
 			Start: result.Location{Line: 2},
@@ -372,7 +364,6 @@ func TestChunkSize(t *testing.T) {
 	contextClient := codycontext.NewCodyContextClient(
 		observationCtx,
 		db,
-		mockEmbeddingsClient,
 		mockSearchClient,
 		mockGitserver,
 	)

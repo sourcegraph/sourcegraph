@@ -29,12 +29,6 @@ extend type Query {
         forIndexing: Boolean
 
         """
-        If set to true, then only configuration policies with embeddings enabled are returned.
-        If set to false, then configuration policies with embeddings enabled are filtered out.
-        """
-        forEmbeddings: Boolean
-
-        """
         If set to true, then only protected configuration policies are returned.
         If set to false, then only un-protected configuration policies are returned.
         If unset, policies are returned regardless if they're protected or not.
@@ -105,11 +99,6 @@ extend type Mutation {
         indexingEnabled: Boolean!
         indexCommitMaxAgeHours: Int
         indexIntermediateCommits: Boolean!
-
-        """
-        embeddingsEnabled, if not provided, currently defaults to false.
-        """
-        embeddingsEnabled: Boolean
     ): CodeIntelligenceConfigurationPolicy!
 
     """
@@ -130,11 +119,6 @@ extend type Mutation {
         indexingEnabled: Boolean!
         indexCommitMaxAgeHours: Int
         indexIntermediateCommits: Boolean!
-
-        """
-        embeddingsEnabled, if not provided, currently defaults to false.
-        """
-        embeddingsEnabled: Boolean
     ): EmptyResponse
 
     """
@@ -271,11 +255,6 @@ type CodeIntelligenceConfigurationPolicy implements Node {
     only consider the tip of the branch.
     """
     indexIntermediateCommits: Boolean!
-
-    """
-    Whether or not this configuration policy affects embeddings.
-    """
-    embeddingsEnabled: Boolean!
 }
 
 """

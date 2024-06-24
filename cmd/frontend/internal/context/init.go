@@ -1,4 +1,4 @@
-package embeddings
+package context
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/embeddings"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 	"github.com/sourcegraph/sourcegraph/internal/search/client"
@@ -26,13 +25,11 @@ func Init(
 	observationCtx = observationCtx.Clone()
 	observationCtx.Logger = observationCtx.Logger.Scoped("codycontext")
 
-	embeddingsClient := embeddings.NewDefaultClient()
 	searchClient := client.New(observationCtx.Logger, db, gitserver.NewClient("graphql.context.search"))
 
 	contextClient := codycontext.NewCodyContextClient(
 		observationCtx,
 		db,
-		embeddingsClient,
 		searchClient,
 		services.GitserverClient.Scoped("codycontext.client"),
 	)

@@ -19,7 +19,6 @@ go_library(
         "sg_db.go",
         "sg_deploy.go",
         "sg_doctor.go",
-        "sg_embeddings_qa.go",
         "sg_generate.go",
         "sg_help.go",
         "sg_images.go",
@@ -50,7 +49,6 @@ go_library(
     importpath = "github.com/sourcegraph/sourcegraph/dev/sg",
     visibility = ["//visibility:private"],
     deps = [
-        "//cmd/embeddings/qa",
         "//dev/sg/buf",
         "//dev/sg/ci",
         "//dev/sg/dependencies",

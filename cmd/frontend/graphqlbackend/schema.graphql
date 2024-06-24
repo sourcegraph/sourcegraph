@@ -1595,14 +1595,6 @@ type Query {
         """
         notIndexed: Boolean = true
         """
-        Include repositories that have embeddings.
-        """
-        embedded: Boolean = true
-        """
-        Include repositories that don't have embeddings.
-        """
-        notEmbedded: Boolean = true
-        """
         Include only repositories that have encountered errors when cloning or fetching
         """
         failedFetch: Boolean = false
@@ -4000,11 +3992,6 @@ type Repository implements Node & GenericSearchResultInterface {
     The size of repo when cloned on disk
     """
     diskSizeBytes: BigInt
-
-    """
-    Returns true if embeddings for the repo are generated.
-    """
-    embeddingExists: Boolean!
 
     """
     Returns true if command executed on the repo are recorded.
@@ -8992,10 +8979,6 @@ type RepositoryStats {
     The number of repositories that are currently corrupt
     """
     corrupted: Int!
-    """
-    The number of repositories that have embeddings
-    """
-    embedded: Int!
 }
 
 """

@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@sourcegraph/http-client'
 import { Container, ErrorAlert, Input, LoadingSpinner, PageSwitcher, useDebounce } from '@sourcegraph/wildcard'
 
-import { isEmbeddingsEnabled } from '../cody/isCodyEnabled'
 import { EXTERNAL_SERVICE_IDS_AND_NAMES } from '../components/externalServices/backend'
 import {
     buildFilterArgs,
@@ -17,18 +16,18 @@ import {
 import { usePageSwitcherPagination } from '../components/FilteredConnection/hooks/usePageSwitcherPagination'
 import { getFilterFromURL, getUrlQuery } from '../components/FilteredConnection/utils'
 import {
+    RepositoryOrderBy,
     type ExternalServiceIDsAndNamesResult,
     type ExternalServiceIDsAndNamesVariables,
     type RepositoriesResult,
     type RepositoriesVariables,
-    RepositoryOrderBy,
     type SiteAdminRepositoryFields,
     type StatusAndRepoStatsResult,
 } from '../graphql-operations'
 import { PageRoutes } from '../routes.constants'
 
 import { ValueLegendList, type ValueLegendListProps } from './analytics/components/ValueLegendList'
-import { REPOSITORIES_QUERY, REPO_PAGE_POLL_INTERVAL, STATUS_AND_REPO_STATS } from './backend'
+import { REPO_PAGE_POLL_INTERVAL, REPOSITORIES_QUERY, STATUS_AND_REPO_STATS } from './backend'
 import { RepositoryNode } from './RepositoryNode'
 
 import styles from './SiteAdminRepositoriesContainer.module.scss'
@@ -364,22 +363,6 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                     }),
             },
         ]
-
-        if (isEmbeddingsEnabled()) {
-            items.push({
-                value: data.repositoryStats.embedded,
-                description: 'Embedded',
-                color: 'var(--body-color)',
-                position: 'right',
-                tooltip: 'The number of repositories that have been embedded for Cody.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.Embedded)
-                        return newValues
-                    }),
-            })
-        }
 
         if (data.repositoryStats.corrupted > 0) {
             items.push({

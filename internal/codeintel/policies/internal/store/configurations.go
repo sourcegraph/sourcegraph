@@ -34,9 +34,6 @@ func (s *store) GetConfigurationPolicies(ctx context.Context, opts shared.GetCon
 	if opts.ForSyntacticIndexing != nil {
 		attrs = append(attrs, attribute.Bool("forSyntacticIndexing", *opts.ForSyntacticIndexing))
 	}
-	if opts.ForEmbeddings != nil {
-		attrs = append(attrs, attribute.Bool("forEmbeddings", *opts.ForEmbeddings))
-	}
 
 	ctx, trace, endObservation := s.operations.getConfigurationPolicies.With(ctx, &err, observation.Args{Attrs: attrs})
 	defer endObservation(1, observation.Args{})
@@ -94,13 +91,6 @@ func (s *store) GetConfigurationPolicies(ctx context.Context, opts shared.GetCon
 			conds = append(conds, sqlf.Sprintf("p.syntactic_indexing_enabled"))
 		} else {
 			conds = append(conds, sqlf.Sprintf("NOT p.syntactic_indexing_enabled"))
-		}
-	}
-	if opts.ForEmbeddings != nil {
-		if *opts.ForEmbeddings {
-			conds = append(conds, sqlf.Sprintf("p.embeddings_enabled"))
-		} else {
-			conds = append(conds, sqlf.Sprintf("NOT p.embeddings_enabled"))
 		}
 	}
 	if len(conds) == 0 {
@@ -166,8 +156,7 @@ SELECT
 	p.retain_intermediate_commits,
 	p.indexing_enabled,
 	p.index_commit_max_age_hours,
-	p.index_intermediate_commits,
-	p.embeddings_enabled
+	p.index_intermediate_commits
 FROM lsif_configuration_policies p
 LEFT JOIN repo ON repo.id = p.repository_id
 WHERE %s
@@ -208,8 +197,7 @@ SELECT
 	p.retain_intermediate_commits,
 	p.indexing_enabled,
 	p.index_commit_max_age_hours,
-	p.index_intermediate_commits,
-	p.embeddings_enabled
+	p.index_intermediate_commits
 FROM lsif_configuration_policies p
 LEFT JOIN repo ON repo.id = p.repository_id
 WHERE
@@ -240,7 +228,6 @@ func (s *store) CreateConfigurationPolicy(ctx context.Context, configurationPoli
 		configurationPolicy.IndexingEnabled,
 		indexingCommitMaxAgeHours,
 		configurationPolicy.IndexIntermediateCommits,
-		configurationPolicy.EmbeddingEnabled,
 	)))
 	if err != nil {
 		return shared.ConfigurationPolicy{}, err
@@ -261,8 +248,7 @@ INSERT INTO lsif_configuration_policies (
 	retain_intermediate_commits,
 	indexing_enabled,
 	index_commit_max_age_hours,
-	index_intermediate_commits,
-	embeddings_enabled
+	index_intermediate_commits
 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 RETURNING
 	id,
@@ -277,8 +263,7 @@ RETURNING
 	retain_intermediate_commits,
 	indexing_enabled,
 	index_commit_max_age_hours,
-	index_intermediate_commits,
-	embeddings_enabled
+	index_intermediate_commits
 `
 
 var (
@@ -326,7 +311,6 @@ func (s *store) UpdateConfigurationPolicy(ctx context.Context, policy shared.Con
 			policy.IndexingEnabled,
 			indexCommitMaxAge,
 			policy.IndexIntermediateCommits,
-			policy.EmbeddingEnabled,
 			policy.ID,
 		))
 	})
@@ -346,8 +330,7 @@ SELECT
 	retain_intermediate_commits,
 	indexing_enabled,
 	index_commit_max_age_hours,
-	index_intermediate_commits,
-	embeddings_enabled
+	index_intermediate_commits
 FROM lsif_configuration_policies
 WHERE id = %s
 FOR UPDATE
@@ -364,8 +347,7 @@ UPDATE lsif_configuration_policies SET
 	retain_intermediate_commits = %s,
 	indexing_enabled = %s,
 	index_commit_max_age_hours = %s,
-	index_intermediate_commits = %s,
-	embeddings_enabled = %s
+	index_intermediate_commits = %s
 WHERE id = %s
 `
 
@@ -433,7 +415,6 @@ func scanConfigurationPolicy(s dbutil.Scanner) (configurationPolicy shared.Confi
 		&configurationPolicy.IndexingEnabled,
 		&indexCommitMaxAgeHours,
 		&configurationPolicy.IndexIntermediateCommits,
-		&configurationPolicy.EmbeddingEnabled,
 	); err != nil {
 		return configurationPolicy, err
 	}

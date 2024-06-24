@@ -786,44 +786,6 @@ type EmailTemplates struct {
 	SetPassword *EmailTemplate `json:"setPassword,omitempty"`
 }
 
-// Embeddings description: Configuration for embeddings service.
-type Embeddings struct {
-	// AccessToken description: The access token used to authenticate with the external embedding API service. For provider sourcegraph, this is optional.
-	AccessToken string `json:"accessToken,omitempty"`
-	// Dimensions description: The dimensionality of the embedding vectors. Required field if not using the sourcegraph provider.
-	Dimensions int `json:"dimensions,omitempty"`
-	// Enabled description: Toggles whether embedding service is enabled.
-	Enabled *bool `json:"enabled,omitempty"`
-	// Endpoint description: The endpoint under which to reach the provider. Sensible default will be used for each provider.
-	Endpoint string `json:"endpoint,omitempty"`
-	// ExcludeChunkOnError description: Whether to cancel indexing a repo if embedding a single file fails. If true, the chunk that cannot generate embeddings is not indexed and the remainder of the repository proceeds with indexing.
-	ExcludeChunkOnError *bool `json:"excludeChunkOnError,omitempty"`
-	// ExcludedFilePathPatterns description: A list of glob patterns that match file paths you want to exclude from embeddings. This is useful to exclude files with low information value (e.g., SVG files, test fixtures, mocks, auto-generated files, etc.).
-	ExcludedFilePathPatterns []string `json:"excludedFilePathPatterns,omitempty"`
-	// FileFilters description: Filters that allow you to specify which files in a repository should get embedded.
-	FileFilters *FileFilters `json:"fileFilters,omitempty"`
-	// Incremental description: Whether to generate embeddings incrementally. If true, only files that have changed since the last run will be processed.
-	Incremental *bool `json:"incremental,omitempty"`
-	// MaxCodeEmbeddingsPerRepo description: The maximum number of embeddings for code files to generate per repo
-	MaxCodeEmbeddingsPerRepo int `json:"maxCodeEmbeddingsPerRepo,omitempty"`
-	// MaxTextEmbeddingsPerRepo description: The maximum number of embeddings for text files to generate per repo
-	MaxTextEmbeddingsPerRepo int `json:"maxTextEmbeddingsPerRepo,omitempty"`
-	// MinimumInterval description: The time to wait between runs. Valid time units are "s", "m", "h". Example values: "30s", "5m", "1h".
-	MinimumInterval string `json:"minimumInterval,omitempty"`
-	// Model description: The model used for embedding. A default model will be used for each provider, if not set.
-	Model string `json:"model,omitempty"`
-	// PerCommunityUserEmbeddingsMonthlyLimit description: If > 0, limits the number of tokens allowed to be embedded by a Community user in a month. This is for Self-serve Cody and applies to Dotcom only.
-	PerCommunityUserEmbeddingsMonthlyLimit int `json:"perCommunityUserEmbeddingsMonthlyLimit,omitempty"`
-	// PerProUserEmbeddingsMonthlyLimit description: If > 0, limits the number of tokens allowed to be embedded by a Pro user in a month. This is for Self-serve Cody and applies to Dotcom only.
-	PerProUserEmbeddingsMonthlyLimit int `json:"perProUserEmbeddingsMonthlyLimit,omitempty"`
-	// PolicyRepositoryMatchLimit description: The maximum number of repositories that can be matched by a global embeddings policy
-	PolicyRepositoryMatchLimit *int `json:"policyRepositoryMatchLimit,omitempty"`
-	// Provider description: The provider to use for generating embeddings. Defaults to sourcegraph.
-	Provider string `json:"provider,omitempty"`
-	// Url description: The url to the external embedding API service. Deprecated, use endpoint instead.
-	Url string `json:"url,omitempty"`
-}
-
 // EncryptionKey description: Config for a key
 type EncryptionKey struct {
 	Cloudkms *CloudKMSEncryptionKey
@@ -1138,16 +1100,6 @@ type ExternalIdentity struct {
 	// GitlabProvider description: The name that identifies the authentication provider to GitLab. This is passed to the `?provider=` query parameter in calls to the GitLab Users API. If you're not sure what this value is, you can look at the `identities` field of the GitLab Users API result (`curl  -H 'PRIVATE-TOKEN: $YOUR_TOKEN' $GITLAB_URL/api/v4/users`).
 	GitlabProvider string `json:"gitlabProvider"`
 	Type           string `json:"type"`
-}
-
-// FileFilters description: Filters that allow you to specify which files in a repository should get embedded.
-type FileFilters struct {
-	// ExcludedFilePathPatterns description: A list of glob patterns that match file paths you want to exclude from embeddings. This is useful to exclude files with low information value (e.g., SVG files, test fixtures, mocks, auto-generated files, etc.).
-	ExcludedFilePathPatterns []string `json:"excludedFilePathPatterns,omitempty"`
-	// IncludedFilePathPatterns description: A list of glob patterns that match file paths you want to include in embeddings. If specified, all files not matching these include patterns are excluded.
-	IncludedFilePathPatterns []string `json:"includedFilePathPatterns,omitempty"`
-	// MaxFileSizeBytes description: The maximum file size (in bytes) to include in embeddings. Must be between 0 and 100000 (1 MB).
-	MaxFileSizeBytes int `json:"maxFileSizeBytes,omitempty"`
 }
 
 // FusionClient description: Configuration for the experimental p4-fusion client
@@ -2822,8 +2774,6 @@ type SiteConfiguration struct {
 	EmailSmtp *SMTPServerConfig `json:"email.smtp,omitempty"`
 	// EmailTemplates description: Configurable templates for some email types sent by Sourcegraph.
 	EmailTemplates *EmailTemplates `json:"email.templates,omitempty"`
-	// Embeddings description: Configuration for embeddings service.
-	Embeddings *Embeddings `json:"embeddings,omitempty"`
 	// EncryptionKeys description: Configuration for encryption keys used to encrypt data at rest in the database.
 	EncryptionKeys *EncryptionKeys `json:"encryption.keys,omitempty"`
 	// ExecutorsAccessToken description: The shared secret between Sourcegraph and executors. The value must contain at least 20 characters.
@@ -3074,7 +3024,6 @@ func (v *SiteConfiguration) UnmarshalJSON(data []byte) error {
 	delete(m, "email.senderName")
 	delete(m, "email.smtp")
 	delete(m, "email.templates")
-	delete(m, "embeddings")
 	delete(m, "encryption.keys")
 	delete(m, "executors.accessToken")
 	delete(m, "executors.batcheshelperImage")

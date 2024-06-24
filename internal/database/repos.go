@@ -93,7 +93,6 @@ type RepoStore interface {
 	ListMinimalRepos(context.Context, ReposListOptions) ([]types.MinimalRepo, error)
 	Metadata(context.Context, ...api.RepoID) ([]*types.SearchedRepo, error)
 	StreamMinimalRepos(context.Context, ReposListOptions, func(*types.MinimalRepo)) error
-	RepoEmbeddingExists(ctx context.Context, repoID api.RepoID) (bool, error)
 }
 
 var _ RepoStore = (*repoStore)(nil)
@@ -679,12 +678,6 @@ type ReposListOptions struct {
 	// OnlyIndexed excludes repositories that are not indexed by zoekt from the list.
 	OnlyIndexed bool
 
-	// NoEmbedded excludes repositories that are embedded from the list.
-	NoEmbedded bool
-
-	// OnlyEmbedded excludes repositories that are not embedded from the list.
-	OnlyEmbedded bool
-
 	// CloneStatus if set will only return repos of that clone status.
 	CloneStatus types.CloneStatus
 
@@ -866,16 +859,6 @@ func (s *repoStore) StreamMinimalRepos(ctx context.Context, opt ReposListOptions
 	}
 
 	return nil
-}
-
-const repoEmbeddingExists = `SELECT EXISTS(SELECT 1 FROM repo_embedding_jobs WHERE repo_id = %s AND state = 'completed')`
-
-// RepoEmbeddingExists returns boolean indicating whether embeddings are generated for the repo.
-func (s *repoStore) RepoEmbeddingExists(ctx context.Context, repoID api.RepoID) (bool, error) {
-	q := sqlf.Sprintf(repoEmbeddingExists, repoID)
-	exists, _, err := basestore.ScanFirstBool(s.Query(ctx, q))
-
-	return exists, err
 }
 
 // ListMinimalRepos returns a list of repositories names and ids.
@@ -1074,12 +1057,6 @@ func (s *repoStore) listSQL(ctx context.Context, tr trace.Trace, opt ReposListOp
 	if opt.OnlyIndexed {
 		where = append(where, sqlf.Sprintf("zr.index_status = 'indexed'"))
 	}
-	if opt.NoEmbedded {
-		where = append(where, sqlf.Sprintf("embedded IS NULL"))
-	}
-	if opt.OnlyEmbedded {
-		where = append(where, sqlf.Sprintf("embedded IS NOT NULL"))
-	}
 
 	if opt.FailedFetch {
 		where = append(where, sqlf.Sprintf("gr.last_error IS NOT NULL"))
@@ -1177,11 +1154,6 @@ func (s *repoStore) listSQL(ctx context.Context, tr trace.Trace, opt ReposListOp
 	}
 	if opt.OnlyIndexed || opt.NoIndexed {
 		joins = append(joins, sqlf.Sprintf("JOIN zoekt_repos zr ON zr.repo_id = repo.id"))
-	}
-
-	if opt.NoEmbedded || opt.OnlyEmbedded {
-		embeddedRepoQuery := sqlf.Sprintf(embeddedReposQueryFmtstr)
-		joins = append(joins, sqlf.Sprintf("LEFT JOIN (%s) embedded on embedded.repo_id = id", embeddedRepoQuery))
 	}
 
 	if len(opt.KVPFilters) > 0 {
@@ -1293,10 +1265,6 @@ func containsOrderBySizeField(orderBy OrderBy) bool {
 	}
 	return false
 }
-
-const embeddedReposQueryFmtstr = `
-	SELECT DISTINCT ON (repo_id) repo_id, true embedded FROM repo_embedding_jobs WHERE state = 'completed'
-`
 
 type ListSourcegraphDotComIndexableReposOptions struct {
 	// CloneStatus if set will only return indexable repos of that clone

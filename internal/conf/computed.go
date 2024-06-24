@@ -19,7 +19,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/license"
 	srccli "github.com/sourcegraph/sourcegraph/internal/src-cli"
 	"github.com/sourcegraph/sourcegraph/internal/version"
-	"github.com/sourcegraph/sourcegraph/lib/pointers"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
 
@@ -388,10 +387,6 @@ func CodeIntelRankingDocumentReferenceCountsGraphKey() string {
 		return val
 	}
 	return "dev"
-}
-
-func EmbeddingsEnabled() bool {
-	return GetEmbeddingsConfig(Get().SiteConfiguration) != nil
 }
 
 func ProductResearchPageEnabled() bool {
@@ -1005,186 +1000,6 @@ func GetAttributionGateway(siteConfig schema.SiteConfiguration) (string, string)
 	return "", ""
 }
 
-const embeddingsMaxFileSizeBytes = 1000000
-
-// GetEmbeddingsConfig evaluates a complete embeddings configuration based on
-// site configuration. The configuration may be nil if completions is disabled.
-func GetEmbeddingsConfig(siteConfig schema.SiteConfiguration) *conftypes.EmbeddingsConfig {
-	// If cody is disabled, don't use embeddings.
-	if !codyEnabled(siteConfig) {
-		return nil
-	}
-
-	// Only allow embeddings as part of evaluating context quality.
-	if !ForceAllowEmbeddings() {
-		return nil
-	}
-
-	// If embeddings are explicitly disabled (legacy flag, TODO: remove after 5.1),
-	// don't use embeddings either.
-	if siteConfig.Embeddings != nil && siteConfig.Embeddings.Enabled != nil && !*siteConfig.Embeddings.Enabled {
-		return nil
-	}
-
-	embeddingsConfig := siteConfig.Embeddings
-	// If no embeddings configuration is set at all, but cody is enabled, assume
-	// a default configuration.
-	if embeddingsConfig == nil {
-		embeddingsConfig = &schema.Embeddings{
-			Provider: string(conftypes.EmbeddingsProviderNameSourcegraph),
-		}
-	}
-
-	// If after setting defaults for no `embeddings` config given there still is no
-	// provider configured.
-	// Before, this meant "use OpenAI", but it's easy to accidentally send Cody Gateway
-	// auth tokens to OpenAI by that, so if an access token is explicitly set we
-	// are careful and require the provider to be explicit. This lets us have good
-	// support for optional Provider in most cases (token is generated for
-	// default provider Sourcegraph)
-	if embeddingsConfig.Provider == "" {
-		if embeddingsConfig.AccessToken != "" {
-			return nil
-		}
-
-		// Otherwise, assume Provider, since it is optional
-		embeddingsConfig.Provider = string(conftypes.EmbeddingsProviderNameSourcegraph)
-	}
-
-	// The default value for incremental is true.
-	if embeddingsConfig.Incremental == nil {
-		embeddingsConfig.Incremental = pointers.Ptr(true)
-	}
-
-	// Set default values for max embeddings counts.
-	embeddingsConfig.MaxCodeEmbeddingsPerRepo = defaultTo(embeddingsConfig.MaxCodeEmbeddingsPerRepo, defaultMaxCodeEmbeddingsPerRepo)
-	embeddingsConfig.MaxTextEmbeddingsPerRepo = defaultTo(embeddingsConfig.MaxTextEmbeddingsPerRepo, defaultMaxTextEmbeddingsPerRepo)
-
-	// The default value for MinimumInterval is 24h.
-	if embeddingsConfig.MinimumInterval == "" {
-		embeddingsConfig.MinimumInterval = defaultMinimumInterval.String()
-	}
-
-	// Set the default for PolicyRepositoryMatchLimit.
-	if embeddingsConfig.PolicyRepositoryMatchLimit == nil {
-		v := defaultPolicyRepositoryMatchLimit
-		embeddingsConfig.PolicyRepositoryMatchLimit = &v
-	}
-
-	// If endpoint is not set, fall back to URL, it's the previous name of the setting.
-	// Note: It might also be empty.
-	if embeddingsConfig.Endpoint == "" {
-		embeddingsConfig.Endpoint = embeddingsConfig.Url
-	}
-
-	if embeddingsConfig.Provider == string(conftypes.EmbeddingsProviderNameSourcegraph) {
-		// If no endpoint is configured, use a default value.
-		if embeddingsConfig.Endpoint == "" {
-			embeddingsConfig.Endpoint = "https://cody-gateway.sourcegraph.com/v1/embeddings"
-		}
-
-		// Set the access token, either use the configured one, or generate one for the platform.
-		embeddingsConfig.AccessToken = getSourcegraphProviderAccessToken(embeddingsConfig.AccessToken, siteConfig)
-		// If we weren't able to generate an access token of some sort, authing with
-		// Cody Gateway is not possible and we cannot use embeddings.
-		if embeddingsConfig.AccessToken == "" {
-			return nil
-		}
-
-		// Set a default model.
-		if embeddingsConfig.Model == "" {
-			embeddingsConfig.Model = "openai/text-embedding-ada-002"
-		}
-		// Make sure models are always treated case-insensitive.
-		embeddingsConfig.Model = strings.ToLower(embeddingsConfig.Model)
-
-		// Set a default for model dimensions if using the default model.
-		if embeddingsConfig.Dimensions <= 0 && embeddingsConfig.Model == "openai/text-embedding-ada-002" {
-			embeddingsConfig.Dimensions = 1536
-		}
-	} else if embeddingsConfig.Provider == string(conftypes.EmbeddingsProviderNameOpenAI) {
-		// If no endpoint is configured, use a default value.
-		if embeddingsConfig.Endpoint == "" {
-			embeddingsConfig.Endpoint = "https://api.openai.com/v1/embeddings"
-		}
-
-		// If not access token is set, we cannot talk to OpenAI. Bail.
-		if embeddingsConfig.AccessToken == "" {
-			return nil
-		}
-
-		// Set a default model.
-		if embeddingsConfig.Model == "" {
-			embeddingsConfig.Model = "text-embedding-ada-002"
-		}
-		// Make sure models are always treated case-insensitive.
-		embeddingsConfig.Model = strings.ToLower(embeddingsConfig.Model)
-
-		// Set a default for model dimensions if using the default model.
-		if embeddingsConfig.Dimensions <= 0 && embeddingsConfig.Model == "text-embedding-ada-002" {
-			embeddingsConfig.Dimensions = 1536
-		}
-	} else if embeddingsConfig.Provider == string(conftypes.EmbeddingsProviderNameAzureOpenAI) {
-		// If no endpoint is configured, we cannot talk to Azure OpenAI.
-		if embeddingsConfig.Endpoint == "" {
-			return nil
-		}
-
-		// If no model is set, we cannot do anything here.
-		if embeddingsConfig.Model == "" {
-			return nil
-		}
-		// Make sure models are always treated case-insensitive.
-		// TODO: Are model names on azure case insensitive?
-		embeddingsConfig.Model = strings.ToLower(embeddingsConfig.Model)
-	} else {
-		// Unknown provider value.
-		return nil
-	}
-
-	// While its not removed, use both options
-	var includedFilePathPatterns []string
-	excludedFilePathPatterns := embeddingsConfig.ExcludedFilePathPatterns
-	maxFileSizeLimit := embeddingsMaxFileSizeBytes
-	if embeddingsConfig.FileFilters != nil {
-		includedFilePathPatterns = embeddingsConfig.FileFilters.IncludedFilePathPatterns
-		excludedFilePathPatterns = append(excludedFilePathPatterns, embeddingsConfig.FileFilters.ExcludedFilePathPatterns...)
-		if embeddingsConfig.FileFilters.MaxFileSizeBytes > 0 && embeddingsConfig.FileFilters.MaxFileSizeBytes <= embeddingsMaxFileSizeBytes {
-			maxFileSizeLimit = embeddingsConfig.FileFilters.MaxFileSizeBytes
-		}
-	}
-	fileFilters := conftypes.EmbeddingsFileFilters{
-		IncludedFilePathPatterns: includedFilePathPatterns,
-		ExcludedFilePathPatterns: excludedFilePathPatterns,
-		MaxFileSizeBytes:         maxFileSizeLimit,
-	}
-
-	computedConfig := &conftypes.EmbeddingsConfig{
-		Provider:    conftypes.EmbeddingsProviderName(embeddingsConfig.Provider),
-		AccessToken: embeddingsConfig.AccessToken,
-		Model:       embeddingsConfig.Model,
-		Endpoint:    embeddingsConfig.Endpoint,
-		Dimensions:  embeddingsConfig.Dimensions,
-		// This is definitely set at this point.
-		Incremental:                            *embeddingsConfig.Incremental,
-		FileFilters:                            fileFilters,
-		MaxCodeEmbeddingsPerRepo:               embeddingsConfig.MaxCodeEmbeddingsPerRepo,
-		MaxTextEmbeddingsPerRepo:               embeddingsConfig.MaxTextEmbeddingsPerRepo,
-		PolicyRepositoryMatchLimit:             embeddingsConfig.PolicyRepositoryMatchLimit,
-		ExcludeChunkOnError:                    pointers.Deref(embeddingsConfig.ExcludeChunkOnError, true),
-		PerCommunityUserEmbeddingsMonthlyLimit: embeddingsConfig.PerCommunityUserEmbeddingsMonthlyLimit,
-		PerProUserEmbeddingsMonthlyLimit:       embeddingsConfig.PerProUserEmbeddingsMonthlyLimit,
-	}
-	d, err := time.ParseDuration(embeddingsConfig.MinimumInterval)
-	if err != nil {
-		computedConfig.MinimumInterval = defaultMinimumInterval
-	} else {
-		computedConfig.MinimumInterval = d
-	}
-
-	return computedConfig
-}
-
 func toUint64(input *int) *uint64 {
 	if input == nil {
 		return nil
@@ -1205,20 +1020,6 @@ func getSourcegraphProviderAccessToken(accessToken string, config schema.SiteCon
 	}
 
 	return license.GenerateLicenseKeyBasedAccessToken(config.LicenseKey)
-}
-
-const (
-	defaultPolicyRepositoryMatchLimit = 5000
-	defaultMinimumInterval            = 24 * time.Hour
-	defaultMaxCodeEmbeddingsPerRepo   = 3_072_000
-	defaultMaxTextEmbeddingsPerRepo   = 512_000
-)
-
-func defaultTo(val, def int) int {
-	if val == 0 {
-		return def
-	}
-	return val
 }
 
 func defaultMaxPromptTokens(provider conftypes.CompletionsProviderName, model string) int {

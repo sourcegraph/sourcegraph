@@ -564,12 +564,6 @@ func NewSchema(
 			}
 		}
 
-		if embeddingsResolver := optional.EmbeddingsResolver; embeddingsResolver != nil {
-			EnterpriseResolvers.embeddingsResolver = embeddingsResolver
-			resolver.EmbeddingsResolver = embeddingsResolver
-			schemas = append(schemas, embeddingsSchema)
-		}
-
 		if contextResolver := optional.CodyContextResolver; contextResolver != nil {
 			EnterpriseResolvers.contextResolver = contextResolver
 			resolver.CodyContextResolver = contextResolver
@@ -665,7 +659,6 @@ type OptionalResolver struct {
 	ComputeResolver
 	CodyContextResolver
 	DotcomRootResolver
-	EmbeddingsResolver
 	SearchJobsResolver
 	GitHubAppsResolver
 	GuardrailsResolver
@@ -786,7 +779,6 @@ var EnterpriseResolvers = struct {
 	computeResolver             ComputeResolver
 	contextResolver             CodyContextResolver
 	dotcomResolver              DotcomRootResolver
-	embeddingsResolver          EmbeddingsResolver
 	searchJobsResolver          SearchJobsResolver
 	gitHubAppsResolver          GitHubAppsResolver
 	guardrailsResolver          GuardrailsResolver

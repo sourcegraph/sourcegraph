@@ -24,7 +24,6 @@ type importsDbConn bool
 func (*importsDbConn) AFact() {}
 
 var allowedToImport = []string{
-	"github.com/sourcegraph/sourcegraph/cmd/embeddings",
 	"github.com/sourcegraph/sourcegraph/cmd/frontend",
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver",
 	"github.com/sourcegraph/sourcegraph/cmd/migrator",

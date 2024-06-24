@@ -19,7 +19,6 @@ var SrcProfServices = []map[string]string{
 	{"Name": "repo-updater", "Host": "127.0.0.1:6074"},
 	{"Name": "worker", "Host": "127.0.0.1:6089"},
 	{"Name": "precise-code-intel-worker", "Host": "127.0.0.1:6088"},
-	{"Name": "embeddings", "Host": "127.0.0.1:6099"},
 	// no executors in server image
 	{"Name": "zoekt-indexserver", "Host": "127.0.0.1:6072"},
 	{"Name": "zoekt-webserver", "Host": "127.0.0.1:3070", "DefaultPath": "/debug/requests/"},

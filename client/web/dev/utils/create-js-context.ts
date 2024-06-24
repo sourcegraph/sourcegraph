@@ -87,7 +87,6 @@ export const createJsContext = ({ sourcegraphBaseUrl }: { sourcegraphBaseUrl: st
             endpoint: ENVIRONMENT_CONFIG.CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT,
         },
         telemetryRecorder: noOpTelemetryRecorder,
-        embeddingsEnabled: false,
         primaryLoginProvidersCount: 5,
         // Site-config overrides default JS context
         ...siteConfig,

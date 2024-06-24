@@ -2,6 +2,7 @@ package codycontext
 
 import (
 	"context"
+
 	"github.com/sourcegraph/sourcegraph/internal/database"
 
 	"github.com/sourcegraph/log"

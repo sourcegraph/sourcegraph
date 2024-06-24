@@ -89,7 +89,6 @@ pkg_tar(
 DEPS = [
     "//cmd/precise-code-intel-worker",
     "//cmd/searcher",
-    "//cmd/embeddings",
     "//cmd/frontend",
     "//cmd/gitserver",
     "//cmd/migrator",
@@ -267,7 +266,6 @@ oci_image(
     ] + dependencies_tars([
         "//cmd/precise-code-intel-worker",
         "//cmd/searcher",
-        "//cmd/embeddings",
         "//cmd/gitserver",
         "//cmd/migrator",
         "//cmd/repo-updater",

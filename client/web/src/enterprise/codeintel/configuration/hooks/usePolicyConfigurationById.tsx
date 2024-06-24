@@ -41,7 +41,6 @@ const emptyPolicy: CodeIntelligenceConfigurationPolicyFields = {
     indexingEnabled: false,
     indexCommitMaxAgeHours: null,
     indexIntermediateCommits: false,
-    embeddingsEnabled: false,
 }
 
 export const usePolicyConfigurationByID = (id: string): UsePolicyConfigResult => {

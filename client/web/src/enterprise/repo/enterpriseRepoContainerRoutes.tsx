@@ -9,8 +9,6 @@ const RepositoryCodeIntelArea = lazyComponent(
     'RepositoryCodeIntelArea'
 )
 
-const CodyRepoArea = lazyComponent(() => import('../cody/repo/CodyRepoArea'), 'CodyRepoArea')
-
 const RepositoryBatchChangesArea = lazyComponent(
     () => import('../batches/repo/RepositoryBatchChangesArea'),
     'RepositoryBatchChangesArea'
@@ -35,10 +33,6 @@ export const enterpriseRepoContainerRoutes: readonly RepoContainerRoute[] = [
         render: context => (
             <RepositoryCodeIntelArea {...context} telemetryRecorder={context.platformContext.telemetryRecorder} />
         ),
-    },
-    {
-        path: '/-/embeddings/*',
-        render: context => <CodyRepoArea {...context} telemetryRecorder={context.platformContext.telemetryRecorder} />,
     },
     {
         path: '/-/batch-changes',

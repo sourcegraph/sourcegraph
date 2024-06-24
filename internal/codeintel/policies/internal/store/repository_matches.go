@@ -191,6 +191,5 @@ RETURNING
 	retain_intermediate_commits,
 	indexing_enabled,
 	index_commit_max_age_hours,
-	index_intermediate_commits,
-	embeddings_enabled
+	index_intermediate_commits
 `

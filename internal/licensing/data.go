@@ -74,7 +74,7 @@ const (
 	// FeatureSCIM is whether SCIM User Management has been purchased on this instance.
 	FeatureSCIM BasicFeature = "SCIM"
 
-	// FeatureCody is whether or not Cody and embeddings has been purchased on this instance.
+	// FeatureCody is whether or not Cody has been purchased on this instance.
 	FeatureCody BasicFeature = "cody"
 
 	// FeatureAllowAirGapped is whether or not air gapped mode is allowed on this instance.

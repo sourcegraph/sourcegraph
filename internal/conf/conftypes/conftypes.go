@@ -37,8 +37,6 @@ type ServiceConnections struct {
 	Searchers []string `json:"searchers"`
 	// Symbols is the addresses of symbol instances that should be talked to.
 	Symbols []string `json:"symbols"`
-	// Embeddings is the addresses of embeddings instances that should be talked to.
-	Embeddings []string `json:"embeddings"`
 	// Zoekts is the addresses of Zoekt instances to talk to.
 	Zoekts []string `json:"zoekts"`
 	// ZoektListTTL is the TTL of the internal cache that Zoekt clients use to
@@ -55,7 +53,6 @@ func (sc *ServiceConnections) ToProto() *proto.ServiceConnections {
 		CodeInsightsDsn:      sc.CodeInsightsDSN,
 		Searchers:            sc.Searchers,
 		Symbols:              sc.Symbols,
-		Embeddings:           sc.Embeddings,
 		Zoekts:               sc.Zoekts,
 		ZoektListTtl:         durationpb.New(sc.ZoektListTTL),
 	}
@@ -69,7 +66,6 @@ func (sc *ServiceConnections) FromProto(in *proto.ServiceConnections) {
 		CodeInsightsDSN:      in.GetCodeInsightsDsn(),
 		Searchers:            in.GetSearchers(),
 		Symbols:              in.GetSymbols(),
-		Embeddings:           in.GetEmbeddings(),
 		Zoekts:               in.GetZoekts(),
 		ZoektListTTL:         in.GetZoektListTtl().AsDuration(),
 	}

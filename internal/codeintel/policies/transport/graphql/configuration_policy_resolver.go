@@ -104,7 +104,3 @@ func (r *configurationPolicyResolver) IndexCommitMaxAgeHours() *int32 {
 func (r *configurationPolicyResolver) IndexIntermediateCommits() bool {
 	return r.configurationPolicy.IndexIntermediateCommits
 }
-
-func (r *configurationPolicyResolver) EmbeddingsEnabled() bool {
-	return r.configurationPolicy.EmbeddingEnabled
-}
