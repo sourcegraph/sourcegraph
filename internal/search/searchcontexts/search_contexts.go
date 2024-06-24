@@ -80,7 +80,7 @@ func ResolveSearchContextSpec(ctx context.Context, db database.DB, searchContext
 
 		// Only member of the organization can use search contexts under the
 		// organization namespace on Sourcegraph Cloud.
-		if dotcom.SourcegraphDotComMode() && namespace.Organization > 0 {
+		if dotcom.IsUserAndOrgProfileDataPrivate() && namespace.Organization > 0 {
 			_, err = db.OrgMembers().GetByOrgIDAndUserID(ctx, namespace.Organization, actor.FromContext(ctx).UID)
 			if err != nil {
 				if errcode.IsNotFound(err) {

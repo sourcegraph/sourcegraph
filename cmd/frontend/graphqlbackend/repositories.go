@@ -216,8 +216,7 @@ func (s *repositoriesConnectionStore) ComputeTotal(ctx context.Context) (int32, 
 		return 0, nil
 	}
 
-	// Counting repositories is slow on Sourcegraph.com. Don't wait very long for an exact count.
-	if dotcom.SourcegraphDotComMode() {
+	if dotcom.LazilySyncsIndefinitelyManyRepositories() {
 		return 0, nil
 	}
 

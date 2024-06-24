@@ -3,10 +3,11 @@ package backend
 import (
 	"context"
 	"fmt"
-	"github.com/sourcegraph/sourcegraph/internal/env"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/sourcegraph/sourcegraph/internal/env"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -96,9 +97,8 @@ func (s *repos) GetByName(ctx context.Context, name api.RepoName) (_ *types.Repo
 		return nil, err
 	}
 
-	if errcode.IsNotFound(err) && !dotcom.SourcegraphDotComMode() {
-		// The repo doesn't exist and we're not on sourcegraph.com, we should not lazy
-		// clone it.
+	if errcode.IsNotFound(err) && !dotcom.LazilySyncsIndefinitelyManyRepositories() {
+		// The repo doesn't exist and we should not lazy clone it.
 		return nil, err
 	}
 
@@ -242,7 +242,7 @@ func (s *repos) ListIndexable(ctx context.Context) (repos []types.MinimalRepo, e
 		done()
 	}()
 
-	if dotcom.SourcegraphDotComMode() {
+	if dotcom.LazilySyncsIndefinitelyManyRepositories() {
 		return s.cache.List(ctx)
 	}
 

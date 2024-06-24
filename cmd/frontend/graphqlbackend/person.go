@@ -7,12 +7,13 @@ import (
 	"sync"
 	"unicode"
 
+	"golang.org/x/text/unicode/norm"
+
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
 	"github.com/sourcegraph/sourcegraph/internal/types"
-	"golang.org/x/text/unicode/norm"
 )
 
 type PersonResolver struct {
@@ -92,7 +93,7 @@ func unicodeToAscii(input string) string {
 }
 
 func (r *PersonResolver) Email(ctx context.Context) (string, error) {
-	if !dotcom.SourcegraphDotComMode() {
+	if !dotcom.IsAbusePreventionEnabled() {
 		return r.email, nil
 	}
 

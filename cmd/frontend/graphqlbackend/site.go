@@ -608,8 +608,8 @@ func (r *siteResolver) PerUserCodeCompletionsQuota() *int32 {
 }
 
 func (r *siteResolver) RequiresVerifiedEmailForCody(ctx context.Context) bool {
-	// We only require this on dotcom
-	if !dotcom.SourcegraphDotComMode() {
+	// We only require a verified email to prevent abuse.
+	if !dotcom.IsAbusePreventionEnabled() {
 		return false
 	}
 

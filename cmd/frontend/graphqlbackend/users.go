@@ -143,8 +143,8 @@ func (r *userConnectionResolver) PageInfo(ctx context.Context) (*graphqlutil.Pag
 }
 
 func checkMembersAccess(ctx context.Context, db database.DB) error {
-	// 🚨 SECURITY: Only site admins can list users on sourcegraph.com.
-	if dotcom.SourcegraphDotComMode() {
+	if dotcom.IsUserAndOrgProfileDataPrivate() {
+		// 🚨 SECURITY: Only site admins can list users in this mode.
 		if err := auth.CheckCurrentUserIsSiteAdmin(ctx, db); err != nil {
 			return err
 		}

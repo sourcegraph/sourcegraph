@@ -25,7 +25,6 @@ import (
 	resolverstubs "github.com/sourcegraph/sourcegraph/internal/codeintel/resolvers"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/internal/gosyntect"
@@ -282,13 +281,11 @@ func (r *GitTreeEntryResolver) Highlight(ctx context.Context, args *HighlightArg
 	}
 
 	// special handling in dotcom to prevent syntax highlighting large lock files
-	if dotcom.SourcegraphDotComMode() {
-		for _, f := range syntaxHighlightFileBlocklist {
-			if strings.HasSuffix(r.Path(), f) {
-				// this will force the content to be returned as plaintext
-				// without hitting the syntax highlighter
-				args.Format = string(gosyntect.FormatHTMLPlaintext)
-			}
+	for _, f := range syntaxHighlightFileBlocklist {
+		if strings.HasSuffix(r.Path(), f) {
+			// this will force the content to be returned as plaintext
+			// without hitting the syntax highlighter
+			args.Format = string(gosyntect.FormatHTMLPlaintext)
 		}
 	}
 

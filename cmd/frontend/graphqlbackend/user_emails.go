@@ -26,8 +26,8 @@ func (r *UserResolver) HasVerifiedEmail(ctx context.Context) (bool, error) {
 
 func (r *UserResolver) Emails(ctx context.Context) ([]*userEmailResolver, error) {
 	// 🚨 SECURITY: Only the authenticated user and site admins can list user's
-	// emails on Sourcegraph.com.
-	if dotcom.SourcegraphDotComMode() {
+	// emails on multi-tenant instances.
+	if !dotcom.IsUserAndOrgProfileDataPrivate() {
 		if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
 			return nil, err
 		}
@@ -52,10 +52,9 @@ func (r *UserResolver) Emails(ctx context.Context) ([]*userEmailResolver, error)
 }
 
 func (r *UserResolver) PrimaryEmail(ctx context.Context) (*userEmailResolver, error) {
-	// 🚨 SECURITY: Only the authenticated user and site admins can list user's
-	// emails on Sourcegraph.com. We don't return an error, but not showing the email
-	// either.
-	if dotcom.SourcegraphDotComMode() {
+	// 🚨 SECURITY: Only the authenticated user and site admins can list the user's emails on
+	// multi-tenant instances. We don't return an error, but we don't show the email either.
+	if !dotcom.IsUserAndOrgProfileDataPrivate() {
 		if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
 			return nil, nil
 		}

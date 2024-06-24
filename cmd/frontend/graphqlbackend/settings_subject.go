@@ -77,15 +77,16 @@ func settingsSubjectForNode(ctx context.Context, n Node) (*settingsSubjectResolv
 	case *UserResolver:
 		// 🚨 SECURITY: Only the authenticated user can view their settings on
 		// Sourcegraph.com.
-		if dotcom.SourcegraphDotComMode() {
-			if err := auth.CheckSameUser(ctx, s.user.ID); err != nil {
-				return nil, err
-			}
-		} else {
+		var err error
+		if dotcom.SiteAdminCanViewAllUserData() {
 			// 🚨 SECURITY: Only the user and site admins are allowed to view the user's settings.
-			if err := auth.CheckSiteAdminOrSameUser(ctx, s.db, s.user.ID); err != nil {
-				return nil, err
-			}
+			err = auth.CheckSiteAdminOrSameUser(ctx, s.db, s.user.ID)
+		} else {
+			// 🚨 SECURITY: Only the user is allowed to view the user's settings.
+			err = auth.CheckSameUser(ctx, s.user.ID)
+		}
+		if err != nil {
+			return nil, err
 		}
 		return &settingsSubjectResolver{user: s}, nil
 

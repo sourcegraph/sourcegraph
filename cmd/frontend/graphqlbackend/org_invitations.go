@@ -355,9 +355,7 @@ func createInvitationJWT(orgID int32, invitationID int64, senderID int32, expiry
 // respond to the invitation. Callers should check conf.CanSendEmail() if they want to return a nice
 // error if sending email is not enabled.
 func sendOrgInvitationNotification(ctx context.Context, db database.DB, org *types.Org, sender *types.User, recipientEmail string, invitationURL string, expiryTime time.Time) error {
-	if dotcom.SourcegraphDotComMode() {
-		// Basic abuse prevention for Sourcegraph.com.
-
+	if dotcom.IsAbusePreventionEnabled() {
 		// Only allow email-verified users to send invites.
 		if _, senderEmailVerified, err := db.UserEmails().GetPrimaryEmail(ctx, sender.ID); err != nil {
 			return err

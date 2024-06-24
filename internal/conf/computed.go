@@ -14,6 +14,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf/confdefaults"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/conf/deploy"
+	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/hashutil"
 	"github.com/sourcegraph/sourcegraph/internal/license"
 	srccli "github.com/sourcegraph/sourcegraph/internal/src-cli"
@@ -164,6 +165,10 @@ func UpdateChannel() string {
 }
 
 func BatchChangesEnabled() bool {
+	if dotcom.SourcegraphDotComMode() {
+		// Batch Changes is always disabled on dotcom.
+		return false
+	}
 	if enabled := Get().BatchChangesEnabled; enabled != nil {
 		return *enabled
 	}

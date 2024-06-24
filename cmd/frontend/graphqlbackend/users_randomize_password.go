@@ -66,9 +66,12 @@ func (r *schemaResolver) RandomizeUserPassword(ctx context.Context, args *struct
 		return nil, errors.New("resetting passwords is not enabled")
 	}
 
-	// 🚨 SECURITY: On dotcom, we MUST send password reset links via email.
-	if dotcom.SourcegraphDotComMode() && !conf.CanSendEmail() {
-		return nil, errors.New("unable to reset password because email sending is not configured")
+	if !dotcom.SiteAdminCanViewAllUserData() {
+		// 🚨 SECURITY: In this mode, we MUST send password reset links via email to avoid a site admin
+		// being able to assume a user's identity by stealing their password reset URL.
+		if !conf.CanSendEmail() {
+			return nil, errors.New("unable to reset password because email sending is not configured")
+		}
 	}
 
 	// 🚨 SECURITY: Only site admins can randomize user passwords.
@@ -112,9 +115,10 @@ func (r *schemaResolver) RandomizeUserPassword(ctx context.Context, args *struct
 		}
 	}
 
-	if dotcom.SourcegraphDotComMode() {
-		// 🚨 SECURITY: Do not return reset URL on dotcom - we must have send it via an email.
-		// We already validate that email is enabled earlier in this endpoint for dotcom.
+	if !dotcom.SiteAdminCanViewAllUserData() {
+		// 🚨 SECURITY: Do not return the reset URL in this mode because it would let the site admin
+		// assume the user's identity. We must send it via an email directly to the user. We already
+		// validate that email sending is enabled earlier in this method.
 		resetURL = nil
 		// Since we don't provide the reset URL, however, if the email fails to send then
 		// this error should be surfaced to the caller.

@@ -54,7 +54,7 @@ func ParseAuthorizationHeader(headerValue string) (token, sudoUser string, err e
 		}
 	}
 
-	if dotcom.SourcegraphDotComMode() && scheme == SchemeTokenSudo {
+	if !dotcom.SiteAdminCanViewAllUserData() && scheme == SchemeTokenSudo {
 		return "", "", errors.New("use of access tokens with sudo scope is disabled")
 	}
 

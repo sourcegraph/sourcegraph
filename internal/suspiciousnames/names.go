@@ -18,7 +18,7 @@ import (
 // 🚨 SECURITY: This is not foolproof; users may choose a name like `secur1ty` that might be
 // confused with a name like "security", or they might find another synonym that we didn't think of.
 func CheckNameAllowedForUserOrOrganization(desiredName string) error {
-	if dotcom.SourcegraphDotComMode() && isSuspicious(desiredName) {
+	if dotcom.IsAbusePreventionEnabled() && isSuspicious(desiredName) {
 		return errors.Errorf("rejected suspicious name %q", desiredName)
 	}
 	return nil

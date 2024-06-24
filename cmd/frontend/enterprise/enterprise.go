@@ -13,7 +13,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/types"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 )
 
 // Services is a bag of HTTP handlers and factory functions that are registered by the
@@ -143,12 +142,6 @@ func (e *emptyWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	makeNotFoundHandler(e.name)
 }
 
-type ErrBatchChangesDisabledDotcom struct{}
-
-func (e ErrBatchChangesDisabledDotcom) Error() string {
-	return "batch changes is not available on Sourcegraph.com; use Sourcegraph Cloud or self-hosted instead"
-}
-
 type ErrBatchChangesDisabled struct{}
 
 func (e ErrBatchChangesDisabled) Error() string {
@@ -166,11 +159,6 @@ func (e ErrBatchChangesDisabledForUser) Error() string {
 func BatchChangesEnabledForSite() error {
 	if !conf.BatchChangesEnabled() {
 		return ErrBatchChangesDisabled{}
-	}
-
-	// Batch Changes are disabled on sourcegraph.com
-	if dotcom.SourcegraphDotComMode() {
-		return ErrBatchChangesDisabledDotcom{}
 	}
 
 	return nil

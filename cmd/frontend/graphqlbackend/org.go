@@ -29,8 +29,8 @@ func (r *schemaResolver) Organization(ctx context.Context, args struct{ Name str
 	if err != nil {
 		return nil, err
 	}
-	// 🚨 SECURITY: Only org members can get org details on Cloud
-	if dotcom.SourcegraphDotComMode() {
+	if dotcom.IsUserAndOrgProfileDataPrivate() {
+		// 🚨 SECURITY: Only org members can get org details.
 		hasAccess := func() error {
 			if auth.CheckOrgAccess(ctx, r.db, org.ID) == nil {
 				return nil
@@ -52,7 +52,7 @@ func (r *schemaResolver) Organization(ctx context.Context, args struct{ Name str
 			if auth.CheckCurrentUserIsSiteAdmin(ctx, r.db) == nil {
 				if featureflag.FromContext(ctx).GetBoolOr("auditlog-expansion", false) {
 
-					// Log action for site admin vieweing an organization's details in dotcom
+					// Log action for site admin viewing an organization's details.
 					if err := r.db.SecurityEventLogs().LogSecurityEvent(ctx, database.SecurityEventNameDotComOrgViewed, "", uint32(actor.FromContext(ctx).UID), "", "BACKEND", args); err != nil {
 						r.logger.Warn("Error logging security event", log.Error(err))
 
@@ -98,9 +98,8 @@ func OrgByIDInt32(ctx context.Context, db database.DB, orgID int32) (*OrgResolve
 }
 
 func orgByIDInt32WithForcedAccess(ctx context.Context, db database.DB, orgID int32, forceAccess bool) (*OrgResolver, error) {
-	// 🚨 SECURITY: Only org members can get org details on Cloud
-	//              And all invited users by email
-	if !forceAccess && dotcom.SourcegraphDotComMode() {
+	if !forceAccess && dotcom.IsUserAndOrgProfileDataPrivate() {
+		// 🚨 SECURITY: Only org members and invited users can get org details.
 		err := auth.CheckOrgAccess(ctx, db, orgID)
 		if err != nil {
 			hasAccess := false

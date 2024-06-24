@@ -26,10 +26,8 @@ import (
 )
 
 func (r *UserResolver) UsageStatistics(ctx context.Context) (*userUsageStatisticsResolver, error) {
-	if dotcom.SourcegraphDotComMode() {
-		if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
-			return nil, err
-		}
+	if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
+		return nil, err
 	}
 
 	stats, err := usagestats.GetByUserID(ctx, r.db, r.user.ID)
@@ -346,7 +344,7 @@ func (r *schemaResolver) SubmitCodySurvey(ctx context.Context, args *struct {
 	IsForWork     bool
 	IsForPersonal bool
 }) (*EmptyResponse, error) {
-	if !dotcom.SourcegraphDotComMode() {
+	if !dotcom.ProvidesCodySelfServe() {
 		return nil, errors.New("Cody survey is not supported outside sourcegraph.com")
 	}
 

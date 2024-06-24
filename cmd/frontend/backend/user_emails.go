@@ -528,10 +528,10 @@ func checkEmailAbuse(ctx context.Context, db database.DB, userID int32) (abused 
 			return true, "too many existing unverified email addresses", nil
 		}
 	}
-	if dotcom.SourcegraphDotComMode() {
-		// Abuse prevention check 3: Set a quota on Sourcegraph.com users to prevent abuse.
+	if dotcom.IsAbusePreventionEnabled() {
+		// Abuse prevention check 3: Set a quota to prevent abuse.
 		//
-		// There is no quota for on-prem instances because we assume they can trust their users
+		// There is no quota by default because we assume most instances can trust their users
 		// to not abuse adding emails.
 		//
 		// TODO(sqs): This reuses the "invite quota", which is really just a number that counts
