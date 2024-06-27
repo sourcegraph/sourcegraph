@@ -62,17 +62,6 @@ func validateModel(m types.Model) error {
 	if l := len(m.DisplayName); l < 5 || l > 40 {
 		return errors.Errorf("display name length: %d", l)
 	}
-	// We don't do any validation of the ModelName, as that the
-	// values needed by LLM providers is outside of our control.
-	if !resourceIDRE.MatchString(string(m.ID)) {
-		return errors.New("id format")
-	}
-
-	// Require that the ModelID matches the supplied ModelRef.
-	if !strings.HasSuffix(string(m.ModelRef), "::"+string(m.ID)) {
-		return errors.New("id does not match modelref")
-	}
-
 	if err := validateModelRef(m.ModelRef); err != nil {
 		return errors.Wrap(err, "modelref")
 	}

@@ -40,13 +40,10 @@ const (
 )
 
 type Model struct {
-	// BUG? Why don't we just remove this since ID is already encoded in the ModelRef
-	// So it's redundant?
-	ID       ModelID  `json:"modelId"`
 	ModelRef ModelRef `json:"modelRef"`
 
 	DisplayName string `json:"displayName"`
-	ModelName   string `json:"string"`
+	ModelName   string `json:"modelName"`
 
 	Capabilities []ModelCapability `json:"capabilities"`
 	Category     ModelCategory     `json:"category"`

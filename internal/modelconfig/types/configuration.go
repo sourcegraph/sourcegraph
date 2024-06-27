@@ -66,7 +66,8 @@ type ClientSideModelConfig struct {
 	//
 	// For example, allowing the server to customize/override the LLM
 	// prompt used. Or describe how clients should upload context to
-	// remote servers, etc.
+	// remote servers, etc. Or "hints", like "this model is great when
+	// working with 'C' code.".
 }
 
 // ========================================================
