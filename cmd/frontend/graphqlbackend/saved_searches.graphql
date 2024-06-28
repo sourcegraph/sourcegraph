@@ -1,0 +1,170 @@
+extend type Mutation {
+    """
+    Creates a saved search.
+    """
+    createSavedSearch(input: SavedSearchInput!): SavedSearch!
+
+    """
+    Updates a saved search.
+    """
+    updateSavedSearch(id: ID!, input: SavedSearchUpdateInput!): SavedSearch!
+
+    """
+    Deletes a saved search.
+    """
+    deleteSavedSearch(id: ID!): EmptyResponse
+
+    """
+    Transfers ownership of a saved search to a new owner (a namespace, either a user or
+    organization).
+
+    Only users who can administer the saved search may transfer it.
+    """
+    transferSavedSearchOwnership(id: ID!, newOwner: ID!): SavedSearch!
+}
+
+extend type Query {
+    """
+    List of saved searches.
+    """
+    savedSearches(
+        """
+        Filter saved searches by text in their description and query.
+        """
+        query: String
+
+        """
+        Filter by saved search owner (a namespace, either a user or organization).
+        """
+        owner: ID
+
+        """
+        Filter to only saved searches owned by the viewer or one of viewer's organizations. If null
+        or false, no such filtering is performed.
+        """
+        viewerIsAffiliated: Boolean
+
+        """
+        The limit argument for forward pagination.
+        """
+        first: Int
+
+        """
+        The limit argument for backward pagination.
+        """
+        last: Int
+
+        """
+        The cursor argument for forward pagination.
+        """
+        after: String
+
+        """
+        The cursor argument for backward pagination.
+        """
+        before: String
+
+        """
+        The field to sort by.
+        """
+        orderBy: SavedSearchesOrderBy = SAVED_SEARCH_UPDATED_AT
+    ): SavedSearchesConnection!
+}
+
+"""
+The input that describes a saved search.
+"""
+input SavedSearchInput {
+    """
+    The owner of the saved search, either a user or organization.
+    """
+    owner: ID!
+
+    """
+    A description of the saved search.
+    """
+    description: String!
+
+    """
+    The search query.
+    """
+    query: String!
+}
+
+"""
+The input that describes a saved search.
+"""
+input SavedSearchUpdateInput {
+    """
+    A description of the saved search.
+    """
+    description: String!
+
+    """
+    The search query.
+    """
+    query: String!
+}
+
+"""
+The ways that a list of saved searches can be ordered.
+"""
+enum SavedSearchesOrderBy {
+    SAVED_SEARCH_DESCRIPTION
+    SAVED_SEARCH_UPDATED_AT
+}
+
+"""
+A paginated connection for saved searches.
+"""
+type SavedSearchesConnection implements Connection {
+    """
+    A list of saved searches.
+    """
+    nodes: [SavedSearch!]!
+
+    """
+    The total number of saved searches in the connection.
+    """
+    totalCount: Int!
+
+    """
+    Pagination information.
+    """
+    pageInfo: ConnectionPageInfo!
+}
+
+"""
+A saved search.
+"""
+type SavedSearch implements Node {
+    """
+    The unique ID of this saved search.
+    """
+    id: ID!
+
+    """
+    The description.
+    """
+    description: String!
+
+    """
+    The search query.
+    """
+    query: String!
+
+    """
+    The owner of the saved search, either a user or organization.
+    """
+    owner: Namespace!
+
+    """
+    The URL of this saved search.
+    """
+    url: String!
+
+    """
+    Whether the viewer can edit and delete this saved search.
+    """
+    viewerCanAdminister: Boolean!
+}

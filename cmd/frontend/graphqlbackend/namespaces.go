@@ -7,7 +7,10 @@ import (
 	"github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
 
+	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
+	"github.com/sourcegraph/sourcegraph/internal/types"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 // Namespace is the interface for the GraphQL Namespace interface.
@@ -45,6 +48,9 @@ func NamespaceByID(ctx context.Context, db database.DB, id graphql.ID) (Namespac
 	}
 }
 
+// UnmarshalNamespaceID is a helper function that unmarshals a namespace ID into a user or org ID.
+//
+// DEPRECATED: Prefer UnmarshalNamespaceToIDs.
 func UnmarshalNamespaceID(id graphql.ID, userID *int32, orgID *int32) (err error) {
 	switch relay.UnmarshalKind(id) {
 	case "User":
@@ -57,22 +63,50 @@ func UnmarshalNamespaceID(id graphql.ID, userID *int32, orgID *int32) (err error
 	return err
 }
 
-// UnmarshalNamespaceToIDs is similar to UnmarshalNamespaceID, except instead of
-// unmarshalling into existing variables, it creates its own for convenience.
-// It will return exactly one non-nil value.
-func UnmarshalNamespaceToIDs(id graphql.ID) (userID *int32, orgID *int32, err error) {
+// UnmarshalNamespaceToIDs is similar to UnmarshalNamespaceID, except instead of unmarshalling into
+// existing variables, it creates its own for convenience.
+//
+// If the err is nil, the returned Namespace will have exactly 1 non-nil field.
+func UnmarshalNamespaceToIDs(id graphql.ID) (*types.Namespace, error) {
+	var namespace types.Namespace
+	var err error
 	switch relay.UnmarshalKind(id) {
 	case "User":
-		var uid int32
-		err = relay.UnmarshalSpec(id, &uid)
-		return &uid, nil, err
+		err = relay.UnmarshalSpec(id, &namespace.User)
 	case "Org":
-		var oid int32
-		err = relay.UnmarshalSpec(id, &oid)
-		return nil, &oid, err
-	default:
-		return nil, nil, InvalidNamespaceIDErr{id: id}
+		err = relay.UnmarshalSpec(id, &namespace.Org)
 	}
+	if err != nil {
+		return nil, err
+	}
+	if namespace.User == nil && namespace.Org == nil {
+		return nil, InvalidNamespaceIDErr{id: id}
+	}
+	return &namespace, nil
+}
+
+func CheckAuthorizedForNamespace(ctx context.Context, db database.DB, namespaceID graphql.ID) (*types.Namespace, error) {
+	namespace, err := UnmarshalNamespaceToIDs(namespaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 🚨 SECURITY: Make sure the current user has permission for the specified namespace.
+	if err := CheckAuthorizedForNamespaceByIDs(ctx, db, *namespace); err != nil {
+		return nil, err
+	}
+	return namespace, nil
+}
+
+func CheckAuthorizedForNamespaceByIDs(ctx context.Context, db database.DB, namespace types.Namespace) error {
+	// 🚨 SECURITY: Make sure the current user has permission for the specified namespace.
+	if namespace.User != nil {
+		return auth.CheckSiteAdminOrSameUser(ctx, db, *namespace.User)
+	}
+	if namespace.Org != nil {
+		return auth.CheckOrgAccessOrSiteAdmin(ctx, db, *namespace.Org)
+	}
+	return errors.New("namespace is required (User or Organization ID)")
 }
 
 func (r *schemaResolver) NamespaceByName(ctx context.Context, args *struct{ Name string }) (*NamespaceResolver, error) {

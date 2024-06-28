@@ -126,7 +126,7 @@ func (r *Resolver) CreateCodeMonitor(ctx context.Context, args *graphqlbackend.C
 		return nil, err
 	}
 
-	userID, orgID, err := graphqlbackend.UnmarshalNamespaceToIDs(args.Monitor.Namespace)
+	namespace, err := graphqlbackend.UnmarshalNamespaceToIDs(args.Monitor.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +146,8 @@ func (r *Resolver) CreateCodeMonitor(ctx context.Context, args *graphqlbackend.C
 		m, err := tx.db.CodeMonitors().CreateMonitor(ctx, database.MonitorArgs{
 			Description:     args.Monitor.Description,
 			Enabled:         args.Monitor.Enabled,
-			NamespaceUserID: userID,
-			NamespaceOrgID:  orgID,
+			NamespaceUserID: namespace.User,
+			NamespaceOrgID:  namespace.Org,
 		})
 		if err != nil {
 			return err
@@ -348,12 +348,12 @@ func (r *Resolver) deleteActions(ctx context.Context, monitorID int64, ids []gra
 
 func (r *Resolver) createRecipients(ctx context.Context, emailID int64, recipients []graphql.ID) error {
 	for _, recipient := range recipients {
-		userID, orgID, err := graphqlbackend.UnmarshalNamespaceToIDs(recipient)
+		namespace, err := graphqlbackend.UnmarshalNamespaceToIDs(recipient)
 		if err != nil {
 			return errors.Wrap(err, "UnmarshalNamespaceID")
 		}
 
-		_, err = r.db.CodeMonitors().CreateRecipient(ctx, emailID, userID, orgID)
+		_, err = r.db.CodeMonitors().CreateRecipient(ctx, emailID, namespace.User, namespace.Org)
 		if err != nil {
 			return err
 		}
@@ -527,7 +527,7 @@ func (r *Resolver) updateCodeMonitor(ctx context.Context, rawDB database.DB, arg
 		return nil, err
 	}
 
-	userID, orgID, err := graphqlbackend.UnmarshalNamespaceToIDs(args.Monitor.Update.Namespace)
+	namespace, err := graphqlbackend.UnmarshalNamespaceToIDs(args.Monitor.Update.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -535,8 +535,8 @@ func (r *Resolver) updateCodeMonitor(ctx context.Context, rawDB database.DB, arg
 	mo, err := r.db.CodeMonitors().UpdateMonitor(ctx, monitorID, database.MonitorArgs{
 		Description:     args.Monitor.Update.Description,
 		Enabled:         args.Monitor.Update.Enabled,
-		NamespaceUserID: userID,
-		NamespaceOrgID:  orgID,
+		NamespaceUserID: namespace.User,
+		NamespaceOrgID:  namespace.Org,
 	})
 	if err != nil {
 		return nil, err

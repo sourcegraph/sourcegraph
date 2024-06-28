@@ -1,0 +1,48 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "resolvers",
+    srcs = ["resolvers.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/frontend/internal/savedsearches/resolvers",
+    tags = [TAG_SEARCHSUITE],
+    visibility = ["//cmd/frontend:__subpackages__"],
+    deps = [
+        "//cmd/frontend/graphqlbackend",
+        "//cmd/frontend/graphqlbackend/graphqlutil",
+        "//internal/auth",
+        "//internal/database",
+        "//internal/lazyregexp",
+        "//internal/types",
+        "//lib/errors",
+        "@com_github_graph_gophers_graphql_go//:graphql-go",
+        "@com_github_graph_gophers_graphql_go//relay",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_test(
+    name = "resolvers_test",
+    srcs = ["resolvers_test.go"],
+    embed = [":resolvers"],
+    tags = [
+        TAG_SEARCHSUITE,
+        # Test requires localhost database
+        "requires-network",
+    ],
+    deps = [
+        "//cmd/frontend/graphqlbackend",
+        "//cmd/frontend/graphqlbackend/graphqlutil",
+        "//internal/actor",
+        "//internal/auth",
+        "//internal/database",
+        "//internal/database/dbmocks",
+        "//internal/database/dbtest",
+        "//internal/types",
+        "//lib/pointers",
+        "@com_github_derision_test_go_mockgen_v2//testutil/require",
+        "@com_github_graph_gophers_graphql_go//:graphql-go",
+        "@com_github_sourcegraph_log//logtest",
+        "@com_github_stretchr_testify//require",
+    ],
+)

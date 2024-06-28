@@ -497,6 +497,16 @@ func NewSchema(
 			}
 		}
 
+		if savedSearches := optional.SavedSearchesResolver; savedSearches != nil {
+			EnterpriseResolvers.savedSearchesResolver = savedSearches
+			resolver.SavedSearchesResolver = savedSearches
+			schemas = append(schemas, savedSearchesSchema)
+			// Register NodeByID handlers.
+			for kind, res := range savedSearches.NodeResolvers() {
+				resolver.nodeByIDFns[kind] = res
+			}
+		}
+
 		if gitHubApps := optional.GitHubAppsResolver; gitHubApps != nil {
 			EnterpriseResolvers.gitHubAppsResolver = gitHubApps
 			resolver.GitHubAppsResolver = gitHubApps
@@ -676,6 +686,7 @@ type OptionalResolver struct {
 	OwnResolver
 	RBACResolver
 	SearchContextsResolver
+	SavedSearchesResolver
 	WebhooksResolver
 	ContentLibraryResolver
 	*TelemetryRootResolver
@@ -723,7 +734,7 @@ func newSchemaResolver(db database.DB, gitserverClient gitserver.Client) *schema
 			return r.gitCommitByID(ctx, id)
 		},
 		"SavedSearch": func(ctx context.Context, id graphql.ID) (Node, error) {
-			return r.savedSearchByID(ctx, id)
+			return r.SavedSearchByID(ctx, id)
 		},
 		"Site": func(ctx context.Context, id graphql.ID) (Node, error) {
 			return r.siteByGQLID(ctx, id)
@@ -797,6 +808,7 @@ var EnterpriseResolvers = struct {
 	ownResolver                 OwnResolver
 	rbacResolver                RBACResolver
 	searchContextsResolver      SearchContextsResolver
+	savedSearchesResolver       SavedSearchesResolver
 	webhooksResolver            WebhooksResolver
 	contentLibraryResolver      ContentLibraryResolver
 	telemetryResolver           *TelemetryRootResolver

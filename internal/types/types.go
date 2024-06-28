@@ -1591,17 +1591,6 @@ type CodeHostIntegrationUsageInboundTrafficToWeb struct {
 	TotalCount   int32
 }
 
-// SavedSearches represents the total number of saved searches, users
-// using saved searches, and usage of saved searches.
-type SavedSearches struct {
-	TotalSavedSearches   int32
-	UniqueUsers          int32
-	NotificationsSent    int32
-	NotificationsClicked int32
-	UniqueUserPageViews  int32
-	OrgSavedSearches     int32
-}
-
 // Panel homepage represents interaction data on the
 // enterprise homepage panels.
 type HomepagePanels struct {

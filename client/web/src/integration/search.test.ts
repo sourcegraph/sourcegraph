@@ -613,11 +613,8 @@ describe('Search', () => {
                                 __typename: 'SavedSearch',
                                 description: 'Demo',
                                 id: 'U2F2ZWRTZWFyY2g6NQ==',
-                                namespace: { __typename: 'User', id: 'user123', namespaceName: 'test' },
-                                notify: false,
-                                notifySlack: false,
+                                owner: { __typename: 'User', id: 'user123', namespaceName: 'test' },
                                 query: 'context:global Batch Change patternType:literal',
-                                slackWebhookURL: null,
                             },
                         ],
                         totalCount: 1,
@@ -637,7 +634,7 @@ describe('Search', () => {
         })
 
         test('is styled correctly, with saved search form', async () => {
-            await driver.page.goto(driver.sourcegraphBaseUrl + '/users/test/searches/add')
+            await driver.page.goto(driver.sourcegraphBaseUrl + '/users/test/searches/new')
             await driver.page.waitForSelector('[data-testid="saved-search-form"]')
             await accessibilityAudit(driver.page)
         })

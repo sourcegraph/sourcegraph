@@ -4,10 +4,12 @@ import { noOpTelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 
 import { WebStory } from '../components/WebStory'
 
-import { SavedSearchForm, type SavedSearchFormProps } from './SavedSearchForm'
+import { SavedSearchForm, type SavedSearchFormProps } from './Form'
 
 const config: Meta = {
     title: 'web/savedSearches/SavedSearchForm',
+    component: SavedSearchForm,
+    decorators: [story => <div className="container mt-5">{story()}</div>],
     parameters: {
         chromatic: { disableSnapshot: false },
     },
@@ -15,26 +17,26 @@ const config: Meta = {
 
 export default config
 
-window.context.emailEnabled = true
-
-const commonProps: Omit<SavedSearchFormProps, 'isLightTheme'> = {
+const commonProps: SavedSearchFormProps = {
     isSourcegraphDotCom: false,
     submitLabel: 'Submit',
     title: 'Title',
-    defaultValues: {},
-    authenticatedUser: null,
+    initialValue: {},
     onSubmit: () => {},
     loading: false,
     error: null,
     namespace: {
         __typename: 'User',
+        username: 'alice',
+        namespaceName: 'alice',
+        displayName: 'Alice',
         id: '',
         url: '',
     },
     telemetryRecorder: noOpTelemetryRecorder,
 }
 
-export const NewSavedSearch: StoryFn = () => (
+export const New: StoryFn = () => (
     <WebStory>
         {webProps => (
             <SavedSearchForm
@@ -42,74 +44,57 @@ export const NewSavedSearch: StoryFn = () => (
                 {...commonProps}
                 submitLabel="Add saved search"
                 title="Add saved search"
-                defaultValues={{}}
+                initialValue={{}}
             />
         )}
     </WebStory>
 )
 
-NewSavedSearch.storyName = 'new saved search'
-
-export const NotifcationsDisabled: StoryFn = () => (
+export const Existing: StoryFn = () => (
     <WebStory>
         {webProps => (
             <SavedSearchForm
                 {...webProps}
                 {...commonProps}
                 submitLabel="Update saved search"
-                title="Manage saved search"
-                defaultValues={{
-                    id: '1',
+                title="Edit saved search"
+                initialValue={{
                     description: 'Existing saved search',
                     query: 'test',
-                    notify: false,
                 }}
             />
         )}
     </WebStory>
 )
 
-NotifcationsDisabled.storyName = 'existing saved search, notifications disabled'
-
-export const NotifcationsEnabled: StoryFn = () => (
+export const HasError: StoryFn = () => (
     <WebStory>
         {webProps => (
             <SavedSearchForm
                 {...webProps}
                 {...commonProps}
-                submitLabel="Update saved search"
-                title="Manage saved search"
-                defaultValues={{
-                    id: '1',
-                    description: 'Existing saved search',
-                    query: 'test type:diff',
-                    notify: true,
-                }}
-            />
-        )}
-    </WebStory>
-)
-
-NotifcationsEnabled.storyName = 'existing saved search, notifications enabled'
-
-export const NotificationsEnabledWithInvalidQueryWarning: StoryFn = () => (
-    <WebStory>
-        {webProps => (
-            <SavedSearchForm
-                {...webProps}
-                {...commonProps}
-                submitLabel="Update saved search"
-                title="Manage saved search"
-                defaultValues={{
-                    id: '1',
+                initialValue={{
                     description: 'Existing saved search',
                     query: 'test',
-                    notify: true,
                 }}
+                error={new Error('Error updating saved search')}
             />
         )}
     </WebStory>
 )
 
-NotificationsEnabledWithInvalidQueryWarning.storyName =
-    'existing saved search, notifications enabled, with invalid query warning'
+export const HasFlash: StoryFn = () => (
+    <WebStory>
+        {webProps => (
+            <SavedSearchForm
+                {...webProps}
+                {...commonProps}
+                initialValue={{
+                    description: 'Existing saved search',
+                    query: 'test',
+                }}
+                flash="Success!"
+            />
+        )}
+    </WebStory>
+)

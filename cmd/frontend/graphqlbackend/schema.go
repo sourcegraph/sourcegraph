@@ -35,6 +35,11 @@ var licenseSchema string
 //go:embed code_monitors.graphql
 var codeMonitorsSchema string
 
+// savedSearchesSchema is the saved searches raw GraphQL schema.
+//
+//go:embed saved_searches.graphql
+var savedSearchesSchema string
+
 // insightsSchema is the Code Insights raw graqhql schema.
 //
 //go:embed insights.graphql

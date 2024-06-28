@@ -6,7 +6,7 @@ import { renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
 
 import { SearchPatternType } from '../graphql-operations'
 
-import { SavedSearchForm } from './SavedSearchForm'
+import { SavedSearchForm } from './Form'
 
 const DEFAULT_PATTERN_TYPE = SearchPatternType.regexp
 
@@ -24,14 +24,16 @@ describe('SavedSearchForm', () => {
                 isSourcegraphDotCom={false}
                 submitLabel="Submit"
                 title="Title"
-                defaultValues={{}}
-                authenticatedUser={null}
+                initialValue={{}}
                 onSubmit={() => {}}
                 loading={false}
                 error={null}
                 namespace={{
                     __typename: 'User',
                     id: '',
+                    username: 'u',
+                    namespaceName: 'u',
+                    displayName: 'U',
                     url: '',
                 }}
                 telemetryRecorder={noOpTelemetryRecorder}

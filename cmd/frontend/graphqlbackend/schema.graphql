@@ -1,5 +1,3 @@
-# See docs/api.md for guidance on schema evolution.
-#
 schema {
     query: Query
     mutation: Mutation
@@ -606,33 +604,6 @@ type Mutation {
     Submits happiness feedback.
     """
     submitHappinessFeedback(input: HappinessFeedbackSubmissionInput!): EmptyResponse
-    """
-    Creates a saved search.
-    """
-    createSavedSearch(
-        description: String!
-        query: String!
-        notifyOwner: Boolean!
-        notifySlack: Boolean!
-        orgID: ID
-        userID: ID
-    ): SavedSearch!
-    """
-    Updates a saved search
-    """
-    updateSavedSearch(
-        id: ID!
-        description: String!
-        query: String!
-        notifyOwner: Boolean!
-        notifySlack: Boolean!
-        orgID: ID
-        userID: ID
-    ): SavedSearch!
-    """
-    Deletes a saved search
-    """
-    deleteSavedSearch(id: ID!): EmptyResponse
 
     """
     OBSERVABILITY
@@ -1805,31 +1776,6 @@ type Query {
         """
         query: String = ""
     ): Search
-    """
-    List of saved searches based on namespace
-    """
-    savedSearches(
-        """
-        The namespace to list the saved searches for.
-        """
-        namespace: ID!
-        """
-        The limit argument for forward pagination.
-        """
-        first: Int
-        """
-        The limit argument for backward pagination.
-        """
-        last: Int
-        """
-        The cursor argument for forward pagination.
-        """
-        after: String
-        """
-        The cursor argument for backward pagination.
-        """
-        before: String
-    ): SavedSearchesConnection!
     """
     EXPERIMENTAL: Return the parse tree of a search query.
     """
@@ -3011,61 +2957,6 @@ type SearchAlert {
     "Did you mean: ____" query proposals
     """
     proposedQueries: [SearchQueryDescription!]
-}
-
-"""
-A paginated connection for saved search queries, defined in settings.
-"""
-type SavedSearchesConnection implements Connection {
-    """
-    A list of saved searches.
-    """
-    nodes: [SavedSearch!]!
-
-    """
-    The total number of saved searches in the connection.
-    """
-    totalCount: Int!
-
-    """
-    Pagination information.
-    """
-    pageInfo: ConnectionPageInfo!
-}
-
-"""
-A saved search query, defined in settings.
-"""
-type SavedSearch implements Node {
-    """
-    The unique ID of this saved query.
-    """
-    id: ID!
-    """
-    The description.
-    """
-    description: String!
-    """
-    The query.
-    """
-    query: String!
-    """
-    Whether or not to notify the owner of the saved search via email. This owner is either
-    a single user, or every member of an organization that owns the saved search.
-    """
-    notify: Boolean!
-    """
-    Whether or not to notify on Slack.
-    """
-    notifySlack: Boolean!
-    """
-    The user or org that owns this saved search.
-    """
-    namespace: Namespace!
-    """
-    The Slack webhook URL associated with this saved search, if any.
-    """
-    slackWebhookURL: String
 }
 
 """

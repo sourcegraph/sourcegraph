@@ -2,35 +2,12 @@ import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
 import type { NamespaceAreaRoute } from './NamespaceArea'
 
-const SavedSearchListPage = lazyComponent(() => import('../savedSearches/SavedSearchListPage'), 'SavedSearchListPage')
-
-const SavedSearchCreateForm = lazyComponent(
-    () => import('../savedSearches/SavedSearchCreateForm'),
-    'SavedSearchCreateForm'
-)
-const SavedSearchUpdateForm = lazyComponent(
-    () => import('../savedSearches/SavedSearchUpdateForm'),
-    'SavedSearchUpdateForm'
-)
+const SavedSearchArea = lazyComponent(() => import('../savedSearches/Area'), 'Area')
 
 export const namespaceAreaRoutes: readonly NamespaceAreaRoute[] = [
     {
-        path: 'searches',
-        render: props => <SavedSearchListPage {...props} telemetryRecorder={props.platformContext.telemetryRecorder} />,
-        condition: () => window.context?.codeSearchEnabledOnInstance,
-    },
-    {
-        path: 'searches/add',
-        render: props => (
-            <SavedSearchCreateForm {...props} telemetryRecorder={props.platformContext.telemetryRecorder} />
-        ),
-        condition: () => window.context?.codeSearchEnabledOnInstance,
-    },
-    {
-        path: 'searches/:id',
-        render: props => (
-            <SavedSearchUpdateForm {...props} telemetryRecorder={props.platformContext.telemetryRecorder} />
-        ),
+        path: 'searches/*',
+        render: props => <SavedSearchArea {...props} />,
         condition: () => window.context?.codeSearchEnabledOnInstance,
     },
 ]

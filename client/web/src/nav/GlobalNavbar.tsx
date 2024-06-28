@@ -316,9 +316,15 @@ export const InlineNavigationPanel: FC<InlineNavigationPanelProps> = props => {
                 path: PageRoutes.SearchJobs,
                 content: 'Search Jobs',
             },
+            props.authenticatedUser
+                ? {
+                      path: PageRoutes.SavedSearches,
+                      content: 'Saved Searches',
+                  }
+                : false,
         ]
         return items.filter<NavDropdownItem>((item): item is NavDropdownItem => !!item)
-    }, [showSearchContext, showSearchJobs, showCodeMonitoring, showSearchNotebook])
+    }, [showSearchContext, showSearchJobs, showCodeMonitoring, showSearchNotebook, props.authenticatedUser])
     const toolsItem = toolsItems.length > 0 && (
         <NavDropdown
             key="tools"

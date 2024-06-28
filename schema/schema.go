@@ -2324,18 +2324,6 @@ type SearchSanitization struct {
 	// SanitizePatterns description: An array of regular expressions representing matched content that should be omitted from search result events. This does not prevent users from accessing file contents through other means if they have read access. Values added to this array must be valid Go regular expressions. Site admins will not have their search results sanitized.
 	SanitizePatterns []string `json:"sanitizePatterns,omitempty"`
 }
-type SearchSavedQueries struct {
-	// Description description: Description of this saved query
-	Description string `json:"description"`
-	// Key description: Unique key for this query in this file
-	Key string `json:"key"`
-	// Notify description: Notify the owner of this configuration file when new results are available
-	Notify bool `json:"notify,omitempty"`
-	// NotifySlack description: Notify Slack via the organization's Slack webhook URL when new results are available
-	NotifySlack bool `json:"notifySlack,omitempty"`
-	// Query description: Query string
-	Query string `json:"query"`
-}
 type SearchScope struct {
 	// Name description: The human-readable name for this search scope
 	Name string `json:"name"`
@@ -2454,8 +2442,6 @@ type Settings struct {
 	SearchIncludeArchived *bool `json:"search.includeArchived,omitempty"`
 	// SearchIncludeForks description: Whether searches should include searching forked repositories.
 	SearchIncludeForks *bool `json:"search.includeForks,omitempty"`
-	// SearchSavedQueries description: DEPRECATED: Saved search queries
-	SearchSavedQueries []*SearchSavedQueries `json:"search.savedQueries,omitempty"`
 	// SearchScopes description: Predefined search snippets that can be appended to any search (also known as search scopes)
 	SearchScopes []*SearchScope `json:"search.scopes,omitempty"`
 	Additional   map[string]any `json:"-"` // additionalProperties not explicitly defined in the schema
@@ -2522,7 +2508,6 @@ func (v *Settings) UnmarshalJSON(data []byte) error {
 	delete(m, "search.hideSuggestions")
 	delete(m, "search.includeArchived")
 	delete(m, "search.includeForks")
-	delete(m, "search.savedQueries")
 	delete(m, "search.scopes")
 	if len(m) > 0 {
 		v.Additional = make(map[string]any, len(m))

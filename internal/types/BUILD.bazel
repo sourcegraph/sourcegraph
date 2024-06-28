@@ -9,6 +9,7 @@ go_library(
         "cursor.go",
         "executors.go",
         "external_services.go",
+        "namespace.go",
         "outbound_webhook_jobs.go",
         "outbound_webhook_logs.go",
         "outbound_webhooks.go",

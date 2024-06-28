@@ -1,8 +1,8 @@
 import AccountIcon from 'mdi-react/AccountIcon'
 import CogOutlineIcon from 'mdi-react/CogOutlineIcon'
-import FeatureSearchOutlineIcon from 'mdi-react/FeatureSearchOutlineIcon'
 
 import { namespaceAreaHeaderNavItems } from '../../namespaces/navitems'
+import { SavedSearchIcon } from '../../savedSearches/SavedSearchIcon'
 
 import type { UserAreaHeaderNavItem } from './UserAreaHeader'
 
@@ -20,8 +20,8 @@ export const userAreaHeaderNavItems: readonly UserAreaHeaderNavItem[] = [
     },
     {
         to: '/searches',
-        label: 'Saved searches',
-        icon: FeatureSearchOutlineIcon,
+        label: 'Saved Searches',
+        icon: SavedSearchIcon,
         condition: ({ user: { viewerCanAdminister } }) =>
             viewerCanAdminister && window.context?.codeSearchEnabledOnInstance,
     },
