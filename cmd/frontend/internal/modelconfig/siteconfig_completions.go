@@ -2,11 +2,47 @@ package modelconfig
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
+	"github.com/sourcegraph/sourcegraph/internal/modelconfig"
 	"github.com/sourcegraph/sourcegraph/internal/modelconfig/types"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
+
+// getProviderConfiguration returns the API Provider configuration based on the supplied site configuration.
+func getProviderConfiguration(siteConfig *conftypes.CompletionsConfig) *types.ServerSideProviderConfig {
+	var serverSideConfig types.ServerSideProviderConfig
+	switch siteConfig.Provider {
+	case conftypes.CompletionsProviderNameAWSBedrock:
+		serverSideConfig.AWSBedrock = &types.AWSBedrockProviderConfig{
+			AccessToken: siteConfig.AccessToken,
+			Endpoint:    siteConfig.Endpoint,
+		}
+	case conftypes.CompletionsProviderNameAzureOpenAI:
+		serverSideConfig.AzureOpenAI = &types.AzureOpenAIProviderConfig{
+			AccessToken: siteConfig.AccessToken,
+			Endpoint:    siteConfig.Endpoint,
+		}
+	case conftypes.CompletionsProviderNameSourcegraph:
+		serverSideConfig.SourcegraphProvider = &types.SourcegraphProviderConfig{
+			AccessToken: siteConfig.AccessToken,
+			Endpoint:    siteConfig.Endpoint,
+		}
+
+		// For all the other types of providers you can define in the site configuration, we
+		// just use a generic config. Rather than creating one for Anthropic, Fireworks, Google, etc.
+		// We'll add those when needed, when we expose the newer style configuration in the site-config.
+	default:
+		serverSideConfig.GenericProvider = &types.GenericProviderConfig{
+			AccessToken: siteConfig.AccessToken,
+			Endpoint:    siteConfig.Endpoint,
+		}
+	}
+
+	return &serverSideConfig
+}
 
 // convertCompletionsConfig converts the supplied Completions configuration blob (the Cody Enterprise configuration data)
 // into the newer types.SiteModelConfiguration structure.
@@ -14,127 +50,173 @@ import (
 // Assumes that the supplied completions object is valid, and contains all the required settings. e.g. the site admin
 // can leave some things blank, but `conf/computed.go`'s `GetCompletionsConfig()` will fill the Endpoint and related
 // fields with meaingful defaults.
-func convertCompletionsConfig(completionsCfg *conftypes.CompletionsConfig) *types.SiteModelConfiguration {
+func convertCompletionsConfig(completionsCfg *conftypes.CompletionsConfig) (*types.SiteModelConfiguration, error) {
 	if completionsCfg == nil {
-		return nil
+		return nil, nil
 	}
 
-	// convertToModelRef convert the format of model defined in the configuration to
-	// a ModelRef, e.g.
-	// "foo" => "${completionsCfg.provider}::unknown::foo"
-	// "foo/bar" => "foo::unknown::bar"
+	// Generic defaults.
+	defaultModelConfig := types.DefaultModelConfig{
+		Capabilities: []types.ModelCapability{
+			types.ModelCapabilityAutocomplete,
+			types.ModelCapabilityChat,
+		},
+		Category: types.ModelCategoryBalanced,
+		Status:   types.ModelStatusStable,
+		Tier:     types.ModelTierEnterprise,
+
+		// IMPORTANT: The default model config contains an invalid
+		// context window (0, 0). The ModelOverrides MUST set the
+		// expected values.
+	}
+
+	// We build the SiteModelConfiguration "backwards". We look at the default models (chat, autocomplete,
+	// fast chat) and then figure out the Model Providers and Model Overrides that are needed.
 	//
-	// And aws-bedrock provisioned throughput... is handled in its own way.
-	convertToModelRef := func(cfgModelID string) string {
-		// Common case, where the cfgModelID is just a model ID or a
-		// provider "/" model ID.
-		if completionsCfg.Provider != "aws-bedrock" {
-			slashIdx := strings.Index(cfgModelID, "/")
-			if slashIdx == -1 {
-				return fmt.Sprintf("%s::unknown::%s", completionsCfg.Provider, cfgModelID)
-			}
-			encodedProvider := cfgModelID[:slashIdx]
-			encodedModel := cfgModelID[slashIdx+1:]
-			return fmt.Sprintf("%s::unknown::%s", encodedProvider, encodedModel)
+	// The actual configuration data is just used in the ProviderOverride.ServerSideConfig settings.
+	requiredProviders := map[string]*types.ProviderOverride{}
+	requiredModels := map[types.ModelRef]*types.ModelOverride{}
+
+	incorporateModel := func(modelIDFromConfig string) (types.ModelRef, error) {
+		// Figure out the provider and model ID from the older-style format in the config.
+		var (
+			providerID string
+			modelID    string
+
+			modelServerSideConfig *types.ServerSideModelConfig
+		)
+		parts := strings.SplitN(modelIDFromConfig, "/", 2)
+		switch len(parts) {
+		case 1:
+			providerID = string(completionsCfg.Provider)
+			modelID = parts[0]
+		case 2:
+			providerID = parts[0]
+			modelID = parts[1]
+		default:
+			return types.ModelRef(""), errors.Errorf("invalid model ID in config %q", modelIDFromConfig)
 		}
+		// Edge case, we support the user encoding an ARN in the model in the config.
+		if completionsCfg.Provider == conftypes.CompletionsProviderNameAWSBedrock {
+			bedrockModelRef := conftypes.NewBedrockModelRefFromModelID(modelIDFromConfig)
+			providerID = "anthropic"
+			// The model ID may contain colons, which we reject as part of the ModelID validation,
+			// so we strip those out here.
+			modelID = strings.ReplaceAll(bedrockModelRef.Model, ":", "_")
 
-		// If the provider is "aws-bedrock", then things get a little tricky. For
-		// The ModelRef, we strip out any provisioned ARNs, as well as any invalid chars.
-		cfgModelID = strings.Replace(cfgModelID, ":", "_", -1)
-		bedrockModelRef := conftypes.NewBedrockModelRefFromModelID(cfgModelID)
-		return fmt.Sprintf("aws-bedrock::unknown::%s", bedrockModelRef.Model)
-	}
-
-	chatModelRef := convertToModelRef(completionsCfg.ChatModel)
-	fastModelRef := convertToModelRef(completionsCfg.FastChatModel)
-	autocompleteModelRef := convertToModelRef(completionsCfg.CompletionModel)
-
-	baseConfig := types.SiteModelConfiguration{
-		// Don't use any Sourcegraph-supplied model information, as that would be a breaking change.
-		// As Cody Enterprise, via the Completions config, ONLY allows you to specify one model per use-case.
-		SourcegraphModelConfig: nil,
-
-		ProviderOverrides: []types.ProviderOverride{
-			{
-				ID:               types.ProviderID(completionsCfg.Provider),
-				ClientSideConfig: nil,
-				ServerSideConfig: &types.ServerSideProviderConfig{
-					GenericProvider: &types.GenericProviderConfig{
-						AccessToken: completionsCfg.AccessToken,
-						Endpoint:    completionsCfg.Endpoint,
-					},
-				},
-
-				DefaultModelConfig: &types.DefaultModelConfig{
-					Capabilities: []types.ModelCapability{
-						types.ModelCapabilityAutocomplete,
-						types.ModelCapabilityChat,
-					},
-					Category: types.ModelCategoryBalanced,
-					Status:   types.ModelStatusStable,
-					Tier:     types.ModelTierEnterprise,
-				},
-			},
-		},
-
-		ModelOverrides: []types.ModelOverride{
-			{
-				ModelRef:    types.ModelRef(chatModelRef),
-				DisplayName: completionsCfg.ChatModel,
-				ModelName:   completionsCfg.ChatModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.ChatModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-			{
-				ModelRef:    types.ModelRef(fastModelRef),
-				DisplayName: completionsCfg.FastChatModel,
-				ModelName:   completionsCfg.FastChatModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.FastChatModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-			{
-				ModelRef:    types.ModelRef(autocompleteModelRef),
-				DisplayName: completionsCfg.CompletionModel,
-				ModelName:   completionsCfg.CompletionModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.CompletionModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-		},
-
-		DefaultModels: &types.DefaultModels{
-			Chat:           types.ModelRef(chatModelRef),
-			CodeCompletion: types.ModelRef(autocompleteModelRef),
-			FastChat:       types.ModelRef(fastModelRef),
-		},
-	}
-
-	// Account for the way we encoded the AWS Provisioned Throughput ARN into the site config.
-	// We overloaded the model name with both the actual model name and an ARN. So if we see
-	// that, add the server-side configuration data.
-	if completionsCfg.Provider == "aws-bedrock" {
-		for idx := range baseConfig.ModelOverrides {
-			modelOverride := &baseConfig.ModelOverrides[idx]
-
-			bedrockModelRef := conftypes.NewBedrockModelRefFromModelID(modelOverride.ModelName)
 			if bedrockModelRef.ProvisionedCapacity != nil {
-				modelOverride.ModelName = bedrockModelRef.Model
-				modelOverride.ServerSideConfig = &types.ServerSideModelConfig{
+				modelServerSideConfig = &types.ServerSideModelConfig{
 					AWSBedrockProvisionedThroughput: &types.AWSBedrockProvisionedThroughput{
 						ARN: *bedrockModelRef.ProvisionedCapacity,
 					},
 				}
 			}
 		}
+
+		// Create ProviderOverride if we haven't seen this provider before.
+		// We need to remap the provider ID if it is referring to an API Provider and not
+		// a Model Provider.
+		effectiveProviderID := providerID
+		if providerID == "aws-bedrock" {
+			effectiveProviderID = "anthropic"
+		}
+		if providerID == "azure-ai" {
+			effectiveProviderID = "openai"
+		}
+
+		if _, found := requiredProviders[providerID]; !found {
+			providerOverride := types.ProviderOverride{
+				ID:                 types.ProviderID(effectiveProviderID),
+				DefaultModelConfig: &defaultModelConfig,
+				ClientSideConfig:   nil,
+				ServerSideConfig:   getProviderConfiguration(completionsCfg),
+			}
+			requiredProviders[effectiveProviderID] = &providerOverride
+		}
+
+		// Create the ModelOverride if we haven't seen this model before.
+		rawModelRef := fmt.Sprintf("%s::unknown::%s", effectiveProviderID, modelID)
+		modelRef := types.ModelRef(rawModelRef)
+		if _, found := requiredModels[modelRef]; !found {
+			modelOverride := types.ModelOverride{
+				ModelRef:    types.ModelRef(modelRef),
+				DisplayName: modelID,
+				ModelName:   modelID,
+
+				ServerSideConfig: modelServerSideConfig,
+			}
+			requiredModels[modelRef] = &modelOverride
+		}
+
+		return modelRef, nil
 	}
 
-	return &baseConfig
+	// Now loop through the models we need to enable, and as a side-effect we build out
+	// the ProviderOverride and ModelOverride objects.
+	chatModelRef, err := incorporateModel(completionsCfg.ChatModel)
+	if err != nil {
+		return nil, errors.Wrap(err, "inspecting chat model")
+	}
+	completionModelRef, err := incorporateModel(completionsCfg.CompletionModel)
+	if err != nil {
+		return nil, errors.Wrap(err, "inspecting completion model")
+	}
+	fastChatModelRef, err := incorporateModel(completionsCfg.FastChatModel)
+	if err != nil {
+		return nil, errors.Wrap(err, "inspecting fast chat model")
+	}
+	defaultModels := types.DefaultModels{
+		Chat:           chatModelRef,
+		CodeCompletion: completionModelRef,
+		FastChat:       fastChatModelRef,
+	}
+
+	// BUG: Two default models (e.g. chat and fast chat) can share the same ModelRef
+	// but have different max tokens. In this case, the "last write wins"
+	requiredModels[chatModelRef].ContextWindow = types.ContextWindow{
+		MaxInputTokens:  completionsCfg.ChatModelMaxTokens,
+		MaxOutputTokens: 4_000,
+	}
+	requiredModels[completionModelRef].ContextWindow = types.ContextWindow{
+		MaxInputTokens:  completionsCfg.CompletionModelMaxTokens,
+		MaxOutputTokens: 4_000,
+	}
+	requiredModels[fastChatModelRef].ContextWindow = types.ContextWindow{
+		MaxInputTokens:  completionsCfg.FastChatModelMaxTokens,
+		MaxOutputTokens: 4_000,
+	}
+
+	// Now lineraize those maps.
+	var providerOverrides []types.ProviderOverride
+	for _, providerOverride := range requiredProviders {
+		providerOverrides = append(providerOverrides, *providerOverride)
+	}
+	var modelOverrides []types.ModelOverride
+	for _, modelOverride := range requiredModels {
+		modelOverrides = append(modelOverrides, *modelOverride)
+	}
+	// Sort the slices so they are deterministic.
+	slices.SortFunc(providerOverrides, func(x, y types.ProviderOverride) int {
+		return strings.Compare(string(x.ID), string(y.ID))
+	})
+	slices.SortFunc(modelOverrides, func(x, y types.ModelOverride) int {
+		return strings.Compare(string(x.ModelRef), string(y.ModelRef))
+	})
+
+	baseConfig := types.SiteModelConfiguration{
+		// Don't use any Sourcegraph-supplied model information, as that would be a breaking change.
+		// As Cody Enterprise, via the Completions config, ONLY allows you to specify one model per use-case.
+		SourcegraphModelConfig: nil,
+
+		ProviderOverrides: providerOverrides,
+		ModelOverrides:    modelOverrides,
+
+		DefaultModels: &defaultModels,
+	}
+
+	if err := modelconfig.ValidateSiteConfig(&baseConfig); err != nil {
+		return nil, errors.Wrap(err, "site configuration is invalid")
+	}
+
+	return &baseConfig, nil
 }

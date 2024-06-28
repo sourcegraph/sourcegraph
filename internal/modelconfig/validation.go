@@ -15,12 +15,15 @@ import (
 // We can NEVER "relax" any validation checks we perform. Because that would lead to older
 // Sourcegraph instances failing to accept newer versions of the configuration data.
 
+const maxDisplayNameLength = 128
+
 // resourceIDRE is a regular expression for verifying resource IDs are
 // of a simple format.
 var resourceIDRE = regexp.MustCompile(`^[a-z0-9][a-z0-9_\-\.]*[a-z0-9]$`)
 
 func validateProvider(p types.Provider) error {
-	if l := len(p.DisplayName); l < 5 || l > 40 {
+	// Display name is optional, but if it is set ensure it is under 128 chars.
+	if l := len(p.DisplayName); l > 0 && l > maxDisplayNameLength {
 		return errors.Errorf("display name length: %d", l)
 	}
 	if !resourceIDRE.MatchString(string(p.ID)) {
@@ -35,6 +38,10 @@ func validateProvider(p types.Provider) error {
 }
 
 func validateModelRef(ref types.ModelRef) error {
+	if ref == "" {
+		return errors.New("modelRef is blank")
+	}
+
 	parts := strings.Split(string(ref), "::")
 	if len(parts) != 3 {
 		return errors.New("modelRef syntax error")
@@ -60,7 +67,7 @@ func validateModelRef(ref types.ModelRef) error {
 }
 
 func validateModel(m types.Model) error {
-	if l := len(m.DisplayName); l < 5 || l > 40 {
+	if l := len(m.DisplayName); l > 0 && l > maxDisplayNameLength {
 		return errors.Errorf("display name length: %d", l)
 	}
 	if err := validateModelRef(m.ModelRef); err != nil {
@@ -89,13 +96,13 @@ func ValidateModelConfig(cfg *types.ModelConfiguration) error {
 
 	for _, provider := range cfg.Providers {
 		if err := validateProvider(provider); err != nil {
-			return err
+			return errors.Wrapf(err, "validating provider %q", provider.ID)
 		}
 	}
 
 	for _, model := range cfg.Models {
 		if err := validateModel(model); err != nil {
-			return err
+			return errors.Wrapf(err, "validating model %q", model.ModelRef)
 		}
 
 		// Verify the model is referencing a known provider.
@@ -220,5 +227,22 @@ func ValidateSiteConfig(doc *types.SiteModelConfiguration) error {
 	if err := validateModelOverrides(doc.ModelOverrides); err != nil {
 		return errors.Wrap(err, "model overrides")
 	}
+
+	// When verifying default models, we expect it to be OK to default to
+	// a model NOT explicitly defined in the site config. e.g. using something
+	// that we expect to be supplied by Sourcegraph. So we just check if they
+	// are valid ModelRefs.
+	if defModels := doc.DefaultModels; defModels != nil {
+		if err := validateModelRef(defModels.Chat); err != nil {
+			return errors.Wrap(err, "default chat model")
+		}
+		if err := validateModelRef(defModels.CodeCompletion); err != nil {
+			return errors.Wrap(err, "default completion model")
+		}
+		if err := validateModelRef(defModels.FastChat); err != nil {
+			return errors.Wrap(err, "default fast chat model")
+		}
+	}
+
 	return nil
 }

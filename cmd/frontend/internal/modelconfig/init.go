@@ -119,7 +119,10 @@ func loadModelConfigFromSiteConfig(siteConfig schema.SiteConfiguration) (*types.
 		// any settings from Sourcegraph v5.3 and prior. i.e. the "completions" object.
 		//
 		// TODO(chrsmith): When we wire up the new model schema, specifying both forms should be an error.
-		return convertLegacyCompletionsConfig(siteConfig.Completions), nil
+		// return convertLegacyCompletionsConfig(siteConfig.Completions), nil
+
+		// CONVERT TO USE siteconfig_completions's load/convert method.
+		return nil, errors.New("NYI")
 	} else {
 		// Otherwise, parse the env var and use that as the siteModelConfig.
 		var siteModelConfig types.SiteModelConfiguration

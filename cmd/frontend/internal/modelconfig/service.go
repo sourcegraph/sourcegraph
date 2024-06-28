@@ -1,11 +1,9 @@
 package modelconfig
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/sourcegraph/sourcegraph/internal/modelconfig/types"
-	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 // Service is the system-wide component for obtaining the set of
@@ -70,82 +68,4 @@ func (svc *service) set(newConfig *types.ModelConfiguration) {
 	defer svc.currentConfigMu.Unlock()
 
 	svc.currentConfig = newConfig
-}
-
-func convertLegacyCompletionsConfig(completionsCfg *schema.Completions) *types.SiteModelConfiguration {
-	if completionsCfg == nil {
-		return nil
-	}
-
-	chatModelRef := fmt.Sprintf("%s/unknown/%s", completionsCfg.Provider, completionsCfg.ChatModel)
-	fastModelRef := fmt.Sprintf("%s/unknown/%s", completionsCfg.Provider, completionsCfg.FastChatModel)
-	autocompleteModelRef := fmt.Sprintf("%s/unknown/%s", completionsCfg.Provider, completionsCfg.CompletionModel)
-
-	baseConfig := types.SiteModelConfiguration{
-		// Don't use any Sourcegraph-supplied model information.
-		SourcegraphModelConfig: nil,
-
-		ProviderOverrides: []types.ProviderOverride{
-			{
-				ID:               types.ProviderID(completionsCfg.Provider),
-				ClientSideConfig: nil,
-				ServerSideConfig: &types.ServerSideProviderConfig{
-					GenericProvider: &types.GenericProviderConfig{
-						AccessToken: completionsCfg.AccessToken,
-						Endpoint:    completionsCfg.Endpoint,
-					},
-				},
-
-				DefaultModelConfig: &types.DefaultModelConfig{
-					Capabilities: []types.ModelCapability{
-						types.ModelCapabilityAutocomplete,
-						types.ModelCapabilityChat,
-					},
-					Category: types.ModelCategoryBalanced,
-					Status:   types.ModelStatusStable,
-					Tier:     types.ModelTierEnterprise,
-				},
-			},
-		},
-
-		ModelOverrides: []types.ModelOverride{
-			{
-				ModelRef:    types.ModelRef(chatModelRef),
-				DisplayName: completionsCfg.ChatModel,
-				ModelName:   completionsCfg.ChatModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.ChatModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-			{
-				ModelRef:    types.ModelRef(fastModelRef),
-				DisplayName: completionsCfg.FastChatModel,
-				ModelName:   completionsCfg.FastChatModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.FastChatModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-			{
-				ModelRef:    types.ModelRef(autocompleteModelRef),
-				DisplayName: completionsCfg.CompletionModel,
-				ModelName:   completionsCfg.CompletionModel,
-
-				ContextWindow: types.ContextWindow{
-					MaxInputTokens:  completionsCfg.CompletionModelMaxTokens,
-					MaxOutputTokens: 4000,
-				},
-			},
-		},
-
-		DefaultModels: &types.DefaultModels{
-			Chat:           types.ModelRef(completionsCfg.ChatModel),
-			CodeCompletion: types.ModelRef(completionsCfg.CompletionModel),
-			FastChat:       types.ModelRef(completionsCfg.FastChatModel),
-		},
-	}
-	return &baseConfig
 }

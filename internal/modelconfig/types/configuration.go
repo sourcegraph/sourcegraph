@@ -50,10 +50,20 @@ type GenericProviderConfig struct {
 	Endpoint    string `json:"endpoint"`
 }
 
+// SourcegraphProviderConfig is the configuration blog for configuring a provider
+// to be use Sourcegraph's Cody Gateway for requests.
+type SourcegraphProviderConfig struct {
+	AccessToken string `json:"accessToken"`
+	Endpoint    string `json:"endpoint"`
+}
+
+// The "Provider" is conceptually a namespace for models. The server-side provider configuration
+// is needed to describe the API endpoint needed to serve its models.
 type ServerSideProviderConfig struct {
-	AWSBedrock      *AWSBedrockProviderConfig  `json:"awsBedrock,omitempty"`
-	AzureOpenAI     *AzureOpenAIProviderConfig `json:"azureOpenAi,omitempty"`
-	GenericProvider *GenericProviderConfig     `json:"genericProviderConfig,omitempty"`
+	AWSBedrock          *AWSBedrockProviderConfig  `json:"awsBedrock,omitempty"`
+	AzureOpenAI         *AzureOpenAIProviderConfig `json:"azureOpenAi,omitempty"`
+	GenericProvider     *GenericProviderConfig     `json:"genericProvider,omitempty"`
+	SourcegraphProvider *SourcegraphProviderConfig `json:"sourcegraphProvider,omitempty"`
 }
 
 // ========================================================

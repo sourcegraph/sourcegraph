@@ -44,6 +44,7 @@ go_test(
         "//internal/conf",
         "//internal/conf/conftypes",
         "//internal/licensing",
+        "//internal/modelconfig",
         "//internal/modelconfig/embedded",
         "//internal/modelconfig/types",
         "//lib/pointers",

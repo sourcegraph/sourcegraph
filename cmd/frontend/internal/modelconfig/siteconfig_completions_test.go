@@ -9,6 +9,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/conf/conftypes"
 	"github.com/sourcegraph/sourcegraph/internal/licensing"
+	"github.com/sourcegraph/sourcegraph/internal/modelconfig/types"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 	"github.com/sourcegraph/sourcegraph/schema"
 )
@@ -44,29 +45,48 @@ func TestConvertCompletionsConfig(t *testing.T) {
 		})
 		require.NotNil(t, compConfig)
 
-		siteModelConfig := convertCompletionsConfig(compConfig)
+		siteModelConfig, err := convertCompletionsConfig(compConfig)
+		require.NoError(t, err)
+
 		assert.Nil(t, siteModelConfig.SourcegraphModelConfig)
 		require.NotNil(t, siteModelConfig.ProviderOverrides)
 		require.NotNil(t, siteModelConfig.ModelOverrides)
 
-		// ProviderOverrides. Default to using "sourcegraph" and Cody Gateway.
-		require.Equal(t, 1, len(siteModelConfig.ProviderOverrides))
-		pOverride := siteModelConfig.ProviderOverrides[0]
-		assert.EqualValues(t, "sourcegraph", pOverride.ID)
+		// ProviderOverrides. Because the default models are from different providers, we stub out
+		// three different ProviderOverrides. However, all of these are configured to use the
+		// "Sourcegraph API Provider".
+		require.Equal(t, 2, len(siteModelConfig.ProviderOverrides))
+		assert.EqualValues(t, "anthropic", siteModelConfig.ProviderOverrides[0].ID)
+		assert.EqualValues(t, "fireworks", siteModelConfig.ProviderOverrides[1].ID)
 
-		require.NotNil(t, pOverride.ServerSideConfig)
-		gProviderInfo := pOverride.ServerSideConfig.GenericProvider
-		require.NotNil(t, gProviderInfo)
-		assert.Equal(t, "https://cody-gateway.sourcegraph.com", gProviderInfo.Endpoint)
-		assert.NotEmpty(t, gProviderInfo.AccessToken) // Based on the license key.
+		for _, providerOverride := range siteModelConfig.ProviderOverrides {
+			// Stock model configuration.
+			defModelCfg := providerOverride.DefaultModelConfig
+			require.NotNil(t, defModelCfg)
+			assert.Equal(t, types.ModelTierEnterprise, defModelCfg.Tier)
+
+			require.Nil(t, providerOverride.ClientSideConfig)
+
+			ssConfig := providerOverride.ServerSideConfig
+			require.NotNil(t, ssConfig)
+			require.NotNil(t, ssConfig.SourcegraphProvider)
+
+			sgAPIProviderConfig := ssConfig.SourcegraphProvider
+			require.NotNil(t, sgAPIProviderConfig)
+			assert.Equal(t, "https://cody-gateway.sourcegraph.com", sgAPIProviderConfig.Endpoint)
+			assert.NotEmpty(t, sgAPIProviderConfig.AccessToken) // Based on the license key.
+		}
 
 		// ModelOverrides
 		require.Equal(t, 3, len(siteModelConfig.ModelOverrides))
+		assert.EqualValues(t, "anthropic::unknown::claude-3-haiku-20240307", siteModelConfig.ModelOverrides[0].ModelRef)
+		assert.EqualValues(t, "anthropic::unknown::claude-3-sonnet-20240229", siteModelConfig.ModelOverrides[1].ModelRef)
+		assert.EqualValues(t, "fireworks::unknown::starcoder", siteModelConfig.ModelOverrides[2].ModelRef)
 
 		// DefaultModels
 		require.NotNil(t, siteModelConfig.DefaultModels)
-		assert.EqualValues(t, "anthropic::unknown::claude-3-sonnet-20240229", siteModelConfig.DefaultModels.Chat)
 		assert.EqualValues(t, "anthropic::unknown::claude-3-haiku-20240307", siteModelConfig.DefaultModels.FastChat)
+		assert.EqualValues(t, "anthropic::unknown::claude-3-sonnet-20240229", siteModelConfig.DefaultModels.Chat)
 		assert.EqualValues(t, "fireworks::unknown::starcoder", siteModelConfig.DefaultModels.CodeCompletion)
 	})
 
@@ -80,21 +100,23 @@ func TestConvertCompletionsConfig(t *testing.T) {
 		})
 		require.NotNil(t, compConfig)
 
-		siteModelConfig := convertCompletionsConfig(compConfig)
+		siteModelConfig, err := convertCompletionsConfig(compConfig)
+		require.NoError(t, err)
+
 		assert.Nil(t, siteModelConfig.SourcegraphModelConfig)
 		require.NotNil(t, siteModelConfig.ProviderOverrides)
 		require.NotNil(t, siteModelConfig.ModelOverrides)
 
 		// ProviderOverrides. Default to using "sourcegraph" and Cody Gateway.
 		require.Equal(t, 1, len(siteModelConfig.ProviderOverrides))
-		pOverride := siteModelConfig.ProviderOverrides[0]
-		assert.EqualValues(t, "openai", pOverride.ID)
+		providerOverride := siteModelConfig.ProviderOverrides[0]
+		assert.EqualValues(t, "openai", providerOverride.ID)
+		require.NotNil(t, providerOverride.ServerSideConfig)
 
-		require.NotNil(t, pOverride.ServerSideConfig)
-		gProviderInfo := pOverride.ServerSideConfig.GenericProvider
-		require.NotNil(t, gProviderInfo)
-		assert.Equal(t, "https://api.openai.com", gProviderInfo.Endpoint)
-		assert.NotEmpty(t, "byok-key", gProviderInfo.AccessToken)
+		genericProviderConfig := providerOverride.ServerSideConfig.GenericProvider
+		require.NotNil(t, genericProviderConfig)
+		assert.Equal(t, "https://api.openai.com", genericProviderConfig.Endpoint)
+		assert.NotEmpty(t, "byok-key", genericProviderConfig.AccessToken)
 
 		// ModelOverrides
 		require.Equal(t, 3, len(siteModelConfig.ModelOverrides))
@@ -118,31 +140,44 @@ func TestConvertCompletionsConfig(t *testing.T) {
 			})
 			require.NotNil(t, compConfig)
 
-			siteModelConfig := convertCompletionsConfig(compConfig)
+			siteModelConfig, err := convertCompletionsConfig(compConfig)
+			require.NoError(t, err)
+
 			assert.Nil(t, siteModelConfig.SourcegraphModelConfig)
 			require.NotNil(t, siteModelConfig.ProviderOverrides)
 			require.NotNil(t, siteModelConfig.ModelOverrides)
 
-			// ProviderOverrides.
+			// The ID of the ProviderOverride is "anthropic", to match the models referenced.
+			// However, the API Provider, i.e. the ProviderOverride's server-side configuration
+			// will define how to _use_ this provider, which will be via AWS Bedrock.
 			require.Equal(t, 1, len(siteModelConfig.ProviderOverrides))
-			pOverride := siteModelConfig.ProviderOverrides[0]
-			assert.EqualValues(t, "aws-bedrock", pOverride.ID)
+			providerOverride := siteModelConfig.ProviderOverrides[0]
+			assert.EqualValues(t, "anthropic", providerOverride.ID)
+			require.NotNil(t, providerOverride.ServerSideConfig)
 
-			require.NotNil(t, pOverride.ServerSideConfig)
-			gProviderInfo := pOverride.ServerSideConfig.GenericProvider
-			require.NotNil(t, gProviderInfo)
-			// Confirm we didn't modify the values from the site config.
-			assert.Equal(t, "us-west-2", gProviderInfo.Endpoint)
-			assert.Equal(t, "", gProviderInfo.AccessToken)
+			awsBedrockConfig := providerOverride.ServerSideConfig.AWSBedrock
+			require.NotNil(t, awsBedrockConfig)
+			assert.Equal(t, "us-west-2", awsBedrockConfig.Endpoint)
+			assert.Equal(t, "", awsBedrockConfig.AccessToken)
 
 			// ModelOverrides
-			require.Equal(t, 3, len(siteModelConfig.ModelOverrides))
+			require.Equal(t, 2, len(siteModelConfig.ModelOverrides))
+			{
+				m := siteModelConfig.ModelOverrides[1]
+				assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", m.ModelRef)
+				require.Nil(t, m.ServerSideConfig)
+			}
+			{
+				m := siteModelConfig.ModelOverrides[0]
+				assert.EqualValues(t, "anthropic::unknown::anthropic.claude-3-opus-20240229-v1_0", m.ModelRef)
+				require.Nil(t, m.ServerSideConfig)
+			}
 
 			// DefaultModels
 			require.NotNil(t, siteModelConfig.DefaultModels)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-3-opus-20240229-v1_0", siteModelConfig.DefaultModels.Chat)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.FastChat)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.CodeCompletion)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-3-opus-20240229-v1_0", siteModelConfig.DefaultModels.Chat)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.FastChat)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.CodeCompletion)
 		})
 
 		t.Run("ProvisionedThroughput", func(t *testing.T) {
@@ -156,39 +191,41 @@ func TestConvertCompletionsConfig(t *testing.T) {
 			})
 			require.NotNil(t, compConfig)
 
-			siteModelConfig := convertCompletionsConfig(compConfig)
+			siteModelConfig, err := convertCompletionsConfig(compConfig)
+			require.NoError(t, err)
+
 			assert.Nil(t, siteModelConfig.SourcegraphModelConfig)
 			require.NotNil(t, siteModelConfig.ProviderOverrides)
 			require.NotNil(t, siteModelConfig.ModelOverrides)
 
 			// ProviderOverrides.
 			require.Equal(t, 1, len(siteModelConfig.ProviderOverrides))
-			pOverride := siteModelConfig.ProviderOverrides[0]
-			assert.EqualValues(t, "aws-bedrock", pOverride.ID)
+			providerOverride := siteModelConfig.ProviderOverrides[0]
+			assert.EqualValues(t, "anthropic", providerOverride.ID)
+			require.NotNil(t, providerOverride.ServerSideConfig)
 
-			require.NotNil(t, pOverride.ServerSideConfig)
-			gProviderInfo := pOverride.ServerSideConfig.GenericProvider
-			require.NotNil(t, gProviderInfo)
-			assert.Equal(t, "access-key-id:secret-access-key:session-token", gProviderInfo.AccessToken)
-			assert.Equal(t, "https://vpce-0000-00000.bedrock-runtime.us-west-2.vpce.amazonaws.com", gProviderInfo.Endpoint)
+			awsBedrockConfig := providerOverride.ServerSideConfig.AWSBedrock
+			require.NotNil(t, awsBedrockConfig)
+			assert.Equal(t, "access-key-id:secret-access-key:session-token", awsBedrockConfig.AccessToken)
+			assert.Equal(t, "https://vpce-0000-00000.bedrock-runtime.us-west-2.vpce.amazonaws.com", awsBedrockConfig.Endpoint)
 
 			// ModelOverrides
-			require.Equal(t, 3, len(siteModelConfig.ModelOverrides))
+			require.Equal(t, 2, len(siteModelConfig.ModelOverrides))
 
-			// Confirm the AWS Provisioned Throughput configuration data is where we expect it.
-			chatModelOverride := siteModelConfig.ModelOverrides[0]
-			require.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-3-haiku-20240307-v1_0-100k", chatModelOverride.ModelRef)
-			// Note the colon in "...v1:0-100k", which we needed to strip out for the ModelID.
-			assert.Equal(t, "anthropic.claude-3-haiku-20240307-v1:0-100k", chatModelOverride.ModelName)
-			require.NotNil(t, chatModelOverride.ServerSideConfig)
-			require.NotNil(t, chatModelOverride.ServerSideConfig.AWSBedrockProvisionedThroughput)
-			assert.Equal(t, "arn:aws:bedrock:us-west-2:012345678901:provisioned-model/abcdefghijkl", chatModelOverride.ServerSideConfig.AWSBedrockProvisionedThroughput.ARN)
+			chatModel := siteModelConfig.ModelOverrides[0]
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-3-haiku-20240307-v1_0-100k", chatModel.ModelRef)
+			require.NotNil(t, chatModel.ServerSideConfig)
+			assert.Equal(t, "arn:aws:bedrock:us-west-2:012345678901:provisioned-model/abcdefghijkl", chatModel.ServerSideConfig.AWSBedrockProvisionedThroughput.ARN)
+
+			completionModel := siteModelConfig.ModelOverrides[1]
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", completionModel.ModelRef)
+			assert.Nil(t, completionModel.ServerSideConfig)
 
 			// DefaultModels. Note the that model was modified, such as stripping out the ARNM.
 			require.NotNil(t, siteModelConfig.DefaultModels)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-3-haiku-20240307-v1_0-100k", siteModelConfig.DefaultModels.Chat)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.FastChat)
-			assert.EqualValues(t, "aws-bedrock::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.CodeCompletion)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-3-haiku-20240307-v1_0-100k", siteModelConfig.DefaultModels.Chat)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.FastChat)
+			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.CodeCompletion)
 		})
 	})
 }

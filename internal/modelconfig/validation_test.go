@@ -286,4 +286,30 @@ func TestValidateSiteConfig(t *testing.T) {
 			assert.ErrorContains(t, err, `model overrides: validating model ref "foo/bar": modelRef syntax error`)
 		})
 	})
+
+	t.Run("DefaultModels", func(t *testing.T) {
+		{
+			// Valid DefaultModels object.
+			siteConfig := getValidSiteConfiguration()
+			siteConfig.DefaultModels = &types.DefaultModels{
+				// Just valid ModelRef values.
+				Chat:           types.ModelRef("foo::bar::baz"),
+				FastChat:       types.ModelRef("foo::bar::baz"),
+				CodeCompletion: types.ModelRef("foo::bar::baz"),
+			}
+			err := ValidateSiteConfig(siteConfig)
+			assert.Nil(t, err)
+		}
+
+		{
+			siteConfig := getValidSiteConfiguration()
+			siteConfig.DefaultModels = &types.DefaultModels{
+				// Invalid ModelRefs, Chat not specified.
+				FastChat:       types.ModelRef("foo::bar::baz"),
+				CodeCompletion: types.ModelRef("foo::bar::baz"),
+			}
+			err := ValidateSiteConfig(siteConfig)
+			assert.ErrorContains(t, err, "default chat model: modelRef is blank")
+		}
+	})
 }

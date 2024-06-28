@@ -4,6 +4,7 @@ load("//dev:go_defs.bzl", "go_test")
 go_library(
     name = "modelconfig",
     srcs = [
+        "updates.go",
         "util.go",
         "validation.go",
     ],
@@ -20,6 +21,7 @@ go_test(
     name = "modelconfig_test",
     srcs = [
         "until_test.go",
+        "updates_test.go",
         "validation_test.go",
     ],
     embed = [":modelconfig"],
