@@ -89,10 +89,7 @@ func NewRunner[Args any](in io.Reader, out *std.Output, categories []Category[Ar
 }
 
 // Check executes all checks exactly once and exits.
-func (r *Runner[Args]) Check(
-	ctx context.Context,
-	args Args,
-) error {
+func (r *Runner[Args]) Check(ctx context.Context, args Args) error {
 	var span *analytics.Span
 	ctx, span = r.startSpan(ctx, "Check")
 	defer span.End()
@@ -109,10 +106,7 @@ func (r *Runner[Args]) Check(
 }
 
 // Fix attempts to applies available fixes on checks that are not satisfied.
-func (r *Runner[Args]) Fix(
-	ctx context.Context,
-	args Args,
-) error {
+func (r *Runner[Args]) Fix(ctx context.Context, args Args) error {
 	var span *analytics.Span
 	ctx, span = r.startSpan(ctx, "Fix")
 	defer span.End()
@@ -149,10 +143,7 @@ func (r *Runner[Args]) Fix(
 
 // Interactive runs both checks and fixes in an interactive manner, prompting the user for
 // decisions about which fixes to apply.
-func (r *Runner[Args]) Interactive(
-	ctx context.Context,
-	args Args,
-) error {
+func (r *Runner[Args]) Interactive(ctx context.Context, args Args) error {
 	var span *analytics.Span
 	ctx, span = r.startSpan(ctx, "Interactive")
 	defer span.End()
@@ -163,7 +154,7 @@ func (r *Runner[Args]) Interactive(
 	}
 
 	buildChoices := func(failed []int) map[int]string {
-		var choices = make(map[int]string)
+		choices := make(map[int]string)
 		for _, idx := range failed {
 			category := r.categories[idx]
 			// categories are zero based indexes internally, but are displayed with 1-based indexes

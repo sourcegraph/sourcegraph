@@ -2,11 +2,19 @@ package dependencies
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path"
+	"slices"
+	"strings"
 
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/check"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/usershell"
 	"github.com/sourcegraph/sourcegraph/dev/sg/root"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 const (
@@ -278,20 +286,92 @@ WARNING: if you just fixed (automatically or manually) this step, you must resta
 			},
 		},
 	},
+	{
+		Name: "sg analytics identity",
+		Checks: []*check.Check[CheckArgs]{
+			{
+				Name: "Identity file exists & is valid",
+				// Check: checkAction(check.FileExists("~/.sourcegraph/sg-analytics/identity.json")),
+				Check: func(ctx context.Context, out *std.Output, args CheckArgs) error {
+					if err := check.FileExists("~/.sourcegraph/sg-analytics/identity.json")(ctx); err != nil {
+						return err
+					}
+
+					home, err := os.UserHomeDir()
+					if err != nil {
+						return err
+					}
+
+					f, err := os.Open(path.Join(home, ".sourcegraph/sg-analytics/identity.json"))
+					if err != nil {
+						return err
+					}
+					defer f.Close()
+
+					var identity struct {
+						Team  string `json:"team"`
+						Email string `json:"email"`
+					}
+					if err := json.NewDecoder(f).Decode(&identity); err != nil {
+						return err
+					}
+
+					if identity.Team == "" {
+						out.WriteWarningf("No value set for your team in the sg analytics user identity file, please set it manually or rerun 'sg setup'")
+					}
+
+					if !slices.Contains(analytics.Teams, identity.Team) {
+						out.WriteWarningf("Unexpected value %q in the sg analytics user identity file denoting your team, please set it manually or rerun 'sg setup'", identity.Team)
+					}
+
+					return nil
+				},
+				Fix: func(ctx context.Context, cio check.IO, args CheckArgs) error {
+					cio.Output.Promptf("What team are you on? Valid options are %s", strings.Join(analytics.Teams, ", "))
+					var team string
+					n, err := fmt.Fscanln(cio.Input, &team)
+					if err != nil && err.Error() != "unexpected newline" {
+						return err
+					}
+					if n == 0 {
+						return errors.New("Must provide a team or else 'anonymous'")
+					}
+
+					cio.Output.Promptf("Optionally, what is your sourcegraph email? Hit enter without further input if you'd like to skip this")
+					var email string
+					n, err = fmt.Fscanln(cio.Input, &email)
+					if err != nil && err.Error() != "unexpected newline" {
+						return err
+					}
+
+					if n == 0 {
+						email = "anonymous@sourcegraph.com"
+					}
+
+					home, err := os.UserHomeDir()
+					if err != nil {
+						return err
+					}
+
+					// Create the directory if it doesn't exist
+					if err := os.MkdirAll(path.Join(home, ".sourcegraph/sg-analytics"), 0o755); err != nil {
+						return err
+					}
+
+					// Create the file
+					f, err := os.Create(path.Join(home, ".sourcegraph/sg-analytics/identity.json"))
+					if err != nil {
+						return err
+					}
+					defer f.Close()
+
+					if err := json.NewEncoder(f).Encode(map[string]string{"team": team, "email": email}); err != nil {
+						return err
+					}
+
+					return nil
+				},
+			},
+		},
+	},
 }
-
-// var homebrewPsqlVersion = regexp.MustCompile(`^psql (PostgreSQL) 15\.(\d+) (Homebrew)$`)
-// var homebrewPostgresVersion = regexp.MustCompile(`^PostgreSQL (\d+)\.(\d+)$`)
-
-// // var psqlCheck = check.Combine(check.InPath("psql"), )
-
-// func checkPsqlVersion(ctx context.Context, out *std.Output, args CheckArgs) error {
-// 	version, err := usershell.Run(ctx, "psql --version").String()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if !homebrewPsqlVersion.MatchString(version) {
-// 		return errors.Newf("wanted psql is not installed with Homebrew")
-// 	}
-// }

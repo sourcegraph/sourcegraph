@@ -1,6 +1,7 @@
 package dependencies
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"strings"
@@ -23,8 +24,9 @@ func TestUbuntuFix(t *testing.T) {
 	ctx, err := usershell.Context(context.Background())
 	require.NoError(t, err)
 
+	input := bytes.NewReader([]byte("infra_devinfra\n\n"))
 	// Set up runner with no input and simple output
-	runner := check.NewRunner(nil, std.NewSimpleOutput(os.Stdout, true), Ubuntu)
+	runner := check.NewRunner(input, std.NewSimpleOutput(os.Stdout, true), Ubuntu)
 
 	// automatically fix everything!
 	t.Run("Fix", func(t *testing.T) {

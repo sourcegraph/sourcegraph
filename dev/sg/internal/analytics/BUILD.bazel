@@ -6,6 +6,7 @@ go_library(
         "analytics.go",
         "context.go",
         "spans.go",
+        "teams.go",
         "tracer.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics",
