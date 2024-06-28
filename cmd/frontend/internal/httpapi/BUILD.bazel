@@ -30,6 +30,7 @@ go_library(
         "//cmd/frontend/internal/handlerutil",
         "//cmd/frontend/internal/httpapi/releasecache",
         "//cmd/frontend/internal/httpapi/webhookhandlers",
+        "//cmd/frontend/internal/modelconfig",
         "//cmd/frontend/internal/routevar",
         "//cmd/frontend/internal/search",
         "//cmd/frontend/internal/ssc",
