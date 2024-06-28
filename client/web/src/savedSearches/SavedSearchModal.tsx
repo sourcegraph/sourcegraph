@@ -107,8 +107,8 @@ export class SavedSearchModal extends React.Component<Props, State> {
             const encodedQuery = encodeURIComponent(this.props.query)
             this.props.navigate(
                 this.state.saveLocation.toLowerCase() === 'user'
-                    ? `/users/${this.props.authenticatedUser.username}/searches/add?query=${encodedQuery}&patternType=${this.props.patternType}`
-                    : `/organizations/${this.state.organization!}/searches/add?query=${encodedQuery}&patternType=${
+                    ? `/users/${this.props.authenticatedUser.username}/searches/new?query=${encodedQuery}&patternType=${this.props.patternType}`
+                    : `/organizations/${this.state.organization!}/searches/new?query=${encodedQuery}&patternType=${
                           this.props.patternType
                       }`
             )

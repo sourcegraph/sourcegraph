@@ -34,7 +34,7 @@ const commonProps: Omit<SavedSearchFormProps, 'isLightTheme'> = {
     telemetryRecorder: noOpTelemetryRecorder,
 }
 
-export const NewSavedSearch: StoryFn = () => (
+export const New: StoryFn = () => (
     <WebStory>
         {webProps => (
             <SavedSearchForm
@@ -48,68 +48,20 @@ export const NewSavedSearch: StoryFn = () => (
     </WebStory>
 )
 
-NewSavedSearch.storyName = 'new saved search'
-
-export const NotifcationsDisabled: StoryFn = () => (
+export const Existing: StoryFn = () => (
     <WebStory>
         {webProps => (
             <SavedSearchForm
                 {...webProps}
                 {...commonProps}
                 submitLabel="Update saved search"
-                title="Manage saved search"
+                title="Edit saved search"
                 defaultValues={{
                     id: '1',
                     description: 'Existing saved search',
                     query: 'test',
-                    notify: false,
                 }}
             />
         )}
     </WebStory>
 )
-
-NotifcationsDisabled.storyName = 'existing saved search, notifications disabled'
-
-export const NotifcationsEnabled: StoryFn = () => (
-    <WebStory>
-        {webProps => (
-            <SavedSearchForm
-                {...webProps}
-                {...commonProps}
-                submitLabel="Update saved search"
-                title="Manage saved search"
-                defaultValues={{
-                    id: '1',
-                    description: 'Existing saved search',
-                    query: 'test type:diff',
-                    notify: true,
-                }}
-            />
-        )}
-    </WebStory>
-)
-
-NotifcationsEnabled.storyName = 'existing saved search, notifications enabled'
-
-export const NotificationsEnabledWithInvalidQueryWarning: StoryFn = () => (
-    <WebStory>
-        {webProps => (
-            <SavedSearchForm
-                {...webProps}
-                {...commonProps}
-                submitLabel="Update saved search"
-                title="Manage saved search"
-                defaultValues={{
-                    id: '1',
-                    description: 'Existing saved search',
-                    query: 'test',
-                    notify: true,
-                }}
-            />
-        )}
-    </WebStory>
-)
-
-NotificationsEnabledWithInvalidQueryWarning.storyName =
-    'existing saved search, notifications enabled, with invalid query warning'

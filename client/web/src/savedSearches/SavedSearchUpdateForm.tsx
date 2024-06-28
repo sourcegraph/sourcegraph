@@ -1,157 +1,119 @@
-import React, { type FC } from 'react'
+import { useCallback, useEffect, useState, type FunctionComponent } from 'react'
 
 import { useParams } from 'react-router-dom'
-import { concat, of, Subject, Subscription } from 'rxjs'
-import { catchError, delay, distinctUntilChanged, map, mergeMap, startWith, switchMap, tap } from 'rxjs/operators'
 
-import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
-import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
-import { Alert, LoadingSpinner } from '@sourcegraph/wildcard'
+import { useMutation, useQuery } from '@sourcegraph/http-client'
+import { Alert, Container, Link, LoadingSpinner } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
-import type { SavedSearchFields } from '../graphql-operations'
+import type {
+    SavedSearchResult,
+    SavedSearchVariables,
+    UpdateSavedSearchResult,
+    UpdateSavedSearchVariables,
+} from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
-import { fetchSavedSearch, updateSavedSearch } from '../search/backend'
+import { namespaceTelemetryMetadata } from '../namespaces/telemetry'
 
-import { type SavedQueryFields, SavedSearchForm } from './SavedSearchForm'
+import { savedSearchQuery, updateSavedSearchMutation } from './backend'
+import { SavedSearchForm, type SavedSearchFormValue } from './SavedSearchForm'
 
 interface Props extends NamespaceProps {
     authenticatedUser: AuthenticatedUser | null
     isSourcegraphDotCom: boolean
-    searchId: string
+    id: string
 }
 
-const LOADING = 'loading' as const
-
-interface State {
-    savedSearchOrError: typeof LOADING | SavedSearchFields | ErrorLike
-    updatedOrError: null | true | typeof LOADING | ErrorLike
-}
-
-export const SavedSearchUpdateForm: FC<Omit<Props, 'searchId'>> = props => {
+export const SavedSearchUpdateForm: FunctionComponent<Omit<Props, 'id'>> = props => {
     const { id } = useParams<{ id: string }>()
 
-    return <InnerSavedSearchUpdateForm {...props} searchId={id!} />
+    return <InnerSavedSearchUpdateForm {...props} id={id!} />
 }
 
-class InnerSavedSearchUpdateForm extends React.Component<Props, State> {
-    constructor(props: Props) {
-        super(props)
-        this.state = {
-            savedSearchOrError: LOADING,
-            updatedOrError: null,
-        }
-    }
+const InnerSavedSearchUpdateForm: FunctionComponent<Props> = ({
+    id: searchId,
+    namespace,
+    telemetryRecorder,
+    authenticatedUser,
+    isSourcegraphDotCom,
+}) => {
+    useEffect(() => {
+        telemetryRecorder.recordEvent('savedSearches.update', 'view', {
+            metadata: namespaceTelemetryMetadata(namespace),
+        })
+    }, [telemetryRecorder, namespace])
 
-    private componentUpdates = new Subject<Props>()
-    private subscriptions = new Subscription()
-    private submits = new Subject<SavedQueryFields>()
+    const result = useQuery<SavedSearchResult, SavedSearchVariables>(savedSearchQuery, { variables: { id: searchId } })
 
-    public componentDidMount(): void {
-        this.subscriptions.add(
-            this.componentUpdates
-                .pipe(
-                    map(props => props.searchId),
-                    distinctUntilChanged(),
-                    switchMap(id =>
-                        fetchSavedSearch(id).pipe(
-                            startWith(LOADING),
-                            catchError(error => [asError(error)])
-                        )
-                    ),
-                    map(result => ({ savedSearchOrError: result }))
-                )
-                .subscribe(stateUpdate => this.setState(stateUpdate))
-        )
+    const [updateSavedSearch, { loading: updateLoading, error: updateError }] = useMutation<
+        UpdateSavedSearchResult,
+        UpdateSavedSearchVariables
+    >(updateSavedSearchMutation, {})
+    const [flashUpdated, setFlashUpdated] = useState(false)
 
-        this.subscriptions.add(
-            this.submits
-                .pipe(
-                    switchMap(input =>
-                        concat(
-                            [{ updatedOrError: LOADING }],
-                            updateSavedSearch(
-                                input.id,
-                                input.description,
-                                input.query,
-                                input.notify,
-                                input.notifySlack,
-                                this.props.namespace.__typename === 'User' ? this.props.namespace.id : null,
-                                this.props.namespace.__typename === 'Org' ? this.props.namespace.id : null
-                            ).pipe(
-                                map(() => null),
-                                tap(() => EVENT_LOGGER.log('SavedSearchUpdated')),
-                                tap(() =>
-                                    this.props.telemetryRecorder.recordEvent(
-                                        `${this.props.namespace.__typename.toLowerCase()}.savedSearch`,
-                                        'update'
-                                    )
-                                ),
-                                mergeMap(() =>
-                                    concat(
-                                        // Flash "updated" text
-                                        of({ updatedOrError: true }),
-                                        // Hide "updated" text again after 1s
-                                        of({ updatedOrError: null }).pipe(delay(1000))
-                                    )
-                                ),
-                                catchError((error: Error) => [{ updatedOrError: asError(error) }])
-                            )
-                        )
-                    )
-                )
-                .subscribe(stateUpdate => this.setState(stateUpdate as State))
-        )
+    const onSubmit = useCallback(
+        async (fields: SavedSearchFormValue): Promise<void> => {
+            try {
+                await updateSavedSearch({
+                    variables: {
+                        id: fields.id,
+                        input: {
+                            description: fields.description,
+                            query: fields.query,
+                        },
+                    },
+                })
+                telemetryRecorder.recordEvent('savedSearches', 'update', {
+                    metadata: namespaceTelemetryMetadata(namespace),
+                })
+                setFlashUpdated(true)
+                setTimeout(() => {
+                    setFlashUpdated(false)
+                }, 1000)
+            } catch {
+                // Mutation error is read in useMutation call.
+            }
+        },
+        [namespace, telemetryRecorder, updateSavedSearch]
+    )
 
-        this.componentUpdates.next(this.props)
+    const savedSearch = result.data?.node?.__typename === 'SavedSearch' ? result.data.node : null
 
-        EVENT_LOGGER.logViewEvent('UpdateSavedSearchPage')
-        this.props.telemetryRecorder.recordEvent(
-            `${this.props.namespace.__typename.toLowerCase()}.savedSearch.update`,
-            'view'
-        )
-    }
-
-    public render(): JSX.Element | null {
-        const savedSearch =
-            (!isErrorLike(this.state.savedSearchOrError) &&
-                this.state.savedSearchOrError !== LOADING &&
-                this.state.savedSearchOrError) ||
-            undefined
-
-        return (
-            <div>
-                {this.state.savedSearchOrError === LOADING && <LoadingSpinner />}
-                {this.props.authenticatedUser && savedSearch && (
-                    <SavedSearchForm
-                        {...this.props}
-                        submitLabel="Update saved search"
-                        title="Manage saved search"
-                        defaultValues={{
-                            id: savedSearch.id,
-                            description: savedSearch.description,
-                            query: savedSearch.query,
-                            notify: savedSearch.notify,
-                            notifySlack: savedSearch.notifySlack,
-                            slackWebhookURL: savedSearch.slackWebhookURL,
-                        }}
-                        loading={this.state.updatedOrError === LOADING}
-                        onSubmit={(fields: Pick<SavedQueryFields, Exclude<keyof SavedQueryFields, 'id'>>): void =>
-                            this.onSubmit({ id: savedSearch.id, ...fields })
-                        }
-                        error={isErrorLike(this.state.updatedOrError) ? this.state.updatedOrError : undefined}
-                    />
-                )}
-                {this.state.updatedOrError === true && (
-                    <Alert variant="success" as="p">
-                        Updated!
-                    </Alert>
-                )}
-            </div>
-        )
-    }
-
-    private onSubmit = (fields: SavedQueryFields): void => {
-        this.submits.next(fields)
-    }
+    return (
+        <div>
+            {result.loading ? (
+                <LoadingSpinner />
+            ) : !savedSearch ? (
+                <Alert variant="danger" as="p">
+                    Saved search not found.
+                </Alert>
+            ) : (
+                <SavedSearchForm
+                    namespace={namespace}
+                    telemetryRecorder={telemetryRecorder}
+                    authenticatedUser={authenticatedUser}
+                    submitLabel="Update saved search"
+                    title="Edit saved search"
+                    isSourcegraphDotCom={isSourcegraphDotCom}
+                    defaultValues={savedSearch}
+                    loading={updateLoading}
+                    error={updateError}
+                    onSubmit={(fields: Pick<SavedSearchFormValue, Exclude<keyof SavedSearchFormValue, 'id'>>): void =>
+                        void onSubmit({ id: savedSearch.id, ...fields })
+                    }
+                />
+            )}
+            {flashUpdated && (
+                <Alert variant="success" as="p">
+                    Updated!
+                </Alert>
+            )}
+            {savedSearch && (
+                <Container className="p-3 mt-3">
+                    To get notified when there are new results for this query, create a{' '}
+                    <Link to="/code-monitoring">code monitor</Link>.
+                </Container>
+            )}
+        </div>
+    )
 }

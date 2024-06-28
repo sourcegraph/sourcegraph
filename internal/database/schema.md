@@ -3809,8 +3809,8 @@ Referenced by:
  query             | text                     |           | not null | 
  created_at        | timestamp with time zone |           | not null | now()
  updated_at        | timestamp with time zone |           | not null | now()
- notify_owner      | boolean                  |           | not null | 
- notify_slack      | boolean                  |           | not null | 
+ notify_owner      | boolean                  |           | not null | false
+ notify_slack      | boolean                  |           | not null | false
  user_id           | integer                  |           |          | 
  org_id            | integer                  |           |          | 
  slack_webhook_url | text                     |           |          | 

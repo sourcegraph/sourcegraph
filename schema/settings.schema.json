@@ -322,37 +322,6 @@
         }
       }
     },
-    "search.savedQueries": {
-      "description": "DEPRECATED: Saved search queries",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Unique key for this query in this file"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description of this saved query"
-          },
-          "query": {
-            "type": "string",
-            "description": "Query string"
-          },
-          "notify": {
-            "type": "boolean",
-            "description": "Notify the owner of this configuration file when new results are available"
-          },
-          "notifySlack": {
-            "type": "boolean",
-            "description": "Notify Slack via the organization's Slack webhook URL when new results are available"
-          }
-        },
-        "additionalProperties": false,
-        "required": ["key", "description", "query"]
-      }
-    },
     "search.scopes": {
       "description": "Predefined search snippets that can be appended to any search (also known as search scopes)",
       "type": "array",

@@ -11234,6 +11234,19 @@
 				],
 				"IsCreateIndexConcurrently": false,
 				"IndexMetadata": null
+			},
+			{
+				"ID": 1719555230,
+				"Name": "deprecate_saved_searches_notifs",
+				"UpQuery": "ALTER TABLE saved_searches ALTER COLUMN notify_owner SET DEFAULT false;\nALTER TABLE saved_searches ALTER COLUMN notify_slack SET DEFAULT false;",
+				"DownQuery": "-- no default value\nALTER TABLE saved_searches ALTER COLUMN notify_owner DROP DEFAULT;\nALTER TABLE saved_searches ALTER COLUMN notify_slack DROP DEFAULT;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1717699555
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
 			}
 		],
 		"BoundsByRev": {
@@ -11494,7 +11507,7 @@
 			"v5.4.0": {
 				"RootID": 1648051770,
 				"LeafIDs": [
-					1717699555
+					1719555230
 				],
 				"PreCreation": false
 			}
