@@ -81,11 +81,6 @@ func (r *Resolver) GetCodyContext(ctx context.Context, args graphqlbackend.GetCo
 	})
 }
 
-// GetCodyIntent is deprecated: use ChatIntent instead.
-func (r *Resolver) GetCodyIntent(ctx context.Context, args graphqlbackend.GetIntentArgs) (graphqlbackend.IntentResolver, error) {
-	return r.ChatIntent(ctx, graphqlbackend.ChatIntentArgs{Query: args.Query})
-}
-
 // ChatIntent is a quick-and-dirty way to expose our intent detection model to Cody clients.
 // Yes, it does things that should not be done in production code - for now it is just a proof of concept for demos.
 func (r *Resolver) ChatIntent(ctx context.Context, args graphqlbackend.ChatIntentArgs) (graphqlbackend.IntentResolver, error) {

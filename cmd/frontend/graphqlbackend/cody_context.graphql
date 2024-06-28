@@ -20,15 +20,6 @@ extend type Query {
         """
         textResultsCount: Int!
     ): [CodyContextResult!]!
-    """
-    DEPRECATED: use chatIntent. This will be deleted in a future release.
-    """
-    getCodyIntent(
-        """
-        A natural language query string.
-        """
-        query: String!
-    ): CodyIntentResponse!
 
     """
     EXPERIMENTAL: Detect intent for a given Cody chat query.
@@ -68,20 +59,6 @@ type FileChunkContext {
     The relevant content of the file from start line to end line.
     """
     chunkContent: String!
-}
-
-"""
-EXPERIMENTAL: A response from Cody intent detection API.
-"""
-type CodyIntentResponse {
-    """
-    Intent that was detected
-    """
-    intent: String!
-    """
-    Confidence score as assigned by the intent detection model
-    """
-    score: Float!
 }
 
 """
