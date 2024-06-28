@@ -3,18 +3,20 @@
 // Match query input styling for the intermediate input displayed while
 // lazy-loading the query input component, to avoid unstable UI.
 .intermediate-input {
-    height: 100%;
     font-size: var(--code-font-size);
     border: none;
-    padding-left: 0;
-    padding-right: 0;
-
+    padding: 0;
+    height: unset;
     &:focus {
         box-shadow: none;
     }
+}
 
-    @media (--xs-breakpoint-down) {
-        height: auto;
-        padding: 0;
+.form-control {
+    cursor: text;
+    height: unset;
+    &:focus-within {
+        border: 1px solid var(--input-focus-border-color);
+        box-shadow: var(--search-box-focus-box-shadow);
     }
 }

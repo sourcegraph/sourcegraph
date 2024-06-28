@@ -7,21 +7,6 @@
     font-weight: bold;
 }
 
-.query-input {
-    display: flex;
-    align-items: center;
-    cursor: text;
-
-    :global(.cm-editor) {
-        flex: 1;
-    }
-
-    &:focus-within {
-        border: 1px solid var(--input-focus-border-color);
-        box-shadow: var(--search-box-focus-box-shadow);
-    }
-}
-
 .submit-button {
     margin-bottom: 1rem;
 }

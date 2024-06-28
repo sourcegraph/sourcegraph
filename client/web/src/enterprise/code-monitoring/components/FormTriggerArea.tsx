@@ -4,7 +4,7 @@ import { mdiCheck, mdiHelpCircle, mdiOpenInNew, mdiRadioboxBlank } from '@mdi/js
 import { VisuallyHidden } from '@reach/visually-hidden'
 import classNames from 'classnames'
 
-import { LazyQueryInput } from '@sourcegraph/branded'
+import { LazyQueryInputFormControl } from '@sourcegraph/branded'
 import type { QueryState } from '@sourcegraph/shared/src/search'
 import { FilterType, resolveFilter, validateFilter } from '@sourcegraph/shared/src/search/query/filters'
 import { scanSearchQuery } from '@sourcegraph/shared/src/search/query/scanner'
@@ -12,7 +12,7 @@ import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { buildSearchURLQuery } from '@sourcegraph/shared/src/util/url'
 import { Button, Card, Checkbox, Code, H3, Icon, Link, Tooltip } from '@sourcegraph/wildcard'
 
-import { SearchPatternType } from '../../../graphql-operations'
+import type { SearchPatternType } from '../../../graphql-operations'
 import { defaultPatternTypeFromSettings } from '../../../util/settings'
 
 import styles from './FormTriggerArea.module.scss'
@@ -226,16 +226,12 @@ export const FormTriggerArea: React.FunctionComponent<React.PropsWithChildren<Tr
                     </span>
                     <span className="mt-4">Search query</span>
                     <div>
-                        <div className={classNames(styles.queryInput, 'my-2')}>
+                        <div className="my-2">
                             <div
-                                className={classNames(
-                                    'form-control',
-                                    styles.queryInputField,
-                                    `test-${derivedInputClassName}`
-                                )}
+                                className={classNames(`test-${derivedInputClassName}`)}
                                 data-testid="trigger-query-edit"
                             >
-                                <LazyQueryInput
+                                <LazyQueryInputFormControl
                                     className="test-trigger-input"
                                     patternType={defaultPatternType}
                                     isSourcegraphDotCom={isSourcegraphDotCom}
@@ -246,21 +242,15 @@ export const FormTriggerArea: React.FunctionComponent<React.PropsWithChildren<Tr
                                     autoFocus={true}
                                 />
                             </div>
-                            <div className={styles.queryInputPreviewLink}>
-                                <Link
-                                    to={`/search?${buildSearchURLQuery(queryState.query, defaultPatternType, false)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="test-preview-link"
-                                >
-                                    Preview results{' '}
-                                    <Icon
-                                        aria-label="Open in new window"
-                                        className={classNames('ml-1', styles.queryInputPreviewLinkIcon)}
-                                        svgPath={mdiOpenInNew}
-                                    />
-                                </Link>
-                            </div>
+                            <Link
+                                to={`/search?${buildSearchURLQuery(queryState.query, defaultPatternType, false)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="test-preview-link d-flex align-items-center flex-gap-1 my-1"
+                            >
+                                Preview results{' '}
+                                <Icon aria-label="Open in new window" className="ml-1" svgPath={mdiOpenInNew} />
+                            </Link>
                         </div>
 
                         <ul className={classNames(styles.checklist, 'mb-4')}>

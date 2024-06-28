@@ -57,3 +57,12 @@ export const LazyQueryInput: React.FunctionComponent<LazyQueryInputProps> = ({ .
         <CodeMirrorQueryInput {...props} />
     </Suspense>
 )
+
+/**
+ * A {@link LazyQueryInput} with a focus ring and other styles from the `.form-control` CSS class.
+ */
+export const LazyQueryInputFormControl: React.FunctionComponent<LazyQueryInputProps> = props => (
+    <div className={classNames('form-control', styles.formControl)}>
+        <LazyQueryInput {...props} />
+    </div>
+)
