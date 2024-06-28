@@ -55,9 +55,8 @@
 (this) @variable.builtin
 (super) @variable.builtin
 
+[(true) (false)] @boolean
 [
-  (true)
-  (false)
   (null)
   (undefined)]
 @constant.builtin

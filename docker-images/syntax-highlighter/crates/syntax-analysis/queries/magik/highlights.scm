@@ -154,10 +154,7 @@
 
 (character_literal) @character
 
-[
-  (true)
-  (false)
-] @boolean
+[(true) (false)] @boolean
 
 (maybe) @constant.builtin
 

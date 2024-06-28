@@ -7,11 +7,9 @@
 
 (identifier) @variable
 
-[
-  (NULL)
-  (TRUE)
-  (FALSE)]
-@constant.builtin
+[(TRUE) (FALSE)] @boolean
+
+(NULL) @constant.builtin
 
 ([
   (type_cast

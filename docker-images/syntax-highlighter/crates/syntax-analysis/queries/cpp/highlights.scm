@@ -6,8 +6,7 @@
 ("nullptr") @constant.null
 (number_literal) @number
 (char_literal) @character
-(true) @boolean
-(false) @boolean
+[(true) (false)] @boolean
 
 (call_expression
   function: (identifier) @identifier.function)

@@ -166,8 +166,7 @@
 
 (string_literal) @string
 (symbol_literal (identifier) @constant) @constant
-(true) @boolean
-(false) @boolean
+[(true) (false)] @boolean
 (null_literal) @constant.null
 
 (documentation_comment) @comment
