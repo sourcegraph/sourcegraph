@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "upgrades",
+    srcs = ["util.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/appliance/upgrades",
+    tags = [TAG_INFRA_RELEASE],
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/version",
+        "@com_github_masterminds_semver//:semver",
+    ],
+)
+
+go_test(
+    name = "upgrades_test",
+    srcs = ["util_test.go"],
+    embed = [":upgrades"],
+)

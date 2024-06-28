@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/sourcegraph/sourcegraph/internal/lazyregexp"
+	"github.com/sourcegraph/sourcegraph/internal/version"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
@@ -81,14 +82,9 @@ func (v Version) GitTagWithPatch(patch int) string {
 	return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, patch)
 }
 
-var lastMinorVersionInMajorRelease = map[int]int{
-	3: 43, // 3.43.0 -> 4.0.0
-	4: 5,  // 4.5 -> 5.0.0,
-}
-
 // Next returns the next minor version immediately following the receiver.
 func (v Version) Next() Version {
-	if minor, ok := lastMinorVersionInMajorRelease[v.Major]; ok && minor == v.Minor {
+	if minor, ok := version.LastMinorVersionInMajorRelease[v.Major]; ok && minor == v.Minor {
 		// We're at terminal minor version for some major release
 		// :tada:
 		// Bump the major version and reset the minor version
@@ -102,7 +98,7 @@ func (v Version) Next() Version {
 // Previous returns the previous minor version immediately preceding the receiver.
 func (v Version) Previous() (Version, bool) {
 	if v.Minor == 0 {
-		minor, ok := lastMinorVersionInMajorRelease[v.Major-1]
+		minor, ok := version.LastMinorVersionInMajorRelease[v.Major-1]
 		return NewVersion(v.Major-1, minor), ok
 	}
 

@@ -19,6 +19,11 @@ var devTimestamp = strconv.FormatInt(time.Now().Unix(), 10) // build timestamp f
 // The version may not be semver-compatible, e.g. `insiders` or `65769_2020-06-05_9bd91a3`.
 var version = devVersion
 
+var LastMinorVersionInMajorRelease = map[int]int{
+	3: 43, // 3.43.0 -> 4.0.0
+	4: 5,  // 4.5 -> 5.0.0,
+}
+
 func init() {
 	exportedVersion := expvar.NewString("sourcegraph.version")
 	exportedVersion.Set(version)
