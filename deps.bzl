@@ -2708,8 +2708,8 @@ def go_dependencies():
         name = "com_github_google_pprof",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/google/pprof",
-        sum = "h1:PxlBVtIFHR/mtWk2i0gTEdCz+jBnqiuHNSki0epDbVs=",
-        version = "v0.0.0-20231205033806-a5a03c77bf08",
+        sum = "h1:gbpYu9NMq8jhDVbvlGkMFWCjLFlqqEZjEmObmhUy6Vo=",
+        version = "v0.0.0-20240409012703-83162a5b38cd",
     )
     go_repository(
         name = "com_github_google_renameio",
@@ -3339,8 +3339,8 @@ def go_dependencies():
         name = "com_github_ianlancetaylor_demangle",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/ianlancetaylor/demangle",
-        sum = "h1:BA4a7pe6ZTd9F8kXETBoijjFJ/ntaa//1wiH9BZu4zU=",
-        version = "v0.0.0-20230524184225-eabc099b10ab",
+        sum = "h1:KwWnWVWCNtNq/ewIX7HIKnELmEx2nDP42yskD/pi7QE=",
+        version = "v0.0.0-20240312041847-bd984b5ce465",
     )
     go_repository(
         name = "com_github_imdario_mergo",
@@ -3864,8 +3864,8 @@ def go_dependencies():
         name = "com_github_klauspost_cpuid_v2",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/klauspost/cpuid/v2",
-        sum = "h1:0E5MSMDEoAulmXNFquVs//DdoomxaoTY1kUhbc/qbZg=",
-        version = "v2.2.5",
+        sum = "h1:ZWSB3igEs+d0qvnxR/ZBzXVmxkgt8DdzP6m9pfuVLDM=",
+        version = "v2.2.7",
     )
     go_repository(
         name = "com_github_klauspost_pgzip",
@@ -8552,15 +8552,43 @@ def go_dependencies():
         name = "org_modernc_cc_v3",
         build_file_proto_mode = "disable_global",
         importpath = "modernc.org/cc/v3",
-        sum = "h1:P3g79IUS/93SYhtoeaHW+kRCIrYaxJ27MFPv+7kaTOw=",
-        version = "v3.40.0",
+        sum = "h1:QoR1Sn3YWlmA1T4vLaKZfawdVtSiGx8H+cEojbC7v1Q=",
+        version = "v3.41.0",
+    )
+    go_repository(
+        name = "org_modernc_cc_v4",
+        build_file_proto_mode = "disable_global",
+        importpath = "modernc.org/cc/v4",
+        sum = "h1:dycHFB/jDc3IyacKipCNSDrjIC0Lm1hyoWOZTRR20Lk=",
+        version = "v4.21.2",
     )
     go_repository(
         name = "org_modernc_ccgo_v3",
         build_file_proto_mode = "disable_global",
         importpath = "modernc.org/ccgo/v3",
-        sum = "h1:Mkgdzl46i5F/CNR/Kj80Ri59hC8TKAhZrYSaqvkwzUw=",
-        version = "v3.16.13",
+        sum = "h1:o3OmOqx4/OFnl4Vm3G8Bgmqxnvxnh0nbxeT5p/dWChA=",
+        version = "v3.17.0",
+    )
+    go_repository(
+        name = "org_modernc_ccgo_v4",
+        build_file_proto_mode = "disable_global",
+        importpath = "modernc.org/ccgo/v4",
+        sum = "h1:6wrtRozgrhCxieCeJh85QsxkX/2FFrT9hdaWPlbn4Zo=",
+        version = "v4.17.10",
+    )
+    go_repository(
+        name = "org_modernc_fileutil",
+        build_file_proto_mode = "disable_global",
+        importpath = "modernc.org/fileutil",
+        sum = "h1:gQ5SIzK3H9kdfai/5x41oQiKValumqNTDXMvKo62HvE=",
+        version = "v1.3.0",
+    )
+    go_repository(
+        name = "org_modernc_gc_v2",
+        build_file_proto_mode = "disable_global",
+        importpath = "modernc.org/gc/v2",
+        sum = "h1:9cNzOqPyMJBvrUipmynX0ZohMhcxPtMccYgGOJdOiBw=",
+        version = "v2.4.1",
     )
     go_repository(
         name = "org_modernc_gc_v3",
@@ -8573,8 +8601,8 @@ def go_dependencies():
         name = "org_modernc_libc",
         build_file_proto_mode = "disable_global",
         importpath = "modernc.org/libc",
-        sum = "h1:g9YAc6BkKlgORsUWj+JwqoB1wU3o4DE3bM3yvA3k+Gk=",
-        version = "v1.41.0",
+        sum = "h1:uau0VoiT5hnR+SpoWekCKbLqm7v6dhRL3hI+NQhgN3M=",
+        version = "v1.52.1",
     )
     go_repository(
         name = "org_modernc_mathutil",
@@ -8587,8 +8615,8 @@ def go_dependencies():
         name = "org_modernc_memory",
         build_file_proto_mode = "disable_global",
         importpath = "modernc.org/memory",
-        sum = "h1:Klh90S215mmH8c9gO98QxQFsY+W451E8AnzjoE2ee1E=",
-        version = "v1.7.2",
+        sum = "h1:IqGTL6eFMaDZZhEWwcREgeMXYwmW83LYW8cROZYkg+E=",
+        version = "v1.8.0",
     )
     go_repository(
         name = "org_modernc_opt",
@@ -8598,11 +8626,18 @@ def go_dependencies():
         version = "v0.1.3",
     )
     go_repository(
+        name = "org_modernc_sortutil",
+        build_file_proto_mode = "disable_global",
+        importpath = "modernc.org/sortutil",
+        sum = "h1:jQiD3PfS2REGJNzNCMMaLSp/wdMNieTbKX920Cqdgqc=",
+        version = "v1.2.0",
+    )
+    go_repository(
         name = "org_modernc_sqlite",
         build_file_proto_mode = "disable_global",
         importpath = "modernc.org/sqlite",
-        sum = "h1:0lOXGrycJPptfHDuohfYgNqoe4hu+gYuN/pKgY5XjS4=",
-        version = "v1.29.6",
+        sum = "h1:YFhPVfu2iIgUf9kuA1CR7iiHdcEEsI2i+yjRYHscyxk=",
+        version = "v1.30.1",
     )
     go_repository(
         name = "org_modernc_strutil",

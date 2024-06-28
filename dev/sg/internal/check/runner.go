@@ -163,7 +163,7 @@ func (r *Runner[Args]) Interactive(
 	}
 
 	buildChoices := func(failed []int) map[int]string {
-		var choices = make(map[int]string)
+		choices := make(map[int]string)
 		for _, idx := range failed {
 			category := r.categories[idx]
 			// categories are zero based indexes internally, but are displayed with 1-based indexes
@@ -804,5 +804,5 @@ func (r *Runner[Args]) startSpan(ctx context.Context, spanName string, opts ...t
 	if r.AnalyticsCategory == "" {
 		return ctx, analytics.NoOpSpan()
 	}
-	return analytics.StartSpan(ctx, spanName, r.AnalyticsCategory, opts...)
+	return analytics.NewInvocation(ctx, spanName, r.AnalyticsCategory, opts...)
 }

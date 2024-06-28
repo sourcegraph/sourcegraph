@@ -120,7 +120,7 @@ func updateToPrebuiltSG(ctx context.Context, release string) (bool, error) {
 }
 
 func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bool) error {
-	ctx, span := analytics.StartSpan(ctx, "auto_update", "background",
+	ctx := analytics.NewInvocation(ctx, "auto_update", "background",
 		trace.WithAttributes(attribute.Bool("skipUpdate", skipUpdate)))
 	defer span.End()
 

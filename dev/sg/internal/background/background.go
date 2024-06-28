@@ -18,8 +18,10 @@ import (
 
 type key int
 
-var jobsKey key
-var hasRun bool
+var (
+	jobsKey key
+	hasRun  bool
+)
 
 type backgroundJobs struct {
 	wg                sync.WaitGroup
@@ -81,7 +83,7 @@ func Wait(ctx context.Context, out *std.Output) {
 	jobs := loadFromContext(ctx)
 	pendingCount := int(jobs.stillRunningCount.Load())
 
-	_, span := analytics.StartSpan(ctx, "background_wait", "",
+	ctx = analytics.NewInvocation(ctx, "background_wait", "",
 		trace.WithAttributes(attribute.Int("jobs", pendingCount)))
 	defer span.End()
 

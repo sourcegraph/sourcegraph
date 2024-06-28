@@ -147,6 +147,7 @@ func (installer *InstallManager) wait(ctx context.Context) error {
 		}
 	}
 }
+
 func (installer *InstallManager) startTicker(interval time.Duration) {
 	installer.ticker = time.NewTicker(interval)
 	installer.tickInterval = interval
@@ -232,7 +233,7 @@ func startInstallAnalytics(ctx context.Context, cmds map[string]Installer) *inst
 	}
 
 	for cmd := range cmds {
-		_, installer.Spans[cmd] = analytics.StartSpan(ctx, fmt.Sprintf("install %s", cmd), "install_command")
+		_, installer.Spans[cmd] = analytics.NewInvocation(ctx, fmt.Sprintf("install %s", cmd), "install_command")
 	}
 
 	interrupt.Register(installer.handleInterrupt)
@@ -297,7 +298,7 @@ var installFuncs = map[string]installFunc{
 
 		// Make sure the data folder exists.
 		disk := env["JAEGER_DISK"]
-		if err := os.MkdirAll(disk, 0755); err != nil {
+		if err := os.MkdirAll(disk, 0o755); err != nil {
 			return err
 		}
 

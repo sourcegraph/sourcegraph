@@ -85,6 +85,7 @@ go_library(
         "//dev/sg/sams",
         "//dev/team",
         "//internal/accesstoken",
+        "//internal/collections",
         "//internal/database",
         "//internal/database/basestore",
         "//internal/database/connections/live",
