@@ -53,5 +53,9 @@ export const STATUS_AND_REPO_COUNT = gql`
                 }
             }
         }
+
+        repositories {
+            totalCount
+        }
     }
 `
