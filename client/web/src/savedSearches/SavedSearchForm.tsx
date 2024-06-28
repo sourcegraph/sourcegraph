@@ -3,27 +3,27 @@ import React, { useEffect, useMemo, useState } from 'react'
 import classNames from 'classnames'
 import type { Omit } from 'utility-types'
 
-import { LazyQueryInput } from '@sourcegraph/branded'
+import { LazyQueryInputFormControl } from '@sourcegraph/branded'
 import type { QueryState } from '@sourcegraph/shared/src/search'
 import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import {
-    Container,
-    PageHeader,
-    ProductStatusBadge,
-    Button,
-    Link,
     Alert,
+    Button,
     Checkbox,
-    Input,
     Code,
-    Label,
+    Container,
     ErrorAlert,
     Form,
+    Input,
+    Label,
+    Link,
+    PageHeader,
+    ProductStatusBadge,
 } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
 import { PageTitle } from '../components/PageTitle'
-import { type Scalars, SearchPatternType } from '../graphql-operations'
+import { type Scalars, type SearchPatternType } from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
 import { defaultPatternTypeFromSettings } from '../util/settings'
 
@@ -60,7 +60,6 @@ export const SavedSearchForm: React.FunctionComponent<React.PropsWithChildren<Sa
 
     /**
      * Returns an input change handler that updates the SavedQueryFields in the component's state
-     *
      * @param key The key of saved query fields that a change of this input should update
      */
     const createInputChangeHandler =
@@ -124,9 +123,7 @@ export const SavedSearchForm: React.FunctionComponent<React.PropsWithChildren<Sa
                     />
                     <Label className={classNames('w-100 form-group', styles.label)}>
                         <div className="mb-2">Query</div>
-
-                        <LazyQueryInput
-                            className={classNames('form-control', styles.queryInput)}
+                        <LazyQueryInputFormControl
                             patternType={defaultPatternType}
                             isSourcegraphDotCom={props.isSourcegraphDotCom}
                             caseSensitive={false}

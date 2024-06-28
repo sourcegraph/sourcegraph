@@ -2,33 +2,33 @@ import React, { useCallback, useMemo, useState } from 'react'
 
 import classNames from 'classnames'
 import { useNavigate } from 'react-router-dom'
-import { type Observable, of, throwError, from } from 'rxjs'
+import { from, of, throwError, type Observable } from 'rxjs'
 import { catchError, map, startWith, switchMap, tap } from 'rxjs/operators'
 
-import { SyntaxHighlightedSearchQuery, LazyQueryInput } from '@sourcegraph/branded'
+import { LazyQueryInputFormControl, SyntaxHighlightedSearchQuery } from '@sourcegraph/branded'
 import { asError, createAggregateError, isErrorLike } from '@sourcegraph/common'
 import {
+    SearchPatternType,
     type Scalars,
+    type SearchContextFields,
     type SearchContextInput,
     type SearchContextRepositoryRevisionsInput,
-    SearchPatternType,
-    type SearchContextFields,
 } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { QueryState, SearchContextProps } from '@sourcegraph/shared/src/search'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import {
-    Container,
+    Alert,
     Button,
+    Code,
+    Container,
+    Form,
+    Input,
+    Link,
     RadioButton,
     TextArea,
     useEventObservable,
-    Alert,
-    Link,
-    Code,
-    Input,
-    Form,
 } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../auth'
@@ -431,7 +431,7 @@ export const SearchContextForm: React.FunctionComponent<React.PropsWithChildren<
                             label={<>Search query</>}
                         />
                         <div className={styles.searchContextFormQuery} data-testid="search-context-dynamic-query">
-                            <LazyQueryInput
+                            <LazyQueryInputFormControl
                                 patternType={SearchPatternType.regexp}
                                 isSourcegraphDotCom={isSourcegraphDotCom}
                                 caseSensitive={true}
