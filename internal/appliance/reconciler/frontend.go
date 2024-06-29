@@ -271,13 +271,13 @@ func frontendEnvVars(sg *config.Sourcegraph) []corev1.EnvVar {
 	vars := []corev1.EnvVar{
 		{Name: "DEPLOY_TYPE", Value: "appliance"},
 	}
-	if !sg.Spec.Grafana.Disabled {
+	if !sg.Spec.Grafana.IsDisabled() {
 		vars = append(vars, corev1.EnvVar{Name: "GRAFANA_SERVER_URL", Value: "http://grafana:30070"})
 	}
-	if !sg.Spec.Jaeger.Disabled {
+	if !sg.Spec.Jaeger.IsDisabled() {
 		vars = append(vars, corev1.EnvVar{Name: "JAEGER_SERVER_URL", Value: "http://jaeger-query:16686"})
 	}
-	if !sg.Spec.Prometheus.Disabled {
+	if !sg.Spec.Prometheus.IsDisabled() {
 		vars = append(vars, corev1.EnvVar{Name: "PROMETHEUS_URL", Value: "http://prometheus:30090"})
 	}
 	return vars

@@ -16,7 +16,7 @@ type Disableable interface {
 }
 
 type StandardConfig struct {
-	Disabled                  bool                       `json:"disabled,omitempty"`
+	Disabled                  *bool                      `json:"disabled,omitempty"`
 	ContainerConfig           map[string]ContainerConfig `json:"containerConfig,omitempty"`
 	PersistentVolumeConfig    PersistentVolumeConfig     `json:"persistentVolumeConfig,omitempty"`
 	PodTemplateConfig         PodTemplateConfig          `json:"podTemplateConfig,omitempty"`
@@ -53,7 +53,7 @@ type PodTemplateConfig struct {
 	Tolerations      []corev1.Toleration           `json:"tolerations,omitempty"`
 }
 
-func (c StandardConfig) IsDisabled() bool                               { return c.Disabled }
+func (c StandardConfig) IsDisabled() bool                               { return c.Disabled != nil && *c.Disabled }
 func (c StandardConfig) GetContainerConfig() map[string]ContainerConfig { return c.ContainerConfig }
 func (c StandardConfig) GetPersistentVolumeConfig() PersistentVolumeConfig {
 	return c.PersistentVolumeConfig

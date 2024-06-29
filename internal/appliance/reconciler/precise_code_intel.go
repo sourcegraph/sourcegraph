@@ -137,7 +137,7 @@ func (r *Reconciler) reconcilePreciseCodeIntelServiceAccount(ctx context.Context
 func addPreciseCodeIntelBlobstoreVars(env []corev1.EnvVar, sg *config.Sourcegraph) []corev1.EnvVar {
 	// Only set these when the internal blobstore is enabled. Otherwise, callers
 	// can supply env vars for external blobstores via ContainerConfig.
-	if !sg.Spec.Blobstore.Disabled {
+	if !sg.Spec.Blobstore.IsDisabled() {
 		env = append(
 			env,
 			corev1.EnvVar{Name: "PRECISE_CODE_INTEL_UPLOAD_BACKEND", Value: "blobstore"},

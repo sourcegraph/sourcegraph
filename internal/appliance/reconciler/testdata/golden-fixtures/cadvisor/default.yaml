@@ -3,7 +3,7 @@ resources:
     kind: DaemonSet
     metadata:
       annotations:
-        appliance.sourcegraph.com/configHash: 6ad4c69be1e1c5d02dbd71d1f427fc7d197bf3d18c4acb8d53092dc659455920
+        appliance.sourcegraph.com/configHash: bc3926745d1f0f2bafb2c27ccd1c34e068d2bd022d55d86f976d9f21d87f5d0c
         deprecated.daemonset.template.generation: "1"
       creationTimestamp: "2024-04-19T00:00:00Z"
       generation: 1
@@ -200,7 +200,7 @@ resources:
     kind: ServiceAccount
     metadata:
       annotations:
-        appliance.sourcegraph.com/configHash: 6ad4c69be1e1c5d02dbd71d1f427fc7d197bf3d18c4acb8d53092dc659455920
+        appliance.sourcegraph.com/configHash: bc3926745d1f0f2bafb2c27ccd1c34e068d2bd022d55d86f976d9f21d87f5d0c
       creationTimestamp: "2024-04-19T00:00:00Z"
       labels:
         deploy: sourcegraph

@@ -133,7 +133,7 @@ func NewDefaultConfig() Sourcegraph {
 			Cadvisor: CadvisorSpec{
 				StandardConfig: StandardConfig{
 					// cadvisor is opt-in due to the privilege requirements
-					Disabled:       true,
+					Disabled:       pointers.Ptr(true),
 					PrometheusPort: pointers.Ptr(48080),
 				},
 			},
@@ -172,12 +172,12 @@ func NewDefaultConfig() Sourcegraph {
 			// Grafana and Jaeger are opt-in
 			Grafana: GrafanaSpec{
 				StandardConfig: StandardConfig{
-					Disabled: true,
+					Disabled: pointers.Ptr(true),
 				},
 			},
 			Jaeger: JaegerSpec{
 				StandardConfig: StandardConfig{
-					Disabled: true,
+					Disabled: pointers.Ptr(true),
 				},
 			},
 		},
