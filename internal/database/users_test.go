@@ -785,7 +785,7 @@ func TestUsers_Delete(t *testing.T) {
 			if _, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
 				Description: "desc",
 				Query:       "foo",
-				UserID:      &user.ID,
+				Owner:       types.NamespaceUser(user.ID),
 			}); err != nil {
 				t.Fatal(err)
 			}

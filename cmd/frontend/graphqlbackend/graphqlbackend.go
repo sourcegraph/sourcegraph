@@ -438,6 +438,7 @@ func NewSchema(
 	resolver := newSchemaResolver(db, gitserverClient)
 	schemas := []string{
 		mainSchema,
+		savedSearchesSchema,
 		outboundWebhooksSchema,
 	}
 

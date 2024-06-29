@@ -1,117 +1,87 @@
-import React, { type FC } from 'react'
+import { useCallback, useEffect, type FunctionComponent } from 'react'
 
-import { useLocation, useNavigate, type NavigateFunction, type Location } from 'react-router-dom'
-import { concat, Subject, Subscription } from 'rxjs'
-import { catchError, map, switchMap } from 'rxjs/operators'
-import type { Omit } from 'utility-types'
+import { useNavigate } from 'react-router-dom'
 
-import { type ErrorLike, isErrorLike, asError } from '@sourcegraph/common'
-import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
+import { useMutation } from '@sourcegraph/http-client'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
+import type { TelemetryRecorder } from '@sourcegraph/shared/src/telemetry'
 import { screenReaderAnnounce } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
+import type { CreateSavedSearchResult, CreateSavedSearchVariables } from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
-import { createSavedSearch } from '../search/backend'
+import { namespaceTelemetryMetadata } from '../namespaces/telemetry'
+import { defaultPatternTypeFromSettings } from '../util/settings'
 
-import { type SavedQueryFields, SavedSearchForm } from './SavedSearchForm'
+import { createSavedSearchMutation } from './backend'
+import { SavedSearchForm, type SavedSearchFormValue } from './SavedSearchForm'
 
-interface Props extends NamespaceProps {
-    authenticatedUser: AuthenticatedUser | null
-    isSourcegraphDotCom: boolean
-    location: Location
-    navigate: NavigateFunction
-}
+export const SavedSearchCreateForm: FunctionComponent<
+    NamespaceProps & {
+        authenticatedUser: AuthenticatedUser | null
+        isSourcegraphDotCom: boolean
+        telemetryRecorder: TelemetryRecorder
+    }
+> = ({ namespace, authenticatedUser, isSourcegraphDotCom, telemetryRecorder }) => {
+    useEffect(() => {
+        telemetryRecorder.recordEvent('savedSearches.new', 'view', {
+            metadata: namespaceTelemetryMetadata(namespace),
+        })
+    }, [namespace, telemetryRecorder])
 
-const LOADING = 'loading' as const
-
-interface State {
-    createdOrError: undefined | typeof LOADING | true | ErrorLike
-}
-
-export const SavedSearchCreateForm: FC<Omit<Props, 'location' | 'navigate'>> = props => {
-    const location = useLocation()
     const navigate = useNavigate()
 
-    return <InnerSavedSearchCreateForm {...props} location={location} navigate={navigate} />
-}
+    const [createSavedSearch, { loading, error }] = useMutation<CreateSavedSearchResult, CreateSavedSearchVariables>(
+        createSavedSearchMutation,
+        {}
+    )
 
-class InnerSavedSearchCreateForm extends React.Component<Props, State> {
-    constructor(props: Props) {
-        super(props)
-        this.state = {
-            createdOrError: undefined,
-        }
-    }
-    private subscriptions = new Subscription()
-    private submits = new Subject<Omit<SavedQueryFields, 'id'>>()
-
-    public componentDidMount(): void {
-        this.subscriptions.add(
-            this.submits
-                .pipe(
-                    switchMap(fields =>
-                        concat(
-                            [LOADING],
-                            createSavedSearch(
-                                fields.description,
-                                fields.query,
-                                fields.notify,
-                                fields.notifySlack,
-                                this.props.namespace.__typename === 'User' ? this.props.namespace.id : null,
-                                this.props.namespace.__typename === 'Org' ? this.props.namespace.id : null
-                            ).pipe(
-                                map(() => true as const),
-                                catchError((error): [ErrorLike] => [asError(error)])
-                            )
-                        ).pipe(map(createdOrError => [createdOrError, fields.description] as const))
-                    )
-                )
-                .subscribe(([createdOrError, queryDescription]) => {
-                    this.setState({ createdOrError })
-                    if (createdOrError === true) {
-                        EVENT_LOGGER.log('SavedSearchCreated')
-                        this.props.telemetryRecorder.recordEvent(
-                            `${this.props.namespace.__typename.toLowerCase()}.savedSearch`,
-                            'create'
-                        )
-                        screenReaderAnnounce(`Saved ${queryDescription} search`)
-                        this.props.navigate(`${this.props.namespace.url}/searches`, {
-                            state: { description: queryDescription },
-                        })
-                    }
+    const onSubmit = useCallback(
+        async (fields: Omit<SavedSearchFormValue, 'id'>): Promise<void> => {
+            try {
+                await createSavedSearch({
+                    variables: {
+                        input: {
+                            description: fields.description,
+                            query: fields.query,
+                            owner: namespace.id,
+                        },
+                    },
                 })
-        )
-        EVENT_LOGGER.logViewEvent('NewSavedSearchPage')
-        this.props.telemetryRecorder.recordEvent(
-            `${this.props.namespace.__typename.toLowerCase()}.savedSearches.new`,
-            'view'
-        )
+                telemetryRecorder.recordEvent('savedSearches', 'create', {
+                    metadata: namespaceTelemetryMetadata(namespace),
+                })
+                screenReaderAnnounce(`Saved ${fields.description} search`)
+                navigate(`${namespace.url}/searches`, {
+                    state: { description: fields.description },
+                })
+            } catch {
+                // Mutation error is read in useMutation call.
+            }
+        },
+        [namespace, telemetryRecorder, navigate, createSavedSearch]
+    )
+
+    const searchParameters = new URLSearchParams(location.search)
+    const query = searchParameters.get('query')
+    const settingsCascade = useSettingsCascade()
+    const patternType = searchParameters.get('patternType') ?? defaultPatternTypeFromSettings(settingsCascade)
+    const defaultValue: Partial<SavedSearchFormValue> = {
+        query: [patternType ? `patternType:${patternType} ` : null, query].filter(Boolean).join(''),
     }
 
-    public render(): JSX.Element | null {
-        const searchParameters = new URLSearchParams(this.props.location.search)
-        let defaultValue: Partial<SavedQueryFields> = {}
-        const query = searchParameters.get('query')
-        const patternType = searchParameters.get('patternType')
-
-        if (query && patternType) {
-            defaultValue = { query: query + ` patternType:${patternType}` }
-        } else if (query) {
-            defaultValue = { query }
-        }
-
-        return (
-            <SavedSearchForm
-                {...this.props}
-                submitLabel="Add saved search"
-                title="Add saved search"
-                defaultValues={defaultValue}
-                onSubmit={this.onSubmit}
-                loading={this.state.createdOrError === LOADING}
-                error={isErrorLike(this.state.createdOrError) ? this.state.createdOrError : undefined}
-            />
-        )
-    }
-
-    private onSubmit = (fields: Omit<SavedQueryFields, 'id'>): void => this.submits.next(fields)
+    return (
+        <SavedSearchForm
+            namespace={namespace}
+            authenticatedUser={authenticatedUser}
+            isSourcegraphDotCom={isSourcegraphDotCom}
+            telemetryRecorder={telemetryRecorder}
+            submitLabel="Create"
+            title="New saved search"
+            defaultValues={defaultValue}
+            onSubmit={onSubmit}
+            loading={loading}
+            error={error}
+        />
+    )
 }

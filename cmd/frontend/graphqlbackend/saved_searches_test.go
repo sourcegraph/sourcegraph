@@ -13,26 +13,25 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
 	"github.com/sourcegraph/sourcegraph/internal/actor"
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/auth"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/types"
+	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
 func TestSavedSearches(t *testing.T) {
-	key := int32(1)
-
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: key}, nil)
+	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: userID}, nil)
 
 	ss := dbmocks.NewMockSavedSearchStore()
-	ss.ListSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
-		return []*types.SavedSearch{{ID: key, Description: "test query", Query: "test type:diff patternType:regexp", UserID: userID, OrgID: nil}}, nil
+	ss.ListFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
+		return []*types.SavedSearch{{ID: userID, Description: "test query", Query: "test type:diff patternType:regexp", Owner: *args.Owner}}, nil
 	})
-	ss.CountSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32) (int, error) {
+	ss.CountFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs) (int, error) {
 		return 1, nil
 	})
 
@@ -40,12 +39,10 @@ func TestSavedSearches(t *testing.T) {
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	args := savedSearchesArgs{
-		ConnectionResolverArgs: graphqlutil.ConnectionResolverArgs{First: &key},
-		Namespace:              MarshalUserID(key),
-	}
+	ownerID := MarshalUserID(userID)
+	args := savedSearchesArgs{Owner: &ownerID, ConnectionResolverArgs: dummyConnectionResolverArgs}
 
-	resolver, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(key)), args)
+	resolver, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(userID)), args)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,12 +53,10 @@ func TestSavedSearches(t *testing.T) {
 	}
 
 	wantNodes := []*savedSearchResolver{{db, types.SavedSearch{
-		ID:              key,
-		Description:     "test query",
-		Query:           "test type:diff patternType:regexp",
-		UserID:          &key,
-		OrgID:           nil,
-		SlackWebhookURL: nil,
+		ID:          userID,
+		Description: "test query",
+		Query:       "test type:diff patternType:regexp",
+		Owner:       types.NamespaceUser(userID),
 	}}}
 	if !reflect.DeepEqual(nodes, wantNodes) {
 		t.Errorf("got %v+, want %v+", nodes[0], wantNodes[0])
@@ -69,16 +64,15 @@ func TestSavedSearches(t *testing.T) {
 }
 
 func TestSavedSearchesForSameUser(t *testing.T) {
-	key := int32(1)
-
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: false, ID: key}, nil)
+	users.GetByIDFunc.SetDefaultReturn(&types.User{ID: userID}, nil)
 
 	ss := dbmocks.NewMockSavedSearchStore()
-	ss.ListSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
-		return []*types.SavedSearch{{ID: key, Description: "test query", Query: "test type:diff patternType:regexp", UserID: userID, OrgID: nil}}, nil
+	ss.ListFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
+		return []*types.SavedSearch{{ID: 1, Description: "test query", Query: "test type:diff patternType:regexp", Owner: *args.Owner}}, nil
 	})
-	ss.CountSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32) (int, error) {
+	ss.CountFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs) (int, error) {
 		return 1, nil
 	})
 
@@ -86,12 +80,10 @@ func TestSavedSearchesForSameUser(t *testing.T) {
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	args := savedSearchesArgs{
-		ConnectionResolverArgs: graphqlutil.ConnectionResolverArgs{First: &key},
-		Namespace:              MarshalUserID(key),
-	}
+	ownerID := MarshalUserID(userID)
+	args := savedSearchesArgs{Owner: &ownerID, ConnectionResolverArgs: dummyConnectionResolverArgs}
 
-	resolver, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(key)), args)
+	resolver, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(userID)), args)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,12 +94,10 @@ func TestSavedSearchesForSameUser(t *testing.T) {
 	}
 
 	wantNodes := []*savedSearchResolver{{db, types.SavedSearch{
-		ID:              key,
-		Description:     "test query",
-		Query:           "test type:diff patternType:regexp",
-		UserID:          &key,
-		OrgID:           nil,
-		SlackWebhookURL: nil,
+		ID:          1,
+		Description: "test query",
+		Query:       "test type:diff patternType:regexp",
+		Owner:       types.NamespaceUser(userID),
 	}}}
 	if !reflect.DeepEqual(nodes, wantNodes) {
 		t.Errorf("got %v+, want %v+", nodes[0], wantNodes[0])
@@ -115,52 +105,48 @@ func TestSavedSearchesForSameUser(t *testing.T) {
 }
 
 func TestSavedSearchesForDifferentUser(t *testing.T) {
-	key := int32(1)
 	userID := int32(2)
-
 	users := dbmocks.NewMockUserStore()
-	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: false, ID: userID}, nil)
+	users.GetByIDFunc.SetDefaultReturn(&types.User{ID: userID}, nil)
 
 	ss := dbmocks.NewMockSavedSearchStore()
-	ss.ListSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
-		return []*types.SavedSearch{{ID: key, Description: "test query", Query: "test type:diff patternType:regexp", UserID: userID, OrgID: nil}}, nil
+	ss.ListFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
+		panic("should fail auth check and never be called")
 	})
-	ss.CountSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32) (int, error) {
-		return 1, nil
+	ss.CountFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs) (int, error) {
+		panic("should fail auth check and never be called")
 	})
 
 	db := dbmocks.NewMockDB()
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	args := savedSearchesArgs{
-		ConnectionResolverArgs: graphqlutil.ConnectionResolverArgs{First: &key},
-		Namespace:              MarshalUserID(key),
-	}
+	ownerID := MarshalUserID(3)
+	args := savedSearchesArgs{Owner: &ownerID, ConnectionResolverArgs: dummyConnectionResolverArgs}
 
 	_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(userID)), args)
 	if err == nil {
-		t.Error("got nil, want error to be returned for accessing saved searches of different user by non site admin.")
+		t.Error("got nil, want error to be returned for accessing saved searches of different user by non-site admin")
 	}
 }
 
 func TestSavedSearchesForDifferentOrg(t *testing.T) {
-	key := int32(1)
-
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: false, ID: key}, nil)
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: false, ID: key}, nil)
+	users.GetByIDFunc.SetDefaultReturn(&types.User{ID: userID}, nil)
+	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: userID}, nil)
 
+	orgID := int32(2)
 	om := dbmocks.NewMockOrgMemberStore()
 	om.GetByOrgIDAndUserIDFunc.SetDefaultHook(func(ctx context.Context, oid, uid int32) (*types.OrgMembership, error) {
 		return nil, nil
 	})
 
 	ss := dbmocks.NewMockSavedSearchStore()
-	ss.ListSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
-		return []*types.SavedSearch{{ID: key, Description: "test query", Query: "test type:diff patternType:regexp", UserID: nil, OrgID: &key}}, nil
+	ss.ListFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs, paginationArgs *database.PaginationArgs) ([]*types.SavedSearch, error) {
+		return []*types.SavedSearch{{ID: 1, Description: "test query", Query: "test type:diff patternType:regexp", Owner: types.NamespaceOrg(orgID)}}, nil
 	})
-	ss.CountSavedSearchesByOrgOrUserFunc.SetDefaultHook(func(_ context.Context, userID, orgId *int32) (int, error) {
+	ss.CountFunc.SetDefaultHook(func(_ context.Context, args database.SavedSearchListArgs) (int, error) {
 		return 1, nil
 	})
 
@@ -169,12 +155,10 @@ func TestSavedSearchesForDifferentOrg(t *testing.T) {
 	db.OrgMembersFunc.SetDefaultReturn(om)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	args := savedSearchesArgs{
-		ConnectionResolverArgs: graphqlutil.ConnectionResolverArgs{First: &key},
-		Namespace:              MarshalOrgID(key),
-	}
+	ownerID := MarshalOrgID(orgID)
+	args := savedSearchesArgs{Owner: &ownerID, ConnectionResolverArgs: dummyConnectionResolverArgs}
 
-	if _, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(key)), args); err != auth.ErrNotAnOrgMember {
+	if _, err := newSchemaResolver(db, gitserver.NewTestClient(t)).SavedSearches(actor.WithActor(context.Background(), actor.FromUser(userID)), args); err != auth.ErrNotAnOrgMember {
 		t.Errorf("got %v+, want %v+", err, auth.ErrNotAnOrgMember)
 	}
 }
@@ -183,21 +167,18 @@ func TestSavedSearchByIDOwner(t *testing.T) {
 	ctx := context.Background()
 
 	userID := int32(1)
-	ssID := marshalSavedSearchID(1)
+	fixtureID := int32(1)
 
 	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: false, ID: userID}, nil)
+	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: userID}, nil)
 
 	ss := dbmocks.NewMockSavedSearchStore()
 	ss.GetByIDFunc.SetDefaultReturn(
-		&api.SavedQuerySpecAndConfig{
-			Spec: api.SavedQueryIDSpec{},
-			Config: api.ConfigSavedQuery{
-				UserID:      &userID,
-				Description: "test query",
-				Query:       "test type:diff patternType:regexp",
-				OrgID:       nil,
-			},
+		&types.SavedSearch{
+			ID:          fixtureID,
+			Description: "test query",
+			Query:       "test type:diff patternType:regexp",
+			Owner:       types.NamespaceUser(userID),
 		},
 		nil,
 	)
@@ -206,22 +187,19 @@ func TestSavedSearchByIDOwner(t *testing.T) {
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	ctx = actor.WithActor(ctx, &actor.Actor{
-		UID: userID,
-	})
+	ctx = actor.WithActor(ctx, &actor.Actor{UID: userID})
 
-	savedSearch, err := newSchemaResolver(db, gitserver.NewTestClient(t)).savedSearchByID(ctx, ssID)
+	savedSearch, err := newSchemaResolver(db, gitserver.NewTestClient(t)).savedSearchByID(ctx, marshalSavedSearchID(fixtureID))
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := &savedSearchResolver{
 		db: db,
 		s: types.SavedSearch{
-			ID:          userID,
+			ID:          fixtureID,
 			Description: "test query",
 			Query:       "test type:diff patternType:regexp",
-			UserID:      &userID,
-			OrgID:       nil,
+			Owner:       types.NamespaceUser(userID),
 		},
 	}
 
@@ -231,24 +209,20 @@ func TestSavedSearchByIDOwner(t *testing.T) {
 }
 
 func TestSavedSearchByIDNonOwner(t *testing.T) {
-	// Non owners, including site admins cannot view a user's saved searches
+	// Non-owners cannot view a user's saved searches.
 	userID := int32(1)
-	adminID := int32(2)
-	ssID := marshalSavedSearchID(1)
+	otherUserID := int32(2)
+	fixtureID := marshalSavedSearchID(1)
 
 	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: adminID}, nil)
+	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: otherUserID}, nil)
 
 	ss := dbmocks.NewMockSavedSearchStore()
 	ss.GetByIDFunc.SetDefaultReturn(
-		&api.SavedQuerySpecAndConfig{
-			Spec: api.SavedQueryIDSpec{},
-			Config: api.ConfigSavedQuery{
-				UserID:      &userID,
-				Description: "test query",
-				Query:       "test type:diff patternType:regexp",
-				OrgID:       nil,
-			},
+		&types.SavedSearch{
+			Description: "test query",
+			Query:       "test type:diff patternType:regexp",
+			Owner:       types.NamespaceUser(userID),
 		},
 		nil,
 	)
@@ -257,11 +231,9 @@ func TestSavedSearchByIDNonOwner(t *testing.T) {
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	ctx := actor.WithActor(context.Background(), &actor.Actor{
-		UID: adminID,
-	})
+	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: otherUserID})
 
-	_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).savedSearchByID(ctx, ssID)
+	_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).savedSearchByID(ctx, fixtureID)
 	t.Log(err)
 	if err == nil {
 		t.Fatal("expected an error")
@@ -269,23 +241,19 @@ func TestSavedSearchByIDNonOwner(t *testing.T) {
 }
 
 func TestCreateSavedSearch(t *testing.T) {
-	key := int32(1)
-
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: key}, nil)
+	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: userID}, nil)
 
-	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: key})
+	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: userID})
 
 	ss := dbmocks.NewMockSavedSearchStore()
 	ss.CreateFunc.SetDefaultHook(func(_ context.Context, newSavedSearch *types.SavedSearch) (*types.SavedSearch, error) {
 		return &types.SavedSearch{
-			ID:          key,
+			ID:          1,
 			Description: newSavedSearch.Description,
 			Query:       newSavedSearch.Query,
-			Notify:      newSavedSearch.Notify,
-			NotifySlack: newSavedSearch.NotifySlack,
-			UserID:      newSavedSearch.UserID,
-			OrgID:       newSavedSearch.OrgID,
+			Owner:       newSavedSearch.Owner,
 		}, nil
 	})
 
@@ -293,26 +261,21 @@ func TestCreateSavedSearch(t *testing.T) {
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	userID := MarshalUserID(key)
 	savedSearches, err := newSchemaResolver(db, gitserver.NewTestClient(t)).CreateSavedSearch(ctx, &struct {
-		Description string
-		Query       string
-		NotifyOwner bool
-		NotifySlack bool
-		OrgID       *graphql.ID
-		UserID      *graphql.ID
-	}{Description: "test query", Query: "test type:diff patternType:regexp", NotifyOwner: true, NotifySlack: false, OrgID: nil, UserID: &userID})
+		Input savedSearchInput
+	}{Input: savedSearchInput{
+		Description: "test query",
+		Query:       "test type:diff patternType:regexp",
+		Owner:       MarshalUserID(userID),
+	}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := &savedSearchResolver{db, types.SavedSearch{
-		ID:          key,
+		ID:          1,
 		Description: "test query",
 		Query:       "test type:diff patternType:regexp",
-		Notify:      true,
-		NotifySlack: false,
-		OrgID:       nil,
-		UserID:      &key,
+		Owner:       types.NamespaceUser(userID),
 	}}
 
 	mockrequire.Called(t, ss.CreateFunc)
@@ -323,73 +286,59 @@ func TestCreateSavedSearch(t *testing.T) {
 
 	// Ensure create saved search errors when patternType is not provided in the query.
 	_, err = newSchemaResolver(db, gitserver.NewTestClient(t)).CreateSavedSearch(ctx, &struct {
-		Description string
-		Query       string
-		NotifyOwner bool
-		NotifySlack bool
-		OrgID       *graphql.ID
-		UserID      *graphql.ID
-	}{Description: "test query", Query: "test type:diff", NotifyOwner: true, NotifySlack: false, OrgID: nil, UserID: &userID})
+		Input savedSearchInput
+	}{Input: savedSearchInput{
+		Description: "test query",
+		Query:       "test type:diff",
+		Owner:       MarshalUserID(userID),
+	}})
 	if err == nil {
 		t.Error("Expected error for createSavedSearch when query does not provide a patternType: field.")
 	}
 }
 
 func TestUpdateSavedSearch(t *testing.T) {
-	key := int32(1)
+	fixtureID := int32(1)
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: key}, nil)
+	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: userID}, nil)
 
-	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: key})
+	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: userID})
 
 	ss := dbmocks.NewMockSavedSearchStore()
 	ss.UpdateFunc.SetDefaultHook(func(ctx context.Context, savedSearch *types.SavedSearch) (*types.SavedSearch, error) {
 		return &types.SavedSearch{
-			ID:          key,
+			ID:          fixtureID,
 			Description: savedSearch.Description,
 			Query:       savedSearch.Query,
-			Notify:      savedSearch.Notify,
-			NotifySlack: savedSearch.NotifySlack,
-			UserID:      savedSearch.UserID,
-			OrgID:       savedSearch.OrgID,
+			Owner:       savedSearch.Owner,
 		}, nil
 	})
-	ss.GetByIDFunc.SetDefaultReturn(&api.SavedQuerySpecAndConfig{
-		Config: api.ConfigSavedQuery{
-			UserID: &key,
-		},
-	}, nil)
+	ss.GetByIDFunc.SetDefaultReturn(&types.SavedSearch{Owner: types.NamespaceUser(userID)}, nil)
 
 	db := dbmocks.NewMockDB()
 	db.UsersFunc.SetDefaultReturn(users)
 	db.SavedSearchesFunc.SetDefaultReturn(ss)
 
-	userID := MarshalUserID(key)
 	savedSearches, err := newSchemaResolver(db, gitserver.NewTestClient(t)).UpdateSavedSearch(ctx, &struct {
-		ID          graphql.ID
-		Description string
-		Query       string
-		NotifyOwner bool
-		NotifySlack bool
-		OrgID       *graphql.ID
-		UserID      *graphql.ID
+		ID    graphql.ID
+		Input savedSearchUpdateInput
 	}{
-		ID:          marshalSavedSearchID(key),
-		Description: "updated query description",
-		Query:       "test type:diff patternType:regexp",
-		OrgID:       nil,
-		UserID:      &userID,
+		ID: marshalSavedSearchID(fixtureID),
+		Input: savedSearchUpdateInput{
+			Description: "updated query description",
+			Query:       "test type:diff patternType:regexp",
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := &savedSearchResolver{db, types.SavedSearch{
-		ID:          key,
+		ID:          fixtureID,
 		Description: "updated query description",
 		Query:       "test type:diff patternType:regexp",
-		OrgID:       nil,
-		UserID:      &key,
+		Owner:       types.NamespaceUser(userID),
 	}}
 
 	mockrequire.Called(t, ss.UpdateFunc)
@@ -400,14 +349,9 @@ func TestUpdateSavedSearch(t *testing.T) {
 
 	// Ensure update saved search errors when patternType is not provided in the query.
 	_, err = newSchemaResolver(db, gitserver.NewTestClient(t)).UpdateSavedSearch(ctx, &struct {
-		ID          graphql.ID
-		Description string
-		Query       string
-		NotifyOwner bool
-		NotifySlack bool
-		OrgID       *graphql.ID
-		UserID      *graphql.ID
-	}{ID: marshalSavedSearchID(key), Description: "updated query description", Query: "test type:diff", NotifyOwner: true, NotifySlack: false, OrgID: nil, UserID: &userID})
+		ID    graphql.ID
+		Input savedSearchUpdateInput
+	}{ID: marshalSavedSearchID(fixtureID), Input: savedSearchUpdateInput{Description: "updated query description", Query: "test type:diff"}})
 	if err == nil {
 		t.Error("Expected error for updateSavedSearch when query does not provide a patternType: field.")
 	}
@@ -472,10 +416,10 @@ func TestUpdateSavedSearchPermissions(t *testing.T) {
 			savedSearches.UpdateFunc.SetDefaultHook(func(_ context.Context, ss *types.SavedSearch) (*types.SavedSearch, error) {
 				return ss, nil
 			})
-			savedSearches.GetByIDFunc.SetDefaultReturn(&api.SavedQuerySpecAndConfig{
-				Config: api.ConfigSavedQuery{
-					UserID: tt.ssUserID,
-					OrgID:  tt.ssOrgID,
+			savedSearches.GetByIDFunc.SetDefaultReturn(&types.SavedSearch{
+				Owner: types.Namespace{
+					User: tt.ssUserID,
+					Org:  tt.ssOrgID,
 				},
 			}, nil)
 
@@ -493,16 +437,13 @@ func TestUpdateSavedSearchPermissions(t *testing.T) {
 			db.OrgMembersFunc.SetDefaultReturn(orgMembers)
 
 			_, err := newSchemaResolver(db, gitserver.NewTestClient(t)).UpdateSavedSearch(ctx, &struct {
-				ID          graphql.ID
-				Description string
-				Query       string
-				NotifyOwner bool
-				NotifySlack bool
-				OrgID       *graphql.ID
-				UserID      *graphql.ID
+				ID    graphql.ID
+				Input savedSearchUpdateInput
 			}{
-				ID:    marshalSavedSearchID(1),
-				Query: "patterntype:literal",
+				ID: marshalSavedSearchID(1),
+				Input: savedSearchUpdateInput{
+					Query: "patterntype:literal",
+				},
 			})
 			if tt.errIs == nil {
 				require.NoError(t, err)
@@ -514,25 +455,18 @@ func TestUpdateSavedSearchPermissions(t *testing.T) {
 }
 
 func TestDeleteSavedSearch(t *testing.T) {
-	key := int32(1)
+	userID := int32(1)
 	users := dbmocks.NewMockUserStore()
-	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: key}, nil)
+	users.GetByIDFunc.SetDefaultReturn(&types.User{SiteAdmin: true, ID: userID}, nil)
 
-	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: key})
+	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: userID})
 
 	ss := dbmocks.NewMockSavedSearchStore()
-	ss.GetByIDFunc.SetDefaultReturn(&api.SavedQuerySpecAndConfig{
-		Spec: api.SavedQueryIDSpec{
-			Subject: api.SettingsSubject{User: &key},
-			Key:     "1",
-		},
-		Config: api.ConfigSavedQuery{
-			Key:         "1",
-			Description: "test query",
-			Query:       "test type:diff",
-			UserID:      &key,
-			OrgID:       nil,
-		},
+	ss.GetByIDFunc.SetDefaultReturn(&types.SavedSearch{
+		ID:          1,
+		Description: "test query",
+		Query:       "test type:diff",
+		Owner:       types.NamespaceUser(userID),
 	}, nil)
 
 	ss.DeleteFunc.SetDefaultReturn(nil)
@@ -568,15 +502,18 @@ func TestSavedSearchesConnectionStore(t *testing.T) {
 		_, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
 			Description: "Test Search",
 			Query:       "r:src-cli",
-			UserID:      &user.ID,
+			Owner:       types.NamespaceUser(user.ID),
 		})
 		require.NoError(t, err)
 	}
 
+	owner := types.NamespaceUser(user.ID)
 	connectionStore := &savedSearchesConnectionStore{
-		db:     db,
-		userID: &user.ID,
+		db:       db,
+		listArgs: database.SavedSearchListArgs{Owner: &owner},
 	}
 
 	graphqlutil.TestConnectionResolverStoreSuite(t, connectionStore)
 }
+
+var dummyConnectionResolverArgs = graphqlutil.ConnectionResolverArgs{First: pointers.Ptr[int32](1)}

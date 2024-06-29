@@ -3,10 +3,10 @@ import { describe, expect, test } from 'vitest'
 import { createAggregateError, isErrorLike } from '@sourcegraph/common'
 
 import {
-    type CustomMergeFunctions,
     gqlToCascade,
     merge,
     mergeSettings,
+    type CustomMergeFunctions,
     type Settings,
     type SettingsCascade,
     type SettingsSubject,
@@ -198,7 +198,6 @@ describe('mergeSettings', () => {
                             key: '1',
                             description: 'global saved query',
                             query: 'type:diff global',
-                            notify: true,
                         },
                     ],
                 },
@@ -208,7 +207,6 @@ describe('mergeSettings', () => {
                             key: '2',
                             description: 'org saved query',
                             query: 'type:diff org',
-                            notify: true,
                         },
                     ],
                 },
@@ -218,7 +216,6 @@ describe('mergeSettings', () => {
                             key: '3',
                             description: 'user saved query',
                             query: 'type:diff user',
-                            notify: true,
                         },
                     ],
                 },
@@ -229,19 +226,16 @@ describe('mergeSettings', () => {
                     key: '1',
                     description: 'global saved query',
                     query: 'type:diff global',
-                    notify: true,
                 },
                 {
                     key: '2',
                     description: 'org saved query',
                     query: 'type:diff org',
-                    notify: true,
                 },
                 {
                     key: '3',
                     description: 'user saved query',
                     query: 'type:diff user',
-                    notify: true,
                 },
             ],
         }))

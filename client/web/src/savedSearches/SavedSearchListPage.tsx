@@ -1,27 +1,26 @@
-import * as React from 'react'
+import { useCallback, useEffect, type FunctionComponent, type MutableRefObject, type PropsWithChildren } from 'react'
 
-import { mdiMessageTextOutline, mdiCog, mdiDelete, mdiPlus } from '@mdi/js'
+import { mdiPlus } from '@mdi/js'
 import { VisuallyHidden } from '@reach/visually-hidden'
 import classNames from 'classnames'
 import { useLocation } from 'react-router-dom'
-import { Subject, Subscription } from 'rxjs'
-import { catchError, map, switchMap } from 'rxjs/operators'
 import { useCallbackRef } from 'use-callback-ref'
 
 import { logger } from '@sourcegraph/common'
+import { useMutation } from '@sourcegraph/http-client'
 import type { SearchPatternTypeProps } from '@sourcegraph/shared/src/search'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { buildSearchURLQuery } from '@sourcegraph/shared/src/util/url'
 import {
-    Container,
-    PageHeader,
-    LoadingSpinner,
     Button,
-    Link,
-    Icon,
-    Tooltip,
+    Code,
+    Container,
     ErrorAlert,
+    H2,
+    Icon,
+    Link,
+    LoadingSpinner,
+    PageHeader,
     PageSwitcher,
 } from '@sourcegraph/wildcard'
 
@@ -30,122 +29,90 @@ import { PageTitle } from '../components/PageTitle'
 import type { SavedSearchFields, SavedSearchesResult, SavedSearchesVariables } from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
 import type { NamespaceAreaContext } from '../namespaces/NamespaceArea'
-import { deleteSavedSearch, savedSearchesQuery } from '../search/backend'
+import { namespaceTelemetryMetadata } from '../namespaces/telemetry'
 import { useNavbarQueryState } from '../stores'
+
+import { deleteSavedSearchMutation, savedSearchesQuery } from './backend'
 
 import styles from './SavedSearchListPage.module.scss'
 
-interface NodeProps extends SearchPatternTypeProps, TelemetryV2Props {
-    namespaceType: NamespaceAreaContext['namespace']['__typename']
-    savedSearch: SavedSearchFields
-    onDelete: () => void
-    linkRef: React.MutableRefObject<HTMLAnchorElement | null> | null
-}
+const SavedSearchNode: FunctionComponent<
+    SearchPatternTypeProps &
+        TelemetryV2Props & {
+            namespace: Pick<NamespaceAreaContext['namespace'], '__typename'>
+            savedSearch: SavedSearchFields
+            onDelete: () => void
+            linkRef: MutableRefObject<HTMLAnchorElement | null> | null
+        }
+> = ({ savedSearch, patternType, onDelete, telemetryRecorder, namespace, linkRef }) => {
+    const [deleteSavedSearch, { loading }] = useMutation(deleteSavedSearchMutation)
 
-interface NodeState {
-    isDeleting: boolean
-}
-
-class SavedSearchNode extends React.PureComponent<NodeProps, NodeState> {
-    constructor(props: NodeProps) {
-        super(props)
-        this.state = { isDeleting: false }
-    }
-
-    private subscriptions = new Subscription()
-    private delete = new Subject<SavedSearchFields>()
-
-    public componentDidMount(): void {
-        this.subscriptions.add(
-            this.delete
-                .pipe(
-                    switchMap(search =>
-                        deleteSavedSearch(search.id).pipe(
-                            map(() => undefined),
-                            catchError(error => {
-                                logger.error(error)
-                                return []
-                            })
-                        )
-                    )
-                )
-                .subscribe(() => {
-                    EVENT_LOGGER.log('SavedSearchDeleted')
-                    this.props.telemetryRecorder.recordEvent(
-                        `${this.props.namespaceType.toLowerCase()}.savedSearch`,
-                        'delete'
-                    )
-                    this.setState({ isDeleting: false })
-                    this.props.onDelete()
-                })
-        )
-    }
-    public render(): JSX.Element | null {
-        return (
-            <div className={classNames(styles.row, 'list-group-item test-saved-search-list-page-row')}>
-                <div className="d-flex">
-                    <Icon className={styles.rowIcon} aria-hidden={true} svgPath={mdiMessageTextOutline} />
-                    <Link
-                        to={
-                            '/search?' +
-                            buildSearchURLQuery(this.props.savedSearch.query, this.props.patternType, false)
-                        }
-                        ref={this.props.linkRef}
-                    >
-                        <div className="test-saved-search-list-page-row-title">
-                            <VisuallyHidden>Run saved search: </VisuallyHidden>
-                            {this.props.savedSearch.description}
-                        </div>
-                    </Link>
-                </div>
-                <div>
-                    <Tooltip content="Saved search settings">
-                        <Button
-                            className="test-edit-saved-search-button"
-                            to={this.props.savedSearch.id}
-                            variant="secondary"
-                            size="sm"
-                            as={Link}
-                        >
-                            <Icon aria-hidden={true} svgPath={mdiCog} /> Settings
-                        </Button>
-                    </Tooltip>{' '}
-                    <Tooltip content="Delete saved search">
-                        <Button
-                            aria-label="Delete"
-                            className="test-delete-saved-search-button"
-                            onClick={this.onDelete}
-                            disabled={this.state.isDeleting}
-                            variant="danger"
-                            size="sm"
-                        >
-                            <Icon aria-hidden={true} svgPath={mdiDelete} />
-                        </Button>
-                    </Tooltip>
-                </div>
-                {this.state.isDeleting && (
-                    <VisuallyHidden aria-live="polite">{`Deleted saved search: ${this.props.savedSearch.description}`}</VisuallyHidden>
-                )}
-            </div>
-        )
-    }
-
-    private onDelete = (): void => {
-        if (!window.confirm(`Delete the saved search ${this.props.savedSearch.description}?`)) {
+    const handleDelete = useCallback(async (): Promise<void> => {
+        if (!window.confirm(`Delete the saved search ${JSON.stringify(savedSearch.description)}?`)) {
             return
         }
-        this.setState({ isDeleting: true })
-        this.delete.next(this.props.savedSearch)
-    }
+        try {
+            await deleteSavedSearch({ variables: { id: savedSearch.id } })
+            telemetryRecorder.recordEvent('savedSearches', 'delete', {
+                metadata: namespaceTelemetryMetadata(namespace),
+            })
+            onDelete()
+        } catch (error) {
+            logger.error(error)
+        }
+    }, [deleteSavedSearch, onDelete, savedSearch, telemetryRecorder, namespace])
+
+    return (
+        <div className={classNames(styles.row, 'list-group-item test-saved-search-list-page-row')}>
+            <div className="flex-1">
+                <H2 className="text-base mb-0">
+                    <Link
+                        to={'/search?' + buildSearchURLQuery(savedSearch.query, patternType, false)}
+                        ref={linkRef}
+                        className="font-weight-bold"
+                    >
+                        <span className="test-saved-search-list-page-row-title">
+                            <VisuallyHidden>Run saved search: </VisuallyHidden>
+                            {savedSearch.description}
+                        </span>
+                    </Link>
+                </H2>
+                <Code>{savedSearch.query}</Code>
+            </div>
+            <div className="flex-0">
+                <Button
+                    className="test-edit-saved-search-button"
+                    to={savedSearch.id}
+                    variant="secondary"
+                    size="sm"
+                    as={Link}
+                >
+                    Edit
+                </Button>{' '}
+                <Button
+                    aria-label="Delete"
+                    className="test-delete-saved-search-button"
+                    onClick={handleDelete}
+                    disabled={loading}
+                    variant="danger"
+                    size="sm"
+                >
+                    Delete
+                </Button>
+            </div>
+            {loading && (
+                <VisuallyHidden aria-live="polite">{`Deleted saved search: ${savedSearch.description}`}</VisuallyHidden>
+            )}
+        </div>
+    )
 }
 
-interface Props extends NamespaceProps {}
-
-export const SavedSearchListPage: React.FunctionComponent<Props> = props => {
-    React.useEffect(() => {
-        EVENT_LOGGER.logViewEvent('SavedSearchListPage')
-        props.telemetryRecorder.recordEvent(`${props.namespace.__typename.toLowerCase()}.savedSearches.list`, 'view')
-    }, [props.telemetryRecorder, props.namespace.__typename])
+export const SavedSearchListPage: FunctionComponent<NamespaceProps> = ({ namespace, telemetryRecorder }) => {
+    useEffect(() => {
+        telemetryRecorder.recordEvent('savedSearches.list', 'view', {
+            metadata: namespaceTelemetryMetadata(namespace),
+        })
+    }, [telemetryRecorder, namespace])
 
     const { connection, loading, error, refetch, ...paginationProps } = usePageSwitcherPagination<
         SavedSearchesResult,
@@ -153,7 +120,7 @@ export const SavedSearchListPage: React.FunctionComponent<Props> = props => {
         SavedSearchFields
     >({
         query: savedSearchesQuery,
-        variables: { namespace: props.namespace.id },
+        variables: { owner: namespace.id },
         getConnection: ({ data }) => data?.savedSearches || undefined,
     })
 
@@ -161,8 +128,8 @@ export const SavedSearchListPage: React.FunctionComponent<Props> = props => {
         <div className={styles.savedSearchListPage} data-testid="saved-searches-list-page">
             <PageHeader
                 actions={
-                    <Button to="add" className="test-add-saved-search-button" variant="primary" as={Link}>
-                        <Icon aria-hidden={true} svgPath={mdiPlus} /> Add saved search
+                    <Button to="new" className="test-new-saved-search-button" variant="primary" as={Link}>
+                        <Icon aria-hidden={true} svgPath={mdiPlus} /> New saved search
                     </Button>
                 }
                 className="mb-3"
@@ -173,7 +140,8 @@ export const SavedSearchListPage: React.FunctionComponent<Props> = props => {
                 </PageHeader.Heading>
             </PageHeader>
             <SavedSearchListPageContent
-                {...props}
+                namespace={namespace}
+                telemetryRecorder={telemetryRecorder}
                 onDelete={refetch}
                 savedSearches={connection?.nodes || []}
                 error={error}
@@ -184,20 +152,16 @@ export const SavedSearchListPage: React.FunctionComponent<Props> = props => {
     )
 }
 
-interface SavedSearchListPageContentProps extends Props {
-    onDelete: () => void
-    savedSearches: SavedSearchFields[]
-    error: unknown
-    loading: boolean
-}
-
-const SavedSearchListPageContent: React.FunctionComponent<React.PropsWithChildren<SavedSearchListPageContentProps>> = ({
-    namespace,
-    savedSearches,
-    error,
-    loading,
-    ...props
-}) => {
+const SavedSearchListPageContent: FunctionComponent<
+    PropsWithChildren<
+        {
+            onDelete: () => void
+            savedSearches: SavedSearchFields[]
+            error: unknown
+            loading: boolean
+        } & NamespaceProps
+    >
+> = ({ namespace, savedSearches, error, loading, ...props }) => {
     const location = useLocation()
     const searchPatternType = useNavbarQueryState(state => state.searchPatternType)
     const callbackReference = useCallbackRef<HTMLAnchorElement>(null, ref => ref?.focus())
@@ -217,14 +181,14 @@ const SavedSearchListPageContent: React.FunctionComponent<React.PropsWithChildre
     return (
         <Container>
             <div className="list-group list-group-flush">
-                {savedSearches.map(search => (
+                {savedSearches.map(savedSearch => (
                     <SavedSearchNode
-                        key={search.id}
-                        linkRef={location.state?.description === search.description ? callbackReference : null}
-                        {...props}
+                        key={savedSearch.id}
+                        linkRef={location.state?.description === savedSearch.description ? callbackReference : null}
                         patternType={searchPatternType}
-                        savedSearch={search}
-                        namespaceType={namespace.__typename}
+                        savedSearch={savedSearch}
+                        namespace={namespace}
+                        {...props}
                     />
                 ))}
             </div>

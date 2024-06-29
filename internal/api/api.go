@@ -142,27 +142,3 @@ type Settings struct {
 	Contents     string          // the raw JSON (with comments and trailing commas allowed)
 	CreatedAt    time.Time       // the date when this settings value was created
 }
-
-type SavedQueryIDSpec struct {
-	Subject SettingsSubject
-	Key     string
-}
-
-// ConfigSavedQuery is the JSON shape of a saved query entry in the JSON configuration
-// (i.e., an entry in the {"search.savedQueries": [...]} array).
-type ConfigSavedQuery struct {
-	Key             string  `json:"key,omitempty"`
-	Description     string  `json:"description"`
-	Query           string  `json:"query"`
-	Notify          bool    `json:"notify,omitempty"`
-	NotifySlack     bool    `json:"notifySlack,omitempty"`
-	UserID          *int32  `json:"userID"`
-	OrgID           *int32  `json:"orgID"`
-	SlackWebhookURL *string `json:"slackWebhookURL"`
-}
-
-// SavedQuerySpecAndConfig represents a saved query configuration its unique ID.
-type SavedQuerySpecAndConfig struct {
-	Spec   SavedQueryIDSpec
-	Config ConfigSavedQuery
-}

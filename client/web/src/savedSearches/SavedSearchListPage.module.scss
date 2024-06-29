@@ -7,7 +7,6 @@
     align-items: center;
     justify-content: space-between;
     padding: 0;
-    font-weight: bold;
 
     &:not(:last-child) {
         padding-bottom: 1rem;
@@ -16,8 +15,4 @@
     + .row {
         padding-top: 1rem;
     }
-}
-
-.row--icon {
-    margin-right: 0.5rem;
 }

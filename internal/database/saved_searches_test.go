@@ -9,54 +9,9 @@ import (
 
 	"github.com/sourcegraph/log/logtest"
 
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 )
-
-func TestSavedSearchesIsEmpty(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	t.Parallel()
-	logger := logtest.Scoped(t)
-	db := NewDB(logger, dbtest.NewDB(t))
-	ctx := context.Background()
-	isEmpty, err := db.SavedSearches().IsEmpty(ctx)
-	if err != nil {
-		t.Fatal()
-	}
-	want := true
-	if want != isEmpty {
-		t.Errorf("want %v, got %v", want, isEmpty)
-	}
-
-	_, err = db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	_, err = db.SavedSearches().Create(ctx, fake)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	isEmpty, err = db.SavedSearches().IsEmpty(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want = false
-	if want != isEmpty {
-		t.Errorf("want %v, got %v", want, isEmpty)
-	}
-}
 
 func TestSavedSearchesCreate(t *testing.T) {
 	if testing.Short() {
@@ -67,34 +22,24 @@ func TestSavedSearchesCreate(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := NewDB(logger, dbtest.NewDB(t))
 	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	ss, err := db.SavedSearches().Create(ctx, fake)
+
+	user, err := db.Users().Create(ctx, NewUser{Username: "u"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ss == nil {
-		t.Fatalf("no saved search returned, create failed")
-	}
 
-	want := &types.SavedSearch{
-		ID:          1,
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
+	input := &types.SavedSearch{
+		Description: "d",
+		Query:       "q",
+		Owner:       types.NamespaceUser(user.ID),
 	}
-	if !reflect.DeepEqual(ss, want) {
-		t.Errorf("query is '%v', want '%v'", ss, want)
+	created, err := db.SavedSearches().Create(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input.ID = created.ID
+	if want := input; !reflect.DeepEqual(created, want) {
+		t.Errorf("got %+v, want %+v", created, want)
 	}
 }
 
@@ -107,16 +52,16 @@ func TestSavedSearchesUpdate(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := NewDB(logger, dbtest.NewDB(t))
 	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
+
+	user, err := db.Users().Create(ctx, NewUser{Username: "u"})
 	if err != nil {
-		t.Fatal("can't create user", err)
+		t.Fatal(err)
 	}
-	userID := int32(1)
+
 	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
+		Description: "d",
+		Query:       "q",
+		Owner:       types.NamespaceUser(user.ID),
 	}
 	_, err = db.SavedSearches().Create(ctx, fake)
 	if err != nil {
@@ -125,19 +70,16 @@ func TestSavedSearchesUpdate(t *testing.T) {
 
 	updated := &types.SavedSearch{
 		ID:          1,
-		Query:       "test2",
 		Description: "test2",
-		UserID:      &userID,
-		OrgID:       nil,
+		Query:       "test2",
+		Owner:       types.NamespaceUser(user.ID),
 	}
-
-	updatedSearch, err := db.SavedSearches().Update(ctx, updated)
+	got, err := db.SavedSearches().Update(ctx, updated)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if !reflect.DeepEqual(updatedSearch, updated) {
-		t.Errorf("updatedSearch is %v, want %v", updatedSearch, updated)
+	if !reflect.DeepEqual(got, updated) {
+		t.Errorf("got %+v, want %+v", got, updated)
 	}
 }
 
@@ -150,78 +92,28 @@ func TestSavedSearchesDelete(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := NewDB(logger, dbtest.NewDB(t))
 	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	_, err = db.SavedSearches().Create(ctx, fake)
+
+	user, err := db.Users().Create(ctx, NewUser{Username: "u"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = db.SavedSearches().Delete(ctx, 1)
+	fixture1, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
+		Description: "d",
+		Query:       "q",
+		Owner:       types.NamespaceUser(user.ID),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	allQueries, err := db.SavedSearches().ListAll(ctx)
-	if err != nil {
+	if err := db.SavedSearches().Delete(ctx, fixture1.ID); err != nil {
 		t.Fatal(err)
 	}
-
-	if len(allQueries) > 0 {
-		t.Error("expected no queries in saved_searches table")
-	}
-}
-
-func TestSavedSearchesGetByUserID(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	t.Parallel()
-	logger := logtest.Scoped(t)
-	db := NewDB(logger, dbtest.NewDB(t))
-	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	ss, err := db.SavedSearches().Create(ctx, fake)
-	if err != nil {
+	if got, err := db.SavedSearches().Count(ctx, SavedSearchListArgs{}); err != nil {
 		t.Fatal(err)
-	}
-
-	if ss == nil {
-		t.Fatalf("no saved search returned, create failed")
-	}
-	savedSearch, err := db.SavedSearches().ListSavedSearchesByUserID(ctx, 1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := []*types.SavedSearch{{
-		ID:          1,
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}}
-	if !reflect.DeepEqual(savedSearch, want) {
-		t.Errorf("query is '%v+', want '%v+'", savedSearch, want)
+	} else if got != 0 {
+		t.Error()
 	}
 }
 
@@ -234,43 +126,34 @@ func TestSavedSearchesGetByID(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := NewDB(logger, dbtest.NewDB(t))
 	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	ss, err := db.SavedSearches().Create(ctx, fake)
+
+	user, err := db.Users().Create(ctx, NewUser{Username: "u"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if ss == nil {
-		t.Fatalf("no saved search returned, create failed")
+	input := &types.SavedSearch{
+		Description: "d",
+		Query:       "q",
+		Owner:       types.NamespaceUser(user.ID),
 	}
-	savedSearch, err := db.SavedSearches().GetByID(ctx, ss.ID)
+	fixture1, err := db.SavedSearches().Create(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := &api.SavedQuerySpecAndConfig{Spec: api.SavedQueryIDSpec{Subject: api.SettingsSubject{User: &userID}, Key: "1"}, Config: api.ConfigSavedQuery{
-		Key:         "1",
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}}
 
-	if diff := cmp.Diff(want, savedSearch); diff != "" {
+	got, err := db.SavedSearches().GetByID(ctx, fixture1.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input.ID = got.ID
+	want := input
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("Mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestListSavedSearchesByUserID(t *testing.T) {
+func TestSavedSearches_ListCount(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -279,98 +162,90 @@ func TestListSavedSearchesByUserID(t *testing.T) {
 	logger := logtest.Scoped(t)
 	db := NewDB(logger, dbtest.NewDB(t))
 	ctx := context.Background()
-	_, err := db.Users().Create(ctx, NewUser{DisplayName: "test", Email: "test@test.com", Username: "test", Password: "test", EmailVerificationCode: "c2"})
-	if err != nil {
-		t.Fatal("can't create user", err)
-	}
-	userID := int32(1)
-	fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}
-	ss, err := db.SavedSearches().Create(ctx, fake)
+
+	user, err := db.Users().Create(ctx, NewUser{Username: "u"})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if ss == nil {
-		t.Fatalf("no saved search returned, create failed")
+	fixture1, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
+		Description: "fixture1",
+		Query:       "fixture1",
+		Owner:       types.NamespaceUser(user.ID),
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	org1, err := db.Orgs().Create(ctx, "org1", nil)
 	if err != nil {
-		t.Fatal("can't create org1", err)
+		t.Fatal(err)
 	}
 	org2, err := db.Orgs().Create(ctx, "org2", nil)
 	if err != nil {
-		t.Fatal("can't create org2", err)
+		t.Fatal(err)
 	}
-
-	orgFake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      nil,
-		OrgID:       &org1.ID,
-	}
-	orgSearch, err := db.SavedSearches().Create(ctx, orgFake)
+	fixture2, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
+		Description: "fixture2",
+		Query:       "fixture2",
+		Owner:       types.NamespaceOrg(org1.ID),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if orgSearch == nil {
-		t.Fatalf("no saved search returned, org saved search create failed")
-	}
-
-	org2Fake := &types.SavedSearch{
-		Query:       "test",
-		Description: "test",
-		UserID:      nil,
-		OrgID:       &org2.ID,
-	}
-	org2Search, err := db.SavedSearches().Create(ctx, org2Fake)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if org2Search == nil {
-		t.Fatalf("no saved search returned, org2 saved search create failed")
-	}
-
-	_, err = db.OrgMembers().Create(ctx, org1.ID, userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = db.OrgMembers().Create(ctx, org2.ID, userID)
+	fixture3, err := db.SavedSearches().Create(ctx, &types.SavedSearch{
+		Description: "fixture3",
+		Query:       "fixture3",
+		Owner:       types.NamespaceOrg(org2.ID),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	savedSearches, err := db.SavedSearches().ListSavedSearchesByUserID(ctx, userID)
-	if err != nil {
+	if _, err = db.OrgMembers().Create(ctx, org1.ID, user.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	want := []*types.SavedSearch{{
-		ID:          1,
-		Query:       "test",
-		Description: "test",
-		UserID:      &userID,
-		OrgID:       nil,
-	}, {
-		ID:          2,
-		Query:       "test",
-		Description: "test",
-		UserID:      nil,
-		OrgID:       &org1.ID,
-	}, {
-		ID:          3,
-		Query:       "test",
-		Description: "test",
-		UserID:      nil,
-		OrgID:       &org2.ID,
-	}}
+	testListCount := func(t *testing.T, args SavedSearchListArgs, want []*types.SavedSearch) {
+		t.Helper()
 
-	if !reflect.DeepEqual(savedSearches, want) {
-		t.Errorf("got %v, want %v", savedSearches, want)
+		got, err := db.SavedSearches().List(ctx, args, &PaginationArgs{Ascending: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Fatalf("Mismatch (-want +got):\n%s", diff)
+		}
+
+		gotCount, err := db.SavedSearches().Count(ctx, args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if wantCount := len(want); gotCount != wantCount {
+			t.Errorf("got count %d, want %d", gotCount, wantCount)
+		}
 	}
+
+	t.Run("list all", func(t *testing.T) {
+		testListCount(t, SavedSearchListArgs{}, []*types.SavedSearch{fixture1, fixture2, fixture3})
+	})
+
+	t.Run("list owned by user", func(t *testing.T) {
+		userNS := types.NamespaceUser(user.ID)
+		testListCount(t, SavedSearchListArgs{Owner: &userNS}, []*types.SavedSearch{fixture1})
+	})
+
+	t.Run("list owned by nonexistent user", func(t *testing.T) {
+		userNS := types.NamespaceUser(1234999 /* user doesn't exist */)
+		testListCount(t, SavedSearchListArgs{Owner: &userNS}, nil)
+	})
+
+	t.Run("list owned by org1", func(t *testing.T) {
+		orgNS := types.NamespaceOrg(org1.ID)
+		testListCount(t, SavedSearchListArgs{Owner: &orgNS}, []*types.SavedSearch{fixture2})
+	})
+
+	t.Run("affiliated with user", func(t *testing.T) {
+		testListCount(t, SavedSearchListArgs{AffiliatedUser: &user.ID}, []*types.SavedSearch{fixture1, fixture2})
+	})
 }
