@@ -53,6 +53,13 @@ type Model struct {
 	// specific like "gpt-4o-2024-05-13".
 	ModelName string `json:"modelName"`
 
+	// DESIGN BUG? Consider breaking all fields below this comment into a separate
+	// `ModelMetadata` type. And then removing `DefaultModelConfiguration` entirely.
+	//
+	// Also, consider making this data entirely optional too. (And maybe introduce
+	// category, status, and tier values of "unknown". Since those aren't especially
+	// useful outside of Cody Pro.
+
 	Capabilities []ModelCapability `json:"capabilities"`
 	Category     ModelCategory     `json:"category"`
 	Status       ModelStatus       `json:"status"`

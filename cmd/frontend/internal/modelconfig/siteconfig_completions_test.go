@@ -228,4 +228,94 @@ func TestConvertCompletionsConfig(t *testing.T) {
 			assert.EqualValues(t, "anthropic::unknown::anthropic.claude-instant-v1", siteModelConfig.DefaultModels.CodeCompletion)
 		})
 	})
+
+	t.Run("MaxTokens", func(t *testing.T) {
+		t.Run("Alising", func(t *testing.T) {
+			compConfig := loadCompletionsConfig(schema.Completions{
+				Provider: "sourcegraph",
+
+				// All 3x kinds of models from in the config point to the same model ID.
+				// But but one of them has a different MaxTokens set. So we need to
+				// update the ModelRef to disambiguate this case.
+				ChatModel:       "model-x",
+				CompletionModel: "model-x",
+				FastChatModel:   "model-x",
+
+				ChatModelMaxTokens:       10_000,
+				CompletionModelMaxTokens: 10_000,
+				FastChatModelMaxTokens:   5_000,
+			})
+			require.NotNil(t, compConfig)
+
+			siteModelConfig, err := convertCompletionsConfig(compConfig)
+			require.NoError(t, err)
+
+			// DefaultModels
+			require.NotNil(t, siteModelConfig.DefaultModels)
+			// Yes, it would make more sense to have "model-x_fast" instead of suffixing the two that shared
+			// an alias. But this is dependent on the ordering we check models for deduping.
+			assert.EqualValues(t, "sourcegraph::unknown::model-x_chat", siteModelConfig.DefaultModels.Chat)
+			assert.EqualValues(t, "sourcegraph::unknown::model-x_chat", siteModelConfig.DefaultModels.CodeCompletion)
+			assert.EqualValues(t, "sourcegraph::unknown::model-x", siteModelConfig.DefaultModels.FastChat)
+
+			// ModelOverrides. We only need two. Because Chat and Completions are using the same model,
+			// with the same number of max tokens.
+			require.Equal(t, 2, len(siteModelConfig.ModelOverrides))
+			{
+				model := siteModelConfig.ModelOverrides[0]
+				assert.EqualValues(t, "sourcegraph::unknown::model-x", model.ModelRef)
+				assert.EqualValues(t, 5000, model.ContextWindow.MaxInputTokens)
+			}
+			{
+				model := siteModelConfig.ModelOverrides[1]
+				assert.EqualValues(t, "sourcegraph::unknown::model-x_chat", model.ModelRef)
+				assert.EqualValues(t, 10_000, model.ContextWindow.MaxInputTokens)
+			}
+		})
+
+		t.Run("3-Way", func(t *testing.T) {
+			compConfig := loadCompletionsConfig(schema.Completions{
+				Provider: "sourcegraph",
+
+				ChatModel:       "model-x",
+				CompletionModel: "model-x",
+				FastChatModel:   "model-x",
+
+				ChatModelMaxTokens:       1_000,
+				CompletionModelMaxTokens: 2_000,
+				FastChatModelMaxTokens:   3_000,
+			})
+			require.NotNil(t, compConfig)
+
+			siteModelConfig, err := convertCompletionsConfig(compConfig)
+			require.NoError(t, err)
+
+			// DefaultModels
+			require.NotNil(t, siteModelConfig.DefaultModels)
+			// Yes, it would make more sense to have "model-x_fast" instead of suffixing the two that shared
+			// an alias. But this is dependent on the ordering we check models for deduping.
+			assert.EqualValues(t, "sourcegraph::unknown::model-x_chat", siteModelConfig.DefaultModels.Chat)
+			assert.EqualValues(t, "sourcegraph::unknown::model-x_completion", siteModelConfig.DefaultModels.CodeCompletion)
+			assert.EqualValues(t, "sourcegraph::unknown::model-x", siteModelConfig.DefaultModels.FastChat)
+
+			// The ModelOverrides slice is sorted by ModelRef, hence why
+			// the ModelRef that wasn't renamed ("model-x") comes first.
+			require.Equal(t, 3, len(siteModelConfig.ModelOverrides))
+			{
+				model := siteModelConfig.ModelOverrides[0]
+				assert.EqualValues(t, "sourcegraph::unknown::model-x", model.ModelRef)
+				assert.EqualValues(t, 3_000, model.ContextWindow.MaxInputTokens)
+			}
+			{
+				model := siteModelConfig.ModelOverrides[1]
+				assert.EqualValues(t, "sourcegraph::unknown::model-x_chat", model.ModelRef)
+				assert.EqualValues(t, 1_000, model.ContextWindow.MaxInputTokens)
+			}
+			{
+				model := siteModelConfig.ModelOverrides[2]
+				assert.EqualValues(t, "sourcegraph::unknown::model-x_completion", model.ModelRef)
+				assert.EqualValues(t, 2_000, model.ContextWindow.MaxInputTokens)
+			}
+		})
+	})
 }
