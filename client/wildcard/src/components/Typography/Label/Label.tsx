@@ -54,7 +54,13 @@ export const Label = React.forwardRef((props, reference) => {
 
         // Resolve label's labellable control with aria-labelledby
         // See https://github.com/sourcegraph/sourcegraph/pull/44676#pullrequestreview-1188749383
-        document.querySelector<HTMLElement>(`[aria-labelledby="${event.currentTarget.id}"]`)?.focus()
+        const labelID = event.currentTarget.id
+        if (labelID) {
+            const control = document.querySelector<HTMLElement>(`[aria-labelledby="${event.currentTarget.id}"]`)
+            if (control) {
+                focusAndSelectEnd(control)
+            }
+        }
         onClick?.(event)
     }
 
@@ -72,3 +78,21 @@ export const Label = React.forwardRef((props, reference) => {
         </Component>
     )
 }) as ForwardReferenceComponent<'label', LabelProps>
+
+function focusAndSelectEnd(element: HTMLElement): void {
+    element.focus()
+
+    if (element.isContentEditable) {
+        // Focusing a contenteditable element (unlike a native input element) will put the cursor at
+        // the start by default, which is not usually the desired behavior.
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        range.collapse(false)
+
+        const selection = window.getSelection()
+        if (selection) {
+            selection.removeAllRanges()
+            selection.addRange(range)
+        }
+    }
+}
