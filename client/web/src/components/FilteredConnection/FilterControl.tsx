@@ -39,9 +39,9 @@ interface FilterControlProps {
     filters: FilteredConnectionFilter[]
 
     /** Called when a filter is selected. */
-    onValueSelect: (filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue) => void
+    onValueSelect: (filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue['value']) => void
 
-    values: Map<string, FilteredConnectionFilterValue>
+    values: Record<string, FilteredConnectionFilterValue['value'] | null>
 }
 
 export const FilterControl: React.FunctionComponent<React.PropsWithChildren<FilterControlProps>> = ({
@@ -56,7 +56,7 @@ export const FilterControl: React.FunctionComponent<React.PropsWithChildren<Filt
             if (value === undefined) {
                 return
             }
-            onValueSelect(filter, value)
+            onValueSelect(filter, value.value)
         },
         [onValueSelect]
     )
@@ -70,7 +70,7 @@ export const FilterControl: React.FunctionComponent<React.PropsWithChildren<Filt
                             key={filter.id}
                             name={filter.id}
                             className="d-inline-flex flex-row"
-                            selected={values.get(filter.id)?.value}
+                            selected={values[filter.id] ?? undefined}
                             nodes={filter.values.map(({ value, label, tooltip }) => ({
                                 tooltip,
                                 label,
@@ -94,7 +94,7 @@ export const FilterControl: React.FunctionComponent<React.PropsWithChildren<Filt
                                     id=""
                                     name={filter.id}
                                     onChange={event => onChange(filter, event.currentTarget.value)}
-                                    value={values.get(filter.id)?.value}
+                                    value={values[filter.id] ?? undefined}
                                     className="mb-0"
                                     isCustomStyle={true}
                                 >

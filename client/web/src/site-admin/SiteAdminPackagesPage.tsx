@@ -6,27 +6,27 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { dataOrThrowErrors, useQuery } from '@sourcegraph/http-client'
 import { RepoLink } from '@sourcegraph/shared/src/components/RepoLink'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
+    Alert,
+    Button,
+    Code,
     Container,
     ErrorAlert,
+    Icon,
+    Input,
     Link,
     LoadingSpinner,
-    PageHeader,
-    Input,
-    useDebounce,
-    Button,
-    Alert,
-    Text,
-    Code,
-    Icon,
     Menu,
     MenuButton,
-    MenuList,
     MenuItem,
     MenuLink,
+    MenuList,
+    PageHeader,
     Position,
+    Text,
+    useDebounce,
 } from '@sourcegraph/wildcard'
 
 import { externalRepoIcon } from '../components/externalServices/externalServices'
@@ -41,11 +41,11 @@ import { ConnectionSummary } from '../components/FilteredConnection/ui'
 import { getFilterFromURL, getUrlQuery } from '../components/FilteredConnection/utils'
 import { PageTitle } from '../components/PageTitle'
 import type {
+    ExternalServiceKindsResult,
+    ExternalServiceKindsVariables,
     PackagesResult,
     PackagesVariables,
     SiteAdminPackageFields,
-    ExternalServiceKindsVariables,
-    ExternalServiceKindsResult,
 } from '../graphql-operations'
 
 import { EXTERNAL_SERVICE_KINDS, PACKAGES_QUERY } from './backend'
@@ -215,8 +215,8 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
         [ecosystemFilterValues]
     )
 
-    const [filterValues, setFilterValues] = useState<Map<string, FilteredConnectionFilterValue>>(() =>
-        getFilterFromURL(new URLSearchParams(location.search), filters)
+    const [filterValues, setFilterValues] = useState<Record<string, FilteredConnectionFilterValue['value'] | null>>(
+        () => getFilterFromURL(new URLSearchParams(location.search), filters)
     )
 
     const [searchValue, setSearchValue] = useState<string>(
@@ -254,7 +254,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
     }, [filterValues, filters, searchValue, location, navigate])
 
     const variables = useMemo<PackagesVariables>(() => {
-        const args = buildFilterArgs(filterValues)
+        const args = buildFilterArgs(filters, filterValues)
 
         return {
             name: query,
@@ -263,7 +263,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
             first: DEFAULT_FIRST,
             ...args,
         }
-    }, [filterValues, query])
+    }, [filters, filterValues, query])
 
     const {
         connection,
@@ -343,13 +343,10 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
                         <FilterControl
                             filters={filters}
                             values={filterValues}
-                            onValueSelect={(filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue) =>
-                                setFilterValues(values => {
-                                    const newValues = new Map(values)
-                                    newValues.set(filter.id, value)
-                                    return newValues
-                                })
-                            }
+                            onValueSelect={(
+                                filter: FilteredConnectionFilter,
+                                value: FilteredConnectionFilterValue['value'] | null
+                            ) => setFilterValues(values => ({ ...values, [filter.id]: value }))}
                         />
                         {connection && (
                             <ConnectionSummary

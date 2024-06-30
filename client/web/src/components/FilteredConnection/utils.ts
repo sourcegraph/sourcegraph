@@ -22,10 +22,9 @@ export const hasDisplayName = (value: unknown): value is { displayName: Scalars[
 export const getFilterFromURL = (
     searchParameters: URLSearchParams,
     filters: FilteredConnectionFilter[] | undefined
-): Map<string, FilteredConnectionFilterValue> => {
-    const values: Map<string, FilteredConnectionFilterValue> = new Map<string, FilteredConnectionFilterValue>()
-
-    if (filters === undefined || filters.length === 0) {
+): Record<string, FilteredConnectionFilterValue['value'] | null> => {
+    const values: Record<string, FilteredConnectionFilterValue['value'] | null> = {}
+    if (filters === undefined) {
         return values
     }
     for (const filter of filters) {
@@ -33,12 +32,12 @@ export const getFilterFromURL = (
         if (urlValue !== null) {
             const value = filter.values.find(value => value.value === urlValue)
             if (value !== undefined) {
-                values.set(filter.id, value)
+                values[filter.id] = value.value
                 continue
             }
         }
         // couldn't find a value, add default
-        values.set(filter.id, filter.values[0])
+        values[filter.id] = filter.values[0].value
     }
     return values
 }
@@ -70,7 +69,7 @@ export interface GetUrlQueryParameters {
         default: number
     }
     query?: string
-    filterValues?: Map<string, FilteredConnectionFilterValue>
+    filterValues?: Record<string, FilteredConnectionFilterValue['value'] | null>
     filters?: FilteredConnectionFilter[]
     visibleResultCount?: number
     search: Location['search']
@@ -99,12 +98,12 @@ export const getUrlQuery = ({
 
     if (filterValues && filters) {
         for (const filter of filters) {
-            const value = filterValues.get(filter.id)
-            if (value === undefined) {
+            const value = filterValues[filter.id]
+            if (value === undefined || value === null) {
                 continue
             }
-            if (value !== filter.values[0]) {
-                searchParameters.set(filter.id, value.value)
+            if (value !== filter.values[0].value) {
+                searchParameters.set(filter.id, value)
             } else {
                 searchParameters.delete(filter.id)
             }

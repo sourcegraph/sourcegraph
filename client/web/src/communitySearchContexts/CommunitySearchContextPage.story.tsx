@@ -44,6 +44,7 @@ const authUser: AuthenticatedUser = {
     __typename: 'User',
     id: '0',
     username: 'alice',
+    namespaceName: 'alice',
     avatarURL: null,
     session: { canSignOut: true },
     displayName: null,

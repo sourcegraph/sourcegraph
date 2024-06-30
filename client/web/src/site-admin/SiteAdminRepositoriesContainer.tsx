@@ -199,8 +199,8 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
         return filtersWithExternalServices
     }, [extSvcs, location.pathname])
 
-    const [filterValues, setFilterValues] = useState<Map<string, FilteredConnectionFilterValue>>(() =>
-        getFilterFromURL(new URLSearchParams(location.search), filters)
+    const [filterValues, setFilterValues] = useState<Record<string, FilteredConnectionFilterValue['value'] | null>>(
+        () => getFilterFromURL(new URLSearchParams(location.search), filters)
     )
 
     useEffect(() => {
@@ -240,7 +240,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
     }, [filters, filterValues, searchQuery, location, navigate])
 
     const variables = useMemo<RepositoriesVariables>(() => {
-        const args = buildFilterArgs(filterValues)
+        const args = buildFilterArgs(filters, filterValues)
 
         return {
             ...args,
@@ -252,7 +252,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
             cloneStatus: args.cloneStatus ?? null,
             externalService: args.externalService ?? null,
         } as RepositoriesVariables
-    }, [searchQuery, filterValues])
+    }, [filters, searchQuery, filterValues])
 
     const debouncedVariables = useDebounce(variables, 300)
 
@@ -295,12 +295,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 color: 'var(--body-color)',
                 position: 'right',
                 tooltip: 'The number of repositories that are queued to be cloned.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.NotCloned)
-                        return newValues
-                    }),
+                onClick: () => setFilterValues(values => ({ ...values, status: STATUS_FILTERS.NotCloned.value })),
             },
             {
                 value: data.repositoryStats.cloning,
@@ -308,12 +303,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 color: data.repositoryStats.cloning > 0 ? 'var(--primary)' : 'var(--body-color)',
                 position: 'right',
                 tooltip: 'The number of repositories that are currently being cloned.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.Cloning)
-                        return newValues
-                    }),
+                onClick: () => setFilterValues(values => ({ ...values, status: STATUS_FILTERS.Cloning.value })),
             },
             {
                 value: data.repositoryStats.cloned,
@@ -321,12 +311,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 color: 'var(--success)',
                 position: 'right',
                 tooltip: 'The number of repositories that have been cloned.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.Cloned)
-                        return newValues
-                    }),
+                onClick: () => setFilterValues(values => ({ ...values, status: STATUS_FILTERS.Cloned.value })),
             },
             {
                 value: data.repositoryStats.indexed,
@@ -334,12 +319,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 color: 'var(--body-color)',
                 position: 'right',
                 tooltip: 'The number of repositories that have been indexed for search.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.Indexed)
-                        return newValues
-                    }),
+                onClick: () => setFilterValues(values => ({ ...values, status: STATUS_FILTERS.Indexed.value })),
             },
             {
                 value: data.repositoryStats.failedFetch,
@@ -348,11 +328,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 position: 'right',
                 tooltip: 'The number of repositories where the last syncing attempt produced an error.',
                 onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.FailedFetchOrClone)
-                        return newValues
-                    }),
+                    setFilterValues(values => ({ ...values, status: STATUS_FILTERS.FailedFetchOrClone.value })),
             },
         ]
 
@@ -364,12 +340,7 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                 position: 'right',
                 tooltip:
                     'The number of repositories where corruption has been detected. Reclone these repositories to get rid of corruption.',
-                onClick: () =>
-                    setFilterValues(values => {
-                        const newValues = new Map(values)
-                        newValues.set('status', STATUS_FILTERS.Corrupted)
-                        return newValues
-                    }),
+                onClick: () => setFilterValues(values => ({ ...values, status: STATUS_FILTERS.Corrupted.value })),
             })
         }
         return items
@@ -387,13 +358,10 @@ export const SiteAdminRepositoriesContainer: React.FunctionComponent<{ alwaysPol
                         <FilterControl
                             filters={filters}
                             values={filterValues}
-                            onValueSelect={(filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue) =>
-                                setFilterValues(values => {
-                                    const newValues = new Map(values)
-                                    newValues.set(filter.id, value)
-                                    return newValues
-                                })
-                            }
+                            onValueSelect={(
+                                filter: FilteredConnectionFilter,
+                                value: FilteredConnectionFilterValue['value'] | null
+                            ) => setFilterValues(values => ({ ...values, [filter.id]: value }))}
                         />
                         <Input
                             type="search"

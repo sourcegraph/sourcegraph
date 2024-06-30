@@ -3,7 +3,7 @@ import React, { useCallback, useRef } from 'react'
 import classNames from 'classnames'
 import { useMergeRefs } from 'use-callback-ref'
 
-import { useAutoFocus, Input, Form } from '@sourcegraph/wildcard'
+import { Form, Input, useAutoFocus } from '@sourcegraph/wildcard'
 
 import { FilterControl, type FilteredConnectionFilter, type FilteredConnectionFilterValue } from '../FilterControl'
 
@@ -44,12 +44,12 @@ export interface ConnectionFormProps {
      */
     filters?: FilteredConnectionFilter[]
 
-    onFilterSelect?: (filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue) => void
+    onFilterSelect?: (filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue['value'] | null) => void
 
     /** An element rendered as a sibling of the filters. */
     additionalFilterElement?: React.ReactElement
 
-    filterValues?: Map<string, FilteredConnectionFilterValue>
+    filterValues?: Record<string, FilteredConnectionFilterValue['value'] | null>
 
     compact?: boolean
 }
