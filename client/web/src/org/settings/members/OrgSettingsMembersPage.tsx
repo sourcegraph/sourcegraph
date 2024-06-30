@@ -8,15 +8,16 @@ import { useMutation } from '@sourcegraph/http-client'
 import { UserAvatar } from '@sourcegraph/shared/src/components/UserAvatar'
 import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
 import {
-    Container,
-    PageHeader,
+    Alert,
     Button,
+    Container,
+    ErrorAlert,
     Input,
     Link,
     LoadingSpinner,
-    Alert,
-    ErrorAlert,
+    PageHeader,
     PageSwitcher,
+    Text,
     Tooltip,
     useDebounce,
 } from '@sourcegraph/wildcard'
@@ -26,9 +27,9 @@ import { usePageSwitcherPagination } from '../../../components/FilteredConnectio
 import { PageTitle } from '../../../components/PageTitle'
 import type {
     OrgAreaOrganizationFields,
+    OrganizationMemberNode,
     OrganizationSettingsMembersResult,
     OrganizationSettingsMembersVariables,
-    OrganizationMemberNode,
     RemoveUserFromOrganizationResult,
     RemoveUserFromOrganizationVariables,
 } from '../../../graphql-operations'
@@ -104,21 +105,17 @@ const UserNode: React.FunctionComponent<UserNodeProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="flex-1 d-flex align-items-center justify-content-between">
-                    <div className="flex-1">
-                        {authenticatedUser && org.viewerCanAdminister && (
-                            <Button
-                                className="site-admin-detail-list__action test-remove-org-member"
-                                onClick={remove}
-                                disabled={loading}
-                                variant="secondary"
-                                size="sm"
-                            >
-                                {isSelf ? 'Leave organization' : 'Remove from organization'}
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                {authenticatedUser && org.viewerCanAdminister && (
+                    <Button
+                        className="site-admin-detail-list__action test-remove-org-member"
+                        onClick={remove}
+                        disabled={loading}
+                        variant="secondary"
+                        size="sm"
+                    >
+                        {isSelf ? 'Leave organization' : 'Remove from organization'}
+                    </Button>
+                )}
             </div>
             {error && <ErrorAlert className="mt-2" error={error} />}
         </li>
@@ -246,19 +243,13 @@ export const OrgSettingsMembersPage: React.FunctionComponent<Props> = ({
                 ) : null}
                 {loading && <LoadingSpinner />}
                 {error && <ErrorAlert className="mb-3" error={error} />}
+
+                {totalCount > 0 && (
+                    <Text>
+                        {`${totalCount} ${debouncedSearchQuery ? 'matching' : ''} ${pluralize('member', totalCount)}`}
+                    </Text>
+                )}
                 <ul className="list-group list-group-flush test-org-members mt-4">
-                    {totalCount > 0 && (
-                        <li className="d-flex mb-2 align-items-center justify-content-between">
-                            <strong className="flex-1">
-                                {`${totalCount} ${pluralize('person', totalCount, 'people')} in the ${
-                                    org.name
-                                } organization`}
-                            </strong>
-                            <div className="flex-1 d-flex align-items-center justify-content-between">
-                                <strong>Action</strong>
-                            </div>
-                        </li>
-                    )}
                     {(connection?.nodes || []).map(node => (
                         <UserNode
                             key={node.id}

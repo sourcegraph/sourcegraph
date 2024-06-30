@@ -1,4 +1,4 @@
-import { type FunctionComponent, useState, useCallback } from 'react'
+import { useCallback, useState, type FunctionComponent } from 'react'
 
 import { lastValueFrom } from 'rxjs'
 
@@ -18,8 +18,6 @@ import type {
     SetUserEmailVerifiedVariables,
     UserEmailsResult,
 } from '../../../graphql-operations'
-
-import styles from './UserEmail.module.scss'
 
 interface Props extends TelemetryV2Props {
     user: string
@@ -165,7 +163,7 @@ export const UserEmail: FunctionComponent<React.PropsWithChildren<Props>> = ({
     return (
         <>
             <div className="d-flex align-items-center justify-content-between">
-                <div className="d-flex align-items-center">
+                <div className="d-flex align-items-center flex-gap-2">
                     <span className="mr-2">{email}</span>
                     {/*
                         a11y-ignore
@@ -173,51 +171,34 @@ export const UserEmail: FunctionComponent<React.PropsWithChildren<Props>> = ({
                         GitHub issue: https://github.com/sourcegraph/sourcegraph/issues/33343
                     */}
                     {verified && (
-                        <Badge variant="success" className="mr-1 a11y-ignore">
+                        <Badge variant="success" className="a11y-ignore">
                             Verified
                         </Badge>
                     )}
-                    {!verified && !verificationPending && (
-                        <Badge variant="secondary" className="mr-1">
-                            Not verified
-                        </Badge>
-                    )}
-                    {isPrimary && (
-                        <Badge variant="primary" className="mr-1">
-                            Primary
-                        </Badge>
-                    )}
-                    {!verified && verificationPending && (
-                        <span>
-                            <span className={styles.dot}>&bull;&nbsp;</span>
-                            <Button
-                                className="p-0"
-                                onClick={resendEmail}
-                                disabled={isLoading || disableControls}
-                                variant="link"
-                            >
-                                Resend verification email
-                            </Button>
-                        </span>
-                    )}
+                    {!verified && !verificationPending && <Badge variant="secondary">Not verified</Badge>}
+                    {isPrimary && <Badge variant="primary">Primary</Badge>}
                 </div>
-                <div className="d-flex align-items-center">
+                <div className="d-flex align-items-center flex-gap-2">
+                    {!verified && verificationPending && (
+                        <Button onClick={resendEmail} disabled={isLoading || disableControls} variant="secondary">
+                            Resend verification email
+                        </Button>
+                    )}
                     {viewerCanManuallyVerify && (
                         <Button
-                            className="p-0"
                             onClick={() => updateEmailVerification(!verified)}
                             disabled={isLoading || disableControls}
-                            variant="link"
+                            variant="secondary"
                         >
                             {verified ? 'Mark as unverified' : 'Mark as verified'}
                         </Button>
-                    )}{' '}
+                    )}
                     {!isPrimary && (
                         <Button
-                            className="text-danger p-0"
                             onClick={removeEmail}
                             disabled={isLoading || disableControls}
-                            variant="link"
+                            variant="danger"
+                            outline={true}
                         >
                             Remove
                         </Button>
