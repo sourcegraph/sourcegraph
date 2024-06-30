@@ -120,6 +120,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if err := r.reconcileIndexedSearcher(ctx, &sourcegraph, &applianceSpec); err != nil {
 		return ctrl.Result{}, errors.Newf("failed to reconcile indexed-searcher: %w", err)
 	}
+	if err := r.reconcileJaeger(ctx, &sourcegraph, &applianceSpec); err != nil {
+		return ctrl.Result{}, errors.Newf("failed to reconcile jaeger: %w", err)
+	}
 
 	// Set the current version annotation in case migration logic depends on it.
 	applianceSpec.Annotations[config.AnnotationKeyCurrentVersion] = sourcegraph.Spec.RequestedVersion

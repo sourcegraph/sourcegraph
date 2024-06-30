@@ -179,6 +179,7 @@ func NewDefaultConfig() Sourcegraph {
 				StandardConfig: StandardConfig{
 					Disabled: true,
 				},
+				Replicas: 1,
 			},
 		},
 	}

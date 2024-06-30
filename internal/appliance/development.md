@@ -115,3 +115,11 @@ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
 This is not a requirement for the Bazel environment (`bazel test
 :appliance_test` in this module).
+
+## Useful Scripts
+
+### Patch all test fixtures
+```
+find internal/appliance/reconciler/testdata/sg -name '*.yaml'  | xargs sed -Ei '/pgsql:/i\  openTelemetry:\n    disabled: true\n'
+```
+Example of appending a new element, openTelemetry , after pgsql

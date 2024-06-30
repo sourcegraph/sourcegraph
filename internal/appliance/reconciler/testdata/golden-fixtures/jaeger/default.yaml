@@ -1,0 +1,278 @@
+resources:
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: a975cc1b1a01d8f09ff9fb298bfbfa5a75ffd4b82636e8628255be58a34bba3b
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      generation: 1
+      labels:
+        app.kubernetes.io/component: jaeger
+        app.kubernetes.io/name: sourcegraph
+        app.kubernetes.io/version: 5.3.9104
+        deploy: sourcegraph
+      name: jaeger
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      minReadySeconds: 10
+      progressDeadlineSeconds: 600
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: jaeger
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          annotations:
+            kubectl.kubernetes.io/default-container: jaeger
+          creationTimestamp: null
+          labels:
+            app: jaeger
+            deploy: sourcegraph
+          name: jaeger
+        spec:
+          containers:
+            - image: index.docker.io/sourcegraph/jaeger:5.3.9104
+              imagePullPolicy: IfNotPresent
+              name: jaeger
+              ports:
+                - containerPort: 5775
+                  protocol: UDP
+                - containerPort: 6831
+                  protocol: UDP
+                - containerPort: 6832
+                  protocol: UDP
+                - containerPort: 5778
+                  protocol: TCP
+                - containerPort: 16686
+                  protocol: TCP
+                - containerPort: 14250
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /
+                  port: 16686
+                  scheme: HTTP
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 1
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 1G
+                requests:
+                  cpu: 500m
+                  memory: 500M
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsGroup: 101
+                runAsUser: 100
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: FallbackToLogsOnError
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 101
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 101
+            runAsUser: 100
+          serviceAccount: jaeger
+          serviceAccountName: jaeger
+          terminationGracePeriodSeconds: 30
+    status: {}
+  - apiVersion: v1
+    data:
+      spec: |
+        spec:
+          requestedVersion: "5.3.9104"
+
+          blobstore:
+            disabled: true
+
+          codeInsights:
+            disabled: true
+
+          codeIntel:
+            disabled: true
+
+          frontend:
+            disabled: true
+
+          gitServer:
+            disabled: true
+
+          indexedSearch:
+            disabled: true
+
+          openTelemetry:
+            disabled: true
+
+          pgsql:
+            disabled: true
+
+          postgresExporter:
+            disabled: true
+
+          preciseCodeIntel:
+            disabled: true
+
+          redisCache:
+            disabled: true
+
+          redisStore:
+            disabled: true
+
+          repoUpdater:
+            disabled: true
+
+          searcher:
+            disabled: true
+
+          symbols:
+            disabled: true
+
+          syntectServer:
+            disabled: true
+
+          worker:
+            disabled: true
+
+          prometheus:
+            disabled: true
+
+          jaeger:
+            disabled: false
+    kind: ConfigMap
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/currentVersion: 5.3.9104
+        appliance.sourcegraph.com/managed: "true"
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      name: sg
+      namespace: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: a975cc1b1a01d8f09ff9fb298bfbfa5a75ffd4b82636e8628255be58a34bba3b
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        deploy: sourcegraph
+      name: jaeger
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: a975cc1b1a01d8f09ff9fb298bfbfa5a75ffd4b82636e8628255be58a34bba3b
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        app: jaeger-collector
+        app.kubernetes.io/component: jaeger-collector
+        deploy: sourcegraph
+      name: jaeger-collector
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      clusterIP: NORMALIZED_FOR_TESTING
+      clusterIPs:
+        - NORMALIZED_FOR_TESTING
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: jaeger-collector-tchannel
+          port: 14267
+          protocol: TCP
+          targetPort: 14267
+        - name: jaeger-collector-http
+          port: 14268
+          protocol: TCP
+          targetPort: 14268
+        - name: jaeger-collector-grpc
+          port: 14250
+          protocol: TCP
+          targetPort: 14250
+      selector:
+        app: jaeger
+        app.kubernetes.io/component: all-in-one
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: a975cc1b1a01d8f09ff9fb298bfbfa5a75ffd4b82636e8628255be58a34bba3b
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        app: jaeger-query
+        app.kubernetes.io/component: jaeger-query
+        deploy: sourcegraph
+      name: jaeger-query
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      clusterIP: NORMALIZED_FOR_TESTING
+      clusterIPs:
+        - NORMALIZED_FOR_TESTING
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: query-http
+          port: 16686
+          protocol: TCP
+          targetPort: 16686
+      selector:
+        app: jaeger
+        app.kubernetes.io/component: all-in-one
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
