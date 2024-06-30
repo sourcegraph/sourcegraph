@@ -440,7 +440,7 @@ func (r *schemaResolver) AddUserToOrganization(ctx context.Context, args *struct
 		return nil, err
 	}
 
-	userToInvite, _, err := getUserToInviteToOrganization(ctx, r.db, args.Username, orgID)
+	userToInvite, err := r.db.Users().GetByUsername(ctx, args.Username)
 	if err != nil {
 		return nil, err
 	}

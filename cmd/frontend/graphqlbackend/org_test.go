@@ -325,7 +325,6 @@ func TestAddOrganizationMember(t *testing.T) {
 	orgs.GetByNameFunc.SetDefaultReturn(&types.Org{ID: orgID, Name: "acme"}, nil)
 
 	users := dbmocks.NewMockUserStore()
-	users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: 1, SiteAdmin: true}, nil)
 	users.GetByUsernameFunc.SetDefaultReturn(&types.User{ID: 2, Username: userName}, nil)
 
 	orgMembers := dbmocks.NewMockOrgMemberStore()
@@ -336,7 +335,10 @@ func TestAddOrganizationMember(t *testing.T) {
 	featureFlags.GetOrgFeatureFlagFunc.SetDefaultReturn(true, nil)
 
 	// tests below depend on config being there
-	conf.Mock(&conf.Unified{SiteConfiguration: schema.SiteConfiguration{AuthProviders: []schema.AuthProviders{{Builtin: &schema.BuiltinAuthProvider{}}}, EmailSmtp: nil}})
+	conf.Mock(&conf.Unified{SiteConfiguration: schema.SiteConfiguration{
+		AuthProviders: []schema.AuthProviders{{Builtin: &schema.BuiltinAuthProvider{}}},
+		EmailSmtp:     &schema.SMTPServerConfig{},
+	}})
 
 	// mock permission sync scheduling
 	permssync.MockSchedulePermsSync = func(_ context.Context, logger log.Logger, _ database.DB, _ permssync.ScheduleSyncOpts) {}
@@ -350,7 +352,8 @@ func TestAddOrganizationMember(t *testing.T) {
 
 	ctx := actor.WithActor(context.Background(), &actor.Actor{UID: 1})
 
-	t.Run("Works for site admin", func(t *testing.T) {
+	t.Run("site admin is permitted", func(t *testing.T) {
+		users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: 1, SiteAdmin: true}, nil)
 		RunTest(t, &Test{
 			Schema:  mustParseGraphQLSchema(t, db),
 			Context: ctx,
@@ -364,6 +367,28 @@ func TestAddOrganizationMember(t *testing.T) {
 					"alwaysNil": null
 				}
 			}`,
+			Variables: map[string]any{
+				"organization": orgIDString,
+				"username":     userName,
+			},
+		})
+	})
+
+	t.Run("non-site admins are not permitted", func(t *testing.T) {
+		users.GetByCurrentAuthUserFunc.SetDefaultReturn(&types.User{ID: 1, SiteAdmin: false}, nil)
+		RunTest(t, &Test{
+			Schema:  mustParseGraphQLSchema(t, db),
+			Context: ctx,
+			Query: `mutation AddUserToOrganization($organization: ID!, $username: String!) {
+				addUserToOrganization(organization: $organization, username: $username) {
+					alwaysNil
+				}
+			}`,
+			ExpectedResult: `null`,
+			ExpectedErrors: []*gqlerrors.QueryError{{
+				Message: "must be site admin",
+				Path:    []any{"addUserToOrganization"},
+			}},
 			Variables: map[string]any{
 				"organization": orgIDString,
 				"username":     userName,
