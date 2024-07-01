@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana-tools/sdk"
+
 	"github.com/sourcegraph/sourcegraph/monitoring/definitions/shared"
 	"github.com/sourcegraph/sourcegraph/monitoring/monitoring"
 )
@@ -234,6 +236,51 @@ func RepoUpdater() *monitoring.Dashboard {
 							Panel:       monitoring.Panel().Unit(monitoring.Number),
 							Owner:       monitoring.ObservableOwnerSource,
 							NextSteps:   "Check repo-updater logs for errors",
+						},
+					},
+					{
+						{
+							Name:        "repo_fetch_p75_latency",
+							Description: "75th percentile fetch latency over 2m",
+							Query:       "histogram_quantile(0.75, sum by (le, name)(rate(src_repoupdater_sched_latency_bucket[2m])))",
+							Panel: monitoring.Panel().LegendFormat("Latency").
+								Unit(monitoring.Seconds).
+								With(monitoring.PanelOptions.LegendOnRight()),
+							Owner:          monitoring.ObservableOwnerSource,
+							NoAlert:        true,
+							Interpretation: "The 75th percentile latency is the time between a repo changed on the code host and the repo being updated in gitserver. Lower is better.",
+						},
+						{
+							Name:        "repo_fetch_histogram",
+							Description: "repo fetch latency",
+							Query:       `sum by (le) (rate(src_repoupdater_sched_latency_bucket[2m]))`,
+							Panel: monitoring.PanelHeatmap().With(func(o monitoring.Observable, p *sdk.Panel) {
+								p.HeatmapPanel.YAxis.Format = string(monitoring.Seconds)
+								p.HeatmapPanel.DataFormat = "tsbuckets"
+								p.HeatmapPanel.Targets[0].Format = "heatmap"
+								p.HeatmapPanel.Targets[0].LegendFormat = "{{le}}"
+							}),
+							Owner:          monitoring.ObservableOwnerSource,
+							NoAlert:        true,
+							Interpretation: "The latency is the time between a repo changed on the code host and the repo being updated in gitserver. Lower is better.",
+						},
+						{
+							Name:           "repo_fetch_result",
+							Description:    "rate of repo fetch success and failure",
+							Query:          `sum by (result) (rate(src_repoupdater_sched_fetch_result[1m]))`,
+							NoAlert:        true,
+							Panel:          monitoring.Panel().LegendFormat("{{result}}").Unit(monitoring.Number),
+							Owner:          monitoring.ObservableOwnerSource,
+							Interpretation: "The rate of repo fetch success and failure. Lower is better.",
+						},
+						{
+							Name:           "repo_fetch_hit_rate",
+							Description:    "rate of repo fetches that resulted in updates",
+							Query:          `(sum(rate(src_repoupdater_sched_fetch_result{result="changed"}[2m])) / sum(rate(src_repoupdater_sched_fetch_result{result=~"(changed|unchanged)"}[2m]))) * 100`,
+							NoAlert:        true,
+							Panel:          monitoring.Panel().LegendFormat("{{result}}").Unit(monitoring.Percentage),
+							Owner:          monitoring.ObservableOwnerSource,
+							Interpretation: "The rate of repo fetch success and failure. Higher is better.",
 						},
 					},
 				},
