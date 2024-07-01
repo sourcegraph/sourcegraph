@@ -1,0 +1,813 @@
+module github.com/keegancsmith/sqlf
+
+go 1.16
+on: [push, pull_request]
+name: CI
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.17.x
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: test
+      run: go test ./...
+The MIT License (MIT)
+
+Copyright (c) 2016 Keegan Carruthers-Smith
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+package sqlf
+
+import "fmt"
+
+// BindVar is used to take a format string and convert it into query
+// string that a gorp.SqlExecutor or sql.Query can use. It is the
+// same as BindVar from gorp.Dialect.
+type BindVar interface {
+	// BindVar binds a variable string to use when forming SQL statements
+	// in many dbs it is "?", but Postgres appears to use $1
+	//
+	// i is a zero based index of the bind variable in this statement
+	//
+	BindVar(i int) string
+}
+
+// SimpleBindVar is the BindVar format used by SQLite, MySQL, SQLServer(mssql driver)
+var SimpleBindVar = simpleBindVar{}
+
+// SQLServerBindVar is the BindVar format used by SQL Server(sqlserver driver)
+// https://github.com/denisenkom/go-mssqldb#parameters
+// https://github.com/denisenkom/go-mssqldb#deprecated
+var SQLServerBindVar = sqlServerBindVar{}
+
+// PostgresBindVar is the BindVar format used by PostgreSQL
+var PostgresBindVar = postgresBindVar{}
+
+// OracleBindVar is the BindVar format used by Oracle Database
+var OracleBindVar = oracleBindVar{}
+
+type simpleBindVar struct{}
+
+// Returns "?"
+func (d simpleBindVar) BindVar(i int) string {
+	return "?"
+}
+
+type postgresBindVar struct{}
+
+// Returns "$(i+1)"
+func (d postgresBindVar) BindVar(i int) string {
+	return fmt.Sprintf("$%d", i+1)
+}
+
+type sqlServerBindVar struct{}
+
+// Returns "@p(i+1)"
+func (d sqlServerBindVar) BindVar(i int) string {
+	return fmt.Sprintf("@p%d", i+1)
+}
+
+type oracleBindVar struct{}
+
+// Returns ":(i+1)"
+func (d oracleBindVar) BindVar(i int) string {
+	return fmt.Sprintf(":%d", i+1)
+}
+sqlf [![Build Status](https://travis-ci.org/keegancsmith/sqlf.svg?branch=master)](https://travis-ci.org/) [![GoDoc](https://godoc.org/github.com/keegancsmith/sqlf?status.svg)](https://godoc.org/github.com/keegancsmith/sqlf)
+======
+
+Generate parameterized SQL statements in Go, sprintf Style.
+
+```go
+q := sqlf.Sprintf("SELECT * FROM users WHERE country = %s AND age > %d", "US", 27);
+rows, err := db.Query(q.Query(sqlf.SimpleBindVar), q.Args()...) // db is a database/sql.DB
+```
+
+`sqlf.Sprintf` does not return a string. It returns `*sqlf.Query` which has
+methods for a parameterized SQL query and arguments. You then pass that to
+`db.Query`, `db.Exec`, etc. This is not like using `fmt.Sprintf`, which could
+expose you to malformed SQL or SQL injection attacks.
+
+`sqlf.Query` can be passed as an argument to `sqlf.Sprintf`. It will "flatten"
+the query string, while preserving the correct variable binding. This allows
+you to easily compose and build SQL queries. See the below examples to find
+out more.
+
+```go
+// This is an example which shows off embedding SQL, which simplifies building
+// complicated SQL queries
+name := "John"
+age, offset := 27, 100
+where := sqlf.Sprintf("name=%s AND age=%d", name, age)
+limit := sqlf.Sprintf("%d OFFSET %d", 10, offset)
+q := sqlf.Sprintf("SELECT name FROM users WHERE %s LIMIT %s", where, limit)
+fmt.Println(q.Query(sqlf.PostgresBindVar))
+fmt.Println(q.Args())
+// Output: SELECT name FROM users WHERE name=$1 AND age=$2 LIMIT $3 OFFSET $4
+// [John 27 10 100]
+```
+
+Another common task is joining conditionals with `AND` or `OR`. sqlf
+simplifies this task with `sqlf.Join`:
+
+```go
+// Our inputs
+min_quantity := 100
+name_filters := []string{"apple", "orange", "coffee"}
+
+var conds []*sqlf.Query
+for _, filter := range name_filters {
+    conds = append(conds, sqlf.Sprintf("name LIKE %s", "%"+filter+"%"))
+}
+sub_query := sqlf.Sprintf("SELECT product_id FROM order_item WHERE quantity > %d", min_quantity)
+q := sqlf.Sprintf("SELECT name FROM product WHERE id IN (%s) AND (%s)", sub_query, sqlf.Join(conds, "OR"))
+
+fmt.Println(q.Query(sqlf.PostgresBindVar))
+fmt.Println(q.Args())
+// Output: SELECT name FROM product WHERE id IN (SELECT product_id FROM order_item WHERE quantity > $1) AND (name LIKE $2 OR name LIKE $3 OR name LIKE $4)
+// [100 %apple% %orange% %coffee%]
+```
+
+See https://godoc.org/github.com/keegancsmith/sqlf for more information.
+// Package sqlf generates parameterized SQL statements in Go, sprintf style.
+//
+// A simple example:
+//
+//   q := sqlf.Sprintf("SELECT * FROM users WHERE country = %s AND age > %d", "US", 27);
+//   rows, err := db.Query(q.Query(sqlf.SimpleBindVar), q.Args()...) // db is a database/sql.DB
+//
+// sqlf.Sprintf does not return a string. It returns *sqlf.Query which has
+// methods for a parameterized SQL query and arguments. You then pass that to
+// db.Query, db.Exec, etc. This is not like using fmt.Sprintf, which could
+// expose you to malformed SQL or SQL injection attacks.
+//
+// sqlf.Query can be passed as an argument to sqlf.Sprintf. It will "flatten"
+// the query string, while preserving the correct variable binding. This
+// allows you to easily compose and build SQL queries. See the below examples
+// to find out more.
+package sqlf
+
+import (
+	"fmt"
+	"io"
+	"strings"
+)
+
+// Query stores a SQL expression and arguments for passing on to
+// database/sql/db.Query or gorp.SqlExecutor.
+type Query struct {
+	fmt  string
+	args []interface{}
+}
+
+// Sprintf formats according to a format specifier and returns the resulting
+// Query.
+func Sprintf(format string, args ...interface{}) *Query {
+	f := make([]interface{}, len(args))
+	a := make([]interface{}, 0, len(args))
+	for i, arg := range args {
+		if q, ok := arg.(*Query); ok {
+			f[i] = ignoreFormat{q.fmt}
+			a = append(a, q.args...)
+		} else {
+			f[i] = ignoreFormat{"%s"}
+			a = append(a, arg)
+		}
+	}
+	// The format string below goes through fmt.Sprintf, which would reduce `%%` (a literal `%`
+	// according to fmt format specifier semantics), but it would also go through fmt.Sprintf
+	// again at Query.Query(binder) time - so we need to make sure `%%` remains as `%%` in our
+	// format string. See the literal_percent_operator test.
+	format = strings.Replace(format, "%%", "%%%%", -1)
+	return &Query{
+		fmt:  fmt.Sprintf(format, f...),
+		args: a,
+	}
+}
+
+// Query returns a string for use in database/sql/db.Query. binder is used to
+// update the format specifiers with the relevant BindVar format
+func (q *Query) Query(binder BindVar) string {
+	a := make([]interface{}, len(q.args))
+	for i := range a {
+		a[i] = ignoreFormat{binder.BindVar(i)}
+	}
+	return fmt.Sprintf(q.fmt, a...)
+}
+
+// Args returns the args for use in database/sql/db.Query along with
+// q.Query()
+func (q *Query) Args() []interface{} {
+	return q.args
+}
+
+// Join concatenates the elements of queries to create a single Query. The
+// separator string sep is placed between elements in the resulting Query.
+//
+// This is commonly used to join clauses in a WHERE query. As such sep is
+// usually "AND" or "OR".
+func Join(queries []*Query, sep string) *Query {
+	f := make([]string, 0, len(queries))
+	var a []interface{}
+	for _, q := range queries {
+		f = append(f, q.fmt)
+		a = append(a, q.args...)
+	}
+	return &Query{
+		fmt:  strings.Join(f, " "+sep+" "),
+		args: a,
+	}
+}
+
+type ignoreFormat struct{ s string }
+
+func (e ignoreFormat) Format(f fmt.State, c rune) {
+	io.WriteString(f, e.s)
+}
+package sqlf_test
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/keegancsmith/sqlf"
+)
+
+func TestSprintf(t *testing.T) {
+	cases := map[string]struct {
+		Fmt      string
+		FmtArgs  []interface{}
+		Want     string
+		WantArgs []interface{}
+	}{
+		"simple_substitute": {
+			"SELECT * FROM test_table WHERE a = %s AND b = %d", []interface{}{"foo", 1},
+			"SELECT * FROM test_table WHERE a = $1 AND b = $2", []interface{}{"foo", 1},
+		},
+
+		"simple_embedded": {
+			"SELECT * FROM test_table WHERE a = (%s)", []interface{}{sqlf.Sprintf("SELECT b FROM b_table WHERE x = %d", 1)},
+			"SELECT * FROM test_table WHERE a = (SELECT b FROM b_table WHERE x = $1)", []interface{}{1},
+		},
+
+		"embedded": {
+			"SELECT * FROM test_table WHERE a = %s AND c = (%s) AND d = %s", []interface{}{"foo", sqlf.Sprintf("SELECT b FROM b_table WHERE x = %d", 1), "bar"},
+			"SELECT * FROM test_table WHERE a = $1 AND c = (SELECT b FROM b_table WHERE x = $2) AND d = $3", []interface{}{"foo", 1, "bar"},
+		},
+
+		"embedded_embedded": {
+			"SELECT * FROM test_table WHERE a = %s AND c = (%s) AND d = %s",
+			[]interface{}{"foo", sqlf.Sprintf("SELECT b FROM b_table WHERE x = %d AND y = (%s)", 1, sqlf.Sprintf("SELECT %s", "baz")), "bar"},
+			"SELECT * FROM test_table WHERE a = $1 AND c = (SELECT b FROM b_table WHERE x = $2 AND y = (SELECT $3)) AND d = $4",
+			[]interface{}{"foo", 1, "baz", "bar"},
+		},
+
+		"literal_percent_operator": {
+			"SELECT * FROM test_table WHERE a <<%% %s AND b = %d", []interface{}{"foo", 1},
+			"SELECT * FROM test_table WHERE a <<% $1 AND b = $2", []interface{}{"foo", 1},
+		},
+	}
+	for tn, tc := range cases {
+		q := sqlf.Sprintf(tc.Fmt, tc.FmtArgs...)
+		if got := q.Query(sqlf.PostgresBindVar); got != tc.Want {
+			t.Errorf("%s: expected query: %q, got: %q", tn, tc.Want, got)
+		}
+		if got := q.Args(); !reflect.DeepEqual(got, tc.WantArgs) {
+			t.Errorf("%s: expected args: %q, got: %q", tn, tc.WantArgs, got)
+		}
+	}
+}
+package sqlf_test
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+
+	"github.com/keegancsmith/sqlf"
+)
+
+func Example() {
+	// This is an example which shows off embedding SQL, which simplifies building
+	// complicated SQL queries
+	name := "John"
+	age, offset := 27, 100
+	where := sqlf.Sprintf("name=%s AND age=%d", name, age)
+	limit := sqlf.Sprintf("%d OFFSET %d", 10, offset)
+	q := sqlf.Sprintf("SELECT name FROM users WHERE %s LIMIT %s", where, limit)
+	fmt.Println(q.Query(sqlf.PostgresBindVar))
+	fmt.Println(q.Args())
+	// Output: SELECT name FROM users WHERE name=$1 AND age=$2 LIMIT $3 OFFSET $4
+	// [John 27 10 100]
+}
+
+func ExampleJoin() {
+	// Our inputs
+	minQuantity := 100
+	nameFilters := []string{"apple", "orange", "coffee"}
+
+	var conds []*sqlf.Query
+	for _, filter := range nameFilters {
+		conds = append(conds, sqlf.Sprintf("name LIKE %s", "%"+filter+"%"))
+	}
+	subQuery := sqlf.Sprintf("SELECT product_id FROM order_item WHERE quantity > %d", minQuantity)
+	q := sqlf.Sprintf("SELECT name FROM product WHERE id IN (%s) AND (%s)", subQuery, sqlf.Join(conds, "OR"))
+
+	fmt.Println(q.Query(sqlf.PostgresBindVar))
+	fmt.Println(q.Args())
+	// Output: SELECT name FROM product WHERE id IN (SELECT product_id FROM order_item WHERE quantity > $1) AND (name LIKE $2 OR name LIKE $3 OR name LIKE $4)
+	// [100 %apple% %orange% %coffee%]
+}
+
+var db *sql.DB
+
+func Example_dbquery() {
+	age := 27
+	// The next two lines are the only difference from the dabatabase/sql/db.Query example.
+	// Original is rows, err := db.Query("SELECT name FROM users WHERE age=?", age)
+	s := sqlf.Sprintf("SELECT name FROM users WHERE age=%d", age)
+	rows, err := db.Query(s.Query(sqlf.SimpleBindVar), s.Args()...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s is %d\n", name, age)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+}
+       -  8  z  l  »   |  'ø#	  +MNMJF9O0KILGNN
+9EB&G:CV$O77*<(?$/1 2!/ 8ß<T[LKN6OML
+O72L+NE'6&Hak+›#I_LY`KNK9NIN	A.M
+:%(!][\:4#NA/')!E'KKJ1&&%45	 !PPt`˜„D†x* SR+<A=DA	 P83M,O6&F`k,œ$YQ?A+&$  /¦  /ª  /¹  /Ï  0	  0D  0¤  0İ                                                                                                      1¤  1¥  1¦  1§  1¨  1©  1ª  1«…’YŞ‰ õbÌ:ËA¹á² 1ÆzGaD³¦e;%6„á[eÅDÂcÁÃI‰$ùYúÎXÕ0¤l$@Ÿ#l¡à À`ÂQ%R nà Ã	!ğ‰j¤À”€$ÉÊfGáôÌ)O»fØ(nZP©Sğ¥Òéï#lS§>@S…¢ügÌ` Hz#O%åñã"Æc5•Ü Ö‰0 „Ş‚ÈÍ0Z¥•éˆiušv7¥n¢q $$S8"Fœ â#[”4‰xÑ`Ñˆ¢lV®jE[Yì'5¶2uG„škÆ-FT\^5N‰Àô%¢Ø]ùØeÑµ1)yA”:5OŠÅÂ¾i6ŞH™ šûM˜ºNÜE Zß®cº8ùdÁÂªhµî"b’¤Ø&Ù·•Q†óÎ”î«RŒj£ãÎæS¤pk…H±×ÔöÒñĞ8 0XDX”æ${-GÂÌ\öåC˜ÏF"çgøHQw¼Èrœ‘Å†î¬ğ¨Cä	B†uÁ9ÙftÌA·TEîyÊó¥µgàok÷ÇÑÔ¶ğî2bPlD<Ê:S-„I»¾Lˆ‡¢Dt	h…Şé"’2O’#@=$SÊ@ˆA¹.Ö:j± 4¼Õ6g;Á¡#"‘ğq¥@h$êæ£ı  pÁEP€UğUÔ)Rd2œ1Ş Yï(…MX:B˜éü:#lä"½¦¹8rRÛÄç(å6~"¦Ú&@A|"ñœfJU"&X	~…Öÿ'‚hH2£«ì*¤PˆS	É¹àF}êbVRÁ „€½Ğ0ÒÓ’ˆ` xNš ‚€l%SŒ$P €zC†‹«ÔPåÑ
+U€$Q²ÁND¥…0¤0 ÊØØ‹ET4*"¨|‡Fšfä<T!JGC£KÃq®€A™–Z‚
+µZ–ñÕ…(nÉ=<]ji=md¡—‚®P¨v%xœìV1!x)(8Î§€wÅ" hR&İ¸€ À­ú®*ò[5A°ƒ€ÊÏÑ´Æ0SÖ0Æ÷*1î¿**páİÌIì4yù×WScö]¡º"@»õ„e-şÅv5ÒdÁ…5à—bA2çøèi­©íó(H"¸ÆƒêˆVnšwu„Ä(¯Z*Ğ@ñ*:H`(hôn”*ˆ0†5€I H‚”01 Ñ2 Õh(¸QœPæ0˜‰¬-À ‚€) "	a8ZÁÌz¤00F 215“h¬9ƒÁ[t(³Q°IA¸Vï t¢~BC9|,,öâ¦*Æª¢g„nšZ÷”K„
+‘ø8f	Ğ£dx&¼(ö „B Hƒ¡É¨”Ğ“¤ÃÁZ%ÈÆI>¨»¬àRUz@L
+b$„„¬Æ-xÅ†X4ˆ£4:Æºñ’HyìgßÁÚ/&ˆÅ° 4àÑâ 2hš,“¬™2Ù@;‡ÂmÁ‘A1ƒ³”÷Pî'zš•BÊ:®BÕ;IxeÀ‚¼iy‹c	’†u€âA†¡¨lˆPŠ#‘oŒÕL ø‚ÓC3df¯G5Ô)¬Şe€½|~
+õ6`=.zİ£<*NÖ‰Ns&O]¨&Ê†1&˜`¦"	8ÀÈ!@q‰o> àH: `¦\@£@D8"Š‘ğ²&DYT @!Cø eÑ(‘ŒÒR˜
+¢™0ˆC f”äIe‹BÂ ÀÜä`V€Bf"Ì…‚cÃÂDÎ‚<=»ÊgXØK¦(x»eaßÃÓ–%w?‡+9^{j ±jñ£øĞµ·¨ÑÛ×´ğôœÑ©[Ÿ«úµmR»ˆlÂ£ëKÉbN«NäÅ%%"b ±!C†áŸ3‘Ë£5l+µ!
+“^Å‹”Ú7g»UøàŞÂÃDtekçŸ_¤àm5„ Õ`æ.$ã}È•pÉÀ8 ­"!! …ò °"Ò ‘Â	ª! YjÂÇ´a1)´Càlpà^‘L €ÀXˆ@QáP1<*¸%6L	!ğ$Å¡wğÅe;°NÃx¶ôu§1U¯ŞÄVğò<œ	å±
+•óŸÑØvš@¸kóæk@7;¦©›»ğÆ}qçÎW!n—QXçIŒç†A/&Ú¥HÙÈÈZş´L0+±Í.È 	k²;p1
+ ¢È&—é	8=Xiƒ„º_!ç4îÒ,EaBƒÙ€ü<4À0rNi‚V†m0É4/‚G²<T0¬¸GB\ Ë€+  $   	  $   "  $   F  $   W  $   [  $   a  $   c  $   f  $   i  $   l  $   q  $   t  $   v  $   }  $ @ S  $ @ d  $ @ e  $ @ f  $ @ g  $ @ i  $ @ l  $ @ r  $ @ s  $ @ t  $ à /  $ @ i  $ À m  $ 
+à a  $ ` ]  $      $   [  $   g  $   r  $ ` a  $ ` o  $ € e  $ À    $ À [  $ À m  $ À o  $   f  $   o  $ € i  $ € o  $   i  $ À a  $      $ @ e  $ @ o  $ `    $ ` u  $ € .  $ À a  $ à h  $   
+  $      $   ,  $   {  (   	  (   "  (   /  (   B  (   a  (   c  (   d  (   f  (   i  (   l  (   m  (   n  (   q  (   r  (   s  (   v  (   w  (   }  ( @ 	  ( @ /  ( @ A  ( @ C  ( @ G  ( @ P  ( @ S  ( @ T  ( @ `  ( @ f  ( @ g  ( @ i  ( @ t  ( @ v  (      (   
+  ( à /  (   =  (   U  (   n  ( ` o  ( À I  ( à e  ( 	  M  ( 	€ I  ( 	à U  ( 
+  e  ( 
+` O  ( 
+` e  ( 
+€ H  ( 
+€ h  (   `  (   d  (   s  (   g  ( ` o  (   x  ( À m  ( À o  ( À u  ( à o  (   m  (   n  ( @ o  ( € i  (   e  (   i  ( À a  ( à f  ( à u  (   a  (      ( @ o  ( ` i  ( ` u  ( € h  ( € o  ( € y  ( À a  ( à h  (   o  (   
+  €      €   -  €   [  €   c  €   f  €   g  €   q  €   r  €   s  €   t  €   u  €   w  €   =  €   r  € @    € @ $  € @ %  € @ )  € @ +  € @ :  € @ ?  € @ @  € @ A  € @ J  € @ O  € @ S  € @ U  € @ b  € @ c  € @ f  € @ o  € € 1  € € 2  € € 3  € € 4  €   a  €   c  €   d  €   o  €   q  €   s  € À Q  €   
+  €   %  €   M  €   S  €   a  €   c  €   d  €   e  €   n  €   q  €   t  € @    € @ Q  € @ s  € @ t  €      €   1  € À .  € À /  € à /  €   ,  €   )  €   ,  €   .  €   0  €   }  € @ 0  € @ 7  € @ =  € € <  €      € À    €      €   C  €   N  €   R  €   r  €   s  € @ E  € @ U  € @ i  € ` I  € ` L  € ` O  € ` a  € € A  € € E  € € a  €   V  €   X  €   x  € À O  € À R  € À o  € à o  € 	  O  € 	  N  € 	  S  € 	  t  € 	@ o  € 	` I  € 	` e  € 	€ I  € 	€ i  € 	  E  € 	  I  € 	  y  € 	À O  € 	à F  € 	à R  € 	à T  € 	à r  € 	à u  € 
+  A  € 
+  R  € 
+  U  € 
+  a  € 
+  o  € 
+  u  € 
+@ e  € 
+` E  € 
+` H  € 
+` O  € 
+` Q  € 
+` e  € 
+` i  € 
+` o  € 
+` p  € 
+` t  € 
+€ H  € 
+€ O  € 
+€ e  € 
+€ h  € 
+  S  € 
+à A  € 
+à H  € 
+à I  €   o  € ` !  € ` 1  € ` J  € ` ]  € ` p  € à ,  €   %  €   *  €   A  €   O  €   d  €   f  €   s  €      €   ,  €   .  €   b  €   c  €   g  €   l  €   n  €   p  €   r  €   s  €   t  € @    € @ _  € @ a  € @ e  € @ i  € @ u  € @ y  € `    € ` a  € ` h  € ` l  € ` o  € ` r  € €    € € a  € € b  € € e  € € i  € € o  € € r  €   .  €   a  €   l  €   m  €   r  €   t  €   x  € À .  € À i  € À m  € À o  € À r  € à e  € à i  € à o  € à r  €   a  €   e  €   t  €      €   +  €   ,  €   d  €   g  €   n  €   s  €   t  € @ o  € € e  € € i  €   a  €   e  €   i  €   o  € À a  € À e  € À i  € À o  € à b  € à f  € à k  € à n  € à r  € à u  €   a  €   e  €   l  €   o  €   r  €   u  €      €   ,  €   .  €   u  € @ a  € @ e  € @ i  € @ o  € @ u  € `    € ` .  € ` a  € ` e  € ` h  € ` i  € ` o  € ` p  € ` q  € ` t  € ` u  € € a  € € c  € € e  € € h  € € i  € € n  € € o  € € w  €   b  €   p  €   s  € À a  € à e  € à h  € à i  € à o  €      €      €   o  € @ e  € ` 
+  €   
+  „      „ ` B  „ ` G  „ @ e  ˆ @ 	  ˆ @ 
+  ˆ @ )  ˆ @ /  ˆ @ a  ˆ @ f  ˆ @ t  ˆ @ }  ˆ   "  ˆ   o  ˆ € %  ˆ € (  ˆ   "  ˆ   %  ˆ   d  ˆ   s  ˆ   )  ˆ   ,  ˆ ` f  ˆ ` s  ˆ € 
+  ˆ €    ˆ À 
+  ˆ @    ˆ @ %  ˆ @ (  ˆ à "  ˆ   p  ˆ   N  ˆ   S  ˆ 	@ o  ˆ 	à R  ˆ 
+` E  ˆ 
+` o  ˆ 
+  S  ˆ   p  ˆ @ a  ˆ ` o  ˆ € a  ˆ   m  ˆ À l  ˆ À m  ˆ À o  ˆ à i  ˆ   o  ˆ € i  ˆ € o  ˆ À a  ˆ à r  ˆ @ e  ˆ ` i  ˆ ` t  ˆ € e  ˆ   
+  ˆ   ,  Œ € e  Œ   a     d     i     
+           )   @     @ "   @ )   `     ` "   ` )   € 
+   € "   € )  ”   $  ”   %  ” @ )  ” @ +  ” @ ,  ”      ”   "  ”   %  ”   `  ”   
+  ”   
+  ”      ”   p  ” ` o  ” €    ” € "  ” € \  ” à r  ”   "  ”   ,  ” `    ” ` "  ” ` )  ” ` :  ˜ 
+  u  ˜ À a    @ 	    @ $    @ %    @ :    @ @    @ S    @ n      s    À n      
+             )      .      ;    @ Q    	  I    
+` E    ` ]             ,      r    @ i    ` )    ` o    €               r    À      À ,    À o    à o      t             )      +      s    À a             .      u    ` .    ` q    €      € c    € h  ¤ @ 	  ¤ @ 
+  ¤ @ /  ¤ @ =  ¤ @ f  ¤ @ l  ¤ @ q  ¤ @ v  ¤ @ }  ¤   *  ¤   /  ¤   2  ¤   A  ¤   B  ¤   F  ¤   Q  ¤   [  ¤   s  ¤   t  ¤   {  ¤ @ 
+  ¤ @ ,  ¤   
+  ¤      ¤   ,  ¤ € 
+  ¤ €    ¤ À .  ¤ ` 
+  ¤ `    ¤   (  ¤   
+  ¤   ,  ¨   F  ¨ 
+  u  ¨ ` q  ¨ € e  ¬ @    ¬ @ %  ¬   )  ¬ À i  ¬ ` e  ° @ 	  ° @ 
+  ° @ F  ° @ O  °   "  °   -  °   0  °   1  °   2  °   A  °   D  °   E  °   I  °   M  °   S  °   T  °   W  °   [  °   `  °   a  °   b  °   c  °   d  °   e  °   f  °   g  °   i  °   l  °   m  °   n  °   o  °   p  °   q  °   s  °   t  °   w  ´   n  ´   s  ´   )  ´ 
+` m  ´ ` i  ´ à o  ´ € a  ´   s  ´ à n  ´ À e  ¸ @ 	  ¸ @ 
+  ¸ @ /  ¸ @ f  ¸ @ p  ¸ @ t  ¸   A  ¸   I  ¸   S  ¸   T  ¸   Y  ¸   b  ¸   s  ¸   *  ¸   
+  ¸      ¸   ,  ¸ À 
+  ¸ À )  ¸ À .  ¸ À i  ¸ à .  ¸   6  ¸   7  ¸   r  ¸ @ i  ¸ ` l  ¸ € B  ¸ € e  ¸ € i  ¸   r  ¸   x  ¸ À a  ¸ À m  ¸ 	@ o  ¸ 	À e  ¸ 
+  o  ¸ 
+  r  ¸ 
+  u  ¸ 
+@ e  ¸ 
+` c  ¸ 
+` i  ¸ 
+` p  ¸ 
+` q  ¸ 
+` t  ¸ 
+€ )  ¸ 
+à a  ¸ 
+à r  ¸   r  ¸ ` o  ¸ À m  ¸   n  ¸ à r  ¸ ` )  ¸ ` v  ¸   
+  ¼ @ 	  ¼ @ /  ¼      ¼   A  ¼   B  ¼   J  ¼   O  ¼   P  ¼   Q  ¼   R  ¼   S  ¼   T  ¼   [  ¼   a  ¼   c  ¼   d  ¼   e  ¼   f  ¼   h  ¼   i  ¼   m  ¼   q  ¼   s  ¼   t  ¼   u  ¼      ¼ À .  ¼ à 
+  ¼ à    ¼ à g  ¼ à t  ¼ ` h  ¼ € b  ¼ € e  ¼ à i  ¼ à o  ¼ ` e  ¼ à r  ¼ ` e  ¼ ` q  ¼ € r  À @ 	  À @ n  À @ w  À   %  À   1  À €    À   
+  À      À   ]  À   6  À   
+  Ä @ 	  Ä @    Ä   A  Ä   
+  Ä      Ä   "  Ä   ,  Ä   }  Ä €    Ä À 1  Ä      Ä   ,  Ä   0  Ä À 
+  Ä À    Ä à .  Ä   ,  È @    È   A  È   L  È   O  È @ ,  È      È   1  È à 
+  È à    È à )  È à ,  Ì   O  Ì @ ,  Ì   )  Ğ @ 	  Ğ @ /  Ğ @ ,  Ğ   
+  Ø   K  Ü @ 	  Ü   1  Ü   ;  Ü €    Ü À x  è @ 
+  è @    è @ /  è      è   %  è   1  è   C  è   S  è   [  è   a  è   c  è   e  è   g  è   t  è   u  è   {  è   d  è   i  è à /  è      ì @ /  ì @ r  ì   !  ì   e  ì   g  ì   o  ğ      ğ   %  ğ € %  ô @ 
+  ô   "  ô   $  ô   %  ô   (  ô   1  ô   2  ô   [  ô   a  ô   d  ô   i  ô   m  ô   n  ô   o  ô   p  ô   q  ô   r  ô   s  ô   t  ô € 1  ô € 2  ô   d  ô   s  ô   
+  ô   =  ô à "  ô   a  ø   $  ø   %  ü @ 
+  ü @ ,  ü @ r  ü ` t     %     (   À 1   À 2    P    s  @ I  @ L  ` T  à E  	  M  	€ I  	€ L  	  A  	À    	À D  	À T  	À Y  
+@    
+@ E  
+@ I  
+@ R  
+@ T  
+`    
+  T  À o  @ g  `    @ 
+  @ /  @ `       	  L  	€ E  
+  T    n    i  	  A  	  
+  	€ A  	€ U  	à N  	à P  
+€    
+€ ,  
+€ I  
+  L    r  € o  à p    "    (    N    T    a    b    c    d    y  @    €      M  @ 
+    A    D    R  	  N         t    e    a  à c  @ A  @ S    $    %    A    F    I    L    O    S    U    W    a    c    i    n    q    x  €    À 
+    L  ` T  €    € ,  	€ E  	  E  	À T  
+@ 
+  
+@    
+@ C  
+@ E  
+@ S  
+@ W  
+`    
+` S  
+€    
+€ H  
+À E    P    u  @ r    a    e    A    C    M    O  À S  	  T  	à R  
+@ I  
+@ O  
+` E  
+€ W    t    l    t  à r    B    F    M    S  	  T  
+`      n  à ,  à D     T     L     N     
+           R     T   	à L   	à R   	à U   
+€   $ @ j $   B $ ` U $ € E $   D $   S $ à H $ 	` E $ 	€ I $ 	  , $ 	  I $ 	  P $ 	À   $ 	À C $ 	À D $ 	À F $ 	À G $ 	à N $ 
+`   $ 
+` " $ 
+` E $ 
+` I $ 
+€   $ 
+€ ) $ 
+€ E $ 
+€ H $ 
+€ N $ 
+€ Y $ €   ( à h ( à i ,     , 	  N ,   e 0 @ v 0   S 0   T 0   e 0   i 0   o 0   q 0   s 0 €   0   I 0   R 0 € E 0     0   C 0 	  A 0 	  E 0 	  K 0 	  M 0 	  N 0 	  T 0 	€   0 
+` e 0 
+  D 0   c 0   t 4   b 4   o 4   p 4   t 4   u 4 € 
+ 4 €   4   G 4   N 4   R 4 	  T 4 
+  L 4   S 8   ( 8   A 8   C 8   N 8   O 8   T 8   W 8 ` L 8 €   8 € " 8 € , 8 € ` 8   C 8   S 8 À R 8 à   8 à E 8 à S 8 	  N 8 	À E 8 	à   8 	à N 8 	à T 8 
+€   8 
+€ . 8 
+€ A 8 
+€ I 8 
+€ R 8 
+€ Y 8     8   x <   E <   T < À   < À F < À T < 	€ D < 	    < 	  , < 	À   < 	À I < 	À N < 	À T < 
+  Y < 
+@ 
+ < 
+@   < 
+@ " < 
+@ S < 
+@ T < 
+@ ` < 
+` E < 
+€   < 
+€ H < 
+  T < 
+À I < @ a < @ i <   r <   t @   R @ 	€ I @ 	à S @ 
+@ E @ 
+@ O @ 
+  R @   R @   c @   r @ à s @ @ i D 	€ 
+ D 	€   D 	€ , D 	€ S D 	€ i D   a D   e H @ I H @ L H   A H   C H   D H   I H   O H   P H   T H   n H @ ) H @ . H   C H   N H ` H H     H   . H   S H 	  G H 	  N H 	  S H 	à M H 	à V H 
+  O H 
+@ A H 
+`   H 
+€   H 
+€ I H 
+à I H   . H   p H   t L   B L   F L   I L   O L   P L @ , L     L   , L   L L   T L 	  A L 	  N L 	à F L 
+  L L 
+`   L ` a L   e L   r L   m L   i L à f L   r L   l L € a L € r L € y P   $ P   % P   * P   H P   L P   N P   O P   S P   W P   b P   n P   p P   
+ P     P €   P À   P   B P   D P 	    P 	  E P 	  O P 	  C P 	  E P 	  O P 	À E P 	à   P 	à R P 
+@ A P 
+à A P     P   , P   s P   e P   i T € I T 	€ A T 
+@ P T 
+` " T 
+` E T 
+€   T 
+€ H X   N X 	  D X   r \   R \ 	  E \ 	  S \ 	  T \   n \ @ i ` 
+  R d   C d   K d   O d € 
+ d €   d 
+@ I d à u l   [ l   0 l @ u l à o l 	@ o l   * l   i l   s l   ] l   u l ` t p À " t @ ` t @ n t @ } t   = t   h t @ Q t @ s t   n t ` t | €   | € b |   m | À i |   d |   t | à p |   e |   u | @ e | ` u | € a | € e € @ 	 € @ 
+ €   ( €   c €   d €   i €   o €   r €   w €   % €   ` € @ s € €   € À   € @ 
+ €   N € 	à R €   
+ €   ` €   g € € b € À m € à o € ` q „   : „   < „   = „   S „   W „   [ „   c „   d „   f „   g „   l „   p „   s „   v „   z „   { „ € 
+ „ €   „ À . „ ` i „ @ a „ @ l „ @ o „ ` c „ ` e „ ` k „ ` l „ ` t „ à a „ à e „   n „ ` e „ € 
+ „ €   „ € ( „ € _ „ € e „ € f „ € l „ € o „ € s „   e „   p „ À   „ À ( „ À c „ À d „ À g „ À t „ À y „   [ „   p „ @   „ @ " „ @ ( „ @ ) „ @ a „ @ e „ @ g „ @ i „ @ r „ @ s „ @ { „ ` 
+ „ `   „ ` e „ ` i „ ` k „ ` s „ ` t „ € 
+ „ €   „ € ( „ € ) „ € , „ € a „ € e „ € i „ € o „ € s „ € t „ € u „ € { „   s „ À i „ @ " ˆ   * ˆ   = ˆ   F ˆ   i ˆ ` d ˆ ` p ˆ À E ˆ À Q ˆ À c ˆ 
+  u ˆ à q ˆ à t ˆ   r ˆ   s ˆ   t ˆ   z ˆ     ˆ   d ˆ   l ˆ   t ˆ   n ˆ @ e ˆ € e ˆ € i ˆ à v ˆ   u ˆ @ a ˆ `   ˆ ` : ˆ ` t ˆ € a ˆ   i ˆ   n ˆ   t ˆ     Œ   ( Œ   : Œ   = Œ   E Œ   J Œ   S Œ   T Œ   r Œ     Œ €   Œ À   Œ À F Œ À W Œ À o Œ   ( Œ   , Œ   n Œ   s Œ   t Œ ` o Œ     Œ   ( Œ   d Œ   n Œ   { Œ     Œ   = Œ   a Œ   e Œ   . Œ   a Œ   f Œ ` a Œ ` o Œ ` s Œ € a Œ € e Œ € u Œ à f Œ à m Œ à n Œ à p Œ à r Œ à u Œ @ e Œ ` ) Œ ` m Œ €   Œ € " Œ € . Œ € _ Œ € e Œ € i Œ € { Œ   m Œ   t  @ /  @ e  @ o  @ v    =    A    F    I    O    S    a    b    c    d    i    o    p    q    r    s    t    v  @ ,  @ :    a    c    f  €    à o  
+À a  € n  à e    b    t  @    @ #  @ .  @ q  @ s  € e  € i    a    d    f    n    p    r    x    f    n    s    t  à    à c  à e  @ i  `    ` ,    c    l ” @ / ” @ v ”   " ”   $ ”   ( ”   - ”   : ”   > ”   B ”   D ”   F ”   L ”   M ”   Q ”   S ”   W ”   ` ”   a ”   b ”   c ”   d ”   e ”   f ”   g ”   h ”   i ”   l ”   n ”   o ”   p ”   q ”   r ”   s ”   t ”   u ”   w ”   y ”   { ” @ ) ” @ , ” @ : ” @ } ”     ”   ] ”   ) ”   [ ”   f ”   
+ ”     ”   ; ” €   ” À 
+ ” À   ” À s ” à s ” @ 
+ ” @   ”   $ ”   % ”   ? ” @ i ” À i ” À o ” 	@ o ” 
+` Q ” 
+` t ” à d ” à e ” à f ” à s ”   l ”   r ”   s ”   t ” @ y ” ` , ” ` ` ” ` a ” ` i ” ` k ” ` t ” ` u ” € 
+ ” €   ” € " ” € , ” € _ ” € d ” € u ”     ”   " ”   % ”   d ”   g ”   n ”   p ” À e ” À l ” à a ” € e ” € l ” € o ” € s ”     ”   a ”   b ”   e ” À   ” À " ” À ( ” À a ” À c ” À d ” À e ” À i ” À k ” À s ” À t ”     ”   + ”   E ”   a ”   l ”   r ”   s ”   u ” @   ” @ ( ” @ ) ” @ + ” @ . ” @ B ” @ _ ” @ a ” @ c ” @ e ” @ f ” @ g ” @ i ” @ m ” @ o ” @ r ” @ s ” @ t ” @ v ” @ y ” ` 
+ ” `   ” ` ) ” ` . ” ` : ” ` B ” ` e ” ` s ” ` t ” ` u ” €   ” € ) ” € c ” € e ” € h ” € u ” € w ” À a ”     ”   a ”   p ”   t ” ` } ˜ @ 	 ˜ @ 
+ ˜ @ s ˜   : ˜   = ˜   S ˜   [ ˜   c ˜   d ˜   e ˜   f ˜   g ˜   q ˜   s ˜   t ˜ @ 
+ ˜   " ˜   f ˜   q ˜   t ˜   
+ ˜ €   ˜ À   ˜ À . ˜ À J ˜ À P ˜ À Q ˜ À S ˜ À s ˜ à s ˜ ` i ˜ à t ˜     ˜   , ˜   . ˜   c ˜   e ˜   r ˜ À   ˜ À e ˜ À s ˜   e ˜   l ˜   n ˜ € a ˜ € e ˜   t ˜ à l ˜ à o ˜ à r ˜ @ e ˜ @ o ˜ ` e ˜ € w ˜   n ˜   r ˜   , œ @ 	 œ @ / œ @ } œ   : œ   Q œ   S œ   ` œ   a œ   b œ   c œ   f œ   o œ   s œ   t œ   w œ   { œ   } œ @ 
+ œ   f œ   
+ œ     œ   ] œ €   œ À   œ À ( œ À F œ À T œ à ) œ à g œ à k œ à b œ   s œ   i œ   n œ     œ   " œ   % œ   ) œ   , œ   = œ   n œ     œ   t œ   n œ   t œ € e œ À o œ à 
+ œ à   œ à - œ à @ œ à d œ à e œ à r œ à t œ @ a œ @ e œ ` 
+ œ `   œ ` " œ ` ( œ ` ) œ ` , œ ` . œ ` : œ   m œ ` "   @ 
+   @ /     `     c     f     h     s     t     w   €     à s   @ 
+     m     l     r     s     t     
+           c     d     n     r     c     l     s   À     À "   à d   à m   à u   à w   @ o   €     € s   € t     b ¤   : ¤   i ¤   } ¤ ` 1 ¤ €   ¤ À o ¤     ¤   b ¤   l ¤   t ¤ @ u ¤ ` a ¤ ` e ¤ ` h ¤ ` s ¤ ` t ¤ €   ¤   r ¤   s ¤ À   ¤ À f ¤ À i ¤ À y ¤ à h ¤ à i ¤ à n ¤ ` e ¤ €   ¤ € d ¤ € e ¤ € l ¤ € t ¤ € y ¤   e ¤   i ¤   p ¤ À   ¤ À ( ¤ À Q ¤ À _ ¤ À ` ¤ À a ¤ À c ¤ À d ¤ À e ¤ À f ¤ À g ¤ À i ¤ À j ¤ À p ¤ À s ¤ À t ¤ à " ¤ à . ¤ à n ¤ ` 
+ ¤ `   ¤ ` - ¤ ` e ¤ ` h ¤ ` s ¤ ` t ¤ €   ¤ € ) ¤ € a ¤ € e ¤ € h ¤ € i ¤ € u ¤ € y ¤ À e ¤ @ e ¨   c ¨ à b ¨ à i ¬   : ¬   i ¬   w ¬   { ¬   g ¬     ¬   ( ¬   e ¬ à m ¬ à u ¬ ` . ° @ c ° @ i °   " °   ` °   b °   d °   i °   p °   { ° @ 
+ °   e °   g ° À D ° À Q ° à d °   x ° 
+` e ° à p ° à r °   c °   t °   u ° € 
+ ° €   ° € b ° € i °     °   " °   % °   ( °   . °   : °   B °   J °   _ °   c °   m °   n °   s °   v ° À 
+ ° À   ° À " ° À ) ° À . ° À ? ° À _ ° À o °   c °   f °   k °   m °   n °   s °   t ° € 
+ ° €   ° € _ ° € o ° € y ° À ( ° à g ° à n ° à s ° à w ° `   ° ` e ° ` o ° € e ° € i °   d °     ´   W ´   g ´   t ´ à d ´ à g ´ à k ´   i ´   k ´   l ´   n ´   p ´   s ´   t ´ @ e ´     ´   ) ´   , ´   : ´   = ´   F ´   _ ´   d ´   n ´   r ´   t ´   n ´   s ´   t ´   o ´ à d ´ à n ´ à r ´   l ´   o ´ ` s ´ €   ´ € " ´ € ) ´ € , ´ € . ´ € : ´ € A ´ € } ¸   " ¸   & ¸   2 ¸   C ¸   G ¸   a ¸   b ¸   c ¸   d ¸   e ¸   f ¸   i ¸   m ¸   n ¸   o ¸   p ¸   q ¸   t ¸   u ¸ @ 
+ ¸ @ , ¸   & ¸   ) ¸   a ¸   c ¸   f ¸   q ¸ €   ¸ À 
+ ¸ @   ¸ 
+  u ¸ à q ¸   : ¸   l ¸   m ¸   t ¸ `   ¸ ` a ¸ ` e ¸ ` h ¸ ` l ¸ ` s ¸ € 
+ ¸ €   ¸ € ( ¸ € / ¸ € V ¸ € e ¸ € i ¸ € s ¸   ) ¸   e ¸   r ¸   s ¸   x ¸ À o ¸ à 
+ ¸ à   ¸ à " ¸ à ( ¸ à ) ¸ à , ¸ à . ¸ à ] ¸ à e ¸ à l ¸ à s ¸ à { ¸   l ¸   n ¸   s ¸ @ e ¸ ` o ¸ € y ¸ à r ¸ à t ¸   u ¸ `   ¸ ` - ¸ ` / ¸ ` : ¸ ` e ¸ € 
+ ¸ €   ¸ € ) ¸ € , ¸ € A ¸ € _ ¸ € a ¸ € e ¸ € f ¸ € i ¸ € l ¸ € o ¸ € r ¸ € s ¸ € u ¸ À e ¸     ¼ @   ¼ @ / ¼ @ ` ¼ @ q ¼   1 ¼   ` ¼   a ¼   b ¼   c ¼   d ¼   e ¼   f ¼   g ¼   j ¼   l ¼   m ¼   p ¼   q ¼   s ¼   t ¼   u ¼   w ¼ @ 
+ ¼ @ , ¼ €   ¼   m ¼   v ¼ À W ¼   v ¼ € o ¼ @ s ¼ @ t ¼ ` . ¼ ` ] ¼ ` i ¼ ` u ¼ € i ¼ € o ¼ € s ¼ € u ¼   s ¼ À   ¼ À f ¼ À t ¼ à " ¼ à . ¼   n ¼   n ¼ `   ¼ € l ¼     ¼   / ¼   m ¼   p ¼ À   ¼ À , ¼ À . ¼ À : ¼ À a ¼ À c ¼ À d ¼ À g ¼ À l ¼ À s ¼ À v ¼ à " ¼   e ¼   i ¼   y ¼ @   ¼ @ " ¼ @ . ¼ @ a ¼ @ d ¼ @ e ¼ @ f ¼ @ g ¼ @ m ¼ @ p ¼ @ r ¼ @ t ¼ ` e ¼ ` t ¼ €   ¼ € ) ¼ € , ¼ € : ¼ € h ¼ € i ¼     ¼   g ¼   l ¼   n ¼   r ¼   t ¼ À e ¼ à   ¼ à i ¼ à s À   i À   s À   d À   i À ` " À   g À À D À À S À   q À ` s À   c À   r À   s À € a À     À   a À   c À   n À   r À   e À € a À € e À € i À à r À à s À   e À   l À @ e À @ i À @ o À ` : À   b À   l À   s À   t À   
+ À   , À   r Ä   * Ä   : Ä @ , Ä €   Ä À A Ä À Q Ä À a Ä À f Ä €   Ä € " Ä € . Ä € / Ä € E Ä € S Ä € d Ä € f Ä € s Ä   a Ä   e È @ 	 È   ! È   " È   : È   = È   B È   O È   P È   S È   _ È   ` È   a È   b È   c È   d È   f È   g È   i È   m È   n È   o È   p È   r È   s È   t È   u È @ : È @ } È   ) È   i È   m È   s È   
+ È     È   ) È   , È   ; È   ] È ` " È À 
+ È À B È @ i È à i È   c È   l È   m È   n È   t È   v È ` e È € e È € i È     È   " È   , È   . È   F È   S È   a È   b È   c È   d È   e È   f È   l È   m È   n È   q È   s È   t È À ( È À a È à   È à ) È à . È à / È à e È à s È à u È   a È   b È   c È   e È   g È   n È   t È   v È   z È   a È   e È   i È À   È À i È À s È à   È à d È à m È à r È à u È à w È   . È @   È @ ( È @ ) È @ e È @ o È @ u È ` 
+ È `   È ` - È ` i È ` o È €   È € i È   c È   n È   t È À e È À i È   
+ È     È   ( È   ) È   , È   . È   : È   ` È   { È ` } Ì @ 	 Ì @ / Ì @ f Ì @ m Ì @ n Ì @ t Ì @ y Ì @ } Ì     Ì   " Ì   % Ì   ( Ì   * Ì   . Ì   : Ì   = Ì   A Ì   B Ì   L Ì   W Ì   [ Ì   ` Ì   a Ì   b Ì   c Ì   f Ì   h Ì   i Ì   j Ì   n Ì   o Ì   p Ì   r Ì   s Ì   t Ì   u Ì   w Ì   y Ì   { Ì @ 
+ Ì @ , Ì @ } Ì   ) Ì   
+ Ì     Ì   " Ì   ) Ì   , Ì €   Ì   S Ì   c Ì   o Ì À 
+ Ì À   Ì À . Ì À A Ì À C Ì À E Ì À J Ì À N Ì À Q Ì À R Ì À S Ì À s Ì à c Ì à s Ì @ 
+ Ì @   Ì @ / Ì @ i Ì   ( Ì   m Ì   
+ Ì     Ì   ( Ì   , Ì   . Ì   / Ì   d Ì   l Ì   m Ì   n Ì   p Ì   r Ì   s Ì   t Ì   , Ì   a Ì   e Ì   o Ì   l Ì   m Ì   n Ì   o Ì `   Ì   i Ì à   Ì à , Ì à c Ì à f Ì à n Ì   e Ì   r Ì   l Ì `   Ì ` e Ì ` i Ì ` o Ì ` q Ì € 
+ Ì €   Ì € . Ì € : Ì € S Ì € ] Ì € _ Ì € a Ì € e Ì € g Ì € i Ì € o Ì € r Ì € y Ì   a Ì   b Ì   c Ì   l Ì   r Ì À g Ğ @ 	 Ğ @ 
+ Ğ @   Ğ @ f Ğ     Ğ   ! Ğ   " Ğ   ( Ğ   * Ğ   . Ğ   : Ğ   = Ğ   B Ğ   P Ğ   Q Ğ   W Ğ   a Ğ   f Ğ   i Ğ   l Ğ   m Ğ   n Ğ   p Ğ   r Ğ   s Ğ   t Ğ   u Ğ   v Ğ   w Ğ   { Ğ @ 
+ Ğ   ) Ğ   f Ğ   
+ Ğ     Ğ €   Ğ À 
+ Ğ À D Ğ À E Ğ À P Ğ À S Ğ @ 
+ Ğ @   Ğ   v Ğ   r Ğ 
+` p Ğ   
+ Ğ à i Ğ à o Ğ à t Ğ   b Ğ   c Ğ   i Ğ   k Ğ   l Ğ   n Ğ   s Ğ   t Ğ `   Ğ ` . Ğ     Ğ   " Ğ   , Ğ   S Ğ   d Ğ   m Ğ   n Ğ   p Ğ   r Ğ   s Ğ À 
+ Ğ À   Ğ À ( Ğ À , Ğ À . Ğ À ` Ğ à r Ğ   
+ Ğ     Ğ   / Ğ   : Ğ   a Ğ   e Ğ   i Ğ   o Ğ   r Ğ   u Ğ   a Ğ   c Ğ   m Ğ   n Ğ   o Ğ   t Ğ € n Ğ À , Ğ à 
+ Ğ à   Ğ à r Ğ   s Ğ   u Ğ @ a Ğ @ i Ğ @ u Ğ @ y Ğ ` 
+ Ğ `   Ğ ` . Ğ € a Ğ € e Ğ € p Ğ   - Ğ   p Ğ   r Ğ   s Ğ   t Ğ à a Ğ à e Ğ à o Ğ     Ğ   ) Ğ   l Ğ   p Ğ `   Ğ ` " Ğ ` b Ğ ` q Ğ ` } Ğ   
+ Ô   t Ô   l Ô   l Ô   n Ô @ . Ô @ Q Ô @ _ Ô @ j Ô @ l Ô @ s Ô @ u Ô ` e Ô ` h Ô ` t Ô € e Ô € i Ô   r Ô   s Ô à h Ô   l Ô € d Ô € e Ô € l Ô € t Ô   e Ô À : Ô À c Ô À e Ô À s Ô À t Ô   - Ô   d Ô @ 
+ Ô @   Ô @ e Ô @ n Ô ` . Ô ` ] Ô ` e Ô ` h Ô ` i Ô ` u Ô € 
+ Ô €   Ô € : Ô € @ Ô € e Ô € h Ô € o Ô € p Ô € s Ø   
+ Ø @ 
+ Ø   n Ø   r Ø     Ø   r Ø à ) Ø à ? Ø   n Ø   s Ü   e Ü   g Ü   r Ü     Ü   e Ü   e Ü   i Ü   o Ü   l Ü   n Ü   t Ü à   Ü à u Ü ` 
+ Ü `   Ü ` , Ü ` . à @   à   = à   o à   m à   c à   e à   o à   r à €   à € ( ä @ 	 ä @ / ä @ f ä @ o ä   " ä   : ä   = ä   > ä   O ä   P ä   S ä   a ä   c ä   d ä   e ä   g ä   o ä   p ä   r ä   s ä   u ä   w ä   { ä   " ä   ) ä   b ä   q ä   s ä   
+ ä     ä   ; ä €   ä À 
+ ä À   ä À Q ä @   ä 
+` Q ä     ä   , ä € e ä à u ä   e ä @ i ä ` 
+ è @ ) è @ , è   d è   r ì @ 	 ì @   ì   s ì @ % ì @ a ì @ f ì   } ì @ i ì   . ì ` q ì   
+ ì     ì   ) ì   , ì   { ô @ 	 ô @ 
+ ô @ s ô @ } ô   e ô   { ô     ô € 
+ ô €   ô ` 
+ ô ` " ô ` 1 ô ` sí3'µPmtv˜£D†xPSŞ‚âëBPUte˜‰Ê§!S‘B¼B«IşŒ4DÑŠøT‹Vî3EËEÒÌ3¡ô•]ybÂMªN‚Ğ]§4>¿ñ²‹ËÍ…°†CPmtv˜£ÊÈS”PœF²0” ¯A„—0ÙKÒ˜A0Ï¿£AÜG:CÈ&][\çP¿O-ñœ[Y¨’B½B¬Işˆ3…DŸ´¬:ãQì»1çÖóAŒV©]ã2ÑYï3E®1ÑÓá,Á,Ø°3ŠİØ¶ÀØÍ3¡•_iâ@³R–]ybUÓQÂÃM£ÎÉsŠ„¤!éÍÃ\„\ÔV«N‚Ú>ò…ûQæ4Ã¨êD É…ŞÕz)8¨4¥Dñ²‹ËçBË3!™#Šá.&šPPt`˜„D†x* SR%+<A=DœŠ;+M0ûåÛG:CÈ&][\çP¿O-ñœ[Y§º1ÍèóìòA¨]­1µMŠİ;¶,†»,ñá@¢È²R€UÒQÂåRÎÈsŠ„¤!éÍ‚ÓV°Ù>òúQè4Ã¨êDå»
+ÑŞÕ£8­Aûñ²‹Û™Ô”¬{èelˆˆ¤§àÉ‹Ë"ÍÒùğ(«€ºœóàì&À¤„‡Ù#†ÿ$ˆüìj‡‹*—$6T  ¸"§0§„•EB¥{O7belˆˆÙO·NŒï›¾Y`KNK9NINGAfM“NûEFKKJËŒ	Ì"ÎÀÓ÷Ó	¡
+úï
+ñ(¬¬µ”îr³áÊœØ¬Ï¯¤!++°$ò§q‰‡˜Œ¶«¤„‡Ù$‡ÿ$ˆü•N¦ –Í#E„˜ÇÎø/–Â©ê‘# %µâÂ«j‡‹°î—âghĞ6ï‚¾–‡‹ƒµ°àÉ‹‚uüäÉá]
+	µ"ÍY˜)…V5¬BÙ$„8Ä¦*_ÄÜ(z¸0¥Ã+U–\¶›NğxcƒOè?%ÎŞò?ê?‘¸İ;‰Å®6ÑŠ2å&—›€ß‘ºG„à	›$³1—ƒ$³1Ù¹è‚ííÔ¥(àíüÜ¦"ìô¢	³°"•İ"Ÿ	¹Ñ(¶1â(¶1Úí§ıÊõ‡¾½¨Í•Ù(¶1ÉN	x	Í»	÷ÖÌ§£uˆõ	›õ7Ó0ˆü¹&	¥õ»cò	ÇŞ'ı™í,†¹5Øq‰‡²@š(µ1Å9Œû°‘ÍPmtv˜£ÊÈSÙ2ïŒÖ“,™.äA†V5¸4é7É2±ª–¡3§¯E‡»HÆ¾'ªëaó›™.cø<ÏCP§RÜå‚Õºü&Üˆ˜\Ú7.€PlY¦aÛ%1œ+™B·0â8/¥RjYy:GiœLS©åffñ•ü˜	*îğŞ‚EbC1!UH8!kK\!ŠR–	Ø”¤Ù¶,¦ÌÁ!ì	âV2ç¾‡©ØËÌP×‹-vVg,ŠR¤ŒËÚ“
+ı:_Ù=©	Š˜ ú~çcsŠ„€#,K»	—	_8èÂ	ß
+¿üìÚP‡ÙÈk›
+—Å…ÑS¥,ÒÍPmF.$Rc5/tfd/™S®ˆóS§,¿>Ã@üø¡	€vpE=Î¥0§¹’á°å²ˆ<ÿæá’šß•ãÙ*˜„ ¿¯»øWßMÇ2›é¤0íô 6;##Ò¥1Í	;QŒ,êHè!ÚïÈ,|ñÎ¼Ù½)Áæ.­0qƒ„œõOlˆˆğ!ÉÈ,í‚	°’“İ@/íÈ•Ôm.¥
+æ•Û}Û /ò½ÆÄWœ,»Ô1Yùk¶šæÖAıùl°şßİUÉó	Ò
+ÖKŞ	ßÅ…ÖP¥/ÍşÔPmC1!U`8,wcg,œS©ˆøP§/º>ÎëË–ğeÌ(¶1¶"’2ñ#1£
+±LÍ+bPd”l¸‹R¡20´$¿ö´5Ÿşı"†#í”“˜Àğ9„|Ê69§5:‚·Ñä–”ÈPmtv˜£ÊÈS¨8Öñ:°\ë/èÔ¾øÌÂ÷ıÌ6	†÷„ï­«-È$ƒùüÈ”RèË˜–¹îÊ˜¯D¼
+ìÀÇÏÊ¯õs†¯¶¬ÜÈİ™ÖÜ–»±CPRµdÚ“¿R˜ERµdÚ“ğèÀÙÄ­ñçœêšæ	½ß‰”Á³í~çc×@˜£Ê‰ê™­ä¼¿=Â¨µÿæ³4¡£±>úèº7àœ‘–µ<åF¸ƒşµ–£èÈó®É6à6·
+¥-¦ˆõUç˜Ú•tô@‰ª4ô\…ˆ2ğ–Â0>_Pø•½0©¯•fù‚º´
+™8õÔî²ƒ&ÃŠ„ØëE>îÙî•ÙÖ~çcõ†¥ƒ€j¦ÈB,Ú˜—	ÙNÊ)7dÂ	IÓ$€…å&6\’“ˆ7°ä·,Ö‹ƒ´3³&¥0§ö3EøÙ)º±	Û€WP!ˆsŠ„¾ÙôçD÷	ÛÈèD²…ê±u 1l~çc–ÒåùæÑİô>?ŠĞ
+ôÌæÌ(ã"×ü2(åÂÌ½”Ş‘¿©”–•%ÌœÄÃø´'ó%³1ğâÖ
+ÊˆV5ˆW…ºÔ¥kì)YˆŞÒ§kğ>·hÑ6$]xcÀƒ§î§¶–çâ…\s×â_uÓ3å0“*‚úà’4©¸Ï¤ë£õŒ¦î/ÜÈ0¦Úæ0©Ê¯œ~ë<‘å
+æ6Íõc¥(c§7È§*ÏĞ3–è§9 ÆÔâƒm›¢¤Å‡pç¨¯ÁˆÌ¦Á$ıâÛ¸Ã­µı™»ÒnÚˆÛ€+Â0í,i`Äµ>¡@ö\Ÿ§Ç0å}=â™ˆ2«Ç/ùõ
+¯äÏ³É0€ø‚ê°~‘Ó8€İ7.¯ä=YNñgµ +Ôƒ€¾CÄ·…8/·>YMƒ{¾
+$›‚É?-FBH@D®ıÔ§€ÙÚq‰¾9¢÷Å¶A
+ø+””rÄ•ş «°F­M0A=@AVÃ‡5âPmtv˜£ÊÈSÊN?_,/:RÇ4çA~çc²	
+ÿ[éÉ	
+à#^Àüƒ‡óælîÄ6©M®¨e»"š×SŒ\Vv@®\YzC‚†è€¦¶…æZi‚9—\ò¾juS“~çc‡×î…ÇÛ¬( ›9ŸˆØ>ï™ÜšÎ6İ©†—¤®‚‰—«ÀÜˆ·îâÒ.—â
+›§5Z¦ERµdÚ“öI“¶–ÓëÙísŠ„×µi!E¾;ÉÀXÖ‘s½ê»’Êg‚¼‹™ÄÆ;=cª@œNğxcò×„O•0†¸“™6„¦0§„Ë.×˜q‰‡´Óé?ø=Ğ‚%§1Ü7½ 2É4ì‚ù›%Îº#ªÎŠé;%²1ë?§IşÌï™‹ƒû¶1Jí
+€fV§ëÑ;OASl3p†@¡
+h=¿Ï2K’
+gV‚?€€>ÿB½ê»’Ş’¹İ;ŠPô=ÆÒŠ2æ&—›©ÂĞY¦ÍPmF.vc5£fC!ÈS«õY’>à‘û#³1»G„à	›$³1•PF²¬—‚%” ÉCPä¸†ş‡R°A„˜0ÚK¬P† ø”-„$³1™AíB¿0¤A•$·ü ¿G„é¢î·ÑƒÚ“"è!ïí°“(êË"ˆİ"¬	¬†Dù–H§"‚,³¢H–K±"‘2£KÆ(µ1òLØ(	¿#î	š%²1%²1Ş7ŸLİ7ã7¶5¯ê(¶1Æ5·5¯Ò(¶1ã(¶1¾ ²)ÛÒ‹ƒû¼1§ıÊõ‡ûö2Í—·^Ú(¶1ÓNÊNÎ¾}Ö	Ì§»•öš’!÷Á »u†	›»&	¥õ»cò	¶N‚ö7Óø]0ˆüÏ¼ ø-‚“æİÙ¨ÂĞY¦Ğ‡¾CçõY’>… ø”-º&	¥õ»cò	÷]Ê;ğ!á;‹İâ!ÉÇ,í¤–Ã1€OßŞ3Èß'ı™í,†í2%èÄº5˜4DÓ
+€3(¼6šÙé$õ½/õŸq‰‡³@ ]ybÊ@˜?MŒµ2>–O<"<°ˆsŠ„Ï:„‰‡‰›(µ1Æ9Œ€°++ò÷]Õ,Á,Œ>CÙ\ù
+°Éâ"Çí­âAÕMü†3(w>‰©ÃI¯}…Ä3M,Ûc˜œ…?A"b*8ÌŸ$½	§„ÊŠÚÉ›Ê£!+É´¥ × ©–Ú‹ƒµÙ‚Ø2Ñ©–Û½&ØÆ…¸ƒş×Ú¯sŠ„Â@Ï9Ô$¶ˆsŠ„¦#Ã6Ş@‘¸¼‹İˆ‰‡Æ&¥”ÿûÍ!¹Î,Ù(çÃ…ÛÎ-˜K¤J8Ö‹–Ç
+ÀíÏ¥–Ã1è‘å3°lüc»^Ñ:±E±‘ÍPmtv˜£ÊÈSÚ2…êŒÂ€¥	ïÅ)ÔåAğ?˜%²1†R7T3P‘%²1ì?Ÿ8ËÒP‘`®„c†x*yR§Dñ²‹¿ 
+Ş¤
+
+€Ø‹ë‡Ò„à	›í	
+Øè7 3§êaƒ#P‡…Æ¾‡RŞcä‘’
+Á	ëÿ÷şÿ	Í¹CPd”l¸‹RìŸ$İ£s¨’¼Ñ	?†¼½(éí;‡ü'ïˆ‡çÔ—Ÿ!âÓÌNj¹œ‹ƒœ!ß(åÂàïû ³1š Œ2–Üsƒ•u6Èœ–èÛ
+%“rúğÙ¤¦å¾CÚ
+ğ§e I0z@=¢¤Í‚ «Àûˆ‡V5Ê6ê7ó<«p¯7eÈ¸7ù#ªäÖó†*ô §2Ú÷/Á×$Ø=õœá°å²®Æüùœş¼Ê–ì8‹#İ3¤4ÑÆ¯—¨–8µ§–æùØÆ¯—´ò–ØùØÆ¯—Ë2²)ÓŸ¾ÉÆ#òíÇ:´]Â–Ù.ŒO¹­N‚¬ñ–š]ybØM±#¨‡«Æ]½!Éÿ&Çí¨!++›,,Á,Øƒ÷ƒ`‡ÆøÑ•d‰ø¸°È¶ÇĞõ/Ë7ò]–Ã1ÇŠ„Ë°É€ä7.“=Y¦µÇ„çƒîÙŸ
+‡¾CÄ¼8/·>YĞğœ%Ğ@íA¡N=@Aå@4òî·7¤<Ú©„…4ç±Ì2“<<Úö@©lÖßG‰*¼  ¤*YŒ*ğ—Ç‡<‹ÜÚïÈ,|ñĞ¦–¬0ô“ŒlˆˆÃ{•"á²Éó	µ"–ü+º—/´[°‰2¬–·ôÄ-‚77¥>«,Á;ÜBÂ ÒÎ.—9éÓ³ŞGã¼  –EB@G>`{O7belˆˆ¤µO·NŒï›qPYEKNK<NINGAfMÎ][\±NûEFKNJÿP¿O-ñœ[Y•7š<Úˆ<û0èÈõ¡7–7¤<Ú¬7„<Ú†e<Ú©„¤¥†e<ùáµ£èÈ¡Ö.Ğ
+‰<ùQšà#îĞ(¶1Á"’2Î Ô§’íò™.šÏ(¶1Ä"’2ŞÅ"’2Û°”"è!ïí°Ù‹ƒ„!”(µ1‡‰‡ç/·G°E¼HÆ¾(ªÀ"’2Í 2ì×›ğ©)Ş<ó*ßÔĞCPñ¶RŒ„KŸ"‘2§(µ1‡Dù—Hİ×Z½"’2æ‘è‹2¨"‚,³£H—KÃT²"¤KÇ(µ1àØZ¾"’2ç‘é‹2ÕªS&;*ƒ8ÓÈN	x	ĞJï!ÉÈ,í/œ\¯6Öã¸N‚›˜h€C½ê»’ß“”7¼<"<Ú™\Ú7.€PlY¦aÛ%1œ+™B·0â8/¥RjYy:Giú*é‚Oş]c–Næ3ñLLLSÑĞŠ2ùC÷í,µ, ÜÌ‘Ìõ§HÛK½æDt˜£cg,Ü#³1æ‹2äğ#³1á$÷8D¼
+ìö–Â0õ3Eøç2%èÄÃ]xcÛõ÷MÀ$ıâÛ¸Ã÷iªå‹İ7.ĞY¦—…¼8/õYĞN’"‘2"‘2– Œ2–
+‹ Œ2ĞÌú[´‘(µ1Ù”ı¶,—;ºÁN­Û‹®ŠÍ*¸¯	í	Æ	¾	â
+…	Ä	ê	âï¾‡iÀØË“¹P×‹-vVg,ŠR¤ŒËÚÛKãÕ×¶’-”
+ØKĞÇ	Í" ¾ÉÈ_Ë,˜'AŠíÚ=³ZÚ+Äª	¹°	‹™ É"H¯.1/	46	I8	G4	â²É›ˆ,jÆÇí«ô³L¼	ƒ÷	8˜	®Â…ËY¥&ÛÍPmF.$Rc5/tfC!/,mS«ˆíY§&Å>ı	î	FÔéµ]ÏÄÁ&ØÛ/Úä™Ó¾‡Ì¹'Œ°CP§R×F˜£ÊäF¸ƒşõI“÷=êÃ	Ã–Ù.à
+Â¥	†#ÀOºÛ‹	î
+¤(•1‡!€.¤à²	¸«	Ê
+¯’Ñ
+ ¥CPmtv˜£ÊÈS‰>Â‘²&¥0§Œ"‘2â%¤ËÄ¦¥ERµdÚ“‘
+÷
+á
+³
+úÂ…ËY¥&ÛÍPmF.$Rc5/tfC!/,mS«ˆíY§&Å>ÃUı«Â…ËY¥&ÛÍPmF.$Rc5/tfC!/,mS«ˆíY§&Å>ğòÑ	ä	y±ÀÅ…ÖP¥/ÍşÔPmC1!U`8,wcg,œS©ˆøP§/º>¦	Œ
+ªñTÅ é¤0íá	ıí‘O®N‚¬ÛP‡Ùôş–ˆáõ	®§
+Â é¤0íÁÉkëœ
+—Å…ÑS¥,ÒÍPmF.$Rc5/tfd/™S®ˆóS§,¿>Ã é¤0í³’-›]ybšUg“B´ı3EøÙ)‰š
+ïÇ		æ
+ÔıøÙ½
+„	´Š	ã®q¡Ğ	(QãÅ…ÖP¥/ÍşÔPmC1!U`8,wcg,œS©ˆøP§/º>à	¢		ÒŸ	M®	'ÓÁü©	…%õ- º¿	”ù•ù0˜ø÷pE=Î¥0§èé‡f«Lğ	FºÊ
+–
+½Ò•ù0˜Ê–ĞëÂ¼“á°å²Óå¥/í²#¨¯ÿÙˆ£†%õ- çâßñ‡	¿0Ñ–Ê–µğ›‹÷‡"–×øı•ˆ2½	Ö¤	±	¬Â…ËY¥&ÛÍPmF.$Rc5/tfC!/,mS«ˆíY§&Å>­	'û„%õ- “ù•ù0˜ã
+»†	‚@¾„Àó—ERµdÚ“Ñ%¤/¦¤&¥0§”CPmtv˜£ÊÈS¶Å…ÇÂ(ˆØ>Ÿ
+À	Å	ñ°¼Ìù•ù0˜ùù¸&¥0§è	­
+øò	ê
+¸
+‚ãï¾‡©ØËÌP×‹-vVg,ŠR¤ŒËÚö=é€#²
+Äêˆ‘îå
+è±
+úæ€	ó¶§ù	ÜäÕÇ]ûœàMÇ2Á é¤0í²’-£	µÅ…ÑS¥,ÒÍPmF.$Rc5/tfd/™S®ˆóS§,¿>
+ñ	Fç°
+ø	™	õÊK ;##Ò¥1ç&—›‘	‚
+ˆ#ŞÎ	;QÓÏ¿,·[Ã#³1é!ÉÈ,íÏúİï½Úš	¾)ûÂæ.ÙÉÿ&Çí©!++›,,Á,ØŞ•ÛüÈ•Ô›¥
+æ•Û}Š!ü•ˆ2@¾ò…U¥„÷ƒ`‡ÆøÑ•d‰§Q ƒ9…ÑÀ>2cŞpOƒ±Çy¨/õ/öÒ	Ëk–	Ş
+å	EÌ	;QØÍ
+ª(¥1è&²1ÿ=û	ÚK²·’øÅ…ÖP¥/ÍşÔPmC1!U`8,wcg,œS©ˆøP§/º>ö
+ğœ	ì•
+
+—Å…ÑS¥,ÒÍPmF.$Rc5/tfd/™S®ˆóS§,¿>¾ÜÙK’	ƒ
+Ñ
+‰#Ì7lˆˆ¨	ÇÈŸó8h6»Ë—‘ßõ
+ªÂ…ËY¥&ÛÍPmF.$Rc5/tfC!/,mS«ˆíY§&Å>Ä é¤0íƒ	—
+±’-”İ
+@/_È•Ôm.¥
+æ•Û}Û /òTó]°Â
+ÛÆƒ@0Ó8ÅWò
+–Ã1ô‚,»ÈŠ„Ë°É€ä7.“=Y¦µÇ„£YëƒîÙø§‡¾CÄ¼8/·>YĞñœ%ú×)ë@‰¥"
+å(¢	
+Æ Jˆ)»K¯‘ÍPmtv˜£ÊÈS 	¾Ó„
+ 	ÕERµdÚ“ñ …¤¥À+ˆÆ§ë>Á%¤/¦ËîAş	ô·—¼
+­qkF(5Ñ¾Ò¨ï	FÃ›
+ú	´’-İ½×A¸õÃ.İ‘şùl°ş‘É…ÕÛá‘Ó
+Ô8—	şÀ É"H¯.1/	46	I8	G4	â²É›ˆ,jÆÇí«µ"K¥-ß	ßÅ…ÖP¥/ÍşÔPmC1!U`8,wcg,œS©ˆøP§/º>
+Ïë¾BÒ=@Aæ@îº	åŞ¾Ü	›	Ì–ñeÍ(¶1óØ·"’2£$òÂÁ1­%èéıÍ+bPd”l¸†ş‡Rò#Íæñ3Eø1€B¹^Æ"¥DØTÉó3Eø€<"<–>¤$´1Â1­%èéıÍ+bPd”l¸†ş‡Ró#ÍÇŸµ$¿öÂZ³D¥æ#fÊ%¤/¦Ø%¤/¦ª7À¢7ÀÑ#ÓSV<ôBšCPmC1!U`8,wcg,œSˆAüÇ5È‚¥¸5òØ÷6‚#ç6‹µ5¯Å5ÿë+¡é¶#ş"‡#Ç‚¥‘µ”îr³’Éàâ•“ÉàËœ-˜‰3è›LS4DÓ
+‚Pmtv˜£Ê»0Ë=ß>Á´–±Á&ê»5£–ê•Äúîê§:©8Ö™4DÓ
+ò:­:Ãö–£èÈ÷ú
+ô™Üš™PmC1!U`8,wcg,œS±å1èÖó$Š#%µ³é‚ûÍ+bPd”l¸†ş‡Rû
+åß·„ƒü,’4\¨6ş
+×„:ø¨¤—ƒüè;ı¥§6	†ºğ2B­½'%ÌœÄ“³.û%”OŠyb 7À¼¿–å„Öµ;õ"“GCV5Œ
+š¥È£=W…Ôf7¥[›æ—%?Yˆwg4§[ğ>·#EÀ0©Ä€!ìÙoæ¥	êæ£Õ"õ]†Q<Ú©„ÙÈ$ƒùüÜºã–¹‡$<šã
+âÛ¸…>›’ùÉ’è¼‘	Ò=@A¦’“¬ÿ	şAË±gğ¿D¼
+†fô ë:')&#&lˆˆ ¥òÙ¬½G„é¢®ˆsŠ„–$­sŠ„ë²É›´°Çí«¹¥È°æ›Õ2,»ÊS£ÇÏÊ¯l‰<(DBÃío·DÌñ™ÜšêÏ·èed”“¥İ™ÖòÓö–£èÈÑÆàş
+‹İ"Fİù¦ğ©Ê¶¾9·0ÿ~çc®	–†B¾jLZ7Ó…È@À@Ø7>Áö–£èÈ÷ş
+‡ybrñ·	‚ÙäÈ—
+Œ#šïğbâ$¯7ª–á1İRÄSü•4EøÂ=Œ<¡J¤«Z²CP§R’ERµdÚ“¯–í¶ğ–ùë«íèÈõ/7¤<Ú©„×V¨£%©™ERµdÚ“¼G„é¢ñÓö–£èÈ÷ş
+”[ J¤é™ˆ®%ê²	µ¸­ó<èœêšµ±ij‰õ™Üš™PmC1!U`8,wcg,œS‚²ÄZ®°Qˆï;¸‰”ô!k¯½(á~çcq‰‡¦#Œá¯MÙF˜£ÊÙP‡Ù†>¬2ÕAØ@Ú‹-û•×M N=@Aì<ÚİõŠê™ç/ôAÆôÄÙ°æ1èÅ÷Û(Ô%Ñ7ï<ÂØŒ2ÀÊ1Š#%èéıÍ+bPd”l¸†ş‡R—Ò‹—ëº¢²¡å‘<áş1ê°ü
+Ä»ƒüèá–À=,’4½±$ÕŞ,Ø7¤<Ü¡£ºŸü„ ¥§±>õ¯Ã<õÃ¨BŠEİšğèÄæ«è¶<ö5†e<Ú©„ŒÖÉ¥¬­ãÒ§ŸA¿ËBÈ%¤/¦¾N‚Ÿ\¹£–…lˆˆ*ê÷œ%Á-®ÍøæF¸ƒşñIÌ%¤/¦µ&¥0§¿ 2øñÈ•Û›¥
+æ•â‡"ÛäÁÕÄµ¸½ì~çcç¹Ãæó‚¡Ì‘ÁN‡2¥ úÇ4Oİ®+¦»‡Ó‹ƒû¼1§ıÊõ‡ûö2Í—»Dê»—4DÓ
+è$²1—?–£œ É"H¯.1/	46	I8	G4	â²É›ˆ,jÆÇí«¸^×H’[¶–£è.š÷®–æ.µ7øëŸí
+÷èÈõ/ÃZ¯¸Dê²	Šˆ2‘ñÈ=ê²	ª]¢7ïÕ%¤Ç±ijÄ¦ùó‹VÀ±šáßèÁ‰£Ì€è‚<ÚÚ•të±„	>Ô¢)<í$õ½/õÆ%c¥ÆÉ!c§›´0ÇÿØÆÈ6Í'ã1)Ò×‘Æ’~çc¾ö …¤¥À+ˆÆ§ë>‚%õ- º1§›,»ŸCPmC1!U`8,wcg,œS³5¯×Øétôâh®‚êJĞMµ¦šÃ[•*ˆ”Ş.šû!ô(î|¦œ¦Èñ)™7Æ$Š«åœÑŠEÛ€SÆT¸š®Ú¹-”âáŸ÷úñâ»Ş¥
+üÛ²Æóë!•¤áïˆ2µ–ØÖ'‰€$
+©1
+şB”$³1×(	­1	é(¶1áPØì2%èÄÒ7¤ Œ2Ñ	?†İ@ü]¦Â$´	åD|º‘E~˜©äÉ¯ñº+õ@½–£èÈ÷ş
+*ICV5‘"†2Š 2–
+ù[ÊWá@/Í4ë–Ã1™Ugü3EøÙ)èTÜê@ÁZ²Då#fóB’ÎŠ¸<ŒŠ-ôóı1ê°ç‹³˜‹‹£ŸL6öœ%÷å•x´Îw~çcµÈ•:¼¥
+æ•=¼¦öE‹‚‚ºDê»•ÖH‰®%ê²	µ¯5›–Â
+ÛÆ“$³1è(¶1Ó6Ğ¶e<Ú©„÷<O«]›AëĞ¶e<Ú©„ª9õ\©¹­«4Û%¤/¦ğ5z†®%ê²	µœ‚Õ
+ø¶\‰É–²—ş2(åÂ”<„[æ$¯D¼
+ìÕ÷£7§7ÃØí±	‚Õ
+ÑÇàïÊ¯Òü\èæ<}=î?OÕ<Í7ğ~>ÑêÆê†i–¼‡p”t±ˆ–%²1Å:Ç¾Ó8Ö%¤/¦×÷òŞ±¤7ÀŠè§å0©ÛÓó$Š#%èéıÍ+bPd”l¸†ş‡RúäÈı›˜
+æ„çâC2ÉüÑ…íñ–Â0>F6Ê¦A£ë
+ûÅ…çfúÑñˆ‰gè>É„@0
+„Ó8²š×/÷ƒ1/‡Mùøz©.•31‰MÚQ ƒ9…ÑÀ>2cŞpO>E±Hÿy¨/–_/Çšï!ù¸ÏÈ”è_÷¸ŸÇÒ•MuğÆîÃ	Õ>¬š\®=æ6«Éÿ&ÇíĞšÅ0A§†3Õ	2°Pmtv˜£ÊÈS¨–2ö
+â‹2Õ 2ù•½¥È°æ˜–§è<0CEECA˜ıæL+rÍô<¬9ú¾0©Ä›!´
+°–ûù‚ãZåË1Š#%èéıÍ+bPd”l¸†ş‡R¢6"ã
+ÿ$#ä2Ñ?‡ïŸí+„ˆ2ú_i£)¸ğÉ)§$Ï3Úÿ)ÉìçâÌA„ÎŠ„Ëİ7.“=Y¦Ğ‡¾C£‚Û8/·>YĞ™´2Üé:áAóÉ´-ëú	MŒ¸.š8°#¨²1¼!Éÿ&Çí„ç¾ïíØ'ŸmCÉä7.“=Y¦rCËĞ‡¾CÄ¼8/·>YĞX¨ğ3E‡Aü×  Õó$Š#%èéıÍ+bPd”l¸†ş‡R’$ÕŞ,Ø[«ƒˆ2‘$ÕŞ,Ødßs˜1u¡÷èê°öñQEÛ0WÊ ­—œAë´	Š„Ä++‘è×E>èÙ±5zÙ,Á,Ø–ÊCPä¸†ş‡R³ÙÖ~çcõ¢ğô…¢ƒƒB{Ãj¦7>:B,^|Ü¶ÀØ™°ÙNàs˜1uÒ2,»šq‰‡˜Œ¶«¤„‡Ùóõ¹1è+é«­ğ½º3“=’üˆ2“¿€€5Ì¨-¢ä0ã<ã›ÙšüèÃö6ÅsŠ„¦#©@«A„ğ@â4¨>˜Åšã„ñƒ’ˆ‚Ü3™]ybìAÒğ<Ú–¬†B©6Ğ¶e<Ú©„ÿ
+×ï
+ş¤—ÄâÛ‚¶Æı×‰$³1ß(¶1£ Œ2Ñ	?†¥×Ş‹2” ‡…0ŒÌ>Ë)’5ƒÕ‰ßº[7¤<Ú©„Â<ø3EøÙ)…Éà%…ã3Æç7¬è<Úˆ5ìIÓ$òM&6$8Ææ.æ6«Éÿ&Çí€<¾1‰€¹™,¤0¢¾É§Ÿòíƒ3(ç“æO 4©î'ˆ¥8ÖÌÃÇÏÊ¯ù#³1ø¾;ü".¨““5ƒ‘“úÇ¢£9¦55Ñ†e<Ú©„»³ä¢““æõ–š´0¹Å?_,/qâV~çc˜#[œ#^Àß§óæl×æùˆÉ–ïè§¹¬/©—Ò‹—ëÜÉšÌÉéùlºö	ş‘Éº"’2ÕŠ2š–ß©ıˆ25ƒÖèß7¼<"<Ú
+7¤<Ú©„œ:åLˆsŠ„Ğ:…R7T3Pµ3’<ò3Eøó™Üš­â·‰2ÁØ«—Ò‹—ëÜõ5³Ë%i¥/i§2ê°°Ï¬w$Ó¯çâC2¤%Î3¡•_iÿZ ÷èê°ôÔ‰ß¹[÷3EøÙ)‹•]xcö©‰”ô!÷Óš¨—è#QEˆ0SCÆ6ÎÚw–1xˆ¾WÇ/ì÷ş”âˆà¿İ™Ä–ß²kè
+ø¹NÛÈoy9Ü&®Ùˆ£ƒU¥Ï#¦´#»[»±š %"H¯.1/	46	I8	G4	âÚ\üÉ›ŞbÓ±D%cÆÇí«ìZ®)½„Û¡$›«ˆsŠ„«¢²š½¢·–@U40%¾U»9¢Ö!0•˜KG;A+Ê÷´»«Ó–Ç#³1í6Ğ€ãˆsmg« °É€ä7.E+£=Ye+İ9µÇ„Y#%‡ƒîği€ıûR+bPd€l†C ‡RK¼8/F,Å>Ye,¿™™0ã@¡,0…pDÒ2>Ã™Ä¹Ùğ£)Ó†GÓu 10<~çc–Ïölù>¨Îİô;ÆĞ
+ô<¥7„sÿÖŠĞıæ÷Õ¸¡!2Ğôå¤ÁŞÌ	ô
+°¦½±Ò7ÒR)¸
+.á…›öñ¤ÌúB×#’ı,’“’tæÈ°æŠË–Oä"×Õ3ß"¥#é3ı
+Ä»ƒü®Ş•»	ë2%èÄ†e<Ú©„©7éâ–«Ï”ª—Ã5ç¾[‘]xc¡PŸ]yb•OÁ–Ù.‚ú0èÈõóœ%“Ó8¡7À;Ï7q½—Á=­“÷©îZ´7©ˆ2ò™® ˆ¡Ñ ¾ÛPmC1!U`8,wcg,œS–ÿ#³1Ö(¶1àPŒø«1œ*ÉWá@/Í4ë–Ã1çTòB¿½à4ë <\ı2(åÂøË«9!ã
+‹ôî´&ËA„È§÷mC5ç-ä7.[ôyK=YN-«rC3í+Ğ‡¾CÄ8„8/\’I>YM.ÕXŒ†AüÀ–˜‰2Ÿ÷‘.Š•ÍÚw–1xëZƒ½5ŞÀªÏæÃ—:˜åğ=®!++›,,Á,­Pêyb¶;¶]™å<á<­ö"ü°$‰6é#QEˆ0SC™2ö
+¾±…AŠÜ%¤/¦³á«U 7«7ë<Ú©„ë6é2%ÌœÄ¾–ªÇ(ıAµ¶¯~çc†­BÇE2j¦7>|,€Ù)‡®%ê²	µ¢ª©…‡¥[‰­ˆ¨§[ğ>·û] Œ2–HCV5‰ ‡…0Œ˜Ugä#fÄ–ì±	‚Õ
+ÑÇàïÊ¯Î\ù¼¥¶°Ô¿¦/¥şÖÛÚ€Ñe<èwû©„îx×"Õ ñØ"ÕÓÖ
+ÊÇWÇ/ì±0,àşŒ¸’¿¯,¨Ùo¼‰ŠXˆüŠ¦7°1«¹‘‚%” Ÿ?î:ìÅŠ„Ä++‘ëƒîÙîç,Á,Ø8Ó¦B¼‡4Ïô7Ó»"’2çûøöòó+÷ô.«âö™Œ<²Õ8Èìûô–	¸Š„$„¨ÚµÅ3Ó–ú;—?½	ÇŒ³£ô–#º^ö]ìTÿ2(İ&²1ä?¯!++éÿCğ,Á,¸óH®¸).9hX„U¥Ğ#¦µ#ô"È8FCV5¶=W…Ôf7¥[˜)?Yˆwg4§[ğ>·#E•<œq‰‡˜Œ¶«¤„‡Ù<…[±¼±†e<Ú©„ÌÚìƒùÄ¸Üºã5a¹ç$¯D¼
+ì¢› É"H¯.1/	46	I8	G4	â²É›ˆ,jÆÇí«øÇ(±ij¢Îşœêµ>õò.<õÜ@Ò6Ö÷íZâZ¯)¼ğŒd„+é«¾„Û¡$›³sŠ„ÍÄ·Ü¾
+Éó‰“Uõ¢Íª0–íªAï@§>Äšã„ğƒ’ˆ‚Ü
+…Bˆ$<šã
+âÛ¸…>›Á<£0¥•ø#³1]xc¼«ö®
+7Ô–¨7¯=Ëù3EøÙ)Áƒ§È¦	§È#³1ØÀûlˆˆí•ıàÒÈc£\¨ÄØ¡™ˆ‘	ä´ˆsŠ„áNÒBÏA¨7Àî“¾	ó$Š#%èéıÍ+bPd”l¸†ş‡RÌŠ„« °É€ä7.“=Yí9µÇ„£YëƒîÙø§‡¾CÄ¼8/·>YĞ™ŒÉ’è•’“¬!++›,,Á,ÑÇ‘Ÿ×Ñ§ïùÎ\mÇ­ÿ	Şà¸	ô”à•&’ªÆ.ï´<ïˆÈ ğ‹6¹=éZ¼–†	ÊÓª(«åšä*äSÜñ0š0ÌCPä¸†ş‡R„úø®7Çä@­ÚP·ë<ÚÜàéòé<Ú›–Ä%c¥/c§Û•™	*ìçâ«.‚\s¿Õ¥(_uåØÑ2,»®P˜]ybÔå¥/íå"N¨¯²MÙˆ£Ô3—àÒÙN,™<Ú©„Ö"Õ’¡ü"ƒ1?b„ÿ—Ù··)-9hó"<¡Ì±>õò.<õ·;®=Ë¢\ÙPpÆËCPä¸†ş‡R«7À®ÏĞt¨Ì¥Ş÷£¬¸®ô¬ù*­ÿœÌ|ÆŸw¶ÀØñK–1İ’4âÖİ,ÙÓ%¤ñ	è¶!¦ÔÖ
+ÊBÄEøÙ)±N‚”<<Ú´ÙÖ~çc—
+ï§†BÇE2j¦7>|,€Ù)íIÓ$Şš“øÿ$ˆü³â´é….Ãæ.æ6«Éÿ&Çíà§î§× &[æN…˜OÏNÏ"ÂÍkÌßkÓ5ƒ«“ëZÅ‘ü6ê£† ³»­šì“„šê!¾
+l,iç<}¡>ÜŒï?ª¸ïœ%OÿAú
+ÿ$ƒü¸¥È°æ›Õ¦ğ©Ê„9Å«j‡‹°îÍü1ê°¦‚å$¯D¼
+ì°œ~Ò0	·	¯ÏÎ7ÈWÇ/ì±0Œ×¾Œ¸’¿¯ìKÚ4o¼à‘.’øÿ$ˆü÷æ6Ÿâ´éÌ˜¯D¼
+ìı#×Ü,ÚñİšÛÉŠ„« °É€ä7.“=Yí9µÇ„£YëƒîÙø§‡¾CÄ¼8/·>YĞÃ%c¥/c§“7¼<"<Ú€82ì!İìÈ,îÅíÑèÇ9Œ—Â©¦ÏÍ£ÎÔNÑ3ú¾ÉÆ#òí°É¬¶Çíœ4òî·„4ç± P¿–Ù.ù0èÈõòœ%’Ó8³7 ã
+ê9e<VmC5ç-ä7.[Ô yK=YN-&grC3í+ÔƒE´‡¾CÄ8ÿM¸8/\’I>YM.ÕXûÒ#’Š'…¦?–âƒm›ã©ÿ‡pç¨:C2Áˆúş6Š]xcû=óÊ
+Ìé*Ùi¨åffÜ9ËãšâÑ–³$¿ö…#¡–ÌÚæÓ"È´1‚¦J®²~çc'†1Ÿ¯ƒ~çc¬îÀ§Ş§)Ô]ûÜ0®]¦Şúlˆˆòï²7öÎ8ÈòK¾G„é¢Ş^¯ˆsŠ„–$ˆø•tšMyb®sŠ„“ ¢Ì!ÉÆ,íš–Ã1”Nº—%²1—1Æ:È¾Ó8×%¤/¦,’4Á5ŞÀº¥È°æ‘×<šã
+âÛ¸…>›Ø÷ßª–‹<¥7ÀÔ%¤/¦é1èÖMÊ†¸	¶óˆÁÙ2¨­ û3EøÙ)Û·<‹òîš®5ššAë©9é6ƒ[=®™	æ=æ6·	ôÉİÎÑö
+€ÇíÊsŠ„˜ıæL+rÍ²N‚Ôó$Š#%èéıÍ+bPd”l¸†ş‡R¹3á4Û3•<<Ú¤×¡¾É†‰<(Y…ínN!·D¯,˜'"ŠíÂÇÏÊ¯ò™Üš²ª›‚çâC2ÉÓ‰ßıT¼$›¿ˆsuo« °®€&¾7.E+¡‚=Ye+İ9µ­„(Å•!Y¾ƒo9F;¢|ûÅ˜KGp&+»‡¾CÄ¼8/F,Ä>Ye,¿ÌMç@‘tåÈ°æµ¯~çc†­BÇE2j¦7>|,€Ù)Ã–ıÑ…»ÎsŠ„˜•÷éÍõ’lˆˆí•ı²ÈîÄ%c¥/c§±ÙN°N‚5ƒë–Â0l,iîIÓ$ò–Â0>_Pİ^¢]ybßš¯N‚ëÀĞëÅ…çfúÑñˆ‰gè>ñË²£Œ>Á$ˆü”ƒlˆˆ¨õîaÄµ>ì…@0
+„Ó8ÓšØÖ´1‡Âñƒë²Ã3ºMÚQ ¼Úúı¬Ìş°É•šô¶Çí–ã3êŒÑ&°šè¥2¶ßO>ÆN‰`‡ú7Ó¸èed¡°D®ÁçìN…ñ•·Èá<«B·İlˆˆµ^ú’,È2í#‹¨åß$²1Ï¾Ó
+Ì§»•ö¦Š!2¼Å…ÇÂ(ˆØ>¡$ÔÄşıõì]ÊÑwoßÔªŒÒ°ş	¤ˆ2¨=–¥º
+‡±Ç‰åŠ¦ì#!¨Äâ"İ§î§²Ïç¦âÏ„#—;À ÎÊ
+Ã/ÇÙ¾ºƒ~çc¼	íÖÎ	¡üş¢Ô-÷"§/Ó$õÀ¶É¥0“!÷á!»u†	›Ë4£¾É§Ÿòí÷@¼&£ »ŒÉÅ&¥“û„3(çÃ÷5î€õ¡ã$¹õ±ò<dã–Éä²ë¡4—¯÷\³]Ú^ß?Å]Ú\Ê7ñ]”€¤R.©›\¯6Ö»‚“7¼<"<Ú¯=æ6«Éÿ&Çíÿ ÆÅ¿
+Sİâ´éú¤È¸]ç6¼–£èÈ÷ş
+¥Îw~çcÌ
+™â
+»¨ï5¦7Ô<}=Îı¼	˜­…Ç¡¡$ˆØ>™\Ï;²Æ¦»s˜1u4Ñãøüˆ2Œ¬Ç/ù÷şŞ¿ö•¼ŞÌµÖğ)Ş"F†e<Ú©„Š6BƒßĞ³£û1ê°øã
+~Œn87(Ó8Ğ9e<Vm65ç-ä7.[Ô yK=YN-&gr63í+ÔwèÈÜE´‡¾CÄ8ÿ.¸8/\’I>YM.ùomX×–ı™€Öğ)Ş‹¦7u§ï>ü¯¶7YÙAB˜CPmtv˜£ÊÈS‰‚õ	`ø|»Äæ.æ6«Éÿ&Çí§AA´0°[¯$›¿É?-FBH@D«Ô´ÙÅ†‰¾9¢÷Å˜A
+İ+à´*í=•r›©«à¨İ=—2ö
+ß6ªl¢ŒAüvv1¿9±1ä,šN×µ-ˆüãA°ãHÉ-ùJÀ7°9À¯6¬&¥0§èÜ5ËF É(Ë½•Ñ ¿Ñ¬µ¸Á&B¾j¦Š…Ğ²äµ½,ç~çcãš¥—Äª1ã˜’‚%ŒˆÊ]É@Ö LşÇ…÷MµˆsŠ„ƒ*Ù7>Øì‡7À÷*‹O¬N‚§!++›,,Á,ØÆŠ„Ä”ëƒîÙîZî!ÉËÓû®í‰§B,¿AÚACÉ%¤/¦©7À™CPmtv˜£ÊÈSÂö–£èÈúPmC1!U`8,wcg,œS¶ş
+ß–¹¬]ybŠÜ"FïbÈ‚à•`øê®Mú•Ç A=@AÚ­ ³ıB‘ä	ß1é@”P’Ä…/‚‚›‚Õ
+è¤ì£-¦±—Ë}Òìú«È¿QEÆæ„Š#%¨ŞâéıÍ+bPd”l¸†ş.YR•SCW§¤'ããòA°Pmtv˜£ÊÈS¨¡6†øîîÍŠ„Ëİ7.“=Y¦üÜÙø§‡¾CÄ¼8/·>YĞ™³-ë·.ÖÉ€Åæ.æ6«Éÿ&Çí÷Æ8û".ù†e<Ú©„ºåõ–î?_,/ŒûçV~çc²	æ#[œ–
+ê#^À†óælîËÉˆ¨Ò–5ƒ	7¤<Ú©„Ã–/Å6š2ö
+˜A \õDÒpÃ™Ä¹Ö#’í’“­!++›,,Á,ªM®ß–ô”©eUf"š)®SèVv@ŠYzCˆè€Ü…ù¼$`›ª–‘7¼<"<Úë!ÉÈ,íŠ<±[¯$›¿ˆsŠ„«Ô´ÙÅ•‰¾9¢÷Å˜KG–+à´‚lˆˆ¨õîÈ‘àÀ«³1÷øè‹Ã
+\È–Ş–°—7¼<"<Ún¨<0CEECA˜ıæL+rÍı•ûBÓ2,»õ<çZØ#’¤ı,’¦ş%²1ŠøÃ«j‡‹°îŸ@Ç4¿:‚4†lˆˆˆ4ÎkÌßkÓoî=¥Ó#’ı,’“7¤<Ú©„ÖV¨¢%©ˆ‡ï;j±5Ş=„lˆˆÇc¥½	õîïc§ğ¿Ö/÷ƒ1/‡Mm›ñøz©.•31‰MpjQ ƒ9…ÑÀ>2cŞUO>:$2H±Hˆ÷y¨/–_/@‘5ƒõ©‰”ô!¬“ëZ9˜2ö
+ëÙÇÏÊ¯¦›q‰‡˜Œ¶«¤„‡ÙÛ@blÚ‘©ƒ9ı6Ä#³1à6ô<0CEECA˜ıæL+rÍ“ş˜\ò¾juS“~çc‡Å…Ç‡( ›ÈˆØ>3•ì=ë«õ‘ Œí!ÉÈ,íˆì=íøœ%ê!ÉÈ,íÊ#³1¯‹­9ğ™âghœ´æ
+ÜòÙ¬´Éÿ	¾30
+}Ó8—«Ôš<¼†5Ô2,»Ï6ö<‡é§å0©—¤®‹—«ÀÜŞ§—›¸î´.ù›èZ¨5Z€ÿê!í–Â0²],i×§ERµdÚ“û¿0©Ä€!ìÙoõş–ˆ»N‚±–Â0äZÉ]ãUÙ¯$Æò=Ù#Ğã/ĞÊ‘œ“ë%¤/¦·Ôï~»–âˆ‡ü¡­ÏM¨[ƒ1®¹8¾šÚq±=,ß2Ñ×[É;€»6šÿ–‡°Éâ"Çí¥ÿ%²1Î9Œä3îÜ!°šè¦2ó
+ë8ßµ6ÇNúŠçê‹ø·ÌÊÓÄ«j‡‹°îÒèû7Ó¢JÆKçÈ°æìÚísŠ„äµi!EÌò;ÉÀXE‘‘Z½ê»’Êg‚¼‹™ÄÆ;=cÕ$ @È4ú#³1ÈCPä¸†ş‡RFÀ:ƒ4üD¹èedlˆˆÉ Í+ï;Ö2ù2%èÆCPd”l¸†ş‡R‰4Dè˜Rû+¾
+É…áÕz)¿{èedMh k’¹àÉ‹‚&¯oÚŸ%Í1àÖñ©4ğ;×2ÑCPŒ`©„ä¢tRú2%èèBÇCPä¸†ş‡RFûD  “ı  ”  ”,  ”/  ”2  ”6  ”@  ”B  ”L  ”T  ”X  ”Z  ”^  ”`  ”s  ”‚  ”„  ”ˆ  ”Œ  ”  ”’  ”–  ”˜  ”  ”   ”¸  ”º  ”½  ”À  ”Ä  ”Í  ”Ï  ”Ó  ”Ù  ”Û  ”İ  ”ß  ”ä  ”ç  ”õ  •  •  •  •  •  •  •  •!  •0  •2  •4  •6  •:  •@  •B  •Z  •\  •f  •h  •©  •¶  •Î  •Ğ  •Ú  •Ü  •Ş  •ö  •ü  •ş  –   –  –  –  –  –!  –#  –9  –I  –b  –d  –f  –h  –j  –l  –p  –z  –†  –‡  –  –˜  –œ  –©  –¯  –ì  –î  –ğ  –ò  –ô  –ö  –ø  –ú  –ü  –ş  —   —  —  —  —  —  —  —  —  —  —!  —'  —)  —D  —E  —M  —O  —P  —R  —T  —V  —[  —]  —_  —a  —g  —i  —k  —m  —o  —q  —~  —ˆ  —Š  —Œ  —«  —Ù  —İ  —ß  —á  —ã  —å  —ç  —ì  —ô  —õ  —ø  —ú  ˜   ˜  ˜  ˜  ˜  ˜  ˜  ˜  ˜  ˜  ˜  ˜"  ˜(  ˜*  ˜.  ˜8  ˜<  ˜B  ˜F  ˜V  ˜b  ˜n  ˜x  ˜|  ˜€  ˜˜  ˜œ  ˜¡  ˜º  ˜¾  ˜Ä  ˜Ñ  ˜Ó  ˜Ş  ˜à  ˜â  ˜é  ˜ë  ˜ï  ˜ó  ˜õ  ™  ™  ™  ™  ™  ™  ™   ™"  ™&  ™*  ™.  ™4  ™7  ™F  ™L  ™N  ™\  ™•  ™˜  ™Ğ  ™Ü  ™à  ™â  š  š  š  š  š  š  š.  š/  š1  š5  š7  š9  š;  š=  š?  šA  šG  šJ  šy  š{  š  š  š  š’  šœ  š   š¢  š¤  š¼  š¾  šÀ  šÂ  šÄ  šÈ  šÖ  šå  šé  šï  šú  šü  šş  ›   ›  ›  ›  ›  ›%  ›'  ›+  ›L  ›T  ›W  ›^  ›a  ›e  ›l  ›p  ›r  ›„  ›†  ›‰  ›º  ›¾  ›Â  ›Å  ›É  ›Í  ›è  ›é  ›ï  ›õ  ›÷  ›ù  ›û  ›ı  ›ÿ  œ  œ0  œ4  œ6  œ8  œ?  œV  œ`  œ}  œ‰  œ   œª  œ°  œÀ  œÊ  œÌ  œÚ  œä  œğ  œö           5  7  ?  K  \  ^  b  j  m  o  s  x  |  ‰    Ÿ  ¡  «  ½  ß  å  ç  è  ı  ÿ      
+          &  P  w  }    ˆ  ˜  ©  ­  ±  ¹  ß  ã  ç  ò  ô  Ÿ  Ÿ	  Ÿ  Ÿ(  Ÿ,  Ÿ<  ŸB  ŸD  ŸK  Ÿ[  Ÿ^  Ÿb  Ÿd  Ÿt  Ÿ”  Ÿ   Ÿ¶  Ÿ¸  ŸÁ  ŸÆ  ŸÈ  ŸÊ  ŸÌ  ŸÕ  ŸÛ  Ÿè  Ÿî  Ÿø   -   i   u   z      –   Ì   Î   Ô   û   ı   ş  ¡   ¡+  ¡3  ¡5  ¡Q  ¡a  ¡d  ¡n  ¡r  ¡x  ¡z  ¡´  ¡¶  ¡¼  ¡¾  ¡À  ¡Â  ¡Ì  ¡Ò  ¡Ø  ¡Ú  ¡Ü  ¡ã  ¡å  ¡ç  ¡ê  ¡ì  ¡î  ¡ğ  ¡ö  ¡ù  ¡ı  ¢  ¢  ¢  ¢  ¢  ¢  ¢f  ¢h  ¢r  ¢t  ¢v  ¢{  ¢~  ¢€  ¢‚  ¢†  ¢Œ  ¢®  ¢°  ¢´  ¢¸  ¢Â  ¢Æ  ¢È  ¢Ì  ¢Ğ  ¢Ö  ¢ä  ¢è  ¢ê  ¢ì  ¢î  ¢ö  ¢ú  ¢ü  £   £  £  £
+  £  £  £  £  £  £  £(  £.  £8  £<  £>  £F  £H  £J  £N  £P  £T  £V  £^  £b  £f  £i  £k  £n  £q  £v  £z  £|  £  £…  £‰  £  £­  £¯  £³  £·  £»  £Ï  £Ş  £ë  £ï  £ó  £õ  £û  £ı  ¤  ¤	  ¤  ¤#  ¤+  ¤8  ¤:  ¤>  ¤H  ¤P  ¤V  ¤Z  ¤\  ¤^  ¤i  ¤p  ¤r  ¤w  ¤z  ¤~  ¤€  ¤ˆ  ¤  ¤‘  ¤•  ¤—  ¤œ  ¤¡  ¤£  ¤¨  ¤±  ¤³  ¤¹  ¤»  ¤¿  ¤Ã  ¤Ö  ¤Ù  ¤Û  ¤í  ¤ï  ¤ñ  ¤ó  ¥  ¥(  ¥0  ¥2  ¥9  ¥;  ¥?  ¥A  ¥M  ¥Q  ¥U  ¥W  ¥i  ¥p  ¥r  ¥t  ¥x  ¥ƒ  ¥…  ¥“  ¥™  ¥£  ¥¼  ¥¾  ¥À  ¥Ä  ¥Ò  ¥Ø  ¥Ü  ¥ä  ¥ç  ¥é  ¥ë  ¥ş  ¦	  ¦  ¦  ¦  ¦  ¦"  ¦&  ¦(  ¦@  ¦H  ¦J  ¦L  ¦l  ¦n  ¦r  ¦ˆ  ¦Œ  ¦  ¦  ¦’  ¦”  ¦–  ¦˜  ¦š  ¦  ¦ª  ¦¬  ¦¿  ¦Ã  ¦Ç  ¦Ë  ¦Ù  ¦á  ¦æ  ¦î  ¦ù  §   §  §  §  §  §5  §@  §R  §V  §X  §Z  §\  §_  §a  §b  §e  §f  §h  §l  §t  §z  §~  §€  §„  §†  §’  §˜  §¢  §¦  §¨  §ª  §¬  §¶  §º  §¼  §¾  §Î  §â  §ä  §æ  §ç  §é  §ù  §û  §ı  ¨  ¨  ¨  ¨  ¨  ¨  ¨  ¨   ¨"  ¨,  ¨:  ¨i  ¨k  ¨m  ¨s  ¨¬  ¨°  ¨²  ¨´  ¨¹  ¨»  ¨Ã  ¨Ğ  ¨Ö  ¨Ø  ¨ß  ¨á  ¨ä  ¨æ  ¨é  ¨ò  ¨õ  ¨ù  ¨ı  ¨ÿ  ©  ©  ©  ©  ©$  ©.  ©6  ©;  ©?  ©G  ©I  ©K  ©N  ©Q  ©S  ©U  ©^  ©b  ©f  ©h  ©j  ©v  ©Å  ©Í  ©Ğ  ©Ò  ©Ú  ©İ  ©å  ©í  ©ø  ©ú  ©ü  ª  ª  ª  ª  ª  ª#  ª'  ª/  ª7  ª;  ª?  ªA  ªE  ªG  ªI  ªU  ª]  ªa  ªi  ªk  ªm  ªs  ªv  ªz  ª~  ª  ª  ª  ª’  ªš  ªœ  ª  ª¢  ª¦  ªª  ª¬  ª®  ª°  ª´  ª¸  ª¼  ªÄ  ªÆ  ªÈ  ªÊ  ªÌ  ªÎ  ªÒ  ªÔ  ªÖ  ªÚ  ªŞ  ªâ  ªä  ªè  ªì  ªî  ªò  ª÷  ªù  ªú  «  «  «
+  «  «  «  «  «  «!  «#  «%  «/  «h  «j  «l  «n  «q  «s  «u  «w  «y  «|  «~  «‚  «‘  «¤  «°  «´  «º  «¾  «É  «Ñ  «Ö  «ß  «ã  «å  «ç  «ë  «ú  ¬  ¬  ¬  ¬   ¬&  ¬*  ¬,  ¬1  ¬3  ¬5  ¬9  ¬A  ¬D  ¬H  ¬J  ¬L  ¬N  ¬P  ¬R  ¬T  ¬V  ¬X  ¬\  ¬^  ¬a  ¬c  ¬e  ¬g  ¬i  ¬k  ¬m  ¬˜  ¬œ  ¬   ¬¢  ¬§  ¬©  ¬¬  ¬®  ¬°  ¬²  ¬´  ¬Î  ¬Ğ  ¬Ò  ¬Ô  ¬Ö  ¬Ø  ¬Ü  ¬Ş  ¬à  ­  ­  ­  ­  ­   ­"  ­%  ­'  ­U  ­W  ­Z  ­\  ­^  ­`  ­b  ­d  ­l  ­n  ­p  ­|  ­‚  ­Š  ­’  ­–  ­˜  ­›  ­  ­£  ­¥  ­§  ­©  ­«  ­­  ­¯  ­±  ­³  ­µ  ­·  ­¹  ­Á  ­É  ­Ë  ­Í  ­Ï  ­Ñ  ­Ô  ­Ø  ­Ú  ­Ü  ­î  ­ò  ­ú  ­ş  ®  ®  ®  ®  ®  ®H  ®K  ®M  ®{  ®}  ®€  ®‚  ®…  ®‡  ®¶  ®¸  ®º  ®¾  ®Á  ®É  ®Ë  ®Í  ®Ï  ®Ñ  ®×  ®İ  ®å  ®ç  ®é  ®ë  ®í  ®õ  ®÷  ®ú  ®ü  ¯+  ¯3  ¯8  ¯<  ¯?  ¯E  ¯N  ¯P  ¯R  ¯T  ¯V  ¯X  ¯Z  ¯\  ¯`  ¯b  ¯d  ¯f  ¯h  ¯l  ¯r  ¯¦  ¯¨  ¯ª  ¯¬  ¯®  ¯°  ¯±  ¯´  ¯¶  ¯¸  ¯º  ¯¼  ¯¾  ¯Ê  ¯Î  ¯Ğ  ¯Ú  ¯Ü  ¯é  ¯ë  ¯í  ¯ï  ¯õ  ¯ø  ¯ú  ¯ü  ¯ş  °   °
+  °  °  °  °  °  °"  °*  °8  °D  °F  °H  °J  °L  °N  °P  °T  °X  °d  °j  °p  °r  °t  °v  °x  °¦  °©  °«  °·  °Á  °Ã  °Ç  °É  °Î  °Ğ  °Ò  °Ô  °Ş  °æ  °î  °ı  ±  ±  ±  ±  ±  ±  ±#  ±%  ±'  ±/  ±2  ±4  ±6  ±8  ±:  ±<  ±>  ±f  ±h  ±j  ±l  ±n  ±p  ±r  ±v  ±x  ±z  ±|  ±~  ±€  ±‚  ±„  ±†  ±ˆ  ±Š  ±Œ  ±  ±  ±”  ±–  ±˜  ±š  ±   ±¨  ±­  ±¯  ±Ü  ±Ş  ±á  ±ã  ±å  ±ç  ±é  ±ë  ±ú  ²   ²  ²  ²  ²  ²
+  ²  ²  ²  ²  ²  ²  ²&  ²(  ²*  ²,  ².  ²0  ²2  ²4  ²6  ²8  ²H  ²V  ²X  ²s  ²y  ²~  ²€  ²„  ²É  ²Ë  ²Í  ²Ğ  ²Ò  ²Ô  ²×  ²Û  ²İ  ²ß  ²å  ²é  ²ë  ²í  ²ğ  ²ò  ³%  ³'  ³)  ³+  ³-  ³/  ³^  ³`  ³b  ³e  ³h  ³j  ³l  ³n  ³p  ³r  ³y  ³{  ³}  ³  ³†  ³ˆ  ³  ³’  ³”  ³Â  ³Ê  ³Ì  ³Î  ³Ó  ³ö  ³ù  ³û  ´  ´  ´  ´  ´   ´^  ´b  ´f  ´h  ´j  ´r  ´z  ´  ´  ´“  ´•  ´˜  ´š  ´œ  ´¦  ´¹  ´Á  ´Ã  ´Å  ´Ç  ´É  ´Ë  ´Í  ´Ï  ´Ú  ´Ş  ´à  ´â  ´å  ´ç  ´é  ´ë  ´í  ´ò  ´ô  ´ø  ´ú  µ  µ  µ  µ  µ  µ  µ  µ"  µ$  µ&  µ(  µa  µh  µ™  µ›  µŸ  µ§  µ©  µ«  µ­  µ¯  µ±  µ³  µµ  µ·  µ»  µ¾  µÂ  µÄ  µÆ  µÊ  µĞ  µí  µó  µø  µù  µû  µı  ¶  ¶  ¶  ¶  ¶  ¶  ¶  ¶3  ¶;  ¶A  ¶C  ¶G  ¶J  ¶R  ¶Z  ¶^  ¶b  ¶h  ¶i  ¶k  ¶}  ¶  ¶ƒ  ¶‰  ¶‹  ¶  ¶  ¶‘  ¶“  ¶•  ¶—  ¶œ  ¶  ¶   ¶¤  ¶¨  ¶ª  ¶¬  ¶®  ¶´  ¶¿  ¶Å  ¶È  ¶Ê  ¶Ğ  ¶×  ¶Û  ¶Ş  ¶ï  ¶ñ  ¶ó  ¶õ  ¶÷  ¶û  ¶ÿ  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ·"  ·3  ·M  ·O  ·S  ·w  ·…  ·  ·  ·’  ·µ  ·º  ·Å  ·Ç  ·Í  ·Ó  ·×  ·Ù  ·İ  ·æ  ·è  ·ì  ¸(  ¸7  ¸E  ¸G  ¸S  ¸h  ¸z  ¸˜  ¸œ  ¸  ¸°  ¸Ú  ¸â  ¸í  ¹  ¹  ¹  ¹>  ¹F  ¹H  ¹J  ¹P  ¹T  ¹\  ¹r  ¹v  ¹y  ¹…  ¹‡  ¹‰  ¹£  ¹¥  ¹§  ¹ª  ¹¾  ¹Ù  ¹Ş  ¹ä  ¹æ  ¹ì  ¹ğ  ¹õ  ¹÷  ¹ú  ¹ş  º   º  º  º  º  º  º  º/  º<  º@  ºD  ºN  ºV  ºh  ºj  ºn  ºt  º  º…  º‡  º•  º—  º±  º´  º¶  º¸  ºº  º¼  º½  ºÁ  ºÃ  ºË  ºÌ  ºÒ  ºÚ  ºç  ºé  ºñ  º÷  ºù  ºû  ºı  ºÿ  »  »  »  »
+  »  »  »  »  »   »$  »,  »0  »9  »;  »=  »E  »c  »u  »w  »y  »|  »  »  »‡  »‘  »”  »˜  »š  »¢  »¦  »®  »Æ  »Ú  »â  »ê  »ò  »ô  »ö  ¼  ¼  ¼  ¼  ¼!  ¼%  ¼.  ¼7  ¼9  ¼=  ¼?  ¼A  ¼C  ¼E  ¼M  ¼O  ¼W  ¼_  ¼c  ¼y  ¼‰  ¼•  ¼—  ¼™  ¼  ¼¡  ¼£  ¼¥  ¼©  ¼­  ¼¹  ¼»  ¼Ù  ¼ß  ¼ä  ¼è  ¼ê  ¼ì  ¼î  ½'  ½)  ½+  ½-  ½:  ½@  ½C  ½X  ½Z  ½\  ½c  ½g  ½i  ½r  ½t  ½w  ½y  ½‡  ½‰  ½  ½  ½Ÿ  ½£  ½¥  ½¬  ½°  ½³  ½¿  ½Ç  ½Õ  ½Ö  ½Ú  ½Ü  ½Ş  ½à  ½â  ½ä  ½ì  ½ğ  ½ø  ½ú  ¾  ¾  ¾  ¾  ¾&  ¾8  ¾<  ¾O  ¾W  ¾_  ¾a  ¾e  ¾m  ¾n  ¾p  ¾~  ¾€  ¾ˆ  ¾  ¾˜  ¾  ¾¦  ¾¼  ¾Æ  ¾Ê  ¾Ò  ¾Ö  ¾Ú  ¾Ü  ¾â  ¾ä  ¾è  ¾î  ¾ò  ¾ö  ¾ı  ¾ÿ  ¿  ¿
+  ¿  ¿"  ¿.  ¿0  ¿2  ¿@  ¿B  ¿F  ¿L  ¿T  ¿V  ¿i  ¿l  ¿t  ¿v  ¿x  ¿z  ¿|  ¿~  ¿  ¿ƒ  ¿…  ¿‡  ¿‹  ¿  ¿  ¿‘  ¿“  ¿•  ¿›  ¿  ¿°  ¿´  ¿¶  ¿á  ¿ç  ¿é  ¿ë  ¿ö  ¿ø  À  À  À
+  À  À  À  À  À  À#  À0  À5  À7  À=  À?  ÀG  ÀJ  ÀU  À`  Àh  Àl  Às  Àu  Àw  À  À…  Àˆ  À‹  À  Àª  À®  À°  À²  À´  À¶  À¸  À¹  Àº  ÀË  ÀÎ  ÀÕ  ÀÙ  ÀÛ  Àã  Àë  À÷  Àû  Á  Á'  Á)  Á?  ÁE  ÁG  ÁW  Áw  Áy  Áˆ  ÁÖ  ÁÜ  Â  Â  Â  Â  Â  Â   Â"  ÂB  ÂF  ÂJ  ÂN  ÂR  Â\  Â`  Â|  Â~  Â€  Â‚  Â  Â—  Â›  Â¹  Â»  ÂÀ  ÂÂ  ÂÆ  ÂÈ  ÂÊ  ÂÌ  ÂÎ  ÂĞ  ÂØ  ÂŞ  Âä  Âè  Âê  Âò  Âö  Ã  Ã#  Ã%  Ã)  Ã+  Ã4  Ã6  Ã8  Ã>  ÃH  ÃT  Ã|  Ã~  Ã€  Ãƒ  Ã‡  Ã‰  Ã‹  Ã  Ã­  Ãµ  Ã¹  Ã½  ÃÆ  ÃÌ  ÃØ  Ãâ  Ãæ  Ãê  Ãî  Ä  Ä   Ä.  Äa  Äc  Äg  Äm  Äv  Ä  Ä‘  Ä“  Äœ  Ä   Ä¢  Ä¤  Ä¦  Ä¬  Ä®  Ä²  Ä´  Ä¸  Ä¼  Ä¾  ÄÀ  ÄÌ  ÄĞ  ÄÙ  ÄÛ  Äß  Äá  Äã  Äå  Äç  Äï  Äù  Äû  Äÿ  Å  Å  Å  Å
+  Å  Å  Å  Å  Å9  Å=  ÅA  ÅJ  ÅR  Å]  Å_  Åc  Åi  Åk  Åx  Åz  Å‚  ÅŠ  Å  Å”  Å–  Å›  Å  Å¢  Å«  Å­  ÅÁ  ÅÃ  ÅÏ  ÅÑ  Åã  Åê  Åì  Åõ  Åû  Æ  Æ	  Æ  Æ  Æ  Æ  Æ  Æ  Æ$  Æ&  Æ(  Æ+  Æ6  Æ8  Æ:  Æ<  Æ>  ÆB  ÆH  ÆL  Æx  Æ{  Æ}  Æƒ  Æ  Æ   Æ¤  Æ¹  Æ½  ÆÁ  ÆÅ  ÆÇ  ÆÊ  ÆÎ  ÆÒ  ÆÖ  ÆØ  Æâ  Æï  Æñ  Æû  Æı  Ç  Ç  Ç	  Ç  Ç  Ç  Ç  Ç  Ç"  Ç)  Ç9  Ç;  Ç=  ÇI  ÇO  Çd  Çn  Çp  Ç|  Ç~  Ç„  Ç†  Ç  Ç’  Ç–  Ç   Ç¦  Çª  Ç´  Ç¸  Çº  ÇÂ  Çã  Çù  È  È  È  È  È  È  ÈZ  È\  È^  È²  È¶  Èº  È¾  ÈÀ  É(  É*  É,  ÉC  ÉI  Éx  É{  É~  É  É…  É‡  É“  É—  É™  É«  ÉÍ  ÉÑ  ÉÓ  Éá  Éä  Éì  Éò  Éó  É÷  Éù  Éû  Éı  Éÿ  Ê	  Ê  Ê  Ê#  Ê&  Ê)  Ê-  Ê1  Ê3  Ê7  Ê9  Ê;  Ê=  Ê?  ÊA  ÊE  ÊG  ÊK  ÊM  ÊS  ÊU  Ê]  Êa  Êf  Êj  Êk  Êo  Êt  Êv  Êz  Êƒ  Ê†  ÊŠ  Ê±  Êµ  Ê¹  Ê»  ÊÁ  ÊÃ  ÊÖ  ÊØ  ÊŞ  Êä  Êç  Êî  Êô  Êö  Êı  Ë  Ë  Ë  Ë@  ËB  ËF  ËJ  ËP  ËV  ËZ  Ëb  Ëd  Ëf  Ël  Ëp  Ëv  Ëw  Ë}  Ë  Ë‹  Ë‘  Ë“  Ë•  ËŸ  Ë¡  Ë¥  Ë§  Ë±  Ëµ  Ë¹  ËÂ  ËÊ  ËÌ  ËĞ  ËÓ  ËÖ  Ëà  Ëâ  Ëë  Ëï  Ëó  Ëõ  Ë÷  Ì  Ì"  ÌI  ÌK  ÌQ  ÌU  Ì]  Ì`  Ìc  Ìg  Ì~  Ì€  ÌŒ  Ì–  Ìš  Ì±  Ìµ  Ì¸  Ì¼  ÌÂ  Ìé  Ìô  Ìù  Ìÿ  Í  Í  Í  Í-  Í1  Í5  Í7  Í9  Í=  ÍA  ÍC  ÍG  ÍY  Í]  Ía  Íe  Ík  Íw  Íy  Í{  Í}  Í  Í…  Í‡  Í’  Í”  Íœ  Í  Í   Í¢  Í¥  Í©  Í«  Í¼  ÍÄ  ÍÆ  ÍÊ  ÍÎ  ÍÒ  ÍÔ  ÍØ  Î  Î
+  Î#  Î%  Î'  Î)  Î-  Î8  Î:  ÎP  ÎZ  Î\  Î•  Î  Î¥  Î³  Îµ  Î·  Î»  Î½  Î¿  ÎÁ  ÎÏ  Ï  Ï  Ï  Ï  Ï  Ï  Ï  Ï0  Ï2  Ï8  Ï<  Ï@  ÏD  ÏI  ÏM  ÏP  ÏT  Ï\  Ïi  Ïm  Ï„  Ï…  Ïˆ  ÏŠ  Ï  Ï  Ïš  Ï£  Ï¥  Ïª  Ï®  Ï°  ÏÒ  Ğ  Ğ&  Ğ2  Ğ4  Ğ8  ĞG  ĞH  ĞJ  ĞN  ĞP  ĞZ  Ğ\  Ğ^  Ğ_  Ğa  Ğe  Ğg  Ği  Ğm  Ğq  Ğw  Ğy  Ğ{  Ğ}  Ğƒ  Ğ…  Ğ‡  Ğ‹  Ğ“  Ğ˜  Ğœ  Ğ  Ğ¬  Ğ²  Ğµ  Ğ·  Ğ¹  Ğ»  Ğ½  Ğ¾  ĞÀ  ĞÅ  ĞÇ  ĞÉ  ĞË  ĞÍ  ĞÒ  ĞÖ  Ğã  Ğé  Ğô  Ñ  Ñ  Ñ  Ñ  Ñ  Ñ+  Ñ.  Ñ0  Ñ6  ÑE  ÑI  ÑQ  Ña  Ñc  Ñe  Ñh  Ñj  Ñl  Ñ|  Ñ~  Ñ‚  Ñ‰  Ñ‹  Ñ™  Ñ  Ñ¡  Ñ¨  ÑÔ  ÑÖ  ÑØ  Ñå  Ññ  Ò   Ò  Ò  Ò1  Ò6  Ò:  ÒD  ÒN  Òb  Òn  Òr  Òt  Òx  Òz  Ò}  Ò‡  Ò‹  Ò’  Ò–  Ò˜  Ò¢  Ò¤  Òª  Ò¬  Ò¿  ÒÂ  ÒÄ  ÒÆ  ÒÈ  ÒÊ  ÒÌ  ÒÎ  ÒÒ  ÒÔ  ÒÖ  ÒŞ  Òê  Òô  Òö  Ó  Ó  Ó  Ó  Ó%  Ó)  Ó-  ÓT  Ó\  Óf  Ós  Ó  Ó‡  Ó  ÓÏ  ÓÛ  Óæ  Óè  Óé  Óê  Óõ  Ó÷  Óù  Óı  Ô  Ô  Ô  Ô  Ô)  Ô9  ÔA  ÔG  ÔI  ÔK  ÔS  Ô[  Ô_  Ôd  Ôg  Ô¯  Ô±  Ô¾  ÔŞ  Ôà  Ôä  Ôæ  Ôõ  Ôû  Ôı  Ôÿ  Õ  Õ	  Õ  Õ  Õ  Õ  Õ!  Õ%  Õ/  Õ1  ÕE  ÕG  ÕI  ÕK  ÕM  ÕP  Õa  Õe  Õi  Õk  Õs  Õu  Õ€  Õ‚  Õ„  Õ‹  Õ–  Õ  Õ¤  Õ¦  Õ¨  Õ¬  Õ®  Õ°  Õ¸  ÕÀ  ÕÈ  ÕÎ  ÕØ  Õî  Õø  Õû  Õÿ  Ö  Ö  Ö  Ö  Ö"  Ö(  Ö0  Ö2  Ö4  Ö6  Ö<  Ö>  Ö@  ÖD  ÖF  ÖH  ÖJ  ÖK  Ök  Öƒ  Ö‡  Ö§  Ö©  Ö«  Ö­  Ö´  Ö¸  Öã  Öí  Öõ  Ö÷  Öù  ×  ×  ×~  ×€  ×ƒ  ×‹  ×«  ×¯  ×·  ×Ê  ×Ì  ×İ  ×ß  ×ë  ×ï  ×ó  ×÷  Ø  Ø  Ø  Ø  Ø  Ø  Ø#  Ø%  Ø'  Ø@  ØB  ØD  ØH  ØQ  ØS  Ø`  Øe  Øg  Ør  Øv  Ø|  Ø  Ø»  ØÁ  ØÉ  ØÓ  ØÕ  ØÚ  ØŞ  Øä  Øê  Øó  Øõ  Øù  Øû  Øı  Øÿ  Ù  Ù  Ù  Ù  Ù  Ù  Ù  Ù  Ù   Ù0  Ù2  Ù6  ÙE  ÙO  ÙS  Ùm  Ùq  Ùs  Ù{  Ù}  Ù‘  Ù“  Ù›  Ù¦  Ù¬  Ù°  Ù¸  ÙÖ  ÙÚ  ÙŞ  Ùà  Ùê  Ùì  Ùù  Ùû  Ú  Ú  Ú  Ú!  Ú(  Ú*  Ú<  Ú>  ÚA  ÚB  ÚF  ÚN  ÚT  ÚV  ÚX  ÚZ  Ú\  Ú^  Ú`  Úb  Úd  Úf  Úh  Új  Ún  Úz  Ú„  Ú•  Ú—  Ú™  Ú›  Ú®  Ú°  Ú³  Úµ  ÚÃ  ÚÔ  ÚÖ  ÚØ  ÚÛ  Úâ  Ú÷  Û   Û  Û  Û  Û  Û  Û  Û(  Û0  Û8  Û;  ÛF  ÛI  ÛK  ÛM  ÛO  ÛS  ÛY  Û]  Û¹  Û½  ÛÁ  ÛÈ  ÛÊ  ÛÏ  ÛÖ  ÛØ  ÛÚ  ÛÛ  Ûİ  ÛŞ  Ûí  Ûø  Ûû  Ü  Ü  Ü  ÜU  ÜW  ÜY  Üg  Üi  Üm  Üo  Ür  Üt  Üx  Ü{  Ü}  Ü‚  Ü„  Ü†  Ü  Ü  Ü’  Üœ  Ü  Ü   Ü¢  Ü¤  Ü¬  Ü®  Ü°  Ü¸  Ü¾  ÜÂ  ÜÄ  ÜÆ  ÜÎ  ÜÜ  Üè  Üî  Üò  Üø  Üş  İ  İ  İ
+  İ  İ!  İ+  İ/  İ1  İ5  İC  İW  İX  İh  İj  İr  İt  İu  İ}  İ  İ  İ²  İ¶  İ¸  İº  İ¾  İÀ  İÃ  İÓ  İÕ  İà  İæ  İè  İî  İğ  İı  Ş  Ş  Ş  ŞN  Şn  Şp  Şx  Ş§  Ş«  Ş­  Ş³  ŞÇ  ŞË  ŞĞ  ŞÛ  Şİ  Şã  ß  ß  ß#  ß'  ß4  ß6  ß;  ß=  ßD  ßV  ßf  ßr  ßx  ß€  ß¢  ß­  ß·  ß¿  ßÂ  ßı  à
+  à  à  à!  à%  à)  à-  à7  à8  à:  àT  àX  àZ  àc  àe  àg  às  àw  à{  àˆ  àŠ  àŒ  à  à  à—  à™  à£  à¤  à¨  à¶  àÃ  àÇ  àË  àÍ  àĞ  àÔ  àÕ  à×  àÙ  àò  àô  àö  áL  áM  áQ  á[  áb  ác  ád  áh  át  áv  á  á‘  á’  á—  á™  á›  á  á¡  á£  á¿  áÁ  áÃ  áê  áë  áï  áñ  áó  áş  â  â  â  â  â  â  â  â   â"  â$  â<  â>  âN  âP  âR  âV  âY  â]  â_  âh  âj  âl  âv  âŠ  âŒ  â  â’  â  â   â£  â¥  â«  â³  â¸  âº  âÄ  âÆ  âÕ  âİ  âá  âå  âç  âé  âë  âí  âï  âñ  âó  âõ  âı  ã  ã  ã  ã  ã  ã  ã"  ã&  ã(  ã*  ã,  ã.  ã0  ã7  ã9  ã;  ã?  ãA  ãE  ãI  ãM  ã^  ãb  ãf  ãh  ãs  ãw  ã}  ã  ã  ãƒ  ã‡  ã‰  ã  ã•  ã¢  ã¦  ãª  ã¬  ã®  ã¶  ã¸  ãô  ãö  ãø  ãú  ãş  ä  ä  ä  ä  ä  ä'  ä)  ä+  ä0  ä@  äZ  äz  ä|  ä†  äˆ  äŠ  äŒ  ä¡  ä¦  ä¨  ä¶  ä¸z ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd-‹ÂòÏÁügo.mod.github/workflows/ci.ymlLICENSEbindvar.goREADME.mdsqlf.gosqlf_test.goexample_test.go ­ ³ Ë Ò Ü å ì ø  ¸ à i  ¸ à o  ¸   d  ¸   o  ¸   m  ¼ ` i  ¼ à o  € M    N  	  E  À m    D  	À S $ ` E 0 	  C 4   . 8 
+` E H   A | € e „   p „ @ . ˆ à w ˆ   n Œ   .  À a ” à t ” ` t ”   a ˜ À g ˜ à t ˜ € o œ   t œ à .     b ¤ À y ¤ À d ¤ € h ¬ À l °   _ ° À . ° À _ ° à w ´ à d ´   l ¸ € v ¼ À m ¼ @ k ¼ à s À € e Ä € f È À g È ` f Ì à c Ì   l Ì € . Ğ À g Ğ   s Ğ   u Ô @ / Ø   r Ü à r Ü ` / à   m ä   l,51 240!3"/CM*%(QEK;B 
+&P:AN'O9+8FGD	)L ' ( , - . / 0 1 2 3 4 5 6 7 8 9 : ; < > ? @ A B C D E G H I J K L M N O P Q R S T U V W X Y Z [ \ ] _ ` a b d f h j k l m n o p 
+	        …g@à•-ËÔ=LyTt&Ó‡¸ĞH[VÒñ-SGj5"£ .y‡\ö£zùÚ¦æ÷…‘™ÛAGâHN8p          {"IndexFormatVersion":16,"IndexFeatureVersion":12,"IndexMinReaderVersion":10,"IndexTime":"2022-03-30T09:30:08.802960505+02:00","PlainASCII":true,"LanguageMap":{"Go":3,"Go Module":0,"Markdown":4,"Text":2,"YAML":1},"ZoektVersion":"","ID":"c920e01b3me26sb77s90"}{"ID":0,"Name":"github.com/keegancsmith/sqlf","URL":"https://github.com/keegancsmith/sqlf","Source":"/home/keegan/src/github.com/keegancsmith/sqlf","Branches":[{"Name":"HEAD","Version":"55bd532cc9607cf718438a4438da05b14a048941"}],"SubRepoMap":{},"CommitURLTemplate":"https://github.com/keegancsmith/sqlf/commit/{{.Version}}","FileURLTemplate":"https://github.com/keegancsmith/sqlf/blob/{{.Version}}/{{.Path}}","LineFragmentTemplate":"#L{{.LineNumber}}","RawConfig":{},"Rank":0,"IndexOptions":"15f65385b2fe458646b237da4ff3e9c64b74dd52","HasSymbols":false,"Tombstone":false,"LatestCommitDate":"2021-10-01T08:53:37+02:00"}    metaData  Ö  repoMetaData  Ù  kfileContents      /†  /†    	fileNames ­   Z     fileSections  1¤     1¬    fileEndSymbol   1@   $	symbolMap  1d      1d    symbolKindMap  1d      1d    symbolMetaData   1d    newlines  /¦  z  1     	ngramText   9-  ZĞpostings  “ı  P½  äº  -hnameNgramText  '   namePostings '   J q   branchMasks   1d   @subRepos  |   	runeOffsets  "   {nameRuneOffsets  q   fileEndRunes     nameEndRunes  s   	contentChecksums  …   @	languages  Å   runeDocSections  Õ   repos         	nameBloom   1Ì   CcontentBloom   2   D  g
