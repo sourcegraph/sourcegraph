@@ -9,9 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
-	"github.com/sourcegraph/sourcegraph/dev/sg/interrupt"
 	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 	"github.com/sourcegraph/sourcegraph/internal/download"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -47,7 +45,7 @@ type InstallManager struct {
 	progress            output.Progress
 	ticker              *time.Ticker
 	tickInterval        time.Duration
-	stats               *installAnalytics
+	startTime           time.Time
 }
 
 func Install(ctx context.Context, env map[string]string, verbose bool, cmds []Installer) error {
@@ -96,8 +94,7 @@ func (installer *InstallManager) start(ctx context.Context) {
 
 	// Every uninterrupted 15 seconds we will print out a waiting message
 	installer.startTicker(15 * time.Second)
-
-	installer.startAnalytics(ctx, installer.cmds)
+	installer.startTime = time.Now()
 }
 
 // Starts the installation process in a non-blocking process
@@ -153,12 +150,7 @@ func (installer *InstallManager) startTicker(interval time.Duration) {
 	installer.tickInterval = interval
 }
 
-func (installer *InstallManager) startAnalytics(ctx context.Context, cmds map[string]Installer) {
-	installer.stats = startInstallAnalytics(ctx, cmds)
-}
-
 func (installer *InstallManager) handleInstalled(name string) {
-	installer.stats.handleInstalled(name)
 	installer.ticker.Reset(installer.tickInterval)
 
 	installer.done += installer.cmds[name].Count()
@@ -174,7 +166,7 @@ func (installer *InstallManager) complete() {
 
 	installer.Write("")
 	if installer.verbose {
-		installer.WriteLine(output.Linef(output.EmojiSuccess, output.StyleSuccess, "Everything installed! Took %s. Booting up the system!", installer.stats.duration()))
+		installer.WriteLine(output.Linef(output.EmojiSuccess, output.StyleSuccess, "Everything installed! Took %s. Booting up the system!", time.Since(installer.startTime)))
 	} else {
 		installer.WriteLine(output.Linef(output.EmojiSuccess, output.StyleSuccess, "Everything installed! Booting up the system!"))
 	}
@@ -193,7 +185,6 @@ func (installer *InstallManager) complete() {
 
 func (installer *InstallManager) handleFailure(name string, err error) {
 	installer.progress.Destroy()
-	installer.stats.handleFailure(name, err)
 	printCmdError(installer.Output.Output, name, err)
 }
 
@@ -219,49 +210,6 @@ func (installer *InstallManager) tick() <-chan time.Time {
 
 func (installer *InstallManager) isDone() bool {
 	return len(installer.cmds) == 0
-}
-
-type installAnalytics struct {
-	Start time.Time
-	Spans map[string]*analytics.Span
-}
-
-func startInstallAnalytics(ctx context.Context, cmds map[string]Installer) *installAnalytics {
-	installer := &installAnalytics{
-		Start: time.Now(),
-		Spans: make(map[string]*analytics.Span, len(cmds)),
-	}
-
-	for cmd := range cmds {
-		_, installer.Spans[cmd] = analytics.NewInvocation(ctx, fmt.Sprintf("install %s", cmd), "install_command")
-	}
-
-	interrupt.Register(installer.handleInterrupt)
-
-	return installer
-}
-
-func (a *installAnalytics) handleInterrupt() {
-	for _, span := range a.Spans {
-		if span.IsRecording() {
-			span.Cancelled()
-			span.End()
-		}
-	}
-}
-
-func (a *installAnalytics) handleInstalled(name string) {
-	a.Spans[name].Succeeded()
-	a.Spans[name].End()
-}
-
-func (a *installAnalytics) handleFailure(name string, err error) {
-	a.Spans[name].RecordError("failed", err)
-	a.Spans[name].End()
-}
-
-func (a *installAnalytics) duration() time.Duration {
-	return time.Since(a.Start)
 }
 
 type installFunc func(context.Context, map[string]string) error

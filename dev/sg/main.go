@@ -14,7 +14,6 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/ci"
 	"github.com/sourcegraph/sourcegraph/dev/sg/enterprise"
-	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/background"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/check"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/release"
@@ -182,9 +181,6 @@ var sg = &cli.App{
 		// Set up analytics and hooks for each command - do this as the first context
 		// setup
 		if !cmd.Bool("disable-analytics") {
-			// Ensure analytics are persisted
-			interrupt.Register(func() { _ = analytics.Persist(cmd.Context) })
-
 			// Add analytics to each command
 			addAnalyticsHooks([]string{"sg"}, cmd.App.Commands)
 		}
@@ -251,8 +247,6 @@ var sg = &cli.App{
 		if !bashCompletionsMode {
 			// Wait for background jobs to finish up, iff not in autocomplete mode
 			background.Wait(cmd.Context, std.Out)
-			// Persist analytics
-			_ = analytics.Persist(cmd.Context)
 		}
 
 		return nil
@@ -297,7 +291,6 @@ var sg = &cli.App{
 		enterprise.Command,
 
 		// Util
-		analyticsCommand,
 		doctorCommand,
 		funkyLogoCommand,
 		helpCommand,

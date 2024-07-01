@@ -7,11 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
 	"github.com/sourcegraph/sourcegraph/lib/output"
 )
@@ -83,10 +80,6 @@ func Wait(ctx context.Context, out *std.Output) {
 	jobs := loadFromContext(ctx)
 	pendingCount := int(jobs.stillRunningCount.Load())
 
-	ctx = analytics.NewInvocation(ctx, "background_wait", "",
-		trace.WithAttributes(attribute.Int("jobs", pendingCount)))
-	defer span.End()
-
 	firstResultWithOutput := true
 	if jobs.verbose && pendingCount > 0 {
 		out.WriteLine(output.Styledf(output.StylePending, "Waiting for %d remaining background %s to complete...",
@@ -112,7 +105,6 @@ func Wait(ctx context.Context, out *std.Output) {
 	if jobs.verbose && pendingCount > 0 {
 		out.WriteLine(output.Line(output.EmojiSuccess, output.StyleSuccess, "Background jobs done!"))
 	}
-	span.Succeeded()
 }
 
 func pluralize(single, plural string, count int) string {
