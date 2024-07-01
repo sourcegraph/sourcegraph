@@ -34,10 +34,15 @@ var DevAndTesting = conftypes.RawUnified{
 // single-container instances of Sourcegraph.
 var DockerContainer = conftypes.RawUnified{
 	Site: `{
-	// The externally accessible URL for Sourcegraph (i.e., what you type into your browser)
+	// The externally accessible URL for this Sourcegraph instance.
+	// i.e. the address you enter in your browser's address bar.
 	// This is required to be configured for Sourcegraph to work correctly.
+	// Only root URLs are allowed.
+	// Note: When configured to the recommended https:// users will not be able to log in using http://
 	// "externalURL": "https://sourcegraph.example.com",
-
+	//
+	//
+	// The authentication providers to use for identifying and signing in users.
 	"auth.providers": [
 		{
 			"type": "builtin",
@@ -51,16 +56,17 @@ var DockerContainer = conftypes.RawUnified{
 // applied to Kubernetes, Docker Compose, and pure Docker instances of Sourcegraph.
 var KubernetesOrDockerComposeOrPureDocker = conftypes.RawUnified{
 	Site: `{
-	// The externally accessible URL for Sourcegraph (i.e., what you type into your browser)
+	// The externally accessible URL for this Sourcegraph instance.
+	// i.e. the address you enter in your browser's address bar.
 	// This is required to be configured for Sourcegraph to work correctly.
+	// Only root URLs are allowed.
+	// Note: When configured to the recommended https:// users will not be able to log in using http://
 	// "externalURL": "https://sourcegraph.example.com",
-
-	// The authentication provider to use for identifying and signing in users.
-	// Only one entry is supported.
 	//
-	// The builtin auth provider with signup disallowed (shown below) means that
+	//
+	// The authentication providers to use for identifying and signing in users.
+	// The builtin auth provider with signup disallowed (default) means that
 	// after the initial site admin signs in, all other users must be invited.
-	//
 	// Other providers are documented at https://sourcegraph.com/docs/admin/auth.
 	"auth.providers": [
 		{
