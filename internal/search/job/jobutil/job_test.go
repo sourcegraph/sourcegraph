@@ -74,7 +74,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)foo])
+                  (zoektQueryRegexps . ["(?i)foo"])
                   (query . substr:"foo")
                   (type . text))))
             (REPOPAGER
@@ -85,12 +85,12 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{"foo",filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)foo])
+                  (pathRegexps . ["(?i)foo"])
                   (indexed . false))))
             (REPOSEARCH
               (repoOpts.repoFilters . [foo])
               (repoOpts.searchContextSpec . @userA)
-              (repoNamePatterns . [(?i)foo])))
+              (repoNamePatterns . ["(?i)foo"])))
           NOOP
           (REPOSCOMPUTEEXCLUDED
             (repoOpts.searchContextSpec . @userA))
@@ -119,16 +119,16 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)foo])
+              (globalZoektQueryRegexps . ["(?i)foo"])
               (query . substr:"foo")
               (type . text)
               (repoOpts.searchContextSpec . global))
             (REPOSEARCH
               (repoOpts.repoFilters . [foo])
               (repoOpts.searchContextSpec . global)
-              (repoNamePatterns . [(?i)foo])))
+              (repoNamePatterns . ["(?i)foo"])))
           (REPOSCOMPUTEEXCLUDED
             (repoOpts.searchContextSpec . global))
           NOOP)))))
@@ -156,14 +156,14 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)foo])
+              (globalZoektQueryRegexps . ["(?i)foo"])
               (query . substr:"foo")
               (type . text))
             (REPOSEARCH
               (repoOpts.repoFilters . [foo])
-              (repoNamePatterns . [(?i)foo])))
+              (repoNamePatterns . ["(?i)foo"])))
           REPOSCOMPUTEEXCLUDED
           NOOP)))))
 `),
@@ -194,7 +194,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)foo])
+                  (zoektQueryRegexps . ["(?i)foo"])
                   (query . substr:"foo")
                   (type . text))))
             (REPOPAGER
@@ -205,11 +205,11 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{"foo",filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)foo])
+                  (pathRegexps . ["(?i)foo"])
                   (indexed . false))))
             (REPOSEARCH
               (repoOpts.repoFilters . [sourcegraph/sourcegraph foo])
-              (repoNamePatterns . [(?i)sourcegraph/sourcegraph (?i)foo])))
+              (repoNamePatterns . ["(?i)sourcegraph/sourcegraph","(?i)foo"])))
           NOOP
           (REPOSCOMPUTEEXCLUDED
             (repoOpts.repoFilters . [sourcegraph/sourcegraph]))
@@ -238,14 +238,14 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)(?-s:ok.*?ok)])
+              (globalZoektQueryRegexps . ["(?i)(?-s:ok.*?ok)"])
               (query . regex:"ok(?-s:.)*?ok")
               (type . text))
             (REPOSEARCH
               (repoOpts.repoFilters . [(?:ok).*?(?:ok)])
-              (repoNamePatterns . [(?i)(?:ok).*?(?:ok)])))
+              (repoNamePatterns . ["(?i)(?:ok).*?(?:ok)"])))
           REPOSCOMPUTEEXCLUDED
           NOOP)))))
 `),
@@ -272,14 +272,14 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)ok @thing])
+              (globalZoektQueryRegexps . ["(?i)ok @thing"])
               (query . substr:"ok @thing")
               (type . text))
             (REPOSEARCH
               (repoOpts.repoFilters . [ok ])
-              (repoNamePatterns . [(?i)ok ])))
+              (repoNamePatterns . ["(?i)ok "])))
           REPOSCOMPUTEEXCLUDED
           NOOP)))))
 `),
@@ -304,9 +304,9 @@ func TestNewPlanJob(t *testing.T) {
           (ZOEKTGLOBALTEXTSEARCH
             (fileMatchLimit . 10000)
             (select . )
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
-            (globalZoektQueryRegexps . [(?i)@nope])
+            (globalZoektQueryRegexps . ["(?i)@nope"])
             (query . substr:"@nope")
             (type . text))
           REPOSCOMPUTEEXCLUDED
@@ -335,7 +335,7 @@ func TestNewPlanJob(t *testing.T) {
               (repoOpts.repoFilters . [sourcegraph/sourcegraph@*refs/heads/*]))
             (REPOSEARCH
               (repoOpts.repoFilters . [sourcegraph/sourcegraph@*refs/heads/*])
-              (repoNamePatterns . [(?i)sourcegraph/sourcegraph]))))))))
+              (repoNamePatterns . ["(?i)sourcegraph/sourcegraph"]))))))))
 `),
 	}, {
 		query:      `repo:sourcegraph/sourcegraph@*refs/heads/*`,
@@ -360,7 +360,7 @@ func TestNewPlanJob(t *testing.T) {
               (repoOpts.repoFilters . [sourcegraph/sourcegraph@*refs/heads/*]))
             (REPOSEARCH
               (repoOpts.repoFilters . [sourcegraph/sourcegraph@*refs/heads/*])
-              (repoNamePatterns . [(?i)sourcegraph/sourcegraph]))))))))
+              (repoNamePatterns . ["(?i)sourcegraph/sourcegraph"]))))))))
 `),
 	}, {
 		query:      `foo @bar`,
@@ -383,9 +383,9 @@ func TestNewPlanJob(t *testing.T) {
           (ZOEKTGLOBALTEXTSEARCH
             (fileMatchLimit . 10000)
             (select . )
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
-            (globalZoektQueryRegexps . [(?i)(?-s:foo.*?@bar)])
+            (globalZoektQueryRegexps . ["(?i)(?-s:foo.*?@bar)"])
             (query . regex:"foo(?-s:.)*?@bar")
             (type . text))
           REPOSCOMPUTEEXCLUDED
@@ -410,7 +410,7 @@ func TestNewPlanJob(t *testing.T) {
         (limit . 10000)
         (PARALLEL
           (ZOEKTGLOBALSYMBOLSEARCH
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
             (fileMatchLimit . 10000)
             (select . )
@@ -500,7 +500,7 @@ func TestNewPlanJob(t *testing.T) {
           (ZOEKTGLOBALTEXTSEARCH
             (fileMatchLimit . 10000)
             (select . )
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
             (globalZoektQueryRegexps . [])
             (query . content_substr:"test")
@@ -544,7 +544,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)test])
+                  (zoektQueryRegexps . ["(?i)test"])
                   (query . substr:"test")
                   (type . text))))
             (REPOPAGER
@@ -555,11 +555,11 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{/test/,filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)test])
+                  (pathRegexps . ["(?i)test"])
                   (indexed . false))))
             (REPOSEARCH
               (repoOpts.repoFilters . [test test])
-              (repoNamePatterns . [(?i)test (?i)test])))
+              (repoNamePatterns . ["(?i)test","(?i)test"])))
           NOOP
           (REPOPAGER
             (containsRefGlobs . false)
@@ -613,7 +613,7 @@ func TestNewPlanJob(t *testing.T) {
           (ZOEKTGLOBALTEXTSEARCH
             (fileMatchLimit . 10000)
             (select . )
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
             (globalZoektQueryRegexps . [])
             (query . content_substr:"test")
@@ -657,7 +657,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)test])
+                  (zoektQueryRegexps . ["(?i)test"])
                   (query . substr:"test")
                   (type . text))))
             (REPOPAGER
@@ -668,11 +668,11 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{/test/,filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)test])
+                  (pathRegexps . ["(?i)test"])
                   (indexed . false))))
             (REPOSEARCH
               (repoOpts.repoFilters . [test test])
-              (repoNamePatterns . [(?i)test (?i)test])))
+              (repoNamePatterns . ["(?i)test","(?i)test"])))
           NOOP
           (REPOPAGER
             (containsRefGlobs . false)
@@ -779,7 +779,7 @@ func TestNewPlanJob(t *testing.T) {
             REPOSCOMPUTEEXCLUDED
             (REPOSEARCH
               (repoOpts.repoFilters . [a])
-              (repoNamePatterns . [(?i)a])))))
+              (repoNamePatterns . ["(?i)a"])))))
       (TIMEOUT
         (timeout . 20s)
         (LIMIT
@@ -788,7 +788,7 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
               (globalZoektQueryRegexps . [])
               (query . content_substr:"b")
@@ -815,7 +815,7 @@ func TestNewPlanJob(t *testing.T) {
         (limit . 10000)
         (PARALLEL
           (ZOEKTGLOBALSYMBOLSEARCH
-            (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+            (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
             (includePrivate . true)
             (fileMatchLimit . 10000)
             (select . )
@@ -872,14 +872,14 @@ func TestNewPlanJob(t *testing.T) {
         (limit . 10000)
         (FILECONTAINSFILTER
           (originalPatterns . [])
-          (filterPatterns . [(?i:a.*b)])
+          (filterPatterns . ["(?i:a.*b)"])
           (PARALLEL
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)(?-s:a.*b)])
+              (globalZoektQueryRegexps . ["(?i)(?-s:a.*b)"])
               (query . regex:"a(?-s:.)*b")
               (type . text))
             REPOSCOMPUTEEXCLUDED
@@ -904,7 +904,7 @@ func TestNewPlanJob(t *testing.T) {
         (limit . 10000)
         (FILECONTAINSFILTER
           (originalPatterns . [])
-          (filterPatterns . [(?i:a.*b)])
+          (filterPatterns . ["(?i:a.*b)"])
           (PARALLEL
             (REPOPAGER
               (containsRefGlobs . false)
@@ -914,7 +914,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)(?-s:a.*b)])
+                  (zoektQueryRegexps . ["(?i)(?-s:a.*b)"])
                   (query . regex:"a(?-s:.)*b")
                   (type . text))))
             (REPOPAGER
@@ -926,7 +926,7 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{(/a.*b/),filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)a.*b])
+                  (pathRegexps . ["(?i)a.*b"])
                   (indexed . false))))
             (REPOSCOMPUTEEXCLUDED
               (repoOpts.repoFilters . [foo])
@@ -1060,7 +1060,7 @@ func TestNewPlanJob(t *testing.T) {
                 (ZOEKTREPOSUBSETTEXTSEARCH
                   (fileMatchLimit . 10000)
                   (select . )
-                  (zoektQueryRegexps . [(?i)foo])
+                  (zoektQueryRegexps . ["(?i)foo"])
                   (query . substr:"foo")
                   (type . text))))
             (REPOPAGER
@@ -1071,12 +1071,12 @@ func TestNewPlanJob(t *testing.T) {
                   (useFullDeadline . true)
                   (patternInfo . TextPatternInfo{/foo/,filematchlimit:10000})
                   (numRepos . 0)
-                  (pathRegexps . [(?i)foo])
+                  (pathRegexps . ["(?i)foo"])
                   (indexed . false))))
             (REPOSEARCH
               (repoOpts.repoFilters . [foo])
               (repoOpts.hasKVPs[0].key . tag)
-              (repoNamePatterns . [(?i)foo])))
+              (repoNamePatterns . ["(?i)foo"])))
           NOOP
           (REPOSCOMPUTEEXCLUDED
             (repoOpts.hasKVPs[0].key . tag))
@@ -1142,7 +1142,7 @@ func TestNewPlanJob(t *testing.T) {
     (originalQuery . )
     (patternType . codycontext)
     (CODYCONTEXTSEARCH
-      (patterns . [readme symf])
+      (patterns . ["readme","symf"])
       (codeCount . 12)
       (textCount . 3))))
 `),
@@ -1174,9 +1174,9 @@ func TestNewPlanJob(t *testing.T) {
             (ZOEKTGLOBALTEXTSEARCH
               (fileMatchLimit . 10000)
               (select . )
-              (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+              (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
               (includePrivate . true)
-              (globalZoektQueryRegexps . [(?i)foo (?i)bar (?i)baz])
+              (globalZoektQueryRegexps . ["(?i)foo","(?i)bar","(?i)baz"])
               (query . (and substr:"foo" substr:"bar" substr:"baz"))
               (type . text)
               (repoOpts.searchContextSpec . global))
@@ -1188,19 +1188,19 @@ func TestNewPlanJob(t *testing.T) {
                 (REPOSEARCH
                   (repoOpts.repoFilters . [foo])
                   (repoOpts.searchContextSpec . global)
-                  (repoNamePatterns . [(?i)foo])))
+                  (repoNamePatterns . ["(?i)foo"])))
               (LIMIT
                 (limit . 40000)
                 (REPOSEARCH
                   (repoOpts.repoFilters . [bar])
                   (repoOpts.searchContextSpec . global)
-                  (repoNamePatterns . [(?i)bar])))
+                  (repoNamePatterns . ["(?i)bar"])))
               (LIMIT
                 (limit . 40000)
                 (REPOSEARCH
                   (repoOpts.repoFilters . [baz])
                   (repoOpts.searchContextSpec . global)
-                  (repoNamePatterns . [(?i)baz])))))))
+                  (repoNamePatterns . ["(?i)baz"])))))))
       (TIMEOUT
         (timeout . 20s)
         (LIMIT
@@ -1211,14 +1211,14 @@ func TestNewPlanJob(t *testing.T) {
               (ZOEKTGLOBALTEXTSEARCH
                 (fileMatchLimit . 10000)
                 (select . )
-                (repoScope . [(and branch="HEAD" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)])
+                (repoScope . ["(and branch=\"HEAD\" rawConfig:RcOnlyPublic|RcNoForks|RcNoArchived)"])
                 (includePrivate . true)
-                (globalZoektQueryRegexps . [(?i)foo bar baz])
+                (globalZoektQueryRegexps . ["(?i)foo bar baz"])
                 (query . substr:"foo bar baz")
                 (type . text))
               (REPOSEARCH
                 (repoOpts.repoFilters . [foo bar baz])
-                (repoNamePatterns . [(?i)foo bar baz])))
+                (repoNamePatterns . ["(?i)foo bar baz"])))
             REPOSCOMPUTEEXCLUDED
             NOOP))))))
 `),
@@ -1251,7 +1251,7 @@ func TestNewPlanJob(t *testing.T) {
               (ZOEKTREPOSUBSETTEXTSEARCH
                 (fileMatchLimit . 10000)
                 (select . )
-                (zoektQueryRegexps . [(?i)(?im:\.MAGIK$)])
+                (zoektQueryRegexps . ["(?i)(?im:\\.MAGIK$)"])
                 (query . file_regex:"(?i:\\.MAGIK)(?m:$)")
                 (type . text))))
           (REPOPAGER
@@ -1263,7 +1263,7 @@ func TestNewPlanJob(t *testing.T) {
                 (useFullDeadline . true)
                 (patternInfo . TextPatternInfo{//,filematchlimit:10000,lang:magik,f:"(?i)\\.magik$"})
                 (numRepos . 0)
-                (pathRegexps . [(?i)\.magik$])
+                (pathRegexps . ["(?i)\\.magik$"])
                 (indexed . false))))
           (REPOSCOMPUTEEXCLUDED
             (repoOpts.repoFilters . [sourcegraph/.*])
@@ -1312,13 +1312,13 @@ func TestToEvaluateJob(t *testing.T) {
 	autogold.Expect(`
 (REPOSEARCH
   (repoOpts.repoFilters . [foo])
-  (repoNamePatterns . [(?i)foo]))
+  (repoNamePatterns . ["(?i)foo"]))
 `).Equal(t, test("foo", search.Streaming))
 
 	autogold.Expect(`
 (REPOSEARCH
   (repoOpts.repoFilters . [foo])
-  (repoNamePatterns . [(?i)foo]))
+  (repoNamePatterns . ["(?i)foo"]))
 `).Equal(t, test("foo", search.Batch))
 }
 

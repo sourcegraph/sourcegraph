@@ -3,6 +3,7 @@
 # Variables:
 #
 # - $JAEGER_HOST
+# - $JAEGER_OTLP_GRPC_PORT
 
 receivers:
   otlp:
@@ -11,9 +12,8 @@ receivers:
       http: # port 4318
 
 exporters:
-  jaeger:
-    # Default Jaeger GRPC server
-    endpoint: "$JAEGER_HOST:14250"
+  otlp/jaeger:
+    endpoint: "${JAEGER_HOST}:${JAEGER_OTLP_GRPC_PORT}"
     tls:
       insecure: true
 
@@ -29,7 +29,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [tail_sampling]
-      exporters: [jaeger]
+      exporters: [otlp/jaeger]
 
 processors:
   tail_sampling:

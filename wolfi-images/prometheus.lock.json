@@ -489,41 +489,41 @@
       },
       {
         "architecture": "x86_64",
-        "checksum": "Q1wJPtj5XZtnPiVWGM5dsT+nyfWXc=",
+        "checksum": "Q179f/1cGWltgMEIm2Eje/6xi4OMM=",
         "control": {
-          "checksum": "sha1-wJPtj5XZtnPiVWGM5dsT+nyfWXc=",
-          "range": "bytes=705-1234"
+          "checksum": "sha1-79f/1cGWltgMEIm2Eje/6xi4OMM=",
+          "range": "bytes=700-1223"
         },
         "data": {
-          "checksum": "sha256-sw+CjlpsjO01q6lqzXgHnniiJKn7bqOSNO6vNqdGc7I=",
-          "range": "bytes=1235-3873775"
+          "checksum": "sha256-W/dEug4qJz9Ck5Q3yvlBYwCVV+ZoYyPl8MbgtzSUXi0=",
+          "range": "bytes=1224-3874567"
         },
         "name": "bind-libs",
         "signature": {
-          "checksum": "sha1-9zDzmHAeu7mWpidXAatqrLZVzUs=",
-          "range": "bytes=0-704"
+          "checksum": "sha1-jlDTNDEfHJIBNWksnL2bZljE3Ls=",
+          "range": "bytes=0-699"
         },
-        "url": "https://packages.wolfi.dev/os/x86_64/bind-libs-9.18.26-r0.apk",
-        "version": "9.18.26-r0"
+        "url": "https://packages.wolfi.dev/os/x86_64/bind-libs-9.18.27-r0.apk",
+        "version": "9.18.27-r0"
       },
       {
         "architecture": "x86_64",
-        "checksum": "Q1AxEQdi8fVcYtGc3zHTCW3OZdY2Q=",
+        "checksum": "Q1WcZZdYsMNQFcJGr+NsOVN4XKLbQ=",
         "control": {
-          "checksum": "sha1-AxEQdi8fVcYtGc3zHTCW3OZdY2Q=",
-          "range": "bytes=694-1208"
+          "checksum": "sha1-WcZZdYsMNQFcJGr+NsOVN4XKLbQ=",
+          "range": "bytes=703-1213"
         },
         "data": {
-          "checksum": "sha256-/dt3qJw5D9iSJ/mKkRQkhWD8R52selhpcwXyw7KLMhg=",
-          "range": "bytes=1209-879444"
+          "checksum": "sha256-1U8VP+Xpy8LE2wNA3G4w6Nw+nM2aGJeauwflEeHtZws=",
+          "range": "bytes=1214-880052"
         },
         "name": "bind-tools",
         "signature": {
-          "checksum": "sha1-VTb0YdUzPMk8Po0p4nj0y5Jey6k=",
-          "range": "bytes=0-693"
+          "checksum": "sha1-s2PREb2MoRzoanMO9+Sq2OzeTl8=",
+          "range": "bytes=0-702"
         },
-        "url": "https://packages.wolfi.dev/os/x86_64/bind-tools-9.18.26-r0.apk",
-        "version": "9.18.26-r0"
+        "url": "https://packages.wolfi.dev/os/x86_64/bind-tools-9.18.27-r0.apk",
+        "version": "9.18.27-r0"
       },
       {
         "architecture": "x86_64",

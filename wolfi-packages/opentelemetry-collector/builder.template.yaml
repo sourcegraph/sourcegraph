@@ -13,8 +13,6 @@ exporters:
   # Contrib exporters - https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/googlecloudexporter v$OTEL_COLLECTOR_VERSION"
   - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter v$OTEL_COLLECTOR_VERSION"
-  # jaegerexporter was removed after v0.85.0 - we try to include it for now by pinning the version.
-  - gomod: "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/jaegerexporter v0.85.0"
 
 receivers:
   # OpenTelemetry receivers - https://go.opentelemetry.io/collector/receiver

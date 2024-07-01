@@ -17,7 +17,10 @@ pkg_tar(
 oci_image(
     name = "image",
     base = ":base_image",
-    cmd = ["--sampling.strategies-file=/etc/jaeger/sampling_strategies.json"],
+    cmd = [
+        "--sampling.strategies-file=/etc/jaeger/sampling_strategies.json",
+        "--collector.otlp.enabled",
+    ],
     entrypoint = ["/usr/local/bin/jaeger-all-in-one"],
     env = {
         # Used in order to reverse proxy the Jaeger UI

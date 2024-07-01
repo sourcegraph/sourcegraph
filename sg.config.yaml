@@ -824,12 +824,18 @@ commands:
   jaeger:
     cmd: |
       echo "Jaeger will be available on http://localhost:16686/-/debug/jaeger/search"
-      .bin/jaeger-all-in-one-${JAEGER_VERSION} --log-level ${JAEGER_LOG_LEVEL}
+      .bin/jaeger-all-in-one-${JAEGER_VERSION} --log-level ${JAEGER_LOG_LEVEL} \
+        --collector.otlp.enabled \
+        --collector.otlp.grpc.host-port=:${JAEGER_OTLP_GRPC_PORT} \
+        --collector.otlp.http.host-port=:${JAEGER_OTLP_HTTP_PORT}
     install_func: installJaeger
     env:
       JAEGER_VERSION: 1.45.0
       JAEGER_DISK: $HOME/.sourcegraph-dev/data/jaeger
       JAEGER_LOG_LEVEL: error
+      COLLECTOR_OTLP_ENABLED: 'true'
+      JAEGER_OTLP_GRPC_PORT: 4320
+      JAEGER_OTLP_HTTP_PORT: 4321
       QUERY_BASE_PATH: /-/debug/jaeger
 
   grafana:
@@ -1009,6 +1015,7 @@ commands:
         -p 4317:4317 -p 4318:4318 -p 55679:55679 -p 55670:55670 \
         -p 8888:8888 \
         -e JAEGER_HOST=$JAEGER_HOST \
+        -e JAEGER_OTLP_GRPC_PORT=4320 \
         -e HONEYCOMB_API_KEY=$HONEYCOMB_API_KEY \
         -e HONEYCOMB_DATASET=$HONEYCOMB_DATASET \
         $IMAGE --config "/etc/otel-collector/$CONFIGURATION_FILE"
@@ -1264,8 +1271,10 @@ dockerCommands:
           net: host
         env:
           JAEGER_HOST: localhost
+          JAEGER_OTLP_GRPC_PORT: 4320
     env:
       JAEGER_HOST: host.docker.internal
+      JAEGER_OTLP_GRPC_PORT: 4320
       # Overwrite the following in sg.config.overwrite.yaml, based on which collector
       # config you are using - see docker-images/opentelemetry-collector for more details.
       CONFIGURATION_FILE: 'configs/jaeger.yaml'

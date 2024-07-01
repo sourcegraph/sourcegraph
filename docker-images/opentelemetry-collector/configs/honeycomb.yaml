@@ -17,11 +17,11 @@ exporters:
   otlp:
     endpoint: "api.honeycomb.io:443"
     headers:
-      "x-honeycomb-team": "$HONEYCOMB_API_KEY"
+      "x-honeycomb-team": "${HONEYCOMB_API_KEY}"
   otlp/webapp:
     endpoint: "api.honeycomb.io:443"
     headers:
-      "x-honeycomb-team": "$HONEYCOMB_API_KEY_WEBAPP"
+      "x-honeycomb-team": "${HONEYCOMB_API_KEY_WEBAPP}"
 
 processors:
   filter/webapp: # You can include certain traces

@@ -47,7 +47,7 @@ func TestNewExhaustive(t *testing.T) {
       (useFullDeadline . true)
       (patternInfo . TextPatternInfo{"content",case,nopath,filematchlimit:1000000,lang:cpp,F:"(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cppm$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)|(?:\\.txx$)"})
       (numRepos . 0)
-      (pathRegexps . [(?i)(?:\.cpp$)|(?:\.c\+\+$)|(?:\.cc$)|(?:\.cp$)|(?:\.cppm$)|(?:\.cxx$)|(?:\.h$)|(?:\.h\+\+$)|(?:\.hh$)|(?:\.hpp$)|(?:\.hxx$)|(?:\.inc$)|(?:\.inl$)|(?:\.ino$)|(?:\.ipp$)|(?:\.ixx$)|(?:\.re$)|(?:\.tcc$)|(?:\.tpp$)|(?:\.txx$)])
+      (pathRegexps . ["(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cppm$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)|(?:\\.txx$)"])
       (indexed . false))))
 `),
 			WantJob: autogold.Expect(`
@@ -55,7 +55,7 @@ func TestNewExhaustive(t *testing.T) {
   (useFullDeadline . true)
   (patternInfo . TextPatternInfo{"content",case,nopath,filematchlimit:1000000,lang:cpp,F:"(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cppm$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)|(?:\\.txx$)"})
   (numRepos . 1)
-  (pathRegexps . [(?i)(?:\.cpp$)|(?:\.c\+\+$)|(?:\.cc$)|(?:\.cp$)|(?:\.cppm$)|(?:\.cxx$)|(?:\.h$)|(?:\.h\+\+$)|(?:\.hh$)|(?:\.hpp$)|(?:\.hxx$)|(?:\.inc$)|(?:\.inl$)|(?:\.ino$)|(?:\.ipp$)|(?:\.ixx$)|(?:\.re$)|(?:\.tcc$)|(?:\.tpp$)|(?:\.txx$)])
+  (pathRegexps . ["(?i)(?:\\.cpp$)|(?:\\.c\\+\\+$)|(?:\\.cc$)|(?:\\.cp$)|(?:\\.cppm$)|(?:\\.cxx$)|(?:\\.h$)|(?:\\.h\\+\\+$)|(?:\\.hh$)|(?:\\.hpp$)|(?:\\.hxx$)|(?:\\.inc$)|(?:\\.inl$)|(?:\\.ino$)|(?:\\.ipp$)|(?:\\.ixx$)|(?:\\.re$)|(?:\\.tcc$)|(?:\\.tpp$)|(?:\\.txx$)"])
   (indexed . false))
 `),
 		},
@@ -288,7 +288,7 @@ func TestNewExhaustive(t *testing.T) {
       (useFullDeadline . true)
       (patternInfo . TextPatternInfo{//,nocontent,filematchlimit:1000000,f:"search.go"})
       (numRepos . 0)
-      (pathRegexps . [(?i)search.go])
+      (pathRegexps . ["(?i)search.go"])
       (indexed . false))))
 `),
 			WantJob: autogold.Expect(`
@@ -296,7 +296,7 @@ func TestNewExhaustive(t *testing.T) {
   (useFullDeadline . true)
   (patternInfo . TextPatternInfo{//,nocontent,filematchlimit:1000000,f:"search.go"})
   (numRepos . 1)
-  (pathRegexps . [(?i)search.go])
+  (pathRegexps . ["(?i)search.go"])
   (indexed . false))
 `),
 		},

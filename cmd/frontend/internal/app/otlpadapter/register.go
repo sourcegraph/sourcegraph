@@ -61,14 +61,14 @@ func Register(ctx context.Context, logger log.Logger, protocol otlpenv.Protocol,
 		{
 			PathPrefix: "/v1/traces",
 			CreateAdapter: func() (*signalAdapter, error) {
-				exporter, err := exporterFactory.CreateTracesExporter(ctx, exporter.CreateSettings{
+				exporter, err := exporterFactory.CreateTracesExporter(ctx, exporter.Settings{
 					ID:                component.NewIDWithName(component.DataTypeTraces, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalExporterConfig)
 				if err != nil {
 					return nil, errors.Wrap(err, "CreateTracesExporter")
 				}
-				receiver, err := receiverFactory.CreateTracesReceiver(ctx, receiver.CreateSettings{
+				receiver, err := receiverFactory.CreateTracesReceiver(ctx, receiver.Settings{
 					ID:                component.NewIDWithName(component.DataTypeTraces, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalReceiverConfig, exporter)
@@ -82,14 +82,14 @@ func Register(ctx context.Context, logger log.Logger, protocol otlpenv.Protocol,
 		{
 			PathPrefix: "/v1/metrics",
 			CreateAdapter: func() (*signalAdapter, error) {
-				exporter, err := exporterFactory.CreateMetricsExporter(ctx, exporter.CreateSettings{
+				exporter, err := exporterFactory.CreateMetricsExporter(ctx, exporter.Settings{
 					ID:                component.NewIDWithName(component.DataTypeMetrics, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalExporterConfig)
 				if err != nil {
 					return nil, errors.Wrap(err, "CreateMetricsExporter")
 				}
-				receiver, err := receiverFactory.CreateMetricsReceiver(ctx, receiver.CreateSettings{
+				receiver, err := receiverFactory.CreateMetricsReceiver(ctx, receiver.Settings{
 					ID:                component.NewIDWithName(component.DataTypeMetrics, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalReceiverConfig, exporter)
@@ -103,14 +103,14 @@ func Register(ctx context.Context, logger log.Logger, protocol otlpenv.Protocol,
 		{
 			PathPrefix: "/v1/logs",
 			CreateAdapter: func() (*signalAdapter, error) {
-				exporter, err := exporterFactory.CreateLogsExporter(ctx, exporter.CreateSettings{
+				exporter, err := exporterFactory.CreateLogsExporter(ctx, exporter.Settings{
 					ID:                component.NewIDWithName(component.DataTypeLogs, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalExporterConfig)
 				if err != nil {
 					return nil, errors.Wrap(err, "CreateLogsExporter")
 				}
-				receiver, err := receiverFactory.CreateLogsReceiver(ctx, receiver.CreateSettings{
+				receiver, err := receiverFactory.CreateLogsReceiver(ctx, receiver.Settings{
 					ID:                component.NewIDWithName(component.DataTypeLogs, componentName),
 					TelemetrySettings: telemetrySettings,
 				}, signalReceiverConfig, exporter)

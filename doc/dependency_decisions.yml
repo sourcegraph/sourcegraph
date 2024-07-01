@@ -615,6 +615,13 @@
     :why:
     :versions: []
     :when: 2024-06-05 15:32:44.440111000 Z
+- - :license
+  - github.com/hashicorp/go-version
+  - MPL-2.0
+  - :who:
+    :why:
+    :versions: []
+    :when: 2024-06-07 22:22:48.626799000 Z
 - - :permit
   - OFL-1.1
   - :who:
