@@ -124,3 +124,8 @@ var searchJobSchema string
 //
 //go:embed telemetry.graphql
 var telemetrySchema string
+
+// workflowsSchema is the workflows raw GraphQL schema.
+//
+//go:embed workflows.graphql
+var workflowsSchema string

@@ -1,0 +1,9 @@
+/* stylelint-disable-next-line selector-max-compound-selectors */
+.namespace-selector > :global(.custom-select) {
+    width: unset;
+}
+
+.namespace-slash {
+    font-size: 1.5rem;
+    font-weight: normal;
+}

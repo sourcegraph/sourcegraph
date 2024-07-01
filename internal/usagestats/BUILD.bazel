@@ -32,6 +32,7 @@ go_library(
         "search_onboarding.go",
         "usage_stats.go",
         "util.go",
+        "workflows.go",
     ],
     embedsrcs = ["code_monitoring_usage_stats.sql"],
     importpath = "github.com/sourcegraph/sourcegraph/internal/usagestats",

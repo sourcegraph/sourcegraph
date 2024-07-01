@@ -176,6 +176,16 @@ func getAndMarshalSavedSearchesJSON(ctx context.Context, db database.DB) (_ json
 	return json.Marshal(savedSearches)
 }
 
+func getAndMarshalWorkflowsJSON(ctx context.Context, db database.DB) (_ json.RawMessage, err error) {
+	defer recordOperation("getAndMarshalWorkflowsJSON")(&err)
+
+	workflows, err := usagestats.GetWorkflows(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(workflows)
+}
+
 func getAndMarshalHomepagePanelsJSON(ctx context.Context, db database.DB) (_ json.RawMessage, err error) {
 	defer recordOperation("getAndMarshalHomepagePanelsJSON")(&err)
 
@@ -603,6 +613,10 @@ func updateBody(ctx context.Context, logger log.Logger, db database.DB) (io.Read
 	r.SavedSearches, err = getAndMarshalSavedSearchesJSON(ctx, db)
 	if err != nil {
 		logFunc("getAndMarshalSavedSearchesJSON failed", log.Error(err))
+	}
+	r.Workflows, err = getAndMarshalWorkflowsJSON(ctx, db)
+	if err != nil {
+		logFunc("getAndMarshalWorkflowsJSON failed", log.Error(err))
 	}
 
 	r.HomepagePanels, err = getAndMarshalHomepagePanelsJSON(ctx, db)

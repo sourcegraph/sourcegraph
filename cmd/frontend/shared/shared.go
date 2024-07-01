@@ -40,6 +40,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/search"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/searchcontexts"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/telemetry"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/workflows"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel"
 	codeintelshared "github.com/sourcegraph/sourcegraph/internal/codeintel/shared"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
@@ -78,6 +79,7 @@ var initFunctions = map[string]EnterpriseInitializer{
 	"search":         search.Init,
 	"telemetry":      telemetry.Init,
 	"codycontext":    codycontext.Init,
+	"workflows":      workflows.Init,
 }
 
 func EnterpriseSetupHook(db database.DB, conf conftypes.UnifiedWatchable) enterprise.Services {

@@ -207,6 +207,7 @@ type pingRequest struct {
 	AutomationUsage               json.RawMessage `json:"automationUsage,omitempty"`
 	GrowthStatistics              json.RawMessage `json:"growthStatistics,omitempty"`
 	SavedSearches                 json.RawMessage `json:"savedSearches,omitempty"`
+	Workflows                     json.RawMessage `json:"workflows,omitempty"`
 	HomepagePanels                json.RawMessage `json:"homepagePanels,omitempty"`
 	SearchOnboarding              json.RawMessage `json:"searchOnboarding,omitempty"`
 	Repositories                  json.RawMessage `json:"repositories,omitempty"`

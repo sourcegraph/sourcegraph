@@ -1,0 +1,216 @@
+extend type Mutation {
+    """
+    Creates a workflow.
+    """
+    createWorkflow(input: WorkflowInput!): Workflow!
+
+    """
+    Updates a workflow.
+    """
+    updateWorkflow(id: ID!, input: WorkflowUpdateInput!): Workflow!
+
+    """
+    Deletes a workflow.
+    """
+    deleteWorkflow(id: ID!): EmptyResponse
+}
+
+extend type Query {
+    """
+    List of workflows.
+    """
+    workflows(
+        """
+        Search workflows by name, description, or prompt template text.
+        """
+        query: String
+
+        """
+        Filter by workflow owner (a namespace, either a user or organization).
+        """
+        owner: ID
+
+        """
+        Filter to only workflows owned by the viewer or one of viewer's organizations. If null or
+        false, no such filtering is performed.
+        """
+        viewerIsAffiliated: Boolean
+
+        """
+        Whether to include draft workflows.
+        """
+        includeDrafts: Boolean = true
+
+        """
+        The limit argument for forward pagination.
+        """
+        first: Int
+
+        """
+        The limit argument for backward pagination.
+        """
+        last: Int
+
+        """
+        The cursor argument for forward pagination.
+        """
+        after: String
+
+        """
+        The cursor argument for backward pagination.
+        """
+        before: String
+    ): WorkflowsConnection!
+}
+
+"""
+The input that describes a workflow.
+"""
+input WorkflowInput {
+    """
+    The owner of the workflow, either a user or organization.
+    """
+    owner: ID!
+
+    """
+    The name of the workflow.
+    """
+    name: String!
+
+    """
+    The description of the workflow.
+    """
+    description: String!
+
+    """
+    The prompt template text.
+    """
+    templateText: String!
+
+    """
+    Whether the workflow is a draft.
+    """
+    draft: Boolean!
+}
+
+"""
+The input that describes a workflow.
+"""
+input WorkflowUpdateInput {
+    """
+    The name of the workflow.
+    """
+    name: String!
+
+    """
+    The description of the workflow.
+    """
+    description: String!
+
+    """
+    The prompt template text.
+    """
+    templateText: String!
+
+    """
+    Whether the workflow is a draft.
+    """
+    draft: Boolean!
+}
+
+"""
+A paginated connection for workflows.
+"""
+type WorkflowsConnection implements Connection {
+    """
+    A list of workflows.
+    """
+    nodes: [Workflow!]!
+
+    """
+    The total number of workflows in the connection.
+    """
+    totalCount: Int!
+
+    """
+    Pagination information.
+    """
+    pageInfo: ConnectionPageInfo!
+}
+
+"""
+A workflow.
+"""
+type Workflow implements Node {
+    """
+    The unique ID of this workflow.
+    """
+    id: ID!
+
+    """
+    The name of the workflow, which is unique among all of the owner's workflows.
+    """
+    name: String!
+
+    """
+    The description of the workflow.
+    """
+    description: String!
+
+    """
+    The prompt template.
+    """
+    template: WorkflowPromptTemplate!
+
+    """
+    Whether the workflow is a draft.
+    """
+    draft: Boolean!
+
+    """
+    The owner of the workflow, either a user or organization.
+    """
+    owner: Namespace!
+
+    """
+    A string of the form `{owner}/{name}`, which is unique among all workflows site-wide.
+    """
+    nameWithOwner: String!
+
+    """
+    The user who created the workflow.
+    """
+    createdBy: User
+
+    """
+    The date of the workflow's creation.
+    """
+    createdAt: DateTime!
+
+    """
+    The user who last updated the workflow.
+    """
+    updatedBy: User
+
+    """
+    The date of the workflow's last update.
+    """
+    updatedAt: DateTime!
+
+    """
+    Whether the viewer can edit and delete this workflow.
+    """
+    viewerCanAdminister: Boolean!
+}
+
+"""
+A prompt template used in a workflow.
+"""
+type WorkflowPromptTemplate {
+    """
+    The text of the template. In the future, templates may contain placeholders and other rich
+    formatting. The text field will always be a raw string and may contain human-readable
+    punctuation to indicate these rich elements.
+    """
+    text: String!
+}

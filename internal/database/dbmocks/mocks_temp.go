@@ -15353,6 +15353,9 @@ type MockDB struct {
 	// WithTransactFunc is an instance of a mock function object controlling
 	// the behavior of the method WithTransact.
 	WithTransactFunc *DBWithTransactFunc
+	// WorkflowsFunc is an instance of a mock function object controlling
+	// the behavior of the method Workflows.
+	WorkflowsFunc *DBWorkflowsFunc
 	// ZoektReposFunc is an instance of a mock function object controlling
 	// the behavior of the method ZoektRepos.
 	ZoektReposFunc *DBZoektReposFunc
@@ -15679,6 +15682,11 @@ func NewMockDB() *MockDB {
 		},
 		WithTransactFunc: &DBWithTransactFunc{
 			defaultHook: func(context.Context, func(tx database.DB) error) (r0 error) {
+				return
+			},
+		},
+		WorkflowsFunc: &DBWorkflowsFunc{
+			defaultHook: func() (r0 database.WorkflowStore) {
 				return
 			},
 		},
@@ -16014,6 +16022,11 @@ func NewStrictMockDB() *MockDB {
 				panic("unexpected invocation of MockDB.WithTransact")
 			},
 		},
+		WorkflowsFunc: &DBWorkflowsFunc{
+			defaultHook: func() database.WorkflowStore {
+				panic("unexpected invocation of MockDB.Workflows")
+			},
+		},
 		ZoektReposFunc: &DBZoektReposFunc{
 			defaultHook: func() database.ZoektReposStore {
 				panic("unexpected invocation of MockDB.ZoektRepos")
@@ -16217,6 +16230,9 @@ func NewMockDBFrom(i database.DB) *MockDB {
 		},
 		WithTransactFunc: &DBWithTransactFunc{
 			defaultHook: i.WithTransact,
+		},
+		WorkflowsFunc: &DBWorkflowsFunc{
+			defaultHook: i.Workflows,
 		},
 		ZoektReposFunc: &DBZoektReposFunc{
 			defaultHook: i.ZoektRepos,
@@ -22606,6 +22622,104 @@ func (c DBWithTransactFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c DBWithTransactFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// DBWorkflowsFunc describes the behavior when the Workflows method of the
+// parent MockDB instance is invoked.
+type DBWorkflowsFunc struct {
+	defaultHook func() database.WorkflowStore
+	hooks       []func() database.WorkflowStore
+	history     []DBWorkflowsFuncCall
+	mutex       sync.Mutex
+}
+
+// Workflows delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockDB) Workflows() database.WorkflowStore {
+	r0 := m.WorkflowsFunc.nextHook()()
+	m.WorkflowsFunc.appendCall(DBWorkflowsFuncCall{r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the Workflows method of
+// the parent MockDB instance is invoked and the hook queue is empty.
+func (f *DBWorkflowsFunc) SetDefaultHook(hook func() database.WorkflowStore) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Workflows method of the parent MockDB instance invokes the hook at the
+// front of the queue and discards it. After the queue is empty, the default
+// hook function is invoked for any future action.
+func (f *DBWorkflowsFunc) PushHook(hook func() database.WorkflowStore) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *DBWorkflowsFunc) SetDefaultReturn(r0 database.WorkflowStore) {
+	f.SetDefaultHook(func() database.WorkflowStore {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *DBWorkflowsFunc) PushReturn(r0 database.WorkflowStore) {
+	f.PushHook(func() database.WorkflowStore {
+		return r0
+	})
+}
+
+func (f *DBWorkflowsFunc) nextHook() func() database.WorkflowStore {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *DBWorkflowsFunc) appendCall(r0 DBWorkflowsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of DBWorkflowsFuncCall objects describing the
+// invocations of this function.
+func (f *DBWorkflowsFunc) History() []DBWorkflowsFuncCall {
+	f.mutex.Lock()
+	history := make([]DBWorkflowsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// DBWorkflowsFuncCall is an object that describes an invocation of method
+// Workflows on an instance of MockDB.
+type DBWorkflowsFuncCall struct {
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 database.WorkflowStore
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c DBWorkflowsFuncCall) Args() []interface{} {
+	return []interface{}{}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c DBWorkflowsFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0}
 }
 
@@ -64826,6 +64940,9 @@ type MockSavedSearchStore struct {
 	// UpdateFunc is an instance of a mock function object controlling the
 	// behavior of the method Update.
 	UpdateFunc *SavedSearchStoreUpdateFunc
+	// UpdateOwnerFunc is an instance of a mock function object controlling
+	// the behavior of the method UpdateOwner.
+	UpdateOwnerFunc *SavedSearchStoreUpdateOwnerFunc
 	// WithFunc is an instance of a mock function object controlling the
 	// behavior of the method With.
 	WithFunc *SavedSearchStoreWithFunc
@@ -64871,6 +64988,11 @@ func NewMockSavedSearchStore() *MockSavedSearchStore {
 		},
 		UpdateFunc: &SavedSearchStoreUpdateFunc{
 			defaultHook: func(context.Context, *types.SavedSearch) (r0 *types.SavedSearch, r1 error) {
+				return
+			},
+		},
+		UpdateOwnerFunc: &SavedSearchStoreUpdateOwnerFunc{
+			defaultHook: func(context.Context, int32, types.Namespace) (r0 *types.SavedSearch, r1 error) {
 				return
 			},
 		},
@@ -64926,6 +65048,11 @@ func NewStrictMockSavedSearchStore() *MockSavedSearchStore {
 				panic("unexpected invocation of MockSavedSearchStore.Update")
 			},
 		},
+		UpdateOwnerFunc: &SavedSearchStoreUpdateOwnerFunc{
+			defaultHook: func(context.Context, int32, types.Namespace) (*types.SavedSearch, error) {
+				panic("unexpected invocation of MockSavedSearchStore.UpdateOwner")
+			},
+		},
 		WithFunc: &SavedSearchStoreWithFunc{
 			defaultHook: func(basestore.ShareableStore) database.SavedSearchStore {
 				panic("unexpected invocation of MockSavedSearchStore.With")
@@ -64964,6 +65091,9 @@ func NewMockSavedSearchStoreFrom(i database.SavedSearchStore) *MockSavedSearchSt
 		},
 		UpdateFunc: &SavedSearchStoreUpdateFunc{
 			defaultHook: i.Update,
+		},
+		UpdateOwnerFunc: &SavedSearchStoreUpdateOwnerFunc{
+			defaultHook: i.UpdateOwner,
 		},
 		WithFunc: &SavedSearchStoreWithFunc{
 			defaultHook: i.With,
@@ -65718,6 +65848,118 @@ func (c SavedSearchStoreUpdateFuncCall) Args() []interface{} {
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c SavedSearchStoreUpdateFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// SavedSearchStoreUpdateOwnerFunc describes the behavior when the
+// UpdateOwner method of the parent MockSavedSearchStore instance is
+// invoked.
+type SavedSearchStoreUpdateOwnerFunc struct {
+	defaultHook func(context.Context, int32, types.Namespace) (*types.SavedSearch, error)
+	hooks       []func(context.Context, int32, types.Namespace) (*types.SavedSearch, error)
+	history     []SavedSearchStoreUpdateOwnerFuncCall
+	mutex       sync.Mutex
+}
+
+// UpdateOwner delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockSavedSearchStore) UpdateOwner(v0 context.Context, v1 int32, v2 types.Namespace) (*types.SavedSearch, error) {
+	r0, r1 := m.UpdateOwnerFunc.nextHook()(v0, v1, v2)
+	m.UpdateOwnerFunc.appendCall(SavedSearchStoreUpdateOwnerFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the UpdateOwner method
+// of the parent MockSavedSearchStore instance is invoked and the hook queue
+// is empty.
+func (f *SavedSearchStoreUpdateOwnerFunc) SetDefaultHook(hook func(context.Context, int32, types.Namespace) (*types.SavedSearch, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// UpdateOwner method of the parent MockSavedSearchStore instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *SavedSearchStoreUpdateOwnerFunc) PushHook(hook func(context.Context, int32, types.Namespace) (*types.SavedSearch, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *SavedSearchStoreUpdateOwnerFunc) SetDefaultReturn(r0 *types.SavedSearch, r1 error) {
+	f.SetDefaultHook(func(context.Context, int32, types.Namespace) (*types.SavedSearch, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *SavedSearchStoreUpdateOwnerFunc) PushReturn(r0 *types.SavedSearch, r1 error) {
+	f.PushHook(func(context.Context, int32, types.Namespace) (*types.SavedSearch, error) {
+		return r0, r1
+	})
+}
+
+func (f *SavedSearchStoreUpdateOwnerFunc) nextHook() func(context.Context, int32, types.Namespace) (*types.SavedSearch, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *SavedSearchStoreUpdateOwnerFunc) appendCall(r0 SavedSearchStoreUpdateOwnerFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of SavedSearchStoreUpdateOwnerFuncCall objects
+// describing the invocations of this function.
+func (f *SavedSearchStoreUpdateOwnerFunc) History() []SavedSearchStoreUpdateOwnerFuncCall {
+	f.mutex.Lock()
+	history := make([]SavedSearchStoreUpdateOwnerFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// SavedSearchStoreUpdateOwnerFuncCall is an object that describes an
+// invocation of method UpdateOwner on an instance of MockSavedSearchStore.
+type SavedSearchStoreUpdateOwnerFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 int32
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 types.Namespace
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *types.SavedSearch
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c SavedSearchStoreUpdateOwnerFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c SavedSearchStoreUpdateOwnerFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
@@ -89864,6 +90106,1131 @@ func (c WebhookStoreUpdateFuncCall) Args() []interface{} {
 // invocation.
 func (c WebhookStoreUpdateFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
+}
+
+// MockWorkflowStore is a mock implementation of the WorkflowStore interface
+// (from the package github.com/sourcegraph/sourcegraph/internal/database)
+// used for unit testing.
+type MockWorkflowStore struct {
+	// CountFunc is an instance of a mock function object controlling the
+	// behavior of the method Count.
+	CountFunc *WorkflowStoreCountFunc
+	// CreateFunc is an instance of a mock function object controlling the
+	// behavior of the method Create.
+	CreateFunc *WorkflowStoreCreateFunc
+	// DeleteFunc is an instance of a mock function object controlling the
+	// behavior of the method Delete.
+	DeleteFunc *WorkflowStoreDeleteFunc
+	// GetByIDFunc is an instance of a mock function object controlling the
+	// behavior of the method GetByID.
+	GetByIDFunc *WorkflowStoreGetByIDFunc
+	// HandleFunc is an instance of a mock function object controlling the
+	// behavior of the method Handle.
+	HandleFunc *WorkflowStoreHandleFunc
+	// ListFunc is an instance of a mock function object controlling the
+	// behavior of the method List.
+	ListFunc *WorkflowStoreListFunc
+	// UpdateFunc is an instance of a mock function object controlling the
+	// behavior of the method Update.
+	UpdateFunc *WorkflowStoreUpdateFunc
+	// WithFunc is an instance of a mock function object controlling the
+	// behavior of the method With.
+	WithFunc *WorkflowStoreWithFunc
+	// WithTransactFunc is an instance of a mock function object controlling
+	// the behavior of the method WithTransact.
+	WithTransactFunc *WorkflowStoreWithTransactFunc
+}
+
+// NewMockWorkflowStore creates a new mock of the WorkflowStore interface.
+// All methods return zero values for all results, unless overwritten.
+func NewMockWorkflowStore() *MockWorkflowStore {
+	return &MockWorkflowStore{
+		CountFunc: &WorkflowStoreCountFunc{
+			defaultHook: func(context.Context, database.WorkflowListArgs) (r0 int, r1 error) {
+				return
+			},
+		},
+		CreateFunc: &WorkflowStoreCreateFunc{
+			defaultHook: func(context.Context, *types.Workflow, int32) (r0 *types.Workflow, r1 error) {
+				return
+			},
+		},
+		DeleteFunc: &WorkflowStoreDeleteFunc{
+			defaultHook: func(context.Context, int32) (r0 error) {
+				return
+			},
+		},
+		GetByIDFunc: &WorkflowStoreGetByIDFunc{
+			defaultHook: func(context.Context, int32) (r0 *types.Workflow, r1 error) {
+				return
+			},
+		},
+		HandleFunc: &WorkflowStoreHandleFunc{
+			defaultHook: func() (r0 basestore.TransactableHandle) {
+				return
+			},
+		},
+		ListFunc: &WorkflowStoreListFunc{
+			defaultHook: func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) (r0 []*types.Workflow, r1 error) {
+				return
+			},
+		},
+		UpdateFunc: &WorkflowStoreUpdateFunc{
+			defaultHook: func(context.Context, *types.Workflow, int32) (r0 *types.Workflow, r1 error) {
+				return
+			},
+		},
+		WithFunc: &WorkflowStoreWithFunc{
+			defaultHook: func(basestore.ShareableStore) (r0 database.WorkflowStore) {
+				return
+			},
+		},
+		WithTransactFunc: &WorkflowStoreWithTransactFunc{
+			defaultHook: func(context.Context, func(database.WorkflowStore) error) (r0 error) {
+				return
+			},
+		},
+	}
+}
+
+// NewStrictMockWorkflowStore creates a new mock of the WorkflowStore
+// interface. All methods panic on invocation, unless overwritten.
+func NewStrictMockWorkflowStore() *MockWorkflowStore {
+	return &MockWorkflowStore{
+		CountFunc: &WorkflowStoreCountFunc{
+			defaultHook: func(context.Context, database.WorkflowListArgs) (int, error) {
+				panic("unexpected invocation of MockWorkflowStore.Count")
+			},
+		},
+		CreateFunc: &WorkflowStoreCreateFunc{
+			defaultHook: func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+				panic("unexpected invocation of MockWorkflowStore.Create")
+			},
+		},
+		DeleteFunc: &WorkflowStoreDeleteFunc{
+			defaultHook: func(context.Context, int32) error {
+				panic("unexpected invocation of MockWorkflowStore.Delete")
+			},
+		},
+		GetByIDFunc: &WorkflowStoreGetByIDFunc{
+			defaultHook: func(context.Context, int32) (*types.Workflow, error) {
+				panic("unexpected invocation of MockWorkflowStore.GetByID")
+			},
+		},
+		HandleFunc: &WorkflowStoreHandleFunc{
+			defaultHook: func() basestore.TransactableHandle {
+				panic("unexpected invocation of MockWorkflowStore.Handle")
+			},
+		},
+		ListFunc: &WorkflowStoreListFunc{
+			defaultHook: func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error) {
+				panic("unexpected invocation of MockWorkflowStore.List")
+			},
+		},
+		UpdateFunc: &WorkflowStoreUpdateFunc{
+			defaultHook: func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+				panic("unexpected invocation of MockWorkflowStore.Update")
+			},
+		},
+		WithFunc: &WorkflowStoreWithFunc{
+			defaultHook: func(basestore.ShareableStore) database.WorkflowStore {
+				panic("unexpected invocation of MockWorkflowStore.With")
+			},
+		},
+		WithTransactFunc: &WorkflowStoreWithTransactFunc{
+			defaultHook: func(context.Context, func(database.WorkflowStore) error) error {
+				panic("unexpected invocation of MockWorkflowStore.WithTransact")
+			},
+		},
+	}
+}
+
+// NewMockWorkflowStoreFrom creates a new mock of the MockWorkflowStore
+// interface. All methods delegate to the given implementation, unless
+// overwritten.
+func NewMockWorkflowStoreFrom(i database.WorkflowStore) *MockWorkflowStore {
+	return &MockWorkflowStore{
+		CountFunc: &WorkflowStoreCountFunc{
+			defaultHook: i.Count,
+		},
+		CreateFunc: &WorkflowStoreCreateFunc{
+			defaultHook: i.Create,
+		},
+		DeleteFunc: &WorkflowStoreDeleteFunc{
+			defaultHook: i.Delete,
+		},
+		GetByIDFunc: &WorkflowStoreGetByIDFunc{
+			defaultHook: i.GetByID,
+		},
+		HandleFunc: &WorkflowStoreHandleFunc{
+			defaultHook: i.Handle,
+		},
+		ListFunc: &WorkflowStoreListFunc{
+			defaultHook: i.List,
+		},
+		UpdateFunc: &WorkflowStoreUpdateFunc{
+			defaultHook: i.Update,
+		},
+		WithFunc: &WorkflowStoreWithFunc{
+			defaultHook: i.With,
+		},
+		WithTransactFunc: &WorkflowStoreWithTransactFunc{
+			defaultHook: i.WithTransact,
+		},
+	}
+}
+
+// WorkflowStoreCountFunc describes the behavior when the Count method of
+// the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreCountFunc struct {
+	defaultHook func(context.Context, database.WorkflowListArgs) (int, error)
+	hooks       []func(context.Context, database.WorkflowListArgs) (int, error)
+	history     []WorkflowStoreCountFuncCall
+	mutex       sync.Mutex
+}
+
+// Count delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) Count(v0 context.Context, v1 database.WorkflowListArgs) (int, error) {
+	r0, r1 := m.CountFunc.nextHook()(v0, v1)
+	m.CountFunc.appendCall(WorkflowStoreCountFuncCall{v0, v1, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the Count method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreCountFunc) SetDefaultHook(hook func(context.Context, database.WorkflowListArgs) (int, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Count method of the parent MockWorkflowStore instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreCountFunc) PushHook(hook func(context.Context, database.WorkflowListArgs) (int, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreCountFunc) SetDefaultReturn(r0 int, r1 error) {
+	f.SetDefaultHook(func(context.Context, database.WorkflowListArgs) (int, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreCountFunc) PushReturn(r0 int, r1 error) {
+	f.PushHook(func(context.Context, database.WorkflowListArgs) (int, error) {
+		return r0, r1
+	})
+}
+
+func (f *WorkflowStoreCountFunc) nextHook() func(context.Context, database.WorkflowListArgs) (int, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreCountFunc) appendCall(r0 WorkflowStoreCountFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreCountFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreCountFunc) History() []WorkflowStoreCountFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreCountFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreCountFuncCall is an object that describes an invocation of
+// method Count on an instance of MockWorkflowStore.
+type WorkflowStoreCountFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 database.WorkflowListArgs
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 int
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreCountFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreCountFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// WorkflowStoreCreateFunc describes the behavior when the Create method of
+// the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreCreateFunc struct {
+	defaultHook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)
+	hooks       []func(context.Context, *types.Workflow, int32) (*types.Workflow, error)
+	history     []WorkflowStoreCreateFuncCall
+	mutex       sync.Mutex
+}
+
+// Create delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) Create(v0 context.Context, v1 *types.Workflow, v2 int32) (*types.Workflow, error) {
+	r0, r1 := m.CreateFunc.nextHook()(v0, v1, v2)
+	m.CreateFunc.appendCall(WorkflowStoreCreateFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the Create method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreCreateFunc) SetDefaultHook(hook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Create method of the parent MockWorkflowStore instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreCreateFunc) PushHook(hook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreCreateFunc) SetDefaultReturn(r0 *types.Workflow, r1 error) {
+	f.SetDefaultHook(func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreCreateFunc) PushReturn(r0 *types.Workflow, r1 error) {
+	f.PushHook(func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+func (f *WorkflowStoreCreateFunc) nextHook() func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreCreateFunc) appendCall(r0 WorkflowStoreCreateFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreCreateFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreCreateFunc) History() []WorkflowStoreCreateFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreCreateFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreCreateFuncCall is an object that describes an invocation of
+// method Create on an instance of MockWorkflowStore.
+type WorkflowStoreCreateFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 *types.Workflow
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 int32
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *types.Workflow
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreCreateFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreCreateFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// WorkflowStoreDeleteFunc describes the behavior when the Delete method of
+// the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreDeleteFunc struct {
+	defaultHook func(context.Context, int32) error
+	hooks       []func(context.Context, int32) error
+	history     []WorkflowStoreDeleteFuncCall
+	mutex       sync.Mutex
+}
+
+// Delete delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) Delete(v0 context.Context, v1 int32) error {
+	r0 := m.DeleteFunc.nextHook()(v0, v1)
+	m.DeleteFunc.appendCall(WorkflowStoreDeleteFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the Delete method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreDeleteFunc) SetDefaultHook(hook func(context.Context, int32) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Delete method of the parent MockWorkflowStore instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreDeleteFunc) PushHook(hook func(context.Context, int32) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreDeleteFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, int32) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreDeleteFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, int32) error {
+		return r0
+	})
+}
+
+func (f *WorkflowStoreDeleteFunc) nextHook() func(context.Context, int32) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreDeleteFunc) appendCall(r0 WorkflowStoreDeleteFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreDeleteFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreDeleteFunc) History() []WorkflowStoreDeleteFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreDeleteFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreDeleteFuncCall is an object that describes an invocation of
+// method Delete on an instance of MockWorkflowStore.
+type WorkflowStoreDeleteFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 int32
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreDeleteFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreDeleteFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// WorkflowStoreGetByIDFunc describes the behavior when the GetByID method
+// of the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreGetByIDFunc struct {
+	defaultHook func(context.Context, int32) (*types.Workflow, error)
+	hooks       []func(context.Context, int32) (*types.Workflow, error)
+	history     []WorkflowStoreGetByIDFuncCall
+	mutex       sync.Mutex
+}
+
+// GetByID delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) GetByID(v0 context.Context, v1 int32) (*types.Workflow, error) {
+	r0, r1 := m.GetByIDFunc.nextHook()(v0, v1)
+	m.GetByIDFunc.appendCall(WorkflowStoreGetByIDFuncCall{v0, v1, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the GetByID method of
+// the parent MockWorkflowStore instance is invoked and the hook queue is
+// empty.
+func (f *WorkflowStoreGetByIDFunc) SetDefaultHook(hook func(context.Context, int32) (*types.Workflow, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// GetByID method of the parent MockWorkflowStore instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreGetByIDFunc) PushHook(hook func(context.Context, int32) (*types.Workflow, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreGetByIDFunc) SetDefaultReturn(r0 *types.Workflow, r1 error) {
+	f.SetDefaultHook(func(context.Context, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreGetByIDFunc) PushReturn(r0 *types.Workflow, r1 error) {
+	f.PushHook(func(context.Context, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+func (f *WorkflowStoreGetByIDFunc) nextHook() func(context.Context, int32) (*types.Workflow, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreGetByIDFunc) appendCall(r0 WorkflowStoreGetByIDFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreGetByIDFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreGetByIDFunc) History() []WorkflowStoreGetByIDFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreGetByIDFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreGetByIDFuncCall is an object that describes an invocation of
+// method GetByID on an instance of MockWorkflowStore.
+type WorkflowStoreGetByIDFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 int32
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *types.Workflow
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreGetByIDFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreGetByIDFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// WorkflowStoreHandleFunc describes the behavior when the Handle method of
+// the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreHandleFunc struct {
+	defaultHook func() basestore.TransactableHandle
+	hooks       []func() basestore.TransactableHandle
+	history     []WorkflowStoreHandleFuncCall
+	mutex       sync.Mutex
+}
+
+// Handle delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) Handle() basestore.TransactableHandle {
+	r0 := m.HandleFunc.nextHook()()
+	m.HandleFunc.appendCall(WorkflowStoreHandleFuncCall{r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the Handle method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreHandleFunc) SetDefaultHook(hook func() basestore.TransactableHandle) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Handle method of the parent MockWorkflowStore instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreHandleFunc) PushHook(hook func() basestore.TransactableHandle) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreHandleFunc) SetDefaultReturn(r0 basestore.TransactableHandle) {
+	f.SetDefaultHook(func() basestore.TransactableHandle {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreHandleFunc) PushReturn(r0 basestore.TransactableHandle) {
+	f.PushHook(func() basestore.TransactableHandle {
+		return r0
+	})
+}
+
+func (f *WorkflowStoreHandleFunc) nextHook() func() basestore.TransactableHandle {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreHandleFunc) appendCall(r0 WorkflowStoreHandleFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreHandleFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreHandleFunc) History() []WorkflowStoreHandleFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreHandleFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreHandleFuncCall is an object that describes an invocation of
+// method Handle on an instance of MockWorkflowStore.
+type WorkflowStoreHandleFuncCall struct {
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 basestore.TransactableHandle
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreHandleFuncCall) Args() []interface{} {
+	return []interface{}{}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreHandleFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// WorkflowStoreListFunc describes the behavior when the List method of the
+// parent MockWorkflowStore instance is invoked.
+type WorkflowStoreListFunc struct {
+	defaultHook func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error)
+	hooks       []func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error)
+	history     []WorkflowStoreListFuncCall
+	mutex       sync.Mutex
+}
+
+// List delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) List(v0 context.Context, v1 database.WorkflowListArgs, v2 *database.PaginationArgs) ([]*types.Workflow, error) {
+	r0, r1 := m.ListFunc.nextHook()(v0, v1, v2)
+	m.ListFunc.appendCall(WorkflowStoreListFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the List method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreListFunc) SetDefaultHook(hook func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// List method of the parent MockWorkflowStore instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreListFunc) PushHook(hook func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreListFunc) SetDefaultReturn(r0 []*types.Workflow, r1 error) {
+	f.SetDefaultHook(func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreListFunc) PushReturn(r0 []*types.Workflow, r1 error) {
+	f.PushHook(func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+func (f *WorkflowStoreListFunc) nextHook() func(context.Context, database.WorkflowListArgs, *database.PaginationArgs) ([]*types.Workflow, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreListFunc) appendCall(r0 WorkflowStoreListFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreListFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreListFunc) History() []WorkflowStoreListFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreListFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreListFuncCall is an object that describes an invocation of
+// method List on an instance of MockWorkflowStore.
+type WorkflowStoreListFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 database.WorkflowListArgs
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 *database.PaginationArgs
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 []*types.Workflow
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreListFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreListFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// WorkflowStoreUpdateFunc describes the behavior when the Update method of
+// the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreUpdateFunc struct {
+	defaultHook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)
+	hooks       []func(context.Context, *types.Workflow, int32) (*types.Workflow, error)
+	history     []WorkflowStoreUpdateFuncCall
+	mutex       sync.Mutex
+}
+
+// Update delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) Update(v0 context.Context, v1 *types.Workflow, v2 int32) (*types.Workflow, error) {
+	r0, r1 := m.UpdateFunc.nextHook()(v0, v1, v2)
+	m.UpdateFunc.appendCall(WorkflowStoreUpdateFuncCall{v0, v1, v2, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the Update method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreUpdateFunc) SetDefaultHook(hook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Update method of the parent MockWorkflowStore instance invokes the hook
+// at the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreUpdateFunc) PushHook(hook func(context.Context, *types.Workflow, int32) (*types.Workflow, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreUpdateFunc) SetDefaultReturn(r0 *types.Workflow, r1 error) {
+	f.SetDefaultHook(func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreUpdateFunc) PushReturn(r0 *types.Workflow, r1 error) {
+	f.PushHook(func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+		return r0, r1
+	})
+}
+
+func (f *WorkflowStoreUpdateFunc) nextHook() func(context.Context, *types.Workflow, int32) (*types.Workflow, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreUpdateFunc) appendCall(r0 WorkflowStoreUpdateFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreUpdateFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreUpdateFunc) History() []WorkflowStoreUpdateFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreUpdateFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreUpdateFuncCall is an object that describes an invocation of
+// method Update on an instance of MockWorkflowStore.
+type WorkflowStoreUpdateFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 *types.Workflow
+	// Arg2 is the value of the 3rd argument passed to this method
+	// invocation.
+	Arg2 int32
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 *types.Workflow
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreUpdateFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreUpdateFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// WorkflowStoreWithFunc describes the behavior when the With method of the
+// parent MockWorkflowStore instance is invoked.
+type WorkflowStoreWithFunc struct {
+	defaultHook func(basestore.ShareableStore) database.WorkflowStore
+	hooks       []func(basestore.ShareableStore) database.WorkflowStore
+	history     []WorkflowStoreWithFuncCall
+	mutex       sync.Mutex
+}
+
+// With delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockWorkflowStore) With(v0 basestore.ShareableStore) database.WorkflowStore {
+	r0 := m.WithFunc.nextHook()(v0)
+	m.WithFunc.appendCall(WorkflowStoreWithFuncCall{v0, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the With method of the
+// parent MockWorkflowStore instance is invoked and the hook queue is empty.
+func (f *WorkflowStoreWithFunc) SetDefaultHook(hook func(basestore.ShareableStore) database.WorkflowStore) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// With method of the parent MockWorkflowStore instance invokes the hook at
+// the front of the queue and discards it. After the queue is empty, the
+// default hook function is invoked for any future action.
+func (f *WorkflowStoreWithFunc) PushHook(hook func(basestore.ShareableStore) database.WorkflowStore) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreWithFunc) SetDefaultReturn(r0 database.WorkflowStore) {
+	f.SetDefaultHook(func(basestore.ShareableStore) database.WorkflowStore {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreWithFunc) PushReturn(r0 database.WorkflowStore) {
+	f.PushHook(func(basestore.ShareableStore) database.WorkflowStore {
+		return r0
+	})
+}
+
+func (f *WorkflowStoreWithFunc) nextHook() func(basestore.ShareableStore) database.WorkflowStore {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreWithFunc) appendCall(r0 WorkflowStoreWithFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreWithFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreWithFunc) History() []WorkflowStoreWithFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreWithFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreWithFuncCall is an object that describes an invocation of
+// method With on an instance of MockWorkflowStore.
+type WorkflowStoreWithFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 basestore.ShareableStore
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 database.WorkflowStore
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreWithFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreWithFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
+}
+
+// WorkflowStoreWithTransactFunc describes the behavior when the
+// WithTransact method of the parent MockWorkflowStore instance is invoked.
+type WorkflowStoreWithTransactFunc struct {
+	defaultHook func(context.Context, func(database.WorkflowStore) error) error
+	hooks       []func(context.Context, func(database.WorkflowStore) error) error
+	history     []WorkflowStoreWithTransactFuncCall
+	mutex       sync.Mutex
+}
+
+// WithTransact delegates to the next hook function in the queue and stores
+// the parameter and result values of this invocation.
+func (m *MockWorkflowStore) WithTransact(v0 context.Context, v1 func(database.WorkflowStore) error) error {
+	r0 := m.WithTransactFunc.nextHook()(v0, v1)
+	m.WithTransactFunc.appendCall(WorkflowStoreWithTransactFuncCall{v0, v1, r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the WithTransact method
+// of the parent MockWorkflowStore instance is invoked and the hook queue is
+// empty.
+func (f *WorkflowStoreWithTransactFunc) SetDefaultHook(hook func(context.Context, func(database.WorkflowStore) error) error) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// WithTransact method of the parent MockWorkflowStore instance invokes the
+// hook at the front of the queue and discards it. After the queue is empty,
+// the default hook function is invoked for any future action.
+func (f *WorkflowStoreWithTransactFunc) PushHook(hook func(context.Context, func(database.WorkflowStore) error) error) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *WorkflowStoreWithTransactFunc) SetDefaultReturn(r0 error) {
+	f.SetDefaultHook(func(context.Context, func(database.WorkflowStore) error) error {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *WorkflowStoreWithTransactFunc) PushReturn(r0 error) {
+	f.PushHook(func(context.Context, func(database.WorkflowStore) error) error {
+		return r0
+	})
+}
+
+func (f *WorkflowStoreWithTransactFunc) nextHook() func(context.Context, func(database.WorkflowStore) error) error {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *WorkflowStoreWithTransactFunc) appendCall(r0 WorkflowStoreWithTransactFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of WorkflowStoreWithTransactFuncCall objects
+// describing the invocations of this function.
+func (f *WorkflowStoreWithTransactFunc) History() []WorkflowStoreWithTransactFuncCall {
+	f.mutex.Lock()
+	history := make([]WorkflowStoreWithTransactFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// WorkflowStoreWithTransactFuncCall is an object that describes an
+// invocation of method WithTransact on an instance of MockWorkflowStore.
+type WorkflowStoreWithTransactFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 context.Context
+	// Arg1 is the value of the 2nd argument passed to this method
+	// invocation.
+	Arg1 func(database.WorkflowStore) error
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c WorkflowStoreWithTransactFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0, c.Arg1}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c WorkflowStoreWithTransactFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
 }
 
 // MockZoektReposStore is a mock implementation of the ZoektReposStore

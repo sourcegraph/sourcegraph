@@ -17,6 +17,7 @@ go_library(
         "secret.go",
         "types.go",
         "webhook_logs.go",
+        "workflows.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/internal/types",
     visibility = ["//:__subpackages__"],

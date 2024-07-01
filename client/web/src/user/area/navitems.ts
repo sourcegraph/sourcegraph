@@ -3,6 +3,7 @@ import CogOutlineIcon from 'mdi-react/CogOutlineIcon'
 
 import { namespaceAreaHeaderNavItems } from '../../namespaces/navitems'
 import { SavedSearchIcon } from '../../savedSearches/SavedSearchIcon'
+import { WorkflowIcon } from '../../workflows/WorkflowIcon'
 
 import type { UserAreaHeaderNavItem } from './UserAreaHeader'
 
@@ -24,6 +25,13 @@ export const userAreaHeaderNavItems: readonly UserAreaHeaderNavItem[] = [
         icon: SavedSearchIcon,
         condition: ({ user: { viewerCanAdminister } }) =>
             viewerCanAdminister && window.context?.codeSearchEnabledOnInstance,
+    },
+    {
+        to: '/workflows',
+        label: 'Workflows',
+        icon: WorkflowIcon,
+        condition: ({ user: { viewerCanAdminister } }) =>
+            viewerCanAdminister && window.context?.codyEnabledForCurrentUser,
     },
     ...namespaceAreaHeaderNavItems,
 ]
