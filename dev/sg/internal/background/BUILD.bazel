@@ -7,11 +7,8 @@ go_library(
     tags = [TAG_INFRA_DEVINFRA],
     visibility = ["//dev/sg:__subpackages__"],
     deps = [
-        "//dev/sg/internal/analytics",
         "//dev/sg/internal/std",
         "//lib/output",
-        "@io_opentelemetry_go_otel//attribute",
-        "@io_opentelemetry_go_otel_trace//:trace",
         "@org_uber_go_atomic//:atomic",
     ],
 )

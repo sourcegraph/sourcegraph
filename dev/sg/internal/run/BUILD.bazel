@@ -21,7 +21,6 @@ go_library(
     tags = [TAG_INFRA_DEVINFRA],
     visibility = ["//dev/sg:__subpackages__"],
     deps = [
-        "//dev/sg/internal/analytics",
         "//dev/sg/internal/secrets",
         "//dev/sg/internal/std",
         "//dev/sg/interrupt",

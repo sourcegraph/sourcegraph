@@ -17,7 +17,6 @@ go_library(
     tags = [TAG_INFRA_DEVINFRA],
     visibility = ["//dev/sg:__subpackages__"],
     deps = [
-        "//dev/sg/internal/analytics",
         "//dev/sg/internal/sgconf",
         "//dev/sg/internal/std",
         "//dev/sg/internal/usershell",
@@ -34,9 +33,6 @@ go_library(
         "@com_github_sourcegraph_conc//pool",
         "@com_github_sourcegraph_conc//stream",
         "@com_github_sourcegraph_run//:run",
-        "@io_opentelemetry_go_otel//attribute",
-        "@io_opentelemetry_go_otel_trace//:trace",
-        "@org_uber_go_atomic//:atomic",
     ],
 )
 
