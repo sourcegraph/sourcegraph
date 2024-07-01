@@ -16,11 +16,6 @@ interface Props extends OrgAreaRouteContext {
     className?: string
 }
 
-export interface OrgSummary {
-    membersSummary: { membersCount: number; invitesCount: number }
-    extServices: { totalCount: number }
-}
-
 export interface OrgAreaHeaderContext extends BatchChangesProps, Pick<Props, 'org'> {
     isSourcegraphDotCom: boolean
 }

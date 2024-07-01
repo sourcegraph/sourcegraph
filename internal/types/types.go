@@ -939,14 +939,6 @@ func (n *NamespacePermission) DisplayName() string {
 	return fmt.Sprintf("%s:%d@%d", n.Namespace, n.ResourceID, n.UserID)
 }
 
-type OrgMemberAutocompleteSearchItem struct {
-	ID          int32
-	Username    string
-	DisplayName string
-	AvatarURL   string
-	InOrg       int32
-}
-
 type Org struct {
 	ID          int32
 	Name        string

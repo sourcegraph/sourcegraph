@@ -2033,30 +2033,6 @@ type Query {
     ): OrganizationInvitation!
 
     """
-    Search for users that opt-in to search autocomplete.
-    """
-    autocompleteMembersSearch(
-        """
-        The organization ID
-        """
-        organization: ID!
-        """
-        Return users whose usernames or display names match the query.
-        """
-        query: String!
-    ): [AutocompleteMemberSearchItem!]!
-
-    """
-    Get started organization summary
-    """
-    orgMembersSummary(
-        """
-        The organization ID
-        """
-        organization: ID!
-    ): OrgMembersSummary!
-
-    """
     Lists webhooks. Only available to site admins.
     If no kind is given, it returns all webhooks.
     If first is omitted, 20 items are returned
@@ -7137,49 +7113,6 @@ type OrganizationInvitation implements Node {
     Boolean flag which returns true if the email on the invite matches a verified email of the user
     """
     isVerifiedEmail: Boolean
-}
-"""
-Result user returned by invite members autocomplete search.
-"""
-type AutocompleteMemberSearchItem {
-    """
-    The unique ID for the user.
-    """
-    id: ID!
-    """
-    The user's username.
-    """
-    username: String!
-    """
-    The display name chosen by the user.
-    """
-    displayName: String
-    """
-    The URL of the user's avatar image.
-    """
-    avatarURL: String
-    """
-    If the user belongs to current Organization.
-    """
-    inOrg: Boolean
-}
-
-"""
-Result organization members count and pending invitations count.
-"""
-type OrgMembersSummary {
-    """
-    The unique ID for the Org.
-    """
-    id: ID!
-    """
-    Total number of members for the org.
-    """
-    membersCount: Int!
-    """
-    Total number of pending invites for the org.
-    """
-    invitesCount: Int!
 }
 
 """

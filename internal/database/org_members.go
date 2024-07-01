@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/jackc/pgconn"
@@ -16,7 +15,6 @@ import (
 type OrgMemberStore interface {
 	basestore.ShareableStore
 	With(basestore.ShareableStore) OrgMemberStore
-	AutocompleteMembersSearch(ctx context.Context, OrgID int32, query string) ([]*types.OrgMemberAutocompleteSearchItem, error)
 	WithTransact(context.Context, func(OrgMemberStore) error) error
 	Create(ctx context.Context, orgID, userID int32) (*types.OrgMembership, error)
 	GetByUserID(ctx context.Context, userID int32) ([]*types.OrgMembership, error)
@@ -97,36 +95,6 @@ func (m *orgMemberStore) GetByOrgID(ctx context.Context, orgID int32) ([]*types.
 		return nil, err
 	}
 	return m.getBySQL(ctx, "INNER JOIN users ON org_members.user_id = users.id WHERE org_id=$1 AND users.deleted_at IS NULL ORDER BY upper(users.display_name), users.id", org.ID)
-}
-
-func (u *orgMemberStore) AutocompleteMembersSearch(ctx context.Context, orgID int32, query string) ([]*types.OrgMemberAutocompleteSearchItem, error) {
-	pattern := query + "%"
-	q := sqlf.Sprintf(`SELECT u.id, u.username, u.display_name, u.avatar_url, (SELECT COUNT(o.org_id) from org_members o WHERE o.org_id = %d AND o.user_id = u.id) as inorg
-		FROM users u WHERE (u.username ILIKE %s OR u.display_name ILIKE %s) AND u.deleted_at IS NULL ORDER BY id ASC LIMIT 10`, orgID, pattern, pattern)
-
-	rows, err := u.Query(ctx, q)
-	if err != nil {
-		return nil, err
-	}
-
-	users := []*types.OrgMemberAutocompleteSearchItem{}
-	defer rows.Close()
-	for rows.Next() {
-		var u types.OrgMemberAutocompleteSearchItem
-		var displayName, avatarURL sql.NullString
-		err := rows.Scan(&u.ID, &u.Username, &displayName, &avatarURL, &u.InOrg)
-		if err != nil {
-			return nil, err
-		}
-		u.DisplayName = displayName.String
-		u.AvatarURL = avatarURL.String
-		users = append(users, &u)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return users, nil
 }
 
 // ErrOrgMemberNotFound is the error that is returned when
