@@ -75,6 +75,12 @@ type GitServerSpec struct {
 
 type GrafanaSpec struct {
 	StandardConfig
+
+	// Replicas defines the number of Grafana pod replicas.
+	// Default: 1
+	Replicas int32 `json:"replicas,omitempty"`
+
+	ExistingConfigMap string `json:"existingConfigMap,omitempty"`
 }
 
 type IndexedSearchSpec struct {

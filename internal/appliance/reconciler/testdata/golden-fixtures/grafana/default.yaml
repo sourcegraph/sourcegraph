@@ -1,0 +1,246 @@
+resources:
+  - apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: c7ada10d28d26c809f8b7e71aabb5a65420c3c2f306a364d3b9b966189d84a05
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      generation: 1
+      labels:
+        app.kubernetes.io/component: grafana
+        app.kubernetes.io/name: sourcegraph
+        app.kubernetes.io/version: 5.3.9104
+        deploy: sourcegraph
+      name: grafana
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      minReadySeconds: 10
+      persistentVolumeClaimRetentionPolicy:
+        whenDeleted: Retain
+        whenScaled: Retain
+      podManagementPolicy: OrderedReady
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        matchLabels:
+          app: grafana
+      serviceName: grafana
+      template:
+        metadata:
+          annotations:
+            kubectl.kubernetes.io/default-container: grafana
+          creationTimestamp: null
+          labels:
+            app: grafana
+            deploy: sourcegraph
+          name: grafana
+        spec:
+          containers:
+            - image: index.docker.io/sourcegraph/grafana:5.3.9104
+              imagePullPolicy: IfNotPresent
+              name: grafana
+              ports:
+                - containerPort: 3370
+                  name: http
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 512Mi
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsGroup: 472
+                runAsUser: 472
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: FallbackToLogsOnError
+              volumeMounts:
+                - mountPath: /var/lib/grafana
+                  name: grafana-data
+                - mountPath: /sg_config_grafana/provisioning/datasources
+                  name: config
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext:
+            fsGroup: 472
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 472
+            runAsUser: 472
+          serviceAccount: grafana
+          serviceAccountName: grafana
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - configMap:
+                defaultMode: 511
+                name: grafana
+              name: config
+      updateStrategy:
+        type: RollingUpdate
+      volumeClaimTemplates:
+        - apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            creationTimestamp: null
+            labels:
+              deploy: sourcegraph
+            name: grafana-data
+            namespace: NORMALIZED_FOR_TESTING
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 2Gi
+            volumeMode: Filesystem
+          status:
+            phase: Pending
+    status:
+      availableReplicas: 0
+      replicas: 0
+  - apiVersion: v1
+    data:
+      spec: |
+        spec:
+          requestedVersion: "5.3.9104"
+
+          blobstore:
+            disabled: true
+
+          codeInsights:
+            disabled: true
+
+          codeIntel:
+            disabled: true
+
+          frontend:
+            disabled: true
+
+          gitServer:
+            disabled: true
+
+          indexedSearch:
+            disabled: true
+
+          openTelemetry:
+            disabled: true
+
+          pgsql:
+            disabled: true
+
+          postgresExporter:
+            disabled: true
+
+          preciseCodeIntel:
+            disabled: true
+
+          redisCache:
+            disabled: true
+
+          redisStore:
+            disabled: true
+
+          repoUpdater:
+            disabled: true
+
+          searcher:
+            disabled: true
+
+          symbols:
+            disabled: true
+
+          syntectServer:
+            disabled: true
+
+          worker:
+            disabled: true
+
+          prometheus:
+            disabled: true
+
+          grafana:
+            disabled: false
+    kind: ConfigMap
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/managed: "true"
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      name: sg
+      namespace: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: c7ada10d28d26c809f8b7e71aabb5a65420c3c2f306a364d3b9b966189d84a05
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        deploy: sourcegraph
+      name: grafana
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: c7ada10d28d26c809f8b7e71aabb5a65420c3c2f306a364d3b9b966189d84a05
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        app: grafana
+        app.kubernetes.io/component: grafana
+        deploy: sourcegraph
+      name: grafana
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      clusterIP: NORMALIZED_FOR_TESTING
+      clusterIPs:
+        - NORMALIZED_FOR_TESTING
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: http
+          port: 3181
+          protocol: TCP
+          targetPort: http
+        - name: debug
+          port: 6060
+          protocol: TCP
+          targetPort: debug
+      selector:
+        app: grafana
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}
