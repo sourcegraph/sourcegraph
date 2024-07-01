@@ -9,10 +9,7 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 
-	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/category"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/repo"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/run"
@@ -120,15 +117,10 @@ func updateToPrebuiltSG(ctx context.Context, release string) (bool, error) {
 }
 
 func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bool) error {
-	ctx, span := analytics.StartSpan(ctx, "auto_update", "background",
-		trace.WithAttributes(attribute.Bool("skipUpdate", skipUpdate)))
-	defer span.End()
-
 	if BuildCommit == "dev" {
 		// If `sg` was built with a dirty `./dev/sg` directory it's a dev build
 		// and we don't need to display this message.
 		out.Verbose("Skipping update check on dev build")
-		span.Skipped()
 		return nil
 	}
 
@@ -136,7 +128,6 @@ func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bo
 	if err != nil {
 		// Ignore the error, because we only want to check the version if we're
 		// in sourcegraph/sourcegraph
-		span.Skipped()
 		return nil
 	}
 
@@ -147,7 +138,6 @@ func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bo
 	if !repo.HasCommit(ctx, rev) {
 		out.VerboseLine(output.Styledf(output.StyleWarning,
 			"current sg version %s not found locally - you may want to run 'git fetch origin main'.", rev))
-		span.Skipped()
 		return nil
 	}
 
@@ -155,17 +145,13 @@ func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bo
 	revList, err := run.GitCmd("rev-list", fmt.Sprintf("%s..origin/main", rev), "--", "./dev/sg")
 	if err != nil {
 		// Unexpected error occured
-		span.RecordError("check_error", err)
 		return err
 	}
 	revList = strings.TrimSpace(revList)
 	if revList == "" {
 		// No newer commits found. sg is up to date.
-		span.AddEvent("already_up_to_date")
-		span.Skipped()
 		return nil
 	}
-	span.SetAttributes(attribute.String("rev-list", revList))
 
 	if skipUpdate {
 		out.WriteLine(output.Styled(output.StyleSearchMatch, "╭───────────────────────────────────────────────────────────────────────╮"))
@@ -173,23 +159,19 @@ func checkSgVersionAndUpdate(ctx context.Context, out *std.Output, skipUpdate bo
 		out.WriteLine(output.Styled(output.StyleSearchMatch, "│         To see what's new, run 'sg version changelog -next'.          │"))
 		out.WriteLine(output.Styled(output.StyleSearchMatch, "╰───────────────────────────────────────────────────────────────────────╯"))
 
-		span.Skipped()
 		return nil
 	}
 
 	out.WriteLine(output.Line(output.EmojiInfo, output.StyleSuggestion, "Auto updating sg ..."))
 	updated, err := updateToPrebuiltSG(ctx, "latest") // always install latest when auto-updating
 	if err != nil {
-		span.RecordError("failed", err)
 		return errors.Newf("failed to install update: %s", err)
 	}
 	if !updated {
-		span.Skipped("not_updated")
 		return nil
 	}
 
 	out.WriteSuccessf("sg has been updated!")
 	out.Write("To see what's new, run 'sg version changelog'.")
-	span.Succeeded()
 	return nil
 }

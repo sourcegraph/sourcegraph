@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/urfave/cli/v2"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/analytics"
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
@@ -36,13 +34,16 @@ func addAnalyticsHooks(commandPath []string, commands []*cli.Command) {
 		// Wrap action with analytics
 		wrappedAction := command.Action
 		command.Action = func(cmd *cli.Context) (actionErr error) {
-			var span *analytics.Span
-			cmd.Context, span = analytics.StartSpan(cmd.Context, fullCommand, "action",
-				trace.WithAttributes(
-					attribute.StringSlice("flags", cmd.FlagNames()),
-					attribute.Int("args", cmd.NArg()),
-				))
-			defer span.End()
+			cmdFlags := make(map[string][]string)
+			for _, parent := range cmd.Lineage() {
+				cmdFlags[parent.Command.Name] = parent.LocalFlagNames()
+			}
+			cmd.Context = analytics.NewInvocation(cmd.Context, cmd.App.Version, map[string]any{
+				"command": fullCommand,
+				"flags":   cmdFlags,
+				"args":    cmd.Args().Slice(),
+				"nargs":   cmd.NArg(),
+			})
 
 			// Make sure analytics are persisted before exit (interrupts or panics)
 			defer func() {
@@ -54,12 +55,13 @@ func addAnalyticsHooks(commandPath []string, commands []*cli.Command) {
 					actionErr = cli.Exit(message, 1)
 
 					// Log event
-					span.RecordError("panic", actionErr)
+					analytics.AddMeta(cmd.Context, map[string]any{
+						"panic": actionErr,
+					})
 				}
 			}()
 			interrupt.Register(func() {
-				span.Cancelled()
-				span.End()
+				analytics.InvocationCancelled(cmd.Context)
 			})
 
 			// Call the underlying action
@@ -67,9 +69,9 @@ func addAnalyticsHooks(commandPath []string, commands []*cli.Command) {
 
 			// Capture analytics post-run
 			if actionErr != nil {
-				span.RecordError("error", actionErr)
+				analytics.InvocationFailed(cmd.Context, actionErr)
 			} else {
-				span.Succeeded()
+				analytics.InvocationSucceeded(cmd.Context)
 			}
 
 			return actionErr

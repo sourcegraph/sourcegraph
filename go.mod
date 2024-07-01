@@ -143,7 +143,7 @@ require (
 	github.com/keegancsmith/rpc v1.3.0
 	github.com/keegancsmith/sqlf v1.1.1
 	github.com/keegancsmith/tmpfriend v0.0.0-20180423180255-86e88902a513
-	github.com/klauspost/cpuid/v2 v2.2.5
+	github.com/klauspost/cpuid/v2 v2.2.7
 	github.com/kljensen/snowball v0.6.0
 	github.com/kr/text v0.2.0
 	github.com/lib/pq v1.10.7
@@ -218,7 +218,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.25.0
 	go.opentelemetry.io/otel/sdk/metric v1.24.0
 	go.opentelemetry.io/otel/trace v1.26.0
-	go.opentelemetry.io/proto/otlp v1.2.0
+	go.opentelemetry.io/proto/otlp v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0
 	go.uber.org/automaxprocs v1.5.2
 	go.uber.org/ratelimit v0.2.0
@@ -324,6 +324,7 @@ require (
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.10
 	gorm.io/plugin/opentelemetry v0.1.4
+	modernc.org/sqlite v1.30.1
 	oss.terrastruct.com/d2 v0.6.5
 	pgregory.net/rapid v1.1.0
 	sigs.k8s.io/controller-runtime v0.17.3
@@ -420,6 +421,7 @@ require (
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20240529184453-5b0b4941f3e0 // indirect
@@ -432,6 +434,7 @@ require (
 	github.com/pressly/goose/v3 v3.20.0 // indirect
 	github.com/prometheus/prometheus v0.40.5 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.0.5 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rickb777/date v1.14.3 // indirect
 	github.com/rickb777/plural v1.2.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
@@ -476,6 +479,12 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	k8s.io/apiextensions-apiserver v0.29.2 // indirect
 	k8s.io/component-base v0.29.2 // indirect
+	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
+	modernc.org/libc v1.52.1 // indirect
+	modernc.org/mathutil v1.6.0 // indirect
+	modernc.org/memory v1.8.0 // indirect
+	modernc.org/strutil v1.2.0 // indirect
+	modernc.org/token v1.1.0 // indirect
 	oss.terrastruct.com/util-go v0.0.0-20231101220827-55b3812542c2 // indirect
 )
 
@@ -566,7 +575,7 @@ require (
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20231205033806-a5a03c77bf08 // indirect
+	github.com/google/pprof v0.0.0-20240409012703-83162a5b38cd // indirect
 	github.com/googleapis/gax-go/v2 v2.12.4
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gopherjs/gopherwasm v1.1.0 // indirect

@@ -1,116 +1,166 @@
 package analytics
 
 import (
-	"bufio"
 	"context"
-	"os"
+	"database/sql"
+	"encoding/json"
+	"sync"
+	"time"
 
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	coltracepb "go.opentelemetry.io/proto/otlp/collector/trace/v1"
-	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
-	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/google/uuid"
+	"github.com/sourcegraph/run"
 
-	"github.com/sourcegraph/sourcegraph/lib/errors"
+	_ "modernc.org/sqlite"
+
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/std"
+	"github.com/sourcegraph/sourcegraph/dev/sg/root"
 )
+
+const schemaVersion = "1"
+
+type key int
 
 const (
-	sgAnalyticsVersionResourceKey = "sg.analytics_version"
-	// Increment to make breaking changes to spans and discard old spans
-	sgAnalyticsVersion = "v1.1"
+	invocationKey key = 0
+	// eventKey      key = 1
 )
 
-const (
-	honeycombEndpoint  = "grpc://api.honeycomb.io:443"
-	otlpEndpointEnvKey = "OTEL_EXPORTER_OTLP_ENDPOINT"
-)
+type invocation struct {
+	uuid uuid.UUID
+}
 
-// Submit pushes all persisted events to Honeycomb if OTEL_EXPORTER_OTLP_ENDPOINT is not
-// set.
-func Submit(ctx context.Context, honeycombToken string) error {
-	spans, err := Load()
+var store = sync.OnceValue(func() analyticsStore {
+	db, err := newDiskStore()
 	if err != nil {
-		return err
+		std.Out.WriteWarningf("failed to create sg analytics store: %s", err)
 	}
-	if len(spans) == 0 {
-		return errors.New("no spans to submit")
-	}
+	return analyticsStore{db}
+})
 
-	// if endpoint is not set, point to Honeycomb
-	var otlpOptions []otlptracegrpc.Option
-	if _, exists := os.LookupEnv(otlpEndpointEnvKey); !exists {
-		os.Setenv(otlpEndpointEnvKey, honeycombEndpoint)
-		otlpOptions = append(otlpOptions, otlptracegrpc.WithHeaders(map[string]string{
-			"x-honeycomb-team": honeycombToken,
-		}))
-	}
-
-	// Set up a trace exporter
-	client := otlptracegrpc.NewClient(otlpOptions...)
-	if err := client.Start(ctx); err != nil {
-		return errors.Wrap(err, "failed to initialize export client")
-	}
-
-	// send spans and shut down
-	if err := client.UploadTraces(ctx, spans); err != nil {
-		return errors.Wrap(err, "failed to export spans")
-	}
-	if err := client.Stop(ctx); err != nil {
-		return errors.Wrap(err, "failed to flush span exporter")
-	}
-
-	return nil
-}
-
-// Persist stores all events in context to disk.
-func Persist(ctx context.Context) error {
-	store := getStore(ctx)
-	if store == nil {
-		return nil
-	}
-	return store.Persist(ctx)
-}
-
-// Reset deletes all persisted events.
-func Reset() error {
-	p, err := spansPath()
-	if err != nil {
-		return err
-	}
-
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		// don't have to remove something that doesn't exist
-		return nil
-	}
-	return os.Remove(p)
-}
-
-// Load retrieves all persisted events.
-func Load() (spans []*tracepb.ResourceSpans, errs error) {
-	p, err := spansPath()
+func newDiskStore() (*sql.DB, error) {
+	sghome, err := root.GetSGHomePath()
 	if err != nil {
 		return nil, err
 	}
 
-	file, err := os.Open(p)
+	// this will create the file if it doesnt exist
+	db, err := sql.Open("sqlite", "file://"+sghome+"analytics.sqlite")
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		var req coltracepb.ExportTraceServiceRequest
-		if err := protojson.Unmarshal(scanner.Bytes(), &req); err != nil {
-			errs = errors.Append(errs, err)
-			continue // drop malformed data
-		}
-
-		for _, s := range req.GetResourceSpans() {
-			if !isValidVersion(s) {
-				continue
-			}
-			spans = append(spans, s)
-		}
+	db.SetMaxOpenConns(1)
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS analytics (
+		event_uuid TEXT PRIMARY KEY,
+		-- invocation_uuid TEXT,
+		schema_version TEXT NOT NULL,
+		metadata_json TEXT,
+	)`)
+	if err != nil {
+		return nil, err
 	}
-	return
+
+	return db, nil
+}
+
+type analyticsStore struct {
+	db *sql.DB
+}
+
+func (s analyticsStore) NewInvocation(ctx context.Context, uuid uuid.UUID, version string, meta map[string]any) {
+	if s.db == nil {
+		return
+	}
+
+	b, err := json.Marshal(meta)
+	if err != nil {
+		std.Out.WriteWarningf("invalid json generated for sg analytics metadata %v: %s", meta, err)
+	}
+
+	meta["email"] = email()
+	meta["start_time"] = time.Now()
+
+	_, err = s.db.Exec(`INSERT INTO analytics (event_uuid, schema_version, metadata_json) VALUES (?, ?, ?)`, uuid, schemaVersion, string(b))
+	if err != nil {
+		std.Out.WriteWarningf("failed to insert sg analytics event: %s", err)
+	}
+}
+
+func (s analyticsStore) AddMetadata(ctx context.Context, uuid uuid.UUID, meta map[string]any) {
+	if s.db == nil {
+		return
+	}
+
+	b, err := json.Marshal(meta)
+	if err != nil {
+		std.Out.WriteWarningf("invalid json generated for sg analytics metadata %v: %s", meta, err)
+		return
+	}
+
+	_, err = s.db.Exec(`UPDATE analytics SET metadata_json = json_patch(metadata_json, ?) WHERE event_uuid = ?`, string(b), uuid)
+	if err != nil {
+		std.Out.WriteWarningf("failed to update sg analytics event: %s", err)
+	}
+}
+
+var email = sync.OnceValue[string](func() string {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	// Loose attempt at getting identity - if we fail, just discard
+	identity, _ := run.Cmd(ctx, "git config user.email").StdOut().Run().String()
+	return identity
+})
+
+func NewInvocation(ctx context.Context, version string, meta map[string]any) context.Context {
+	u, _ := uuid.NewV7()
+	invc := invocation{u}
+
+	store().NewInvocation(ctx, u, version, meta)
+
+	return context.WithValue(ctx, invocationKey, invc)
+}
+
+func AddMeta(ctx context.Context, meta map[string]any) {
+	invc, ok := ctx.Value(invocationKey).(invocation)
+	if !ok {
+		return
+	}
+
+	store().AddMetadata(ctx, invc.uuid, meta)
+}
+
+func InvocationSucceeded(ctx context.Context) {
+	invc, ok := ctx.Value(invocationKey).(invocation)
+	if !ok {
+		return
+	}
+
+	store().AddMetadata(ctx, invc.uuid, map[string]any{
+		"success":  true,
+		"end_time": time.Now(),
+	})
+}
+
+func InvocationCancelled(ctx context.Context) {
+	invc, ok := ctx.Value(invocationKey).(invocation)
+	if !ok {
+		return
+	}
+
+	store().AddMetadata(ctx, invc.uuid, map[string]any{
+		"cancelled": true,
+		"end_time":  time.Now(),
+	})
+}
+
+func InvocationFailed(ctx context.Context, err error) {
+	invc, ok := ctx.Value(invocationKey).(invocation)
+	if !ok {
+		return
+	}
+
+	store().AddMetadata(ctx, invc.uuid, map[string]any{
+		"failed":   true,
+		"error":    err.Error(),
+		"end_time": time.Now(),
+	})
 }
