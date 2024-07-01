@@ -19,7 +19,6 @@ import type {
     UserAreaUserProfileResult,
     UserAreaUserProfileVariables,
 } from '../../graphql-operations'
-import type { NamespaceProps } from '../../namespaces'
 import type { RouteV6Descriptor } from '../../util/contributions'
 import { isAccessTokenCallbackPage } from '../settings/accessTokens/UserSettingsCreateAccessTokenCallbackPage'
 import type { UserSettingsAreaRoute } from '../settings/UserSettingsArea'
@@ -103,7 +102,6 @@ export interface UserAreaRouteContext
     extends PlatformContextProps,
         SettingsCascadeProps,
         TelemetryProps,
-        NamespaceProps,
         BreadcrumbsProps,
         BreadcrumbSetters,
         BatchChangesProps {

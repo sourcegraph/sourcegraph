@@ -12,7 +12,7 @@ import (
 
 func (r *UserResolver) OrganizationMemberships(ctx context.Context) (*organizationMembershipConnectionResolver, error) {
 	// 🚨 SECURITY: Only the user and admins are allowed to access the user's
-	// organisation memberships.
+	// organization memberships.
 	if err := auth.CheckSiteAdminOrSameUser(ctx, r.db, r.user.ID); err != nil {
 		return nil, err
 	}

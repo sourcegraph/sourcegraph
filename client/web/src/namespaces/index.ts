@@ -1,13 +1,15 @@
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-
-import type { OrgAreaOrganizationFields, UserAreaUserFields } from '../graphql-operations'
+import type { OrgSettingFields, UserSettingFields } from '@sourcegraph/shared/src/graphql-operations'
 
 /**
  * Common props for components underneath a namespace (e.g., a user or organization).
  */
-export interface NamespaceProps extends TelemetryV2Props {
+export interface NamespaceProps {
     /**
      * The namespace.
      */
-    namespace: Pick<UserAreaUserFields | OrgAreaOrganizationFields, '__typename' | 'id' | 'url'>
+    namespace: PartialNamespace
 }
+
+export type PartialNamespace =
+    | Pick<UserSettingFields, '__typename' | 'id' | 'username' | 'displayName' | 'namespaceName' | 'url'>
+    | Pick<OrgSettingFields, '__typename' | 'id' | 'name' | 'displayName' | 'namespaceName' | 'url'>

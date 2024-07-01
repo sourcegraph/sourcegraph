@@ -1,15 +1,16 @@
-import { type PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
+import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 
 import type { AuthenticatedUser } from '../auth'
 import type { BatchChangesProps } from '../batches'
-import type { OrgAreaOrganizationFields, UserAreaUserFields } from '../graphql-operations'
 import type { NavItemWithIconDescriptor, RouteV6Descriptor } from '../util/contributions'
+
+import type { PartialNamespace } from '.'
 
 /**
  * Properties passed to all page components in the namespace area.
  */
 export interface NamespaceAreaContext extends PlatformContextProps {
-    namespace: Pick<UserAreaUserFields | OrgAreaOrganizationFields, '__typename' | 'id' | 'url'>
+    namespace: PartialNamespace
 
     authenticatedUser: AuthenticatedUser | null
     isSourcegraphDotCom: boolean

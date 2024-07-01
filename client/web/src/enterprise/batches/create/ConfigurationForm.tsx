@@ -2,11 +2,11 @@ import React, { useCallback, useState } from 'react'
 
 import classNames from 'classnames'
 import { noop } from 'lodash'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useMutation } from '@sourcegraph/http-client'
-import type { UserSettingFields, OrgSettingFields } from '@sourcegraph/shared/src/graphql-operations'
-import { Alert, Button, Container, Input, ErrorAlert, Form } from '@sourcegraph/wildcard'
+import type { OrgSettingFields, UserSettingFields } from '@sourcegraph/shared/src/graphql-operations'
+import { Alert, Button, Container, ErrorAlert, Form, Input } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../auth'
 import type {
@@ -17,11 +17,11 @@ import type {
     CreateEmptyBatchChangeVariables,
     Scalars,
 } from '../../../graphql-operations'
+import { useAffiliatedNamespaces } from '../../../namespaces/useAffiliatedNamespaces'
 import { useBatchChangesLicense } from '../useBatchChangesLicense'
 
 import { CREATE_BATCH_SPEC_FROM_RAW, CREATE_EMPTY_BATCH_CHANGE } from './backend'
 import { NamespaceSelector } from './NamespaceSelector'
-import { useNamespaces } from './useNamespaces'
 
 import styles from './ConfigurationForm.module.scss'
 
@@ -91,7 +91,7 @@ export const ConfigurationForm: React.FunctionComponent<React.PropsWithChildren<
 
     // The set of namespaces the user has permissions to create batch changes in, and the
     // namespace among those that should be selected by default.
-    const { namespaces, defaultSelectedNamespace } = useNamespaces(authenticatedUser, initialNamespaceID)
+    const { namespaces, defaultSelectedNamespace } = useAffiliatedNamespaces(authenticatedUser, initialNamespaceID)
 
     // If the user is creating a new batch change, this is the namespace selected.
     const [selectedNamespace, setSelectedNamespace] = useState<

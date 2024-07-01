@@ -1,0 +1,42 @@
+extend type Query {
+    """
+    The current user (if authenticated), or an unauthenticated visitor. On some Sourcegraph sites,
+    unauthenticated visitors can access the GraphQL API and perform a limited set of actions.
+    """
+    viewer: Viewer!
+}
+
+"""
+A viewer is either an (authenticated) user or an (unauthenticated) visitor. It contains the subset
+of fields that visitors may query, which are shared with those for users to make it easier to access
+authentication-agnostic Sourcegraph features.
+"""
+interface Viewer {
+    """
+    All namespaces that the viewer is affiliated with. A user's affiliated namespaces are their own
+    user account plus all organizations of which they are a member. An unauthenticated visitor has
+    no affiliated namespaces (but in the future, there might be a global namespace).
+    """
+    affiliatedNamespaces: [Namespace!]!
+}
+
+"""
+An (unauthenticated) visitor. On some Sourcegraph sites, unauthenticated visitors can access the
+GraphQL API and perform a limited set of actions.
+"""
+type Visitor implements Viewer {
+    """
+    A visitor has no affiliated namespaces, so this is currently always empty. (In the future, there
+    might be a global namespace that is available to visitors).
+    """
+    affiliatedNamespaces: [Namespace!]!
+}
+
+extend type User implements Viewer {
+    """
+    A user's affiliated namespaces are their own user account plus all organizations of which they
+    are a member. (In the future, there may be more kinds of namespaces that users can be affiliated
+    with.)
+    """
+    affiliatedNamespaces: [Namespace!]!
+}

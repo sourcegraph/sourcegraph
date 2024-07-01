@@ -9,7 +9,6 @@ import { Alert, Button, ErrorAlert, Form, H3, LoadingSpinner, Modal } from '@sou
 
 import type { AuthenticatedUser } from '../auth'
 import { NamespaceSelector } from '../enterprise/batches/create/NamespaceSelector'
-import { useNamespaces } from '../enterprise/batches/create/useNamespaces'
 import type {
     SavedSearchFields,
     SavedSearchResult,
@@ -21,6 +20,7 @@ import type {
 } from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
 import { namespaceTelemetryMetadata } from '../namespaces/telemetry'
+import { useAffiliatedNamespaces } from '../namespaces/useAffiliatedNamespaces'
 
 import { SavedSearchForm, type SavedSearchFormValue } from './Form'
 import {
@@ -194,7 +194,7 @@ const TransferOwnershipModal: FunctionComponent<{
 }> = ({ authenticatedUser, savedSearch, onClose, telemetryRecorder }) => {
     const navigate = useNavigate()
 
-    const { namespaces } = useNamespaces(authenticatedUser)
+    const { namespaces } = useAffiliatedNamespaces(authenticatedUser)
     const validNamespaces = namespaces.filter(ns => ns.id !== savedSearch.owner.id)
     const [selectedNamespace, setSelectedNamespace] = useState<string | undefined>(validNamespaces.at(0)?.id)
 

@@ -439,6 +439,7 @@ func NewSchema(
 	schemas := []string{
 		mainSchema,
 		outboundWebhooksSchema,
+		viewerSchema,
 	}
 
 	for _, optional := range optionals {

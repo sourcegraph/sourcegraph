@@ -24,7 +24,6 @@ import type { AuthenticatedUser } from '../auth'
 import type { FilteredConnectionFilter } from '../components/FilteredConnection'
 import { usePageSwitcherPagination } from '../components/FilteredConnection/hooks/usePageSwitcherPagination'
 import { ConnectionContainer, ConnectionForm } from '../components/FilteredConnection/ui'
-import { useNamespaces } from '../enterprise/batches/create/useNamespaces'
 import {
     SavedSearchesOrderBy,
     type SavedSearchFields,
@@ -33,6 +32,7 @@ import {
 } from '../graphql-operations'
 import type { NamespaceProps } from '../namespaces'
 import { namespaceTelemetryMetadata } from '../namespaces/telemetry'
+import { useAffiliatedNamespaces } from '../namespaces/useAffiliatedNamespaces'
 import { useNavbarQueryState } from '../stores'
 
 import { savedSearchesQuery } from './graphql'
@@ -88,7 +88,7 @@ export const ListPage: FunctionComponent<NamespaceProps & { authenticatedUser: A
         owner: namespace.id,
     })
 
-    const { namespaces } = useNamespaces(authenticatedUser)
+    const { namespaces } = useAffiliatedNamespaces(authenticatedUser)
     const filters = useMemo<FilteredConnectionFilter[]>(
         () => [
             {
