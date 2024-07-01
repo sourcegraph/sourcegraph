@@ -64,6 +64,11 @@ func TestValidationMethods(t *testing.T) {
 				"didn't get expected validation error for mref %q", test.MRef)
 		}
 	})
+
+	t.Run("ValidateModel", func(t *testing.T) {
+		// TODO: Verify error if the model ID doesn't match the model ref.
+		// "id does not match modelref"
+	})
 }
 
 // Confirm that the model data currently in the repo is well-formed and valid.

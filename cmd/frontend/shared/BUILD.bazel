@@ -29,6 +29,7 @@ go_library(
         "//cmd/frontend/internal/guardrails",
         "//cmd/frontend/internal/insights",
         "//cmd/frontend/internal/licensing/init",
+        "//cmd/frontend/internal/modelconfig",
         "//cmd/frontend/internal/notebooks",
         "//cmd/frontend/internal/own",
         "//cmd/frontend/internal/rbac",

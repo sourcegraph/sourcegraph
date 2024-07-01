@@ -68,6 +68,11 @@ func validateModel(m types.Model) error {
 		return errors.New("id format")
 	}
 
+	// Require that the ModelID matches the supplied ModelRef.
+	if !strings.HasSuffix(string(m.ModelRef), "::"+string(m.ID)) {
+		return errors.New("id does not match modelref")
+	}
+
 	if err := validateModelRef(m.ModelRef); err != nil {
 		return errors.Wrap(err, "modelref")
 	}
@@ -83,5 +88,27 @@ func validateModel(m types.Model) error {
 	// We intentionally do not validate any of the enum metadata fields, because
 	// older Sourcegraph instances wouldn't be able to recognize any newer values.
 
+	return nil
+}
+
+// ValidateSiteConfig validates that the site configuration data expressed is valid.
+func ValidateSiteConfig(doc *types.SiteModelConfiguration) error {
+	// TODO: Verify Sourcegraph
+	// - Endpoint is a valid URL.
+	// - PollingInterval is a valid duration, or "never".
+	// - ModelFilters.CategoryFilter only contains valid categories.
+	// - The strings in the Allow/Deny lists are reasonable, e.g. do not
+	//   contain any whitespaces, more than six colons, etc.
+	// - The Allow/Deny list wildcard strings are well-formed: they may
+	//   only contain an asterisk as the first and/or last character.
+
+	// TODO: Verify ProviderOverrides
+	// - No ProviderIDs are duplicated.
+
+	// TODO: Verify ModelOverrides
+	// - Every model must have a ModelRef. All other fields are optional.
+	// - No ModelRefs are duplicated.
+	// - Every ModelOverride for a ProviderOverrided must have a ModelRef that is
+	//   prefixed by the "${ProviderID}::".
 	return nil
 }

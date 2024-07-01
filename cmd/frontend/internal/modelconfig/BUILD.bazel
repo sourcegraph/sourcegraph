@@ -1,0 +1,44 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "modelconfig",
+    srcs = [
+        "builder.go",
+        "httpapi.go",
+        "init.go",
+        "service.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/frontend/internal/modelconfig",
+    visibility = ["//cmd/frontend:__subpackages__"],
+    deps = [
+        "//cmd/frontend/enterprise",
+        "//cmd/frontend/internal/auth",
+        "//cmd/frontend/internal/registry",
+        "//internal/actor",
+        "//internal/codeintel",
+        "//internal/conf",
+        "//internal/conf/conftypes",
+        "//internal/database",
+        "//internal/modelconfig",
+        "//internal/modelconfig/embedded",
+        "//internal/modelconfig/types",
+        "//internal/observation",
+        "//lib/errors",
+        "//schema",
+        "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_test(
+    name = "modelconfig_test",
+    srcs = ["builder_test.go"],
+    embed = [":modelconfig"],
+    deps = [
+        "//internal/modelconfig/embedded",
+        "//internal/modelconfig/types",
+        "//schema",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

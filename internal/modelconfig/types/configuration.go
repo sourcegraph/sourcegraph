@@ -37,9 +37,22 @@ type AzureOpenAIProviderConfig struct {
 	Endpoint string `json:"endpoint"`
 }
 
+// GenericProvider is the generic format that older Sourcegraph instances used.
+//
+// Try to avoid using this where possible, and instead rely on the more specific
+// types like `AzureOpenAIProviderConfig`. Even if they only contain the same fields.
+// This allows us to more gracefully migrate customers forward as the API providers
+// and associated API clients evolve. e.g. giving us the possibility of providing
+// defaults for any missing configuration settings that get added later.
+type GenericProviderConfig struct {
+	AccessToken string `json:"accessToken"`
+	Endpoint    string `json:"endpoint"`
+}
+
 type ServerSideProviderConfig struct {
-	AWSBedrock  *AWSBedrockProviderConfig  `json:"awsBedrock"`
-	AzureOpenAI *AzureOpenAIProviderConfig `json:"azureOpenAi"`
+	AWSBedrock      *AWSBedrockProviderConfig  `json:"awsBedrock,omitempty"`
+	AzureOpenAI     *AzureOpenAIProviderConfig `json:"azureOpenAi,omitempty"`
+	GenericProvider *GenericProviderConfig     `json:"genericProviderConfig,omitempty"`
 }
 
 // ========================================================

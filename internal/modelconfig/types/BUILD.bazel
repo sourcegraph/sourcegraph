@@ -8,6 +8,7 @@ go_library(
         "model.go",
         "provider.go",
         "refs.go",
+        "site_config.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/internal/modelconfig/types",
     visibility = ["//:__subpackages__"],

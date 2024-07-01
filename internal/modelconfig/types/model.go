@@ -40,6 +40,8 @@ const (
 )
 
 type Model struct {
+	// BUG? Why don't we just remove this since ID is already encoded in the ModelRef
+	// So it's redundant?
 	ID       ModelID  `json:"modelId"`
 	ModelRef ModelRef `json:"modelRef"`
 

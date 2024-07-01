@@ -25,6 +25,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/handlerutil"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/httpapi/releasecache"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/httpapi/webhookhandlers"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/modelconfig"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/routevar"
 	frontendsearch "github.com/sourcegraph/sourcegraph/cmd/frontend/internal/search"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/ssc"
@@ -172,6 +173,10 @@ func NewHandler(
 
 	m.Path("/completions/stream").Methods("POST").Handler(handlers.NewChatCompletionsStreamHandler())
 	m.Path("/completions/code").Methods("POST").Handler(handlers.NewCodeCompletionsHandler())
+
+	// HTTP endpoints related to LLM model configuration.
+	modelConfigHandlers := modelconfig.NewHandlers(db, logger)
+	m.Path("/supported-llms").Methods("GET").HandlerFunc(modelConfigHandlers.GetSupportedModelsHandler)
 
 	if dotcom.SourcegraphDotComMode() {
 		m.Path("/license/check").Methods("POST").Name("dotcom.license.check").Handler(handlers.NewDotcomLicenseCheckHandler())
