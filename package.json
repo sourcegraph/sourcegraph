@@ -423,7 +423,7 @@
     "utility-types": "^3.10.0",
     "uuid": "^8.3.0",
     "vscode-uri": "^3.0.7",
-    "webext-domain-permission-toggle": "^1.0.1",
+    "webext-permission-toggle": "^5.0.2",
     "webextension-polyfill": "^0.6.0",
     "whatwg-url": "^14.0.0",
     "yaml-ast-parser": "^0.0.43",

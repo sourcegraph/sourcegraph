@@ -18,7 +18,7 @@ import {
     catchError,
     distinctUntilChanged,
 } from 'rxjs/operators'
-import addDomainPermissionToggle from 'webext-domain-permission-toggle'
+import addDomainPermissionToggle from 'webext-permission-toggle'
 
 import { isDefined, fetchCache } from '@sourcegraph/common'
 import { type GraphQLResult, requestGraphQLCommon } from '@sourcegraph/http-client'

@@ -2617,7 +2617,7 @@ PNPM,web-streams-polyfill,3.2.1,MIT,"",Approved
 PNPM,webcomponents.js,0.7.20,New BSD,"",Approved
 PNPM,webcrypto-core,1.7.5,MIT,"",Approved
 PNPM,webext-additional-permissions,1.0.0,MIT,"",Approved
-PNPM,webext-domain-permission-toggle,1.0.1,MIT,"",Approved
+PNPM,webext-permission-toggle,5.0.2,MIT,"",Approved
 PNPM,webextension-polyfill,0.6.0,Mozilla Public License 2.0,"",Approved
 PNPM,webidl-conversions,7.0.0,Simplified BSD,"",Approved
 PNPM,webpack,5.88.2,MIT,"",Approved

@@ -259,7 +259,7 @@ ts_project(
         "//:node_modules/utility-types",
         "//:node_modules/uuid",
         "//:node_modules/vitest",
-        "//:node_modules/webext-domain-permission-toggle",
+        "//:node_modules/webext-permission-toggle",
         "//:node_modules/webextension-polyfill",  #keep
     ],
 )
