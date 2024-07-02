@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "codyaccess",
+    srcs = ["codygateway.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/codyaccess",
+    visibility = ["//cmd/enterprise-portal:__subpackages__"],
+    deps = ["//cmd/enterprise-portal/internal/database/subscriptions"],
+)

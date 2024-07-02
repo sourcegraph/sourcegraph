@@ -3,6 +3,7 @@ package tables
 import (
 	"gorm.io/gorm/schema"
 
+	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/codyaccess"
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
 )
 
@@ -15,5 +16,7 @@ func All() []schema.Tabler {
 		&subscriptions.SubscriptionCondition{},
 		&subscriptions.SubscriptionLicense{},
 		&subscriptions.SubscriptionLicenseCondition{},
+
+		&codyaccess.CodyGatewayAccess{},
 	}
 }

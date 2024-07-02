@@ -7,6 +7,7 @@ go_library(
     tags = [TAG_INFRA_CORESERVICES],
     visibility = ["//cmd/enterprise-portal:__subpackages__"],
     deps = [
+        "//cmd/enterprise-portal/internal/database/codyaccess",
         "//cmd/enterprise-portal/internal/database/subscriptions",
         "@io_gorm_gorm//schema",
     ],
