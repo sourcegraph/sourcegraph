@@ -55,11 +55,8 @@ Our containers are only built for `linux/amd64`, therefore we need to cross-comp
 Example:
 
 ```
-# Create a tarball that can be loaded in Docker of the worker service:
-bazel build //cmd/worker:image_tarball
-
-# Load the image in Docker:
-docker load --input $(bazel cquery //cmd/worker:image_tarball  --output=files)
+# Create and load a tarball that can be loaded in Docker of the worker service:
+bazel run //cmd/worker:image_tarball
 ```
 
 You can also use the same configuration flag to run the container tests on MacOS:

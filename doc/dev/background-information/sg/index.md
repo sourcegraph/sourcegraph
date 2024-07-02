@@ -186,8 +186,7 @@ env:
 commands:
   gitserver:
     install: |
-      bazel build //cmd/gitserver:image_tarball && \
-      docker load --input $(bazel cquery //cmd/gitserver:image_tarball --output=files)
+      bazel run //cmd/gitserver:image_tarball
   gitserver-0:
     cmd: |
       docker inspect gitserver-${GITSERVER_INDEX} >/dev/null 2>&1 && docker stop gitserver-${GITSERVER_INDEX}

@@ -106,9 +106,9 @@ http_archive(
 # Container rules
 http_archive(
     name = "rules_oci",
-    sha256 = "647f4c6fd092dc7a86a7f79892d4b1b7f1de288bdb4829ca38f74fd430fcd2fe",
-    strip_prefix = "rules_oci-1.7.6",
-    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v1.7.6/rules_oci-v1.7.6.tar.gz",
+    sha256 = "768cd23d5fea0235858eecfc8bfaae77a11fe9db9ebb1ac03d31c4b19eb9bc11",
+    strip_prefix = "rules_oci-2.0.0-alpha5",
+    url = "https://github.com/bazel-contrib/rules_oci/releases/download/v2.0.0-alpha5/rules_oci-v2.0.0-alpha5.tar.gz",
 )
 
 http_archive(
@@ -407,15 +407,9 @@ load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 
 rules_oci_dependencies()
 
-load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
+load("@rules_oci//oci:repositories.bzl", "oci_register_toolchains")
 
-oci_register_toolchains(
-    name = "oci",
-    crane_version = LATEST_CRANE_VERSION,
-    # Uncommenting the zot toolchain will cause it to be used instead of crane for some tasks.
-    # Note that it does not support docker-format images.
-    # zot_version = LATEST_ZOT_VERSION,
-)
+oci_register_toolchains(name = "oci")
 
 # Optional, for oci_tarball rule
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")

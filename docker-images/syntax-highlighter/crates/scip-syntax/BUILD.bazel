@@ -112,22 +112,31 @@ oci_image(
     base = "@scip-java",
 )
 
+# TODO: this is expensive as whole has to be uploaded to the remote cache
+# Instead call the executable script created by oci_tarball to load the image
+# to daemon.
 oci_tarball(
     name = "scip_java_image_tarball",
     image = ":scip_java_image",
     repo_tags = ["scip-java:tmp"],
 )
 
+filegroup(
+    name = "scip_java_image_tarball_tar",
+    srcs = [":scip_java_image_tarball"],
+    output_group = "tarball",
+)
+
 genrule(
     name = "java_groundtruth_scip",
     srcs = [
         "testdata/scip-index.sh",
-        ":scip_java_image_tarball",
+        ":scip_java_image_tarball_tar",
     ] + glob(["testdata/java/**"]),
     outs = ["index-java.scip"],
     cmd = """\
     $(location testdata/scip-index.sh) \
-        $(location :scip_java_image_tarball) \
+        $(location :scip_java_image_tarball_tar) \
         scip-java:tmp \
         $(location testdata/java/build.gradle) \
         'scip-java index' \

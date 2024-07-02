@@ -28,6 +28,9 @@ sh_binary(
     env = {
         "SRC_CLI_VERSION": SRC_CLI_VERSION,
     },
+    deps = [
+        "@bazel_tools//tools/bash/runfiles",
+    ],
 )
 
 sh_binary(
