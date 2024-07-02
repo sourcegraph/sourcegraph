@@ -1,4 +1,4 @@
-import React, { type FC, useMemo } from 'react'
+import React, { useMemo, type FC } from 'react'
 
 import { mdiProgressClock } from '@mdi/js'
 import { VisuallyHidden } from '@reach/visually-hidden'
@@ -11,16 +11,16 @@ import { useQuery } from '@sourcegraph/http-client'
 import type { AuthenticatedUser } from '@sourcegraph/shared/src/auth'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { Badge, Icon, LoadingSpinner, ErrorMessage, LinkOrSpan } from '@sourcegraph/wildcard'
+import { Badge, ErrorMessage, Icon, LinkOrSpan, LoadingSpinner } from '@sourcegraph/wildcard'
 
 import { withAuthenticatedUser } from '../../../../auth/withAuthenticatedUser'
 import { HeroPage } from '../../../../components/HeroPage'
 import { Duration } from '../../../../components/time/Duration'
 import {
+    BatchSpecSource,
     type BatchSpecExecutionByIDResult,
     type BatchSpecExecutionByIDVariables,
     type BatchSpecExecutionFields,
-    BatchSpecSource,
     type GetBatchChangeToEditResult,
     type GetBatchChangeToEditVariables,
 } from '../../../../graphql-operations'
@@ -28,7 +28,7 @@ import type { NamespaceProps } from '../../../../namespaces'
 import { GET_BATCH_CHANGE_TO_EDIT } from '../../create/backend'
 import { ConfigurationForm } from '../../create/ConfigurationForm'
 import { NewBatchChangePreviewPage } from '../../preview/BatchChangePreviewPage'
-import { BatchSpecContextProvider, type BatchSpecContextState, useBatchSpecContext } from '../BatchSpecContext'
+import { BatchSpecContextProvider, useBatchSpecContext, type BatchSpecContextState } from '../BatchSpecContext'
 import { ActionButtons } from '../header/ActionButtons'
 import { BatchChangeHeader } from '../header/BatchChangeHeader'
 import { TabBar, type TabsConfig } from '../TabBar'
@@ -213,11 +213,7 @@ const MemoizedExecuteBatchSpecContent: FC<MemoizedExecuteBatchSpecContentProps> 
                         element={
                             <>
                                 <TabBar activeTabKey="configuration" tabsConfig={tabsConfig} matchURL={executionURL} />
-                                <ConfigurationForm
-                                    isReadOnly={true}
-                                    batchChange={batchChange}
-                                    authenticatedUser={authenticatedUser}
-                                />
+                                <ConfigurationForm isReadOnly={true} batchChange={batchChange} />
                             </>
                         }
                     />

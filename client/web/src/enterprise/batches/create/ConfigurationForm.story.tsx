@@ -4,7 +4,6 @@ import { MATCH_ANY_PARAMETERS, WildcardMockLink } from 'wildcard-mock-link'
 import { getDocumentNode } from '@sourcegraph/http-client'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 
-import type { AuthenticatedUser } from '../../../auth'
 import { WebStory } from '../../../components/WebStory'
 import { GET_LICENSE_AND_USAGE_INFO } from '../list/backend'
 import { getLicenseAndUsageInfoResult } from '../list/testData'
@@ -32,16 +31,6 @@ const MOCK_ORGANIZATION = {
     id: 'acme-corp-id',
 }
 
-const mockAuthenticatedUser = {
-    __typename: 'User',
-    username: 'alice',
-    displayName: 'alice',
-    id: 'b',
-    organizations: {
-        nodes: [MOCK_ORGANIZATION],
-    },
-} as AuthenticatedUser
-
 const buildMocks = (isLicensed = true, hasBatchChanges = true) =>
     new WildcardMockLink([
         {
@@ -55,7 +44,7 @@ export const NewBatchChange: StoryFn = () => (
     <WebStory>
         {props => (
             <MockedTestProvider link={buildMocks()}>
-                <ConfigurationForm authenticatedUser={mockAuthenticatedUser} />
+                <ConfigurationForm />
             </MockedTestProvider>
         )}
     </WebStory>
@@ -67,11 +56,7 @@ export const NewOrgBatchChange: StoryFn = () => (
     <WebStory>
         {props => (
             <MockedTestProvider link={buildMocks()}>
-                <ConfigurationForm
-                    {...props}
-                    initialNamespaceID={MOCK_ORGANIZATION.id}
-                    authenticatedUser={mockAuthenticatedUser}
-                />
+                <ConfigurationForm {...props} initialNamespaceID={MOCK_ORGANIZATION.id} />
             </MockedTestProvider>
         )}
     </WebStory>
@@ -85,7 +70,6 @@ export const ExistingBatchChange: StoryFn = () => (
             <MockedTestProvider link={buildMocks()}>
                 <ConfigurationForm
                     {...props}
-                    authenticatedUser={mockAuthenticatedUser}
                     isReadOnly={true}
                     batchChange={{
                         name: 'My existing batch change',
@@ -113,7 +97,6 @@ export const LicenseAlert: StoryFn = () => (
                 <ConfigurationForm
                     {...props}
                     isReadOnly={true}
-                    authenticatedUser={mockAuthenticatedUser}
                     batchChange={{
                         name: 'My existing batch change',
                         namespace: {

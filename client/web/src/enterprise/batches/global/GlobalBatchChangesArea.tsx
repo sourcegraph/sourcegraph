@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { Routes, Route } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 
 import type { Scalars } from '@sourcegraph/shared/src/graphql-operations'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
@@ -102,7 +102,7 @@ export const GlobalBatchChangesArea: React.FunctionComponent<React.PropsWithChil
 
 const AuthenticatedCreateBatchChangePage = withAuthenticatedUser<
     CreateBatchChangePageProps & { authenticatedUser: AuthenticatedUser }
->(props => <CreateBatchChangePage {...props} authenticatedUser={props.authenticatedUser} />)
+>(props => <CreateBatchChangePage {...props} />)
 
 export interface NamespaceBatchChangesAreaProps extends Props {
     namespaceID: Scalars['ID']

@@ -119,3 +119,6 @@ var searchJobSchema string
 //
 //go:embed telemetry.graphql
 var telemetrySchema string
+
+//go:embed viewer.graphql
+var viewerSchema string

@@ -1,4 +1,4 @@
-import React, { type FC, useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState, type FC } from 'react'
 
 import AlertCircleIcon from 'mdi-react/AlertCircleIcon'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -8,7 +8,7 @@ import type { Settings, SettingsCascadeProps } from '@sourcegraph/shared/src/set
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
-import { Button, Icon, LoadingSpinner, H3, H4, Alert } from '@sourcegraph/wildcard'
+import { Alert, Button, H3, H4, Icon, LoadingSpinner } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
 import { HeroPage } from '../../../../components/HeroPage'
@@ -30,7 +30,7 @@ import { BatchSpecContextProvider, useBatchSpecContext, type BatchSpecContextSta
 import { ActionsMenu, ActionsMenuMode } from '../execute/ActionsMenu'
 import { ActionButtons } from '../header/ActionButtons'
 import { BatchChangeHeader } from '../header/BatchChangeHeader'
-import { TabBar, type TabsConfig, type TabKey } from '../TabBar'
+import { TabBar, type TabKey, type TabsConfig } from '../TabBar'
 
 import { DownloadSpecModal } from './DownloadSpecModal'
 import { EditorFeedbackPanel } from './editor/EditorFeedbackPanel'
@@ -98,9 +98,7 @@ export const EditBatchSpecPage: FC<EditBatchSpecPageProps> = props => {
     )
 }
 
-interface EditBatchSpecPageContentProps extends SettingsCascadeProps<Settings>, TelemetryV2Props {
-    authenticatedUser: AuthenticatedUser | null
-}
+interface EditBatchSpecPageContentProps extends SettingsCascadeProps<Settings>, TelemetryV2Props {}
 
 const EditBatchSpecPageContent: React.FunctionComponent<
     React.PropsWithChildren<EditBatchSpecPageContentProps>
@@ -129,7 +127,6 @@ const MemoizedEditBatchSpecPageContent: React.FunctionComponent<
     batchSpec,
     editor,
     errors,
-    authenticatedUser,
     telemetryRecorder,
 }) {
     const navigate = useNavigate()
@@ -268,7 +265,7 @@ const MemoizedEditBatchSpecPageContent: React.FunctionComponent<
             <TabBar activeTabKey={activeTabKey} tabsConfig={tabsConfig} />
 
             {activeTabKey === 'configuration' ? (
-                <ConfigurationForm isReadOnly={true} batchChange={batchChange} authenticatedUser={authenticatedUser} />
+                <ConfigurationForm isReadOnly={true} batchChange={batchChange} />
             ) : (
                 <div className={styles.form}>
                     <LibraryPane

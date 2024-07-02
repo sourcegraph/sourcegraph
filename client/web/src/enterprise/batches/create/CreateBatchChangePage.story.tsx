@@ -49,7 +49,6 @@ export const ExperimentalExecutionDisabled: StoryFn = () => (
             <CreateBatchChangePage
                 {...props}
                 headingElement="h1"
-                authenticatedUser={mockAuthenticatedUser}
                 settingsCascade={{
                     ...EMPTY_SETTINGS_CASCADE,
                     final: { experimentalFeatures: { batchChangesExecution: false } },
@@ -87,7 +86,6 @@ export const ExperimentalExecutionEnabled: StoryFn = () => (
             <CreateBatchChangePage
                 {...props}
                 headingElement="h1"
-                authenticatedUser={mockAuthenticatedUser}
                 settingsCascade={{
                     ...EMPTY_SETTINGS_CASCADE,
                     subjects: [
@@ -109,7 +107,6 @@ export const ExperimentalExecutionEnabledFromOrgNamespace: StoryFn = () => (
                 {...props}
                 headingElement="h1"
                 initialNamespaceID={MOCK_ORGANIZATION.id}
-                authenticatedUser={mockAuthenticatedUser}
                 settingsCascade={{
                     ...EMPTY_SETTINGS_CASCADE,
                     final: {
@@ -134,7 +131,6 @@ export const ExperimentalExecutionEnabledFromUserNamespace: StoryFn = () => (
                 {...props}
                 headingElement="h1"
                 initialNamespaceID={mockAuthenticatedUser.id}
-                authenticatedUser={mockAuthenticatedUser}
                 settingsCascade={{
                     ...EMPTY_SETTINGS_CASCADE,
                     final: {
