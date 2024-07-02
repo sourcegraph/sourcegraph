@@ -1,0 +1,25 @@
+name: Cody context filters tests change
+on:
+  pull_request_target:
+    paths:
+      - 'cmd/frontend/internal/codycontext/testdata/enterprise_filter_test_data.json'
+jobs:
+  comment-on-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Existing Comments
+        id: check-comments
+        run: |
+          COMMENT_IDENTIFIER="cody-context-filters-test-dataset-release-required"
+          COMMENTS_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+          COMMENTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" $COMMENTS_URL)
+          echo "::set-output name=already_commented::$(echo \"$COMMENTS\" | grep -Fq -- \"$COMMENT_IDENTIFIER\" && echo 'true' || echo 'false')"
+
+      - name: Create Comment
+        if: steps.check-comments.outputs.already_commented == 'false'
+        run: |
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          COMMENT_URL="https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
+          COMMENT_IDENTIFIER="cody-context-filters-test-dataset-release-required"
+          COMMENT="> [!IMPORTANT]  \n> This PR changes the Cody context filters test dataset, which is shared among Cody clients. Please consider releasing a new version of [@sourcegraph/cody-context-filters-test-dataset](https://www.npmjs.com/package/@sourcegraph/cody-context-filters-test-dataset) to ensure consistency across all implementations.\n <!-- $COMMENT_IDENTIFIER -->"
+          curl -s -H "Authorization: token ${GITHUB_TOKEN}" -X POST $COMMENT_URL -d "{\"body\":\"$COMMENT\"}"
