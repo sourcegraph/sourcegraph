@@ -62,7 +62,7 @@ func (s fakeOwnService) RulesetForRepo(context.Context, api.RepoName, api.RepoID
 	return s.Ruleset, nil
 }
 
-// ResolverOwnersWithType here behaves in line with production
+// ResolveOwnersWithType here behaves in line with production
 // OwnService implementation in case handle/email cannot be associated
 // with anything - defaults to a Person with a nil person entity.
 func (s fakeOwnService) ResolveOwnersWithType(_ context.Context, owners []*codeownerspb.Owner) ([]codeowners.ResolvedOwner, error) {

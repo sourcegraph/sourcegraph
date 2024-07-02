@@ -406,7 +406,7 @@ Hi there! Somebody (likely you) {{.Change}} for the user {{.Username}} on Source
 `,
 })
 
-// SendUserEmailOnAccessTokenCreation sends the user an email that an access
+// SendUserEmailOnAccessTokenChange sends the user an email that an access
 // token has been created or deleted.
 func (e *userEmails) SendUserEmailOnAccessTokenChange(ctx context.Context, id int32, tokenName string, deleted bool) error {
 	usr, email, err := e.loadUserForEmail(ctx, id)

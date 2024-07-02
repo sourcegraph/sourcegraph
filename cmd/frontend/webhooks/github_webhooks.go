@@ -136,7 +136,7 @@ func (h *GitHubWebhook) getExternalService(r *http.Request, body []byte) (*types
 	return e, nil
 }
 
-// findExternalService is the slow path for validating an incoming webhook against a configured
+// findAndValidateExternalService is the slow path for validating an incoming webhook against a configured
 // external service, it iterates over all configured external services and attempts to match
 // the signature to the configured secret
 // TODO: delete this once old style webhooks are deprecated

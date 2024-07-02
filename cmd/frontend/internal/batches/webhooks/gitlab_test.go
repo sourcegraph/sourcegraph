@@ -935,7 +935,7 @@ func createGitLabExternalService(t *testing.T, ctx context.Context, esStore data
 	return es
 }
 
-// createGitLabExternalService creates a mock GitHub service with a valid
+// createGitHubExternalService creates a mock GitHub service with a valid
 // configuration, including the secrets "super" and "secret".
 func createGitHubExternalService(t *testing.T, ctx context.Context, esStore database.ExternalServiceStore) *types.ExternalService {
 	es := &types.ExternalService{
