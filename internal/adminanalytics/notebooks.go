@@ -15,7 +15,7 @@ type Notebooks struct {
 }
 
 func (s *Notebooks) Creations() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"SearchNotebookCreated"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"notebook.create"})
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (s *Notebooks) Creations() (*AnalyticsFetcher, error) {
 }
 
 func (s *Notebooks) Views() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"SearchNotebookPageViewed"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"notebook.view"})
 	if err != nil {
 		return nil, err
 	}
@@ -50,8 +50,8 @@ func (s *Notebooks) Views() (*AnalyticsFetcher, error) {
 
 func (s *Notebooks) BlockRuns() (*AnalyticsFetcher, error) {
 	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{
-		"SearchNotebookRunAllBlocks",
-		"SearchNotebookRunBlock",
+		"notebook.blocks.runAll",
+		"notebook.block.run",
 	})
 	if err != nil {
 		return nil, err

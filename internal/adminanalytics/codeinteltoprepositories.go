@@ -45,23 +45,23 @@ func GetCodeIntelTopRepositories(ctx context.Context, db database.DB, cache bool
 			SELECT *
 			FROM (
 				SELECT
-					(argument->>'repositoryId')::int AS repo_id,
+					(public_argument->>'repositoryId')::int AS repo_id,
 					(argument->>'languageId')::text AS lang,
 					(
 						CASE
-						WHEN name = 'codeintel.lsifDefinitions.xrepo'                                      THEN 'crossRepo'
-						WHEN name = 'codeintel.lsifDefinitions'                                            THEN 'precise'
-						WHEN name = 'codeintel.lsifReferences.xrepo'                                       THEN 'crossRepo'
-						WHEN name = 'codeintel.lsifReferences'                                             THEN 'precise'
-						WHEN name = 'codeintel.searchDefinitions.xrepo'                                    THEN 'crossRepo'
-						WHEN name = 'codeintel.searchReferences.xrepo'                                     THEN 'crossRepo'
-						WHEN name = 'findReferences'                    AND source = 'CODEHOSTINTEGRATION' THEN 'codeHost'
-						WHEN name = 'findReferences'                    AND source = 'WEB'                 THEN 'inApp'
-						WHEN name = 'goToDefinition.preloaded'          AND source = 'CODEHOSTINTEGRATION' THEN 'codeHost'
-						WHEN name = 'goToDefinition.preloaded'          AND source = 'WEB'                 THEN 'inApp'
-						WHEN name = 'goToDefinition'                    AND source = 'CODEHOSTINTEGRATION' THEN 'codeHost'
-						WHEN name = 'goToDefinition'                    AND source = 'WEB'                 THEN 'inApp'
-						WHEN name = 'codeintel.searchDefinitions'                                          THEN 'inApp'
+						WHEN name = 'blob.codeintel.lsifDefinitions.xrepo'                              THEN 'crossRepo'
+						WHEN name = 'blob.codeintel.lsifDefinitions'                                    THEN 'precise'
+						WHEN name = 'blob.codeintel.lsifReferences.xrepo'                               THEN 'crossRepo'
+						WHEN name = 'blob.codeintel.lsifReferences'                                     THEN 'precise'
+						WHEN name = 'blob.codeintel.searchDefinitions.xrepo'                            THEN 'crossRepo'
+						WHEN name = 'blob.codeintel.searchReferences.xrepo'                             THEN 'crossRepo'
+						WHEN name = 'blob.findReferences.executed'           AND source != 'server.web' THEN 'codeHost'
+						WHEN name = 'blob.findReferences.executed'           AND source = 'server.web'  THEN 'inApp'
+						WHEN name = 'blob.goToDefinition.preloaded.executed' AND source != 'server.web' THEN 'codeHost'
+						WHEN name = 'blob.goToDefinition.preloaded.executed' AND source = 'server.web'  THEN 'inApp'
+						WHEN name = 'blob.goToDefinition.executed'           AND source != 'server.web' THEN 'codeHost'
+						WHEN name = 'blob.goToDefinition.executed'           AND source = 'server.web'  THEN 'inApp'
+						WHEN name = 'blob.codeintel.searchDefinitions'                                  THEN 'inApp'
 						ELSE NULL
 						END
 					) AS kind,
@@ -83,11 +83,11 @@ func GetCodeIntelTopRepositories(ctx context.Context, db database.DB, cache bool
 			kind,
 			(
 				CASE
-				WHEN name = 'codeintel.lsifDefinitions.xrepo' THEN 'precise'
-				WHEN name = 'codeintel.lsifDefinitions'       THEN 'precise'
-				WHEN name = 'codeintel.lsifHover'             THEN 'precise'
-				WHEN name = 'codeintel.lsifReferences.xrepo'  THEN 'precise'
-				WHEN name = 'codeintel.lsifReferences'        THEN 'precise'
+				WHEN name = 'blob.codeintel.lsifDefinitions.xrepo' THEN 'precise'
+				WHEN name = 'blob.codeintel.lsifDefinitions'       THEN 'precise'
+				WHEN name = 'blob.codeintel.lsifHover'             THEN 'precise'
+				WHEN name = 'blob.codeintel.lsifReferences.xrepo'  THEN 'precise'
+				WHEN name = 'blob.codeintel.lsifReferences'        THEN 'precise'
 				ELSE                                               'search-based'
 				END
 			) AS precision,

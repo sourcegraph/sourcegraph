@@ -15,7 +15,7 @@ type Search struct {
 }
 
 func (s *Search) Searches() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"SearchResultsQueried"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"search.results.query"})
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (s *Search) Searches() (*AnalyticsFetcher, error) {
 }
 
 func (s *Search) ResultClicks() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"SearchResultClicked"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"search.result.area.click"})
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *Search) ResultClicks() (*AnalyticsFetcher, error) {
 }
 
 func (s *Search) FileViews() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"ViewBlob"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"blob.view", "repo.blob.view"})
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +66,8 @@ func (s *Search) FileViews() (*AnalyticsFetcher, error) {
 
 func (s *Search) FileOpens() (*AnalyticsFetcher, error) {
 	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{
-		"GoToCodeHostClicked",
-		"vscode.open.file",
-		"openInAtom.open.file",
-		"openineditor.open.file",
-		"openInWebstorm.open.file",
+		"repo.goToCodeHost.click",
+		"blob.openInEditor.click",
 	})
 	if err != nil {
 		return nil, err
@@ -88,7 +85,7 @@ func (s *Search) FileOpens() (*AnalyticsFetcher, error) {
 }
 
 func (s *Search) CodeCopied() (*AnalyticsFetcher, error) {
-	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"CodeCopied"})
+	nodesQuery, summaryQuery, err := makeEventLogsQueries(s.DateRange, s.Grouping, []string{"code.copy", "repo.blob.code.copy", "notebook.code.copy"})
 	if err != nil {
 		return nil, err
 	}

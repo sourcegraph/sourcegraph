@@ -41,14 +41,14 @@ func GetCodeIntelByLanguage(ctx context.Context, db database.DB, cache bool, dat
 			WHERE
 				timestamp BETWEEN $1 AND $2 AND
 				name IN (
-					'codeintel.searchDefinitions',
-					'codeintel.searchDefinitions.xrepo',
-					'codeintel.searchReferences',
-					'codeintel.searchReferences.xrepo',
-					'codeintel.lsifDefinitions',
-					'codeintel.lsifDefinitions.xrepo',
-					'codeintel.lsifReferences',
-					'codeintel.lsifReferences.xrepo'
+					'blob.codeintel.searchDefinitions',
+					'blob.codeintel.searchDefinitions.xrepo',
+					'blob.codeintel.searchReferences',
+					'blob.codeintel.searchReferences.xrepo',
+					'blob.codeintel.lsifDefinitions',
+					'blob.codeintel.lsifDefinitions.xrepo',
+					'blob.codeintel.lsifReferences',
+					'blob.codeintel.lsifReferences.xrepo'
 				)
 		) sub
 		GROUP BY language, precision;

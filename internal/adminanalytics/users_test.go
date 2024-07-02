@@ -71,16 +71,16 @@ func TestUserActivityLastMonth(t *testing.T) {
 	now := bod(time.Now())
 
 	eventLogs := []EventLogRow{
-		{"SearchNotebookCreated", 100000, "1", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 100000, "2", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 200000, "3", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "4", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "6", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 0, "7", now.AddDate(0, 0, 1)},
-		{"SearchNotebookCreated", 0, "backend", now.AddDate(0, 0, -5)},
-		{"ViewSignIn", 300000, "8", now.AddDate(0, 0, -5)},
+		{"notebook.create", 100000, "1", now.AddDate(0, 0, -5)},
+		{"notebook.create", 100000, "2", now.AddDate(0, 0, -5)},
+		{"notebook.create", 200000, "3", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "4", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "5", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "5", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "6", now.AddDate(0, -2, 0)},
+		{"notebook.create", 0, "7", now.AddDate(0, 0, 1)},
+		{"notebook.create", 0, "backend", now.AddDate(0, 0, -5)},
+		{"auth.signIn.view", 300000, "8", now.AddDate(0, 0, -5)},
 	}
 
 	employeeUsers, err := createEmployees(db)
@@ -88,7 +88,7 @@ func TestUserActivityLastMonth(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, user := range employeeUsers {
-		eventLogs = append(eventLogs, EventLogRow{"SearchNotebookCreated", user.ID, "abc", now.AddDate(0, 0, -5)})
+		eventLogs = append(eventLogs, EventLogRow{"notebook.create", user.ID, "abc", now.AddDate(0, 0, -5)})
 	}
 
 	err = createEventLogs(db, eventLogs)
@@ -169,19 +169,19 @@ func TestUserFrequencyLastMonth(t *testing.T) {
 	now := bod(time.Now())
 
 	eventLogs := []EventLogRow{
-		{"SearchNotebookCreated", 100000, "1", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 100000, "2", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 100000, "2", now.AddDate(0, 0, -4)},
-		{"SearchNotebookCreated", 100000, "2", now.AddDate(0, 0, -3)},
-		{"SearchNotebookCreated", 200000, "3", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 200000, "3", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "4", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, 0, -5)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, 0, -4)},
-		{"SearchNotebookCreated", 0, "6", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 0, "7", now.AddDate(0, 0, 1)},
-		{"SearchNotebookCreated", 0, "backend", now.AddDate(0, 0, -5)},
-		{"ViewSignIn", 300000, "8", now.AddDate(0, 0, -5)},
+		{"notebook.create", 100000, "1", now.AddDate(0, 0, -5)},
+		{"notebook.create", 100000, "2", now.AddDate(0, 0, -5)},
+		{"notebook.create", 100000, "2", now.AddDate(0, 0, -4)},
+		{"notebook.create", 100000, "2", now.AddDate(0, 0, -3)},
+		{"notebook.create", 200000, "3", now.AddDate(0, 0, -5)},
+		{"notebook.create", 200000, "3", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "4", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "5", now.AddDate(0, 0, -5)},
+		{"notebook.create", 0, "5", now.AddDate(0, 0, -4)},
+		{"notebook.create", 0, "6", now.AddDate(0, -2, 0)},
+		{"notebook.create", 0, "7", now.AddDate(0, 0, 1)},
+		{"notebook.create", 0, "backend", now.AddDate(0, 0, -5)},
+		{"auth.signIn.view", 300000, "8", now.AddDate(0, 0, -5)},
 	}
 
 	employeeUsers, err := createEmployees(db)
@@ -189,7 +189,7 @@ func TestUserFrequencyLastMonth(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, user := range employeeUsers {
-		eventLogs = append(eventLogs, EventLogRow{"SearchNotebookCreated", user.ID, "abc", now.AddDate(0, 0, -5)})
+		eventLogs = append(eventLogs, EventLogRow{"notebook.create", user.ID, "abc", now.AddDate(0, 0, -5)})
 	}
 
 	err = createEventLogs(db, eventLogs)
@@ -259,20 +259,20 @@ func TestMonthlyActiveUsersLast3Month(t *testing.T) {
 	now := bod(time.Now())
 
 	eventLogs := []EventLogRow{
-		{"SearchNotebookCreated", 100000, "1", now},
-		{"SearchNotebookCreated", 100000, "1", now},
-		{"SearchNotebookCreated", 100000, "1", now.AddDate(0, -1, 0)},
-		{"SearchNotebookCreated", 100000, "1", now.AddDate(0, -1, 0)},
-		{"SearchNotebookCreated", 100000, "1", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 200000, "3", now},
-		{"SearchNotebookCreated", 200000, "3", now.AddDate(0, -1, 0)},
-		{"SearchNotebookCreated", 0, "4", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 0, "5", now.AddDate(0, -2, 0)},
-		{"SearchNotebookCreated", 0, "6", now.AddDate(0, -3, 0)},
-		{"SearchNotebookCreated", 0, "7", now.AddDate(0, 0, 1)},
-		{"SearchNotebookCreated", 0, "backend", now},
-		{"ViewSignIn", 300000, "8", now},
+		{"notebook.create", 100000, "1", now},
+		{"notebook.create", 100000, "1", now},
+		{"notebook.create", 100000, "1", now.AddDate(0, -1, 0)},
+		{"notebook.create", 100000, "1", now.AddDate(0, -1, 0)},
+		{"notebook.create", 100000, "1", now.AddDate(0, -2, 0)},
+		{"notebook.create", 200000, "3", now},
+		{"notebook.create", 200000, "3", now.AddDate(0, -1, 0)},
+		{"notebook.create", 0, "4", now.AddDate(0, -2, 0)},
+		{"notebook.create", 0, "5", now.AddDate(0, -2, 0)},
+		{"notebook.create", 0, "5", now.AddDate(0, -2, 0)},
+		{"notebook.create", 0, "6", now.AddDate(0, -3, 0)},
+		{"notebook.create", 0, "7", now.AddDate(0, 0, 1)},
+		{"notebook.create", 0, "backend", now},
+		{"auth.signIn.view", 300000, "8", now},
 	}
 
 	employeeUsers, err := createEmployees(db)
@@ -280,7 +280,7 @@ func TestMonthlyActiveUsersLast3Month(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, user := range employeeUsers {
-		eventLogs = append(eventLogs, EventLogRow{"SearchNotebookCreated", user.ID, "abc", now})
+		eventLogs = append(eventLogs, EventLogRow{"notebook.create", user.ID, "abc", now})
 	}
 
 	err = createEventLogs(db, eventLogs)
