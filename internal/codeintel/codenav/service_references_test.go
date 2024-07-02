@@ -1,6 +1,7 @@
 package codenav
 
 import (
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 )
 
@@ -13,5 +14,5 @@ var (
 	testRange6 = shared.Range{Start: shared.Position{Line: 16, Character: 26}, End: shared.Position{Line: 36, Character: 46}}
 
 	mockPath   = repoRelPath("s1/main.go")
-	mockCommit = "deadbeef"
+	mockCommit = api.CommitID("deadbeef")
 )

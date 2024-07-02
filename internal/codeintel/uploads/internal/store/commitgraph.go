@@ -300,7 +300,7 @@ func (s *store) FindClosestCompletedUploads(ctx context.Context, opts shared.Upl
 
 	conds := makeFindClosestProcessUploadsConditions(opts)
 	// TODO(id: completed-state-check) Make sure we only return uploads with state = 'completed' here
-	query := sqlf.Sprintf(findClosestCompletedUploadsQuery, makeVisibleUploadsQuery(opts.RepositoryID, opts.Commit), sqlf.Join(conds, " AND "))
+	query := sqlf.Sprintf(findClosestCompletedUploadsQuery, makeVisibleUploadsQuery(int(opts.RepositoryID), string(opts.Commit)), sqlf.Join(conds, " AND "))
 
 	uploads, err := scanCompletedUploads(s.db.Query(ctx, query))
 	if err != nil {

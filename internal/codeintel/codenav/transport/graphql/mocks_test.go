@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	scip "github.com/sourcegraph/scip/bindings/go/scip"
+	api "github.com/sourcegraph/sourcegraph/internal/api"
 	codenav "github.com/sourcegraph/sourcegraph/internal/codeintel/codenav"
 	shared1 "github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 	core "github.com/sourcegraph/sourcegraph/internal/codeintel/core"
@@ -285,7 +286,7 @@ func NewMockCodeNavService() *MockCodeNavService {
 			},
 		},
 		SnapshotForDocumentFunc: &CodeNavServiceSnapshotForDocumentFunc{
-			defaultHook: func(context.Context, int, string, core.RepoRelPath, int) (r0 []shared1.SnapshotData, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) (r0 []shared1.SnapshotData, r1 error) {
 				return
 			},
 		},
@@ -362,7 +363,7 @@ func NewStrictMockCodeNavService() *MockCodeNavService {
 			},
 		},
 		SnapshotForDocumentFunc: &CodeNavServiceSnapshotForDocumentFunc{
-			defaultHook: func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
+			defaultHook: func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
 				panic("unexpected invocation of MockCodeNavService.SnapshotForDocument")
 			},
 		},
@@ -1704,15 +1705,15 @@ func (c CodeNavServiceSearchBasedUsagesFuncCall) Results() []interface{} {
 // SnapshotForDocument method of the parent MockCodeNavService instance is
 // invoked.
 type CodeNavServiceSnapshotForDocumentFunc struct {
-	defaultHook func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error)
-	hooks       []func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error)
+	defaultHook func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error)
+	hooks       []func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error)
 	history     []CodeNavServiceSnapshotForDocumentFuncCall
 	mutex       sync.Mutex
 }
 
 // SnapshotForDocument delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockCodeNavService) SnapshotForDocument(v0 context.Context, v1 int, v2 string, v3 core.RepoRelPath, v4 int) ([]shared1.SnapshotData, error) {
+func (m *MockCodeNavService) SnapshotForDocument(v0 context.Context, v1 api.RepoID, v2 api.CommitID, v3 core.RepoRelPath, v4 int) ([]shared1.SnapshotData, error) {
 	r0, r1 := m.SnapshotForDocumentFunc.nextHook()(v0, v1, v2, v3, v4)
 	m.SnapshotForDocumentFunc.appendCall(CodeNavServiceSnapshotForDocumentFuncCall{v0, v1, v2, v3, v4, r0, r1})
 	return r0, r1
@@ -1721,7 +1722,7 @@ func (m *MockCodeNavService) SnapshotForDocument(v0 context.Context, v1 int, v2 
 // SetDefaultHook sets function that is called when the SnapshotForDocument
 // method of the parent MockCodeNavService instance is invoked and the hook
 // queue is empty.
-func (f *CodeNavServiceSnapshotForDocumentFunc) SetDefaultHook(hook func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error)) {
+func (f *CodeNavServiceSnapshotForDocumentFunc) SetDefaultHook(hook func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error)) {
 	f.defaultHook = hook
 }
 
@@ -1730,7 +1731,7 @@ func (f *CodeNavServiceSnapshotForDocumentFunc) SetDefaultHook(hook func(context
 // invokes the hook at the front of the queue and discards it. After the
 // queue is empty, the default hook function is invoked for any future
 // action.
-func (f *CodeNavServiceSnapshotForDocumentFunc) PushHook(hook func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error)) {
+func (f *CodeNavServiceSnapshotForDocumentFunc) PushHook(hook func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1739,19 +1740,19 @@ func (f *CodeNavServiceSnapshotForDocumentFunc) PushHook(hook func(context.Conte
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *CodeNavServiceSnapshotForDocumentFunc) SetDefaultReturn(r0 []shared1.SnapshotData, r1 error) {
-	f.SetDefaultHook(func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *CodeNavServiceSnapshotForDocumentFunc) PushReturn(r0 []shared1.SnapshotData, r1 error) {
-	f.PushHook(func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
+	f.PushHook(func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
 		return r0, r1
 	})
 }
 
-func (f *CodeNavServiceSnapshotForDocumentFunc) nextHook() func(context.Context, int, string, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
+func (f *CodeNavServiceSnapshotForDocumentFunc) nextHook() func(context.Context, api.RepoID, api.CommitID, core.RepoRelPath, int) ([]shared1.SnapshotData, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1790,10 +1791,10 @@ type CodeNavServiceSnapshotForDocumentFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 int
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
-	Arg2 string
+	Arg2 api.CommitID
 	// Arg3 is the value of the 4th argument passed to this method
 	// invocation.
 	Arg3 core.RepoRelPath

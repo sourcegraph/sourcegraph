@@ -310,7 +310,7 @@ func (s *Service) getUploadLocation(ctx context.Context, args RequestArgs, reque
 // commit. If the translation fails, then the original commit and range are returned along with a false-valued
 // flag.
 func (s *Service) getSourceRange(ctx context.Context, args RequestArgs, requestState RequestState, repositoryID int, commit string, path core.RepoRelPath, rng shared.Range) (string, shared.Range, bool, error) {
-	if repositoryID != args.RepositoryID {
+	if repositoryID != int(args.RepositoryID) {
 		// No diffs between distinct repositories
 		return commit, rng, true, nil
 	}
@@ -318,7 +318,7 @@ func (s *Service) getSourceRange(ctx context.Context, args RequestArgs, requestS
 	if sourceRange, ok, err := requestState.GitTreeTranslator.GetTargetCommitRangeFromSourceRange(ctx, commit, path.RawValue(), rng, true); err != nil {
 		return "", shared.Range{}, false, errors.Wrap(err, "gitTreeTranslator.GetTargetCommitRangeFromSourceRange")
 	} else if ok {
-		return args.Commit, sourceRange, true, nil
+		return string(args.Commit), sourceRange, true, nil
 	}
 
 	return commit, rng, false, nil
@@ -520,7 +520,7 @@ func (s *Service) filterCachedUploadsContainingPath(ctx context.Context, trace o
 	filteredUploads, err := filterUploadsImpl(ctx, s.lsifstore, cachedUploads, path,
 		/*skipDBCheck*/ func(upload uploadsshared.CompletedUpload) bool {
 			// See NOTE(id: path-based-upload-filtering)
-			return upload.Commit == requestState.Commit && path == requestState.Path
+			return api.CommitID(upload.Commit) == requestState.Commit && path == requestState.Path
 		})
 	if err != nil {
 		trace.Warn("FindDocumentIDs failed", log.Error(err))
@@ -690,8 +690,8 @@ func filterUploadsWithCommits(ctx context.Context, commitCache CommitCache, uplo
 	rcs := make([]RepositoryCommit, 0, len(uploads))
 	for _, upload := range uploads {
 		rcs = append(rcs, RepositoryCommit{
-			RepositoryID: upload.RepositoryID,
-			Commit:       upload.Commit,
+			RepositoryID: api.RepoID(upload.RepositoryID),
+			Commit:       api.CommitID(upload.Commit),
 		})
 	}
 	exists, err := commitCache.ExistsBatch(ctx, rcs)
@@ -840,10 +840,10 @@ func (s *Service) getVisibleUpload(ctx context.Context, line, character int, upl
 	}, true, nil
 }
 
-func (s *Service) SnapshotForDocument(ctx context.Context, repositoryID int, commit string, path core.RepoRelPath, uploadID int) (data []shared.SnapshotData, err error) {
+func (s *Service) SnapshotForDocument(ctx context.Context, repositoryID api.RepoID, commit api.CommitID, path core.RepoRelPath, uploadID int) (data []shared.SnapshotData, err error) {
 	ctx, _, endObservation := s.operations.snapshotForDocument.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
-		attribute.Int("repoID", repositoryID),
-		attribute.String("commit", commit),
+		attribute.Int("repoID", int(repositoryID)),
+		attribute.String("commit", string(commit)),
 		attribute.String("path", path.RawValue()),
 		attribute.Int("uploadID", uploadID),
 	}})
@@ -1036,8 +1036,8 @@ func (e SyntacticUsagesError) Error() string {
 
 func (s *Service) getSyntacticUpload(ctx context.Context, trace observation.TraceLogger, args UsagesForSymbolArgs) (uploadsshared.CompletedUpload, *SyntacticUsagesError) {
 	uploads, err := s.GetClosestCompletedUploadsForBlob(ctx, uploadsshared.UploadMatchingOptions{
-		RepositoryID:       int(args.Repo.ID),
-		Commit:             string(args.Commit),
+		RepositoryID:       args.Repo.ID,
+		Commit:             args.Commit,
 		Indexer:            uploadsshared.SyntacticIndexer,
 		Path:               args.Path,
 		RootToPathMatching: uploadsshared.RootMustEnclosePath,

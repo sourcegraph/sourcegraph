@@ -36,7 +36,7 @@ func TestHasRepository(t *testing.T) {
 		name := fmt.Sprintf("repositoryID=%d", testCase.repositoryID)
 
 		t.Run(name, func(t *testing.T) {
-			exists, err := store.HasRepository(context.Background(), testCase.repositoryID)
+			exists, err := store.HasRepository(context.Background(), api.RepoID(testCase.repositoryID))
 			if err != nil {
 				t.Fatalf("unexpected error checking if repository exists: %s", err)
 			}
@@ -70,7 +70,7 @@ func TestHasCommit(t *testing.T) {
 		name := fmt.Sprintf("repositoryID=%d commit=%s", testCase.repositoryID, testCase.commit)
 
 		t.Run(name, func(t *testing.T) {
-			exists, err := store.HasCommit(context.Background(), testCase.repositoryID, testCase.commit)
+			exists, err := store.HasCommit(context.Background(), api.RepoID(testCase.repositoryID), api.CommitID(testCase.commit))
 			if err != nil {
 				t.Fatalf("unexpected error checking if commit exists: %s", err)
 			}

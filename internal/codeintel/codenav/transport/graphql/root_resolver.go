@@ -95,7 +95,7 @@ func (r *rootResolver) GitBlobLSIFData(ctx context.Context, args *resolverstubs.
 		authz.DefaultSubRepoPermsChecker,
 		r.gitserverClient,
 		args.Repo,
-		string(args.Commit),
+		args.Commit,
 		// OK to use Unchecked function based on contract of GraphQL API
 		core.NewRepoRelPathUnchecked(args.Path),
 		r.maximumIndexesPerMonikerSearch,
@@ -127,8 +127,8 @@ func (r *rootResolver) CodeGraphData(ctx context.Context, opts *resolverstubs.Co
 			indexer = shared.SyntacticIndexer
 		}
 		uploads, err := r.svc.GetClosestCompletedUploadsForBlob(ctx, shared.UploadMatchingOptions{
-			RepositoryID:       int(opts.Repo.ID),
-			Commit:             string(opts.Commit),
+			RepositoryID:       opts.Repo.ID,
+			Commit:             opts.Commit,
 			Path:               opts.Path,
 			RootToPathMatching: shared.RootMustEnclosePath,
 			Indexer:            indexer,

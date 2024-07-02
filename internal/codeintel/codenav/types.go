@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/core"
 	uploadsshared "github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
@@ -51,16 +52,16 @@ func (s *qualifiedMonikerSet) add(qualifiedMoniker precise.QualifiedMonikerData)
 }
 
 type RequestArgs struct {
-	RepositoryID int
-	Commit       string
+	RepositoryID api.RepoID
+	Commit       api.CommitID
 	Limit        int
 	RawCursor    string
 }
 
 func (args *RequestArgs) Attrs() []attribute.KeyValue {
 	return []attribute.KeyValue{
-		attribute.Int("repositoryID", args.RepositoryID),
-		attribute.String("commit", args.Commit),
+		attribute.Int("repositoryID", int(args.RepositoryID)),
+		attribute.String("commit", string(args.Commit)),
 		attribute.Int("limit", args.Limit),
 	}
 }

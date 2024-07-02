@@ -9,6 +9,7 @@ import (
 	"github.com/dgraph-io/ristretto"
 	"github.com/sourcegraph/go-diff/diff"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	sgtypes "github.com/sourcegraph/sourcegraph/internal/types"
@@ -66,7 +67,7 @@ type gitTreeTranslator struct {
 // of the commit field and pass that as a parameter for increased clarity at call-sites.
 type translationBase struct {
 	repo   *sgtypes.Repo
-	commit string
+	commit api.CommitID
 }
 
 func (r *translationBase) GetRepoID() int {
@@ -107,7 +108,7 @@ func NewGitTreeTranslator(client gitserver.Client, base *translationBase, hunkCa
 // indicating that the translation was successful. If reverse is true, then the source and
 // target commits are swapped.
 func (g *gitTreeTranslator) GetTargetCommitPositionFromSourcePosition(ctx context.Context, commit string, path string, px shared.Position, reverse bool) (shared.Position, bool, error) {
-	hunks, err := g.readCachedHunks(ctx, g.base.repo, g.base.commit, commit, path, reverse)
+	hunks, err := g.readCachedHunks(ctx, g.base.repo, string(g.base.commit), commit, path, reverse)
 	if err != nil {
 		return shared.Position{}, false, err
 	}
@@ -121,7 +122,7 @@ func (g *gitTreeTranslator) GetTargetCommitPositionFromSourcePosition(ctx contex
 // that the translation was successful. If reverse is true, then the source and target commits
 // are swapped.
 func (g *gitTreeTranslator) GetTargetCommitRangeFromSourceRange(ctx context.Context, commit string, path string, rx shared.Range, reverse bool) (shared.Range, bool, error) {
-	hunks, err := g.readCachedHunks(ctx, g.base.repo, g.base.commit, commit, path, reverse)
+	hunks, err := g.readCachedHunks(ctx, g.base.repo, string(g.base.commit), commit, path, reverse)
 	if err != nil {
 		return shared.Range{}, false, err
 	}

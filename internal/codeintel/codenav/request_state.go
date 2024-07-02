@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/authz"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/core"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/uploads/shared"
@@ -28,15 +29,15 @@ type RequestState struct {
 
 	authChecker authz.SubRepoPermissionChecker
 
-	RepositoryID int
-	Commit       string
+	RepositoryID api.RepoID
+	Commit       api.CommitID
 	Path         core.RepoRelPath
 }
 
 func (r *RequestState) Attrs() []attribute.KeyValue {
 	out := []attribute.KeyValue{
-		attribute.Int("repositoryID", r.RepositoryID),
-		attribute.String("commit", r.Commit),
+		attribute.Int("repositoryID", int(r.RepositoryID)),
+		attribute.String("commit", string(r.Commit)),
 		attribute.String("path", r.Path.RawValue()),
 	}
 	if r.dataLoader != nil {
@@ -52,14 +53,14 @@ func NewRequestState(
 	authChecker authz.SubRepoPermissionChecker,
 	gitserverClient gitserver.Client,
 	repo *sgTypes.Repo,
-	commit string,
+	commit api.CommitID,
 	path core.RepoRelPath,
 	maxIndexes int,
 	hunkCache HunkCache,
 ) RequestState {
 	r := &RequestState{
 		// repoStore:    repoStore,
-		RepositoryID: int(repo.ID),
+		RepositoryID: repo.ID,
 		Commit:       commit,
 		Path:         path,
 	}
@@ -95,7 +96,7 @@ func (r *RequestState) SetUploadsDataLoader(uploads []shared.CompletedUpload) {
 	}
 }
 
-func (r *RequestState) SetLocalGitTreeTranslator(client gitserver.Client, repo *sgTypes.Repo, commit string, hunkCache HunkCache) {
+func (r *RequestState) SetLocalGitTreeTranslator(client gitserver.Client, repo *sgTypes.Repo, commit api.CommitID, hunkCache HunkCache) {
 	args := &translationBase{
 		repo:   repo,
 		commit: commit,

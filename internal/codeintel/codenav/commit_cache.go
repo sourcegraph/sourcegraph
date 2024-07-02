@@ -16,26 +16,26 @@ import (
 
 type CommitCache interface {
 	ExistsBatch(ctx context.Context, commits []RepositoryCommit) ([]bool, error)
-	SetResolvableCommit(repositoryID int, commit string)
+	SetResolvableCommit(repositoryID api.RepoID, commit api.CommitID)
 }
 
 type RepositoryCommit struct {
-	RepositoryID int
-	Commit       string
+	RepositoryID api.RepoID
+	Commit       api.CommitID
 }
 
 type commitCache struct {
 	repoStore       database.RepoStore
 	gitserverClient gitserver.Client
 	mutex           sync.RWMutex
-	cache           map[int]map[string]bool
+	cache           map[api.RepoID]map[api.CommitID]bool
 }
 
 func NewCommitCache(repoStore database.RepoStore, client gitserver.Client) CommitCache {
 	return &commitCache{
 		repoStore:       repoStore,
 		gitserverClient: client,
-		cache:           map[int]map[string]bool{},
+		cache:           map[api.RepoID]map[api.CommitID]bool{},
 	}
 }
 
@@ -91,16 +91,16 @@ func (c *commitCache) ExistsBatch(ctx context.Context, commits []RepositoryCommi
 func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryCommit) (_ []bool, err error) {
 	repositoryIDSet := collections.NewSet[api.RepoID]()
 	for _, rc := range commits {
-		repositoryIDSet.Add(api.RepoID(rc.RepositoryID))
+		repositoryIDSet.Add(rc.RepositoryID)
 	}
 	repositoryIDs := repositoryIDSet.Values()
 	repos, err := c.repoStore.GetReposSetByIDs(ctx, repositoryIDs...)
 	if err != nil {
 		return nil, err
 	}
-	repositoryNames := make(map[int]api.RepoName, len(repos))
+	repositoryNames := make(map[api.RepoID]api.RepoName, len(repos))
 	for _, v := range repos {
-		repositoryNames[int(v.ID)] = v.Name
+		repositoryNames[v.ID] = v.Name
 	}
 
 	// Build the batch request to send to gitserver. Because we only add repo/commit
@@ -108,9 +108,9 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 	// unresolvable repo. We also ensure that we only represent each repo/commit pair
 	// ONCE in the input slice.
 
-	repoCommits := make([]repoCommit, 0, len(commits))    // input to CommitsExist
-	indexMapping := make(map[int]int, len(commits))       // map commits[i] to relevant repoCommits[i]
-	commitsRepresentedInInput := map[int]map[string]int{} // used to populate index mapping
+	repoCommits := make([]repoCommit, 0, len(commits))                 // input to CommitsExist
+	indexMapping := make(map[int]int, len(commits))                    // map commits[i] to relevant repoCommits[i]
+	commitsRepresentedInInput := map[api.RepoID]map[api.CommitID]int{} // used to populate index mapping
 
 	for i, rc := range commits {
 		repoName, ok := repositoryNames[rc.RepositoryID]
@@ -123,7 +123,7 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 
 		// Ensure our second-level mapping exists
 		if _, ok := commitsRepresentedInInput[rc.RepositoryID]; !ok {
-			commitsRepresentedInInput[rc.RepositoryID] = map[string]int{}
+			commitsRepresentedInInput[rc.RepositoryID] = map[api.CommitID]int{}
 		}
 
 		if n, ok := commitsRepresentedInInput[rc.RepositoryID][rc.Commit]; ok {
@@ -138,7 +138,7 @@ func (c *commitCache) commitsExist(ctx context.Context, commits []RepositoryComm
 
 			repoCommits = append(repoCommits, repoCommit{
 				repoName: repoName,
-				commitID: api.CommitID(rc.Commit),
+				commitID: rc.Commit,
 			})
 		}
 	}
@@ -175,11 +175,11 @@ type repoCommit struct {
 }
 
 // set marks the given repository and commit as valid and resolvable by gitserver.
-func (c *commitCache) SetResolvableCommit(repositoryID int, commit string) {
+func (c *commitCache) SetResolvableCommit(repositoryID api.RepoID, commit api.CommitID) {
 	c.setInternal(repositoryID, commit, true)
 }
 
-func (c *commitCache) getInternal(repositoryID int, commit string) (bool, bool) {
+func (c *commitCache) getInternal(repositoryID api.RepoID, commit api.CommitID) (bool, bool) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
@@ -192,12 +192,12 @@ func (c *commitCache) getInternal(repositoryID int, commit string) (bool, bool) 
 	return false, false
 }
 
-func (c *commitCache) setInternal(repositoryID int, commit string, exists bool) {
+func (c *commitCache) setInternal(repositoryID api.RepoID, commit api.CommitID, exists bool) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	if _, ok := c.cache[repositoryID]; !ok {
-		c.cache[repositoryID] = map[string]bool{}
+		c.cache[repositoryID] = map[api.CommitID]bool{}
 	}
 
 	c.cache[repositoryID][commit] = exists

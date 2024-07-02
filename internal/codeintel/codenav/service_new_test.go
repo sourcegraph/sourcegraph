@@ -36,6 +36,18 @@ func TestGetDefinitions(t *testing.T) {
 		mockRequestState.SetLocalCommitCache(mockRepoStore, mockGitserverClient)
 
 		mockRequestState.SetLocalGitTreeTranslator(mockGitserverClient, &sgtypes.Repo{}, mockCommit, hunkCache)
+		mockRequest := PositionalRequestArgs{
+			RequestArgs: RequestArgs{
+				RepositoryID: 51,
+				Commit:       mockCommit,
+				Limit:        50,
+			},
+			Path:      mockPath,
+			Line:      10,
+			Character: 20,
+		}
+		mockCommit := string(mockCommit)
+
 		uploads := []uploadsshared.CompletedUpload{
 			{ID: 50, Commit: mockCommit, Root: "sub1/"},
 			{ID: 51, Commit: mockCommit, Root: "sub2/"},
@@ -53,16 +65,6 @@ func TestGetDefinitions(t *testing.T) {
 		}
 		mockLsifStore.ExtractDefinitionLocationsFromPositionFunc.PushReturn(locations, nil, nil)
 
-		mockRequest := PositionalRequestArgs{
-			RequestArgs: RequestArgs{
-				RepositoryID: 51,
-				Commit:       mockCommit,
-				Limit:        50,
-			},
-			Path:      mockPath,
-			Line:      10,
-			Character: 20,
-		}
 		adjustedLocations, _, err := svc.GetDefinitions(context.Background(), mockRequest, mockRequestState, Cursor{})
 		if err != nil {
 			t.Fatalf("unexpected error querying definitions: %s", err)

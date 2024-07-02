@@ -8,6 +8,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/core"
 	"github.com/sourcegraph/sourcegraph/internal/executor"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -85,7 +86,7 @@ func (u Upload) SizeStats() UploadSizeStats {
 // The State must be 'completed', see TODO(id: completed-state-check).
 type CompletedUpload struct {
 	ID                int        `json:"id"`
-	Commit            string     `json:"commit"`
+	Commit            string     `json:"commit"` // TODO: This type ought to be api.CommitID
 	Root              string     `json:"root"`
 	VisibleAtTip      bool       `json:"visibleAtTip"`
 	UploadedAt        time.Time  `json:"uploadedAt"`
@@ -96,7 +97,7 @@ type CompletedUpload struct {
 	ProcessAfter      *time.Time `json:"processAfter"`
 	NumResets         int        `json:"numResets"`
 	NumFailures       int        `json:"numFailures"`
-	RepositoryID      int        `json:"repositoryId"`
+	RepositoryID      int        `json:"repositoryId"` // TODO: This type ought to be api.RepoID, but that is 32-bit
 	RepositoryName    string     `json:"repositoryName"`
 	Indexer           string     `json:"indexer"`
 	IndexerVersion    string     `json:"indexerVersion"`
@@ -354,8 +355,8 @@ type UploadsWithRepositoryNamespace struct {
 }
 
 type UploadMatchingOptions struct {
-	RepositoryID int
-	Commit       string
+	RepositoryID api.RepoID
+	Commit       api.CommitID
 	Path         core.RepoRelPath
 	// RootToPathMatching describes how the root for which a SCIP index was uploaded
 	// should be matched to the provided Path for a file or directory
@@ -375,8 +376,8 @@ type UploadMatchingOptions struct {
 
 func (u *UploadMatchingOptions) Attrs() []attribute.KeyValue {
 	return []attribute.KeyValue{
-		attribute.Int("repositoryID", u.RepositoryID),
-		attribute.String("commit", u.Commit),
+		attribute.Int("repositoryID", int(u.RepositoryID)),
+		attribute.String("commit", string(u.Commit)),
 		attribute.String("path", u.Path.RawValue()),
 		attribute.String("rootToPathMatching", string(u.RootToPathMatching)),
 		attribute.String("indexer", u.Indexer),

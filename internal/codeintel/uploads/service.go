@@ -142,7 +142,7 @@ func (s *Service) InferClosestUploads(ctx context.Context, opts shared.UploadMat
 	// graph as dirty so it's updated for subsequent requests.
 
 	commits, err := s.gitserverClient.Commits(ctx, repo.Name, gitserver.CommitsOptions{
-		Ranges: []string{opts.Commit},
+		Ranges: []string{string(opts.Commit)},
 		N:      numAncestors,
 		Order:  gitserver.CommitsOrderTopoDate,
 	})
@@ -157,7 +157,7 @@ func (s *Service) InferClosestUploads(ctx context.Context, opts shared.UploadMat
 		return nil, errors.Wrap(err, "dbstore.FindClosestCompletedUploadsFromGraphFragment")
 	}
 
-	if err := s.store.SetRepositoryAsDirty(ctx, opts.RepositoryID); err != nil {
+	if err := s.store.SetRepositoryAsDirty(ctx, int(opts.RepositoryID)); err != nil {
 		return nil, errors.Wrap(err, "dbstore.MarkRepositoryAsDirty")
 	}
 

@@ -583,12 +583,12 @@ func NewMockStore() *MockStore {
 			},
 		},
 		HasCommitFunc: &StoreHasCommitFunc{
-			defaultHook: func(context.Context, int, string) (r0 bool, r1 error) {
+			defaultHook: func(context.Context, api.RepoID, api.CommitID) (r0 bool, r1 error) {
 				return
 			},
 		},
 		HasRepositoryFunc: &StoreHasRepositoryFunc{
-			defaultHook: func(context.Context, int) (r0 bool, r1 error) {
+			defaultHook: func(context.Context, api.RepoID) (r0 bool, r1 error) {
 				return
 			},
 		},
@@ -910,12 +910,12 @@ func NewStrictMockStore() *MockStore {
 			},
 		},
 		HasCommitFunc: &StoreHasCommitFunc{
-			defaultHook: func(context.Context, int, string) (bool, error) {
+			defaultHook: func(context.Context, api.RepoID, api.CommitID) (bool, error) {
 				panic("unexpected invocation of MockStore.HasCommit")
 			},
 		},
 		HasRepositoryFunc: &StoreHasRepositoryFunc{
-			defaultHook: func(context.Context, int) (bool, error) {
+			defaultHook: func(context.Context, api.RepoID) (bool, error) {
 				panic("unexpected invocation of MockStore.HasRepository")
 			},
 		},
@@ -5289,15 +5289,15 @@ func (c StoreHardDeleteUploadsByIDsFuncCall) Results() []interface{} {
 // StoreHasCommitFunc describes the behavior when the HasCommit method of
 // the parent MockStore instance is invoked.
 type StoreHasCommitFunc struct {
-	defaultHook func(context.Context, int, string) (bool, error)
-	hooks       []func(context.Context, int, string) (bool, error)
+	defaultHook func(context.Context, api.RepoID, api.CommitID) (bool, error)
+	hooks       []func(context.Context, api.RepoID, api.CommitID) (bool, error)
 	history     []StoreHasCommitFuncCall
 	mutex       sync.Mutex
 }
 
 // HasCommit delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockStore) HasCommit(v0 context.Context, v1 int, v2 string) (bool, error) {
+func (m *MockStore) HasCommit(v0 context.Context, v1 api.RepoID, v2 api.CommitID) (bool, error) {
 	r0, r1 := m.HasCommitFunc.nextHook()(v0, v1, v2)
 	m.HasCommitFunc.appendCall(StoreHasCommitFuncCall{v0, v1, v2, r0, r1})
 	return r0, r1
@@ -5305,7 +5305,7 @@ func (m *MockStore) HasCommit(v0 context.Context, v1 int, v2 string) (bool, erro
 
 // SetDefaultHook sets function that is called when the HasCommit method of
 // the parent MockStore instance is invoked and the hook queue is empty.
-func (f *StoreHasCommitFunc) SetDefaultHook(hook func(context.Context, int, string) (bool, error)) {
+func (f *StoreHasCommitFunc) SetDefaultHook(hook func(context.Context, api.RepoID, api.CommitID) (bool, error)) {
 	f.defaultHook = hook
 }
 
@@ -5313,7 +5313,7 @@ func (f *StoreHasCommitFunc) SetDefaultHook(hook func(context.Context, int, stri
 // HasCommit method of the parent MockStore instance invokes the hook at the
 // front of the queue and discards it. After the queue is empty, the default
 // hook function is invoked for any future action.
-func (f *StoreHasCommitFunc) PushHook(hook func(context.Context, int, string) (bool, error)) {
+func (f *StoreHasCommitFunc) PushHook(hook func(context.Context, api.RepoID, api.CommitID) (bool, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -5322,19 +5322,19 @@ func (f *StoreHasCommitFunc) PushHook(hook func(context.Context, int, string) (b
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *StoreHasCommitFunc) SetDefaultReturn(r0 bool, r1 error) {
-	f.SetDefaultHook(func(context.Context, int, string) (bool, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID, api.CommitID) (bool, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *StoreHasCommitFunc) PushReturn(r0 bool, r1 error) {
-	f.PushHook(func(context.Context, int, string) (bool, error) {
+	f.PushHook(func(context.Context, api.RepoID, api.CommitID) (bool, error) {
 		return r0, r1
 	})
 }
 
-func (f *StoreHasCommitFunc) nextHook() func(context.Context, int, string) (bool, error) {
+func (f *StoreHasCommitFunc) nextHook() func(context.Context, api.RepoID, api.CommitID) (bool, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -5372,10 +5372,10 @@ type StoreHasCommitFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 int
+	Arg1 api.RepoID
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
-	Arg2 string
+	Arg2 api.CommitID
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 bool
@@ -5399,15 +5399,15 @@ func (c StoreHasCommitFuncCall) Results() []interface{} {
 // StoreHasRepositoryFunc describes the behavior when the HasRepository
 // method of the parent MockStore instance is invoked.
 type StoreHasRepositoryFunc struct {
-	defaultHook func(context.Context, int) (bool, error)
-	hooks       []func(context.Context, int) (bool, error)
+	defaultHook func(context.Context, api.RepoID) (bool, error)
+	hooks       []func(context.Context, api.RepoID) (bool, error)
 	history     []StoreHasRepositoryFuncCall
 	mutex       sync.Mutex
 }
 
 // HasRepository delegates to the next hook function in the queue and stores
 // the parameter and result values of this invocation.
-func (m *MockStore) HasRepository(v0 context.Context, v1 int) (bool, error) {
+func (m *MockStore) HasRepository(v0 context.Context, v1 api.RepoID) (bool, error) {
 	r0, r1 := m.HasRepositoryFunc.nextHook()(v0, v1)
 	m.HasRepositoryFunc.appendCall(StoreHasRepositoryFuncCall{v0, v1, r0, r1})
 	return r0, r1
@@ -5415,7 +5415,7 @@ func (m *MockStore) HasRepository(v0 context.Context, v1 int) (bool, error) {
 
 // SetDefaultHook sets function that is called when the HasRepository method
 // of the parent MockStore instance is invoked and the hook queue is empty.
-func (f *StoreHasRepositoryFunc) SetDefaultHook(hook func(context.Context, int) (bool, error)) {
+func (f *StoreHasRepositoryFunc) SetDefaultHook(hook func(context.Context, api.RepoID) (bool, error)) {
 	f.defaultHook = hook
 }
 
@@ -5423,7 +5423,7 @@ func (f *StoreHasRepositoryFunc) SetDefaultHook(hook func(context.Context, int) 
 // HasRepository method of the parent MockStore instance invokes the hook at
 // the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *StoreHasRepositoryFunc) PushHook(hook func(context.Context, int) (bool, error)) {
+func (f *StoreHasRepositoryFunc) PushHook(hook func(context.Context, api.RepoID) (bool, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -5432,19 +5432,19 @@ func (f *StoreHasRepositoryFunc) PushHook(hook func(context.Context, int) (bool,
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *StoreHasRepositoryFunc) SetDefaultReturn(r0 bool, r1 error) {
-	f.SetDefaultHook(func(context.Context, int) (bool, error) {
+	f.SetDefaultHook(func(context.Context, api.RepoID) (bool, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *StoreHasRepositoryFunc) PushReturn(r0 bool, r1 error) {
-	f.PushHook(func(context.Context, int) (bool, error) {
+	f.PushHook(func(context.Context, api.RepoID) (bool, error) {
 		return r0, r1
 	})
 }
 
-func (f *StoreHasRepositoryFunc) nextHook() func(context.Context, int) (bool, error) {
+func (f *StoreHasRepositoryFunc) nextHook() func(context.Context, api.RepoID) (bool, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -5482,7 +5482,7 @@ type StoreHasRepositoryFuncCall struct {
 	Arg0 context.Context
 	// Arg1 is the value of the 2nd argument passed to this method
 	// invocation.
-	Arg1 int
+	Arg1 api.RepoID
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 bool

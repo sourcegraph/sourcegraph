@@ -517,8 +517,8 @@ func (s *Service) prepareCandidateUploads(
 				ctx,
 				monikers,
 				cursor.DefinitionIDs,
-				args.RepositoryID,
-				args.Commit,
+				int(args.RepositoryID),
+				string(args.Commit),
 				requestState.maximumIndexesPerMonikerSearch, // limit
 				cursor.RemoteUploadOffset,                   // offset
 			)

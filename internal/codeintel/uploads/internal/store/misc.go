@@ -6,19 +6,20 @@ import (
 	"github.com/keegancsmith/sqlf"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/database/basestore"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbutil"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
 // HasRepository determines if there is LSIF data for the given repository.
-func (s *store) HasRepository(ctx context.Context, repositoryID int) (_ bool, err error) {
+func (s *store) HasRepository(ctx context.Context, repositoryID api.RepoID) (_ bool, err error) {
 	ctx, _, endObservation := s.operations.hasRepository.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
-		attribute.Int("repositoryID", repositoryID),
+		attribute.Int("repositoryID", int(repositoryID)),
 	}})
 	defer endObservation(1, observation.Args{})
 
-	_, found, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(hasRepositoryQuery, repositoryID)))
+	_, found, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(hasRepositoryQuery, int(repositoryID))))
 	return found, err
 }
 
@@ -27,10 +28,10 @@ SELECT 1 FROM lsif_uploads WHERE state NOT IN ('deleted', 'deleting') AND reposi
 `
 
 // HasCommit determines if the given commit is known for the given repository.
-func (s *store) HasCommit(ctx context.Context, repositoryID int, commit string) (_ bool, err error) {
+func (s *store) HasCommit(ctx context.Context, repositoryID api.RepoID, commit api.CommitID) (_ bool, err error) {
 	ctx, _, endObservation := s.operations.hasCommit.With(ctx, &err, observation.Args{Attrs: []attribute.KeyValue{
-		attribute.Int("repositoryID", repositoryID),
-		attribute.String("commit", commit),
+		attribute.Int("repositoryID", int(repositoryID)),
+		attribute.String("commit", string(commit)),
 	}})
 	defer endObservation(1, observation.Args{})
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/sourcegraph/scip/bindings/go/scip"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/codenav/shared"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/core"
@@ -24,11 +25,13 @@ type CodeNavService interface {
 	// see NOTE(id: closest-uploads-postcondition).
 	GetClosestCompletedUploadsForBlob(context.Context, uploadsshared.UploadMatchingOptions) (_ []uploadsshared.CompletedUpload, err error)
 	VisibleUploadsForPath(ctx context.Context, requestState codenav.RequestState) ([]uploadsshared.CompletedUpload, error)
-	SnapshotForDocument(ctx context.Context, repositoryID int, commit string, path core.RepoRelPath, uploadID int) (data []shared.SnapshotData, err error)
+	SnapshotForDocument(ctx context.Context, repositoryID api.RepoID, commit api.CommitID, path core.RepoRelPath, uploadID int) (data []shared.SnapshotData, err error)
 	SCIPDocument(ctx context.Context, uploadID int, path core.RepoRelPath) (*scip.Document, error)
 	SyntacticUsages(ctx context.Context, args codenav.UsagesForSymbolArgs) (codenav.SyntacticUsagesResult, *codenav.PreviousSyntacticSearch, *codenav.SyntacticUsagesError)
 	SearchBasedUsages(ctx context.Context, args codenav.UsagesForSymbolArgs, previous *codenav.PreviousSyntacticSearch) ([]codenav.SearchBasedMatch, error)
 }
+
+var _ CodeNavService = &codenav.Service{}
 
 type AutoIndexingService interface {
 	QueueRepoRev(ctx context.Context, repositoryID int, rev string) error

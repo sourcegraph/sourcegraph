@@ -1295,7 +1295,7 @@ func (t *FindClosestCompletedUploadsTestCase) uploadMatchingOptions() shared.Upl
 	if !t.rootMustEnclosePath {
 		matching = shared.RootEnclosesPathOrPathEnclosesRoot
 	}
-	return shared.UploadMatchingOptions{50, t.commit, core.NewRepoRelPathUnchecked(t.file), matching, t.indexer}
+	return shared.UploadMatchingOptions{50, api.CommitID(t.commit), core.NewRepoRelPathUnchecked(t.file), matching, t.indexer}
 }
 
 func testFindClosestCompletedUploads(t *testing.T, store Store, testCases []FindClosestCompletedUploadsTestCase) {

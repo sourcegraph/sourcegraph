@@ -53,8 +53,8 @@ func (a *GitBlobLSIFDataArgs) Options() shared.UploadMatchingOptions {
 		matching = shared.RootEnclosesPathOrPathEnclosesRoot
 	}
 	return shared.UploadMatchingOptions{
-		RepositoryID: int(a.Repo.ID),
-		Commit:       string(a.Commit),
+		RepositoryID: a.Repo.ID,
+		Commit:       a.Commit,
 		// OK to use Unchecked method since we expect a repo-root relative
 		// path from the GraphQL API arguments; upload root relative paths
 		// are largely an implementation detail.
