@@ -61,7 +61,7 @@ interface UsersListProps {
     renderAssignmentModal: (
         onCancel: () => void,
         onSuccess: (user: { username: string }) => void,
-        user: SiteUser
+        users: SiteUser[]
     ) => React.ReactNode
 }
 
@@ -177,9 +177,7 @@ export const UsersList: React.FunctionComponent<UsersListProps> = ({ onActionEnd
     const [roleAssignmentModal, setRoleAssignmentModal] = useState<React.ReactNode>(null)
 
     const openRoleAssignmentModal = (selectedUsers: SiteUser[]): void => {
-        setRoleAssignmentModal(
-            renderAssignmentModal(closeRoleAssignmentModal, onRoleAssignmentSuccess, selectedUsers[0])
-        )
+        setRoleAssignmentModal(renderAssignmentModal(closeRoleAssignmentModal, onRoleAssignmentSuccess, selectedUsers))
     }
     const closeRoleAssignmentModal = (): void => setRoleAssignmentModal(null)
 
@@ -326,6 +324,7 @@ export const UsersList: React.FunctionComponent<UsersListProps> = ({ onActionEnd
                                 icon: mdiBadgeAccount,
                                 onClick: openRoleAssignmentModal,
                                 condition: ([user]) => !user?.deletedAt,
+                                bulk: true,
                             },
                             {
                                 key: 'unlock-user',

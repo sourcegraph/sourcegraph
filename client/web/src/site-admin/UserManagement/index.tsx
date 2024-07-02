@@ -20,7 +20,7 @@ export interface UsersManagementProps extends TelemetryV2Props {
     renderAssignmentModal: (
         onCancel: () => void,
         onSuccess: (user: { username: string }) => void,
-        user: SiteUser
+        users: SiteUser[]
     ) => React.ReactNode
 }
 
