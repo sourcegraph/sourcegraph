@@ -152,3 +152,12 @@
   is_enterprise: true
   introduced_version_major: 5
   introduced_version_minor: 0
+- id: 24
+  team: source
+  component: frontend-db.code_hosts
+  description: Backfill code hosts from existing code host connections.
+  non_destructive: true
+  introduced_version_major: 5
+  introduced_version_minor: 1
+  deprecated_version_major: 5
+  deprecated_version_minor: 3
