@@ -2926,6 +2926,14 @@
           "default": "enabled",
           "enum": ["enabled", "disabled"]
         },
+        "disableClientConfigAPI": {
+          "description": "Should not be set. If set to true, disables the use of the new client config API. This new API has no user-facing effect, this opt-out is provided only as an escape hatch in case of issues.",
+          "type": "boolean",
+          "!go": {
+            "pointer": true
+          },
+          "deprecationMessage": "This opt-out feature flag will be removed soon."
+        },
         "completionModel": {
           "description": "The model used for code completion. If using the default provider 'sourcegraph', a reasonable default model will be set.\n NOTE: The Anthropic messages API does not support model names like claude-2 or claude-instant-1 where only the major version is specified as they are retired. We recommend using a specific model identifier as specified here https://docs.anthropic.com/claude/docs/models-overview#model-comparison ",
           "type": "string",

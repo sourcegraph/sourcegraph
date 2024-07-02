@@ -7496,6 +7496,11 @@ type CodyLLMConfiguration {
     """
     smartContextWindow: String!
     """
+    Disable Cody clients from using the new server-side config API. This is an escape-hatch for any issues
+    that may arise. This field will be removed in the future.
+    """
+    disableClientConfigAPI: Boolean!
+    """
     Name of the model being used for fast chat.
     """
     fastChatModel: String!

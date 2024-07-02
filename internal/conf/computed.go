@@ -931,12 +931,15 @@ func GetCompletionsConfig(siteConfig schema.SiteConfiguration) (c *conftypes.Com
 		completionsConfig.SmartContextWindow = "enabled"
 	}
 
+	disableClientConfigAPI := completionsConfig.DisableClientConfigAPI != nil && *completionsConfig.DisableClientConfigAPI
+
 	computedConfig := &conftypes.CompletionsConfig{
 		Provider:               conftypes.CompletionsProviderName(completionsConfig.Provider),
 		AccessToken:            completionsConfig.AccessToken,
 		ChatModel:              completionsConfig.ChatModel,
 		ChatModelMaxTokens:     completionsConfig.ChatModelMaxTokens,
 		SmartContextWindow:     completionsConfig.SmartContextWindow,
+		DisableClientConfigAPI: disableClientConfigAPI,
 		FastChatModel:          completionsConfig.FastChatModel,
 		FastChatModelMaxTokens: completionsConfig.FastChatModelMaxTokens,
 		AzureUseDeprecatedCompletionsAPIForOldModels: completionsConfig.AzureUseDeprecatedCompletionsAPIForOldModels,

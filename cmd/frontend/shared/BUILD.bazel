@@ -15,6 +15,7 @@ go_library(
         "//cmd/frontend/internal/authz",
         "//cmd/frontend/internal/batches",
         "//cmd/frontend/internal/cli",
+        "//cmd/frontend/internal/clientconfig",
         "//cmd/frontend/internal/codeintel",
         "//cmd/frontend/internal/codemonitors",
         "//cmd/frontend/internal/codycontext",

@@ -680,6 +680,8 @@ type Completions struct {
 	CompletionModel string `json:"completionModel,omitempty"`
 	// CompletionModelMaxTokens description: The maximum number of tokens to use as client when talking to completionModel. If not set, clients need to set their own limit.
 	CompletionModelMaxTokens int `json:"completionModelMaxTokens,omitempty"`
+	// DisableClientConfigAPI description: Feature flag opt-out. Do not set this unless you know what you are doing. This will be removed in the future. Disables use of the new Cody client config API.
+	DisableClientConfigAPI *bool `json:"disableClientConfigAPI,omitempty"`
 	// Enabled description: DEPRECATED. Use cody.enabled instead to turn Cody on/off.
 	Enabled *bool `json:"enabled,omitempty"`
 	// Endpoint description: The endpoint under which to reach the provider. Currently only used for provider types "sourcegraph", "openai" and "anthropic". The default values are "https://cody-gateway.sourcegraph.com", "https://api.openai.com/v1/chat/completions", and "https://api.anthropic.com/v1/messages" for Sourcegraph, OpenAI, and Anthropic, respectively.
