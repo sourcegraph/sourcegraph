@@ -17,7 +17,6 @@ import {
     Text,
     Container,
     Icon,
-    H3,
     LoadingSpinner,
     Collapse,
     H4,
@@ -282,9 +281,8 @@ export const CodyProCheckoutForm: React.FunctionComponent<CodyProCheckoutFormPro
     return (
         <>
             {initialSeatCount + planChange.seatCountDiff >= 30 && (
-                <CodyAlert variant="purple">
-                    <H3>Explore an enterprise plan</H3>
-                    <Text className="mb-0">
+                <CodyAlert title="Explore an enterprise plan" variant="purple">
+                    <Text>
                         Team plans are limited to 50 users.{' '}
                         <Link to="https://sourcegraph.com/contact/sales/">Contact sales</Link> to learn more.
                     </Text>

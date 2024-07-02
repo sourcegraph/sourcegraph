@@ -123,7 +123,7 @@ export const GettingStarted: React.FC<
                 )}
 
                 {isCodyChatPage ? (
-                    <div className={classNames(styles.section, 'mb-3')}>
+                    <div className={classNames('mt-auto', 'mb-3')}>
                         <fieldset>
                             <legend>
                                 <H4 className="mb-1">Choose the context for this conversation</H4>

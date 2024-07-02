@@ -2,24 +2,34 @@ import React from 'react'
 
 import classNames from 'classnames'
 
+import { H2 } from '@sourcegraph/wildcard'
+
+import { AlertBadge } from './AlertBadge'
+import { CodyProBadge } from './CodyProBadge'
+
 import styles from './CodyAlert.module.scss'
 
 interface CodyAlertProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant: 'purple' | 'greenSuccess' | 'purpleSuccess' | 'purpleCodyPro' | 'greenCodyPro' | 'error'
+    variant: 'purple' | 'green' | 'error'
     className?: string
+    title?: string
+    badge?: 'CodyPro' | 'Alert'
     children: React.ReactNode
 }
 
-export const CodyAlert: React.FunctionComponent<CodyAlertProps> = ({ variant, className, children, ...props }) => {
+export const CodyAlert: React.FunctionComponent<CodyAlertProps> = ({
+    variant,
+    className,
+    title,
+    children,
+    badge,
+    ...props
+}) => {
     const alertClassName = classNames(
-        'mb-4',
         styles.alert,
         {
-            [styles.purpleNoIcon]: variant === 'purple',
-            [styles.greenSuccess]: variant === 'greenSuccess',
-            [styles.purpleSuccess]: variant === 'purpleSuccess',
-            [styles.purpleCodyPro]: variant === 'purpleCodyPro',
-            [styles.greenCodyPro]: variant === 'greenCodyPro',
+            [styles.purple]: variant === 'purple',
+            [styles.green]: variant === 'green',
             [styles.error]: variant === 'error',
         },
         className
@@ -28,7 +38,15 @@ export const CodyAlert: React.FunctionComponent<CodyAlertProps> = ({ variant, cl
     return (
         // eslint-disable-next-line no-restricted-syntax
         <div className={alertClassName} {...props}>
-            {children}
+            {badge && (
+                <div className={styles.badge}>
+                    <div className={styles.cardClip}>{badge === 'CodyPro' ? <CodyProBadge /> : <AlertBadge />}</div>
+                </div>
+            )}
+            <div className={styles.content}>
+                <H2>{title}</H2>
+                <div>{children}</div>
+            </div>
         </div>
     )
 }

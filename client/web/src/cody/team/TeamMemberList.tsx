@@ -214,7 +214,7 @@ export const TeamMemberList: FunctionComponent<TeamMemberListProps> = ({
     return (
         <>
             {actionResult && (
-                <CodyAlert variant={actionResult.isError ? 'error' : 'greenSuccess'}>{actionResult.message}</CodyAlert>
+                <CodyAlert variant={actionResult.isError ? 'error' : 'green'}>{actionResult.message}</CodyAlert>
             )}
             <CodyContainer className={classNames('p-4 border bg-1 d-flex flex-column')}>
                 <H2 className="text-lg font-semibold mb-2">Team members</H2>
