@@ -45,6 +45,7 @@ go_test(
     srcs = [
         "enqueuer_test.go",
         "scheduler_test.go",
+        "store_test.go",
     ],
     embed = [":syntactic_indexing"],
     tags = [
@@ -56,8 +57,8 @@ go_test(
         "//internal/codeintel/policies",
         "//internal/codeintel/reposcheduler",
         "//internal/codeintel/shared",
-        "//internal/codeintel/syntactic_indexing/internal/testutils",
         "//internal/codeintel/syntactic_indexing/jobstore",
+        "//internal/codeintel/syntactic_indexing/testkit",
         "//internal/codeintel/uploads",
         "//internal/database",
         "//internal/database/dbtest",

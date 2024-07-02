@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testkit",
+    srcs = [
+        "no_op_upload_store.go",
+        "testutils.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/testkit",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/api",
+        "//internal/codeintel/syntactic_indexing/jobstore",
+        "//internal/database",
+        "//internal/uploadstore",
+        "//lib/errors",
+        "//lib/iterator",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_stretchr_testify//require",
+    ],
+)

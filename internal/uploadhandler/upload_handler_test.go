@@ -421,7 +421,7 @@ func newTestUploadHandler(t *testing.T, dbStore DBStore[testUploadMetadata], upl
 	}
 
 	return NewUploadHandler(
-		logtest.Scoped(t),
+		observation.TestContextTB(t),
 		dbStore,
 		uploadStore,
 		NewOperations(observation.TestContextTB(t), "test"),

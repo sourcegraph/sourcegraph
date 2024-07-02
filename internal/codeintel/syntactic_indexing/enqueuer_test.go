@@ -8,14 +8,14 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/reposcheduler"
-	"github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/internal/testutils"
+	testutils "github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/testkit"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/jobstore"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
-func TestSyntacticIndexingStoreEnqueue(t *testing.T) {
+func TestSyntacticIndexingEnqueuer(t *testing.T) {
 	/*
 		The purpose of this test is to verify that methods InsertIndexes and IsQueued
 		correctly interact with each other, and that the records inserted using those methods

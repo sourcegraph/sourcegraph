@@ -2,6 +2,7 @@ package gitops
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -46,6 +47,7 @@ func GetBranchChangedFiles(baseBranch, commit string) ([]string, error) {
 		return nil, err
 	}
 
+	fmt.Fprintln(os.Stderr, "git diff --name-only", diffArgs)
 	output, err := exec.Command("git", "diff", "--name-only", diffArgs).CombinedOutput()
 	if err != nil {
 		return nil, err

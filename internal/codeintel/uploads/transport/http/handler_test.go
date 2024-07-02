@@ -117,6 +117,7 @@ func TestHandleEnqueueAuth(t *testing.T) {
 
 		auth.AuthMiddleware(
 			newHandler(
+				observation.TestContextTB(t),
 				repoStore,
 				mockUploadStore,
 				mockDBStore,

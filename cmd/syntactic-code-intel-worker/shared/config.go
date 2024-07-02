@@ -5,16 +5,18 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/shared/lsifuploadstore"
 	"github.com/sourcegraph/sourcegraph/internal/env"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
 type IndexingWorkerConfig struct {
 	env.BaseConfig
-	PollInterval         time.Duration
-	Concurrency          int
-	MaximumRuntimePerJob time.Duration
-	CliPath              string
+	PollInterval          time.Duration
+	Concurrency           int
+	MaximumRuntimePerJob  time.Duration
+	CliPath               string
+	LSIFUploadStoreConfig *lsifuploadstore.Config
 }
 
 type Config struct {
@@ -28,6 +30,8 @@ type Config struct {
 const DefaultPort = 3188
 
 func (c *IndexingWorkerConfig) Load() {
+	c.LSIFUploadStoreConfig = &lsifuploadstore.Config{}
+	c.LSIFUploadStoreConfig.Load()
 
 	c.PollInterval = c.GetInterval("SYNTACTIC_CODE_INTEL_INDEXING_POLL_INTERVAL", "1s", "Interval between queries to the repository queue")
 	c.Concurrency = c.GetInt("SYNTACTIC_CODE_INTEL_INDEXING_CONCURRENCY", "1", "The maximum number of repositories that can be processed concurrently.")

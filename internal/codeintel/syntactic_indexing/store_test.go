@@ -1,4 +1,4 @@
-package jobstore
+package syntactic_indexing
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
-	"github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/internal/testutils"
+	"github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/jobstore"
+	testutils "github.com/sourcegraph/sourcegraph/internal/codeintel/syntactic_indexing/testkit"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
@@ -30,7 +31,7 @@ func TestSyntacticIndexingStoreDequeue(t *testing.T) {
 	sqlDB := dbtest.NewDB(t)
 	db := database.NewDB(observationContext.Logger, sqlDB)
 
-	jobStore, err := NewStoreWithDB(observationContext, sqlDB)
+	jobStore, err := jobstore.NewStoreWithDB(observationContext, sqlDB)
 	require.NoError(t, err, "unexpected error creating dbworker stores")
 	store := jobStore.DBWorkerStore()
 
@@ -40,14 +41,16 @@ func TestSyntacticIndexingStoreDequeue(t *testing.T) {
 
 	require.Equal(t, 0, initCount)
 
+	Queued := jobstore.Queued
+
 	commit1, commit2, commit3 := testutils.MakeCommit(1), testutils.MakeCommit(2), testutils.MakeCommit(3)
 
-	insertIndexRecords(t, db,
+	testutils.InsertSyntacticIndexingRecords(t, db,
 		// Even though this record is the oldest in the queue,
 		// it is associated with a deleted repository.
 		// The view that we use for dequeuing should not return this
 		// record at all, and the first one should still be the record with ID=1
-		SyntacticIndexingJob{
+		jobstore.SyntacticIndexingJob{
 			ID:             500,
 			Commit:         commit3,
 			RepositoryID:   4,
@@ -55,7 +58,7 @@ func TestSyntacticIndexingStoreDequeue(t *testing.T) {
 			State:          Queued,
 			QueuedAt:       time.Now().Add(time.Second * -100),
 		},
-		SyntacticIndexingJob{
+		jobstore.SyntacticIndexingJob{
 			ID:             1,
 			Commit:         commit1,
 			RepositoryID:   1,
@@ -63,7 +66,7 @@ func TestSyntacticIndexingStoreDequeue(t *testing.T) {
 			State:          Queued,
 			QueuedAt:       time.Now().Add(time.Second * -5),
 		},
-		SyntacticIndexingJob{
+		jobstore.SyntacticIndexingJob{
 			ID:             2,
 			Commit:         commit2,
 			RepositoryID:   2,
@@ -71,12 +74,12 @@ func TestSyntacticIndexingStoreDequeue(t *testing.T) {
 			State:          Queued,
 			QueuedAt:       time.Now().Add(time.Second * -2),
 		},
-		SyntacticIndexingJob{
+		jobstore.SyntacticIndexingJob{
 			ID:             3,
 			Commit:         commit3,
 			RepositoryID:   3,
 			RepositoryName: "juicy/mangoes",
-			State:          Processing,
+			State:          jobstore.Processing,
 			QueuedAt:       time.Now().Add(time.Second * -1),
 		},
 	)
@@ -118,7 +121,7 @@ func TestSyntacticIndexingStoreEnqueue(t *testing.T) {
 	db := database.NewDB(observationContext.Logger, sqlDB)
 	ctx := context.Background()
 
-	jobStore, err := NewStoreWithDB(observationContext, sqlDB)
+	jobStore, err := jobstore.NewStoreWithDB(observationContext, sqlDB)
 	require.NoError(t, err, "unexpected error creating dbworker stores")
 	store := jobStore.DBWorkerStore()
 
@@ -130,13 +133,13 @@ func TestSyntacticIndexingStoreEnqueue(t *testing.T) {
 	testutils.InsertRepo(t, db, empanadasRepoId, empanadasRepoName)
 	testutils.InsertRepo(t, db, mangosRepoId, mangosRepoName)
 
-	jobStore.InsertIndexingJobs(ctx, []SyntacticIndexingJob{
+	jobStore.InsertIndexingJobs(ctx, []jobstore.SyntacticIndexingJob{
 		{
 			ID:             1,
 			Commit:         tacosCommit,
 			RepositoryID:   tacosRepoId,
 			RepositoryName: tacosRepoName,
-			State:          Queued,
+			State:          jobstore.Queued,
 			QueuedAt:       time.Now().Add(time.Second * -5),
 		},
 		{
@@ -144,7 +147,7 @@ func TestSyntacticIndexingStoreEnqueue(t *testing.T) {
 			Commit:         empanadasCommit,
 			RepositoryID:   empanadasRepoId,
 			RepositoryName: empanadasRepoName,
-			State:          Queued,
+			State:          jobstore.Queued,
 			QueuedAt:       time.Now().Add(time.Second * -2),
 		},
 	})
