@@ -19,3 +19,9 @@ const GeminiPro = "gemini-pro"
 const Gemini15FlashLatest = "gemini-1.5-flash-latest"
 const Gemini15ProLatest = "gemini-1.5-pro-latest"
 const GeminiProLatest = "gemini-pro-latest"
+
+// Fixed stable versions
+// NOTE: Only the fixed stable versions support context caching.
+// Ref: https://ai.google.dev/gemini-api/docs/caching?lang=node
+const Gemini15Flash001 = "gemini-1.5-flash-001"
+const Gemini15Pro001 = "gemini-1.5-pro-001"

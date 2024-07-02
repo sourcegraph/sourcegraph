@@ -311,6 +311,8 @@ func (c *Config) Load() {
 			google.Gemini15FlashLatest,
 			google.Gemini15ProLatest,
 			google.GeminiProLatest,
+			google.Gemini15Flash001,
+			google.Gemini15Pro001,
 			google.Gemini15Flash,
 			google.Gemini15Pro,
 			google.GeminiPro,
