@@ -27,7 +27,7 @@ func K8S(logger log.Logger, urlspec string) *Map {
 	logger = logger.Scoped("k8s")
 	return &Map{
 		urlspec:   urlspec,
-		discofunk: k8sDiscovery(logger, urlspec, namespace(logger), loadClient),
+		discofunk: k8sDiscovery(logger, urlspec, Namespace(logger), LoadClient),
 	}
 }
 
@@ -189,10 +189,10 @@ func parseURL(rawurl string) (*k8sURL, error) {
 	}, nil
 }
 
-// namespace returns the namespace the pod is currently running in
-// this is done because the k8s client we previously used set the namespace
+// Namespace returns the Namespace the pod is currently running in
+// this is done because the k8s client we previously used set the Namespace
 // when the client was created, the official k8s client does not
-func namespace(logger log.Logger) string {
+func Namespace(logger log.Logger) string {
 	logger = logger.Scoped("namespace")
 	const filename = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 	data, err := os.ReadFile(filename)
@@ -209,7 +209,7 @@ func namespace(logger log.Logger) string {
 	return ns
 }
 
-func loadClient() (client *kubernetes.Clientset, err error) {
+func LoadClient() (client *kubernetes.Clientset, err error) {
 	// Uncomment below to test against a real cluster. This is only important
 	// when you are changing how we interact with the k8s API and you want to
 	// test against the real thing.
@@ -226,7 +226,7 @@ func loadClient() (client *kubernetes.Clientset, err error) {
 		}
 		clientConfig := clientcmd.NewDefaultClientConfig(*c, nil)
 		config, err = clientConfig.ClientConfig()
-		namespace = "prod"
+		Namespace = "prod"
 	*/
 
 	config, err := rest.InClusterConfig()
