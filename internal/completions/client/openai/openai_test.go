@@ -54,8 +54,8 @@ func TestErrStatusNotOK(t *testing.T) {
 
 	t.Run("Stream", func(t *testing.T) {
 		logger := log.Scoped("completions")
-		sendEventFn := func(event types.CompletionResponse) error { return nil }
-		err := mockClient.Stream(context.Background(), logger, compRequest, sendEventFn)
+		responseMetadataCapture := types.NewResponseMetadataCapture(func(types.CompletionResponse) error { return nil })
+		err := mockClient.Stream(context.Background(), logger, compRequest, &responseMetadataCapture)
 		require.Error(t, err)
 
 		autogold.Expect("OpenAI: unexpected status code 429: oh no, please slow down!").Equal(t, err.Error())

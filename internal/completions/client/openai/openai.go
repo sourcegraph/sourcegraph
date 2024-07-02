@@ -86,7 +86,7 @@ func (c *openAIChatCompletionStreamClient) Stream(
 	ctx context.Context,
 	logger log.Logger,
 	request types.CompletionRequest,
-	sendEvent types.SendCompletionEvent) error {
+	responseMetadataCapture *types.ResponseMetadataCapture) error {
 	feature := request.Feature
 	requestParams := request.Parameters
 
@@ -145,7 +145,7 @@ func (c *openAIChatCompletionStreamClient) Stream(
 				Completion: content,
 				StopReason: event.Choices[0].FinishReason,
 			}
-			err = sendEvent(ev)
+			err = responseMetadataCapture.SendEvent(ev)
 			if err != nil {
 				return err
 			}

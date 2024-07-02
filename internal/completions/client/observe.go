@@ -33,7 +33,7 @@ type observedClient struct {
 
 var _ types.CompletionsClient = (*observedClient)(nil)
 
-func (o *observedClient) Stream(ctx context.Context, logger log.Logger, request types.CompletionRequest, send types.SendCompletionEvent) (err error) {
+func (o *observedClient) Stream(ctx context.Context, logger log.Logger, request types.CompletionRequest, responseMetadataCapture *types.ResponseMetadataCapture) (err error) {
 	feature := request.Feature
 	version := request.Version
 	params := request.Parameters
@@ -47,17 +47,18 @@ func (o *observedClient) Stream(ctx context.Context, logger log.Logger, request 
 	})
 	defer endObservation(1, observation.Args{})
 
-	tracedSend := func(event types.CompletionResponse) error {
+	originalCaptureEvent := responseMetadataCapture.SendEvent
+	responseMetadataCapture.SendEvent = func(event types.CompletionResponse) error {
 		if event.StopReason != "" {
 			tr.AddEvent("stopped", attribute.String("reason", event.StopReason))
 		} else {
 			tr.AddEvent("completion", attribute.Int("len", len(event.Completion)))
 		}
 
-		return send(event)
+		return originalCaptureEvent(event)
 	}
 
-	return o.inner.Stream(ctx, logger, request, tracedSend)
+	return o.inner.Stream(ctx, logger, request, responseMetadataCapture)
 }
 
 func (o *observedClient) Complete(ctx context.Context, logger log.Logger, request types.CompletionRequest) (resp *types.CompletionResponse, err error) {

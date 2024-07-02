@@ -336,14 +336,19 @@ func newStreamingResponseHandler(logger log.Logger, db database.DB, feature type
 			Version:    version,
 			Parameters: requestParams,
 		}
-		sendEventFn := func(event types.CompletionResponse) error {
+
+		var responseMetadataCapture types.ResponseMetadataCapture
+		responseMetadataCapture = types.NewResponseMetadataCapture(func(event types.CompletionResponse) error {
 			if !firstEventObserved {
+				responseMetadataCapture.ApplyCapturedMetadata(w)
 				firstEventObserved = true
 				timeToFirstEventMetrics.Observe(time.Since(start).Seconds(), 1, nil, requestParams.Model)
 			}
 			return f.Send(ctx, event)
-		}
-		err := cc.Stream(ctx, logger, compReq, sendEventFn)
+		})
+
+		err := cc.Stream(ctx, logger, compReq, &responseMetadataCapture)
+
 		if err != nil {
 			l := trace.Logger(ctx, logger)
 

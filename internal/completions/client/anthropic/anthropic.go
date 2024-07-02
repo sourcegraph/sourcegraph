@@ -84,7 +84,7 @@ func (a *anthropicClient) Stream(
 	ctx context.Context,
 	logger log.Logger,
 	request types.CompletionRequest,
-	sendEvent types.SendCompletionEvent) error {
+	responseMetadataCapture *types.ResponseMetadataCapture) error {
 
 	feature := request.Feature
 	version := request.Version
@@ -94,6 +94,10 @@ func (a *anthropicClient) Stream(
 	if err != nil {
 		return err
 	}
+
+	responseMetadataCapture.CaptureHeaders(resp.Header)
+	responseMetadataCapture.CaptureStatusCode(resp.StatusCode)
+
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
@@ -139,7 +143,7 @@ func (a *anthropicClient) Stream(
 			continue
 		}
 
-		err = sendEvent(types.CompletionResponse{
+		err = responseMetadataCapture.SendEvent(types.CompletionResponse{
 			Completion: completedString,
 			StopReason: stopReason,
 		})

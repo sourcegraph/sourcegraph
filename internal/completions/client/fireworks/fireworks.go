@@ -116,7 +116,7 @@ func (c *fireworksClient) Stream(
 	ctx context.Context,
 	logger log.Logger,
 	request types.CompletionRequest,
-	sendEvent types.SendCompletionEvent) error {
+	responseMetadataCapture *types.ResponseMetadataCapture) error {
 	feature := request.Feature
 	requestParams := request.Parameters
 	logprobsInclude := uint8(0)
@@ -132,6 +132,10 @@ func (c *fireworksClient) Stream(
 	if err != nil {
 		return err
 	}
+
+	responseMetadataCapture.CaptureHeaders(resp.Header)
+	responseMetadataCapture.CaptureStatusCode(resp.StatusCode)
+
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
@@ -166,7 +170,7 @@ func (c *fireworksClient) Stream(
 				StopReason: event.Choices[0].FinishReason,
 				Logprobs:   accumulatedLogprobs,
 			}
-			err = sendEvent(ev)
+			err = responseMetadataCapture.SendEvent(ev)
 			if err != nil {
 				return err
 			}
@@ -232,10 +236,10 @@ func (c *fireworksClient) makeRequest(ctx context.Context, feature types.Complet
 				Role:    role,
 				Content: m.Text,
 			})
-			// HACK: Replace the ending part of the endpint from `/completions` to `/chat/completions`
+			// HACK: Replace the ending part of the endpoint from `/completions` to `/chat/completions`
 			//
 			// This is _only_ used when running the Fireworks API directly from the SG instance
-			// (without Cody Gateway) and is neccessary because every client can only have one
+			// (without Cody Gateway) and is necessary because every client can only have one
 			// endpoint configured at the moment. If the request is routed to Cody Gateway, the
 			// endpoint will not have `inference/v1/completions` in the URL
 			endpoint = strings.Replace(c.endpoint, "/inference/v1/completions", "/inference/v1/chat/completions", 1)
@@ -249,6 +253,7 @@ func (c *fireworksClient) makeRequest(ctx context.Context, feature types.Complet
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(reqBody))
+
 	if err != nil {
 		return nil, err
 	}
@@ -257,6 +262,7 @@ func (c *fireworksClient) makeRequest(ctx context.Context, feature types.Complet
 	req.Header.Set("Authorization", "Bearer "+c.accessToken)
 
 	resp, err := c.cli.Do(req)
+
 	if err != nil {
 		return nil, err
 	}

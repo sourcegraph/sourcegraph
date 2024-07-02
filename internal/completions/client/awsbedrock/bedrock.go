@@ -86,7 +86,7 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 	ctx context.Context,
 	logger log.Logger,
 	request types.CompletionRequest,
-	sendEvent types.SendCompletionEvent) error {
+	responseMetadataCapture *types.ResponseMetadataCapture) error {
 
 	feature := request.Feature
 	version := request.Version
@@ -169,7 +169,7 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 			continue
 		}
 		sentEvent = true
-		err = sendEvent(types.CompletionResponse{
+		err = responseMetadataCapture.SendEvent(types.CompletionResponse{
 			Completion: totalCompletion,
 			StopReason: stopReason,
 		})

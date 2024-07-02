@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -200,7 +201,7 @@ type CompletionRequest struct {
 type CompletionsClient interface {
 	// Stream executions a completions request, streaming results to the callback.
 	// Callers should check for ErrStatusNotOK and handle the error appropriately.
-	Stream(context.Context, log.Logger, CompletionRequest, SendCompletionEvent) error
+	Stream(context.Context, log.Logger, CompletionRequest, *ResponseMetadataCapture) error
 	// Complete executions a completions request until done. Callers should check
 	// for ErrStatusNotOK and handle the error appropriately.
 	Complete(context.Context, log.Logger, CompletionRequest) (*CompletionResponse, error)
@@ -254,4 +255,48 @@ func ConvertFromLegacyMessages(messages []Message) []Message {
 	}
 
 	return filteredMessages
+}
+
+// ResponseMetadataCapture holds metadata from an HTTP response, including headers,
+// status code, and a function to send completion events.
+type ResponseMetadataCapture struct {
+	headers    http.Header
+	statusCode *int
+	SendEvent  SendCompletionEvent
+}
+
+// NewResponseMetadataCapture creates and initializes a new ResponseMetadataCapture
+// with empty headers and the provided SendCompletionEvent function.
+func NewResponseMetadataCapture(sendEvent SendCompletionEvent) ResponseMetadataCapture {
+	return ResponseMetadataCapture{
+		headers:   make(http.Header),
+		SendEvent: sendEvent,
+	}
+}
+
+// CaptureHeaders copies the provided headers into the ResponseMetadataCapture.
+func (rc *ResponseMetadataCapture) CaptureHeaders(headers http.Header) {
+	for key, values := range headers {
+		rc.headers[key] = values
+	}
+}
+
+// CaptureStatusCode stores the provided status code in the ResponseMetadataCapture.
+func (rc *ResponseMetadataCapture) CaptureStatusCode(statusCode int) {
+	rc.statusCode = &statusCode
+}
+
+// ApplyCapturedMetadata applies the captured headers and status code to the provided
+// http.ResponseWriter. This is typically used to propagate upstream response metadata
+// to the client.
+func (rc *ResponseMetadataCapture) ApplyCapturedMetadata(w http.ResponseWriter) {
+	for key, values := range rc.headers {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	if rc.statusCode != nil {
+		w.WriteHeader(*rc.statusCode)
+	}
 }

@@ -169,18 +169,18 @@ func (c *googleCompletionStreamClient) Stream(
 	ctx context.Context,
 	logger log.Logger,
 	request types.CompletionRequest,
-	sendEvent types.SendCompletionEvent) error {
+	responseMetadataCapture *types.ResponseMetadataCapture) error {
 	if c.apiFamily == VertexAnthropic {
-		return c.handleVertexAnthropicStream(ctx, request.Parameters, sendEvent)
+		return c.handleVertexAnthropicStream(ctx, request.Parameters, responseMetadataCapture)
 	} else {
-		return c.handleGeminiStream(ctx, request.Parameters, sendEvent)
+		return c.handleGeminiStream(ctx, request.Parameters, responseMetadataCapture)
 	}
 }
 
 func (c *googleCompletionStreamClient) handleGeminiStream(
 	ctx context.Context,
 	requestParams types.CompletionRequestParameters,
-	sendEvent types.SendCompletionEvent,
+	responseMetadataCapture *types.ResponseMetadataCapture,
 ) error {
 	resp, err := c.makeGeminiRequest(ctx, requestParams, true)
 	if err != nil {
@@ -215,7 +215,7 @@ func (c *googleCompletionStreamClient) handleGeminiStream(
 				Completion: content,
 				StopReason: event.Candidates[0].FinishReason,
 			}
-			err = sendEvent(ev)
+			err = responseMetadataCapture.SendEvent(ev)
 			if err != nil {
 				return err
 			}
@@ -231,7 +231,7 @@ func (c *googleCompletionStreamClient) handleGeminiStream(
 func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 	ctx context.Context,
 	requestParams types.CompletionRequestParameters,
-	sendEvent types.SendCompletionEvent,
+	responseMetadataCapture *types.ResponseMetadataCapture,
 ) error {
 	var resp *http.Response
 	var err error
@@ -294,7 +294,7 @@ func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 				}
 				totalCompletion += d.Delta.Text
 				sentEvent = true
-				err = sendEvent(types.CompletionResponse{
+				err = responseMetadataCapture.SendEvent(types.CompletionResponse{
 					Completion: totalCompletion,
 				})
 				if err != nil {

@@ -47,13 +47,13 @@ type codyGatewayClient struct {
 }
 
 func (c *codyGatewayClient) Stream(
-	ctx context.Context, logger log.Logger, request types.CompletionRequest, sendEvent types.SendCompletionEvent) error {
+	ctx context.Context, logger log.Logger, request types.CompletionRequest, responseMetadataCapture *types.ResponseMetadataCapture) error {
 	cc, err := c.clientForParams(request.Feature, &request.Parameters)
 	if err != nil {
 		return err
 	}
 
-	err = cc.Stream(ctx, logger, request, sendEvent)
+	err = cc.Stream(ctx, logger, request, responseMetadataCapture)
 	return overwriteErrSource(err)
 }
 
@@ -137,7 +137,7 @@ func gatewayDoer(upstream httpcli.Doer, feature types.CompletionsFeature, gatewa
 			}),
 		}).RoundTrip(req)
 
-		// If we get a repsonse, record Cody Gateway's x-trace response header,
+		// If we get a response, record Cody Gateway's x-trace response header,
 		// so that we can link up to an event on our end if needed.
 		if resp != nil && resp.Header != nil {
 			if span := trace.SpanFromContext(req.Context()); span.SpanContext().IsValid() {
