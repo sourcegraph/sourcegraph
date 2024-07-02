@@ -1,13 +1,13 @@
 package:
   name: docker-client
-  version: 24.0.0
-  epoch: 3
+  version: 27.0.3
+  epoch: 0
   description: "Docker client binary - excludes container runtime"
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - "*"
       attestation: 'Copyright 2013-2018 Docker, Inc.'
       license: 'Apache License, Version 2.0'
   dependencies:
@@ -20,16 +20,17 @@ environment:
     keyring:
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
-      - wolfi-base
       - busybox
       - ca-certificates-bundle
+      - wolfi-base
 
 pipeline:
   - uses: fetch
     with:
       uri: https://download.docker.com/linux/static/stable/x86_64/docker-${{package.version}}.tgz
-      expected-sha256: be1a3b2810171ec143b410f009d3859bdf780f3613ec848b69687ec7ef6c3952
+      expected-sha256: f6299aeada422d527cba35061fe56df5e2294776f6d39b7830d699335054b1e6
       strip-components: 0
+
   - runs: |
       mkdir -p ${{targets.destdir}}/usr/bin/
       cp docker/docker ${{targets.destdir}}/usr/bin/
