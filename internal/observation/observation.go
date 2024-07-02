@@ -5,6 +5,7 @@ package observation
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/sourcegraph/log"
@@ -169,7 +170,9 @@ func (f FinishFunc) OnCancel(ctx context.Context, count float64, args Args) {
 }
 
 // ErrCollector represents multiple errors and additional log fields that arose from those errors.
+// This type is thread-safe.
 type ErrCollector struct {
+	mu         sync.Mutex
 	errs       error
 	extraAttrs []attribute.KeyValue
 }
@@ -177,6 +180,9 @@ type ErrCollector struct {
 func NewErrorCollector() *ErrCollector { return &ErrCollector{errs: nil} }
 
 func (e *ErrCollector) Collect(err *error, attrs ...attribute.KeyValue) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if err != nil && *err != nil {
 		e.errs = errors.Append(e.errs, *err)
 		e.extraAttrs = append(e.extraAttrs, attrs...)
@@ -184,6 +190,9 @@ func (e *ErrCollector) Collect(err *error, attrs ...attribute.KeyValue) {
 }
 
 func (e *ErrCollector) Error() string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	if e.errs == nil {
 		return ""
 	}
@@ -194,7 +203,19 @@ func (e *ErrCollector) Unwrap() error {
 	// ErrCollector wraps collected errors, for compatibility with errors.HasType,
 	// errors.Is etc it has to implement Unwrap to return the inner errors the
 	// collector stores.
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	return e.errs
+}
+
+// appendExtraAttrs appends the extra attributes stored in the ErrCollector to the provided base slice.
+func (e *ErrCollector) appendExtraAttrs(base []attribute.KeyValue) []attribute.KeyValue {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return append(base, e.extraAttrs...)
 }
 
 // Args configures the observation behavior of an invocation of an operation.
@@ -230,7 +251,7 @@ func (op *Operation) WithErrorsAndLogger(ctx context.Context, root *error, args 
 	if root != nil {
 		endFunc = func(count float64, args Args) {
 			if *root != nil {
-				errTracer.errs = errors.Append(errTracer.errs, *root)
+				errTracer.Collect(root)
 			}
 			endObservation(count, args)
 		}
@@ -288,10 +309,11 @@ func (op *Operation) With(ctx context.Context, err *error, args Args) (context.C
 		metricLabels := mergeLabels(op.metricLabels, args.MetricLabelValues, finishArgs.MetricLabelValues)
 
 		if multi := new(ErrCollector); err != nil && errors.As(*err, &multi) {
-			if multi.errs == nil {
+			if multi.Error() == "" {
 				err = nil
 			}
-			finishAttrs = append(finishAttrs, multi.extraAttrs...)
+
+			multi.appendExtraAttrs(finishAttrs)
 		}
 
 		var (

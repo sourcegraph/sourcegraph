@@ -30,8 +30,6 @@ import (
 )
 
 func TestRockskipIntegration(t *testing.T) {
-	t.Skip("This test is having data race and needs to be fixed. See https://github.com/sourcegraph/sourcegraph/issues/63360")
-
 	gs, _ := gitserverintegration.NewTestGitserverWithRepos(t, map[api.RepoName]string{
 		"github.com/sourcegraph/rockskiptest": gitserverintegration.RepoWithCommands(t,
 			"echo '# Title' > README.md",
