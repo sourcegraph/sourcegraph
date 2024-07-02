@@ -5,20 +5,20 @@ import classNames from 'classnames'
 
 import { RepoLink } from '@sourcegraph/shared/src/components/RepoLink'
 import {
+    Alert,
     Button,
+    ErrorAlert,
+    Form,
     Icon,
     Input,
     Label,
-    Alert,
+    LoadingSpinner,
+    Select,
     Tooltip,
     useDebounce,
-    LoadingSpinner,
-    ErrorAlert,
-    Select,
-    Form,
 } from '@sourcegraph/wildcard'
 
-import type { FilteredConnectionFilterValue } from '../../../components/FilteredConnection'
+import type { FilterOption } from '../../../components/FilteredConnection'
 import type { PackageRepoReferenceKind } from '../../../graphql-operations'
 import { prettyBytesBigint } from '../../../util/prettyBytesBigint'
 import { useMatchingPackages } from '../hooks/useMatchingPackages'
@@ -35,7 +35,7 @@ export interface MultiPackageState {
 
 interface MultiPackageFormProps {
     initialState: MultiPackageState
-    filters: FilteredConnectionFilterValue[]
+    filters: FilterOption[]
     setType: (type: BlockType) => void
     onDismiss: () => void
     onSave: (state: MultiPackageState) => Promise<unknown>

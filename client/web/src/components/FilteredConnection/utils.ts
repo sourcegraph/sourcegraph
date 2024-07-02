@@ -7,7 +7,7 @@ import type { Scalars } from '@sourcegraph/shared/src/graphql-operations'
 
 import type { Connection } from './ConnectionType'
 import { QUERY_KEY } from './constants'
-import type { FilteredConnectionFilter, FilteredConnectionFilterValue } from './FilterControl'
+import type { Filter, FilterValues } from './FilterControl'
 
 /** Checks if the passed value satisfies the GraphQL Node interface */
 export const hasID = (value: unknown): value is { id: Scalars['ID'] } =>
@@ -19,26 +19,22 @@ export const hasDisplayName = (value: unknown): value is { displayName: Scalars[
     hasProperty('displayName')(value) &&
     typeof value.displayName === 'string'
 
-export const getFilterFromURL = (
-    searchParameters: URLSearchParams,
-    filters: FilteredConnectionFilter[] | undefined
-): Map<string, FilteredConnectionFilterValue> => {
-    const values: Map<string, FilteredConnectionFilterValue> = new Map<string, FilteredConnectionFilterValue>()
-
-    if (filters === undefined || filters.length === 0) {
+export const getFilterFromURL = (searchParameters: URLSearchParams, filters: Filter[] | undefined): FilterValues => {
+    const values: FilterValues = {}
+    if (filters === undefined) {
         return values
     }
     for (const filter of filters) {
         const urlValue = searchParameters.get(filter.id)
         if (urlValue !== null) {
-            const value = filter.values.find(value => value.value === urlValue)
+            const value = filter.options.find(opt => opt.value === urlValue)
             if (value !== undefined) {
-                values.set(filter.id, value)
+                values[filter.id] = value.value
                 continue
             }
         }
         // couldn't find a value, add default
-        values.set(filter.id, filter.values[0])
+        values[filter.id] = filter.options[0].value
     }
     return values
 }
@@ -70,8 +66,8 @@ export interface GetUrlQueryParameters {
         default: number
     }
     query?: string
-    filterValues?: Map<string, FilteredConnectionFilterValue>
-    filters?: FilteredConnectionFilter[]
+    filterValues?: FilterValues
+    filters?: Filter[]
     visibleResultCount?: number
     search: Location['search']
 }
@@ -99,12 +95,12 @@ export const getUrlQuery = ({
 
     if (filterValues && filters) {
         for (const filter of filters) {
-            const value = filterValues.get(filter.id)
-            if (value === undefined) {
+            const value = filterValues[filter.id]
+            if (value === undefined || value === null) {
                 continue
             }
-            if (value !== filter.values[0]) {
-                searchParameters.set(filter.id, value.value)
+            if (value !== filter.options[0].value) {
+                searchParameters.set(filter.id, value)
             } else {
                 searchParameters.delete(filter.id)
             }

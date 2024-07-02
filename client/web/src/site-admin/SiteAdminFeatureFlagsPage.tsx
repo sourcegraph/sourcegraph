@@ -2,19 +2,19 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 
 import { mdiChevronRight } from '@mdi/js'
 import classNames from 'classnames'
-import { of, type Observable, forkJoin } from 'rxjs'
+import { forkJoin, of, type Observable } from 'rxjs'
 import { catchError, map, mergeMap } from 'rxjs/operators'
 
-import { asError, type ErrorLike, isErrorLike, pluralize } from '@sourcegraph/common'
-import { aggregateStreamingSearch, type ContentMatch, LATEST_VERSION } from '@sourcegraph/shared/src/search/stream'
+import { asError, isErrorLike, pluralize, type ErrorLike } from '@sourcegraph/common'
+import { LATEST_VERSION, aggregateStreamingSearch, type ContentMatch } from '@sourcegraph/shared/src/search/stream'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { Link, PageHeader, Container, Code, H3, Text, Icon, Tooltip, ButtonLink, Alert } from '@sourcegraph/wildcard'
+import { Alert, ButtonLink, Code, Container, H3, Icon, Link, PageHeader, Text, Tooltip } from '@sourcegraph/wildcard'
 
-import { FilteredConnection, type FilteredConnectionFilter } from '../components/FilteredConnection'
+import { FilteredConnection, type Filter } from '../components/FilteredConnection'
 import { PageTitle } from '../components/PageTitle'
 import { useFeatureFlag } from '../featureFlags/useFeatureFlag'
-import { type FeatureFlagFields, SearchPatternType } from '../graphql-operations'
+import { SearchPatternType, type FeatureFlagFields } from '../graphql-operations'
 
 import { fetchFeatureFlags as defaultFetchFeatureFlags } from './backend'
 
@@ -104,12 +104,12 @@ export function getFeatureFlagReferences(flagName: string, productGitVersion: st
     )
 }
 
-const filters: FilteredConnectionFilter[] = [
+const filters: Filter[] = [
     {
         id: 'filters',
         label: 'Type',
         type: 'select',
-        values: [
+        options: [
             {
                 label: 'All',
                 value: 'all',

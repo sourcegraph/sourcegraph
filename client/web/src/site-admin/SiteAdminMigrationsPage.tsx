@@ -1,31 +1,31 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 
-import { mdiAlertCircle, mdiAlert, mdiArrowLeftBold, mdiArrowRightBold } from '@mdi/js'
+import { mdiAlert, mdiAlertCircle, mdiArrowLeftBold, mdiArrowRightBold } from '@mdi/js'
 import classNames from 'classnames'
-import { type Observable, of, timer } from 'rxjs'
+import { of, timer, type Observable } from 'rxjs'
 import { catchError, concatMap, map, repeat, takeWhile } from 'rxjs/operators'
 import { parse as _parseVersion, type SemVer } from 'semver'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
-import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
+import { asError, isErrorLike, type ErrorLike } from '@sourcegraph/common'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
-    LoadingSpinner,
-    useObservable,
     Alert,
-    Container,
-    Icon,
     Code,
+    Container,
+    ErrorAlert,
     H3,
+    Icon,
+    LoadingSpinner,
+    PageHeader,
     Text,
     Tooltip,
-    PageHeader,
-    ErrorAlert,
+    useObservable,
 } from '@sourcegraph/wildcard'
 
 import { Collapsible } from '../components/Collapsible'
-import { FilteredConnection, type FilteredConnectionFilter, type Connection } from '../components/FilteredConnection'
+import { FilteredConnection, type Connection, type Filter } from '../components/FilteredConnection'
 import { PageTitle } from '../components/PageTitle'
 import type { OutOfBandMigrationFields } from '../graphql-operations'
 
@@ -42,12 +42,12 @@ export interface SiteAdminMigrationsPageProps extends TelemetryProps, TelemetryV
     now?: () => Date
 }
 
-const filters: FilteredConnectionFilter[] = [
+const filters: Filter[] = [
     {
         id: 'filters',
         label: 'Migration state',
         type: 'select',
-        values: [
+        options: [
             {
                 label: 'All',
                 value: 'all',

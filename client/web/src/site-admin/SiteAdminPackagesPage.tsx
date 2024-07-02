@@ -6,46 +6,47 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { dataOrThrowErrors, useQuery } from '@sourcegraph/http-client'
 import { RepoLink } from '@sourcegraph/shared/src/components/RepoLink'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
+    Alert,
+    Button,
+    Code,
     Container,
     ErrorAlert,
+    Icon,
+    Input,
     Link,
     LoadingSpinner,
-    PageHeader,
-    Input,
-    useDebounce,
-    Button,
-    Alert,
-    Text,
-    Code,
-    Icon,
     Menu,
     MenuButton,
-    MenuList,
     MenuItem,
     MenuLink,
+    MenuList,
+    PageHeader,
     Position,
+    Text,
+    useDebounce,
 } from '@sourcegraph/wildcard'
 
 import { externalRepoIcon } from '../components/externalServices/externalServices'
 import {
     buildFilterArgs,
     FilterControl,
-    type FilteredConnectionFilter,
-    type FilteredConnectionFilterValue,
+    type Filter,
+    type FilterOption,
+    type FilterValues,
 } from '../components/FilteredConnection'
 import { useShowMorePagination } from '../components/FilteredConnection/hooks/useShowMorePagination'
 import { ConnectionSummary } from '../components/FilteredConnection/ui'
 import { getFilterFromURL, getUrlQuery } from '../components/FilteredConnection/utils'
 import { PageTitle } from '../components/PageTitle'
 import type {
+    ExternalServiceKindsResult,
+    ExternalServiceKindsVariables,
     PackagesResult,
     PackagesVariables,
     SiteAdminPackageFields,
-    ExternalServiceKindsVariables,
-    ExternalServiceKindsResult,
 } from '../graphql-operations'
 
 import { EXTERNAL_SERVICE_KINDS, PACKAGES_QUERY } from './backend'
@@ -179,7 +180,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
         error: extSvcError,
     } = useQuery<ExternalServiceKindsResult, ExternalServiceKindsVariables>(EXTERNAL_SERVICE_KINDS, {})
 
-    const ecosystemFilterValues = useMemo<FilteredConnectionFilterValue[]>(() => {
+    const ecosystemFilterValues = useMemo<FilterOption[]>(() => {
         const values = []
 
         for (const extSvc of extSvcs?.externalServices.nodes ?? []) {
@@ -196,13 +197,13 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
         return values
     }, [extSvcs?.externalServices.nodes])
 
-    const filters = useMemo<FilteredConnectionFilter[]>(
+    const filters = useMemo<Filter[]>(
         () => [
             {
                 id: 'ecosystem',
                 label: 'Ecosystem',
                 type: 'select',
-                values: [
+                options: [
                     {
                         label: 'All',
                         value: 'all',
@@ -215,7 +216,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
         [ecosystemFilterValues]
     )
 
-    const [filterValues, setFilterValues] = useState<Map<string, FilteredConnectionFilterValue>>(() =>
+    const [filterValues, setFilterValues] = useState<FilterValues>(() =>
         getFilterFromURL(new URLSearchParams(location.search), filters)
     )
 
@@ -254,7 +255,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
     }, [filterValues, filters, searchValue, location, navigate])
 
     const variables = useMemo<PackagesVariables>(() => {
-        const args = buildFilterArgs(filterValues)
+        const args = buildFilterArgs(filters, filterValues)
 
         return {
             name: query,
@@ -263,7 +264,7 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
             first: DEFAULT_FIRST,
             ...args,
         }
-    }, [filterValues, query])
+    }, [filters, filterValues, query])
 
     const {
         connection,
@@ -343,12 +344,8 @@ export const SiteAdminPackagesPage: React.FunctionComponent<React.PropsWithChild
                         <FilterControl
                             filters={filters}
                             values={filterValues}
-                            onValueSelect={(filter: FilteredConnectionFilter, value: FilteredConnectionFilterValue) =>
-                                setFilterValues(values => {
-                                    const newValues = new Map(values)
-                                    newValues.set(filter.id, value)
-                                    return newValues
-                                })
+                            onValueSelect={(filter: Filter, value: FilterOption['value'] | null) =>
+                                setFilterValues(values => ({ ...values, [filter.id]: value }))
                             }
                         />
                         {connection && (
