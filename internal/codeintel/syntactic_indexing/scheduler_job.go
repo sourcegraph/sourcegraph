@@ -81,6 +81,8 @@ func newSchedulerJob(
 		goroutine.HandlerFunc(func(ctx context.Context) error {
 			config := conf.Get().ExperimentalFeatures
 
+			observationCtx.Logger.Info("Scheduling!")
+
 			if config != nil && config.CodeintelSyntacticIndexingEnabled {
 				return scheduler.Schedule(observationCtx, ctx, time.Now())
 			} else {
@@ -90,7 +92,7 @@ func newSchedulerJob(
 		}),
 		goroutine.WithName("codeintel.syntactic-indexing-background-scheduler"),
 		goroutine.WithDescription("schedule syntactic indexing jobs in the background"),
-		goroutine.WithInterval(time.Second*5),
+		goroutine.WithInterval(schedulerConfig.SchedulerInterval),
 		goroutine.WithOperation(observationCtx.Operation(observation.Op{
 			Name:              "codeintel.syntactic_indexing.HandleIndexSchedule",
 			MetricLabelValues: []string{"HandleIndexSchedule"},

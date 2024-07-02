@@ -1590,6 +1590,9 @@ commandsets:
       - jaeger
       - grafana
       - prometheus
+      - syntactic-code-intel-worker-0
+      - syntactic-code-intel-worker-1
+
   enterprise-codeintel-multi-queue-executor:
     checks:
       - docker

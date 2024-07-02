@@ -1,3 +1,4 @@
+load("//dev:go_defs.bzl", "go_test")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
@@ -12,21 +13,60 @@ go_library(
     tags = [TAG_PLATFORM_GRAPH],
     visibility = ["//visibility:public"],
     deps = [
+        "//internal/api",
         "//internal/authz",
+        "//internal/codeintel/shared",
+        "//internal/codeintel/shared/lsifuploadstore",
         "//internal/codeintel/syntactic_indexing/jobstore",
+        "//internal/codeintel/uploads",
         "//internal/conf",
         "//internal/conf/conftypes",
+        "//internal/database",
         "//internal/database/connections/live",
         "//internal/debugserver",
         "//internal/encryption/keyring",
         "//internal/env",
+        "//internal/gitserver",
         "//internal/goroutine",
         "//internal/httpserver",
         "//internal/observation",
         "//internal/service",
+        "//internal/uploadhandler",
+        "//internal/uploadstore",
         "//internal/workerutil",
         "//internal/workerutil/dbworker",
         "//lib/errors",
         "@com_github_sourcegraph_log//:log",
+    ],
+)
+
+go_test(
+    name = "shared_test",
+    srcs = ["indexing_worker_test.go"],
+    data = [
+        "//docker-images/syntax-highlighter/crates/scip-syntax",
+    ],
+    embed = [":shared"],
+    env = {
+        "SCIP_SYNTAX_PATH": "$(rlocationpath //docker-images/syntax-highlighter/crates/scip-syntax:scip-syntax)",
+    },
+    tags = [
+        "requires-network",
+        TAG_PLATFORM_GRAPH,
+    ],
+    deps = [
+        "//internal/codeintel/shared",
+        "//internal/codeintel/syntactic_indexing/jobstore",
+        "//internal/codeintel/syntactic_indexing/testkit",
+        "//internal/database",
+        "//internal/database/dbtest",
+        "//internal/gitserver",
+        "//internal/observation",
+        "//lib/iterator",
+        "@com_github_sourcegraph_log//logtest",
+        "@com_github_sourcegraph_scip//bindings/go/scip",
+        "@com_github_stretchr_testify//require",
+        "@io_bazel_rules_go//go/runfiles:go_default_library",
+        "@org_golang_google_protobuf//proto",
     ],
 )

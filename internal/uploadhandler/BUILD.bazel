@@ -7,6 +7,8 @@ go_library(
     srcs = [
         "iface.go",
         "observability.go",
+        "upload_enqueuer.go",
+        "upload_enqueuer_observability.go",
         "upload_handler.go",
         "upload_handler_multipart.go",
         "upload_handler_single.go",

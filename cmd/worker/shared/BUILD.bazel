@@ -43,6 +43,7 @@ go_library(
         "//internal/authz",
         "//internal/authz/providers",
         "//internal/authz/subrepoperms",
+        "//internal/codeintel/syntactic_indexing",
         "//internal/conf",
         "//internal/database",
         "//internal/debugserver",

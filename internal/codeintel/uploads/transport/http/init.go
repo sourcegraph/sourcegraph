@@ -38,7 +38,7 @@ func GetHandler(svc *uploads.Service, db database.DB, gitserverClient gitserver.
 
 		// Construct base handler, used in internal routes and as internal handler wrapped
 		// in the auth middleware defined on the next few lines
-		handler = newHandler(repoStore, uploadStore, svc.UploadHandlerStore(), uploadHandlerOperations)
+		handler = newHandler(observationCtx, repoStore, uploadStore, svc.UploadHandlerStore(), uploadHandlerOperations)
 
 		// 🚨 SECURITY: Non-internal installations of this handler will require a user/repo
 		// visibility check with the remote code host (if enabled via site configuration).

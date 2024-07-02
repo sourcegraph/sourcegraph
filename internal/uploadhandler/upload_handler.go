@@ -22,22 +22,24 @@ type UploadHandler[T any] struct {
 	logger              sglog.Logger
 	dbStore             DBStore[T]
 	uploadStore         uploadstore.Store
+	enqueuer            UploadEnqueuer[T]
 	operations          *Operations
 	metadataFromRequest func(ctx context.Context, r *http.Request) (T, int, error)
 }
 
 func NewUploadHandler[T any](
-	logger sglog.Logger,
+	observationCtx *observation.Context,
 	dbStore DBStore[T],
 	uploadStore uploadstore.Store,
 	operations *Operations,
 	metadataFromRequest func(ctx context.Context, r *http.Request) (T, int, error),
 ) http.Handler {
 	handler := &UploadHandler[T]{
-		logger:              logger,
+		logger:              observationCtx.Logger,
 		dbStore:             dbStore,
 		uploadStore:         uploadStore,
 		operations:          operations,
+		enqueuer:            NewUploadEnqueuer[T](observationCtx, dbStore, uploadStore),
 		metadataFromRequest: metadataFromRequest,
 	}
 

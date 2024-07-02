@@ -1,5 +1,4 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("//dev:go_defs.bzl", "go_test")
 
 go_library(
     name = "jobstore",
@@ -26,27 +25,5 @@ go_library(
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_sourcegraph_log//:log",
         "@io_opentelemetry_go_otel//attribute",
-    ],
-)
-
-go_test(
-    name = "jobstore_test",
-    srcs = [
-        "store_helpers_test.go",
-        "store_test.go",
-    ],
-    embed = [":jobstore"],
-    tags = [
-        TAG_PLATFORM_GRAPH,
-        "requires-network",
-    ],
-    deps = [
-        "//internal/api",
-        "//internal/codeintel/syntactic_indexing/internal/testutils",
-        "//internal/database",
-        "//internal/database/dbtest",
-        "//internal/observation",
-        "@com_github_keegancsmith_sqlf//:sqlf",
-        "@com_github_stretchr_testify//require",
     ],
 )
