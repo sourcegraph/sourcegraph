@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "analytics.go",
         "context.go",
+        "oauth.go",
         "spans.go",
         "tracer.go",
     ],
@@ -12,6 +13,7 @@ go_library(
     tags = [TAG_INFRA_DEVINFRA],
     visibility = ["//dev/sg:__subpackages__"],
     deps = [
+        "//dev/sg/internal/secrets",
         "//dev/sg/internal/std",
         "//dev/sg/root",
         "//lib/errors",
@@ -29,6 +31,9 @@ go_library(
         "@io_opentelemetry_go_otel_trace//noop",
         "@io_opentelemetry_go_proto_otlp//collector/trace/v1:trace",
         "@io_opentelemetry_go_proto_otlp//trace/v1:trace",
+        "@org_golang_google_api//oauth2/v2:oauth2",
         "@org_golang_google_protobuf//encoding/protojson",
+        "@org_golang_x_oauth2//:oauth2",
+        "@org_golang_x_oauth2//google",
     ],
 )
