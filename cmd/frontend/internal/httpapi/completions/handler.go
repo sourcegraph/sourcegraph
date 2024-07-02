@@ -85,12 +85,15 @@ func newCompletionsHandler(
 		}
 
 		var version types.CompletionsVersion
-		versionParam := r.URL.Query().Get("api-version")
-		if versionParam == "" {
+		switch versionParam := r.URL.Query().Get("api-version"); versionParam {
+		case "":
 			version = types.CompletionsVersionLegacy
-		} else if versionParam == "1" {
+		case "1":
 			version = types.CompletionsV1
-		} else {
+		default:
+			logger.Warn(
+				"blocking request because unrecognized CompletionsVersion API param",
+				log.String("version", versionParam))
 			http.Error(w, "Unsupported API Version (Please update your client)", http.StatusNotAcceptable)
 			return
 		}
@@ -110,6 +113,7 @@ func newCompletionsHandler(
 		// JSON payload. And just have a zero-value CompletionRequestParameters, e.g. no prompt.
 		var requestParams types.CodyCompletionRequestParameters
 		if err := json.NewDecoder(r.Body).Decode(&requestParams); err != nil {
+			logger.Warn("malformed CodyCompletionRequestParameters", log.Error(err))
 			http.Error(w, "could not decode request body", http.StatusBadRequest)
 			return
 		}

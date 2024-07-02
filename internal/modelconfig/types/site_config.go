@@ -55,7 +55,8 @@ type DefaultModelConfig struct {
 // ProviderOverride is how a Sourcegraph admin would describe a `Provider` within
 // the site-configuration.
 type ProviderOverride struct {
-	ID ProviderID `json:"id"`
+	ID          ProviderID `json:"id"`
+	DisplayName string     `json:"displayName"`
 
 	ClientSideConfig *ClientSideProviderConfig `json:"clientSideConfig,omitempty"`
 	ServerSideConfig *ServerSideProviderConfig `json:"serverSideConfig,omitempty"`
