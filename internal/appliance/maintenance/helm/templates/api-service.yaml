@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: operator-api
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: operator-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

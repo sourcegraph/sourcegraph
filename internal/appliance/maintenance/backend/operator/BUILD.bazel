@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "operator",
+    srcs = [
+        "manage.go",
+        "task.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/appliance/maintenance/backend/operator",
+    visibility = ["//:__subpackages__"],
+)

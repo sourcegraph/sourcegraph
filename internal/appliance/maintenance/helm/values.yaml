@@ -1,0 +1,9 @@
+namespace: sourcegraph
+
+registry: us-central1-docker.pkg.dev/sg-infra-release-merge-feb2024/merge-workshop-feb2024
+
+webui:
+  image: operator-ui:v0.0.5999860
+
+api:
+  image: operator-api:v0.0.5999860

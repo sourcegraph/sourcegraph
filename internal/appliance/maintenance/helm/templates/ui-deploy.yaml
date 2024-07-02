@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: operator-ui
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: operator-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: operator-ui
+  template:
+    metadata:
+      labels:
+        app: operator-ui
+    spec:
+      containers:
+        - name: operator-ui
+          image: {{ .Values.registry }}/{{ .Values.webui.image }}
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_ENDPOINT
+              value: 'http://operator-api.{{ .Values.namespace }}.svc.cluster.local'

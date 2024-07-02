@@ -1,0 +1,51 @@
+==============================================================
+    ____ ____ _  _ ____ ____ ____ ____ ____ ____ ___  _  _
+    [__  |  | |  | |__/ |    |___ | __ |__/ |__| |__] |__|
+    ___] |__| |__| |  \ |___ |___ |__] |  \ |  | |    |  |
+
+          ____ ___  ____ ____ ____ ___ ____ ____
+          [__] |--' |=== |--< |--|  |  [__] |--<
+
+               Version: {{ .Chart.Version }}
+
+--------------------------------------------------------------
+
+Thanks for installing the Operator UI.
+
+To check if the operator is running, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+--------------------------------------------------------------
+
+The maintenance (and installation) interface is
+available at:
+
+  $ echo -n 'http://' \
+    && kubectl get service operator-ui \
+          -o jsonpath='{.status.loadBalancer.ingress[0].ip}' \
+          --namespace {{ .Values.namespace }} && echo
+
+If the result is simply `http://`, then it means the service
+is not fully provisioned yet. Either wait or monitor the
+output of this command:
+
+  $ kubectl get service operator-ui \
+        --namespace {{ .Values.namespace }}
+
+The `EXTERNAL-IP` field will be either `<pending>` or an IP
+address.
+
+--------------------------------------------------------------
+
+To access the interface, you will need the maintenance
+password:
+
+  $ echo -n 'Password: ' \
+      && kubectl get secret operator-api \
+             -o jsonpath='{.data.MAINTENANCE_PASSWORD}' \
+             --namespace {{ .Values.namespace }} \
+      | base64 -d && echo
+
+--------------------------------------------------------------

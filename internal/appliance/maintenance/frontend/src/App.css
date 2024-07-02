@@ -1,0 +1,151 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --item-grid-border: lightgray;
+}
+
+#logo {
+  height: 36px;
+}
+
+.title-light {
+  color: black;
+}
+
+.product {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+#frame {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+HEADER.MuiAppBar-root {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+#content {
+  flex: 1;
+  margin: 1.5rem;
+  margin-top: 90px;
+}
+
+#operator-status {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#operator-debug {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home,
+.install,
+.progress,
+.maintenance,
+.wait-for-admin,
+.login,
+.public-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.home {
+  gap: 1rem;
+}
+
+.progress .task-grid,
+.maintenance .service-grid {
+  border-top: 1px solid var(--item-grid-border);
+  width: 40rem;
+  margin-top: 1rem;
+}
+
+.progress .task-grid-item,
+.maintenance .service-item {
+  padding: 0;
+  white-space: nowrap;
+}
+
+.progress .task-grid-item.MuiGrid-item,
+.maintenance .service-item.MuiGrid-item,
+.maintenance .service-header.MuiGrid-item {
+  display: flex;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--item-grid-border);
+}
+
+.maintenance .service-item.healthy {
+  color: green;
+}
+
+.maintenance .service-item.unhealthy {
+  color: red;
+}
+
+.progress .task-grid-item.running {
+  background-color: var(--task-installing-background);
+}
+
+.progress,
+.wait-for-admin {
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.install,
+.maintenance {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2rem;
+}
+
+.install .components {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.install IMG {
+  height: 32px;
+}
+
+.login > * {
+  max-width: 20rem;
+}
+
+.public-message {
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.public-message .login-message {
+  margin-top: 10rem;
+}
+
+.spacer {
+  flex: 1;
+}

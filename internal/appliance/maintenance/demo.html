@@ -1,0 +1,151 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      HTML,
+      BODY {
+        margin: 0;
+        padding: 0;
+      }
+      BODY {
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+      }
+      HEADER {
+        display: flex;
+        padding: 0.5rem 1rem;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: #666666;
+      }
+      IMG {
+        height: 64px;
+      }
+      H1 {
+        margin: 0;
+        padding: 0;
+        color: white;
+        font-size: 3em;
+      }
+      H2 {
+        border-top: 1px solid gray;
+        border-left: 1px solid gray;
+        padding: 0.5rem 1rem;
+        margin-top: 3rem;
+      }
+      .content {
+        padding: 1rem;
+      }
+      PRE {
+        background-color: #dddddd;
+        padding: 1rem;
+        display: inline-block;
+        font-size: 1.5rem;
+      }
+      .small {
+        background-color: #dddddd;
+        padding: 0.5rem;
+      }
+      P {
+        font-size: 1.5rem;
+      }
+      LI {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="https://sourcegraph.com/sourcegraph-reverse-logo.svg" />
+      <h1>Appliance</h1>
+    </header>
+    <div class="content">
+      <h2>Pre-Requisites</h2>
+      <ol>
+        <li>A Kubernetes Cluster (any kind: k3s, minicube, GKE, EKS, etc)</li>
+        <li>
+          <pre class="small">kubectl</pre>
+          configured in your command line with credentials to the cluster
+        </li>
+        <li>
+          Kubernetes context set to the namespace you want to create
+          Sourcegraph.
+          <p>
+            If you don't ever set, it will install in the
+            <span class="small">default</span> namespace
+          </p>
+        </li>
+      </ol>
+      <h2>Install</h2>
+      <p>
+        This is the only cluster piece required. From this point on, all
+        installation happens guided by the Operator:
+      </p>
+      <pre>
+kubectl apply -f https://storage.googleapis.com/merge-appliance-demo/v0.0.5999925/bundle.yaml</pre
+      >
+      <p>
+        We will need to get the IP address of the Appliance, as well the
+        maintenance password.
+      </p>
+      <p>The steps below help you get those values...</p>
+
+      <h2>Get Frontend Address</h2>
+      <pre>kubectl get svc operator-ui --watch</pre>
+      <p>Once the external IP address is available, you visit that page.</p>
+
+      <pre>
+% kubectl get svc operator-ui
+NAME          TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)        AGE
+operator-ui   LoadBalancer   10.92.6.197   34.71.130.103   80:31883/TCP   10h
+                                           ⇑⇑⇑⇑⇑⇑⇑⇑⇑⇑⇑⇑⇑
+                                           this address</pre
+      >
+
+      <h2>Navigate to the Appliance Page</h2>
+      <pre>http://&lt;ip-address-above&gt;/</pre>
+
+      <h2>Get the Maintenance Password</h2>
+      <pre>
+kubectl get secret operator-api -o json \
+    | jq '{name: .metadata.name,data: .data|map_values(@base64d)}'</pre
+      >
+
+      <p>Example output:</p>
+
+      <pre>
+{
+  "name": "operator-api",
+  "data": {
+    "MAINTENANCE_PASSWORD": "password-is-here"
+  }
+}</pre
+      >
+
+      <h2>Install</h2>
+      <ol>
+        <li>Follow the wizard</li>
+        <li>
+          Once the installation is complete, you will see a "Wait for Admin to
+          Return"
+          <p>
+            This step is to avoid exposing the admin UI before creating a user,
+            allowing, for example, the administrator to leave the
+            installation/upgrade/maintenance going and walk away from the
+            computer.
+          </p>
+        </li>
+        <li>Press the Launch button and the Admin UI will start</li>
+      </ol>
+
+      <h2>Teardown</h2>
+      <p>This will <b>DELETE ALL DATA:</b></p>
+      <pre>
+kubectl delete -f https://storage.googleapis.com/merge-appliance-demo/v0.0.5999925/bundle.yaml
+kubectl delete pvc --all</pre
+      >
+    </div>
+  </body>
+</html>

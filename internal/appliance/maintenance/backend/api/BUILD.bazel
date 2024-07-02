@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "api",
+    srcs = [
+        "auth.go",
+        "install.go",
+        "json.go",
+        "server.go",
+        "stage.go",
+        "status.go",
+        "task.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/appliance/maintenance/backend/api",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/appliance/maintenance/backend/operator",
+        "@com_github_gorilla_mux//:mux",
+    ],
+)
