@@ -289,17 +289,17 @@ commands:
       - internal
       - cmd/worker
 
-  cody-gateway:
-    cmd: |
+  cody-gateway: &cody-gateway-defaults
+    cmd: &cody-gateway-cmd |
       .bin/cody-gateway
-    install: |
+    install: &cody-gateway-install |
       if [ -n "$DELVE" ]; then
         export GCFLAGS='all=-N -l'
       fi
 
       go build -gcflags="$GCFLAGS" -o .bin/cody-gateway github.com/sourcegraph/sourcegraph/cmd/cody-gateway
-    checkBinary: .bin/cody-gateway
-    env:
+    checkBinary: &cody-gateway-checkBinary .bin/cody-gateway
+    env: &cody-gateway-env
       SRC_LOG_LEVEL: info
       # Enables metrics in dev via debugserver
       SRC_PROF_HTTP: '127.0.0.1:6098'
@@ -322,17 +322,64 @@ commands:
       SAMS_URL: https://accounts.sgdev.org
       # Connect to Enterprise Portal running locally
       CODY_GATEWAY_ENTERPRISE_PORTAL_URL: http://localhost:6081
-    externalSecrets:
+    externalSecrets: &cody-gateway-externalSecrets
       SAMS_CLIENT_ID:
         project: sourcegraph-local-dev
         name: SG_LOCAL_DEV_SAMS_CLIENT_ID
       SAMS_CLIENT_SECRET:
         project: sourcegraph-local-dev
         name: SG_LOCAL_DEV_SAMS_CLIENT_SECRET
-    watch:
+    watch: &cody-gateway-watch
       - lib
       - internal
       - cmd/cody-gateway
+
+  cody-gateway-local-e2e:
+    cmd: *cody-gateway-cmd
+    install: *cody-gateway-install
+    checkBinary: *cody-gateway-checkBinary
+    watch: *cody-gateway-watch
+    env: # we can't use anchors here, because we're *removing* fields, which wouldn't work with a YAML override.
+      SRC_LOG_LEVEL: info
+      # Enables metrics in dev via debugserver
+      SRC_PROF_HTTP: '127.0.0.1:6098'
+      CODY_GATEWAY_ALLOW_ANONYMOUS: true
+      CODY_GATEWAY_DIAGNOSTICS_SECRET: sekret
+      # Default site-admin user's token, created by `sg db default-site-admin`
+      CODY_GATEWAY_DOTCOM_ACCESS_TOKEN: 'sgp_local_f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0'
+      CODY_GATEWAY_SOURCEGRAPH_EMBEDDINGS_API_TOKEN: sgp_local_f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0
+      CODY_GATEWAY_DOTCOM_API_URL: https://sourcegraph.test:3443/.api/graphql
+
+      # Connect to services that require SAMS M2M http://go/sams-m2m
+      SAMS_URL: https://accounts.sgdev.org
+      # Connect to Enterprise Portal running locally
+      CODY_GATEWAY_ENTERPRISE_PORTAL_URL: http://localhost:6081
+
+    externalSecrets: # same here
+      # SAMS
+      SAMS_CLIENT_ID:
+        project: sourcegraph-local-dev
+        name: SG_LOCAL_DEV_SAMS_CLIENT_ID
+      SAMS_CLIENT_SECRET:
+        project: sourcegraph-local-dev
+        name: SG_LOCAL_DEV_SAMS_CLIENT_SECRET
+
+      # LLM Tokens
+      #
+      # 🚧 TODO(@jhchabran), Waiting on: https://sourcegraph.slack.com/archives/C01CSS3TC75/p1719502918899479
+      #
+      CODY_GATEWAY_ANTHROPIC_ACCESS_TOKEN:
+        project: sourcegraph-local-dev
+        name: SG_LOCAL_DEV_CODY_GATEWAY_ANTHROPIC_ACCESS_TOKEN
+      # CODY_GATEWAY_OPENAI_ACCESS_TOKEN:
+      #   project: sourcegraph-local-dev
+      #   name: SG_LOCAL_DEV_CODY_GATEWAY_OPENAI_ACCESS_TOKEN
+      # CODY_GATEWAY_FIREWORKS_ACCESS_TOKEN:
+      #   project: sourcegraph-local-dev
+      #   name: SG_LOCAL_DEV_CODY_GATEWAY_FIREWORKS_ACCESS_TOKEN
+      # CODY_GATEWAY_GOOGLE_ACCESS_TOKEN:
+      #   project: sourcegraph-local-dev
+      #   name: SG_LOCAL_DEV_CODY_GATEWAY_GOOGLE_ACCESS_TOKEN
 
   telemetry-gateway:
     cmd: |
@@ -1069,36 +1116,8 @@ bazelCommands:
       BLOBSTORE_DATA_DIR: $HOME/.sourcegraph-dev/data/blobstore-go
   cody-gateway:
     target: //cmd/cody-gateway
-    env:
-      SRC_LOG_LEVEL: info
-      # Enables metrics in dev via debugserver
-      SRC_PROF_HTTP: '127.0.0.1:6098'
-      # Set in override if you want to test local Cody Gateway: https://docs-legacy.sourcegraph.com/dev/how-to/cody_gateway
-      CODY_GATEWAY_DOTCOM_ACCESS_TOKEN: ''
-      CODY_GATEWAY_DOTCOM_API_URL: https://sourcegraph.test:3443/.api/graphql
-      CODY_GATEWAY_ALLOW_ANONYMOUS: true
-      CODY_GATEWAY_DIAGNOSTICS_SECRET: sekret
-      # Set in 'sg.config.overwrite.yaml' if you want to test upstream
-      # integrations from local Cody Gateway:
-      # Entitle: https://app.entitle.io/request?data=eyJkdXJhdGlvbiI6IjIxNjAwIiwianVzdGlmaWNhdGlvbiI6IldSSVRFIEpVU1RJRklDQVRJT04gSEVSRSIsInJvbGVJZHMiOlt7ImlkIjoiYjhmYTk2NzgtNDExZC00ZmU1LWE2NDYtMzY4Y2YzYzUwYjJlIiwidGhyb3VnaCI6ImI4ZmE5Njc4LTQxMWQtNGZlNS1hNjQ2LTM2OGNmM2M1MGIyZSIsInR5cGUiOiJyb2xlIn1dfQ%3D%3D
-      # GSM: https://console.cloud.google.com/security/secret-manager?project=cody-gateway-dev
-      CODY_GATEWAY_ANTHROPIC_ACCESS_TOKEN: sekret
-      CODY_GATEWAY_OPENAI_ACCESS_TOKEN: sekret
-      CODY_GATEWAY_FIREWORKS_ACCESS_TOKEN: sekret
-      CODY_GATEWAY_SOURCEGRAPH_EMBEDDINGS_API_TOKEN: sekret
-      CODY_GATEWAY_GOOGLE_ACCESS_TOKEN: sekret
-      # Connect to services that require SAMS M2M http://go/sams-m2m
-      SAMS_URL: https://accounts.sgdev.org
-      # Connect to Enterprise Portal running locally
-      CODY_GATEWAY_ENTERPRISE_PORTAL_URL: http://localhost:6081
-    externalSecrets:
-      SAMS_CLIENT_ID:
-        project: sourcegraph-local-dev
-        name: SG_LOCAL_DEV_SAMS_CLIENT_ID
-      SAMS_CLIENT_SECRET:
-        project: sourcegraph-local-dev
-        name: SG_LOCAL_DEV_SAMS_CLIENT_SECRET
-
+    env: *cody-gateway-env
+    externalSecrets: *cody-gateway-externalSecrets
   docsite:
     runTarget: //doc:serve
   searcher:
@@ -1417,7 +1436,7 @@ commandsets:
       # additional connections.
       EXTSVC_CONFIG_FILE: ''
 
-  dotcom:
+  dotcom: &dotcom-defaults
     # This is 95% the enterprise runset, with the addition of Cody Gateway.
     checks:
       - docker
@@ -1446,6 +1465,28 @@ commandsets:
       - enterprise-portal # required by Cody Gateway
     env:
       SOURCEGRAPHDOTCOM_MODE: true
+
+  dotcom-cody-e2e:
+    <<: *dotcom-defaults
+    commands:
+      - cody-gateway-local-e2e # Replaces cody-gateway, the rest is just a dup of remaining commands.
+      - frontend
+      - worker
+      - repo-updater
+      - web
+      - gitserver-0
+      - gitserver-1
+      - searcher
+      - symbols
+      - caddy
+      - syntax-highlighter
+      - zoekt-index-0
+      - zoekt-index-1
+      - zoekt-web-0
+      - zoekt-web-1
+      - blobstore
+      - embeddings
+      - enterprise-portal # required by Cody Gateway
 
   codeintel-bazel: &codeintel_bazel_set
     checks:
