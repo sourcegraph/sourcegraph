@@ -15,28 +15,14 @@
     import Tooltip from '$lib/Tooltip.svelte'
     import { Badge } from '$lib/wildcard'
 
-    export let count: number | undefined
+    export let count: number
     export let exhaustive: boolean
 </script>
 
-{#if count !== undefined}
-    <span>
-        {#if exhaustive}
-            <Badge variant="secondary">{count}</Badge>
-        {:else}
-            <Tooltip placement="right" tooltip="At least {count} {pluralize('result', count)} match this filter.">
-                <Badge variant="secondary">{roundCount(count)}+</Badge>
-            </Tooltip>
-        {/if}
-    </span>
+{#if exhaustive}
+    <Badge variant="secondary">{count}</Badge>
+{:else}
+    <Tooltip placement="right" tooltip="At least {count} {pluralize('result', count)} match this filter.">
+        <Badge variant="secondary">{roundCount(count)}+</Badge>
+    </Tooltip>
 {/if}
-
-<style lang="scss">
-    span {
-        display: contents;
-        :global(span) {
-            background-color: var(--secondary-2);
-            color: var(--text-body);
-        }
-    }
-</style>

@@ -1,14 +1,7 @@
-import type { Filter } from '@sourcegraph/shared/src/search/stream'
-
-import type { IconComponent } from '$lib/Icon.svelte'
+import type { Filter } from '$lib/shared'
 
 import { parseExtendedSearchURL } from '..'
 import { SearchCachePolicy, setCachePolicyInURL } from '../state'
-
-export type SectionItemData = Omit<Filter, 'count'> & {
-    count?: Filter['count']
-    selected: boolean
-}
 
 /**
  * URLQueryFilter is the subset of a filter that is stored in the URL query
@@ -16,7 +9,11 @@ export type SectionItemData = Omit<Filter, 'count'> & {
  * necessary to render the selected filter before the backend streams back
  * any filters.
  */
-export type URLQueryFilter = Pick<Filter, 'kind' | 'label' | 'value'>
+export type URLQueryFilter = {
+    kind: string
+    label: string
+    value: string
+}
 
 const DYNAMIC_FILTER_URL_QUERY_KEY = 'df'
 
@@ -71,62 +68,4 @@ export function resetFilters(url: URL): URL {
 
 export function filtersFromParams(params: URLSearchParams): URLQueryFilter[] {
     return params.getAll(DYNAMIC_FILTER_URL_QUERY_KEY).map(deserializeURLFilter)
-}
-
-export const staticTypeFilters: URLQueryFilter[] = [
-    { kind: 'type', label: 'Code', value: 'type:file' },
-    { kind: 'type', label: 'Repositories', value: 'type:repo' },
-    { kind: 'type', label: 'Paths', value: 'type:path' },
-    { kind: 'type', label: 'Symbols', value: 'type:symbol' },
-    { kind: 'type', label: 'Commits', value: 'type:commit' },
-    { kind: 'type', label: 'Diffs', value: 'type:diff' },
-]
-
-export const typeFilterIcons: Record<string, IconComponent> = {
-    Code: ILucideBraces,
-    Repositories: ILucideGitFork,
-    Paths: ILucideFile,
-    Symbols: ILucideSquareFunction,
-    Commits: ILucideGitCommitVertical,
-    Diffs: ILucideDiff,
-}
-
-export type FilterGroups = Record<Filter['kind'], SectionItemData[]>
-
-export function groupFilters(streamFilters: Filter[], selectedFilters: URLQueryFilter[]): FilterGroups {
-    const groupedFilters: FilterGroups = {
-        type: [],
-        repo: [],
-        lang: [],
-        utility: [],
-        author: [],
-        file: [],
-        'commit date': [],
-        'symbol type': [],
-    }
-    for (const selectedFilter of selectedFilters) {
-        const streamFilter = streamFilters.find(
-            streamFilter => streamFilter.kind === selectedFilter.kind && streamFilter.value === selectedFilter.value
-        )
-        groupedFilters[selectedFilter.kind].push({
-            value: selectedFilter.value,
-            label: selectedFilter.label,
-            kind: selectedFilter.kind,
-            selected: true,
-            // Use count and exhaustiveness from the stream filter if it exists
-            count: streamFilter?.count,
-            exhaustive: streamFilter?.exhaustive || false,
-        })
-    }
-    for (const filter of streamFilters) {
-        if (groupedFilters[filter.kind].some(existingFilter => existingFilter.value === filter.value)) {
-            // Skip any filters that were already added by the seleced loop above
-            continue
-        }
-        groupedFilters[filter.kind].push({
-            ...filter,
-            selected: false,
-        })
-    }
-    return groupedFilters
 }

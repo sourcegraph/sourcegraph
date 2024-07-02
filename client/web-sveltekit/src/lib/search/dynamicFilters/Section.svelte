@@ -1,14 +1,14 @@
 <script lang="ts">
+    import type { ComponentProps } from 'svelte'
+
     import { Button } from '$lib/wildcard'
 
-    import type { SectionItemData } from './index.ts'
     import SectionItem from './SectionItem.svelte'
 
-    export let items: SectionItemData[]
+    export let items: ComponentProps<SectionItem>[]
     export let title: string
     export let filterPlaceholder: string = ''
     export let showAll: boolean = false
-    export let onFilterSelect: (kind: SectionItem['kind']) => void = () => {}
 
     let filterText = ''
     $: processedFilterText = filterText.trim().toLowerCase()
@@ -32,7 +32,7 @@
             {#each limitedItems as item}
                 <li>
                     <slot name="item" {item}>
-                        <SectionItem {item} {onFilterSelect} />
+                        <SectionItem {...item} on:select />
                     </slot>
                 </li>
             {/each}

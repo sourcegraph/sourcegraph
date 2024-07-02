@@ -7,17 +7,116 @@
         const filters = tokens.term.filter((token): token is QueryFilter => token.type === 'filter')
         return filters.some(filter => filter.field.value === 'type')
     }
+
+    const sectionKinds = [
+        'file',
+        'repo',
+        'lang',
+        'utility',
+        'author',
+        'commit date',
+        'symbol type',
+        'type',
+        'snippet',
+    ] as const
+
+    type SectionKind = typeof sectionKinds[number]
+
+    // A statically-defined filter
+    type StaticFilter = {
+        label: string
+        value: string
+    }
+
+    // A selected filter
+    type SelectedFilter = StaticFilter
+
+    // A filter sourced from the stream API
+    type StreamFilter = StaticFilter & {
+        count: number
+        exhaustive: boolean
+    }
+
+    // Everything needed to render a SectionItem except the href, which
+    // can be calculated from the current URL and the other props.
+    type MergedFilter = Omit<ComponentProps<SectionItem>, 'href'>
+
+    const typeFilterIcons: Record<string, IconComponent> = {
+        Code: ILucideBraces,
+        Repositories: ILucideGitFork,
+        Paths: ILucideFile,
+        Symbols: ILucideSquareFunction,
+        Commits: ILucideGitCommitVertical,
+        Diffs: ILucideDiff,
+    }
+
+    const staticTypeFilters: StaticFilter[] = [
+        { label: 'Code', value: 'type:file' },
+        { label: 'Repositories', value: 'type:repo' },
+        { label: 'Paths', value: 'type:path' },
+        { label: 'Symbols', value: 'type:symbol' },
+        { label: 'Commits', value: 'type:commit' },
+        { label: 'Diffs', value: 'type:diff' },
+    ]
+
+    // mergeFilterSources merges the filters of a shared kind from different sources.
+    function mergeFilterSources(
+        staticFilters: readonly StaticFilter[],
+        selectedFilters: readonly SelectedFilter[],
+        streamFilters: readonly StreamFilter[]
+    ): MergedFilter[] {
+        // Start with static filters, which are well-ordered
+        const merged: MergedFilter[] = staticFilters.map(filter => ({
+            ...filter,
+            selected: false,
+            count: undefined,
+        }))
+
+        // Then merge in the selected filters
+        for (const selectedFilter of selectedFilters) {
+            const found = merged.find(filter => filter.label === selectedFilter.label)
+            if (found !== undefined) {
+                // If we found a matching static filter, update it to be selected
+                found.selected = true
+            } else {
+                // Othersie, add it to the end of the list
+                merged.push({
+                    ...selectedFilter,
+                    selected: true,
+                    count: undefined,
+                })
+            }
+        }
+
+        // Finally, merge in the filters from the search stream
+        for (const streamFilter of streamFilters) {
+            const found = merged.find(filter => filter.label === streamFilter.label)
+            if (found !== undefined) {
+                // If we found a matching filter, update its count
+                found.count = { count: streamFilter.count, exhaustive: streamFilter.exhaustive }
+            } else {
+                // Otherwise, add it to the end of the list
+                merged.push({
+                    ...streamFilter,
+                    count: { count: streamFilter.count, exhaustive: streamFilter.exhaustive },
+                    selected: false,
+                })
+            }
+        }
+
+        return merged
+    }
 </script>
 
 <script lang="ts">
-    import { onMount } from 'svelte'
+    import { onMount, type ComponentProps } from 'svelte'
 
     import type { Filter as QueryFilter } from '@sourcegraph/shared/src/search/query/token'
 
     import { goto } from '$app/navigation'
     import { page } from '$app/stores'
     import { getGraphQLClient } from '$lib/graphql'
-    import Icon from '$lib/Icon.svelte'
+    import Icon, { type IconComponent } from '$lib/Icon.svelte'
     import KeyboardShortcut from '$lib/KeyboardShortcut.svelte'
     import LanguageIcon from '$lib/LanguageIcon.svelte'
     import Popover from '$lib/Popover.svelte'
@@ -25,21 +124,14 @@
     import CodeHostIcon from '$lib/search/CodeHostIcon.svelte'
     import SymbolKindIcon from '$lib/search/SymbolKindIcon.svelte'
     import { TELEMETRY_FILTER_TYPES, displayRepoName, scanSearchQuery, type Filter } from '$lib/shared'
+    import { settings } from '$lib/stores'
     import { TELEMETRY_RECORDER } from '$lib/telemetry'
     import { delay } from '$lib/utils'
     import { Alert } from '$lib/wildcard'
     import Button from '$lib/wildcard/Button.svelte'
 
     import HelpFooter from './HelpFooter.svelte'
-    import {
-        type URLQueryFilter,
-        type SectionItemData,
-        staticTypeFilters,
-        typeFilterIcons,
-        groupFilters,
-        moveFiltersToQuery,
-        resetFilters,
-    } from './index'
+    import { type URLQueryFilter, moveFiltersToQuery, resetFilters, updateFilterInURL } from './index'
     import LoadingSkeleton from './LoadingSkeleton.svelte'
     import Section from './Section.svelte'
     import SectionItem from './SectionItem.svelte'
@@ -49,18 +141,51 @@
     export let selectedFilters: URLQueryFilter[]
     export let state: 'complete' | 'error' | 'loading'
 
-    $: groupedFilters = groupFilters(streamFilters, selectedFilters)
-    $: typeFilters = staticTypeFilters.map((staticTypeFilter): SectionItemData => {
-        const selectedOrStreamFilter = groupedFilters.type.find(
-            typeFilter => typeFilter.label === staticTypeFilter.label
-        )
-        return {
-            ...staticTypeFilter,
-            count: selectedOrStreamFilter?.count,
-            exhaustive: selectedOrStreamFilter?.exhaustive || false,
-            selected: selectedOrStreamFilter?.selected || false,
-        }
-    })
+    // We have three potential sources for filters:
+    // - Static filters (types, snippets)
+    // - Selected filters (stored in the URL)
+    // - Stream filters (generated from search results)
+    //
+    // First, we group each source of filters by kind which is only relevant
+    // for grouping and not for rendering individual items.
+
+    let groupedStaticFilters: Partial<Record<SectionKind, StaticFilter[]>>
+    $: groupedStaticFilters = {
+        type: staticTypeFilters,
+        snippet:
+            $settings?.['search.scopes']?.map(
+                (scope): StaticFilter => ({
+                    label: scope.name,
+                    value: scope.value,
+                })
+            ) ?? [],
+    }
+
+    let groupedSelectedFilters: Partial<Record<SectionKind, SelectedFilter[]>>
+    $: groupedSelectedFilters = Object.groupBy(selectedFilters, ({ kind }) => kind)
+
+    let groupedStreamFilters: Partial<Record<SectionKind, StreamFilter[]>>
+    $: groupedStreamFilters = Object.groupBy(streamFilters, ({ kind }) => kind)
+
+    // Then we merge the groups together. Different sources provide different
+    // information (see mergeFilterSources for details). After we've merged, add
+    // an href to the results. At that point, we have everything we need to render
+    // a SectionItem.
+
+    let sectionItems: Record<SectionKind, ComponentProps<SectionItem>[]>
+    $: sectionItems = Object.fromEntries(
+        sectionKinds.map(sectionKind => [
+            sectionKind satisfies SectionKind,
+            mergeFilterSources(
+                groupedStaticFilters[sectionKind] ?? [],
+                groupedSelectedFilters[sectionKind] ?? [],
+                groupedStreamFilters[sectionKind] ?? []
+            ).map(mergedFilter => ({
+                ...mergedFilter,
+                href: updateFilterInURL($page.url, { ...mergedFilter, kind: sectionKind }, mergedFilter.selected),
+            })) satisfies ComponentProps<SectionItem>[],
+        ])
+    ) as Record<SectionKind, ComponentProps<SectionItem>[]> // Safe assertion because of internal `satisfies`
 
     $: resetURL = resetFilters($page.url).toString()
     $: enableReset = selectedFilters.length > 0
@@ -71,12 +196,13 @@
         }
     }
 
-    function handleFilterSelect(kind: SectionItemData['kind']): void {
+    function handleFilterSelect(kind: keyof typeof TELEMETRY_FILTER_TYPES): void {
         TELEMETRY_RECORDER.recordEvent('search.filters', 'select', {
             metadata: { filterKind: TELEMETRY_FILTER_TYPES[kind] },
         })
     }
 
+    // TODO: use registerHotkey
     onMount(() => {
         window.addEventListener('keydown', handleResetKeydown)
         return () => window.removeEventListener('keydown', handleResetKeydown)
@@ -96,25 +222,20 @@
         </div>
 
         {#if !queryHasTypeFilter(searchQuery)}
-            <Section items={typeFilters} title="By type" showAll onFilterSelect={handleFilterSelect}>
-                <SectionItem slot="item" let:item {item}>
+            <Section items={sectionItems.type} title="By type" showAll>
+                <SectionItem slot="item" let:item {...item} on:select={() => handleFilterSelect('type')}>
                     <Icon slot="icon" icon={typeFilterIcons[item.label]} inline />
                 </SectionItem>
             </Section>
         {/if}
 
-        <Section
-            items={groupedFilters.repo}
-            title="By repository"
-            filterPlaceholder="Filter repositories"
-            onFilterSelect={handleFilterSelect}
-        >
+        <Section items={sectionItems.repo} title="By repository" filterPlaceholder="Filter repositories">
             <svelte:fragment slot="item" let:item>
                 <Popover showOnHover let:registerTrigger placement="right-start">
                     <div use:registerTrigger>
-                        <SectionItem {item}>
+                        <SectionItem {...item} on:select={() => handleFilterSelect('repo')}>
                             <CodeHostIcon slot="icon" disableTooltip repository={item.label} />
-                            <span slot="label" let:label>{displayRepoName(label)}</span>
+                            <span slot="label">{displayRepoName(item.label)}</span>
                         </SectionItem>
                     </div>
                     <svelte:fragment slot="content">
@@ -127,42 +248,41 @@
                 </Popover>
             </svelte:fragment>
         </Section>
-        <Section
-            items={groupedFilters.lang}
-            title="By language"
-            filterPlaceholder="Filter languages"
-            onFilterSelect={handleFilterSelect}
-        >
-            <SectionItem slot="item" let:item {item}>
+        <Section items={sectionItems.lang} title="By language" filterPlaceholder="Filter languages">
+            <SectionItem slot="item" let:item {...item} on:select={() => handleFilterSelect('lang')}>
                 <LanguageIcon slot="icon" language={item.label} inline />
             </SectionItem>
         </Section>
-        <Section
-            items={groupedFilters['symbol type']}
-            title="By symbol type"
-            filterPlaceholder="Filter symbol types"
-            onFilterSelect={handleFilterSelect}
-        >
-            <SectionItem slot="item" let:item {item}>
+        <Section items={sectionItems['symbol type']} title="By symbol type" filterPlaceholder="Filter symbol types">
+            <SectionItem slot="item" let:item {...item} on:select={() => handleFilterSelect('symbol type')}>
                 <SymbolKindIcon slot="icon" symbolKind={item.label.toUpperCase()} />
             </SectionItem>
         </Section>
         <Section
-            items={groupedFilters.author}
+            items={sectionItems.author}
             title="By author"
             filterPlaceholder="Filter authors"
-            onFilterSelect={handleFilterSelect}
+            on:select={() => handleFilterSelect('author')}
         />
-        <Section items={groupedFilters['commit date']} title="By commit date" onFilterSelect={handleFilterSelect}>
-            <SectionItem slot="item" let:item {item}>
-                <span class="commit-date-label" slot="label">
+        <Section items={sectionItems['commit date']} title="By commit date">
+            <SectionItem slot="item" let:item {...item} on:select={() => handleFilterSelect('commit date')}>
+                <svelte:fragment slot="label">
                     {item.label}
                     <small><pre>{item.value}</pre></small>
-                </span>
+                </svelte:fragment>
             </SectionItem>
         </Section>
-        <Section items={groupedFilters.file} title="By file" showAll onFilterSelect={handleFilterSelect} />
-        <Section items={groupedFilters.utility} title="Utility" showAll onFilterSelect={handleFilterSelect} />
+        <Section items={sectionItems.file} title="By file" showAll on:select={() => handleFilterSelect('file')} />
+        <Section items={sectionItems.utility} title="Utility" showAll on:select={() => handleFilterSelect('utility')} />
+
+        <Section items={sectionItems.snippet} title="Snippets">
+            <SectionItem slot="item" let:item {...item} on:select={() => handleFilterSelect('snippet')}>
+                <svelte:fragment slot="label">
+                    {item.label}
+                    <small><pre>{item.value}</pre></small>
+                </svelte:fragment>
+            </SectionItem>
+        </Section>
 
         {#if state === 'loading'}
             <LoadingSkeleton />
@@ -175,10 +295,8 @@
     {#if selectedFilters.length > 0}
         <div class="move-button">
             <Button variant="secondary" display="block" outline on:click={() => goto(moveFiltersToQuery($page.url))}>
-                <svelte:fragment>
-                    Move filters to query&nbsp;
-                    <Icon icon={ILucideCornerRightDown} aria-hidden inline />
-                </svelte:fragment>
+                Move filters to query&nbsp;
+                <Icon icon={ILucideCornerRightDown} aria-hidden inline />
             </Button>
         </div>
     {/if}

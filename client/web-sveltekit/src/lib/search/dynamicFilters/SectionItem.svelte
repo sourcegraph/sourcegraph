@@ -1,30 +1,32 @@
 <script lang="ts">
-    import { page } from '$app/stores'
+    import { createEventDispatcher, type ComponentProps } from 'svelte'
+
     import Icon from '$lib/Icon.svelte'
 
     import CountBadge from './CountBadge.svelte'
-    import { updateFilterInURL, type SectionItemData } from './index'
 
-    export let item: SectionItemData
-    export let onFilterSelect: (kind: SectionItemData['kind']) => void = () => {}
+    export let label: string
+    export let value: string
+    export let href: URL
+    export let count: ComponentProps<CountBadge> | undefined = undefined
+    export let selected: boolean
+
+    const dispatch = createEventDispatcher<{ select: { label: string; value: string } }>()
 </script>
 
-<a
-    href={updateFilterInURL($page.url, item, item.selected).toString()}
-    class:selected={item.selected}
-    on:click={() => onFilterSelect(item.kind)}
->
+<!-- TODO: a11y. This should expose the aria selected state and use the proper roles -->
+<a href={href.toString()} class:selected on:click={() => dispatch('select', { label, value })}>
     <slot name="icon" />
     <span class="label">
-        <slot name="label" label={item.label} value={item.value}>
-            {item.label}
+        <slot name="label" {label} {value}>
+            {label}
         </slot>
     </span>
-    <CountBadge count={item.count} exhaustive={item.exhaustive} />
-    {#if item.selected}
-        <span class="close">
-            <Icon icon={ILucideX} inline aria-hidden />
-        </span>
+    {#if count}
+        <CountBadge {...count} />
+    {/if}
+    {#if selected}
+        <Icon icon={ILucideX} inline aria-hidden />
     {/if}
 </a>
 
@@ -73,10 +75,6 @@
             .label {
                 color: var(--light-text);
             }
-        }
-
-        .close {
-            flex-shrink: 0;
         }
     }
 </style>

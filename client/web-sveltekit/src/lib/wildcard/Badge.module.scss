@@ -52,9 +52,9 @@
 }
 
 .secondary {
-    --badge-base: var(--secondary);
-    --badge-light: var(--secondary-2);
-    --badge-dark: var(--secondary-3);
+    --badge-base: var(--secondary-2);
+    --badge-light: var(--secondary-3);
+    --badge-dark: var(--secondary-4);
     --badge-text: var(--body-color);
 }
 

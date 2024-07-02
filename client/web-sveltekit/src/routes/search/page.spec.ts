@@ -260,3 +260,51 @@ test.describe('search results', async () => {
         await expect(alert).toBeVisible()
     })
 })
+
+test.describe('search filters', async () => {
+    test('type filters are always visible', async ({ page, sg }) => {
+        const stream = await sg.mockSearchStream()
+        await page.goto('/search?q=test')
+        await page.getByRole('heading', { name: 'Filter results' }).waitFor()
+        await stream.publish(
+            {
+                type: 'matches',
+                data: [chunkMatch],
+            },
+            createProgressEvent(),
+            createDoneEvent()
+        )
+        await stream.close()
+
+        for (const typeFilter of ['Code', 'Repositories', 'Paths', 'Symbols', 'Commits', 'Diffs']) {
+            await expect(page.getByRole('link', { name: typeFilter })).toBeVisible()
+        }
+    })
+
+    test('snippets are shown', async ({ page, sg }) => {
+        sg.mockOperations({
+            Init: () => ({
+                currentUser: null,
+                viewerSettings: {
+                    final: '{"search.scopes":[{"name":"Test snippet", "value": "repo:testsnippet"}]}',
+                },
+            }),
+        })
+
+        const stream = await sg.mockSearchStream()
+        await page.goto('/search?q=test')
+        await page.getByRole('heading', { name: 'Filter results' }).waitFor()
+        await stream.publish(
+            {
+                type: 'matches',
+                data: [chunkMatch],
+            },
+            createProgressEvent(),
+            createDoneEvent()
+        )
+        await stream.close()
+
+        await page.getByRole('link', { name: 'Test snippet' }).click()
+        await page.waitForURL(/Test\+snippet/)
+    })
+})

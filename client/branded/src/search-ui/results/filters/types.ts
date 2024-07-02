@@ -10,6 +10,7 @@ export enum FilterKind {
     // Synthetic filters, lives only on the client
     Count = 'count',
     Type = 'type',
+    Snippet = 'snippet',
 }
 
 export const DYNAMIC_FILTER_KINDS = [

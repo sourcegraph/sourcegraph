@@ -13,6 +13,7 @@ import { Button, Icon, H2, H4, Input, LanguageIcon, Code, Tooltip } from '@sourc
 import { codeHostIcon } from '../../../../components'
 import { SyntaxHighlightedSearchQuery } from '../../../../components/SyntaxHighlightedSearchQuery'
 import type { URLQueryFilter } from '../../hooks'
+import { FilterKind } from '../../types'
 import { DynamicFilterBadge } from '../DynamicFilterBadge'
 
 import styles from './SearchDynamicFilter.module.scss'
@@ -28,7 +29,7 @@ interface SearchDynamicFilterProps {
      * Specifies which type filter we want to render in this particular
      * filter section, it could be lang filter, repo filter, or file filters.
      */
-    filterKind: Filter['kind']
+    filterKind: FilterKind
 
     /**
      * The set of filters that are selected. This is the state that is stored
@@ -48,7 +49,7 @@ interface SearchDynamicFilterProps {
      * It's called whenever user changes (pick/reset) any filters in the filter panel.
      * @param nextQuery
      */
-    onSelectedFilterChange: (filterKind: Filter['kind'], filters: URLQueryFilter[]) => void
+    onSelectedFilterChange: (filterKind: FilterKind, filters: URLQueryFilter[]) => void
 
     onAddFilterToQuery: (newFilter: string) => void
 }
@@ -221,7 +222,7 @@ const DynamicFilterItem: FC<DynamicFilterItemProps> = props => {
     )
 }
 
-function filterForSearchTerm(input: string, filterKind: Filter['kind']): string | null {
+function filterForSearchTerm(input: string, filterKind: FilterKind): string | null {
     switch (filterKind) {
         case 'repo': {
             return `repo:${maybeQuoteString(input)}`
