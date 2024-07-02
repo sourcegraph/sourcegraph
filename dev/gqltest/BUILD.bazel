@@ -39,3 +39,40 @@ go_test(
         "@io_k8s_utils//strings/slices",
     ],
 )
+
+genrule(
+    name = "varun",
+    srcs = [
+        "@go-diff//:src",
+    ],
+    outs = ["index.scip"],
+    cmd = """
+    repo_path=external/go-diff/*/
+    echo $$repo_path
+    abs_scip_go=$$(pwd)/$(location //dev/tools:scip-go)
+
+    GO_ABS_PATH=`cd $$(dirname $(location @go_sdk//:bin/go)) && pwd`
+    GO_SDK_ABS_PATH=`dirname $$GO_ABS_PATH`
+
+    pushd $$repo_path
+
+    env \
+        PATH=$$GO_ABS_PATH \
+        GOCACHE=$$(mktemp -d) \
+        GOMODCACHE=$$(mktemp -d) \
+        GOROOT=$$GO_SDK_ABS_PATH \
+        $$abs_scip_go
+
+    abs_index_scip=$$(pwd)/index.scip
+    popd
+
+    cp $$abs_index_scip $@
+    """,
+    tags = ["requires-network"],
+    tools = [
+        "@go_sdk//:bin/go",
+        "@go_sdk//:srcs",
+        "@go_sdk//:tools",
+        "//dev/tools:scip-go",
+    ],
+)
