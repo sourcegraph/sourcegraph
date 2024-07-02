@@ -68,6 +68,9 @@ type completionsFilter struct {
 	// completion passed over to Send while attribution is running. Once attribution
 	// finishes, we carry on sending from the most recent completion.
 	mostRecentCompletion types.CompletionResponse
+	// totalCompletion tracks the whole completion string in memory, in delta mode
+	// we otherwise cannot keep track of the whole string to search for.
+	totalCompletion string
 }
 
 // CompletionsFilterConfig assembles parameters needed to create new CompletionFilter.
@@ -93,6 +96,7 @@ func NewCompletionsFilter(config CompletionsFilterConfig) (CompletionsFilter, er
 // Send is invoked each time new completion prefix arrives as the completion
 // is being yielded by the LLM.
 func (a *completionsFilter) Send(ctx context.Context, e types.CompletionResponse) error {
+	a.setTotalCompletion(e)
 	if err := ctx.Err(); err != nil {
 		a.blockSending()
 		return err
@@ -100,12 +104,12 @@ func (a *completionsFilter) Send(ctx context.Context, e types.CompletionResponse
 	if a.attributionResultPermissive() {
 		return a.send(e)
 	}
-	if a.smallEnough(e) {
+	if a.smallEnough() {
 		return a.send(e)
 	}
 	a.setMostRecentCompletion(e)
 	a.attributionRun.Do(func() {
-		go a.runAttribution(ctx, e)
+		go a.runAttribution(ctx)
 	})
 	return nil
 }
@@ -126,6 +130,16 @@ func (a *completionsFilter) WaitDone(ctx context.Context) error {
 		return ctx.Err()
 	case err := <-a.attributionFinished:
 		return err
+	}
+}
+
+func (a *completionsFilter) setTotalCompletion(e types.CompletionResponse) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if len(e.DeltaText) > 0 {
+		a.totalCompletion += e.DeltaText
+	} else if len(e.Completion) > 0 {
+		a.totalCompletion = e.Completion
 	}
 }
 
@@ -159,8 +173,11 @@ func (a *completionsFilter) send(e types.CompletionResponse) error {
 // smallEnough indicates whether snippet size is small enough not to consider
 // it for attribution search. At this point we run attribution search for
 // snippets 10 lines long or longer.
-func (a *completionsFilter) smallEnough(e types.CompletionResponse) bool {
-	return !NewThreshold().ShouldSearch(e.Completion)
+func (a *completionsFilter) smallEnough() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	return !NewThreshold().ShouldSearch(a.totalCompletion)
 }
 
 // getMostRecentCompletion returns the last completion event to be fed to `Send`.
@@ -174,13 +191,20 @@ func (a *completionsFilter) getMostRecentCompletion() types.CompletionResponse {
 func (a *completionsFilter) setMostRecentCompletion(e types.CompletionResponse) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	a.mostRecentCompletion = e
+	// Copy so we don't modify the incoming event:
+	next := e
+	next.DeltaText = a.mostRecentCompletion.DeltaText + e.DeltaText
+	a.mostRecentCompletion = next
 }
 
 // runAttribution performs attribution search and updates the state of the object
 // after finishing. It's run within `attributionRun` to ensure it only runs once.
-func (a *completionsFilter) runAttribution(ctx context.Context, e types.CompletionResponse) {
-	result, err := a.config.Test(ctx, e.Completion)
+func (a *completionsFilter) runAttribution(ctx context.Context) {
+	a.mu.Lock()
+	totalCompletion := a.totalCompletion
+	a.mu.Unlock()
+
+	result, err := a.config.Test(ctx, totalCompletion)
 	if err != nil {
 		a.config.AttributionError(err)
 	}

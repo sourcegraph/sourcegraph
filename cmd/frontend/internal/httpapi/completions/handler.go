@@ -90,6 +90,8 @@ func newCompletionsHandler(
 			version = types.CompletionsVersionLegacy
 		} else if versionParam == "1" {
 			version = types.CompletionsV1
+		} else if versionParam == "2" {
+			version = types.CompletionsV2
 		} else {
 			http.Error(w, "Unsupported API Version (Please update your client)", http.StatusNotAcceptable)
 			return

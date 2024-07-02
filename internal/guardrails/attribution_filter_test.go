@@ -34,9 +34,13 @@ func (s *fakeClient) trimmedDiffs() []string {
 	var prefix string
 	var diffs []string
 	for _, e := range s.events {
-		diffStr := strings.TrimSpace(strings.TrimPrefix(e.Completion, prefix))
-		diffs = append(diffs, strings.Split(diffStr, "\n")...)
-		prefix = e.Completion
+		if e.DeltaText != "" {
+			diffs = append(diffs, strings.Split(strings.Trim(e.DeltaText, "\n"), "\n")...)
+		} else {
+			diffStr := strings.TrimSpace(strings.TrimPrefix(e.Completion, prefix))
+			diffs = append(diffs, strings.Split(diffStr, "\n")...)
+			prefix = e.Completion
+		}
 	}
 	return diffs
 }
@@ -56,15 +60,23 @@ func (s *fakeSearch) test(_ context.Context, snippet string) (bool, error) {
 
 type eventOrder []event
 
-func (o eventOrder) replay(ctx context.Context, f guardrails.CompletionsFilter) error {
+func (o eventOrder) replay(ctx context.Context, delta bool, f guardrails.CompletionsFilter) error {
 	var completionPrefix string
 	for _, e := range o {
 		if s := e.NextCompletionLine(); s != nil {
-			completionPrefix = fmt.Sprintf("%s\n%s", completionPrefix, *s)
-			if err := f.Send(ctx, types.CompletionResponse{
-				Completion: completionPrefix,
-			}); err != nil {
-				return err
+			if delta {
+				if err := f.Send(ctx, types.CompletionResponse{
+					DeltaText: "\n" + *s,
+				}); err != nil {
+					return err
+				}
+			} else {
+				completionPrefix = fmt.Sprintf("%s\n%s", completionPrefix, *s)
+				if err := f.Send(ctx, types.CompletionResponse{
+					Completion: completionPrefix,
+				}); err != nil {
+					return err
+				}
 			}
 		}
 		e.Run()
@@ -97,28 +109,29 @@ func (_ contextCancelled) NextCompletionLine() *string { return nil }
 
 func bothImplementations(
 	t *testing.T,
-	test func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch),
+	test func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool),
 ) {
-	t.Helper()
 	for implementationName, factory := range map[string]func(guardrails.CompletionsFilterConfig) (guardrails.CompletionsFilter, error){
 		"guardrails.NewCompletionsFilter (old)":  guardrails.NewCompletionsFilter,
 		"guardrails.NewCompletionsFilter2 (new)": guardrails.NewCompletionsFilter2,
 	} {
-		client := &fakeClient{}
-		search := &fakeSearch{response: make(chan bool)}
-		config := guardrails.CompletionsFilterConfig{
-			Sink:             client.stream,
-			Test:             search.test,
-			AttributionError: func(error) {},
+		for delta, testNameSuffix := range map[bool]string{false: " (full response)", true: " (delta)"} {
+			client := &fakeClient{}
+			search := &fakeSearch{response: make(chan bool)}
+			config := guardrails.CompletionsFilterConfig{
+				Sink:             client.stream,
+				Test:             search.test,
+				AttributionError: func(error) {},
+			}
+			filter, err := factory(config)
+			require.NoError(t, err)
+			t.Run(implementationName+testNameSuffix, func(t *testing.T) { test(t, filter, client, search, delta) })
 		}
-		filter, err := factory(config)
-		require.NoError(t, err)
-		t.Run(implementationName, func(t *testing.T) { t.Helper(); test(t, filter, client, search) })
 	}
 }
 
 func TestAttributionNotFound(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx := context.Background()
 		o := eventOrder{
 			nextLine("1"),
@@ -133,7 +146,7 @@ func TestAttributionNotFound(t *testing.T) {
 			nextLine("10"),
 			searchFinishes{search: search, canUseSnippet: true},
 		}
-		require.NoError(t, o.replay(ctx, f))
+		require.NoError(t, o.replay(ctx, delta, f))
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5", "6", "7", "8",
@@ -146,7 +159,7 @@ func TestAttributionNotFound(t *testing.T) {
 }
 
 func TestAttributionFound(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx := context.Background()
 		o := eventOrder{
 			nextLine("1"),
@@ -161,7 +174,7 @@ func TestAttributionFound(t *testing.T) {
 			nextLine("10"),
 			searchFinishes{search: search, canUseSnippet: false},
 		}
-		require.NoError(t, o.replay(ctx, f))
+		require.NoError(t, o.replay(ctx, delta, f))
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5", "6", "7", "8",
@@ -174,7 +187,7 @@ func TestAttributionFound(t *testing.T) {
 }
 
 func TestAttributionNotFoundMoreDataAfter(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx := context.Background()
 		o := eventOrder{
 			nextLine("1"),
@@ -191,7 +204,7 @@ func TestAttributionNotFoundMoreDataAfter(t *testing.T) {
 			nextLine("11"),
 			nextLine("12"),
 		}
-		require.NoError(t, o.replay(ctx, f))
+		require.NoError(t, o.replay(ctx, delta, f))
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5", "6", "7", "8",
@@ -207,7 +220,7 @@ func TestAttributionNotFoundMoreDataAfter(t *testing.T) {
 }
 
 func TestAttributionFoundMoreDataAfter(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx := context.Background()
 		o := eventOrder{
 			nextLine("1"),
@@ -224,7 +237,7 @@ func TestAttributionFoundMoreDataAfter(t *testing.T) {
 			nextLine("11"),
 			nextLine("12"),
 		}
-		require.NoError(t, o.replay(ctx, f))
+		require.NoError(t, o.replay(ctx, delta, f))
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5", "6", "7", "8",
@@ -237,7 +250,7 @@ func TestAttributionFoundMoreDataAfter(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx, cancel := context.WithCancel(context.Background())
 		o := eventOrder{
 			nextLine("1"),
@@ -252,7 +265,7 @@ func TestTimeout(t *testing.T) {
 			nextLine("9"),
 			nextLine("10"),
 		}
-		require.ErrorIs(t, o.replay(ctx, f), context.Canceled)
+		require.ErrorIs(t, o.replay(ctx, delta, f), context.Canceled)
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5",
@@ -264,7 +277,7 @@ func TestTimeout(t *testing.T) {
 }
 
 func TestTimeoutAfterAttributionFound(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx, cancel := context.WithCancel(context.Background())
 		o := eventOrder{
 			nextLine("1"),
@@ -282,7 +295,7 @@ func TestTimeoutAfterAttributionFound(t *testing.T) {
 			contextCancelled(cancel),
 			nextLine("12"),
 		}
-		require.ErrorIs(t, o.replay(ctx, f), context.Canceled)
+		require.ErrorIs(t, o.replay(ctx, delta, f), context.Canceled)
 		t.Skip("TODO(#59863) Still sometimes flakes in not returning lines past 8.")
 		got := client.trimmedDiffs()
 		want := []string{
@@ -300,7 +313,7 @@ func TestTimeoutAfterAttributionFound(t *testing.T) {
 }
 
 func TestTimeoutBeforeAttributionFound(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx, cancel := context.WithCancel(context.Background())
 		o := eventOrder{
 			nextLine("1"),
@@ -317,7 +330,7 @@ func TestTimeoutBeforeAttributionFound(t *testing.T) {
 			searchFinishes{search: search, canUseSnippet: false},
 			nextLine("11"),
 		}
-		require.ErrorIs(t, o.replay(ctx, f), context.Canceled)
+		require.ErrorIs(t, o.replay(ctx, delta, f), context.Canceled)
 		got := client.trimmedDiffs()
 		want := []string{
 			"1", "2", "3", "4", "5", "6", "7", "8",
@@ -331,7 +344,7 @@ func TestTimeoutBeforeAttributionFound(t *testing.T) {
 }
 
 func TestAttributionSearchFinishesAfterWaitDoneIsCalled(t *testing.T) {
-	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch) {
+	bothImplementations(t, func(t *testing.T, f guardrails.CompletionsFilter, client *fakeClient, search *fakeSearch, delta bool) {
 		ctx := context.Background()
 		o := eventOrder{
 			nextLine("1"),
@@ -349,7 +362,7 @@ func TestAttributionSearchFinishesAfterWaitDoneIsCalled(t *testing.T) {
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
-			require.NoError(t, o.replay(ctx, f))
+			require.NoError(t, o.replay(ctx, delta, f))
 			wg.Done()
 		}()
 		want := []string{
@@ -358,7 +371,7 @@ func TestAttributionSearchFinishesAfterWaitDoneIsCalled(t *testing.T) {
 			// not streamed yet
 		}
 		for got := []string{}; reflect.DeepEqual(want, got); got = client.trimmedDiffs() {
-			time.Sleep(10) // Poor man's awaitility.
+			time.Sleep(10 * time.Millisecond) // Poor man's awaitility.
 		}
 		search.response <- true // Finish attribution search.
 		wg.Wait()               // WaitDone returns.

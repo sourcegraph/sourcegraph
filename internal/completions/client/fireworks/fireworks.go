@@ -121,6 +121,7 @@ func (c *fireworksClient) Stream(
 	requestParams := request.Parameters
 	logprobsInclude := uint8(0)
 	requestParams.Logprobs = &logprobsInclude
+	builder := types.NewCompletionResponseBuilder(request.Version)
 
 	// HACK: Cody Gateway expects model names in <provider>/<model> format, but if we're connecting directly to
 	// the Fireworks API, we need to strip the "fireworks" provider prefix
@@ -135,7 +136,6 @@ func (c *fireworksClient) Stream(
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
-	var content string
 	var accumulatedLogprobs *types.Logprobs
 	for dec.Scan() {
 		if ctx.Err() != nil && ctx.Err() == context.Canceled {
@@ -155,20 +155,23 @@ func (c *fireworksClient) Stream(
 
 		if len(event.Choices) > 0 {
 			// The /completion endpoint returns a text field ...
-			content += event.Choices[0].Text
+			content := event.Choices[0].Text
 			// ... whereas the /chat/completion endpoints returns this structure
 			if event.Choices[0].Delta != nil {
-				content += event.Choices[0].Delta.Content
+				content = event.Choices[0].Delta.Content
 			}
 			accumulatedLogprobs = accumulatedLogprobs.Append(event.Choices[0].Logprobs)
-			ev := types.CompletionResponse{
-				Completion: content,
-				StopReason: event.Choices[0].FinishReason,
-				Logprobs:   accumulatedLogprobs,
-			}
+			ev := builder.NextMessage(content, accumulatedLogprobs)
 			err = sendEvent(ev)
 			if err != nil {
 				return err
+			}
+
+			if event.Choices[0].FinishReason != "" {
+				err = sendEvent(builder.Stop(event.Choices[0].FinishReason))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

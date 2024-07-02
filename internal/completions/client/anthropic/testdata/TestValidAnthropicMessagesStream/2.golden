@@ -1,0 +1,8 @@
+[]types.CompletionResponse{
+	{
+		DeltaText: "He",
+	},
+	{DeltaText: "llo"},
+	{DeltaText: "!"},
+	{StopReason: "end_turn"},
+}

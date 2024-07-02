@@ -107,9 +107,60 @@ func (p *CompletionRequestParameters) Attrs(feature CompletionsFeature) []attrib
 }
 
 type CompletionResponse struct {
-	Completion string    `json:"completion"`
-	StopReason string    `json:"stopReason"`
+	// Completion is the full completion string.
+	// In the V2 API, this field is empty for streaming responses.
+	// Use DeltaText instead.
+	Completion string `json:"completion,omitempty"`
+	// DeltaText is the incremental text that was added to the prompt.
+	// It is only present in the V2 API. If set, don't use Completion.
+	DeltaText  string    `json:"deltaText,omitempty"`
+	StopReason string    `json:"stopReason,omitempty"`
 	Logprobs   *Logprobs `json:"logprobs,omitempty"`
+}
+
+// CompletionResponseBuilder is used to build a completion response in the right format.
+// It is version aware and renders the output in the right format depending on the version.
+type CompletionResponseBuilder interface {
+	// NextMessage should be called for each message that is returned by the model.
+	// text is expected to be incremental over the last invocation of NextMessage.
+	NextMessage(text string, logprobs *Logprobs) CompletionResponse
+	// Stop should be called when the model has finished producing a response.
+	// A stopReason can be given to indicate why the generation stopped.
+	Stop(stopReason string) CompletionResponse
+}
+
+// NewCompletionResponseBuilder returns a new CompletionResponseBuilder for the given version.
+func NewCompletionResponseBuilder(version CompletionsVersion) CompletionResponseBuilder {
+	return &completionResponseBuilder{version: version}
+}
+
+type completionResponseBuilder struct {
+	version         CompletionsVersion
+	totalCompletion string
+}
+
+func (b *completionResponseBuilder) NextMessage(text string, logprobs *Logprobs) CompletionResponse {
+	if b.version == CompletionsV2 {
+		return CompletionResponse{
+			DeltaText: text,
+			Logprobs:  logprobs,
+		}
+	}
+
+	b.totalCompletion += text
+
+	return CompletionResponse{
+		Completion: b.totalCompletion,
+		Logprobs:   logprobs,
+	}
+}
+
+func (b *completionResponseBuilder) Stop(stopReason string) CompletionResponse {
+	return CompletionResponse{
+		// In < V2, the completion is also set on the stop reason message.
+		Completion: b.totalCompletion,
+		StopReason: stopReason,
+	}
 }
 
 type Logprobs struct {
@@ -180,6 +231,10 @@ type CompletionsVersion int
 const (
 	CompletionsVersionLegacy CompletionsVersion = 0
 	CompletionsV1            CompletionsVersion = 1
+	// CompletionsV2 extends CompletionsV1 by support for delta completions events.
+	// The response will only contain newly generated characters, not characters that
+	// were already sent.
+	CompletionsV2 CompletionsVersion = 2
 )
 
 // CodyClientName represents the name of a client in URL query parameters.

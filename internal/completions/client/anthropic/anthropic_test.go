@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/sourcegraph/log"
@@ -45,49 +46,53 @@ func getMockClient(responseBody []byte) types.CompletionsClient {
 }
 
 func TestValidAnthropicMessagesStream(t *testing.T) {
-	logger := log.Scoped("completions")
-	var mockAnthropicMessagesResponseLines = []string{
-		`event: message_start
-		data: {"type": "message_start", "message": {"id": "msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY", "type": "message", "role": "assistant", "content": [], "model": "claude-3-opus-20240229", "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 25, "output_tokens": 1}}}`,
-		`event: content_block_start
-		data: {"type": "content_block_start", "index":0, "content_block": {"type": "text", "text": ""}}`,
-		`event: ping
-		data: {"type": "ping"}`,
-		`event: content_block_delta
-		data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "He"}}`,
-		`event: content_block_delta
-		data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "llo"}}`,
-		`event: content_block_delta
-		data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "!"}}`,
-		`event: content_block_stop
-		data: {"type": "content_block_stop", "index": 0}`,
-		`event: message_delta
-		data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null}, "usage":{"output_tokens": 15}}`,
-		`event: message_stop
-		data: {"type": "message_stop"}`,
-	}
+	for _, version := range []types.CompletionsVersion{types.CompletionsVersionLegacy, types.CompletionsV2} {
+		t.Run(strconv.Itoa(int(version)), func(t *testing.T) {
+			logger := log.Scoped("completions")
+			var mockAnthropicMessagesResponseLines = []string{
+				`event: message_start
+			data: {"type": "message_start", "message": {"id": "msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY", "type": "message", "role": "assistant", "content": [], "model": "claude-3-opus-20240229", "stop_reason": null, "stop_sequence": null, "usage": {"input_tokens": 25, "output_tokens": 1}}}`,
+				`event: content_block_start
+			data: {"type": "content_block_start", "index":0, "content_block": {"type": "text", "text": ""}}`,
+				`event: ping
+			data: {"type": "ping"}`,
+				`event: content_block_delta
+			data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "He"}}`,
+				`event: content_block_delta
+			data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "llo"}}`,
+				`event: content_block_delta
+			data: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "!"}}`,
+				`event: content_block_stop
+			data: {"type": "content_block_stop", "index": 0}`,
+				`event: message_delta
+			data: {"type": "message_delta", "delta": {"stop_reason": "end_turn", "stop_sequence":null}, "usage":{"output_tokens": 15}}`,
+				`event: message_stop
+			data: {"type": "message_stop"}`,
+			}
 
-	mockClient := getMockClient(linesToResponse(mockAnthropicMessagesResponseLines, "\n\n"))
-	events := []types.CompletionResponse{}
+			mockClient := getMockClient(linesToResponse(mockAnthropicMessagesResponseLines, "\n\n"))
+			events := []types.CompletionResponse{}
 
-	sendEventFn := func(event types.CompletionResponse) error {
-		events = append(events, event)
-		return nil
-	}
+			sendEventFn := func(event types.CompletionResponse) error {
+				events = append(events, event)
+				return nil
+			}
 
-	compRequest := types.CompletionRequest{
-		Feature: types.CompletionsFeatureChat,
-		Version: types.CompletionsVersionLegacy,
-		Parameters: types.CompletionRequestParameters{
-			Stream: pointers.Ptr(true),
-		},
-	}
+			compRequest := types.CompletionRequest{
+				Feature: types.CompletionsFeatureChat,
+				Version: version,
+				Parameters: types.CompletionRequestParameters{
+					Stream: pointers.Ptr(true),
+				},
+			}
 
-	err := mockClient.Stream(context.Background(), logger, compRequest, sendEventFn)
-	if err != nil {
-		t.Fatal(err)
+			err := mockClient.Stream(context.Background(), logger, compRequest, sendEventFn)
+			if err != nil {
+				t.Fatal(err)
+			}
+			autogold.ExpectFile(t, events)
+		})
 	}
-	autogold.ExpectFile(t, events)
 }
 
 func TestInvalidAnthropicMessagesStream(t *testing.T) {
