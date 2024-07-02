@@ -790,7 +790,23 @@ type EnvironmentResourcePostgreSQLSpec struct {
 	//  - https://cloud.google.com/sql/pricing
 	//
 	// Also see: https://sourcegraph.notion.site/655e89d164b24727803f5e5a603226d8
+	//
+	// Toggling highAvailability will incur a small amount of downtime.
 	HighAvailability *bool `yaml:"highAvailability,omitempty"`
+	// LogicalReplication configures native logical replication for PostgreSQL:
+	// https://www.postgresql.org/docs/current/logical-replication.html
+	//
+	// Enabling logicalReplication will incur a small amount of downtime. If you
+	// plan to use logical replication, you should configure an empty
+	// 'logicalReplication' block to initialize the database instance with the
+	// prerequisite configuration:
+	//
+	//  logicalReplication: {}
+	//
+	// The primary use case for logicalReplication is to integrate with GCP
+	// Datastream to make tables available in BigQuery:
+	// https://cloud.google.com/datastream/docs/sources-postgresql
+	LogicalReplication *EnvironmentResourcePostgreSQLLogicalReplicationSpec `yaml:"logicalReplication,omitempty"`
 }
 
 func (EnvironmentResourcePostgreSQLSpec) ResourceKind() string { return "PostgreSQL instance" }
@@ -823,7 +839,60 @@ func (s *EnvironmentResourcePostgreSQLSpec) Validate() []error {
 			errs = append(errs, errors.New("postgreSQL.memoryGB must be <= 6*postgreSQL.cpu"))
 		}
 	}
+	if s.LogicalReplication != nil {
+		errs = append(errs, s.LogicalReplication.Validate()...)
+	}
 	return errs
+}
+
+type EnvironmentResourcePostgreSQLLogicalReplicationSpec struct {
+	// Publications configure PostgreSQL logical replication publications for
+	// consumption in tools like GCP Datastream.
+	Publications []EnvironmentResourcePostgreSQLLogicalReplicationPublicationsSpec `yaml:"publications,omitempty"`
+}
+
+func (s *EnvironmentResourcePostgreSQLLogicalReplicationSpec) Validate() []error {
+	if s == nil {
+		return nil
+	}
+
+	var errs []error
+	seenPublications := map[string]struct{}{}
+	for i, p := range s.Publications {
+		if p.Name == "" {
+			errs = append(errs, errors.Newf("publication[%d].name is required", i))
+		}
+		if _, ok := seenPublications[p.Name]; ok {
+			errs = append(errs, errors.Newf("publication[%d].name must be unique", i))
+		}
+		seenPublications[p.Name] = struct{}{}
+
+		if p.Database == "" {
+			errs = append(errs, errors.Newf("publication[%d].database is required", i))
+		}
+		if len(p.Tables) == 0 {
+			errs = append(errs, errors.Newf("publication[%d].tables is required", i))
+		}
+		for ti, t := range p.Tables {
+			if t == "" {
+				errs = append(errs, errors.Newf("publication[%d].tables[%d] must not be empty", i, ti))
+			}
+		}
+	}
+	return errs
+}
+
+type EnvironmentResourcePostgreSQLLogicalReplicationPublicationsSpec struct {
+	// Name of the publication. Must be machine-friendly and unique. Required.
+	Name string `yaml:"name"`
+	// Database containing the tables you want to replicate and publish. Required.
+	Database string `yaml:"database"`
+	// Tables to replicate and publish. Required.
+	//
+	// Note that curerntly, referenced tables MUST exist BEFORE a publication
+	// is provisioned on them. Database tables should be created and owned by
+	// the application workload identity.
+	Tables []string `yaml:"tables"`
 }
 
 type EnvironmentResourceBigQueryDatasetSpec struct {

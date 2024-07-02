@@ -303,7 +303,7 @@ require (
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/google_beta v0.0.0-20240513203650-e2b1273f1c1a
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/nobl9 v0.0.0-20240513203650-e2b1273f1c1a
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/opsgenie v0.0.0-20240513203650-e2b1273f1c1a
-	github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240513203650-e2b1273f1c1a
+	github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240617210115-f286e77e83e8
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/random v0.0.0-20240513203650-e2b1273f1c1a
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/sentry v0.0.0-20240513203650-e2b1273f1c1a
 	github.com/sourcegraph/managed-services-platform-cdktf/gen/slack v0.0.0-20240513203650-e2b1273f1c1a

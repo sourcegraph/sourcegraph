@@ -1654,8 +1654,8 @@ github.com/sourcegraph/managed-services-platform-cdktf/gen/nobl9 v0.0.0-20240513
 github.com/sourcegraph/managed-services-platform-cdktf/gen/nobl9 v0.0.0-20240513203650-e2b1273f1c1a/go.mod h1:1HTn7/xUQWdIjhr9ROmAVAwgG2mdJB6aJjKyi5aCDCg=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/opsgenie v0.0.0-20240513203650-e2b1273f1c1a h1:a5CffqYMpDTeVZnz3a6ovY4AvKSuzhvjVJihE24BcKU=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/opsgenie v0.0.0-20240513203650-e2b1273f1c1a/go.mod h1:hPo1VnFnbG4CpmG0+jU/mt2afL0oQ48uJep/zm2jDQw=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240513203650-e2b1273f1c1a h1:Jy9vKM1mtyJYgx/DRSDftIuhL2MFO6esU84uj4deNn4=
-github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240513203650-e2b1273f1c1a/go.mod h1:lQ1E8rSHgTmL8GmtcQFXS75rqQrCmuQRXZWh7A+Fp6s=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240617210115-f286e77e83e8 h1:t0hSCAvffnF3VAlSW3M9eeeubpMF6TieVc52vKLT98o=
+github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql v0.0.0-20240617210115-f286e77e83e8/go.mod h1:p6IV7VaCthZ4wlVAEDewHkM+2iwiew4jbaiXQyu6vWg=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/random v0.0.0-20240513203650-e2b1273f1c1a h1:Te08CFBDZrBcmICwwOvV5t3GW5GtRDaUSJEuyY0YDNw=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/random v0.0.0-20240513203650-e2b1273f1c1a/go.mod h1:TiUqRvYs/Gah8bGw/toyVWCaP3dnCB4tBh3jf5HGdo0=
 github.com/sourcegraph/managed-services-platform-cdktf/gen/sentry v0.0.0-20240513203650-e2b1273f1c1a h1:lws+6zhwD9KFG5c0mt0Xnhqw6uV/3LNv9ymQku0FbO0=

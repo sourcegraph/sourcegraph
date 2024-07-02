@@ -8,6 +8,7 @@ go_library(
     visibility = ["//dev/managedservicesplatform:__subpackages__"],
     deps = [
         "//dev/managedservicesplatform/internal/resource/cloudsql",
+        "//dev/managedservicesplatform/internal/resource/postgresqllogicalreplication",
         "//dev/managedservicesplatform/internal/resourceid",
         "//lib/pointers",
         "@com_github_aws_constructs_go_constructs_v10//:constructs",
@@ -15,6 +16,6 @@ go_library(
         "@com_github_hashicorp_terraform_cdk_go_cdktf//:cdktf",
         "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//grant",
         "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//grantrole",
-        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//provider",
+        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//role",
     ],
 )

@@ -22,6 +22,9 @@ import (
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/storagebucket"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/storagebucketiammember"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/google/storagebucketobject"
+	postgresql "github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql/provider"
+	"github.com/sourcegraph/managed-services-platform-cdktf/gen/postgresql/role"
+	"github.com/sourcegraph/managed-services-platform-cdktf/gen/random/password"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/sentry/datasentryorganization"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/sentry/datasentryteam"
 	"github.com/sourcegraph/managed-services-platform-cdktf/gen/sentry/key"
@@ -32,6 +35,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/cloudsql"
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/deliverypipeline"
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/gsmsecret"
+	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/postgresqllogicalreplication"
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/postgresqlroles"
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/privatenetwork"
 	"github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/random"
@@ -279,10 +283,126 @@ func NewStack(stacks *stack.Set, vars Variables) (crossStackOutput *CrossStackOu
 		// magically handles certs for us, so we don't need to mount certs in
 		// Cloud Run.
 
-		// Apply additional runtime configuration
+		// There are additional runtime configuration we need to apply directly
+		// in the PostgreSQL instance. To do this we use a different provider
+		// authenticated by the users we just created.
+		//
+		// Some of the providers are only used if certain configurations are
+		// enabled, but we create them all up-front to make teardown scenarios
+		// easier to manage.
+		pgRuntimeAdminProvider := postgresql.NewPostgresqlProvider(stack,
+			id.TerraformID("postgresql_admin_provider"),
+			&postgresql.PostgresqlProviderConfig{
+				Alias:     pointers.Ptr("postgresql_admin_provider"),
+				Scheme:    pointers.Ptr("gcppostgres"),
+				Host:      sqlInstance.Instance.ConnectionName(),
+				Port:      pointers.Float64(5432),
+				Superuser: pointers.Ptr(false),
+
+				Username: sqlInstance.AdminUser.Name(),
+				Password: sqlInstance.AdminUser.Password(),
+			})
+		// Some configurations require impersonating the workload identity, for
+		// things like database tables that are likely provisioned by the
+		// application.
+		pgRuntimeWorkloadUserProvider := postgresql.NewPostgresqlProvider(stack,
+			id.TerraformID("postgresql_workloaduser_provider"),
+			&postgresql.PostgresqlProviderConfig{
+				Alias:     pointers.Ptr("postgresql_workloaduser_provider"),
+				Scheme:    pointers.Ptr("gcppostgres"),
+				Host:      sqlInstance.Instance.ConnectionName(),
+				Port:      pointers.Float64(5432),
+				Superuser: pointers.Ptr(false),
+
+				// Impersonate the workload identity
+				Username:                        sqlInstance.WorkloadUser.Name(),
+				GcpIamImpersonateServiceAccount: &vars.IAM.CloudRunWorkloadServiceAccount.Email,
+			})
+		// The admin user's cloudsqlsuperuser does not have replication enabled,
+		// so we need another user that does have it enabled, because replication
+		// permission in roles are not inherited. We use the Postgres provider
+		// instead of the Cloud SQL providers in 'cloudsql.New' so that we can
+		// enable replication on this user.
+		replicationUser := role.NewRole(stack, id.TerraformID("postgresql_replicationuser"), &role.RoleConfig{
+			Provider: pgRuntimeAdminProvider,
+			Name:     pointers.Ptr("msp-replicationuser"),
+			Password: password.NewPassword(stack, id.TerraformID("postgresql_replicationuser_password"), &password.PasswordConfig{
+				Length:  pointers.Float64(32),
+				Special: pointers.Ptr(false),
+			}).Result(),
+			Login:       pointers.Ptr(true),
+			Replication: pointers.Ptr(true),
+		})
+		pgRuntimeReplicationProvider := postgresql.NewPostgresqlProvider(stack,
+			id.TerraformID("postgresql_replicationuser_provider"),
+			&postgresql.PostgresqlProviderConfig{
+				Alias:     pointers.Ptr("postgresql_replicationuser_provider"),
+				Scheme:    pointers.Ptr("gcppostgres"),
+				Host:      sqlInstance.Instance.ConnectionName(),
+				Port:      pointers.Float64(5432),
+				Superuser: pointers.Ptr(false),
+
+				Username: replicationUser.Name(),
+				Password: replicationUser.Password(),
+			})
+
+		// Apply runtime configuration
+		var publications []postgresqllogicalreplication.PublicationOutput
+		if pgSpec.LogicalReplication != nil {
+			replication, err := postgresqllogicalreplication.New(stack,
+				id.Group("postgresqllogicalreplication"),
+				postgresqllogicalreplication.Config{
+					AdminPostgreSQLProvider:        pgRuntimeAdminProvider,
+					WorkloadUserPostgreSQLProvider: pgRuntimeWorkloadUserProvider,
+					ReplicationPostgreSQLProvider:  pgRuntimeReplicationProvider,
+					CloudSQL:                       sqlInstance,
+					Spec:                           *pgSpec.LogicalReplication,
+
+					DependsOn: []cdktf.ITerraformDependable{
+						// Since tables are managed by the application, in the
+						// future, we may need to for the application before we
+						// provision a publication on tables that may not yet
+						// exist. This is currently a circular dependency - the
+						// Cloud Run resource does not need logical replication
+						// config to start, but we cannot reference the Cloud Run
+						// resource the way the codebase is structured now without
+						// a bit of trickery or refactoring.
+					},
+				})
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to render Cloud SQL PostgreSQL logical replication")
+			}
+			publications = replication.Publications
+
+			// Make output visible for configuration in consumer tools like
+			// Datastream
+			for _, pub := range replication.Publications {
+				locals.Add(fmt.Sprintf("postgresql_publication_%s_name", pub.Name),
+					*pub.PublicationName,
+					fmt.Sprintf("Publication name of the %q PostgreSQL publication", pub.Name))
+				locals.Add(fmt.Sprintf("postgresql_publication_%s_replicationslot", pub.Name),
+					*pub.ReplicationSlotName,
+					fmt.Sprintf("Replication slot name of the %q PostgreSQL publication", pub.Name))
+				locals.Add(fmt.Sprintf("postgresql_publication_%s_user", pub.Name),
+					*pub.User.Name(),
+					fmt.Sprintf("User for subscribing to the %q PostgreSQL publication", pub.Name))
+				gsmsecret.New(stack,
+					id.Group("postgresqllogicalreplication_output").
+						Group(pub.Name).
+						Group("user_password"),
+					gsmsecret.Config{
+						ProjectID: vars.ProjectID,
+						ID: fmt.Sprintf("POSTGRESQL_PUBLICATION_%s_USER_PASSWORD",
+							strings.ToUpper(pub.Name)),
+						Value: *pub.User.Password(),
+					})
+			}
+		}
 		pgRoles, err := postgresqlroles.New(stack, id.Group("postgresqlroles"), postgresqlroles.Config{
-			Databases: pgSpec.Databases,
-			CloudSQL:  sqlInstance,
+			PostgreSQLProvider: pgRuntimeAdminProvider,
+			Databases:          pgSpec.Databases,
+			CloudSQL:           sqlInstance,
+			Publications:       publications,
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to render Cloud SQL PostgreSQL roles")

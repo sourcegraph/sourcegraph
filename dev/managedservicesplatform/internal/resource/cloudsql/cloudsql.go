@@ -77,6 +77,13 @@ func New(scope constructs.Construct, id resourceid.ID, config Config) (*Output, 
 			Value: pointers.Stringf("%d", *config.Spec.MaxConnections),
 		})
 	}
+	if config.Spec.LogicalReplication != nil {
+		// https://cloud.google.com/sql/docs/postgres/replication/configure-logical-replication#set-up-native-postgresql-logical-replication
+		databaseFlags = append(databaseFlags, sqldatabaseinstance.SqlDatabaseInstanceSettingsDatabaseFlags{
+			Name:  pointers.Ptr("cloudsql.logical_decoding"),
+			Value: pointers.Ptr("on"),
+		})
+	}
 
 	instance := sqldatabaseinstance.NewSqlDatabaseInstance(scope, id.TerraformID("instance"), &sqldatabaseinstance.SqlDatabaseInstanceConfig{
 		Project: &config.ProjectID,
@@ -148,7 +155,12 @@ func New(scope constructs.Construct, id resourceid.ID, config Config) (*Output, 
 			IpConfiguration: &sqldatabaseinstance.SqlDatabaseInstanceSettingsIpConfiguration{
 				Ipv4Enabled:    pointers.Ptr(true),
 				PrivateNetwork: config.Network.Id(),
-				RequireSsl:     pointers.Ptr(true),
+
+				// https://cloud.google.com/sql/docs/postgres/admin-api/rest/v1beta4/instances#SslMode
+				RequireSsl: pointers.Ptr(true),
+				SslMode:    pointers.Ptr("TRUSTED_CLIENT_CERTIFICATE_REQUIRED"),
+
+				EnablePrivatePathForGoogleCloudServices: pointers.Ptr(true),
 			},
 		},
 
@@ -194,6 +206,7 @@ func New(scope constructs.Construct, id resourceid.ID, config Config) (*Output, 
 		Length:  pointers.Float64(32),
 		Special: pointers.Ptr(false),
 	})
+	// sqluser.NewSqlUser has 'cloudsqlsuperuser' by default
 	adminUser := sqluser.NewSqlUser(scope, id.TerraformID("admin_user"), &sqluser.SqlUserConfig{
 		Instance: instance.Name(),
 		Project:  &config.ProjectID,

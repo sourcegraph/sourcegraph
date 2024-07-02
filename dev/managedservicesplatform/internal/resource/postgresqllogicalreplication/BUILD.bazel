@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "postgresqllogicalreplication",
+    srcs = ["postgresqllogicalreplication.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/managedservicesplatform/internal/resource/postgresqllogicalreplication",
+    visibility = ["//dev/managedservicesplatform:__subpackages__"],
+    deps = [
+        "//dev/managedservicesplatform/internal/resource/cloudsql",
+        "//dev/managedservicesplatform/internal/resourceid",
+        "//dev/managedservicesplatform/spec",
+        "//lib/pointers",
+        "@com_github_aws_constructs_go_constructs_v10//:constructs",
+        "@com_github_hashicorp_terraform_cdk_go_cdktf//:cdktf",
+        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_google//sqluser",
+        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//publication",
+        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_postgresql//replicationslot",
+        "@com_github_sourcegraph_managed_services_platform_cdktf_gen_random//password",
+    ],
+)
