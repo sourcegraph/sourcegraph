@@ -208,33 +208,35 @@ mod tags {
     }
 
     create_tags_configuration!(c, ParserId::C, "c");
+    create_tags_configuration!(cpp, ParserId::Cpp, "cpp");
+    create_tags_configuration!(c_sharp, ParserId::C_Sharp, "c_sharp");
+    create_tags_configuration!(go, ParserId::Go, "go");
+    create_tags_configuration!(java, ParserId::Java, "java");
     create_tags_configuration!(javascript, ParserId::Javascript, "javascript");
     create_tags_configuration!(kotlin, ParserId::Kotlin, "kotlin");
-    create_tags_configuration!(ruby, ParserId::Ruby, "ruby");
+    create_tags_configuration!(magik, ParserId::Magik, "magik");
     create_tags_configuration!(python, ParserId::Python, "python");
-    create_tags_configuration!(cpp, ParserId::Cpp, "cpp");
-    create_tags_configuration!(typescript, ParserId::Typescript, "typescript");
-    create_tags_configuration!(scala, ParserId::Scala, "scala");
-    create_tags_configuration!(c_sharp, ParserId::C_Sharp, "c_sharp");
-    create_tags_configuration!(java, ParserId::Java, "java");
+    create_tags_configuration!(ruby, ParserId::Ruby, "ruby");
     create_tags_configuration!(rust, ParserId::Rust, "rust");
-    create_tags_configuration!(go, ParserId::Go, "go");
+    create_tags_configuration!(scala, ParserId::Scala, "scala");
+    create_tags_configuration!(typescript, ParserId::Typescript, "typescript");
     create_tags_configuration!(zig, ParserId::Zig, "zig");
 
     pub fn get_tag_configuration(parser: ParserId) -> Option<&'static TagConfiguration> {
         match parser {
             ParserId::C => Some(c()),
+            ParserId::Cpp => Some(cpp()),
+            ParserId::C_Sharp => Some(c_sharp()),
+            ParserId::Go => Some(go()),
+            ParserId::Java => Some(java()),
             ParserId::Javascript => Some(javascript()),
             ParserId::Kotlin => Some(kotlin()),
-            ParserId::Ruby => Some(ruby()),
+            ParserId::Magik => Some(magik()),
             ParserId::Python => Some(python()),
-            ParserId::Cpp => Some(cpp()),
-            ParserId::Typescript => Some(typescript()),
-            ParserId::Scala => Some(scala()),
-            ParserId::C_Sharp => Some(c_sharp()),
-            ParserId::Java => Some(java()),
+            ParserId::Ruby => Some(ruby()),
             ParserId::Rust => Some(rust()),
-            ParserId::Go => Some(go()),
+            ParserId::Scala => Some(scala()),
+            ParserId::Typescript => Some(typescript()),
             ParserId::Zig => Some(zig()),
             _ => None,
         }

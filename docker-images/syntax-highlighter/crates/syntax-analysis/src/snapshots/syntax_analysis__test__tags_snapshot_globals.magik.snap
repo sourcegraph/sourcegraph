@@ -1,0 +1,13 @@
+---
+source: crates/syntax-analysis/src/lib.rs
+expression: "String::from_utf8_lossy(&output)"
+---
+{"_type":"tag","name":"pp","path":"globals.magik","language":"magik","line":2,"kind":"package","scope":null}
+{"_type":"tag","name":"some_thing","path":"globals.magik","language":"magik","line":65,"kind":"method","scope":"pp.my_mixin"}
+{"_type":"tag","name":"my_mixin","path":"globals.magik","language":"magik","line":63,"kind":"class","scope":"pp"}
+{"_type":"tag","name":"debug","path":"globals.magik","language":"magik","line":52,"kind":"method","scope":"pp.line_parser"}
+{"_type":"tag","name":"init","path":"globals.magik","language":"magik","line":22,"kind":"method","scope":"pp.line_parser"}
+{"_type":"tag","name":"new","path":"globals.magik","language":"magik","line":17,"kind":"method","scope":"pp.line_parser"}
+{"_type":"tag","name":"line_parser","path":"globals.magik","language":"magik","line":9,"kind":"class","scope":"pp"}
+{"_type":"tag","name":"top_level_constant","path":"globals.magik","language":"magik","line":5,"kind":"constant","scope":"pp"}
+{"_type":"tag","name":"top_level_global","path":"globals.magik","language":"magik","line":4,"kind":"variable","scope":"pp"}

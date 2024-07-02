@@ -1,0 +1,79 @@
+
+_package pp
+
+_global top_level_global << 1
+_global _constant top_level_constant << 1
+
+# Examplar Objects
+def_slotted_exemplar(
+    :line_parser,
+    {
+        {:settings, _unset},
+        {:alias, _unset, :writable, :public}
+    }
+)
+$
+
+_method line_parser.new()
+	_return _clone.init()
+_endmethod
+$
+
+_method line_parser.init()
+    _global g_yes
+    g_yes << "yes!"
+	.settings << property_list.new()
+	.alias << g_yes
+
+    _while i <= 100
+    _loop
+        i +<< 1
+    _endloop
+
+    _for a _over _self.elements()
+    _loop
+        _if a.even? _is _true
+        _then
+            g_yes << 1
+        _endif
+    _endloop
+
+    _try _with cond
+        a << 1
+    _when error
+        a << 2
+    _endtry
+
+
+	_return _self
+_endmethod
+$
+
+_private _method line_parser.debug(line, props)
+    _local new_line << line
+    _block
+        (key, value) << (_scatter new_line.split_by(%=, _false))
+        props[key.lowercase] << value
+    _endblock
+	_return props
+_endmethod
+
+
+# Mixins
+def_mixin(:my_mixin)
+
+_abstract _method my_mixin.some_thing
+_endmethod
+
+
+_block
+    _local some_local << 1
+    _constant some_local_constant << 1
+    _global some_global1, some_global2
+    some_global1 << 1
+    bruh = 10
+
+    some_proc << _proc (arg1)
+        arg1.action()
+    _endproc
+_endblock
