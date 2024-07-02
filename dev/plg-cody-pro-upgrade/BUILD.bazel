@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "plg-cody-pro-upgrade_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/plg-cody-pro-upgrade",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "plg-cody-pro-upgrade",
+    embed = [":plg-cody-pro-upgrade_lib"],
+    visibility = ["//visibility:public"],
+)
