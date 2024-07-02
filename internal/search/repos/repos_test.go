@@ -3,6 +3,8 @@ package repos
 import (
 	stdcmp "cmp"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -20,6 +22,7 @@ import (
 	"github.com/sourcegraph/log/logtest"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
+	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbmocks"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
@@ -34,6 +37,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/iterator"
+	"github.com/sourcegraph/sourcegraph/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -401,6 +405,231 @@ func TestResolverIterator(t *testing.T) {
 					RepoRevs: all.RepoRevs[3:],
 				},
 			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := NewResolver(logtest.Scoped(t), db, gsClient, nil, defaults.NewConnectionCache(logtest.Scoped(t)), nil)
+			it := r.Iterator(ctx, tc.opts)
+
+			var pages []Resolved
+
+			for it.Next() {
+				page := it.Current()
+				pages = append(pages, page)
+			}
+
+			err = it.Err()
+			if !errors.Is(err, tc.err) {
+				diff := cmp.Diff(errors.UnwrapAll(err), tc.err)
+				t.Errorf("%s unexpected error (-have, +want):\n%s", tc.name, diff)
+			}
+
+			if diff := cmp.Diff(pages, tc.pages); diff != "" {
+				t.Errorf("%s unexpected pages (-have, +want):\n%s", tc.name, diff)
+			}
+		})
+	}
+}
+
+func TestResolverIterator_Perforce(t *testing.T) {
+	conf.Mock(&conf.Unified{
+		SiteConfiguration: schema.SiteConfiguration{
+			ExperimentalFeatures: &schema.ExperimentalFeatures{
+				PerforceChangelistMapping: "enabled",
+			},
+		},
+	})
+	t.Cleanup(func() {
+		conf.Mock(nil)
+	})
+
+	ctx := context.Background()
+	logger := logtest.Scoped(t)
+	db := database.NewDB(logger, dbtest.NewDB(t))
+
+	var revSpecs []RepoRevSpecs
+	for i := 1; i <= 5; i++ {
+		r := &types.Repo{
+			Name:  api.RepoName(fmt.Sprintf("p4/foo/bar%d", i)),
+			Stars: i * 100,
+			ExternalRepo: api.ExternalRepoSpec{
+				ID:          "my-external-id",
+				ServiceType: "perforce",
+			},
+		}
+
+		if err := db.Repos().Create(ctx, r); err != nil {
+			t.Fatal(err)
+		}
+
+		revSpecs = append(revSpecs, RepoRevSpecs{Repo: types.MinimalRepo{
+			ID:    r.ID,
+			Name:  r.Name,
+			Stars: r.Stars,
+		}})
+	}
+
+	// Populate perforce changelist mapping table
+	s := db.RepoCommitsChangelists()
+	data := []types.PerforceChangelist{}
+	for i := range revSpecs {
+		repo := &revSpecs[i]
+		sha := gitSha(fmt.Sprintf("%d", repo.Repo.ID))
+		data = append(data, types.PerforceChangelist{
+			CommitSHA:    api.CommitID(sha),
+			ChangelistID: int64(i),
+		})
+		repo.Revs = []query.RevisionSpecifier{
+			{
+				RevSpec: sha,
+			},
+		}
+		err := s.BatchInsertCommitSHAsWithPerforceChangelistID(ctx, api.RepoID(repo.Repo.ID), data)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	gsClient := gitserver.NewMockClient()
+	gsClient.ResolveRevisionFunc.SetDefaultHook(func(_ context.Context, name api.RepoName, spec string, _ gitserver.ResolveRevisionOptions) (api.CommitID, error) {
+		if spec == "bad_commit" {
+			return "", &gitdomain.BadCommitError{}
+		}
+		// All repos have the revision except foo/bar5
+		if name == "p4/foo/bar5" {
+			return "", &gitdomain.RevisionNotFoundError{}
+		}
+
+		if len(spec) > 0 {
+			shortSpec := api.CommitID(spec).Short()
+			for _, revSpec := range revSpecs {
+				shortRevSpec := api.CommitID(revSpec.Revs[0].RevSpec).Short()
+				if name == revSpec.Repo.Name && shortSpec == shortRevSpec {
+					return api.CommitID(revSpec.Revs[0].RevSpec), nil
+				}
+			}
+
+			return "", &gitdomain.RevisionNotFoundError{}
+		}
+
+		return "", nil
+	})
+
+	resolver := NewResolver(logtest.Scoped(t), db, gsClient, nil, defaults.NewConnectionCache(logtest.Scoped(t)), nil)
+	all, _, err := resolver.resolve(ctx, search.RepoOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert that we get the cursor we expect
+	{
+		want := types.MultiCursor{
+			{Column: "stars", Direction: "prev", Value: fmt.Sprint(all.RepoRevs[3].Repo.Stars)},
+			{Column: "id", Direction: "prev", Value: fmt.Sprint(all.RepoRevs[3].Repo.ID)},
+		}
+		_, next, err := resolver.resolve(ctx, search.RepoOptions{
+			Limit: 3,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(next, want); diff != "" {
+			t.Errorf("unexpected cursor (-have, +want):\n%s", diff)
+		}
+	}
+
+	withRepoRevs := func(rrs []*search.RepositoryRevisions, revs ...string) []*search.RepositoryRevisions {
+		var with []*search.RepositoryRevisions
+		for _, r := range rrs {
+			with = append(with, &search.RepositoryRevisions{
+				Repo: r.Repo,
+				Revs: revs,
+			})
+		}
+		return with
+	}
+
+	for _, tc := range []struct {
+		name  string
+		opts  search.RepoOptions
+		pages []Resolved
+		err   error
+	}{
+		{
+			name: "with sha rev",
+			opts: search.RepoOptions{
+				RepoFilters: toParsedRepoFilters(fmt.Sprintf("foo/bar[0-4]@%s", data[2].CommitSHA.Short())),
+			},
+			pages: []Resolved{
+				{
+					RepoRevs: withRepoRevs(all.RepoRevs[2:3], data[2].CommitSHA.Short()),
+				},
+			}, err: &MissingRepoRevsError{Missing: []RepoRevSpecs{
+				{
+					Repo: all.RepoRevs[0].Repo,
+					Revs: []query.RevisionSpecifier{
+						{
+							RevSpec: "rev",
+						},
+					},
+				},
+				{
+					Repo: all.RepoRevs[1].Repo,
+					Revs: []query.RevisionSpecifier{
+						{
+							RevSpec: "rev",
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "with perforce changelist id rev",
+			opts: search.RepoOptions{
+				RepoFilters: toParsedRepoFilters(fmt.Sprintf("foo/bar[0-4]@%d", data[2].ChangelistID)),
+			},
+			pages: []Resolved{
+				{
+					RepoRevs: withRepoRevs(all.RepoRevs[2:3], string(data[2].CommitSHA)),
+				},
+			}, err: &MissingRepoRevsError{Missing: []RepoRevSpecs{
+				{
+					Repo: all.RepoRevs[0].Repo,
+					Revs: []query.RevisionSpecifier{
+						{
+							RevSpec: "rev",
+						},
+					},
+				},
+				{
+					Repo: all.RepoRevs[1].Repo,
+					Revs: []query.RevisionSpecifier{
+						{
+							RevSpec: "rev",
+						},
+					},
+				},
+			}},
+		},
+		{
+			name: "single perforce changelist id rev",
+			opts: search.RepoOptions{
+				RepoFilters: toParsedRepoFilters(fmt.Sprintf("foo/bar3@%d", data[2].ChangelistID)),
+			},
+			pages: []Resolved{
+				{
+					RepoRevs: withRepoRevs(all.RepoRevs[2:3], string(data[2].CommitSHA)),
+				},
+			}, err: nil,
+		},
+		{
+			name: "with limit 3 and fatal error",
+			opts: search.RepoOptions{
+				Limit:       3,
+				RepoFilters: toParsedRepoFilters("foo/bar[0-5]@bad_commit"),
+			},
+			err:   &gitdomain.BadCommitError{},
+			pages: nil,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -886,4 +1115,10 @@ func TestRepoHasCommitAfter(t *testing.T) {
 			require.Equal(t, tc.expected, resolved.RepoRevs)
 		})
 	}
+}
+
+func gitSha(val string) string {
+	writer := sha1.New()
+	writer.Write([]byte(val))
+	return hex.EncodeToString(writer.Sum(nil))
 }

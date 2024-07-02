@@ -287,9 +287,9 @@ func (r *Resolver) doQueryDB(ctx context.Context, tr trace.Trace, op search.Repo
 		options.SearchContextID = searchContext.ID
 	}
 
-	tr.AddEvent("Repos.ListMinimalRepos - start")
-	repos, err := r.db.Repos().ListMinimalRepos(ctx, options)
-	tr.AddEvent("Repos.ListMinimalRepos - done", attribute.Int("numRepos", len(repos)), trace.Error(err))
+	tr.AddEvent("Repos.ListRepos - start")
+	repos, err := r.db.Repos().List(ctx, options)
+	tr.AddEvent("Repos.ListRepos - done", attribute.Int("numRepos", len(repos)), trace.Error(err))
 
 	if err != nil {
 		return dbResolved{}, nil, err
@@ -344,7 +344,7 @@ func (r *Resolver) doQueryDB(ctx context.Context, tr trace.Trace, op search.Repo
 	}
 
 	tr.AddEvent("starting rev association")
-	associatedRepoRevs, missingRepoRevs := r.associateReposWithRevs(repos, searchContextRepositoryRevisions, includePatternRevs)
+	associatedRepoRevs, missingRepoRevs := r.associateReposWithRevs(ctx, repos, searchContextRepositoryRevisions, includePatternRevs)
 	tr.AddEvent("completed rev association")
 
 	return dbResolved{
@@ -407,7 +407,8 @@ func (r *Resolver) filterGitserver(ctx context.Context, tr trace.Trace, op searc
 
 // associateReposWithRevs re-associates revisions with the repositories fetched from the db
 func (r *Resolver) associateReposWithRevs(
-	repos []types.MinimalRepo,
+	ctx context.Context,
+	repos []*types.Repo,
 	searchContextRepoRevs map[api.RepoID]RepoRevSpecs,
 	includePatternRevs []patternRevspec,
 ) (
@@ -418,6 +419,9 @@ func (r *Resolver) associateReposWithRevs(
 
 	associatedRevs := make([]RepoRevSpecs, len(repos))
 	revsAreMissing := make([]bool, len(repos))
+
+	c := conf.Get()
+	isPerforceChangelistMappingEnabled := c.ExperimentalFeatures != nil && c.ExperimentalFeatures.PerforceChangelistMapping == "enabled"
 
 	for i, repo := range repos {
 		i, repo := i, repo
@@ -444,7 +448,17 @@ func (r *Resolver) associateReposWithRevs(
 				}
 			}
 
-			associatedRevs[i] = RepoRevSpecs{Repo: repo, Revs: revs}
+			if isPerforceChangelistMappingEnabled &&
+				repo.ExternalRepo.ServiceType == "perforce" &&
+				len(revs) > 0 {
+				// If the repo is a perforce repo and the revs looks like changelist ids
+				// then we will try to map them to shas
+				// Best effort mapping, if we don't find it just leave as it
+				tryMapPerforceChangelistIdsToGitShas(ctx, revs, r.db, repo)
+
+			}
+
+			associatedRevs[i] = RepoRevSpecs{Repo: repo.ToMinimalRepo(), Revs: revs}
 			revsAreMissing[i] = isMissing
 		})
 	}
@@ -464,6 +478,19 @@ func (r *Resolver) associateReposWithRevs(
 	}
 
 	return associatedRevs[:notMissingCount], associatedRevs[notMissingCount:]
+}
+
+func tryMapPerforceChangelistIdsToGitShas(ctx context.Context, revs []query.RevisionSpecifier, db database.DB, repo *types.Repo) {
+	for i := range revs {
+		rev := &revs[i]
+		if changeListId, err := strconv.ParseInt(rev.RevSpec, 10, 0); err == nil {
+			commit, err := db.RepoCommitsChangelists().GetRepoCommitChangelist(ctx, repo.ID, changeListId)
+
+			if err == nil {
+				rev.RevSpec = string(commit.CommitSHA)
+			}
+		}
+	}
 }
 
 // normalizeRefs handles three jobs:

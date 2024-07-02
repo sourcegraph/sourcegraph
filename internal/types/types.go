@@ -515,6 +515,15 @@ func (rs Repos) Filter(pred func(*Repo) bool) (fs Repos) {
 	return fs
 }
 
+// Converts a *Repo into a MinimalRepo
+func (r *Repo) ToMinimalRepo() MinimalRepo {
+	return MinimalRepo{
+		ID:    r.ID,
+		Name:  r.Name,
+		Stars: r.Stars,
+	}
+}
+
 // RepoIDName combines a repo name and ID into a single struct
 type RepoIDName struct {
 	ID   api.RepoID
