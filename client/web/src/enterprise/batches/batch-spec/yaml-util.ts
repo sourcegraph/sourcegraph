@@ -81,7 +81,7 @@ const appendExcludeRepoToQuery = (spec: string, ast: YAMLMap, repo: string): YAM
     const isQuoted = queryValue.doubleQuoted || queryValue.singleQuoted || false
 
     // If the value is not quoted, we need to escape characters
-    const excludeQualifierString = isQuoted ? ` -repo:${repo}` : ` -repo:${escapeRegExp(repo)}`
+    const excludeQualifierString = isQuoted ? ` -repo:^${repo}$` : ` -repo:^${escapeRegExp(repo)}$`
     // If the value is quoted, we also need to shift the slice position so that the string
     // is inserted inside of the quotes
     const slicePosition = isQuoted ? queryValue.endPosition - 1 : queryValue.endPosition
