@@ -12,14 +12,15 @@ go_library(
     tags = [TAG_SEARCHSUITE],
     visibility = ["//cmd/frontend:__subpackages__"],
     deps = [
-        "//internal/trace",
+        "//internal/api",
+        "//internal/env",
+        "//internal/gitserver",
         "//lib/codeintel/languages",
         "//lib/errors",
         "@com_github_go_enry_go_enry_v2//:go-enry",
         "@com_github_go_enry_go_enry_v2//data",
         "@com_github_sourcegraph_conc//iter",
         "@com_github_sourcegraph_log//:log",
-        "@io_opentelemetry_go_otel//attribute",
     ],
 )
 
@@ -32,6 +33,7 @@ go_test(
     embed = [":inventory"],
     tags = [TAG_SEARCHSUITE],
     deps = [
+        "//internal/api",
         "//internal/fileutil",
         "//lib/errors",
         "@com_github_go_enry_go_enry_v2//:go-enry",

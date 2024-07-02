@@ -6,9 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sourcegraph/sourcegraph/internal/env"
-
 	"github.com/sourcegraph/log"
+	"github.com/sourcegraph/sourcegraph/internal/env"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/inventory"
@@ -119,6 +118,10 @@ func (s *repos) GetInventory(ctx context.Context, repo api.RepoName, commitID ap
 		return Mocks.Repos.GetInventory(ctx, repo, commitID)
 	}
 
+	if commitID == "" {
+		return nil, errors.Errorf("Could not find a commit in the repository. Please add a file first.")
+	}
+
 	ctx, done := startTrace(ctx, "GetInventory", map[string]any{"repo": repo, "commitID": commitID}, &err)
 	defer done()
 
@@ -130,16 +133,11 @@ func (s *repos) GetInventory(ctx context.Context, repo api.RepoName, commitID ap
 		return nil, err
 	}
 
-	root, err := s.gitserverClient.Stat(ctx, repo, commitID, "")
-	if err != nil {
-		return nil, err
-	}
-
 	// In computing the inventory, sub-tree inventories are cached based on the OID of the Git
 	// tree. Compared to per-blob caching, this creates many fewer cache entries, which means fewer
 	// stores, fewer lookups, and less cache storage overhead. Compared to per-commit caching, this
 	// yields a higher cache hit rate because most trees are unchanged across commits.
-	inv, err := invCtx.Entries(ctx, root)
+	inv, err := invCtx.All(ctx)
 	if err != nil {
 		return nil, err
 	}

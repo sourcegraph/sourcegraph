@@ -65,7 +65,8 @@ func TestGetLang_language(t *testing.T) {
 		t.Run(label, func(t *testing.T) {
 			lang, err := getLang(context.Background(),
 				test.file,
-				makeFileReader(test.file.Contents))
+				makeFileReader(test.file.Contents),
+				false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -135,7 +136,7 @@ func TestGet_readFile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.file.Name(), func(t *testing.T) {
 			fr := makeFileReader(test.file.(fi).Contents)
-			lang, err := getLang(context.Background(), test.file, fr)
+			lang, err := getLang(context.Background(), test.file, fr, false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -169,7 +170,7 @@ func BenchmarkGetLang(b *testing.B) {
 	b.ResetTimer()
 	for range b.N {
 		for _, file := range files {
-			_, err = getLang(context.Background(), file, fr)
+			_, err = getLang(context.Background(), file, fr, false)
 			if err != nil {
 				b.Fatal(err)
 			}

@@ -6,16 +6,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/go-enry/go-enry/v2"      //nolint:depguard - FIXME: replace this usage of enry with languages package
+	"github.com/go-enry/go-enry/v2/data" //nolint:depguard - FIXME: replace this usage of enry with languages package
+	"github.com/sourcegraph/log"
 	"io"
 	"io/fs"
 
-	"github.com/go-enry/go-enry/v2"      //nolint:depguard - FIXME: replace this usage of enry with languages package
-	"github.com/go-enry/go-enry/v2/data" //nolint:depguard - FIXME: replace this usage of enry with languages package
-	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/sourcegraph/log"
-
-	"github.com/sourcegraph/sourcegraph/internal/trace"
 	"github.com/sourcegraph/sourcegraph/lib/codeintel/languages"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -45,7 +41,7 @@ type Lang struct {
 
 var newLine = []byte{'\n'}
 
-func getLang(ctx context.Context, file fs.FileInfo, getFileReader func(ctx context.Context, path string) (io.ReadCloser, error)) (Lang, error) {
+func getLang(ctx context.Context, file fs.FileInfo, getFileReader func(ctx context.Context, path string) (io.ReadCloser, error), skipEnhancedLanguageDetection bool) (Lang, error) {
 	if file == nil {
 		return Lang{}, nil
 	}
@@ -53,32 +49,23 @@ func getLang(ctx context.Context, file fs.FileInfo, getFileReader func(ctx conte
 		return Lang{}, nil
 	}
 
-	trc, ctx := trace.New(ctx, "getLang")
-	defer trc.End()
-	rc, err := getFileReader(ctx, file.Name())
-	if err != nil {
-		return Lang{}, errors.Wrap(err, "getting file reader")
-	}
-	if rc != nil {
-		defer rc.Close()
-	}
-
 	var lang Lang
 	// In many cases, GetLanguageByFilename can detect the language conclusively just from the
 	// filename. If not, we pass a subset of the file contents for analysis.
 	matchedLang, safe := GetLanguageByFilename(file.Name())
 
-	trc.AddEvent("GetLanguageByFilename",
-		attribute.String("FileName", file.Name()),
-		attribute.Bool("Safe", safe),
-		attribute.String("MatchedLang", matchedLang),
-	)
-
-	// No content
-	if rc == nil {
+	if skipEnhancedLanguageDetection {
 		lang.Name = matchedLang
 		lang.TotalBytes = uint64(file.Size())
 		return lang, nil
+	}
+
+	rc, err := getFileReader(ctx, file.Name())
+	if err != nil {
+		return Lang{}, errors.Wrap(err, "Failed to create a file reader.")
+	}
+	if rc != nil {
+		defer rc.Close()
 	}
 
 	buf := make([]byte, fileReadBufferSize)

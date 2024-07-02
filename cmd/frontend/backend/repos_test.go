@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"flag"
@@ -69,6 +70,45 @@ func (oid gitObjectInfo) OID() gitdomain.OID {
 	return v
 }
 
+type FileData struct {
+	Name    string
+	Content string
+}
+
+// createInMemoryTarArchive creates a tar archive in memory containing multiple files with their given content.
+func createInMemoryTarArchive(files []FileData) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	tarWriter := tar.NewWriter(buf)
+
+	for _, file := range files {
+		// Create a tar header for each file.
+		header := &tar.Header{
+			Name: file.Name,
+			Size: int64(len(file.Content)),
+		}
+
+		// Write the header to the tar archive.
+		err := tarWriter.WriteHeader(header)
+		if err != nil {
+			return nil, err
+		}
+
+		// Write the content to the tar archive.
+		_, err = io.WriteString(tarWriter, file.Content)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Close the tar writer to flush the data to the buffer.
+	err := tarWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
 func TestReposGetInventory(t *testing.T) {
 	ctx := testContext()
 
@@ -108,12 +148,26 @@ func TestReposGetInventory(t *testing.T) {
 		switch name {
 		case "b.go":
 			data = []byte("package main")
-		case "a/c.m":
+		case "c.m":
 			data = []byte("@interface X:NSObject {}")
 		default:
 			panic("unhandled mock ReadFile " + name)
 		}
 		return io.NopCloser(bytes.NewReader(data)), nil
+	})
+	gitserverClient.ArchiveReaderFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName, archiveOptions gitserver.ArchiveOptions) (io.ReadCloser, error) {
+		files := []FileData{
+			{Name: "b.go", Content: "package main"},
+			{Name: "a/c.m", Content: "@interface X:NSObject {}"},
+		}
+
+		// Create the in-memory tar archive.
+		archiveData, err := createInMemoryTarArchive(files)
+		if err != nil {
+			t.Fatalf("Failed to create in-memory tar archive: %v", err)
+		}
+
+		return io.NopCloser(bytes.NewReader(archiveData)), nil
 	})
 	s := repos{
 		logger:          logtest.Scoped(t),

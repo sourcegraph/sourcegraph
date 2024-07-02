@@ -1,6 +1,7 @@
 package graphqlbackend
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"io"
@@ -21,6 +22,45 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 )
+
+type FileData struct {
+	Name    string
+	Content string
+}
+
+// createInMemoryTarArchive creates a tar archive in memory containing multiple files with their given content.
+func createInMemoryTarArchive(files []FileData) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	tarWriter := tar.NewWriter(buf)
+
+	for _, file := range files {
+		// Create a tar header for each file.
+		header := &tar.Header{
+			Name: file.Name,
+			Size: int64(len(file.Content)),
+		}
+
+		// Write the header to the tar archive.
+		err := tarWriter.WriteHeader(header)
+		if err != nil {
+			return nil, err
+		}
+
+		// Write the content to the tar archive.
+		_, err = io.WriteString(tarWriter, file.Content)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Close the tar writer to flush the data to the buffer.
+	err := tarWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
 
 func TestSearchResultsStatsLanguages(t *testing.T) {
 	logger := logtest.Scoped(t)
@@ -57,6 +97,20 @@ func TestSearchResultsStatsLanguages(t *testing.T) {
 
 	gsClient.StatFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName, _ api.CommitID, path string) (fs.FileInfo, error) {
 		return &fileutil.FileInfo{Name_: path, Mode_: os.ModeDir}, nil
+	})
+	gsClient.ArchiveReaderFunc.SetDefaultHook(func(_ context.Context, _ api.RepoName, archiveOptions gitserver.ArchiveOptions) (io.ReadCloser, error) {
+		files := []FileData{
+			{Name: "two.go", Content: "a\nb\n"},
+			{Name: "three.go", Content: "a\nb\nc\n"},
+		}
+
+		// Create the in-memory tar archive.
+		archiveData, err := createInMemoryTarArchive(files)
+		if err != nil {
+			t.Fatalf("Failed to create in-memory tar archive: %v", err)
+		}
+
+		return io.NopCloser(bytes.NewReader(archiveData)), nil
 	})
 
 	mkResult := func(path string, lineNumbers ...int) *result.FileMatch {
