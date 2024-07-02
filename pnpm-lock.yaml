@@ -1149,6 +1149,9 @@ importers:
       '@sourcegraph/shared':
         specifier: workspace:*
         version: link:../shared
+      '@sourcegraph/telemetry':
+        specifier: ^0.16.0
+        version: 0.16.0
       '@sourcegraph/wildcard':
         specifier: workspace:*
         version: link:../wildcard

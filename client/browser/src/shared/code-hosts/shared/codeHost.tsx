@@ -97,6 +97,7 @@ import { WildcardThemeProvider } from '../../components/WildcardThemeProvider'
 import { isExtension, isInPage } from '../../context'
 import type { SourcegraphIntegrationURLs, BrowserPlatformContext } from '../../platform/context'
 import { resolveRevision, retryWhenCloneInProgressError, resolvePrivateRepo } from '../../repo/backend'
+import { ConditionalTelemetryRecorderProvider } from '../../telemetry'
 import { ConditionalTelemetryService, EventLogger } from '../../tracking/eventLogger'
 import { DEFAULT_SOURCEGRAPH_URL, getPlatformName, isDefaultSourcegraphUrl } from '../../util/context'
 import { type MutationRecordLike, querySelectorOrSelf } from '../../util/dom'
@@ -1364,6 +1365,11 @@ export function injectCodeIntelligenceToCodeHost(
     const telemetryService = new ConditionalTelemetryService(innerTelemetryService, isTelemetryEnabled)
     subscriptions.add(telemetryService)
 
+    const telemetryRecorderProvider = new ConditionalTelemetryRecorderProvider(isTelemetryEnabled, requestGraphQL)
+    const telemetryRecorder = telemetryRecorderProvider.getRecorder()
+    subscriptions.add(telemetryRecorder)
+    platformContext.telemetryRecorder = telemetryRecorder
+
     let codeHostSubscription: Subscription
     // In the browser extension, observe whether the `disableExtension` storage flag is set.
     // In the native integration, this flag does not exist.
@@ -1402,7 +1408,7 @@ export function injectCodeIntelligenceToCodeHost(
                     extensionsController,
                     platformContext,
                     telemetryService,
-                    telemetryRecorder: platformContext.telemetryRecorder,
+                    telemetryRecorder,
                     render: renderWithThemeProvider as Renderer,
                     minimalUI,
                     hideActions,

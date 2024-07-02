@@ -32,6 +32,7 @@ import { initializeOmniboxInterface } from '../../shared/cli'
 import { browserPortToMessagePort, findMessagePorts } from '../../shared/platform/ports'
 import { createBlobURLForBundle } from '../../shared/platform/worker'
 import { initSentry } from '../../shared/sentry'
+import { ConditionalTelemetryRecorderProvider } from '../../shared/telemetry'
 import { EventLogger } from '../../shared/tracking/eventLogger'
 import { getExtensionVersion, getPlatformName, observeSourcegraphURL } from '../../shared/util/context'
 import { type BrowserActionIconState, setBrowserActionIconState } from '../browser-action-icon'
@@ -148,6 +149,9 @@ async function main(): Promise<void> {
                             .log('BrowserExtensionInstalled')
                             .then(() => console.log(`Triggered "BrowserExtensionInstalled" using ${sourcegraphURL}`))
                             .catch(error => console.error('Error triggering "BrowserExtensionInstalled" event:', error))
+                        new ConditionalTelemetryRecorderProvider(of(true), requestGraphQL)
+                            .getRecorder()
+                            .recordEvent('browserExtension', 'install')
                     })
             )
         }
