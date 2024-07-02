@@ -692,6 +692,19 @@
 				],
 				"IsCreateIndexConcurrently": false,
 				"IndexMetadata": null
+			},
+			{
+				"ID": 1719914228,
+				"Name": "insight_series_modify_query",
+				"UpQuery": "ALTER TABLE insight_series ADD COLUMN IF NOT EXISTS query_old TEXT;\nUPDATE insight_series SET query_old = query;\n\n-- prefix query with patternType:standard if there is no patterntype: in the query\nUPDATE insight_series\nSET query = 'patterntype:standard ' || query\nWHERE query NOT ILIKE '%patterntype:%'\n  -- exclude empty queries, which are created by language stats insights\n  AND query != '';\n\nCOMMENT ON COLUMN insight_series.query_old IS 'Backup for migration. Remove with release 5.6 or later.';",
+				"DownQuery": "DO\n$$\n    BEGIN\n        -- Check if column 'query_old' exists\n        IF EXISTS (SELECT 1\n                   FROM information_schema.columns\n                   WHERE table_name = 'insight_series' AND column_name = 'query_old') THEN\n            -- Update the 'query' column with values from 'query_old'\n            UPDATE insight_series SET query = query_old;\n            ALTER TABLE insight_series DROP COLUMN query_old;\n        END IF;\n    END\n$$;",
+				"Privileged": false,
+				"NonIdempotent": false,
+				"Parents": [
+					1679051112
+				],
+				"IsCreateIndexConcurrently": false,
+				"IndexMetadata": null
 			}
 		],
 		"BoundsByRev": {
@@ -930,7 +943,7 @@
 			"v5.4.0": {
 				"RootID": 1000000027,
 				"LeafIDs": [
-					1679051112
+					1719914228
 				],
 				"PreCreation": false
 			}

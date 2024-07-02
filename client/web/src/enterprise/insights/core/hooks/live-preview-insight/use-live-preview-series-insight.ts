@@ -6,6 +6,8 @@ import { noop } from 'lodash'
 
 import { HTTPStatusError } from '@sourcegraph/http-client'
 import type { RepositoryScopeInput } from '@sourcegraph/shared/src/graphql-operations'
+import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import type { Series } from '@sourcegraph/wildcard'
 
 import type {
@@ -13,6 +15,7 @@ import type {
     GetInsightPreviewVariables,
     SearchSeriesPreviewInput,
 } from '../../../../../graphql-operations'
+import { defaultPatternTypeFromSettings } from '../../../../../util/settings'
 import { DATA_SERIES_COLORS_LIST, MAX_NUMBER_OF_SERIES } from '../../../constants'
 import { getStepInterval } from '../../backend/gql-backend/utils/get-step-interval'
 import { generateLinkURL, type InsightDataSeriesData } from '../../backend/utils/create-line-chart-content'
@@ -126,17 +129,20 @@ export function useLivePreviewSeriesInsight(props: Props): Result<Series<Datum>[
         return () => subscription.unsubscribe()
     }, [client, repoScope, series, skip, unit, value, counter])
 
+    const defaultPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+
     const parsedSeries = useMemo(() => {
         if (data) {
             return createPreviewSeriesContent({
                 response: data,
                 originalSeries: series,
                 repositories: repoScope.repositories,
+                defaultPatternType,
             })
         }
 
         return null
-    }, [data, repoScope, series])
+    }, [data, repoScope, series, defaultPatternType])
 
     if (loading) {
         return { state: { status: LivePreviewStatus.Loading }, refetch }
@@ -175,10 +181,11 @@ interface PreviewProps {
     response: GetInsightPreviewResult
     originalSeries: SeriesWithStroke[]
     repositories: string[]
+    defaultPatternType: SearchPatternType
 }
 
 function createPreviewSeriesContent(props: PreviewProps): Series<Datum>[] {
-    const { response, originalSeries } = props
+    const { response, originalSeries, defaultPatternType } = props
     const { searchInsightPreview: series } = response
 
     // inputMetadata creates a lookup so that the correct color can be later applied to the preview series
@@ -206,7 +213,7 @@ function createPreviewSeriesContent(props: PreviewProps): Series<Datum>[] {
         data: line.points.map(point => ({
             value: point.value,
             dateTime: new Date(point.dateTime),
-            link: generateLinkURL(point.pointInTimeQuery),
+            link: generateLinkURL(point.pointInTimeQuery, defaultPatternType),
         })),
         name: line.label,
         color: getColorForSeries(line.label, index),

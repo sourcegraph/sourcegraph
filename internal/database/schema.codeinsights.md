@@ -137,6 +137,7 @@ Foreign-key constraints:
  backfill_completed_at         | timestamp without time zone |           |          | 
  supports_augmentation         | boolean                     |           | not null | true
  repository_criteria           | text                        |           |          | 
+ query_old                     | text                        |           |          | 
 Indexes:
     "insight_series_pkey" PRIMARY KEY, btree (id)
     "insight_series_series_id_unique_idx" UNIQUE, btree (series_id)
@@ -171,6 +172,8 @@ Data series that comprise code insights.
 **oldest_historical_at**: Timestamp representing the oldest point of which this series is backfilled.
 
 **query**: Query string that generates this series
+
+**query_old**: Backup for migration. Remove with release 5.6 or later.
 
 **repository_criteria**: The search criteria used to determine the repositories that are included in this series.
 

@@ -13,6 +13,7 @@ interface LineChartContentInput {
     insight: BackendInsight
     seriesData: InsightDataSeries[]
     showError: boolean
+    defaultPatternType: SearchPatternType
 }
 
 /**
@@ -32,7 +33,7 @@ export function createLineChartContent(input: LineChartContentInput): BackendIns
         data: line.points.map(point => ({
             dateTime: new Date(point.dateTime),
             value: point.value,
-            link: generateLinkURL(point.pointInTimeQuery),
+            link: generateLinkURL(point.pointInTimeQuery, input.defaultPatternType),
         })),
         name: seriesDefinitionMap[line.seriesId]?.name ?? line.label,
         color: seriesDefinitionMap[line.seriesId]?.stroke,
@@ -47,9 +48,9 @@ export function createLineChartContent(input: LineChartContentInput): BackendIns
  */
 export type InsightDataSeriesData = Pick<InsightDataSeries, 'seriesId' | 'label' | 'points'>
 
-export function generateLinkURL(query: string | null): string | undefined {
+export function generateLinkURL(query: string | null, defaultPatternType: SearchPatternType): string | undefined {
     if (query) {
-        const searchQueryParameter = buildSearchURLQuery(query, SearchPatternType.literal, false)
+        const searchQueryParameter = buildSearchURLQuery(query, defaultPatternType, false)
         return `${window.location.origin}${PageRoutes.Search}?${searchQueryParameter}`
     }
 

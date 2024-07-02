@@ -6,12 +6,14 @@ import { useMergeRefs } from 'use-callback-ref'
 
 import { isDefined } from '@sourcegraph/common'
 import { useQuery } from '@sourcegraph/http-client'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Link, useDebounce, useDeepMemo, Text } from '@sourcegraph/wildcard'
 
 import type { GetInsightViewResult, GetInsightViewVariables } from '../../../../../../graphql-operations'
 import { useSeriesToggle } from '../../../../../../insights/utils/use-series-toggle'
+import { defaultPatternTypeFromSettings } from '../../../../../../util/settings'
 import {
     type BackendInsight,
     CodeInsightsBackendContext,
@@ -88,14 +90,16 @@ export const BackendInsightView = forwardRef<HTMLElement, BackendInsightProps>((
         }
     )
 
+    const defaultPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+
     const insightData = useMemo(() => {
         if (!data) {
             return
         }
 
         const node = data.insightViews.nodes[0]
-        return isDefined(node) ? createBackendInsightData({ ...insight, filters }, node) : undefined
-    }, [data, filters, insight])
+        return isDefined(node) ? createBackendInsightData({ ...insight, filters }, node, defaultPatternType) : undefined
+    }, [data, filters, insight, defaultPatternType])
 
     // Reset item selection items on every data change
     useLayoutEffect(

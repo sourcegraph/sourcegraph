@@ -147,7 +147,8 @@ CREATE TABLE insight_series (
     needs_migration boolean,
     backfill_completed_at timestamp without time zone,
     supports_augmentation boolean DEFAULT true NOT NULL,
-    repository_criteria text
+    repository_criteria text,
+    query_old text
 );
 
 COMMENT ON TABLE insight_series IS 'Data series that comprise code insights.';
@@ -173,6 +174,8 @@ COMMENT ON COLUMN insight_series.generation_method IS 'Specifies the execution m
 COMMENT ON COLUMN insight_series.just_in_time IS 'Specifies if the series should be resolved just in time at query time, or recorded in background processing.';
 
 COMMENT ON COLUMN insight_series.repository_criteria IS 'The search criteria used to determine the repositories that are included in this series.';
+
+COMMENT ON COLUMN insight_series.query_old IS 'Backup for migration. Remove with release 5.6 or later.';
 
 CREATE TABLE insight_series_backfill (
     id integer NOT NULL,

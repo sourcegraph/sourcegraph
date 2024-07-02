@@ -945,6 +945,19 @@
           "Comment": "Query string that generates this series"
         },
         {
+          "Name": "query_old",
+          "Index": 24,
+          "TypeName": "text",
+          "IsNullable": true,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": "Backup for migration. Remove with release 5.6 or later."
+        },
+        {
           "Name": "repositories",
           "Index": 12,
           "TypeName": "text[]",

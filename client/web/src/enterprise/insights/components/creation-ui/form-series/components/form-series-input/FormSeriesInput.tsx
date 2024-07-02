@@ -3,8 +3,13 @@ import type { FC, ReactNode } from 'react'
 import classNames from 'classnames'
 import { noop } from 'rxjs'
 
+import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
+import { FilterType } from '@sourcegraph/shared/src/search/query/filters'
+import { findFilter, FilterKind } from '@sourcegraph/shared/src/search/query/query'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { Button, Card, Input, Code, useForm, useField, getDefaultInputProps } from '@sourcegraph/wildcard'
 
+import { defaultPatternTypeFromSettings } from '../../../../../../../util/settings'
 import { DEFAULT_DATA_SERIES_COLOR } from '../../../../../constants'
 import { InsightQueryInput } from '../../../../form'
 import type { EditableDataSeries } from '../../types'
@@ -79,6 +84,13 @@ export const FormSeriesInput: FC<FormSeriesInputProps> = props => {
 
     const { name, query, stroke: color } = series
 
+    const hasPatternType = (query: string): boolean => {
+        const patternType = findFilter(query, FilterType.patterntype, FilterKind.Global)
+        return patternType?.value !== undefined
+    }
+
+    const defaultPatternType: SearchPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+
     const { formAPI, handleSubmit, ref } = useForm({
         touched: showValidationErrorsOnMount,
         initialValues: {
@@ -90,7 +102,9 @@ export const FormSeriesInput: FC<FormSeriesInputProps> = props => {
             onSubmit({
                 ...series,
                 name: values.seriesName,
-                query: values.seriesQuery,
+                query: hasPatternType(values.seriesQuery)
+                    ? values.seriesQuery
+                    : `patterntype:${defaultPatternType} ${values.seriesQuery}`,
                 stroke: values.seriesColor,
             }),
         onChange: event => {
@@ -142,7 +156,7 @@ export const FormSeriesInput: FC<FormSeriesInputProps> = props => {
                 as={InsightQueryInput}
                 repoQuery={repoQuery}
                 repositories={repositories}
-                patternType={getQueryPatternTypeFilter(queryField.input.value)}
+                patternType={getQueryPatternTypeFilter(queryField.input.value, defaultPatternType)}
                 placeholder="Example: patternType:regexp const\s\w+:\s(React\.)?FunctionComponent"
                 message={
                     queryFieldDescription ?? (

@@ -1,11 +1,16 @@
 import type { InsightDataNode } from '../../../../../../../graphql-operations'
+import { SearchPatternType } from '../../../../../../../graphql-operations'
 import { type BackendInsight, isComputeInsight, isCaptureGroupInsight } from '../../../../types'
 import { InsightContentType } from '../../../../types/insight/common'
 import type { BackendInsightData } from '../../../code-insights-backend-types'
 import { createComputeCategoricalChart } from '../../../utils/create-categorical-content'
 import { createLineChartContent } from '../../../utils/create-line-chart-content'
 
-export const createBackendInsightData = (insight: BackendInsight, response: InsightDataNode): BackendInsightData => {
+export const createBackendInsightData = (
+    insight: BackendInsight,
+    response: InsightDataNode,
+    defaultPatternType: SearchPatternType
+): BackendInsightData => {
     const seriesData = response.dataSeries
     const isFetchingHistoricalData = seriesData.some(({ status: { isLoadingData } }) => isLoadingData)
     const isAllSeriesErrored =
@@ -29,7 +34,7 @@ export const createBackendInsightData = (insight: BackendInsight, response: Insi
             isFetchingHistoricalData,
             data: {
                 type: InsightContentType.Series,
-                series: createLineChartContent({ insight, seriesData, showError: false }),
+                series: createLineChartContent({ insight, seriesData, showError: false, defaultPatternType }),
             },
         }
     }
@@ -41,7 +46,7 @@ export const createBackendInsightData = (insight: BackendInsight, response: Insi
         isFetchingHistoricalData,
         data: {
             type: InsightContentType.Series,
-            series: createLineChartContent({ insight, seriesData, showError: true }),
+            series: createLineChartContent({ insight, seriesData, showError: true, defaultPatternType }),
         },
     }
 }

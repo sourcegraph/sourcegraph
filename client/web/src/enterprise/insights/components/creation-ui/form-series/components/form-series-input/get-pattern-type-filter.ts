@@ -6,7 +6,7 @@ import { FilterKind, findFilter } from '@sourcegraph/shared/src/search/query/que
  * Returns pattern type filter value if it's represented in the query string,
  * otherwise returns default value for patternType filter - literal
  */
-export function getQueryPatternTypeFilter(query: string): SearchPatternType {
+export function getQueryPatternTypeFilter(query: string, defaultPatternType: SearchPatternType): SearchPatternType {
     const patternType = findFilter(query, FilterType.patterntype, FilterKind.Global)
 
     if (patternType?.value) {
@@ -23,11 +23,14 @@ export function getQueryPatternTypeFilter(query: string): SearchPatternType {
             case SearchPatternType.standard: {
                 return SearchPatternType.standard
             }
+            case SearchPatternType.keyword: {
+                return SearchPatternType.keyword
+            }
             default: {
-                return SearchPatternType.standard
+                return defaultPatternType
             }
         }
     }
 
-    return SearchPatternType.literal
+    return defaultPatternType
 }

@@ -5,6 +5,7 @@ import classNames from 'classnames'
 import { noop } from 'rxjs'
 
 import { gql, useQuery } from '@sourcegraph/http-client'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import {
@@ -22,6 +23,8 @@ import {
 } from '@sourcegraph/wildcard'
 
 import type { GetExampleRepositoryResult, GetExampleRepositoryVariables } from '../../../../../../../graphql-operations'
+import { SearchPatternType } from '../../../../../../../graphql-operations'
+import { defaultPatternTypeFromSettings } from '../../../../../../../util/settings'
 import { InsightQueryInput, RepositoriesField, insightRepositoriesValidator } from '../../../../../components'
 import { getQueryPatternTypeFilter } from '../../../../insights/creation/search-insight'
 import { CodeInsightsDescription } from '../code-insights-description/CodeInsightsDescription'
@@ -106,6 +109,8 @@ export const DynamicCodeInsightExample: FC<DynamicCodeInsightExampleProps> = pro
 
     const { status: repositoryStatus, ...repositoryProps } = getDefaultInputProps(repositories)
 
+    const defaultPatternType: SearchPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+
     return (
         <Card {...otherProps} className={classNames(styles.wrapper, otherProps.className)}>
             {/* eslint-disable-next-line react/forbid-elements */}
@@ -125,7 +130,7 @@ export const DynamicCodeInsightExample: FC<DynamicCodeInsightExampleProps> = pro
                     as={InsightQueryInput}
                     repoQuery={null}
                     repositories={repositories.input.value}
-                    patternType={getQueryPatternTypeFilter(query.input.value)}
+                    patternType={getQueryPatternTypeFilter(query.input.value, defaultPatternType)}
                     placeholder="Example: patternType:regexp const\s\w+:\s(React\.)?FunctionComponent"
                     {...getDefaultInputProps(query)}
                     className="mt-3 mb-0"

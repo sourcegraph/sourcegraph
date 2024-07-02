@@ -38,6 +38,7 @@ export const searchQueryValidator = (value: string | undefined): Checks => {
                 resolveFilter(filter.field.value)?.type === FilterType.patterntype &&
                 (filter.value?.value === 'literal' ||
                     filter.value?.value === 'structural' ||
+                    filter.value?.value === 'standard' ||
                     filter.value?.value === 'keyword')
         )
 

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { lastValueFrom } from 'rxjs'
 
 import { useQuery } from '@sourcegraph/http-client'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { Card, CardBody, useDebounce, useDeepMemo, type FormChangeEvent } from '@sourcegraph/wildcard'
@@ -16,6 +17,7 @@ import type {
     SeriesDisplayOptionsInput,
 } from '../../../../../../../graphql-operations'
 import { useSeriesToggle } from '../../../../../../../insights/utils/use-series-toggle'
+import { defaultPatternTypeFromSettings } from '../../../../../../../util/settings'
 import { InsightCard, InsightCardHeader, InsightCardLoading } from '../../../../../components'
 import {
     DrillDownInsightFilters,
@@ -95,6 +97,8 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
         }
     )
 
+    const defaultPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+
     const insightData = useMemo(() => {
         const node = data?.insightViews.nodes[0]
 
@@ -102,12 +106,12 @@ export const StandaloneBackendInsight: React.FunctionComponent<StandaloneBackend
             stopPolling()
             return
         }
-        const parsedData = createBackendInsightData({ ...insight, filters }, node)
+        const parsedData = createBackendInsightData({ ...insight, filters }, node, defaultPatternType)
         if (!parsedData.isFetchingHistoricalData) {
             stopPolling()
         }
         return parsedData
-    }, [data, filters, insight, stopPolling])
+    }, [data, filters, insight, stopPolling, defaultPatternType])
 
     const { trackMouseLeave, trackMouseEnter, trackDatumClicks } = useCodeInsightViewPings({
         telemetryService,

@@ -1925,6 +1925,7 @@ ts_project(
         "src/enterprise/code-monitoring/components/actions/WebhookAction.test.tsx",
         "src/enterprise/codeintel/configuration/components/inference-form/auto-index-to-schema.test.tsx",
         "src/enterprise/insights/components/creation-ui/code-insight-time-step-picker/get-interval-descrtiption-text/get-interval-description.text.test.ts",
+        "src/enterprise/insights/components/creation-ui/form-series/components/form-series-input/get-pattern-type-filter.test.ts",
         "src/enterprise/insights/hooks/use-parallel-requests/use-prallel-requests.test.ts",
         "src/enterprise/insights/pages/CodeInsightsRootPage.test.tsx",
         "src/enterprise/insights/pages/dashboards/dashboard-view/DashboardsContentPage.test.tsx",
