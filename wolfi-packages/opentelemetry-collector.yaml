@@ -1,13 +1,13 @@
 package:
   name: opentelemetry-collector
-  version: 0.92.0 # Keep in sync with go.opentelemetry.io/collector version in go.mod
-  epoch: 7
+  version: 0.104.0 # Keep in sync with go.opentelemetry.io/collector version in go.mod
+  epoch: 0
   description: "Vendor-agnostic implementation on how to receive, process and export telemetry data"
   target-architecture:
     - x86_64
   copyright:
     - paths:
-      - "*"
+        - "*"
       attestation: 'Copyright 2014 The open-telemetry Authors'
       license: 'Apache License 2.0'
   dependencies:
@@ -20,14 +20,14 @@ environment:
     keyring:
       - https://packages.wolfi.dev/os/wolfi-signing.rsa.pub
     packages:
-      - wolfi-base
       - busybox
       - ca-certificates-bundle
+      - gcc
       - gettext
       - git
-      - gcc
       - go
       # - g++ # Not available on Wolfi - required?
+      - wolfi-base
 
 pipeline:
   - name: Populate builder template with version variables
@@ -35,11 +35,13 @@ pipeline:
       export OTEL_COLLECTOR_VERSION=${{package.version}}
       envsubst <opentelemetry-collector/builder.template.yaml >opentelemetry-collector/builder.yaml
       cat opentelemetry-collector/builder.yaml
+
   - name: Run collector builder
     runs: |
       go run go.opentelemetry.io/collector/cmd/builder@v${{package.version}} \
       --config opentelemetry-collector/builder.yaml \
       --output-path=/tmp/otelcol-sourcegraph
+
   - name: Package collector
     # TODO: Change directory, but /bin is hardcoded into k8s manifests
     runs: |
