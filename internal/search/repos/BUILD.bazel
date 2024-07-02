@@ -15,7 +15,6 @@ go_library(
         "//internal/api",
         "//internal/conf",
         "//internal/database",
-        "//internal/dotcom",
         "//internal/endpoint",
         "//internal/gitserver",
         "//internal/gitserver/gitdomain",

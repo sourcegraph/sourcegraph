@@ -22,7 +22,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
-	"github.com/sourcegraph/sourcegraph/internal/dotcom"
 	"github.com/sourcegraph/sourcegraph/internal/endpoint"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
@@ -1117,7 +1116,7 @@ func findPatternRevs(includePatterns []query.ParsedRepoFilter) (outputPatterns [
 }
 
 func optimizeRepoPatternWithHeuristics(repoPattern string) string {
-	if dotcom.SourcegraphDotComMode() && (strings.HasPrefix(repoPattern, "github.com") || strings.HasPrefix(repoPattern, `github\.com`)) {
+	if strings.HasPrefix(repoPattern, "github.com/") || strings.HasPrefix(repoPattern, `github\.com/`) {
 		repoPattern = "^" + repoPattern
 	}
 	// Optimization: make the "." in "github.com" a literal dot
