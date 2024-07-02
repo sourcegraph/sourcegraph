@@ -849,6 +849,9 @@ commands:
 
       echo "Grafana: serving on http://localhost:${PORT}"
       echo "Grafana: note that logs are piped to ${GRAFANA_LOG_FILE}"
+
+      docker inspect $CONTAINER >/dev/null 2>&1 && docker rm -f $CONTAINER
+
       docker run --rm ${DOCKER_USER} \
         --name=${CONTAINER} \
         --cpus=1 \
@@ -858,11 +861,16 @@ commands:
         -v "$(pwd)"/dev/grafana/all:/sg_config_grafana/provisioning/datasources \
         grafana:candidate >"${GRAFANA_LOG_FILE}" 2>&1
     install: |
+      rm -Rf .bin/grafana-image.tar
       mkdir -p "${GRAFANA_DISK}"
       mkdir -p "$(dirname ${GRAFANA_LOG_FILE})"
-      docker inspect $CONTAINER >/dev/null 2>&1 && docker rm -f $CONTAINER
+
       bazel build //docker-images/grafana:image_tarball
-      docker load --input $(bazel cquery //docker-images/grafana:image_tarball --output=files)
+      cp $(bazel cquery //docker-images/grafana:image_tarball --output=files) .bin/grafana-image.tar
+      docker load --input .bin/grafana-image.tar
+    watch:
+      - monitoring
+    checkBinary: .bin/grafana-image.tar
     env:
       GRAFANA_DISK: $HOME/.sourcegraph-dev/data/grafana
       # Log file location: since we log outside of the Docker container, we should
@@ -893,6 +901,8 @@ commands:
         SRC_FRONTEND_INTERNAL="localhost:3090"
       fi
 
+      docker inspect $CONTAINER >/dev/null 2>&1 && docker rm -f $CONTAINER
+
       echo "Prometheus: serving on http://localhost:${PORT}"
       echo "Prometheus: note that logs are piped to ${PROMETHEUS_LOG_FILE}"
       docker run --rm ${DOCKER_NET} ${DOCKER_USER} \
@@ -908,10 +918,9 @@ commands:
         -e PROMETHEUS_ADDITIONAL_FLAGS="--web.enable-lifecycle --web.enable-admin-api" \
         ${IMAGE} >"${PROMETHEUS_LOG_FILE}" 2>&1
     install: |
+      rm .bin/prometheus-image.tar
       mkdir -p "${PROMETHEUS_DISK}"
       mkdir -p "$(dirname ${PROMETHEUS_LOG_FILE})"
-
-      docker inspect $CONTAINER >/dev/null 2>&1 && docker rm -f $CONTAINER
 
       if [[ $(uname) == "Linux" ]]; then
         PROM_TARGETS="dev/prometheus/linux/prometheus_targets.yml"
@@ -920,7 +929,11 @@ commands:
       cp ${PROM_TARGETS} "${CONFIG_DIR}"/prometheus_targets.yml
 
       bazel build //docker-images/prometheus:image_tarball
-      docker load --input $(bazel cquery //docker-images/prometheus:image_tarball --output=files)
+      cp $(bazel cquery //docker-images/prometheus:image_tarball --output=files) .bin/prometheus-image.tar
+      docker load --input .bin/prometheus-image.tar
+    watch:
+      - monitoring
+    checkBinary: .bin/prometheus-image.tar
     env:
       PROMETHEUS_DISK: $HOME/.sourcegraph-dev/data/prometheus
       # See comment above for `grafana`
@@ -991,8 +1004,13 @@ commands:
 
   otel-collector:
     install: |
+      rm -Rf .bin/otel-collector-image.tar
       bazel build //docker-images/opentelemetry-collector:image_tarball
-      docker load --input $(bazel cquery //docker-images/opentelemetry-collector:image_tarball --output=files)
+      cp $(bazel cquery //docker-images/opentelemetry-collector:image_tarball --output=files) .bin/otel-collector-image.tar
+      docker load --input .bin/otel-collector-image.tar
+    checkBinary: .bin/otel-collector-image.tar
+    watch:
+      - monitoring
     description: OpenTelemetry collector
     cmd: |
       JAEGER_HOST='host.docker.internal'
