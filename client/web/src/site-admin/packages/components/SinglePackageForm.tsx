@@ -1,26 +1,26 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 import { mdiPlus } from '@mdi/js'
 import classNames from 'classnames'
 
 import { toRepoURL } from '@sourcegraph/shared/src/util/url'
 import {
+    Badge,
     Button,
+    ErrorAlert,
+    Form,
     Icon,
     Input,
     Label,
-    Tooltip,
-    Select,
-    LoadingSpinner,
-    ErrorAlert,
-    Badge,
-    useDebounce,
-    Form,
     Link,
+    LoadingSpinner,
+    Select,
+    Tooltip,
+    useDebounce,
 } from '@sourcegraph/wildcard'
 
-import type { FilteredConnectionFilterValue } from '../../../components/FilteredConnection'
-import type { PackageRepoReferenceKind, PackageRepoMatchFields } from '../../../graphql-operations'
+import type { FilterOption } from '../../../components/FilteredConnection'
+import type { PackageRepoMatchFields, PackageRepoReferenceKind } from '../../../graphql-operations'
 import { useMatchingPackages } from '../hooks/useMatchingPackages'
 import { useMatchingVersions } from '../hooks/useMatchingVersions'
 import type { BlockType } from '../modal-content/AddPackageFilterModalContent'
@@ -37,7 +37,7 @@ export interface SinglePackageState {
 
 interface SinglePackageFormProps {
     initialState: SinglePackageState
-    filters: FilteredConnectionFilterValue[]
+    filters: FilterOption[]
     setType: (type: BlockType) => void
     onDismiss: () => void
     onSave: (state: SinglePackageState) => Promise<unknown>

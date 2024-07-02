@@ -2,22 +2,22 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { mdiBookOutline } from '@mdi/js'
 import classNames from 'classnames'
-import { type Location, Navigate, useNavigate, useLocation, type NavigateFunction } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, type Location, type NavigateFunction } from 'react-router-dom'
 import type { Observable } from 'rxjs'
 import { catchError, startWith, switchMap } from 'rxjs/operators'
 
-import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
+import { asError, isErrorLike, type ErrorLike } from '@sourcegraph/common'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
 import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
-import { PageHeader, Button, useEventObservable, Alert, ButtonLink } from '@sourcegraph/wildcard'
+import { Alert, Button, ButtonLink, PageHeader, useEventObservable } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../auth'
-import type { FilteredConnectionFilter } from '../../components/FilteredConnection'
+import type { Filter } from '../../components/FilteredConnection'
 import { Page } from '../../components/Page'
-import { type CreateNotebookVariables, NotebooksOrderBy } from '../../graphql-operations'
+import { NotebooksOrderBy, type CreateNotebookVariables } from '../../graphql-operations'
 import { PageRoutes } from '../../routes.constants'
-import { fetchNotebooks as _fetchNotebooks, createNotebook as _createNotebook } from '../backend'
+import { createNotebook as _createNotebook, fetchNotebooks as _fetchNotebooks } from '../backend'
 
 import { NotebooksGettingStartedTab } from './NotebooksGettingStartedTab'
 import { NotebooksList, type NotebooksListProps } from './NotebooksList'
@@ -106,13 +106,13 @@ export const NotebooksListPage: React.FunctionComponent<React.PropsWithChildren<
         [navigate, location, setSelectedTab, telemetryService, telemetryRecorder]
     )
 
-    const orderOptions: FilteredConnectionFilter[] = [
+    const orderOptions: Filter[] = [
         {
             label: 'Order by',
             type: 'select',
             id: 'order',
             tooltip: 'Order notebooks',
-            values: [
+            options: [
                 {
                     value: 'updated-at-desc',
                     label: 'Last update (descending)',

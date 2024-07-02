@@ -1,4 +1,4 @@
-import { type FunctionComponent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FunctionComponent } from 'react'
 
 import { useApolloClient } from '@apollo/client'
 import { mdiChevronRight, mdiDelete, mdiMapSearch, mdiRedo } from '@mdi/js'
@@ -29,16 +29,16 @@ import {
 
 import {
     FilteredConnection,
-    type FilteredConnectionFilter,
+    type Filter,
     type FilteredConnectionQueryArguments,
 } from '../../../../components/FilteredConnection'
 import { PageTitle } from '../../../../components/PageTitle'
 import {
+    PreciseIndexState,
     type IndexerListResult,
     type IndexerListVariables,
-    type PreciseIndexesVariables,
     type PreciseIndexFields,
-    PreciseIndexState,
+    type PreciseIndexesVariables,
 } from '../../../../graphql-operations'
 import { FlashMessage } from '../../configuration/components/FlashMessage'
 import { PreciseIndexLastUpdated } from '../components/CodeIntelLastUpdated'
@@ -71,11 +71,11 @@ export interface CodeIntelPreciseIndexesPageProps extends TelemetryProps, Teleme
     indexingEnabled?: boolean
 }
 
-const STATE_FILTER: FilteredConnectionFilter = {
+const STATE_FILTER: Filter = {
     id: 'filters',
     label: 'State',
     type: 'select',
-    values: [
+    options: [
         {
             label: 'All',
             value: 'all',
@@ -146,12 +146,12 @@ export const CodeIntelPreciseIndexesPage: FunctionComponent<CodeIntelPreciseInde
 
     const { data: indexerData } = useQuery<IndexerListResult, IndexerListVariables>(INDEXER_LIST, {})
 
-    const filters = useMemo<FilteredConnectionFilter[]>(() => {
-        const indexerFilter: FilteredConnectionFilter = {
+    const filters = useMemo<Filter[]>(() => {
+        const indexerFilter: Filter = {
             id: 'filters-indexer',
             label: 'Indexer',
             type: 'select',
-            values: [
+            options: [
                 {
                     label: 'All',
                     value: 'all',
@@ -163,7 +163,7 @@ export const CodeIntelPreciseIndexesPage: FunctionComponent<CodeIntelPreciseInde
         const keys = (indexerData?.indexerKeys || []).filter(key => Boolean(key))
 
         for (const key of keys) {
-            indexerFilter.values.push({
+            indexerFilter.options.push({
                 label: key,
                 value: key,
                 args: { indexerKey: key },

@@ -167,7 +167,7 @@ export const CodeIntelConfigurationPage: FunctionComponent<CodeIntelConfiguratio
                             id: 'filters',
                             label: 'Show',
                             type: 'select',
-                            values: [
+                            options: [
                                 {
                                     label: 'All policies',
                                     value: 'all',

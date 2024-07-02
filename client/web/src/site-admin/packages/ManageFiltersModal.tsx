@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { Button, Modal, PageHeader } from '@sourcegraph/wildcard'
 
-import type { FilteredConnectionFilterValue } from '../../components/FilteredConnection'
+import type { FilterOption } from '../../components/FilteredConnection'
 import type { PackageRepoFilterFields } from '../../graphql-operations'
 
 import { EditPackageFilterModalContent } from './modal-content/EditPackageFilterModalContent'
@@ -16,7 +16,7 @@ import styles from './PackagesModal.module.scss'
 interface ManageFiltersModalProps extends Omit<ManagePackageFiltersModalContentProps, 'setActiveFilter'> {
     onDismiss: () => void
     onAdd: () => void
-    filters: FilteredConnectionFilterValue[]
+    filters: FilterOption[]
 }
 
 export const ManageFiltersModal: React.FunctionComponent<ManageFiltersModalProps> = props => {

@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { useMutation } from '@sourcegraph/http-client'
 import { ErrorAlert } from '@sourcegraph/wildcard'
 
-import type { FilteredConnectionFilterValue } from '../../../components/FilteredConnection'
+import type { FilterOption } from '../../../components/FilteredConnection'
 import {
+    PackageMatchBehaviour,
     type AddPackageRepoFilterResult,
     type AddPackageRepoFilterVariables,
-    PackageMatchBehaviour,
     type PackageRepoReferenceKind,
     type SiteAdminPackageFields,
 } from '../../../graphql-operations'
@@ -20,7 +20,7 @@ import styles from './AddPackageFilterModalContent.module.scss'
 
 export interface AddPackageFilterModalContentProps {
     node?: SiteAdminPackageFields
-    filters: FilteredConnectionFilterValue[]
+    filters: FilterOption[]
     onDismiss: () => void
 }
 

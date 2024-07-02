@@ -8,28 +8,28 @@ import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
 import {
     Badge,
-    type BADGE_VARIANTS,
     Button,
-    useLocalStorage,
+    Card,
+    H2,
+    H3,
     Link,
     Tab,
     TabList,
     TabPanel,
     TabPanels,
     Tabs,
-    H2,
-    H3,
     Text,
-    Card,
+    useLocalStorage,
+    type BADGE_VARIANTS,
 } from '@sourcegraph/wildcard'
 
-import { FilteredConnection, type FilteredConnectionFilter } from '../components/FilteredConnection'
+import { FilteredConnection, type Filter } from '../components/FilteredConnection'
 import { PageTitle } from '../components/PageTitle'
 import {
+    UserActivePeriod,
     type SurveyResponseAggregateFields,
     type SurveyResponseFields,
     type UserWithSurveyResponseFields,
-    UserActivePeriod,
 } from '../graphql-operations'
 import {
     fetchAllSurveyResponses,
@@ -43,12 +43,12 @@ import { ValueLegendItem } from './analytics/components/ValueLegendList'
 
 import styles from './SiteAdminSurveyResponsesPage.module.scss'
 
-const USER_ACTIVITY_FILTERS: FilteredConnectionFilter[] = [
+const USER_ACTIVITY_FILTERS: Filter[] = [
     {
         label: '',
         type: 'radio',
         id: 'user-activity-filters',
-        values: [
+        options: [
             {
                 label: 'All users',
                 value: 'all',

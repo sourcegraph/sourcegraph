@@ -1,9 +1,9 @@
-import { type FC, useCallback, useEffect } from 'react'
+import { useCallback, useEffect, type FC } from 'react'
 
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { H2 } from '@sourcegraph/wildcard'
 
-import { FilteredConnection, type FilteredConnectionFilter } from '../../components/FilteredConnection'
+import { FilteredConnection, type Filter } from '../../components/FilteredConnection'
 import type {
     ListNotebooksResult,
     ListNotebooksVariables,
@@ -20,7 +20,7 @@ import styles from './NotebooksList.module.scss'
 export interface NotebooksListProps extends TelemetryProps {
     title: string
     logEventName: NotebooksFilterEvents
-    orderOptions: FilteredConnectionFilter[]
+    orderOptions: Filter[]
     creatorUserID?: string
     starredByUserID?: string
     namespace?: string

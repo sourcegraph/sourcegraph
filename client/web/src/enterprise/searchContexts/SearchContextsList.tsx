@@ -17,8 +17,8 @@ import type { AuthenticatedUser } from '../../auth'
 import {
     FilteredConnection,
     type Connection,
-    type FilteredConnectionFilter,
-    type FilteredConnectionFilterValue,
+    type Filter,
+    type FilterOption,
 } from '../../components/FilteredConnection'
 
 import { useDefaultContext } from './hooks/useDefaultContext'
@@ -64,7 +64,7 @@ export const SearchContextsList: React.FunctionComponent<SearchContextsListProps
         [authenticatedUser, fetchSearchContexts, getUserSearchContextNamespaces, platformContext]
     )
 
-    const ownerNamespaceFilterValues: FilteredConnectionFilterValue[] = useMemo(
+    const ownerNamespaceFilterValues: FilterOption[] = useMemo(
         () =>
             authenticatedUser
                 ? [
@@ -87,14 +87,14 @@ export const SearchContextsList: React.FunctionComponent<SearchContextsListProps
         [authenticatedUser]
     )
 
-    const filters: FilteredConnectionFilter[] = useMemo(
+    const filters = useMemo<Filter[]>(
         () => [
             {
                 label: 'Sort',
                 type: 'select',
                 id: 'order',
                 tooltip: 'Order search contexts',
-                values: [
+                options: [
                     {
                         value: 'spec-asc',
                         label: 'By name',
@@ -118,7 +118,7 @@ export const SearchContextsList: React.FunctionComponent<SearchContextsListProps
                 type: 'select',
                 id: 'owner',
                 tooltip: 'Search context owner',
-                values: [
+                options: [
                     {
                         value: 'all',
                         label: 'All',
