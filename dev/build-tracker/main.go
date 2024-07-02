@@ -137,14 +137,20 @@ func (s *Server) handleGetBuild(w http.ResponseWriter, req *http.Request) {
 	}
 
 	s.logger.Info("retrieving build", log.Int("buildNumber", buildNum))
-	build := s.store.GetByBuildNumber(buildNum)
-	if build == nil {
-		s.logger.Debug("no build found", log.Int("buildNumber", buildNum))
-		w.WriteHeader(http.StatusNotFound)
-		return
+	b := s.store.GetByBuildNumber(buildNum)
+	if b == nil {
+		// fallback to buildkite api on cache miss
+		s.logger.Debug("cache miss, retrieving build from buildkite", log.Int("buildNumber", buildNum))
+		bb, _, err := s.bkClient.Builds.Get("sourcegraph", "sourcegraph", fmt.Sprintf("%d", buildNum), nil)
+		if err != nil {
+			s.logger.Error("failed to retrieve build from buildkite", log.Error(err), log.Int("buildNumber", buildNum))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		b = build.FromBuildkiteBuild(*bb)
 	}
 	s.logger.Debug("encoding build", log.Int("buildNumber", buildNum))
-	json.NewEncoder(w).Encode(build)
+	json.NewEncoder(w).Encode(b)
 	w.WriteHeader(http.StatusOK)
 }
 
