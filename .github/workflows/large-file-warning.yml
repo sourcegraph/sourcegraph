@@ -1,0 +1,34 @@
+name: File Size Checker
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-size:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Check for large files
+      run: |
+        if git log -1 --pretty=%B | grep -q "skip filesize check" ; then
+          exit 0
+        fi
+
+        # Fetch the target branch to compare
+        git fetch --depth=1 origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+        # Check for added or modified files larger than 1MB
+        changed_files=$(git diff --name-only --diff-filter=AM ${{ github.base_ref }})
+        while read file; do
+          old_size=$(git ls-tree -r ${{ github.base_ref }} -l "$file" | awk '{print $4}')
+          old_size=${old_size:-0} # default to zero if the file didn't exist on main
+          new_size=$(git ls-tree -r HEAD -l "$file" | awk '{print $4}')
+          if [ "$new_size" -gt "1000000" ] && [ "$old_size" -le "1000000" ]; then
+            echo "ERROR: this PR added or modified '$file' which now exceeds 1MB. Please remove the committed file."
+            echo "If you are SUPER sure you want to do this, push a commit with 'git commit --allow-empty -m \"skip filesize check\""
+            exit 1
+          fi
+        done <<< "$changed_files"
