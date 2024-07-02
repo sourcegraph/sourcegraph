@@ -48,21 +48,20 @@ func NewPlanJob(inputs *search.Inputs, plan query.Plan) (job.Job, error) {
 		return NewBasicJob(inputs, b)
 	}
 
-	if inputs.PatternType == query.SearchTypeCodyContext {
-		if inputs.SearchMode == search.SmartSearch {
-			return nil, errors.New("The 'codycontext' patterntype is not compatible with Smart Search")
+	if inputs.SearchMode == search.SmartSearch || inputs.PatternType == query.SearchTypeLucky {
+		if inputs.PatternType == query.SearchTypeCodyContext || inputs.PatternType == query.SearchTypeKeyword {
+			return nil, errors.Newf("The '%s' patterntype is not compatible with Smart Search", inputs.PatternType)
 		}
+		jobTree = smartsearch.NewSmartSearchJob(jobTree, newJob, plan)
+	}
 
+	if inputs.PatternType == query.SearchTypeCodyContext {
 		newJobTree, err := codycontext.NewSearchJob(plan, inputs, newJob)
 		if err != nil {
 			return nil, err
 		}
 
 		jobTree = newJobTree
-	}
-
-	if inputs.SearchMode == search.SmartSearch || inputs.PatternType == query.SearchTypeLucky {
-		jobTree = smartsearch.NewSmartSearchJob(jobTree, newJob, plan)
 	}
 
 	alertJob := NewAlertJob(inputs, jobTree)

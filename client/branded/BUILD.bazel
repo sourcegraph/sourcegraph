@@ -117,7 +117,6 @@ ts_project(
         "src/search-ui/input/experimental/placeholder.ts",
         "src/search-ui/input/experimental/suggestionsExtension.ts",
         "src/search-ui/input/experimental/utils.ts",
-        "src/search-ui/input/toggles/LegacyToggles.tsx",
         "src/search-ui/input/toggles/QueryInputToggle.tsx",
         "src/search-ui/input/toggles/SmartSearchToggle.tsx",
         "src/search-ui/input/toggles/Toggles.tsx",

@@ -3,7 +3,7 @@ import React, { useCallback, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import shallow from 'zustand/shallow'
 
-import { SearchBox, LegacyToggles } from '@sourcegraph/branded'
+import { SearchBox } from '@sourcegraph/branded'
 import { Toggles } from '@sourcegraph/branded/src/search-ui/input/toggles/Toggles'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { SearchContextInputProps, SubmitSearchParameters } from '@sourcegraph/shared/src/search'
@@ -30,7 +30,6 @@ interface Props
     isSourcegraphDotCom: boolean
     isSearchAutoFocusRequired?: boolean
     isRepositoryRelatedPage?: boolean
-    showKeywordSearchToggle?: boolean
 }
 
 const selectQueryState = ({
@@ -126,38 +125,20 @@ export const SearchNavbarItem: React.FunctionComponent<React.PropsWithChildren<P
                     selectedSearchContextSpec={props.selectedSearchContextSpec}
                     className="flex-grow-1"
                 >
-                    {props.showKeywordSearchToggle ? (
-                        <Toggles
-                            patternType={searchPatternType}
-                            defaultPatternType={defaultPatternType}
-                            caseSensitive={searchCaseSensitivity}
-                            setPatternType={setSearchPatternType}
-                            setCaseSensitivity={setSearchCaseSensitivity}
-                            searchMode={searchMode}
-                            setSearchMode={setSearchMode}
-                            navbarSearchQuery={queryState.query}
-                            submitSearch={submitSearchOnChange}
-                            structuralSearchDisabled={
-                                window.context?.experimentalFeatures?.structuralSearch !== 'enabled'
-                            }
-                            telemetryService={props.telemetryService}
-                            telemetryRecorder={props.telemetryRecorder}
-                        />
-                    ) : (
-                        <LegacyToggles
-                            patternType={searchPatternType}
-                            caseSensitive={searchCaseSensitivity}
-                            setPatternType={setSearchPatternType}
-                            setCaseSensitivity={setSearchCaseSensitivity}
-                            searchMode={searchMode}
-                            setSearchMode={setSearchMode}
-                            navbarSearchQuery={queryState.query}
-                            submitSearch={submitSearchOnChange}
-                            structuralSearchDisabled={
-                                window.context?.experimentalFeatures?.structuralSearch !== 'enabled'
-                            }
-                        />
-                    )}
+                    <Toggles
+                        patternType={searchPatternType}
+                        defaultPatternType={defaultPatternType}
+                        caseSensitive={searchCaseSensitivity}
+                        setPatternType={setSearchPatternType}
+                        setCaseSensitivity={setSearchCaseSensitivity}
+                        searchMode={searchMode}
+                        setSearchMode={setSearchMode}
+                        navbarSearchQuery={queryState.query}
+                        submitSearch={submitSearchOnChange}
+                        structuralSearchDisabled={window.context?.experimentalFeatures?.structuralSearch !== 'enabled'}
+                        telemetryService={props.telemetryService}
+                        telemetryRecorder={props.telemetryRecorder}
+                    />
                 </LazyV2SearchInput>
             </Form>
         )
@@ -189,7 +170,6 @@ export const SearchNavbarItem: React.FunctionComponent<React.PropsWithChildren<P
                 hideHelpButton={false}
                 showSearchHistory={true}
                 recentSearches={recentSearches}
-                showKeywordSearchToggle={props.showKeywordSearchToggle}
             />
         </Form>
     )

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from 'react'
+import { type FC, useEffect, useState } from 'react'
 
 import classNames from 'classnames'
 
@@ -11,7 +11,8 @@ import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Label, Tooltip, useLocalStorage } from '@sourcegraph/wildcard'
 
 import { BrandLogo } from '../../../components/branding/BrandLogo'
-import { useFeatureFlag, useKeywordSearch } from '../../../featureFlags/useFeatureFlag'
+import { useFeatureFlag } from '../../../featureFlags/useFeatureFlag'
+import { SearchPatternType } from '../../../graphql-operations'
 import { useLegacyContext_onlyInStormRoutes } from '../../../LegacyRouteContext'
 import { useV2QueryInput } from '../../../search/useV2QueryInput'
 import { useNavbarQueryState } from '../../../stores'
@@ -74,8 +75,6 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
     const showOnboardingTour = useShowOnboardingTour({ authenticatedUser, isSourcegraphDotCom })
     const patternType = useNavbarQueryState.getState().searchPatternType
 
-    const showKeywordSearchToggle = useKeywordSearch()
-
     return (
         <div className={classNames('d-flex flex-column align-items-center px-3', styles.searchPage)}>
             <BrandLogo className={styles.logo} isLightTheme={isLightTheme} variant="logo" />
@@ -117,7 +116,6 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
                                     simpleSearch={false}
                                     queryState={queryState}
                                     setQueryState={setQueryState}
-                                    showKeywordSearchToggle={showKeywordSearchToggle}
                                 />
                             </div>
                         </Tooltip>
@@ -129,7 +127,6 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
                             simpleSearch={simpleSearch && simpleSearchEnabled}
                             queryState={queryState}
                             setQueryState={setQueryState}
-                            showKeywordSearchToggle={showKeywordSearchToggle}
                         />
                         {authenticatedUser && showOnboardingTour && (
                             <GettingStartedTour
@@ -140,7 +137,7 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
                                 authenticatedUser={authenticatedUser}
                             />
                         )}
-                        <KeywordSearchCtaSection />
+                        {patternType === SearchPatternType.keyword ? <KeywordSearchCtaSection /> : <></>}
                     </>
                 )}
             </div>

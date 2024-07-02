@@ -1294,6 +1294,62 @@ func TestNewPlanJob(t *testing.T) {
 	}
 }
 
+func TestSmartSearchRestrictions(t *testing.T) {
+	cases := []struct {
+		query      string
+		protocol   search.Protocol
+		searchType query.SearchType
+		searchMode search.Mode
+		wantErr    error
+	}{{
+		query:      `foo context:@userA`,
+		protocol:   search.Streaming,
+		searchType: query.SearchTypeStandard,
+		searchMode: search.SmartSearch,
+		wantErr:    nil,
+	},
+		{
+			query:      `foo context:@userA`,
+			protocol:   search.Streaming,
+			searchType: query.SearchTypeKeyword,
+			searchMode: search.SmartSearch,
+			wantErr:    errors.New("The 'keyword' patterntype is not compatible with Smart Search"),
+		},
+		{
+			query:      `foo context:@userA`,
+			protocol:   search.Streaming,
+			searchType: query.SearchTypeCodyContext,
+			searchMode: search.SmartSearch,
+			wantErr:    errors.New("The 'codycontext' patterntype is not compatible with Smart Search"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.query, func(t *testing.T) {
+			plan, err := query.Pipeline(query.Init(tc.query, tc.searchType))
+			require.NoError(t, err)
+
+			inputs := &search.Inputs{
+				UserSettings:        &schema.Settings{},
+				PatternType:         tc.searchType,
+				SearchMode:          tc.searchMode,
+				Protocol:            tc.protocol,
+				Features:            &search.Features{},
+				OnSourcegraphDotCom: true,
+			}
+
+			_, err = NewPlanJob(inputs, plan)
+			if !errors.Is(err, tc.wantErr) {
+				if tc.wantErr == nil {
+					t.Errorf("got unexpected error %v", err)
+				} else {
+					t.Errorf("error mismatch: got %v, want %v", err, tc.wantErr)
+				}
+			}
+		})
+	}
+}
+
 func TestToEvaluateJob(t *testing.T) {
 	test := func(input string, protocol search.Protocol) string {
 		q, _ := query.ParseLiteral(input)

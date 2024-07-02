@@ -8,7 +8,6 @@ import ToolsIcon from 'mdi-react/ToolsIcon'
 import { NavLink, useLocation, useNavigate, useSearchParams, type RouteObject } from 'react-router-dom'
 import shallow from 'zustand/shallow'
 
-import { LegacyToggles } from '@sourcegraph/branded'
 import { Toggles } from '@sourcegraph/branded/src/search-ui/input/toggles/Toggles'
 import type { SearchQueryState, SubmitSearchParameters } from '@sourcegraph/shared/src/search'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
@@ -21,7 +20,6 @@ import { BatchChangesIconNav } from '../../batches/icons'
 import { CodyLogo } from '../../cody/components/CodyLogo'
 import { BrandLogo } from '../../components/branding/BrandLogo'
 import { DeveloperSettingsGlobalNavItem } from '../../devsettings/DeveloperSettingsGlobalNavItem'
-import { useKeywordSearch } from '../../featureFlags/useFeatureFlag'
 import { useRoutesMatch } from '../../hooks'
 import { PageRoutes } from '../../routes.constants'
 import { isSearchJobsEnabled } from '../../search-jobs/utility'
@@ -201,7 +199,6 @@ const NavigationSearchBox: FC<NavigationSearchBoxProps> = props => {
 
     const navigate = useNavigate()
     const location = useLocation()
-    const showKeywordSearchToggle = useKeywordSearch()
 
     const {
         searchMode,
@@ -246,34 +243,20 @@ const NavigationSearchBox: FC<NavigationSearchBoxProps> = props => {
             onChange={setQueryState}
             onSubmit={submitSearchOnChange}
         >
-            {showKeywordSearchToggle ? (
-                <Toggles
-                    searchMode={searchMode}
-                    patternType={searchPatternType}
-                    defaultPatternType={defaultPatternType}
-                    caseSensitive={searchCaseSensitivity}
-                    navbarSearchQuery={queryState.query}
-                    structuralSearchDisabled={structuralSearchDisabled}
-                    setPatternType={setSearchPatternType}
-                    setCaseSensitivity={setSearchCaseSensitivity}
-                    setSearchMode={setSearchMode}
-                    submitSearch={submitSearchOnChange}
-                    telemetryService={telemetryService}
-                    telemetryRecorder={telemetryRecorder}
-                />
-            ) : (
-                <LegacyToggles
-                    searchMode={searchMode}
-                    patternType={searchPatternType}
-                    caseSensitive={searchCaseSensitivity}
-                    navbarSearchQuery={queryState.query}
-                    structuralSearchDisabled={structuralSearchDisabled}
-                    setPatternType={setSearchPatternType}
-                    setCaseSensitivity={setSearchCaseSensitivity}
-                    setSearchMode={setSearchMode}
-                    submitSearch={submitSearchOnChange}
-                />
-            )}
+            <Toggles
+                searchMode={searchMode}
+                patternType={searchPatternType}
+                defaultPatternType={defaultPatternType}
+                caseSensitive={searchCaseSensitivity}
+                navbarSearchQuery={queryState.query}
+                structuralSearchDisabled={structuralSearchDisabled}
+                setPatternType={setSearchPatternType}
+                setCaseSensitivity={setSearchCaseSensitivity}
+                setSearchMode={setSearchMode}
+                submitSearch={submitSearchOnChange}
+                telemetryService={telemetryService}
+                telemetryRecorder={telemetryRecorder}
+            />
         </LazyV2SearchInput>
     )
 }

@@ -41,7 +41,6 @@ import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 import { Button, H2, H4, Icon, Link, Panel, useLocalStorage, useScrollManager } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
-import { useKeywordSearch } from '../../../../featureFlags/useFeatureFlag'
 import { fetchBlob } from '../../../../repo/blob/backend'
 import { isSearchJobsEnabled } from '../../../../search-jobs/utility'
 import { buildSearchURLQueryFromQueryState } from '../../../../stores'
@@ -141,7 +140,6 @@ export const NewSearchContent: FC<NewSearchContentProps> = props => {
     const containerRef = useRef<HTMLDivElement>(null)
     const { previewBlob, clearPreview } = useSearchResultState()
 
-    const showKeywordSearchToggle = useKeywordSearch()
     const newFiltersEnabled = useIsNewSearchFiltersEnabled()
     const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage('search.sidebar.collapsed', true)
 
@@ -236,7 +234,6 @@ export const NewSearchContent: FC<NewSearchContentProps> = props => {
                 className={styles.infobar}
                 onExpandAllResultsToggle={onExpandAllResultsToggle}
                 onShowMobileFiltersChanged={setSidebarCollapsed}
-                showKeywordSearchToggle={!!showKeywordSearchToggle}
                 onTogglePatternType={onTogglePatternType}
                 stats={
                     <>

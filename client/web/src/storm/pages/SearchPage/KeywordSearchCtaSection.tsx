@@ -3,7 +3,6 @@ import React from 'react'
 import { mdiClose } from '@mdi/js'
 import classNames from 'classnames'
 
-import { useExperimentalFeatures } from '@sourcegraph/shared/src/settings/settings'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary'
 import { Code, H2, Icon, Link, ProductStatusBadge, Text } from '@sourcegraph/wildcard'
 
@@ -18,9 +17,8 @@ interface KeywordSearchCtaSection {
 }
 
 export const KeywordSearchCtaSection: React.FC<KeywordSearchCtaSection> = ({ className }) => {
-    const keywordSearchEnabled = useExperimentalFeatures(features => features.keywordSearch)
     const [isDismissed = true, setIsDismissed] = useTemporarySetting('search.homepage.keywordCta.dismissed', false)
-    if (!keywordSearchEnabled || isDismissed) {
+    if (isDismissed) {
         return null
     }
 

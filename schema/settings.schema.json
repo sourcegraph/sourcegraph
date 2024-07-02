@@ -224,7 +224,7 @@
           }
         },
         "keywordSearch": {
-          "description": "Whether to enable the 'keyword search' language improvement",
+          "description": "DEPRECATED: this setting is no longer used. To disable keyword search, set `search.defaultPatternType: standard` instead.",
           "type": "boolean",
           "default": true
         },
@@ -406,7 +406,7 @@
       }
     },
     "search.defaultMode": {
-      "description": "Defines default properties for search behavior. The default is `smart`, which provides query assistance that automatically runs alternative queries when appropriate. When `precise`, search behavior strictly searches for the precise meaning of the query.",
+      "description": "DEPRECATED: this setting is no longer read when the default 'keyword' patterntype is enabled, which always uses the 'precise' mode. Smart search will be removed in a future release.",
       "type": "string",
       "pattern": "precise|smart"
     },
