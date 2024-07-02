@@ -7,7 +7,7 @@ contents:
     - mailcap
 
     ## opentelemetry-collector packages
-    - opentelemetry-collector@sourcegraph
+    - opentelemetry-collector=0.92.0-r7@sourcegraph
 
 paths:
   - path: /otel-collector
