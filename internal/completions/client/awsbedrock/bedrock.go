@@ -89,20 +89,16 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 	sendEvent types.SendCompletionEvent) error {
 
 	feature := request.Feature
-	version := request.Version
+	builder := types.NewCompletionResponseBuilder(request.Version)
 	requestParams := request.Parameters
 
-	resp, err := a.makeRequest(ctx, requestParams, version, true)
+	resp, err := a.makeRequest(ctx, requestParams, request.Version, true)
 	if err != nil {
 		return errors.Wrap(err, "making request")
 	}
 	defer resp.Body.Close()
 	var sentEvent bool
 
-	// totalCompletion is the complete completion string, bedrock already uses
-	// the new incremental Anthropic API, but our clients still expect a full
-	// response in each event.
-	var totalCompletion string
 	var inputPromptTokens int
 	dec := eventstream.NewDecoder()
 	// Allocate a 1 MB buffer for decoding.
@@ -145,7 +141,6 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 		if err := json.Unmarshal(data, &event); err != nil {
 			return errors.Errorf("failed to decode event payload: %w - body: %s", err, string(data))
 		}
-		stopReason := ""
 		switch event.Type {
 		case "message_start":
 			if event.Message != nil && event.Message.Usage != nil {
@@ -154,27 +149,27 @@ func (a *awsBedrockAnthropicCompletionStreamClient) Stream(
 			continue
 		case "content_block_delta":
 			if event.Delta != nil {
-				totalCompletion += event.Delta.Text
+				sentEvent = true
+				err = sendEvent(builder.NextMessage(event.Delta.Text, nil))
+				if err != nil {
+					return errors.Wrap(err, "sending event")
+				}
 			}
 		case "message_delta":
 			if event.Delta != nil {
-				stopReason = event.Delta.StopReason
 				parsedModelId := conftypes.NewBedrockModelRefFromModelID(requestParams.Model)
 				err = a.tokenManager.UpdateTokenCountsFromModelUsage(inputPromptTokens, event.Usage.OutputTokens, "anthropic/"+parsedModelId.Model, string(feature), tokenusage.AwsBedrock)
 				if err != nil {
 					logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 				}
+				sentEvent = true
+				err = sendEvent(builder.Stop(event.Delta.StopReason))
+				if err != nil {
+					return errors.Wrap(err, "sending event")
+				}
 			}
 		default:
 			continue
-		}
-		sentEvent = true
-		err = sendEvent(types.CompletionResponse{
-			Completion: totalCompletion,
-			StopReason: stopReason,
-		})
-		if err != nil {
-			return errors.Wrap(err, "sending event")
 		}
 	}
 }

@@ -54,23 +54,39 @@ type attributionRunFilter struct {
 	// Last seen completion that was not sent. Unsynchronized - only referred
 	// to from Send and WaitDone, which are executed in the same request handler routine.
 	last *types.CompletionResponse
+	// totalCompletion tracks the whole completion string in memory, in delta mode
+	// we otherwise cannot keep track of the whole string to search for.
+	totalCompletion string
 }
 
 // Send forwards the completion to the client if it can given its current idea
 // about attribution status. Otherwise it memoizes completion in `attributionRunFilter#last`.
 func (d *attributionRunFilter) Send(ctx context.Context, r types.CompletionResponse) error {
+	if len(r.DeltaText) > 0 {
+		d.totalCompletion += r.DeltaText
+	} else if len(r.Completion) > 0 {
+		d.totalCompletion = r.Completion
+	}
+
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if d.shortEnough(r) {
+	if d.shortEnough() {
 		d.last = nil // last seen completion was sent
 		return d.config.Sink(r)
 	}
-	d.attributionSearch.Do(func() { go d.runAttribution(ctx, r) })
+
+	d.attributionSearch.Do(func() { go d.runAttribution(ctx, d.totalCompletion) })
+
+	if d.last != nil {
+		r.DeltaText = d.last.DeltaText + r.DeltaText
+	}
+
 	if d.attributionSucceeded.Load() {
 		d.last = nil // last seen completion was sent
 		return d.config.Sink(r)
 	}
+
 	d.last = &r // last seen completion not sent
 	return nil
 }
@@ -93,17 +109,17 @@ func (d *attributionRunFilter) WaitDone(ctx context.Context) error {
 	}
 }
 
-func (d *attributionRunFilter) shortEnough(r types.CompletionResponse) bool {
-	return !NewThreshold().ShouldSearch(r.Completion)
+func (d *attributionRunFilter) shortEnough() bool {
+	return !NewThreshold().ShouldSearch(d.totalCompletion)
 }
 
 // runAttribution is a blocking function that defines the goroutine
 // that runs attribution search and then synchronizes with main thread
 // by setting `atomic.Bool` for flagging and closing `chan struct{}`
 // to notify `WaitDone` if needed.
-func (d *attributionRunFilter) runAttribution(ctx context.Context, r types.CompletionResponse) {
+func (d *attributionRunFilter) runAttribution(ctx context.Context, snippet string) {
 	defer close(d.closeOnSearchFinished)
-	canUse, err := d.config.Test(ctx, r.Completion)
+	canUse, err := d.config.Test(ctx, snippet)
 	if err != nil {
 		d.config.AttributionError(err)
 		return

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/hexops/autogold/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLegacyMessageConversion(t *testing.T) {
@@ -61,4 +62,45 @@ func TestLegacyMessageConversionWithTrailingAssistantResponse(t *testing.T) {
 			Text:    "Roses are red,",
 		},
 	}).Equal(t, convertedMessages)
+}
+
+func TestCompletionResponseBuilder_NextMessage(t *testing.T) {
+	t.Run("V1", func(t *testing.T) {
+		builder := &completionResponseBuilder{version: CompletionsV1}
+		resp := builder.NextMessage("hello", nil)
+		assert.Equal(t, "hello", resp.Completion)
+		assert.Nil(t, resp.Logprobs)
+
+		resp = builder.NextMessage(" world", nil)
+		assert.Equal(t, "hello world", resp.Completion)
+		assert.Nil(t, resp.Logprobs)
+	})
+
+	t.Run("V2", func(t *testing.T) {
+		builder := &completionResponseBuilder{version: CompletionsV2}
+		resp := builder.NextMessage("hello", nil)
+		assert.Equal(t, "hello", resp.DeltaText)
+		assert.Nil(t, resp.Logprobs)
+
+		resp = builder.NextMessage(" world", nil)
+		assert.Equal(t, " world", resp.DeltaText)
+		assert.Nil(t, resp.Logprobs)
+	})
+}
+
+func TestCompletionResponseBuilder_Stop(t *testing.T) {
+	t.Run("V1", func(t *testing.T) {
+		builder := &completionResponseBuilder{version: CompletionsV1, totalCompletion: "hello world"}
+		resp := builder.Stop("stop reason")
+		assert.Equal(t, "hello world", resp.Completion)
+		assert.Equal(t, "stop reason", resp.StopReason)
+	})
+
+	t.Run("V2", func(t *testing.T) {
+		builder := &completionResponseBuilder{version: CompletionsV2}
+		resp := builder.Stop("stop reason")
+		assert.Empty(t, resp.Completion)
+		assert.Empty(t, resp.DeltaText)
+		assert.Equal(t, "stop reason", resp.StopReason)
+	})
 }

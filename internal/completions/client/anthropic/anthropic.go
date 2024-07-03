@@ -77,7 +77,6 @@ func (a *anthropicClient) Complete(
 		Completion: completion,
 		StopReason: response.StopReason,
 	}, nil
-
 }
 
 func (a *anthropicClient) Stream(
@@ -87,17 +86,16 @@ func (a *anthropicClient) Stream(
 	sendEvent types.SendCompletionEvent) error {
 
 	feature := request.Feature
-	version := request.Version
+	builder := types.NewCompletionResponseBuilder(request.Version)
 	requestParams := request.Parameters
 
-	resp, err := a.makeRequest(ctx, requestParams, version, true)
+	resp, err := a.makeRequest(ctx, requestParams, request.Version, true)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
-	completedString := ""
 	var inputPromptTokens int
 	for dec.Scan() {
 		if ctx.Err() != nil && ctx.Err() == context.Canceled {
@@ -111,7 +109,6 @@ func (a *anthropicClient) Stream(
 			continue
 		}
 
-		stopReason := ""
 		var event anthropicStreamingResponse
 		if err := json.Unmarshal(data, &event); err != nil {
 			return errors.Errorf("failed to decode event payload: %w - body: %s", err, string(data))
@@ -125,28 +122,26 @@ func (a *anthropicClient) Stream(
 			continue
 		case "content_block_delta":
 			if event.Delta != nil {
-				completedString += event.Delta.Text
+				ev := builder.NextMessage(event.Delta.Text, nil)
+				err = sendEvent(ev)
+				if err != nil {
+					return err
+				}
 			}
 		case "message_delta":
 			if event.Delta != nil {
-				stopReason = event.Delta.StopReason
 				err = a.tokenManager.UpdateTokenCountsFromModelUsage(inputPromptTokens, event.Usage.OutputTokens, "anthropic/"+requestParams.Model, string(feature), tokenusage.Anthropic)
 				if err != nil {
 					logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
+				}
+				err = sendEvent(builder.Stop(event.Delta.StopReason))
+				if err != nil {
+					return err
 				}
 			}
 		default:
 			continue
 		}
-
-		err = sendEvent(types.CompletionResponse{
-			Completion: completedString,
-			StopReason: stopReason,
-		})
-		if err != nil {
-			return err
-		}
-
 	}
 	return dec.Err()
 }

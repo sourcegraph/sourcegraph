@@ -275,13 +275,12 @@ func (c *azureCompletionClient) Stream(
 	sendEvent types.SendCompletionEvent,
 ) error {
 	feature := request.Feature
-	requestParams := request.Parameters
 
 	switch feature {
 	case types.CompletionsFeatureCode:
-		return streamAutocomplete(ctx, c.client, requestParams, sendEvent, log)
+		return streamAutocomplete(ctx, c.client, request, sendEvent, log)
 	case types.CompletionsFeatureChat:
-		return streamChat(ctx, c.client, requestParams, sendEvent, log)
+		return streamChat(ctx, c.client, request, sendEvent, log)
 	default:
 		return errors.New("invalid completions feature")
 	}
@@ -338,25 +337,27 @@ func NumTokensFromAzureOpenAiResponseString(response string, model string) (numT
 func streamAutocomplete(
 	ctx context.Context,
 	client CompletionsClient,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 	logger log.Logger,
 ) error {
-	if requestParams.AzureUseDeprecatedCompletionsAPIForOldModels {
-		return doStreamCompletionsAPI(ctx, client, requestParams, sendEvent, logger)
+	if request.Parameters.AzureUseDeprecatedCompletionsAPIForOldModels {
+		return doStreamCompletionsAPI(ctx, client, request, sendEvent, logger)
 	}
-	return doStreamChatCompletionsAPI(ctx, client, requestParams, sendEvent, logger)
+	return doStreamChatCompletionsAPI(ctx, client, request, sendEvent, logger)
 }
 
 // Streaming with ChatCompletions API
 func doStreamChatCompletionsAPI(
 	ctx context.Context,
 	client CompletionsClient,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 	logger log.Logger,
 ) error {
-	resp, err := client.GetChatCompletionsStream(ctx, getChatOptions(requestParams), nil)
+	builder := types.NewCompletionResponseBuilder(request.Version)
+
+	resp, err := client.GetChatCompletionsStream(ctx, getChatOptions(request.Parameters), nil)
 	if err != nil {
 		return err
 	}
@@ -367,18 +368,18 @@ func doStreamChatCompletionsAPI(
 		entry, err := resp.ChatCompletionsStream.Read()
 		if errors.Is(err, io.EOF) {
 			tokenManager := tokenusage.NewManager()
-			inputTokens, err := NumTokensFromAzureOpenAiMessages(requestParams.Messages, requestParams.AzureChatModel)
+			inputTokens, err := NumTokensFromAzureOpenAiMessages(request.Parameters.Messages, request.Parameters.AzureChatModel)
 			if err != nil {
 				logger.Warn("Failed to count input tokens with the token manager %w ", log.Error(err))
 			}
-			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, requestParams.AzureChatModel)
+			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, request.Parameters.AzureChatModel)
 			if err != nil {
 				logger.Warn("Failed to count output tokens with the token manager %w ", log.Error(err))
 			}
 			// Note: If we had an error calculating input/output tokens, that is unfortunate, the
 			// best thing we can do is record zero token usage which would be our hint to look at
 			// the logs for errors.
-			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+requestParams.Model, "code_completions", tokenusage.AzureOpenAI)
+			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+request.Parameters.Model, "code_completions", tokenusage.AzureOpenAI)
 			if err != nil {
 				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 			}
@@ -389,18 +390,16 @@ func doStreamChatCompletionsAPI(
 		}
 
 		if hasValidFirstChatChoice(entry.Choices) {
-			content += *entry.Choices[0].Delta.Content
-			finish := ""
-			if entry.Choices[0].FinishReason != nil {
-				finish = string(*entry.Choices[0].FinishReason)
-			}
-			ev := types.CompletionResponse{
-				Completion: content,
-				StopReason: finish,
-			}
-			err := sendEvent(ev)
+			err := sendEvent(builder.NextMessage(*entry.Choices[0].Delta.Content, nil))
 			if err != nil {
 				return err
+			}
+
+			if entry.Choices[0].FinishReason != nil {
+				err := sendEvent(builder.Stop(string(*entry.Choices[0].FinishReason)))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -410,11 +409,13 @@ func doStreamChatCompletionsAPI(
 func doStreamCompletionsAPI(
 	ctx context.Context,
 	client CompletionsClient,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 	logger log.Logger,
 ) error {
-	options, err := getCompletionsOptions(requestParams)
+	builder := types.NewCompletionResponseBuilder(request.Version)
+
+	options, err := getCompletionsOptions(request.Parameters)
 	if err != nil {
 		return err
 	}
@@ -432,18 +433,18 @@ func doStreamCompletionsAPI(
 		// stream is done
 		if errors.Is(err, io.EOF) {
 			tokenManager := tokenusage.NewManager()
-			inputTokens, err := NumTokensFromAzureOpenAiMessages(requestParams.Messages, requestParams.AzureCompletionModel)
+			inputTokens, err := NumTokensFromAzureOpenAiMessages(request.Parameters.Messages, request.Parameters.AzureCompletionModel)
 			if err != nil {
 				logger.Warn("Failed to count input tokens with the token manager %w ", log.Error(err))
 			}
-			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, requestParams.AzureCompletionModel)
+			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, request.Parameters.AzureCompletionModel)
 			if err != nil {
 				logger.Warn("Failed to count output tokens with the token manager %w ", log.Error(err))
 			}
 			// Note: If we had an error calculating input/output tokens, that is unfortunate, the
 			// best thing we can do is record zero token usage which would be our hint to look at
 			// the logs for errors.
-			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+requestParams.Model, "code_completions", tokenusage.AzureOpenAI)
+			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+request.Parameters.Model, "code_completions", tokenusage.AzureOpenAI)
 			if err != nil {
 				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 			}
@@ -455,18 +456,16 @@ func doStreamCompletionsAPI(
 		}
 		// hasValidFirstCompletionsChoice checks for a valid 1st choice which has text
 		if hasValidFirstCompletionsChoice(entry.Choices) {
-			content += *entry.Choices[0].Text
-			finish := ""
-			if entry.Choices[0].FinishReason != nil {
-				finish = string(*entry.Choices[0].FinishReason)
-			}
-			ev := types.CompletionResponse{
-				Completion: content,
-				StopReason: finish,
-			}
-			err := sendEvent(ev)
+			err := sendEvent(builder.NextMessage(*entry.Choices[0].Text, nil))
 			if err != nil {
 				return err
+			}
+
+			if entry.Choices[0].FinishReason != nil {
+				err := sendEvent(builder.Stop(string(*entry.Choices[0].FinishReason)))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -486,12 +485,13 @@ func isOperationNotSupportedError(err error) bool {
 func streamChat(
 	ctx context.Context,
 	client CompletionsClient,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 	logger log.Logger,
 ) error {
+	builder := types.NewCompletionResponseBuilder(request.Version)
 
-	resp, err := client.GetChatCompletionsStream(ctx, getChatOptions(requestParams), nil)
+	resp, err := client.GetChatCompletionsStream(ctx, getChatOptions(request.Parameters), nil)
 	if err != nil {
 		return toStatusCodeError(err)
 	}
@@ -506,18 +506,18 @@ func streamChat(
 		// stream is done
 		if errors.Is(err, io.EOF) {
 			tokenManager := tokenusage.NewManager()
-			inputTokens, err := NumTokensFromAzureOpenAiMessages(requestParams.Messages, requestParams.AzureChatModel)
+			inputTokens, err := NumTokensFromAzureOpenAiMessages(request.Parameters.Messages, request.Parameters.AzureChatModel)
 			if err != nil {
 				logger.Warn("Failed to count input tokens with the token manager %w ", log.Error(err))
 			}
-			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, requestParams.AzureChatModel)
+			outputTokens, err := NumTokensFromAzureOpenAiResponseString(content, request.Parameters.AzureChatModel)
 			if err != nil {
 				logger.Warn("Failed to count output tokens with the token manager %w ", log.Error(err))
 			}
 			// Note: If we had an error calculating input/output tokens, that is unfortunate, the
 			// best thing we can do is record zero token usage which would be our hint to look at
 			// the logs for errors.
-			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+requestParams.Model, "code_completions", tokenusage.AzureOpenAI)
+			err = tokenManager.UpdateTokenCountsFromModelUsage(inputTokens, outputTokens, tokenizer.AzureModel+"/"+request.Parameters.Model, "code_completions", tokenusage.AzureOpenAI)
 			if err != nil {
 				logger.Warn("Failed to count tokens with the token manager %w ", log.Error(err))
 			}
@@ -531,20 +531,17 @@ func streamChat(
 		if hasValidFirstChatChoice(entry.Choices) {
 			// hasValidFirstChatChoice checks that Delta.Content isn't null
 			// it is marked as REQUIRED in docs despite being a pointer
-			content += *entry.Choices[0].Delta.Content
-
-			finish := ""
-			// FinishReason is marked as REQUIRED but it's nil until the end
-			if entry.Choices[0].FinishReason != nil {
-				finish = string(*entry.Choices[0].FinishReason)
-			}
-			ev := types.CompletionResponse{
-				Completion: content,
-				StopReason: finish,
-			}
-			err := sendEvent(ev)
+			err := sendEvent(builder.NextMessage(*entry.Choices[0].Delta.Content, nil))
 			if err != nil {
 				return err
+			}
+
+			// FinishReason is marked as REQUIRED but it's nil until the end
+			if entry.Choices[0].FinishReason != nil {
+				err := sendEvent(builder.Stop(string(*entry.Choices[0].FinishReason)))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

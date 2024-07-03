@@ -89,6 +89,7 @@ func (c *openAIChatCompletionStreamClient) Stream(
 	sendEvent types.SendCompletionEvent) error {
 	feature := request.Feature
 	requestParams := request.Parameters
+	builder := types.NewCompletionResponseBuilder(request.Version)
 
 	var resp *http.Response
 	var err error
@@ -107,8 +108,6 @@ func (c *openAIChatCompletionStreamClient) Stream(
 		return err
 	}
 	dec := NewDecoder(resp.Body)
-	var content string
-	var ev types.CompletionResponse
 	var promptTokens, completionTokens int
 
 	for dec.Scan() {
@@ -136,18 +135,23 @@ func (c *openAIChatCompletionStreamClient) Stream(
 		}
 
 		if len(event.Choices) > 0 {
+			var content string
 			if feature == types.CompletionsFeatureCode {
-				content += event.Choices[0].Text
+				content = event.Choices[0].Text
 			} else {
-				content += event.Choices[0].Delta.Content
+				content = event.Choices[0].Delta.Content
 			}
-			ev = types.CompletionResponse{
-				Completion: content,
-				StopReason: event.Choices[0].FinishReason,
-			}
-			err = sendEvent(ev)
+
+			err = sendEvent(builder.NextMessage(content, nil))
 			if err != nil {
 				return err
+			}
+
+			if event.Choices[0].FinishReason != "" {
+				err = sendEvent(builder.Stop(event.Choices[0].FinishReason))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

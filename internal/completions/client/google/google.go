@@ -171,26 +171,26 @@ func (c *googleCompletionStreamClient) Stream(
 	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent) error {
 	if c.apiFamily == VertexAnthropic {
-		return c.handleVertexAnthropicStream(ctx, request.Parameters, sendEvent)
+		return c.handleVertexAnthropicStream(ctx, request, sendEvent)
 	} else {
-		return c.handleGeminiStream(ctx, request.Parameters, sendEvent)
+		return c.handleGeminiStream(ctx, request, sendEvent)
 	}
 }
 
 func (c *googleCompletionStreamClient) handleGeminiStream(
 	ctx context.Context,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 ) error {
-	resp, err := c.makeGeminiRequest(ctx, requestParams, true)
+	builder := types.NewCompletionResponseBuilder(request.Version)
+
+	resp, err := c.makeGeminiRequest(ctx, request.Parameters, true)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	dec := NewDecoder(resp.Body)
-	var content string
-	var ev types.CompletionResponse
 
 	for dec.Scan() {
 		if ctx.Err() != nil && ctx.Err() == context.Canceled {
@@ -209,15 +209,16 @@ func (c *googleCompletionStreamClient) handleGeminiStream(
 		}
 
 		if len(event.Candidates) > 0 && len(event.Candidates[0].Content.Parts) > 0 {
-			content += event.Candidates[0].Content.Parts[0].Text
-
-			ev = types.CompletionResponse{
-				Completion: content,
-				StopReason: event.Candidates[0].FinishReason,
-			}
-			err = sendEvent(ev)
+			err = sendEvent(builder.NextMessage(event.Candidates[0].Content.Parts[0].Text, nil))
 			if err != nil {
 				return err
+			}
+
+			if event.Candidates[0].FinishReason != "" {
+				err = sendEvent(builder.Stop(event.Candidates[0].FinishReason))
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -230,9 +231,11 @@ func (c *googleCompletionStreamClient) handleGeminiStream(
 
 func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 	ctx context.Context,
-	requestParams types.CompletionRequestParameters,
+	request types.CompletionRequest,
 	sendEvent types.SendCompletionEvent,
 ) error {
+	builder := types.NewCompletionResponseBuilder(request.Version)
+
 	var resp *http.Response
 	var err error
 
@@ -241,7 +244,7 @@ func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 			resp.Body.Close()
 		}
 	})()
-	resp, err = c.makeAnthopicRequest(ctx, requestParams, true)
+	resp, err = c.makeAnthopicRequest(ctx, request.Parameters, true)
 	if err != nil {
 		return err
 	}
@@ -250,7 +253,6 @@ func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 	var (
 		event             []byte
 		emptyMessageCount uint
-		totalCompletion   string
 		sentEvent         bool
 	)
 	for {
@@ -292,14 +294,12 @@ func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 				if err := json.Unmarshal(data, &d); err != nil {
 					return err
 				}
-				totalCompletion += d.Delta.Text
 				sentEvent = true
-				err = sendEvent(types.CompletionResponse{
-					Completion: totalCompletion,
-				})
+				err = sendEvent(builder.NextMessage(d.Delta.Text, nil))
 				if err != nil {
 					return err
 				}
+
 				continue
 			case "message_delta":
 				// Handle message_delta event
@@ -313,6 +313,8 @@ func (c *googleCompletionStreamClient) handleVertexAnthropicStream(
 			case "message_stop":
 				// Handle message_stop event
 				// Process message_stop event if needed
+				// TODO: No stop word message here?
+
 				continue
 
 			default:
