@@ -99,11 +99,7 @@ export const SignInPage: React.FunctionComponent<React.PropsWithChildren<SignInP
         return (
             <>
                 <PageTitle title="Signing in..." />
-                <AuthPageWrapper
-                    title="Redirecting to sign in..."
-                    sourcegraphDotComMode={context.sourcegraphDotComMode}
-                    className={styles.wrapper}
-                >
+                <AuthPageWrapper title="Redirecting to sign in..." className={styles.wrapper}>
                     <Alert className="mt-3" variant="info">
                         You are being redirected to sign in with {thirdPartyAuthProviders[0].displayName}.
                     </Alert>
@@ -200,11 +196,7 @@ export const SignInPage: React.FunctionComponent<React.PropsWithChildren<SignInP
     return (
         <>
             <PageTitle title="Sign in" />
-            <AuthPageWrapper
-                title="Sign in to Sourcegraph"
-                sourcegraphDotComMode={context.sourcegraphDotComMode}
-                className={styles.wrapper}
-            >
+            <AuthPageWrapper title="Sign in to Sourcegraph" className={styles.wrapper}>
                 {body}
             </AuthPageWrapper>
         </>
@@ -271,15 +263,6 @@ const SignUpNotice: React.FunctionComponent<SignUpNoticeProps> = ({
         return (
             <Text className="mt-3 text-center text-muted">
                 Need an account? <Link to="/request-access">Request access</Link> or contact your site admin.
-            </Text>
-        )
-    }
-
-    if (sourcegraphDotComMode) {
-        return (
-            <Text className="mt-3 text-center text-muted">
-                Currently, we are unable to create accounts using email. Please use the providers listed above to
-                continue. <br /> For private code, {dotcomCTAs}
             </Text>
         )
     }

@@ -101,7 +101,6 @@ export const LegacyLayout: FC<LegacyLayoutProps> = props => {
         [PageRoutes.SignIn, PageRoutes.SignUp, PageRoutes.PasswordReset, PageRoutes.RequestAccess].includes(
             routeMatch as PageRoutes
         )
-    const isPostSignUpPage = location.pathname === PageRoutes.PostSignUp.toString()
 
     const [newSearchNavigation] = useNewSearchNavigation()
     const [enableContrastCompliantSyntaxHighlighting] = useFeatureFlag('contrast-compliant-syntax-highlighting')
@@ -223,7 +222,7 @@ export const LegacyLayout: FC<LegacyLayoutProps> = props => {
                     telemetryRecorder={props.platformContext.telemetryRecorder}
                 />
             )}
-            {!isSiteInit && !isSignInOrUp && !isPostSignUpPage && (
+            {!isSiteInit && !isSignInOrUp && (
                 <>
                     {newSearchNavigation ? (
                         <NewGlobalNavigationBar

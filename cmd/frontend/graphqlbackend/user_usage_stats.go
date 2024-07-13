@@ -124,10 +124,6 @@ func (r *schemaResolver) LogEvents(ctx context.Context, args *EventBatch) (*Empt
 	}
 
 	userID := actor.FromContext(ctx).UID
-	userPrimaryEmail := ""
-	if dotcom.SourcegraphDotComMode() {
-		userPrimaryEmail, _, _ = r.db.UserEmails().GetPrimaryEmail(ctx, userID)
-	}
 
 	events := make([]usagestats.Event, 0, len(*args.Events))
 	for _, args := range *args.Events {
@@ -168,6 +164,8 @@ func (r *schemaResolver) LogEvents(ctx context.Context, args *EventBatch) (*Empt
 					emailsEnabled = ffs.GetBoolOr("vscodeCodyEmailsEnabled", false)
 				}
 			}
+
+			userPrimaryEmail, _, _ := r.db.UserEmails().GetPrimaryEmail(ctx, userID)
 
 			hubspotutil.SyncUser(userPrimaryEmail, hubspotutil.CodyClientInstalledEventID, &hubspot.ContactProperties{
 				DatabaseID: userID,

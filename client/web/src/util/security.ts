@@ -3,10 +3,7 @@ import { logger } from '@sourcegraph/common'
 import type { SourcegraphContext } from '../jscontext'
 
 export function validatePassword(
-    context: Pick<
-        SourcegraphContext,
-        'authProviders' | 'sourcegraphDotComMode' | 'authPasswordPolicy' | 'authMinPasswordLength'
-    >,
+    context: Pick<SourcegraphContext, 'authProviders' | 'authPasswordPolicy' | 'authMinPasswordLength'>,
     password: string
 ): string | undefined {
     // minPasswordLen always has a value so we do it first
@@ -57,10 +54,7 @@ export function validatePassword(
 }
 
 export function getPasswordRequirements(
-    context: Pick<
-        SourcegraphContext,
-        'authProviders' | 'sourcegraphDotComMode' | 'authPasswordPolicy' | 'authMinPasswordLength'
-    >
+    context: Pick<SourcegraphContext, 'authProviders' | 'authPasswordPolicy' | 'authMinPasswordLength'>
 ): string {
     const passwordPolicyReference = context.authPasswordPolicy
 

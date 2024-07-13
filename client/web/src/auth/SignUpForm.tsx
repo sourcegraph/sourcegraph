@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
 
-import { mdiBitbucket, mdiGithub, mdiGitlab } from '@mdi/js'
 import classNames from 'classnames'
 import { type Observable, of } from 'rxjs'
 import { fromFetch } from 'rxjs/fetch'
@@ -14,14 +13,13 @@ import {
     type ValidationOptions,
     deriveInputClassName,
 } from '@sourcegraph/shared/src/util/useInputValidation'
-import { Link, Icon, Label, Text, Button, AnchorLink, LoaderInput, ErrorAlert } from '@sourcegraph/wildcard'
+import { Link, Label, Text, LoaderInput, ErrorAlert } from '@sourcegraph/wildcard'
 
 import { LoaderButton } from '../components/LoaderButton'
-import type { AuthProvider, SourcegraphContext } from '../jscontext'
-import { EventName, V2AuthProviderTypes } from '../util/constants'
+import type { SourcegraphContext } from '../jscontext'
+import { V2AuthProviderTypes } from '../util/constants'
 import { validatePassword, getPasswordRequirements } from '../util/security'
 
-import { OrDivider } from './OrDivider'
 import { PasswordInput, UsernameInput } from './SignInSignUpCommon'
 import { SignupEmailField } from './SignupEmailField'
 
@@ -41,10 +39,7 @@ interface SignUpFormProps extends TelemetryV2Props {
     onSignUp: (args: SignUpArguments) => Promise<void>
 
     buttonLabel?: string
-    context: Pick<
-        SourcegraphContext,
-        'authProviders' | 'sourcegraphDotComMode' | 'authPasswordPolicy' | 'authMinPasswordLength'
-    >
+    context: Pick<SourcegraphContext, 'authProviders' | 'authPasswordPolicy' | 'authMinPasswordLength'>
 
     // For use in ExperimentalSignUpPage. Modifies styling and removes terms of service.
     experimental?: boolean
@@ -123,18 +118,6 @@ export const SignUpForm: React.FunctionComponent<React.PropsWithChildren<SignUpF
         [onSignUp, disabled, emailState, usernameState, passwordState, telemetryRecorder]
     )
 
-    const externalAuthProviders = context.authProviders.filter(provider => !provider.isBuiltin)
-
-    const onClickExternalAuthSignup = useCallback(
-        (type: AuthProvider['serviceType']) => () => {
-            // TODO: Log events with keepalive=true to ensure they always outlive the webpage
-            // https://github.com/sourcegraph/sourcegraph/issues/19174
-            EVENT_LOGGER.log(EventName.AUTH_INITIATED, { type }, { type })
-            telemetryRecorder.recordEvent('auth', 'initiate', { metadata: { type: V2AuthProviderTypes[type] } })
-        },
-        [telemetryRecorder]
-    )
-
     return (
         <>
             {error && <ErrorAlert error={error} />}
@@ -206,33 +189,6 @@ export const SignUpForm: React.FunctionComponent<React.PropsWithChildren<SignUpF
                         display="block"
                     />
                 </div>
-                {context.sourcegraphDotComMode && (
-                    <>
-                        {externalAuthProviders.length > 0 && <OrDivider className="my-4" />}
-                        {externalAuthProviders.map((provider, index) => (
-                            // Use index as key because display name may not be unique. This is OK
-                            // here because this list will not be updated during this component's lifetime.
-                            <div className="mb-2" key={index}>
-                                <Button
-                                    to={provider.authenticationURL}
-                                    display="block"
-                                    onClick={onClickExternalAuthSignup(provider.serviceType)}
-                                    variant="secondary"
-                                    as={AnchorLink}
-                                >
-                                    {provider.serviceType === 'github' ? (
-                                        <Icon aria-hidden={true} svgPath={mdiGithub} />
-                                    ) : provider.serviceType === 'gitlab' ? (
-                                        <Icon aria-hidden={true} svgPath={mdiGitlab} />
-                                    ) : provider.serviceType === 'bitbucketCloud' ? (
-                                        <Icon aria-hidden={true} svPath={mdiBitbucket} />
-                                    ) : null}{' '}
-                                    Continue with {provider.displayName}
-                                </Button>
-                            </div>
-                        ))}
-                    </>
-                )}
 
                 {!experimental && (
                     <Text className="mt-3 mb-0">

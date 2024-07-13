@@ -130,7 +130,7 @@ export const RequestAccessPage: React.FunctionComponent<RequestAccessPageProps> 
     const location = useLocation()
     const navigate = useNavigate()
     const [error, setError] = useState<Error | null>(null)
-    const { sourcegraphDotComMode, isAuthenticatedUser, xhrHeaders } = window.context
+    const { isAuthenticatedUser, xhrHeaders } = window.context
     const isRequestAccessAllowed = checkRequestAccessAllowed(window.context)
 
     if (isAuthenticatedUser) {
@@ -145,11 +145,7 @@ export const RequestAccessPage: React.FunctionComponent<RequestAccessPageProps> 
     return (
         <>
             <PageTitle title="Request access" />
-            <AuthPageWrapper
-                title="Request access to Sourcegraph"
-                sourcegraphDotComMode={sourcegraphDotComMode}
-                className={styles.wrapper}
-            >
+            <AuthPageWrapper title="Request access to Sourcegraph" className={styles.wrapper}>
                 {error && <ErrorAlert error={error} />}
                 <Routes>
                     <Route

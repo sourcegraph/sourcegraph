@@ -29,7 +29,7 @@ func (r *schemaResolver) Organization(ctx context.Context, args struct{ Name str
 	if err != nil {
 		return nil, err
 	}
-	// 🚨 SECURITY: Only org members can get org details on Cloud
+	// 🚨 SECURITY: Only org members can get org details on Dotcom.
 	if dotcom.SourcegraphDotComMode() {
 		hasAccess := func() error {
 			if auth.CheckOrgAccess(ctx, r.db, org.ID) == nil {

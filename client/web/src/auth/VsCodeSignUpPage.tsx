@@ -1,19 +1,17 @@
 import React from 'react'
 
-import { mdiChevronLeft } from '@mdi/js'
 import classNames from 'classnames'
 import { useLocation } from 'react-router-dom'
 
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
-import { Link, Icon, H2 } from '@sourcegraph/wildcard'
+import { Link, H2 } from '@sourcegraph/wildcard'
 
 import { BrandLogo } from '../components/branding/BrandLogo'
 import type { SourcegraphContext } from '../jscontext'
 
 import { ExternalsAuth } from './components/ExternalsAuth'
-import { type SignUpArguments, SignUpForm } from './SignUpForm'
 
 import styles from './VsCodeSignUpPage.module.scss'
 
@@ -21,9 +19,6 @@ export const ShowEmailFormQueryParameter = 'showEmail'
 
 export interface VsCodeSignUpPageProps extends TelemetryProps, TelemetryV2Props {
     source: string | null
-    showEmailForm: boolean
-    /** Called to perform the signup on the server. */
-    onSignUp: (args: SignUpArguments) => Promise<void>
     context: Pick<SourcegraphContext, 'externalURL' | 'authMinPasswordLength'>
 }
 
@@ -40,8 +35,6 @@ const VSCodeIcon: React.FC = () => (
  * Sign up page specifically from users via our VS Code integration
  */
 export const VsCodeSignUpPage: React.FunctionComponent<React.PropsWithChildren<VsCodeSignUpPageProps>> = ({
-    showEmailForm,
-    onSignUp,
     context,
     telemetryService,
     telemetryRecorder,
@@ -49,62 +42,7 @@ export const VsCodeSignUpPage: React.FunctionComponent<React.PropsWithChildren<V
     const isLightTheme = useIsLightTheme()
     const location = useLocation()
 
-    const queryWithUseEmailToggled = new URLSearchParams(location.search)
-    if (showEmailForm) {
-        queryWithUseEmailToggled.delete(ShowEmailFormQueryParameter)
-    } else {
-        queryWithUseEmailToggled.append(ShowEmailFormQueryParameter, 'true')
-    }
-
     const assetsRoot = window.context?.assetsRoot || ''
-
-    const signUpForm = (
-        <SignUpForm
-            onSignUp={args => onSignUp(args)}
-            context={{
-                authProviders: [],
-                sourcegraphDotComMode: true,
-                authMinPasswordLength: context.authMinPasswordLength,
-            }}
-            buttonLabel="Sign up"
-            experimental={true}
-            className="my-3"
-            telemetryRecorder={telemetryRecorder}
-        />
-    )
-
-    const renderCodeHostAuth = (): JSX.Element => (
-        <>
-            <ExternalsAuth
-                page="vscode-signup-page"
-                context={context}
-                githubLabel="Continue with GitHub"
-                gitlabLabel="Continue with GitLab"
-                googleLabel="Continue with Google"
-                onClick={() => {}}
-                telemetryRecorder={telemetryRecorder}
-                telemetryService={telemetryService}
-            />
-        </>
-    )
-
-    const renderEmailAuthForm = (): JSX.Element => (
-        <>
-            <small className="d-block mt-3">
-                <Link
-                    className="d-flex align-items-center"
-                    to={`${location.pathname}?${queryWithUseEmailToggled.toString()}`}
-                >
-                    <Icon className={styles.backIcon} aria-hidden={true} svgPath={mdiChevronLeft} />
-                    Go back
-                </Link>
-            </small>
-
-            {signUpForm}
-        </>
-    )
-
-    const renderAuthMethod = (): JSX.Element => (showEmailForm ? renderEmailAuthForm() : renderCodeHostAuth())
 
     return (
         <div className={styles.page}>
@@ -140,7 +78,16 @@ export const VsCodeSignUpPage: React.FunctionComponent<React.PropsWithChildren<V
                 <div className={classNames(styles.leftOrRight, styles.signUpWrapper)}>
                     {' '}
                     <H2>Create a free account</H2>
-                    {renderAuthMethod()}
+                    <ExternalsAuth
+                        page="vscode-signup-page"
+                        context={context}
+                        githubLabel="Continue with GitHub"
+                        gitlabLabel="Continue with GitLab"
+                        googleLabel="Continue with Google"
+                        onClick={() => {}}
+                        telemetryRecorder={telemetryRecorder}
+                        telemetryService={telemetryService}
+                    />
                     <small className="text-muted">
                         By registering, you agree to our{' '}
                         <Link to="https://sourcegraph.com/terms" target="_blank" rel="noopener">

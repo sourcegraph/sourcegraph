@@ -4,7 +4,6 @@ export enum PageRoutes {
     SearchConsole = '/search/console',
     SignIn = '/sign-in',
     SignUp = '/sign-up',
-    PostSignUp = '/post-sign-up',
     UnlockAccount = '/unlock-account/:token',
     Settings = '/settings',
     User = '/user/*',

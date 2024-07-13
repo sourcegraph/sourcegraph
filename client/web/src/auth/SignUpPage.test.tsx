@@ -38,7 +38,7 @@ describe('SignUpPage', () => {
         },
     ]
 
-    it('renders sign up page (server)', () => {
+    it('renders sign up page', () => {
         expect(
             renderWithBrandedContext(
                 <MockedTestProvider mocks={[]}>
@@ -51,38 +51,6 @@ describe('SignUpPage', () => {
                                     authenticatedUser={null}
                                     context={{
                                         allowSignup: true,
-                                        sourcegraphDotComMode: false,
-                                        authMinPasswordLength: 12,
-                                        authProviders,
-                                        xhrHeaders: {},
-                                        externalURL: 'https://sourcegraph.test:3443',
-                                    }}
-                                    telemetryService={NOOP_TELEMETRY_SERVICE}
-                                    telemetryRecorder={noOpTelemetryRecorder}
-                                />
-                            }
-                        />
-                    </Routes>
-                </MockedTestProvider>,
-                { route: '/sign-up' }
-            ).asFragment()
-        ).toMatchSnapshot()
-    })
-
-    it('renders sign up page (cloud)', () => {
-        expect(
-            renderWithBrandedContext(
-                <MockedTestProvider mocks={[]}>
-                    <Routes>
-                        <Route
-                            path="/sign-up"
-                            element={
-                                <SignUpPage
-                                    {...commonProps}
-                                    authenticatedUser={null}
-                                    context={{
-                                        allowSignup: true,
-                                        sourcegraphDotComMode: true,
                                         authMinPasswordLength: 12,
                                         authProviders,
                                         xhrHeaders: {},
@@ -121,7 +89,6 @@ describe('SignUpPage', () => {
                                     authenticatedUser={mockUser}
                                     context={{
                                         allowSignup: true,
-                                        sourcegraphDotComMode: false,
                                         authMinPasswordLength: 12,
                                         authProviders,
                                         xhrHeaders: {},

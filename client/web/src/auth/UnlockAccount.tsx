@@ -17,10 +17,7 @@ import styles from './UnlockAccount.module.scss'
 
 interface UnlockAccountPageProps extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
-    context: Pick<
-        SourcegraphContext,
-        'allowSignup' | 'authProviders' | 'sourcegraphDotComMode' | 'xhrHeaders' | 'resetPasswordEnabled'
-    >
+    context: Pick<SourcegraphContext, 'allowSignup' | 'authProviders' | 'xhrHeaders' | 'resetPasswordEnabled'>
     /** Used for testing only. */
     mockSuccess?: boolean
 }
@@ -83,15 +80,7 @@ export const UnlockAccountPage: React.FunctionComponent<React.PropsWithChildren<
     return (
         <>
             <PageTitle title="Unlock account" />
-            <AuthPageWrapper
-                title={
-                    props.context.sourcegraphDotComMode
-                        ? 'Unlock your Sourcegraph.com account'
-                        : 'Unlock your Sourcegraph Server account'
-                }
-                sourcegraphDotComMode={props.context.sourcegraphDotComMode}
-                className={styles.wrapper}
-            >
+            <AuthPageWrapper title="Unlock your Sourcegraph account" className={styles.wrapper}>
                 <Container>
                     {!props.mockSuccess && loading && <LoadingSpinner />}
                     {!props.mockSuccess && error && <ErrorAlert className="mb-0" error={error} />}

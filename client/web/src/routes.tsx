@@ -31,7 +31,6 @@ const RepoContainer = lazyComponent(() => import('./repo/RepoContainer'), 'RepoC
 const TeamsArea = lazyComponent(() => import('./team/TeamsArea'), 'TeamsArea')
 const CodySidebarStoreProvider = lazyComponent(() => import('./cody/sidebar/Provider'), 'CodySidebarStoreProvider')
 const CodyIgnoreProvider = lazyComponent(() => import('./cody/useCodyIgnore'), 'CodyIgnoreProvider')
-const PostSignUpPage = lazyComponent(() => import('./auth/PostSignUpPage'), 'PostSignUpPage')
 
 const GlobalNotebooksArea = lazyComponent(() => import('./notebooks/GlobalNotebooksArea'), 'GlobalNotebooksArea')
 const GlobalBatchChangesArea = lazyComponent(
@@ -83,10 +82,6 @@ const PassThroughToServer: React.FC = () => {
  * See https://reacttraining.com/react-router/web/example/sidebar
  */
 export const routes: RouteObject[] = [
-    {
-        path: PageRoutes.PostSignUp,
-        element: <LegacyRoute render={() => <PostSignUpPage />} />,
-    },
     {
         path: PageRoutes.Index,
         element: <Index />,

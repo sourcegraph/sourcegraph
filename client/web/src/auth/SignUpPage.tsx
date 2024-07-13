@@ -5,17 +5,14 @@ import { Navigate, useLocation } from 'react-router-dom'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import type { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { EVENT_LOGGER } from '@sourcegraph/shared/src/telemetry/web/eventLogger'
-import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Container, Link, Text } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../auth'
 import { PageTitle } from '../components/PageTitle'
 import type { SourcegraphContext } from '../jscontext'
-import { PageRoutes } from '../routes.constants'
 import { EventName } from '../util/constants'
 
 import { AuthPageWrapper } from './AuthPageWrapper'
-import { CloudSignUpPage, ShowEmailFormQueryParameter } from './CloudSignUpPage'
 import { getReturnTo } from './SignInSignUpCommon'
 import { type SignUpArguments, SignUpForm } from './SignUpForm'
 import { VsCodeSignUpPage } from './VsCodeSignUpPage'
@@ -26,13 +23,7 @@ export interface SignUpPageProps extends TelemetryProps, TelemetryV2Props {
     authenticatedUser: AuthenticatedUser | null
     context: Pick<
         SourcegraphContext,
-        | 'allowSignup'
-        | 'externalURL'
-        | 'authProviders'
-        | 'sourcegraphDotComMode'
-        | 'xhrHeaders'
-        | 'authPasswordPolicy'
-        | 'authMinPasswordLength'
+        'allowSignup' | 'externalURL' | 'authProviders' | 'xhrHeaders' | 'authPasswordPolicy' | 'authMinPasswordLength'
     >
 }
 
@@ -46,8 +37,6 @@ export const SignUpPage: React.FunctionComponent<React.PropsWithChildren<SignUpP
     const query = new URLSearchParams(location.search)
     const invitedBy = query.get('invitedBy')
     const returnTo = getReturnTo(location)
-
-    const isLightTheme = useIsLightTheme()
 
     useEffect(() => {
         EVENT_LOGGER.logViewEvent('SignUp', null, false)
@@ -92,9 +81,6 @@ export const SignUpPage: React.FunctionComponent<React.PropsWithChildren<SignUpP
             const v2Source = query.get('editor') === 'vscode' ? 0 : 1
             telemetryRecorder.recordEvent('auth.signUp', 'complete', { metadata: { source: v2Source } })
 
-            // Redirects to the /post-sign-up after successful signup on sourcegraphDotCom.
-            window.location.replace(context.sourcegraphDotComMode ? PageRoutes.PostSignUp : returnTo)
-
             return Promise.resolve()
         })
 
@@ -102,26 +88,9 @@ export const SignUpPage: React.FunctionComponent<React.PropsWithChildren<SignUpP
         return (
             <VsCodeSignUpPage
                 source={query.get('src')}
-                onSignUp={handleSignUp}
-                showEmailForm={query.has(ShowEmailFormQueryParameter)}
                 context={context}
                 telemetryService={telemetryService}
                 telemetryRecorder={telemetryRecorder}
-            />
-        )
-    }
-
-    if (context.sourcegraphDotComMode) {
-        return (
-            <CloudSignUpPage
-                source={query.get('src')}
-                onSignUp={handleSignUp}
-                isLightTheme={isLightTheme}
-                showEmailForm={query.has(ShowEmailFormQueryParameter)}
-                context={context}
-                telemetryService={telemetryService}
-                telemetryRecorder={telemetryRecorder}
-                isSourcegraphDotCom={context.sourcegraphDotComMode}
             />
         )
     }
@@ -131,13 +100,9 @@ export const SignUpPage: React.FunctionComponent<React.PropsWithChildren<SignUpP
             <PageTitle title="Sign up" />
             <AuthPageWrapper
                 title="Welcome to Sourcegraph"
-                description={
-                    context.sourcegraphDotComMode ? 'Sign up for Sourcegraph.com' : 'Sign up for Sourcegraph Server'
-                }
-                sourcegraphDotComMode={context.sourcegraphDotComMode}
+                description="Sign up for Sourcegraph"
                 className={styles.wrapper}
             >
-                {context.sourcegraphDotComMode && <Text className="pt-1 pb-2">Start searching public code now</Text>}
                 <Container>
                     <SignUpForm context={context} onSignUp={handleSignUp} telemetryRecorder={telemetryRecorder} />
                 </Container>

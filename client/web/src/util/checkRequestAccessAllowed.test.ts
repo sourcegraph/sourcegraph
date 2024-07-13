@@ -8,10 +8,6 @@ describe('checkRequestAccessAllowed', () => {
         allowSignup: false,
     }
 
-    it('should return false if dotcom mode', () => {
-        expect(checkRequestAccessAllowed({ ...defaultContext, sourcegraphDotComMode: true })).toBe(false)
-    })
-
     it('should return false if builtin signup enabled', () => {
         expect(checkRequestAccessAllowed({ ...defaultContext, allowSignup: true })).toBe(false)
     })
