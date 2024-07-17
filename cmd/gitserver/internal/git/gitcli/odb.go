@@ -16,6 +16,8 @@ import (
 
 	"github.com/go-git/go-git/v5/plumbing/format/config"
 
+	"github.com/sourcegraph/log"
+
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/byteutils"
@@ -65,12 +67,12 @@ func (g *gitCLIBackend) GetCommit(ctx context.Context, commit api.CommitID, incl
 	return c, nil
 }
 
-func buildGetCommitArgs(commit api.CommitID, includeModifiedFiles bool) []string {
+func buildGetCommitArgs(commit gitdomain.OID, includeModifiedFiles bool) []string {
 	args := []string{"log", logFormatWithoutRefs, "-n", "1"}
 	if includeModifiedFiles {
 		args = append(args, "--name-only")
 	}
-	args = append(args, string(commit))
+	args = append(args, commit.String())
 	return args
 }
 
@@ -253,10 +255,10 @@ func (g *gitCLIBackend) BehindAhead(ctx context.Context, left, right string) (*g
 	return &gitdomain.BehindAhead{Behind: uint32(b), Ahead: uint32(a)}, nil
 }
 
-func (g *gitCLIBackend) FirstEverCommit(ctx context.Context) (api.CommitID, error) {
+func (g *gitCLIBackend) FirstEverCommit(ctx context.Context) (gitdomain.OID, error) {
 	rc, err := g.NewCommand(ctx, WithArguments("rev-list", "--reverse", "--date-order", "--max-parents=0", "HEAD"))
 	if err != nil {
-		return "", err
+		return gitdomain.OID{}, err
 	}
 	defer rc.Close()
 
@@ -270,21 +272,20 @@ func (g *gitCLIBackend) FirstEverCommit(ctx context.Context) (api.CommitID, erro
 					Repo: g.repoName,
 					Spec: "HEAD",
 				}
-				return "", e
+				return gitdomain.OID{}, e
 			}
 		}
 
-		return "", errors.Wrap(err, "git rev-list command failed")
+		return gitdomain.OID{}, errors.Wrap(err, "git rev-list command failed")
 	}
 
 	lines := bytes.TrimSpace(out)
 	tokens := bytes.SplitN(lines, []byte("\n"), 2)
 	if len(tokens) == 0 {
-		return "", errors.New("FirstEverCommit returned no revisions")
+		return gitdomain.OID{}, errors.New("FirstEverCommit returned no revisions")
 	}
 	first := tokens[0]
-	id := api.CommitID(bytes.TrimSpace(first))
-	return id, nil
+	return gitdomain.NewOID(api.CommitID(bytes.TrimSpace(first)))
 }
 
 const revListUsageString = `usage: git rev-list [<options>] <commit>... [--] [<path>...]`
@@ -298,21 +299,17 @@ func (g *gitCLIBackend) Stat(ctx context.Context, commit api.CommitID, path stri
 
 	// Special case root, which is not returned by `git ls-tree`.
 	if path == "" || path == "." {
-		rev, err := g.revParse(ctx, string(commit)+"^{tree}")
+		oid, err := g.revParse(ctx, string(commit)+"^{tree}")
 		if err != nil {
 			if errors.HasType[*gitdomain.RevisionNotFoundError](err) {
 				return nil, &os.PathError{Op: "ls-tree", Path: path, Err: os.ErrNotExist}
 			}
 			return nil, err
 		}
-		oid, err := decodeOID(rev)
-		if err != nil {
-			return nil, err
-		}
 		return &fileutil.FileInfo{Mode_: os.ModeDir, Sys_: objectInfo(oid)}, nil
 	}
 
-	it, err := g.lsTree(ctx, commit, path, false)
+	it, err := g.lsTree(ctx, commit, path, false, true)
 	if err != nil {
 		return nil, err
 	}
@@ -345,16 +342,15 @@ func (g *gitCLIBackend) ReadDir(ctx context.Context, commit api.CommitID, path s
 		path = filepath.Clean(rel(path)) + "/"
 	}
 
-	return g.lsTree(ctx, commit, path, recursive)
+	return g.lsTree(ctx, commit, path, recursive, true)
 }
 
-func (g *gitCLIBackend) lsTree(ctx context.Context, commit api.CommitID, path string, recurse bool) (_ git.ReadDirIterator, err error) {
+func (g *gitCLIBackend) lsTree(ctx context.Context, commit api.CommitID, path string, recurse bool, includeSize bool) (_ git.ReadDirIterator, err error) {
 	// Note: We don't call filepath.Clean(path) because ReadDir needs to pass
 	// path with a trailing slash.
 
 	args := []string{
 		"ls-tree",
-		"--long", // show size
 		"--full-name",
 		"-z",
 		string(commit),
@@ -377,25 +373,28 @@ func (g *gitCLIBackend) lsTree(ctx context.Context, commit api.CommitID, path st
 	sc.Split(byteutils.ScanNullLines)
 
 	return &readDirIterator{
-		ctx:      ctx,
-		g:        g,
-		sc:       sc,
-		repoName: g.repoName,
-		commit:   commit,
-		path:     path,
-		r:        r,
+		ctx:         ctx,
+		g:           g,
+		sc:          sc,
+		repoName:    g.repoName,
+		commit:      commit,
+		path:        path,
+		r:           r,
+		includeSize: includeSize,
 	}, nil
 }
 
 type readDirIterator struct {
-	ctx      context.Context
-	g        *gitCLIBackend
-	sc       *bufio.Scanner
-	repoName api.RepoName
-	commit   api.CommitID
-	path     string
-	fdsSeen  int
-	r        io.ReadCloser
+	ctx         context.Context
+	g           *gitCLIBackend
+	sc          *bufio.Scanner
+	repoName    api.RepoName
+	commit      api.CommitID
+	path        string
+	fdsSeen     int
+	r           io.ReadCloser
+	sizeReader  *fileSizeReader
+	includeSize bool
 }
 
 func (it *readDirIterator) Next() (fs.FileInfo, error) {
@@ -411,7 +410,7 @@ func (it *readDirIterator) Next() (fs.FileInfo, error) {
 		}
 		info := bytes.SplitN(line[:tabPos], []byte(" "), 4)
 
-		if len(info) != 4 {
+		if len(info) != 3 {
 			return nil, errors.Errorf("invalid `git ls-tree` output: %q", line)
 		}
 
@@ -421,19 +420,9 @@ func (it *readDirIterator) Next() (fs.FileInfo, error) {
 		if !gitdomain.IsAbsoluteRevision(string(sha)) {
 			return nil, errors.Errorf("invalid `git ls-tree` SHA output: %q", sha)
 		}
-		oid, err := decodeOID(api.CommitID(sha))
+		oid, err := gitdomain.NewOID(api.CommitID(sha))
 		if err != nil {
 			return nil, err
-		}
-
-		sizeStr := string(bytes.TrimSpace(info[3]))
-		var size int64
-		if sizeStr != "-" {
-			// Size of "-" indicates a dir or submodule.
-			size, err = strconv.ParseInt(sizeStr, 10, 64)
-			if err != nil || size < 0 {
-				return nil, errors.Errorf("invalid `git ls-tree` size output: %q (error: %s)", sizeStr, err)
-			}
 		}
 
 		var sys any
@@ -446,6 +435,7 @@ func (it *readDirIterator) Next() (fs.FileInfo, error) {
 			return it.g.gitModulesConfig(it.ctx, it.commit)
 		})
 
+		var size int64
 		mode := os.FileMode(modeVal)
 		switch string(typ) {
 		case "blob":
@@ -454,6 +444,19 @@ func (it *readDirIterator) Next() (fs.FileInfo, error) {
 			} else {
 				// Regular file.
 				mode = mode | 0o644
+			}
+			// Read size:
+			if it.includeSize {
+				if it.sizeReader == nil {
+					it.sizeReader, err = it.g.newFileSizeReader(it.ctx)
+					if err != nil {
+						return nil, err
+					}
+				}
+				size, err = it.sizeReader.Size(api.CommitID(sha))
+				if err != nil {
+					return nil, err
+				}
 			}
 		case "commit":
 			mode = gitdomain.ModeSubmodule
@@ -514,6 +517,12 @@ func (it *readDirIterator) Next() (fs.FileInfo, error) {
 }
 
 func (it *readDirIterator) Close() error {
+	if it.sizeReader != nil {
+		err := it.sizeReader.Close()
+		if err != nil {
+			it.g.logger.Error("error closing fileSizeReader", log.Error(err))
+		}
+	}
 	if err := it.r.Close(); err != nil {
 		var cfe *commandFailedError
 		if errors.As(err, &cfe) {
@@ -531,6 +540,66 @@ func (it *readDirIterator) Close() error {
 	}
 
 	return nil
+}
+
+// newFileSizeReader returns a new fileSizeReader. The reader can be used to read the size of
+// a git object, given its SHA. The reader is backed by a git cat-file batching process
+// to reduce latency.
+// The caller is responsible for closing the returned reader.
+func (g *gitCLIBackend) newFileSizeReader(ctx context.Context) (*fileSizeReader, error) {
+	pr, pw := io.Pipe()
+	stdin := bufio.NewWriter(pw)
+	r, err := g.NewCommand(ctx, WithStdin(pr), WithArguments("cat-file", "-Z", "--batch-check=%(objectsize)"))
+	if err != nil {
+		return nil, err
+	}
+	sc := bufio.NewScanner(r)
+	sc.Split(byteutils.ScanNullLines)
+	return &fileSizeReader{
+		input: stdin,
+		sc:    sc,
+		close: func() error {
+			pw.Close()
+			pr.Close()
+			return r.Close()
+		},
+	}, nil
+}
+
+type fileSizeReader struct {
+	sc    *bufio.Scanner
+	input *bufio.Writer
+	close func() error
+}
+
+func (r *fileSizeReader) Size(sha api.CommitID) (int64, error) {
+	_, err := r.input.Write([]byte(sha))
+	if err != nil {
+		return 0, err
+	}
+	err = r.input.WriteByte('\000')
+	if err != nil {
+		return 0, err
+	}
+	if err := r.input.Flush(); err != nil {
+		return 0, err
+	}
+	if !r.sc.Scan() {
+		if err := r.sc.Err(); err != nil {
+			return 0, err
+		}
+		return 0, errors.New("failed to read size")
+	}
+	l := r.sc.Bytes()
+	size, err := strconv.Atoi(string(bytes.TrimSpace(l)))
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to parse size")
+	}
+	return int64(size), r.sc.Err()
+}
+
+func (r *fileSizeReader) Close() error {
+	return r.close()
 }
 
 // gitModulesConfig returns the gitmodules configuration for the given commit.

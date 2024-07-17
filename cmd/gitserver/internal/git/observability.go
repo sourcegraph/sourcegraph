@@ -102,7 +102,7 @@ func (b *observableBackend) GetObject(ctx context.Context, objectName string) (_
 	return b.backend.GetObject(ctx, objectName)
 }
 
-func (b *observableBackend) MergeBase(ctx context.Context, baseRevspec, headRevspec string) (_ api.CommitID, err error) {
+func (b *observableBackend) MergeBase(ctx context.Context, baseRevspec, headRevspec string) (_ gitdomain.OID, err error) {
 	ctx, _, endObservation := b.operations.mergeBase.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
@@ -234,7 +234,7 @@ func (b *observableBackend) ArchiveReader(ctx context.Context, format ArchiveFor
 	}, nil
 }
 
-func (b *observableBackend) ResolveRevision(ctx context.Context, revspec string) (_ api.CommitID, err error) {
+func (b *observableBackend) ResolveRevision(ctx context.Context, revspec string) (_ gitdomain.OID, err error) {
 	ctx, _, endObservation := b.operations.resolveRevision.With(ctx, &err, observation.Args{
 		Attrs: []attribute.KeyValue{
 			attribute.String("revspec", revspec),
@@ -248,7 +248,7 @@ func (b *observableBackend) ResolveRevision(ctx context.Context, revspec string)
 	return b.backend.ResolveRevision(ctx, revspec)
 }
 
-func (b *observableBackend) RevAtTime(ctx context.Context, revspec string, t time.Time) (_ api.CommitID, err error) {
+func (b *observableBackend) RevAtTime(ctx context.Context, revspec string, t time.Time) (_ gitdomain.OID, err error) {
 	ctx, _, endObservation := b.operations.revAtTime.With(ctx, &err, observation.Args{
 		Attrs: []attribute.KeyValue{
 			attribute.String("revspec", revspec),
@@ -356,7 +356,7 @@ func (b *observableBackend) ContributorCounts(ctx context.Context, opt Contribut
 	return b.backend.ContributorCounts(ctx, opt)
 }
 
-func (b *observableBackend) FirstEverCommit(ctx context.Context) (_ api.CommitID, err error) {
+func (b *observableBackend) FirstEverCommit(ctx context.Context) (_ gitdomain.OID, err error) {
 	ctx, _, endObservation := b.operations.firstEverCommit.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
@@ -544,6 +544,7 @@ func newOperations(observationCtx *observation.Context) *operations {
 		"gitserver_backend",
 		metrics.WithLabels("op"),
 		metrics.WithCountHelp("Total number of method invocations."),
+		metrics.WithDurationBuckets(prometheus.ExponentialBucketsRange(0.001, 30, 20)),
 	)
 
 	op := func(name string) *observation.Operation {

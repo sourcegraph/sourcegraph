@@ -657,7 +657,7 @@ func NewMockGitBackend() *MockGitBackend {
 			},
 		},
 		FirstEverCommitFunc: &GitBackendFirstEverCommitFunc{
-			defaultHook: func(context.Context) (r0 api.CommitID, r1 error) {
+			defaultHook: func(context.Context) (r0 gitdomain.OID, r1 error) {
 				return
 			},
 		},
@@ -682,7 +682,7 @@ func NewMockGitBackend() *MockGitBackend {
 			},
 		},
 		MergeBaseFunc: &GitBackendMergeBaseFunc{
-			defaultHook: func(context.Context, string, string) (r0 api.CommitID, r1 error) {
+			defaultHook: func(context.Context, string, string) (r0 gitdomain.OID, r1 error) {
 				return
 			},
 		},
@@ -707,12 +707,12 @@ func NewMockGitBackend() *MockGitBackend {
 			},
 		},
 		ResolveRevisionFunc: &GitBackendResolveRevisionFunc{
-			defaultHook: func(context.Context, string) (r0 api.CommitID, r1 error) {
+			defaultHook: func(context.Context, string) (r0 gitdomain.OID, r1 error) {
 				return
 			},
 		},
 		RevAtTimeFunc: &GitBackendRevAtTimeFunc{
-			defaultHook: func(context.Context, string, time.Time) (r0 api.CommitID, r1 error) {
+			defaultHook: func(context.Context, string, time.Time) (r0 gitdomain.OID, r1 error) {
 				return
 			},
 		},
@@ -774,7 +774,7 @@ func NewStrictMockGitBackend() *MockGitBackend {
 			},
 		},
 		FirstEverCommitFunc: &GitBackendFirstEverCommitFunc{
-			defaultHook: func(context.Context) (api.CommitID, error) {
+			defaultHook: func(context.Context) (gitdomain.OID, error) {
 				panic("unexpected invocation of MockGitBackend.FirstEverCommit")
 			},
 		},
@@ -799,7 +799,7 @@ func NewStrictMockGitBackend() *MockGitBackend {
 			},
 		},
 		MergeBaseFunc: &GitBackendMergeBaseFunc{
-			defaultHook: func(context.Context, string, string) (api.CommitID, error) {
+			defaultHook: func(context.Context, string, string) (gitdomain.OID, error) {
 				panic("unexpected invocation of MockGitBackend.MergeBase")
 			},
 		},
@@ -824,12 +824,12 @@ func NewStrictMockGitBackend() *MockGitBackend {
 			},
 		},
 		ResolveRevisionFunc: &GitBackendResolveRevisionFunc{
-			defaultHook: func(context.Context, string) (api.CommitID, error) {
+			defaultHook: func(context.Context, string) (gitdomain.OID, error) {
 				panic("unexpected invocation of MockGitBackend.ResolveRevision")
 			},
 		},
 		RevAtTimeFunc: &GitBackendRevAtTimeFunc{
-			defaultHook: func(context.Context, string, time.Time) (api.CommitID, error) {
+			defaultHook: func(context.Context, string, time.Time) (gitdomain.OID, error) {
 				panic("unexpected invocation of MockGitBackend.RevAtTime")
 			},
 		},
@@ -1691,15 +1691,15 @@ func (c GitBackendContributorCountsFuncCall) Results() []interface{} {
 // GitBackendFirstEverCommitFunc describes the behavior when the
 // FirstEverCommit method of the parent MockGitBackend instance is invoked.
 type GitBackendFirstEverCommitFunc struct {
-	defaultHook func(context.Context) (api.CommitID, error)
-	hooks       []func(context.Context) (api.CommitID, error)
+	defaultHook func(context.Context) (gitdomain.OID, error)
+	hooks       []func(context.Context) (gitdomain.OID, error)
 	history     []GitBackendFirstEverCommitFuncCall
 	mutex       sync.Mutex
 }
 
 // FirstEverCommit delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockGitBackend) FirstEverCommit(v0 context.Context) (api.CommitID, error) {
+func (m *MockGitBackend) FirstEverCommit(v0 context.Context) (gitdomain.OID, error) {
 	r0, r1 := m.FirstEverCommitFunc.nextHook()(v0)
 	m.FirstEverCommitFunc.appendCall(GitBackendFirstEverCommitFuncCall{v0, r0, r1})
 	return r0, r1
@@ -1708,7 +1708,7 @@ func (m *MockGitBackend) FirstEverCommit(v0 context.Context) (api.CommitID, erro
 // SetDefaultHook sets function that is called when the FirstEverCommit
 // method of the parent MockGitBackend instance is invoked and the hook
 // queue is empty.
-func (f *GitBackendFirstEverCommitFunc) SetDefaultHook(hook func(context.Context) (api.CommitID, error)) {
+func (f *GitBackendFirstEverCommitFunc) SetDefaultHook(hook func(context.Context) (gitdomain.OID, error)) {
 	f.defaultHook = hook
 }
 
@@ -1716,7 +1716,7 @@ func (f *GitBackendFirstEverCommitFunc) SetDefaultHook(hook func(context.Context
 // FirstEverCommit method of the parent MockGitBackend instance invokes the
 // hook at the front of the queue and discards it. After the queue is empty,
 // the default hook function is invoked for any future action.
-func (f *GitBackendFirstEverCommitFunc) PushHook(hook func(context.Context) (api.CommitID, error)) {
+func (f *GitBackendFirstEverCommitFunc) PushHook(hook func(context.Context) (gitdomain.OID, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1724,20 +1724,20 @@ func (f *GitBackendFirstEverCommitFunc) PushHook(hook func(context.Context) (api
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitBackendFirstEverCommitFunc) SetDefaultReturn(r0 api.CommitID, r1 error) {
-	f.SetDefaultHook(func(context.Context) (api.CommitID, error) {
+func (f *GitBackendFirstEverCommitFunc) SetDefaultReturn(r0 gitdomain.OID, r1 error) {
+	f.SetDefaultHook(func(context.Context) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitBackendFirstEverCommitFunc) PushReturn(r0 api.CommitID, r1 error) {
-	f.PushHook(func(context.Context) (api.CommitID, error) {
+func (f *GitBackendFirstEverCommitFunc) PushReturn(r0 gitdomain.OID, r1 error) {
+	f.PushHook(func(context.Context) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitBackendFirstEverCommitFunc) nextHook() func(context.Context) (api.CommitID, error) {
+func (f *GitBackendFirstEverCommitFunc) nextHook() func(context.Context) (gitdomain.OID, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1775,7 +1775,7 @@ type GitBackendFirstEverCommitFuncCall struct {
 	Arg0 context.Context
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 api.CommitID
+	Result0 gitdomain.OID
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error
@@ -2231,15 +2231,15 @@ func (c GitBackendListRefsFuncCall) Results() []interface{} {
 // GitBackendMergeBaseFunc describes the behavior when the MergeBase method
 // of the parent MockGitBackend instance is invoked.
 type GitBackendMergeBaseFunc struct {
-	defaultHook func(context.Context, string, string) (api.CommitID, error)
-	hooks       []func(context.Context, string, string) (api.CommitID, error)
+	defaultHook func(context.Context, string, string) (gitdomain.OID, error)
+	hooks       []func(context.Context, string, string) (gitdomain.OID, error)
 	history     []GitBackendMergeBaseFuncCall
 	mutex       sync.Mutex
 }
 
 // MergeBase delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockGitBackend) MergeBase(v0 context.Context, v1 string, v2 string) (api.CommitID, error) {
+func (m *MockGitBackend) MergeBase(v0 context.Context, v1 string, v2 string) (gitdomain.OID, error) {
 	r0, r1 := m.MergeBaseFunc.nextHook()(v0, v1, v2)
 	m.MergeBaseFunc.appendCall(GitBackendMergeBaseFuncCall{v0, v1, v2, r0, r1})
 	return r0, r1
@@ -2248,7 +2248,7 @@ func (m *MockGitBackend) MergeBase(v0 context.Context, v1 string, v2 string) (ap
 // SetDefaultHook sets function that is called when the MergeBase method of
 // the parent MockGitBackend instance is invoked and the hook queue is
 // empty.
-func (f *GitBackendMergeBaseFunc) SetDefaultHook(hook func(context.Context, string, string) (api.CommitID, error)) {
+func (f *GitBackendMergeBaseFunc) SetDefaultHook(hook func(context.Context, string, string) (gitdomain.OID, error)) {
 	f.defaultHook = hook
 }
 
@@ -2256,7 +2256,7 @@ func (f *GitBackendMergeBaseFunc) SetDefaultHook(hook func(context.Context, stri
 // MergeBase method of the parent MockGitBackend instance invokes the hook
 // at the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *GitBackendMergeBaseFunc) PushHook(hook func(context.Context, string, string) (api.CommitID, error)) {
+func (f *GitBackendMergeBaseFunc) PushHook(hook func(context.Context, string, string) (gitdomain.OID, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -2264,20 +2264,20 @@ func (f *GitBackendMergeBaseFunc) PushHook(hook func(context.Context, string, st
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitBackendMergeBaseFunc) SetDefaultReturn(r0 api.CommitID, r1 error) {
-	f.SetDefaultHook(func(context.Context, string, string) (api.CommitID, error) {
+func (f *GitBackendMergeBaseFunc) SetDefaultReturn(r0 gitdomain.OID, r1 error) {
+	f.SetDefaultHook(func(context.Context, string, string) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitBackendMergeBaseFunc) PushReturn(r0 api.CommitID, r1 error) {
-	f.PushHook(func(context.Context, string, string) (api.CommitID, error) {
+func (f *GitBackendMergeBaseFunc) PushReturn(r0 gitdomain.OID, r1 error) {
+	f.PushHook(func(context.Context, string, string) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitBackendMergeBaseFunc) nextHook() func(context.Context, string, string) (api.CommitID, error) {
+func (f *GitBackendMergeBaseFunc) nextHook() func(context.Context, string, string) (gitdomain.OID, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -2321,7 +2321,7 @@ type GitBackendMergeBaseFuncCall struct {
 	Arg2 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 api.CommitID
+	Result0 gitdomain.OID
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error
@@ -2796,15 +2796,15 @@ func (c GitBackendRefHashFuncCall) Results() []interface{} {
 // GitBackendResolveRevisionFunc describes the behavior when the
 // ResolveRevision method of the parent MockGitBackend instance is invoked.
 type GitBackendResolveRevisionFunc struct {
-	defaultHook func(context.Context, string) (api.CommitID, error)
-	hooks       []func(context.Context, string) (api.CommitID, error)
+	defaultHook func(context.Context, string) (gitdomain.OID, error)
+	hooks       []func(context.Context, string) (gitdomain.OID, error)
 	history     []GitBackendResolveRevisionFuncCall
 	mutex       sync.Mutex
 }
 
 // ResolveRevision delegates to the next hook function in the queue and
 // stores the parameter and result values of this invocation.
-func (m *MockGitBackend) ResolveRevision(v0 context.Context, v1 string) (api.CommitID, error) {
+func (m *MockGitBackend) ResolveRevision(v0 context.Context, v1 string) (gitdomain.OID, error) {
 	r0, r1 := m.ResolveRevisionFunc.nextHook()(v0, v1)
 	m.ResolveRevisionFunc.appendCall(GitBackendResolveRevisionFuncCall{v0, v1, r0, r1})
 	return r0, r1
@@ -2813,7 +2813,7 @@ func (m *MockGitBackend) ResolveRevision(v0 context.Context, v1 string) (api.Com
 // SetDefaultHook sets function that is called when the ResolveRevision
 // method of the parent MockGitBackend instance is invoked and the hook
 // queue is empty.
-func (f *GitBackendResolveRevisionFunc) SetDefaultHook(hook func(context.Context, string) (api.CommitID, error)) {
+func (f *GitBackendResolveRevisionFunc) SetDefaultHook(hook func(context.Context, string) (gitdomain.OID, error)) {
 	f.defaultHook = hook
 }
 
@@ -2821,7 +2821,7 @@ func (f *GitBackendResolveRevisionFunc) SetDefaultHook(hook func(context.Context
 // ResolveRevision method of the parent MockGitBackend instance invokes the
 // hook at the front of the queue and discards it. After the queue is empty,
 // the default hook function is invoked for any future action.
-func (f *GitBackendResolveRevisionFunc) PushHook(hook func(context.Context, string) (api.CommitID, error)) {
+func (f *GitBackendResolveRevisionFunc) PushHook(hook func(context.Context, string) (gitdomain.OID, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -2829,20 +2829,20 @@ func (f *GitBackendResolveRevisionFunc) PushHook(hook func(context.Context, stri
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitBackendResolveRevisionFunc) SetDefaultReturn(r0 api.CommitID, r1 error) {
-	f.SetDefaultHook(func(context.Context, string) (api.CommitID, error) {
+func (f *GitBackendResolveRevisionFunc) SetDefaultReturn(r0 gitdomain.OID, r1 error) {
+	f.SetDefaultHook(func(context.Context, string) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitBackendResolveRevisionFunc) PushReturn(r0 api.CommitID, r1 error) {
-	f.PushHook(func(context.Context, string) (api.CommitID, error) {
+func (f *GitBackendResolveRevisionFunc) PushReturn(r0 gitdomain.OID, r1 error) {
+	f.PushHook(func(context.Context, string) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitBackendResolveRevisionFunc) nextHook() func(context.Context, string) (api.CommitID, error) {
+func (f *GitBackendResolveRevisionFunc) nextHook() func(context.Context, string) (gitdomain.OID, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -2883,7 +2883,7 @@ type GitBackendResolveRevisionFuncCall struct {
 	Arg1 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 api.CommitID
+	Result0 gitdomain.OID
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error
@@ -2904,15 +2904,15 @@ func (c GitBackendResolveRevisionFuncCall) Results() []interface{} {
 // GitBackendRevAtTimeFunc describes the behavior when the RevAtTime method
 // of the parent MockGitBackend instance is invoked.
 type GitBackendRevAtTimeFunc struct {
-	defaultHook func(context.Context, string, time.Time) (api.CommitID, error)
-	hooks       []func(context.Context, string, time.Time) (api.CommitID, error)
+	defaultHook func(context.Context, string, time.Time) (gitdomain.OID, error)
+	hooks       []func(context.Context, string, time.Time) (gitdomain.OID, error)
 	history     []GitBackendRevAtTimeFuncCall
 	mutex       sync.Mutex
 }
 
 // RevAtTime delegates to the next hook function in the queue and stores the
 // parameter and result values of this invocation.
-func (m *MockGitBackend) RevAtTime(v0 context.Context, v1 string, v2 time.Time) (api.CommitID, error) {
+func (m *MockGitBackend) RevAtTime(v0 context.Context, v1 string, v2 time.Time) (gitdomain.OID, error) {
 	r0, r1 := m.RevAtTimeFunc.nextHook()(v0, v1, v2)
 	m.RevAtTimeFunc.appendCall(GitBackendRevAtTimeFuncCall{v0, v1, v2, r0, r1})
 	return r0, r1
@@ -2921,7 +2921,7 @@ func (m *MockGitBackend) RevAtTime(v0 context.Context, v1 string, v2 time.Time) 
 // SetDefaultHook sets function that is called when the RevAtTime method of
 // the parent MockGitBackend instance is invoked and the hook queue is
 // empty.
-func (f *GitBackendRevAtTimeFunc) SetDefaultHook(hook func(context.Context, string, time.Time) (api.CommitID, error)) {
+func (f *GitBackendRevAtTimeFunc) SetDefaultHook(hook func(context.Context, string, time.Time) (gitdomain.OID, error)) {
 	f.defaultHook = hook
 }
 
@@ -2929,7 +2929,7 @@ func (f *GitBackendRevAtTimeFunc) SetDefaultHook(hook func(context.Context, stri
 // RevAtTime method of the parent MockGitBackend instance invokes the hook
 // at the front of the queue and discards it. After the queue is empty, the
 // default hook function is invoked for any future action.
-func (f *GitBackendRevAtTimeFunc) PushHook(hook func(context.Context, string, time.Time) (api.CommitID, error)) {
+func (f *GitBackendRevAtTimeFunc) PushHook(hook func(context.Context, string, time.Time) (gitdomain.OID, error)) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -2937,20 +2937,20 @@ func (f *GitBackendRevAtTimeFunc) PushHook(hook func(context.Context, string, ti
 
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
-func (f *GitBackendRevAtTimeFunc) SetDefaultReturn(r0 api.CommitID, r1 error) {
-	f.SetDefaultHook(func(context.Context, string, time.Time) (api.CommitID, error) {
+func (f *GitBackendRevAtTimeFunc) SetDefaultReturn(r0 gitdomain.OID, r1 error) {
+	f.SetDefaultHook(func(context.Context, string, time.Time) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
-func (f *GitBackendRevAtTimeFunc) PushReturn(r0 api.CommitID, r1 error) {
-	f.PushHook(func(context.Context, string, time.Time) (api.CommitID, error) {
+func (f *GitBackendRevAtTimeFunc) PushReturn(r0 gitdomain.OID, r1 error) {
+	f.PushHook(func(context.Context, string, time.Time) (gitdomain.OID, error) {
 		return r0, r1
 	})
 }
 
-func (f *GitBackendRevAtTimeFunc) nextHook() func(context.Context, string, time.Time) (api.CommitID, error) {
+func (f *GitBackendRevAtTimeFunc) nextHook() func(context.Context, string, time.Time) (gitdomain.OID, error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -2994,7 +2994,7 @@ type GitBackendRevAtTimeFuncCall struct {
 	Arg2 time.Time
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
-	Result0 api.CommitID
+	Result0 gitdomain.OID
 	// Result1 is the value of the 2nd result returned from this method
 	// invocation.
 	Result1 error

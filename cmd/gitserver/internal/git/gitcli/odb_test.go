@@ -347,7 +347,7 @@ func TestRepository_FirstEverCommit(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			commit, err := backend.GetCommit(ctx, id, false)
+			commit, err := backend.GetCommit(ctx, api.CommitID(id.String()), false)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -868,4 +868,35 @@ func TestGitCLIBackend_ReadDir(t *testing.T) {
 
 func TestLogPartsPerCommitInSync(t *testing.T) {
 	require.Equal(t, partsPerCommit-1, strings.Count(logFormatWithoutRefs, "%x00"))
+}
+
+func TestGitCLIBackend_fileSizeReader(t *testing.T) {
+	ctx := context.Background()
+
+	// Prepare repo state:
+	backend := BackendWithRepoCommands(t,
+		"echo abcd > file1",
+		"git add file1",
+		"git commit -m commit --author='Foo Author <foo@sourcegraph.com>'",
+	)
+
+	sizeReader, err := backend.(*gitCLIBackend).newFileSizeReader(ctx)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		sizeReader.Close()
+	})
+
+	it, err := backend.ReadDir(ctx, "HEAD", "", false)
+	t.Cleanup(func() {
+		it.Close()
+	})
+	require.NoError(t, err)
+	fd, err := it.Next()
+	require.NoError(t, err)
+	oid := fd.Sys().(objectInfo)
+
+	size, err := sizeReader.Size(api.CommitID(oid.OID().String()))
+	require.NoError(t, err)
+	// "abcd\n" -> 5 bytes
+	require.Equal(t, int64(5), size)
 }

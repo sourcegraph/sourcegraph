@@ -3,10 +3,8 @@ package gitcli
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"io"
 
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -16,14 +14,9 @@ func (g *gitCLIBackend) GetObject(ctx context.Context, objectName string) (*gitd
 		return nil, err
 	}
 
-	sha, err := g.revParse(ctx, objectName)
+	oid, err := g.revParse(ctx, objectName)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting object ID")
-	}
-
-	oid, err := decodeOID(sha)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode OID")
 	}
 
 	objectType, err := g.getObjectType(ctx, oid.String())
@@ -56,14 +49,4 @@ func (g *gitCLIBackend) getObjectType(ctx context.Context, objectID string) (git
 	}
 
 	return gitdomain.ObjectType(bytes.TrimSpace(stdout)), nil
-}
-
-func decodeOID(sha api.CommitID) (gitdomain.OID, error) {
-	oidBytes, err := hex.DecodeString(string(sha))
-	if err != nil {
-		return gitdomain.OID{}, err
-	}
-	var oid gitdomain.OID
-	copy(oid[:], oidBytes)
-	return oid, nil
 }

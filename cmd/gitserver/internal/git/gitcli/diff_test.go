@@ -640,7 +640,7 @@ func TestGitDiffIterator(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			rc := io.NopCloser(bytes.NewReader(testCase.output))
-			iterator := newGitDiffIterator(rc)
+			iterator := newChangedFilesIterator(rc)
 			defer func() {
 				err := iterator.Close()
 				if err != nil {
@@ -682,7 +682,7 @@ func TestGitDiffIterator(t *testing.T) {
 			[]byte("D"), []byte{NUL},
 		)
 		rc := io.NopCloser(bytes.NewReader(input))
-		iter := newGitDiffIterator(rc)
+		iter := newChangedFilesIterator(rc)
 
 		_, err := iter.Next()
 		require.NoError(t, err)
@@ -698,7 +698,7 @@ func TestGitDiffIterator(t *testing.T) {
 			[]byte("X"), []byte{NUL}, []byte("file2.txt"), []byte{NUL},
 		)
 		rc := io.NopCloser(bytes.NewReader(input))
-		iter := newGitDiffIterator(rc)
+		iter := newChangedFilesIterator(rc)
 
 		_, err := iter.Next()
 		require.NoError(t, err)
@@ -713,7 +713,7 @@ func TestGitDiffIterator(t *testing.T) {
 			[]byte("D"), []byte{NUL}, []byte("file3.txt"), []byte{NUL},
 		)
 		rc := io.NopCloser(bytes.NewReader(input))
-		iter := newGitDiffIterator(rc)
+		iter := newChangedFilesIterator(rc)
 
 		err := iter.Close()
 		require.NoError(t, err)
@@ -730,7 +730,7 @@ func TestGitDiffIterator(t *testing.T) {
 			[]byte("D"), []byte{NUL}, []byte("file3.txt"), []byte{NUL},
 		)
 		rc := io.NopCloser(bytes.NewReader(input))
-		iter := newGitDiffIterator(rc)
+		iter := newChangedFilesIterator(rc)
 
 		// Iterate over the first change
 		_, err := iter.Next()

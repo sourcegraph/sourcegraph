@@ -30,7 +30,7 @@ var (
 		"merge-base":   {"--"},
 		"show-ref":     {"--heads"},
 		"shortlog":     {"--summary", "--numbered", "--email", "--no-merges", "--after", "--before"},
-		"cat-file":     {"-p", "-t"},
+		"cat-file":     {"-p", "-t", "--batch-check", "-Z"},
 		"lfs":          {},
 
 		// Commands used by GitConfigStore:

@@ -664,7 +664,7 @@ func (gs *grpcServer) MergeBase(ctx context.Context, req *proto.MergeBaseRequest
 
 	backend := gs.gitBackendSource(repoDir, repoName)
 
-	sha, err := backend.MergeBase(ctx, string(req.GetBase()), string(req.GetHead()))
+	oid, err := backend.MergeBase(ctx, string(req.GetBase()), string(req.GetHead()))
 	if err != nil {
 		var e *gitdomain.RevisionNotFoundError
 		if errors.As(err, &e) {
@@ -683,7 +683,7 @@ func (gs *grpcServer) MergeBase(ctx context.Context, req *proto.MergeBaseRequest
 	}
 
 	return &proto.MergeBaseResponse{
-		MergeBaseCommitSha: string(sha),
+		MergeBaseCommitSha: oid.String(),
 	}, nil
 }
 
@@ -968,14 +968,14 @@ func (gs *grpcServer) ResolveRevision(ctx context.Context, req *proto.ResolveRev
 	backend := gs.gitBackendSource(repoDir, repoName)
 
 	// First, try to resolve the revspec.
-	sha, err := backend.ResolveRevision(ctx, revspec)
+	oid, err := backend.ResolveRevision(ctx, revspec)
 	if err != nil {
 		// If that fails to resolve the revspec, try to ensure the revision exists,
 		// if requested by the caller.
 		if req.GetEnsureRevision() && errors.HasType[*gitdomain.RevisionNotFoundError](err) {
 			// We ensured the revision exists, so try to resolve it again.
 			if gs.svc.EnsureRevision(ctx, repoName, revspec) {
-				sha, err = backend.ResolveRevision(ctx, revspec)
+				oid, err = backend.ResolveRevision(ctx, revspec)
 			}
 		}
 	}
@@ -998,7 +998,7 @@ func (gs *grpcServer) ResolveRevision(ctx context.Context, req *proto.ResolveRev
 	}
 
 	return &proto.ResolveRevisionResponse{
-		CommitSha: string(sha),
+		CommitSha: oid.String(),
 	}, nil
 }
 
@@ -1040,7 +1040,7 @@ func (gs *grpcServer) RevAtTime(ctx context.Context, req *proto.RevAtTimeRequest
 	}
 
 	return &proto.RevAtTimeResponse{
-		CommitSha: string(commitID),
+		CommitSha: commitID.String(),
 	}, nil
 }
 
@@ -1289,7 +1289,7 @@ func (gs *grpcServer) FirstEverCommit(ctx context.Context, request *proto.FirstE
 		return nil, err
 	}
 
-	commit, err := backend.GetCommit(ctx, id, false)
+	commit, err := backend.GetCommit(ctx, api.CommitID(id.String()), false)
 	if err != nil {
 		var revisionErr *gitdomain.RevisionNotFoundError
 		if errors.As(err, &revisionErr) {

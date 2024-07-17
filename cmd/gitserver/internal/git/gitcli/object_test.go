@@ -79,7 +79,7 @@ func TestGitCLIBackend_GetObject(t *testing.T) {
 func mustDecodeOID(t *testing.T, s string) gitdomain.OID {
 	t.Helper()
 
-	oid, err := decodeOID(api.CommitID(s))
+	oid, err := gitdomain.NewOID(api.CommitID(s))
 	require.NoError(t, err)
 	return oid
 }

@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/sourcegraph/sourcegraph/cmd/gitserver/internal/git"
-	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/byteutils"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver/gitdomain"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -23,15 +22,6 @@ func (g *gitCLIBackend) RawDiff(ctx context.Context, base string, head string, t
 		return nil, err
 	}
 
-	// We should trust baseOID and headOID, but let's be paranoid for now. If we
-	// ever encode hashes as [20]byte, we can skip this.
-	if err := checkSpecArgSafety(string(baseOID)); err != nil {
-		return nil, err
-	}
-	if err := checkSpecArgSafety(string(headOID)); err != nil {
-		return nil, err
-	}
-
 	switch typ {
 	case git.GitDiffComparisonTypeIntersection:
 		// From the git docs on diff:
@@ -39,7 +29,7 @@ func (g *gitCLIBackend) RawDiff(ctx context.Context, base string, head string, t
 		// This form is to view the changes on the branch containing and up to the second <commit>, starting at a common
 		// ancestor of both <commit>.  git diff A...B is equivalent to git diff $(git merge-base A B) B. You can omit
 		// any one of <commit>, which has the same effect as using HEAD instead.
-		baseOID, err = g.MergeBase(ctx, string(baseOID), string(headOID))
+		baseOID, err = g.MergeBase(ctx, baseOID.String(), headOID.String())
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +53,7 @@ func (g *gitCLIBackend) RawDiff(ctx context.Context, base string, head string, t
 	return g.NewCommand(ctx, WithArguments(args...))
 }
 
-func buildRawDiffArgs(base, head api.CommitID, paths []string) []string {
+func buildRawDiffArgs(base, head gitdomain.OID, paths []string) []string {
 	return append([]string{
 		// Note: We use git diff-tree instead of git diff because git diff lets
 		// you diff any arbitrary files on disk, which is a security risk, diffing
@@ -74,8 +64,8 @@ func buildRawDiffArgs(base, head api.CommitID, paths []string) []string {
 		"--full-index",
 		"--inter-hunk-context=3",
 		"--no-prefix",
-		string(base),
-		string(head),
+		base.String(),
+		head.String(),
 		"--",
 	}, paths...)
 }
@@ -98,7 +88,7 @@ func (g *gitCLIBackend) ChangedFiles(ctx context.Context, base, head string) (gi
 			return nil, errors.Wrapf(err, "failed to resolve base commit %q", base)
 		}
 
-		args = append(args, string(baseOID))
+		args = append(args, baseOID.String())
 	}
 
 	headOID, err := g.revParse(ctx, head)
@@ -106,17 +96,17 @@ func (g *gitCLIBackend) ChangedFiles(ctx context.Context, base, head string) (gi
 		return nil, errors.Wrapf(err, "failed to resolve head commit %q", head)
 	}
 
-	args = append(args, string(headOID))
+	args = append(args, headOID.String())
 
 	rc, err := g.NewCommand(ctx, WithArguments(args...))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run git diff-tree command")
 	}
 
-	return newGitDiffIterator(rc), nil
+	return newChangedFilesIterator(rc), nil
 }
 
-func newGitDiffIterator(rc io.ReadCloser) git.ChangedFilesIterator {
+func newChangedFilesIterator(rc io.ReadCloser) git.ChangedFilesIterator {
 	scanner := bufio.NewScanner(rc)
 	scanner.Split(byteutils.ScanNullLines)
 
@@ -128,7 +118,7 @@ func newGitDiffIterator(rc io.ReadCloser) git.ChangedFilesIterator {
 		return err
 	})
 
-	return &gitDiffIterator{
+	return &changedFilesIterator{
 		rc:             rc,
 		scanner:        scanner,
 		closeChan:      closeChan,
@@ -136,7 +126,7 @@ func newGitDiffIterator(rc io.ReadCloser) git.ChangedFilesIterator {
 	}
 }
 
-type gitDiffIterator struct {
+type changedFilesIterator struct {
 	rc      io.ReadCloser
 	scanner *bufio.Scanner
 
@@ -144,7 +134,7 @@ type gitDiffIterator struct {
 	onceFuncCloser func() error
 }
 
-func (i *gitDiffIterator) Next() (gitdomain.PathStatus, error) {
+func (i *changedFilesIterator) Next() (gitdomain.PathStatus, error) {
 	select {
 	case <-i.closeChan:
 		return gitdomain.PathStatus{}, io.EOF
@@ -189,8 +179,8 @@ func (i *gitDiffIterator) Next() (gitdomain.PathStatus, error) {
 	return gitdomain.PathStatus{}, io.EOF
 }
 
-func (i *gitDiffIterator) Close() error {
+func (i *changedFilesIterator) Close() error {
 	return i.onceFuncCloser()
 }
 
-var _ git.ChangedFilesIterator = &gitDiffIterator{}
+var _ git.ChangedFilesIterator = &changedFilesIterator{}

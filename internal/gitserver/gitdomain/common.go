@@ -20,6 +20,19 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
+func NewOID(sha api.CommitID) (OID, error) {
+	oidBytes, err := hex.DecodeString(string(sha))
+	if err != nil {
+		return OID{}, err
+	}
+	if len(oidBytes) != 20 {
+		return OID{}, errors.Errorf("invalid OID length: %d", len(oidBytes))
+	}
+	var oid OID
+	copy(oid[:], oidBytes)
+	return oid, nil
+}
+
 // OID is a Git OID (40-char hex-encoded).
 type OID [20]byte
 

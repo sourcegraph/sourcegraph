@@ -30,7 +30,7 @@ type GitBackend interface {
 	// Returns an empty string and no error if no common merge-base was found.
 	// If one of the two given revspecs does not exist, a RevisionNotFoundError
 	// is returned.
-	MergeBase(ctx context.Context, baseRevspec, headRevspec string) (api.CommitID, error)
+	MergeBase(ctx context.Context, baseRevspec, headRevspec string) (gitdomain.OID, error)
 	// Blame returns a reader for the blame info of the given path.
 	// BlameHunkReader must always be closed.
 	// If the file does not exist, a os.PathError is returned.
@@ -65,7 +65,7 @@ type GitBackend interface {
 	// I.e., HEAD, deadbeefdeadbeefdeadbeefdeadbeef, or refs/heads/main.
 	// If passed a commit sha, will also verify that the commit exists.
 	// If the revspec can not be resolved to a commit, a RevisionNotFoundError is returned.
-	ResolveRevision(ctx context.Context, revspec string) (api.CommitID, error)
+	ResolveRevision(ctx context.Context, revspec string) (gitdomain.OID, error)
 	// ListRefs returns a list of all the refs known to the repository, this includes
 	// heads, tags, and other potential refs, but filters can be applied.
 	//
@@ -84,7 +84,7 @@ type GitBackend interface {
 	// If revspec does not exist, a RevisionNotFoundError is returned.
 	// If no commit exists in the history of revspec before time, an empty
 	// commitID is returned.
-	RevAtTime(ctx context.Context, revspec string, time time.Time) (api.CommitID, error)
+	RevAtTime(ctx context.Context, revspec string, time time.Time) (gitdomain.OID, error)
 	// RawDiff returns the raw git diff for the given range.
 	// Diffs returned from this function will have the following settings applied:
 	// - 3 lines of context
@@ -121,7 +121,7 @@ type GitBackend interface {
 	//
 	// If the repository is empty, a RevisionNotFoundError is returned (as the
 	// "HEAD" ref does not exist).
-	FirstEverCommit(ctx context.Context) (api.CommitID, error)
+	FirstEverCommit(ctx context.Context) (gitdomain.OID, error)
 
 	// BehindAhead returns the behind/ahead commit counts information for the symmetric difference left...right (both Git
 	// revspecs).

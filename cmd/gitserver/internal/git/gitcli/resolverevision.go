@@ -13,7 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-func (g *gitCLIBackend) ResolveRevision(ctx context.Context, spec string) (api.CommitID, error) {
+func (g *gitCLIBackend) ResolveRevision(ctx context.Context, spec string) (gitdomain.OID, error) {
 	if spec == "" {
 		spec = "HEAD"
 	}
@@ -26,16 +26,16 @@ func (g *gitCLIBackend) ResolveRevision(ctx context.Context, spec string) (api.C
 	}
 
 	if err := checkSpecArgSafety(spec); err != nil {
-		return "", err
+		return gitdomain.OID{}, err
 	}
 
 	return g.revParse(ctx, spec)
 }
 
-func (g *gitCLIBackend) revParse(ctx context.Context, spec string) (api.CommitID, error) {
+func (g *gitCLIBackend) revParse(ctx context.Context, spec string) (gitdomain.OID, error) {
 	r, err := g.NewCommand(ctx, WithArguments("rev-parse", spec, "--"))
 	if err != nil {
-		return "", err
+		return gitdomain.OID{}, err
 	}
 
 	stdout, err := io.ReadAll(r)
@@ -44,10 +44,10 @@ func (g *gitCLIBackend) revParse(ctx context.Context, spec string) (api.CommitID
 		if errors.As(err, &e) && e.ExitStatus == 128 && (bytes.Contains(e.Stderr, []byte("bad revision")) ||
 			bytes.Contains(e.Stderr, []byte("unknown revision")) ||
 			bytes.Contains(e.Stderr, []byte("expected commit type"))) {
-			return "", &gitdomain.RevisionNotFoundError{Repo: g.repoName, Spec: spec}
+			return gitdomain.OID{}, &gitdomain.RevisionNotFoundError{Repo: g.repoName, Spec: spec}
 		}
 
-		return "", err
+		return gitdomain.OID{}, err
 	}
 
 	line, _, _ := bytes.Cut(stdout, []byte{'\n'})
@@ -58,13 +58,13 @@ func (g *gitCLIBackend) revParse(ctx context.Context, spec string) (api.CommitID
 			// if HEAD doesn't point to anything git just returns `HEAD` as the
 			// output of rev-parse. An example where this occurs is an empty
 			// repository.
-			return "", &gitdomain.RevisionNotFoundError{Repo: g.repoName, Spec: spec}
+			return gitdomain.OID{}, &gitdomain.RevisionNotFoundError{Repo: g.repoName, Spec: spec}
 		}
 		// TODO: When can this happen?
 		badCommitErrorCounter.Inc()
-		return "", &gitdomain.BadCommitError{Spec: spec, Commit: commit, Repo: g.repoName}
+		return gitdomain.OID{}, &gitdomain.BadCommitError{Spec: spec, Commit: commit, Repo: g.repoName}
 	}
-	return commit, nil
+	return gitdomain.NewOID(commit)
 }
 
 // TODO: Remove, just temporary to check if BadCommitError ever happens in practice:

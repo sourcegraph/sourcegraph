@@ -45,7 +45,7 @@ func (g *gitCLIBackend) SymbolicRefHead(ctx context.Context, short bool) (refNam
 	return refName, nil
 }
 
-func (g *gitCLIBackend) RevParseHead(ctx context.Context) (sha api.CommitID, err error) {
+func (g *gitCLIBackend) RevParseHead(ctx context.Context) (api.CommitID, error) {
 	shaStr, err := quickRevParseHead(g.dir)
 	if err == nil {
 		return api.CommitID(shaStr), nil
@@ -65,7 +65,7 @@ func (g *gitCLIBackend) RevParseHead(ctx context.Context) (sha api.CommitID, err
 		return "", err
 	}
 
-	sha = api.CommitID(bytes.TrimSpace(stdout))
+	sha := string(bytes.TrimSpace(stdout))
 	if sha == "HEAD" {
 		// If HEAD doesn't point to anything git just returns `HEAD` as the
 		// output of rev-parse. An example where this occurs is an empty
@@ -73,7 +73,7 @@ func (g *gitCLIBackend) RevParseHead(ctx context.Context) (sha api.CommitID, err
 		return "", &gitdomain.RevisionNotFoundError{Repo: g.repoName, Spec: "HEAD"}
 	}
 
-	return sha, nil
+	return api.CommitID(sha), nil
 }
 
 const headFileRefPrefix = "ref: "
