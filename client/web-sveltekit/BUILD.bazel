@@ -217,7 +217,6 @@ playwright_test_bin.playwright_test(
         "ASSETS_DIR": "./client/web-sveltekit/test_app_assets/test_build/_sk/",
     },
     flaky = True,
-    tags = ["manual"],
 )
 
 TESTS = glob([
