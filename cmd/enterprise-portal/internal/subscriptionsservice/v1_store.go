@@ -2,12 +2,15 @@ package subscriptionsservice
 
 import (
 	"context"
+	"strings"
 
 	sams "github.com/sourcegraph/sourcegraph-accounts-sdk-go"
 	clientsv1 "github.com/sourcegraph/sourcegraph-accounts-sdk-go/clients/v1"
 
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database"
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
 )
 
@@ -17,15 +20,27 @@ import (
 type StoreV1 interface {
 	// UpsertEnterpriseSubscription upserts a enterprise subscription record based
 	// on the given options.
-	UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions) (*subscriptions.SubscriptionWithConditions, error)
+	UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions, conditions ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error)
 	// ListEnterpriseSubscriptions returns a list of enterprise subscriptions based
 	// on the given options.
 	ListEnterpriseSubscriptions(ctx context.Context, opts subscriptions.ListEnterpriseSubscriptionsOptions) ([]*subscriptions.SubscriptionWithConditions, error)
+	// GetEnterpriseSubscriptions returns a specific enterprise subscription.
+	//
+	// Returns subscriptions.ErrSubscriptionNotFound if the subscription does
+	// not exist.
+	GetEnterpriseSubscription(ctx context.Context, subscriptionID string) (*subscriptions.SubscriptionWithConditions, error)
+
 	// ListDotcomEnterpriseSubscriptionLicenses returns a list of enterprise
 	// subscription license attributes with the given filters. It silently ignores
 	// any non-matching filters. The caller should check the length of the returned
 	// slice to ensure all requested licenses were found.
 	ListEnterpriseSubscriptionLicenses(ctx context.Context, opts subscriptions.ListLicensesOpts) ([]*subscriptions.LicenseWithConditions, error)
+
+	// CreateLicense creates a new classic offline license for the given subscription.
+	CreateEnterpriseSubscriptionLicenseKey(ctx context.Context, subscriptionID string, license *subscriptions.DataLicenseKey, opts subscriptions.CreateLicenseOpts) (*subscriptions.LicenseWithConditions, error)
+
+	// RevokeEnterpriseSubscriptionLicense premanently revokes a license.
+	RevokeEnterpriseSubscriptionLicense(ctx context.Context, licenseID string, opts subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error)
 
 	// IntrospectSAMSToken takes a SAMS access token and returns relevant metadata.
 	//
@@ -69,16 +84,50 @@ func NewStoreV1(opts NewStoreV1Options) StoreV1 {
 	}
 }
 
-func (s *storeV1) UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions) (*subscriptions.SubscriptionWithConditions, error) {
-	return s.db.Subscriptions().Upsert(ctx, subscriptionID, opts)
+func (s *storeV1) UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions, conditions ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error) {
+	return s.db.Subscriptions().Upsert(
+		ctx,
+		strings.TrimPrefix(subscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix),
+		opts,
+		conditions...,
+	)
 }
 
 func (s *storeV1) ListEnterpriseSubscriptions(ctx context.Context, opts subscriptions.ListEnterpriseSubscriptionsOptions) ([]*subscriptions.SubscriptionWithConditions, error) {
+	for idx := range opts.IDs {
+		opts.IDs[idx] = strings.TrimPrefix(opts.IDs[idx], subscriptionsv1.EnterpriseSubscriptionIDPrefix)
+	}
 	return s.db.Subscriptions().List(ctx, opts)
 }
 
+func (s *storeV1) GetEnterpriseSubscription(ctx context.Context, subscriptionID string) (*subscriptions.SubscriptionWithConditions, error) {
+	return s.db.Subscriptions().Get(ctx,
+		strings.TrimPrefix(subscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix))
+}
+
 func (s *storeV1) ListEnterpriseSubscriptionLicenses(ctx context.Context, opts subscriptions.ListLicensesOpts) ([]*subscriptions.LicenseWithConditions, error) {
+	opts.SubscriptionID = strings.TrimPrefix(opts.SubscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix)
 	return s.db.Subscriptions().Licenses().List(ctx, opts)
+}
+
+func (s *storeV1) CreateEnterpriseSubscriptionLicenseKey(ctx context.Context, subscriptionID string, license *subscriptions.DataLicenseKey, opts subscriptions.CreateLicenseOpts) (*subscriptions.LicenseWithConditions, error) {
+	if opts.ImportLicenseID != "" {
+		return nil, errors.New("import license ID not allowed via API")
+	}
+	return s.db.Subscriptions().Licenses().CreateLicenseKey(
+		ctx,
+		strings.TrimPrefix(subscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix),
+		license,
+		opts,
+	)
+}
+
+func (s *storeV1) RevokeEnterpriseSubscriptionLicense(ctx context.Context, licenseID string, opts subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error) {
+	return s.db.Subscriptions().Licenses().Revoke(
+		ctx,
+		strings.TrimPrefix(licenseID, subscriptionsv1.EnterpriseSubscriptionLicenseIDPrefix),
+		opts,
+	)
 }
 
 func (s *storeV1) IntrospectSAMSToken(ctx context.Context, token string) (*sams.IntrospectTokenResponse, error) {

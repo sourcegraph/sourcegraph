@@ -319,6 +319,9 @@ message CreateEnterpriseSubscriptionLicenseRequest {
   //   - license.key.info.expire_time
   //   - license.key.info.salesforce_opportunity_id
   EnterpriseSubscriptionLicense license = 1;
+
+  // Message to associate with the license creation event.
+  string message = 2;
 }
 
 message CreateEnterpriseSubscriptionLicenseResponse {
@@ -346,6 +349,8 @@ message UpdateEnterpriseSubscriptionRequest {
   // Updatable fields are:
   //  - instance_domain
   //  - display_name
+  //  - salesforce.subscription_id
+  //  - salesforce.opportunity_id
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -373,6 +378,9 @@ message CreateEnterpriseSubscriptionRequest {
   // - instance_domain
   // - salesforce.subscription_id
   EnterpriseSubscription subscription = 1;
+
+  // Message to associate with the subscription creation event.
+  string message = 2;
 }
 
 message CreateEnterpriseSubscriptionResponse {

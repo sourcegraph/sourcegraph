@@ -13,6 +13,16 @@ func NewNullString(v string) *sql.NullString {
 	}
 }
 
+func NewNullStringPtr(v *string) sql.NullString {
+	if v == nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: *v,
+		Valid:  *v != "",
+	}
+}
+
 // NewNullInt32 is like NewNullString, but always produces a valid value.
 func NewNullInt32[T int | int32 | int64 | uint64](v T) *sql.NullInt32 {
 	return &sql.NullInt32{

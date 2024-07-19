@@ -2,10 +2,16 @@ package subscriptionsservice
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
 
+	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/utctime"
+	"github.com/sourcegraph/sourcegraph/internal/license"
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
@@ -105,8 +111,52 @@ func convertProtoToIAMTupleRelation(action subscriptionsv1.PermissionRelation) i
 func convertProtoRoleToIAMTupleObject(role subscriptionsv1.Role, subscriptionID string) iam.TupleObject {
 	switch role {
 	case subscriptionsv1.Role_ROLE_SUBSCRIPTION_CUSTOMER_ADMIN:
-		return iam.ToTupleObject(iam.TupleTypeCustomerAdmin, subscriptionID)
+		return iam.ToTupleObject(iam.TupleTypeCustomerAdmin,
+			strings.TrimPrefix(subscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix))
 	default:
 		return ""
 	}
+}
+
+// convertLicenseKeyToLicenseKeyData converts a create-license request into an
+// actual license key. It only returns valid Connect errors.
+func convertLicenseKeyToLicenseKeyData(
+	createdAt utctime.Time,
+	sub *subscriptions.Subscription,
+	key *subscriptionsv1.EnterpriseSubscriptionLicenseKey,
+) (*subscriptions.DataLicenseKey, error) {
+	expires := key.GetInfo().GetExpireTime().AsTime()
+	if expires.Before(time.Now()) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expiry must be in the future"))
+	}
+	tags := key.GetInfo().GetTags()
+	providedTagPrefixes := map[string]struct{}{}
+	for _, t := range tags {
+		providedTagPrefixes[strings.SplitN(t, ":", 2)[0]] = struct{}{}
+	}
+	if _, exists := providedTagPrefixes["customer"]; !exists && sub.DisplayName != nil {
+		tags = append(tags, fmt.Sprintf("customer:%s", *sub.DisplayName))
+	}
+
+	info := license.Info{
+		Tags:      tags,
+		UserCount: uint(key.GetInfo().GetUserCount()),
+		CreatedAt: createdAt.AsTime(),
+		ExpiresAt: expires.UTC(),
+
+		// Inherited from subscription
+		SalesforceSubscriptionID: sub.SalesforceSubscriptionID,
+		SalesforceOpportunityID:  sub.SalesforceOpportunityID,
+	}
+
+	// TODO
+	// signedKey, _, err := licensing.GenerateProductLicenseKey(info)
+	// if err != nil {
+	// 	return nil, connectutil.InternalError(ctx, logger, err, "")
+	// }
+
+	return &subscriptions.DataLicenseKey{
+		Info:      info,
+		SignedKey: "TODO",
+	}, nil
 }

@@ -257,9 +257,11 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 			},
 			// All update-able values should be set to their defaults explicitly
 			wantUpdateOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{
-				InstanceDomain: &sql.NullString{},
-				DisplayName:    &sql.NullString{},
-				ForceUpdate:    true,
+				InstanceDomain:           &sql.NullString{},
+				DisplayName:              &sql.NullString{},
+				SalesforceSubscriptionID: &sql.NullString{},
+				SalesforceOpportunityID:  &sql.NullString{},
+				ForceUpdate:              true,
 			}),
 		},
 		{
@@ -286,8 +288,9 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 						ID: "80ca12e2-54b4-448c-a61a-390b1a9c1224",
 					}},
 				}, nil)
-			h.mockStore.UpsertEnterpriseSubscriptionFunc.SetDefaultHook(func(_ context.Context, _ string, opts subscriptions.UpsertSubscriptionOptions) (*subscriptions.SubscriptionWithConditions, error) {
+			h.mockStore.UpsertEnterpriseSubscriptionFunc.SetDefaultHook(func(_ context.Context, _ string, opts subscriptions.UpsertSubscriptionOptions, conds ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error) {
 				tc.wantUpdateOpts.Equal(t, opts)
+				assert.Len(t, conds, 0) // no conditions for standard updates
 				return &subscriptions.SubscriptionWithConditions{}, nil
 			})
 			_, err := h.UpdateEnterpriseSubscription(ctx, req)

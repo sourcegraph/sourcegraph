@@ -422,6 +422,9 @@ WHERE id = @licenseID
 		"revokedAt": opts.Time,
 		"licenseID": licenseID,
 	}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrSubscriptionLicenseNotFound
+		}
 		return nil, errors.Wrap(err, "revoke license")
 	}
 
