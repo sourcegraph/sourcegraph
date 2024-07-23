@@ -188,17 +188,10 @@ func GetConfiguredProductLicenseInfoWithSignature() (*Info, string, error) {
 	return GetFreeLicenseInfo(), "", nil
 }
 
-// licenseGenerationPrivateKeyURL is the URL where Sourcegraph staff can find the private key for
-// generating licenses.
-//
-// NOTE: If you change this, use text search to replace other instances of it (in source code
-// comments).
-const licenseGenerationPrivateKeyURL = "https://team-sourcegraph.1password.com/vaults/dnrhbauihkhjs5ag6vszsme45a/allitems/zkdx6gpw4uqejs3flzj7ef5j4i"
-
 // envLicenseGenerationPrivateKey (the env var SOURCEGRAPH_LICENSE_GENERATION_KEY) is the
 // PEM-encoded form of the private key used to sign product license keys. It is stored at
 // https://team-sourcegraph.1password.com/vaults/dnrhbauihkhjs5ag6vszsme45a/allitems/zkdx6gpw4uqejs3flzj7ef5j4i.
-var envLicenseGenerationPrivateKey = env.Get("SOURCEGRAPH_LICENSE_GENERATION_KEY", "", "the PEM-encoded form of the private key used to sign product license keys ("+licenseGenerationPrivateKeyURL+")")
+var envLicenseGenerationPrivateKey = env.Get("SOURCEGRAPH_LICENSE_GENERATION_KEY", "", "the PEM-encoded form of the private key used to sign product license keys ("+license.GenerationPrivateKeyURL+")")
 
 // licenseGenerationPrivateKey is the private key used to generate license keys.
 var licenseGenerationPrivateKey = func() ssh.Signer {
@@ -221,7 +214,7 @@ func GenerateProductLicenseKey(info license.Info) (licenseKey string, version in
 		const msg = "no product license generation private key was configured"
 		if env.InsecureDev {
 			// Show more helpful error message in local dev.
-			return "", 0, errors.Errorf("%s (for testing by Sourcegraph staff: set the SOURCEGRAPH_LICENSE_GENERATION_KEY env var to the key obtained at %s)", msg, licenseGenerationPrivateKeyURL)
+			return "", 0, errors.Errorf("%s (for testing by Sourcegraph staff: set the SOURCEGRAPH_LICENSE_GENERATION_KEY env var to the key obtained at %s)", msg, license.GenerationPrivateKeyURL)
 		}
 		return "", 0, errors.New(msg)
 	}

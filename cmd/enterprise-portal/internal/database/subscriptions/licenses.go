@@ -362,7 +362,7 @@ VALUES (
 `, pgx.NamedArgs{
 		"licenseID":      licenseID,
 		"subscriptionID": subscriptionID,
-		"licenseType":    subscriptionsv1.EnterpriseSubscriptionLicenseType_name[int32(licenseType)],
+		"licenseType":    licenseType.String(),
 		"licenseData":    licenseData,
 		"createdAt":      opts.Time,
 		"expireAt":       opts.ExpireTime,

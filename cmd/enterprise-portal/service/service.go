@@ -120,9 +120,11 @@ func (Service) Initialize(ctx context.Context, logger log.Logger, contract runti
 		httpServer,
 		subscriptionsservice.NewStoreV1(
 			subscriptionsservice.NewStoreV1Options{
-				DB:         dbHandle,
-				SAMSClient: samsClient,
-				IAMClient:  iamClient,
+				DB:                     dbHandle,
+				SAMSClient:             samsClient,
+				IAMClient:              iamClient,
+				LicenseKeySigner:       config.LicenseKeys.Signer,
+				LicenseKeyRequiredTags: config.LicenseKeys.RequiredTags,
 			},
 		),
 		connect.WithInterceptors(otelConnctInterceptor),

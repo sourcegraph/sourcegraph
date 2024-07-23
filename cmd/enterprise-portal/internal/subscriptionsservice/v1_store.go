@@ -4,11 +4,15 @@ import (
 	"context"
 	"strings"
 
+	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
+
 	sams "github.com/sourcegraph/sourcegraph-accounts-sdk-go"
 	clientsv1 "github.com/sourcegraph/sourcegraph-accounts-sdk-go/clients/v1"
 
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database"
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	"github.com/sourcegraph/sourcegraph/internal/license"
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
@@ -18,6 +22,9 @@ import (
 // is meant to abstract away and limit the exposure of the underlying data layer
 // to the handler through a thin-wrapper.
 type StoreV1 interface {
+	// GenerateSubscriptionID generates a new subscription ID for subscription
+	// creation.
+	GenerateSubscriptionID() (string, error)
 	// UpsertEnterpriseSubscription upserts a enterprise subscription record based
 	// on the given options.
 	UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions, conditions ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error)
@@ -35,12 +42,11 @@ type StoreV1 interface {
 	// any non-matching filters. The caller should check the length of the returned
 	// slice to ensure all requested licenses were found.
 	ListEnterpriseSubscriptionLicenses(ctx context.Context, opts subscriptions.ListLicensesOpts) ([]*subscriptions.LicenseWithConditions, error)
-
-	// CreateLicense creates a new classic offline license for the given subscription.
-	CreateEnterpriseSubscriptionLicenseKey(ctx context.Context, subscriptionID string, license *subscriptions.DataLicenseKey, opts subscriptions.CreateLicenseOpts) (*subscriptions.LicenseWithConditions, error)
-
 	// RevokeEnterpriseSubscriptionLicense premanently revokes a license.
 	RevokeEnterpriseSubscriptionLicense(ctx context.Context, licenseID string, opts subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error)
+
+	// Interfaces specific to 'ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY'
+	licenseKeysStore
 
 	// IntrospectSAMSToken takes a SAMS access token and returns relevant metadata.
 	//
@@ -63,17 +69,40 @@ type StoreV1 interface {
 	IAMCheck(ctx context.Context, opts iam.CheckOptions) (allowed bool, _ error)
 }
 
+// licenseKeysStore groups mechanisms specific to the license type
+// 'ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY'
+type licenseKeysStore interface {
+	// GetRequiredEnterpriseSubscriptionLicenseKeyTags returns the license tags
+	// that must be included on all generated license keys.
+	GetRequiredEnterpriseSubscriptionLicenseKeyTags() []string
+	// SignEnterpriseSubscriptionLicenseKey signs a new license key for
+	// creation of 'ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY' licenses.
+	//
+	// Returns errStoreUnimplemented if key signing is not configured.
+	SignEnterpriseSubscriptionLicenseKey(license.Info) (string, error)
+	// CreateLicense creates a new classic offline license for the given subscription.
+	CreateEnterpriseSubscriptionLicenseKey(ctx context.Context, subscriptionID string, license *subscriptions.DataLicenseKey, opts subscriptions.CreateLicenseOpts) (*subscriptions.LicenseWithConditions, error)
+}
+
 type storeV1 struct {
 	db         *database.DB
 	SAMSClient *sams.ClientV1
 	IAMClient  *iam.ClientV1
+	// LicenseKeySigner may be nil if not configured for key signing.
+	LicenseKeySigner       ssh.Signer
+	LicenseKeyRequiredTags []string
 }
 
 type NewStoreV1Options struct {
 	DB         *database.DB
 	SAMSClient *sams.ClientV1
 	IAMClient  *iam.ClientV1
+
+	LicenseKeySigner       ssh.Signer
+	LicenseKeyRequiredTags []string
 }
+
+var errStoreUnimplemented = errors.New("unimplemented")
 
 // NewStoreV1 returns a new StoreV1 using the given resource handles.
 func NewStoreV1(opts NewStoreV1Options) StoreV1 {
@@ -81,7 +110,18 @@ func NewStoreV1(opts NewStoreV1Options) StoreV1 {
 		db:         opts.DB,
 		SAMSClient: opts.SAMSClient,
 		IAMClient:  opts.IAMClient,
+
+		LicenseKeySigner:       opts.LicenseKeySigner,
+		LicenseKeyRequiredTags: opts.LicenseKeyRequiredTags,
 	}
+}
+
+func (s *storeV1) GenerateSubscriptionID() (string, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return "", errors.Wrap(err, "uuid")
+	}
+	return id.String(), nil
 }
 
 func (s *storeV1) UpsertEnterpriseSubscription(ctx context.Context, subscriptionID string, opts subscriptions.UpsertSubscriptionOptions, conditions ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error) {
@@ -108,6 +148,21 @@ func (s *storeV1) GetEnterpriseSubscription(ctx context.Context, subscriptionID 
 func (s *storeV1) ListEnterpriseSubscriptionLicenses(ctx context.Context, opts subscriptions.ListLicensesOpts) ([]*subscriptions.LicenseWithConditions, error) {
 	opts.SubscriptionID = strings.TrimPrefix(opts.SubscriptionID, subscriptionsv1.EnterpriseSubscriptionIDPrefix)
 	return s.db.Subscriptions().Licenses().List(ctx, opts)
+}
+
+func (s *storeV1) GetRequiredEnterpriseSubscriptionLicenseKeyTags() []string {
+	return s.LicenseKeyRequiredTags
+}
+
+func (s *storeV1) SignEnterpriseSubscriptionLicenseKey(info license.Info) (string, error) {
+	if s.LicenseKeySigner == nil {
+		return "", errStoreUnimplemented
+	}
+	signedKey, _, err := license.GenerateSignedKey(info, s.LicenseKeySigner)
+	if err != nil {
+		return "", errors.Wrap(err, "generating signed key")
+	}
+	return signedKey, nil
 }
 
 func (s *storeV1) CreateEnterpriseSubscriptionLicenseKey(ctx context.Context, subscriptionID string, license *subscriptions.DataLicenseKey, opts subscriptions.CreateLicenseOpts) (*subscriptions.LicenseWithConditions, error) {

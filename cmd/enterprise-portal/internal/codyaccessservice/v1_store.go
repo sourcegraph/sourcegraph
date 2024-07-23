@@ -33,6 +33,8 @@ type StoreV1 interface {
 
 	// GetCodyGatewayUsage retrieves recent Cody Gateway usage data.
 	// The subscriptionID should not be prefixed.
+	//
+	// Returns errStoreUnimplemented if the data source not configured.
 	GetCodyGatewayUsage(ctx context.Context, subscriptionID string) (*codyaccessv1.CodyGatewayUsage, error)
 
 	// GetCodyGatewayAccessBySubscription retrieves Cody Gateway access by

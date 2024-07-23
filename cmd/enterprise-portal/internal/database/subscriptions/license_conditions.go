@@ -96,7 +96,7 @@ VALUES (
 )`, pgx.NamedArgs{
 		"licenseID": licenseID,
 		// Convert to string representation of EnterpriseSubscriptionLicenseCondition
-		"status":         subscriptionsv1.EnterpriseSubscriptionLicenseCondition_Status_name[int32(opts.Status)],
+		"status":         opts.Status.String(),
 		"message":        pointers.NilIfZero(opts.Message),
 		"transitionTime": opts.TransitionTime,
 	})

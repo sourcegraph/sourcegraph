@@ -13,14 +13,15 @@ func NewNullString(v string) *sql.NullString {
 	}
 }
 
-func NewNullStringPtr(v *string) sql.NullString {
+// NewNullString creates an *sql.NullString that indicates "invalid", i.e. null,
+// if v is nil or an empty string. It returns a pointer because many use cases
+// require a pointer - it is safe to immediately deref the return value if you
+// need to, since it always returns a non-nil value.
+func NewNullStringPtr(v *string) *sql.NullString {
 	if v == nil {
-		return sql.NullString{}
+		return &sql.NullString{}
 	}
-	return sql.NullString{
-		String: *v,
-		Valid:  *v != "",
-	}
+	return NewNullString(*v)
 }
 
 // NewNullInt32 is like NewNullString, but always produces a valid value.

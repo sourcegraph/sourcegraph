@@ -124,6 +124,10 @@ func convertLicenseKeyToLicenseKeyData(
 	createdAt utctime.Time,
 	sub *subscriptions.Subscription,
 	key *subscriptionsv1.EnterpriseSubscriptionLicenseKey,
+	// StoreV1.GetRequiredEnterpriseSubscriptionLicenseKeyTags
+	requiredTags []string,
+	// StoreV1.SignEnterpriseSubscriptionLicenseKey
+	signKeyFn func(license.Info) (string, error),
 ) (*subscriptions.DataLicenseKey, error) {
 	expires := key.GetInfo().GetExpireTime().AsTime()
 	if expires.Before(time.Now()) {
@@ -137,6 +141,12 @@ func convertLicenseKeyToLicenseKeyData(
 	if _, exists := providedTagPrefixes["customer"]; !exists && sub.DisplayName != nil {
 		tags = append(tags, fmt.Sprintf("customer:%s", *sub.DisplayName))
 	}
+	for _, r := range requiredTags {
+		if _, ok := providedTagPrefixes[r]; !ok {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.Newf("key tags [%s] are required", strings.Join(requiredTags, ", ")))
+		}
+	}
 
 	info := license.Info{
 		Tags:      tags,
@@ -148,15 +158,18 @@ func convertLicenseKeyToLicenseKeyData(
 		SalesforceSubscriptionID: sub.SalesforceSubscriptionID,
 		SalesforceOpportunityID:  sub.SalesforceOpportunityID,
 	}
-
-	// TODO
-	// signedKey, _, err := licensing.GenerateProductLicenseKey(info)
-	// if err != nil {
-	// 	return nil, connectutil.InternalError(ctx, logger, err, "")
-	// }
+	signedKey, err := signKeyFn(info)
+	if err != nil {
+		// See StoreV1.SignEnterpriseSubscriptionLicenseKey
+		if errors.Is(err, errStoreUnimplemented) {
+			return nil, connect.NewError(connect.CodeUnimplemented,
+				errors.Wrap(err, "key signing not available"))
+		}
+		return nil, errors.Wrap(err, "sign key")
+	}
 
 	return &subscriptions.DataLicenseKey{
 		Info:      info,
-		SignedKey: "TODO",
+		SignedKey: signedKey,
 	}, nil
 }

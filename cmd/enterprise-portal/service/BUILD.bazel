@@ -25,6 +25,7 @@ go_library(
         "//internal/codygateway/codygatewayevents",
         "//internal/debugserver",
         "//internal/httpserver",
+        "//internal/license",
         "//internal/redispool",
         "//internal/trace/policy",
         "//internal/version",

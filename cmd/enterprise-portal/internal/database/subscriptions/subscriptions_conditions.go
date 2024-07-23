@@ -97,7 +97,7 @@ VALUES (
 )`, pgx.NamedArgs{
 		"subscriptionID": subscriptionID,
 		// Convert to string representation of EnterpriseSubscriptionCondition
-		"status":         subscriptionsv1.EnterpriseSubscriptionCondition_Status_name[int32(opts.Status)],
+		"status":         opts.Status.String(),
 		"message":        pointers.NilIfZero(opts.Message),
 		"transitionTime": opts.TransitionTime,
 	})

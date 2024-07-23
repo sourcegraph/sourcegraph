@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	"github.com/sourcegraph/log"
 	"golang.org/x/exp/maps"
 
@@ -417,29 +416,26 @@ func (s *handlerV1) CreateEnterpriseSubscription(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("subscription details are required"))
 	}
 
-	// Generate a new ID for the subscription.
-	if sub.Id == "" {
-		subscriptionID, err := uuid.NewRandom()
-		if err != nil {
-			return nil, connectutil.InternalError(ctx, s.logger, err, "failed to generate new subscription ID")
-		}
-		sub.Id = subscriptionID.String()
-	} else {
-		_, err := uuid.Parse(strings.TrimPrefix(sub.Id, subscriptionsv1.EnterpriseSubscriptionIDPrefix))
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Wrap(err, "custom subscription.id must be a UUID"))
-		}
+	// Validate required arguments.
+	if strings.TrimSpace(sub.GetDisplayName()) == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("display_name is required"))
 	}
 
+	// Generate a new ID for the subscription.
+	if sub.Id != "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("subscription_id can not be set"))
+	}
+	sub.Id, err = s.store.GenerateSubscriptionID()
+	if err != nil {
+		return nil, connectutil.InternalError(ctx, s.logger, err, "failed to generate new subscription ID")
+	}
+
+	// Check for an existing subscription, just in case.
 	if _, err := s.store.GetEnterpriseSubscription(ctx, sub.Id); err == nil {
 		return nil, connect.NewError(connect.CodeAlreadyExists, err)
 	} else if !errors.Is(err, subscriptions.ErrSubscriptionNotFound) {
 		return nil, connectutil.InternalError(ctx, logger, err,
 			"failed to check for existing subscription")
-	}
-
-	if strings.TrimSpace(sub.GetDisplayName()) == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("display_name is required required"))
 	}
 
 	createdAt := utctime.Now()
@@ -629,9 +625,12 @@ func (s *handlerV1) CreateEnterpriseSubscriptionLicense(ctx context.Context, req
 	logger = logger.With(clientAttrs...)
 
 	create := req.Msg.GetLicense()
+	if create.GetId() != "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("license.id cannot be set"))
+	}
 	subscriptionID := create.GetSubscriptionId()
 	if subscriptionID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("subscription_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("license.subscription_id is required"))
 	}
 	sub, err := s.store.GetEnterpriseSubscription(ctx, subscriptionID)
 	if err != nil {
@@ -650,9 +649,18 @@ func (s *handlerV1) CreateEnterpriseSubscriptionLicense(ctx context.Context, req
 	var createdLicense *subscriptions.LicenseWithConditions
 	switch data := create.License.(type) {
 	case *subscriptionsv1.EnterpriseSubscriptionLicense_Key:
-		licenseKey, err := convertLicenseKeyToLicenseKeyData(createdAt, &sub.Subscription, data.Key)
+		licenseKey, err := convertLicenseKeyToLicenseKeyData(
+			createdAt,
+			&sub.Subscription,
+			data.Key,
+			s.store.GetRequiredEnterpriseSubscriptionLicenseKeyTags(),
+			s.store.SignEnterpriseSubscriptionLicenseKey)
 		if err != nil {
-			return nil, err
+			var connectErr *connect.Error
+			if errors.As(err, &connectErr) {
+				return nil, err
+			}
+			return nil, connectutil.InternalError(ctx, logger, err, "failed to initialize license key from inputs")
 		}
 		createdLicense, err = s.store.CreateEnterpriseSubscriptionLicenseKey(ctx, subscriptionID,
 			licenseKey,
@@ -749,13 +757,11 @@ func (s *handlerV1) UpdateEnterpriseSubscriptionMembership(ctx context.Context, 
 
 	if subscriptionID != "" {
 		// Double check that the subscription ID is valid.
-		subscriptionAttrs, err := s.store.ListEnterpriseSubscriptions(ctx, subscriptions.ListEnterpriseSubscriptionsOptions{
-			IDs: []string{subscriptionID},
-		})
-		if err != nil {
+		if _, err := s.store.GetEnterpriseSubscription(ctx, subscriptionID); err != nil {
+			if errors.Is(err, subscriptions.ErrSubscriptionNotFound) {
+				return nil, connect.NewError(connect.CodeNotFound, errors.New("subscription not found"))
+			}
 			return nil, connectutil.InternalError(ctx, logger, err, "get dotcom enterprise subscription")
-		} else if len(subscriptionAttrs) != 1 {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("subscription not found"))
 		}
 	} else if instanceDomain != "" {
 		// Validate and normalize the domain
@@ -767,7 +773,7 @@ func (s *handlerV1) UpdateEnterpriseSubscriptionMembership(ctx context.Context, 
 			ctx,
 			subscriptions.ListEnterpriseSubscriptionsOptions{
 				InstanceDomains: []string{instanceDomain},
-				PageSize:        1,
+				PageSize:        1, // instanceDomain should be globally unique
 			},
 		)
 		if err != nil {

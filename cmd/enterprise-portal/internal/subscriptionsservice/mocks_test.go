@@ -13,6 +13,7 @@ import (
 	sourcegraphaccountssdkgo "github.com/sourcegraph/sourcegraph-accounts-sdk-go"
 	v1 "github.com/sourcegraph/sourcegraph-accounts-sdk-go/clients/v1"
 	subscriptions "github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	license "github.com/sourcegraph/sourcegraph/internal/license"
 	iam "github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
 )
 
@@ -25,10 +26,17 @@ type MockStoreV1 struct {
 	// function object controlling the behavior of the method
 	// CreateEnterpriseSubscriptionLicenseKey.
 	CreateEnterpriseSubscriptionLicenseKeyFunc *StoreV1CreateEnterpriseSubscriptionLicenseKeyFunc
+	// GenerateSubscriptionIDFunc is an instance of a mock function object
+	// controlling the behavior of the method GenerateSubscriptionID.
+	GenerateSubscriptionIDFunc *StoreV1GenerateSubscriptionIDFunc
 	// GetEnterpriseSubscriptionFunc is an instance of a mock function
 	// object controlling the behavior of the method
 	// GetEnterpriseSubscription.
 	GetEnterpriseSubscriptionFunc *StoreV1GetEnterpriseSubscriptionFunc
+	// GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc is an instance of
+	// a mock function object controlling the behavior of the method
+	// GetRequiredEnterpriseSubscriptionLicenseKeyTags.
+	GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc
 	// GetSAMSUserByIDFunc is an instance of a mock function object
 	// controlling the behavior of the method GetSAMSUserByID.
 	GetSAMSUserByIDFunc *StoreV1GetSAMSUserByIDFunc
@@ -56,6 +64,10 @@ type MockStoreV1 struct {
 	// function object controlling the behavior of the method
 	// RevokeEnterpriseSubscriptionLicense.
 	RevokeEnterpriseSubscriptionLicenseFunc *StoreV1RevokeEnterpriseSubscriptionLicenseFunc
+	// SignEnterpriseSubscriptionLicenseKeyFunc is an instance of a mock
+	// function object controlling the behavior of the method
+	// SignEnterpriseSubscriptionLicenseKey.
+	SignEnterpriseSubscriptionLicenseKeyFunc *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc
 	// UpsertEnterpriseSubscriptionFunc is an instance of a mock function
 	// object controlling the behavior of the method
 	// UpsertEnterpriseSubscription.
@@ -71,8 +83,18 @@ func NewMockStoreV1() *MockStoreV1 {
 				return
 			},
 		},
+		GenerateSubscriptionIDFunc: &StoreV1GenerateSubscriptionIDFunc{
+			defaultHook: func() (r0 string, r1 error) {
+				return
+			},
+		},
 		GetEnterpriseSubscriptionFunc: &StoreV1GetEnterpriseSubscriptionFunc{
 			defaultHook: func(context.Context, string) (r0 *subscriptions.SubscriptionWithConditions, r1 error) {
+				return
+			},
+		},
+		GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc: &StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc{
+			defaultHook: func() (r0 []string) {
 				return
 			},
 		},
@@ -116,6 +138,11 @@ func NewMockStoreV1() *MockStoreV1 {
 				return
 			},
 		},
+		SignEnterpriseSubscriptionLicenseKeyFunc: &StoreV1SignEnterpriseSubscriptionLicenseKeyFunc{
+			defaultHook: func(license.Info) (r0 string, r1 error) {
+				return
+			},
+		},
 		UpsertEnterpriseSubscriptionFunc: &StoreV1UpsertEnterpriseSubscriptionFunc{
 			defaultHook: func(context.Context, string, subscriptions.UpsertSubscriptionOptions, ...subscriptions.CreateSubscriptionConditionOptions) (r0 *subscriptions.SubscriptionWithConditions, r1 error) {
 				return
@@ -133,9 +160,19 @@ func NewStrictMockStoreV1() *MockStoreV1 {
 				panic("unexpected invocation of MockStoreV1.CreateEnterpriseSubscriptionLicenseKey")
 			},
 		},
+		GenerateSubscriptionIDFunc: &StoreV1GenerateSubscriptionIDFunc{
+			defaultHook: func() (string, error) {
+				panic("unexpected invocation of MockStoreV1.GenerateSubscriptionID")
+			},
+		},
 		GetEnterpriseSubscriptionFunc: &StoreV1GetEnterpriseSubscriptionFunc{
 			defaultHook: func(context.Context, string) (*subscriptions.SubscriptionWithConditions, error) {
 				panic("unexpected invocation of MockStoreV1.GetEnterpriseSubscription")
+			},
+		},
+		GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc: &StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc{
+			defaultHook: func() []string {
+				panic("unexpected invocation of MockStoreV1.GetRequiredEnterpriseSubscriptionLicenseKeyTags")
 			},
 		},
 		GetSAMSUserByIDFunc: &StoreV1GetSAMSUserByIDFunc{
@@ -178,6 +215,11 @@ func NewStrictMockStoreV1() *MockStoreV1 {
 				panic("unexpected invocation of MockStoreV1.RevokeEnterpriseSubscriptionLicense")
 			},
 		},
+		SignEnterpriseSubscriptionLicenseKeyFunc: &StoreV1SignEnterpriseSubscriptionLicenseKeyFunc{
+			defaultHook: func(license.Info) (string, error) {
+				panic("unexpected invocation of MockStoreV1.SignEnterpriseSubscriptionLicenseKey")
+			},
+		},
 		UpsertEnterpriseSubscriptionFunc: &StoreV1UpsertEnterpriseSubscriptionFunc{
 			defaultHook: func(context.Context, string, subscriptions.UpsertSubscriptionOptions, ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error) {
 				panic("unexpected invocation of MockStoreV1.UpsertEnterpriseSubscription")
@@ -193,8 +235,14 @@ func NewMockStoreV1From(i StoreV1) *MockStoreV1 {
 		CreateEnterpriseSubscriptionLicenseKeyFunc: &StoreV1CreateEnterpriseSubscriptionLicenseKeyFunc{
 			defaultHook: i.CreateEnterpriseSubscriptionLicenseKey,
 		},
+		GenerateSubscriptionIDFunc: &StoreV1GenerateSubscriptionIDFunc{
+			defaultHook: i.GenerateSubscriptionID,
+		},
 		GetEnterpriseSubscriptionFunc: &StoreV1GetEnterpriseSubscriptionFunc{
 			defaultHook: i.GetEnterpriseSubscription,
+		},
+		GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc: &StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc{
+			defaultHook: i.GetRequiredEnterpriseSubscriptionLicenseKeyTags,
 		},
 		GetSAMSUserByIDFunc: &StoreV1GetSAMSUserByIDFunc{
 			defaultHook: i.GetSAMSUserByID,
@@ -219,6 +267,9 @@ func NewMockStoreV1From(i StoreV1) *MockStoreV1 {
 		},
 		RevokeEnterpriseSubscriptionLicenseFunc: &StoreV1RevokeEnterpriseSubscriptionLicenseFunc{
 			defaultHook: i.RevokeEnterpriseSubscriptionLicense,
+		},
+		SignEnterpriseSubscriptionLicenseKeyFunc: &StoreV1SignEnterpriseSubscriptionLicenseKeyFunc{
+			defaultHook: i.SignEnterpriseSubscriptionLicenseKey,
 		},
 		UpsertEnterpriseSubscriptionFunc: &StoreV1UpsertEnterpriseSubscriptionFunc{
 			defaultHook: i.UpsertEnterpriseSubscription,
@@ -345,6 +396,110 @@ func (c StoreV1CreateEnterpriseSubscriptionLicenseKeyFuncCall) Results() []inter
 	return []interface{}{c.Result0, c.Result1}
 }
 
+// StoreV1GenerateSubscriptionIDFunc describes the behavior when the
+// GenerateSubscriptionID method of the parent MockStoreV1 instance is
+// invoked.
+type StoreV1GenerateSubscriptionIDFunc struct {
+	defaultHook func() (string, error)
+	hooks       []func() (string, error)
+	history     []StoreV1GenerateSubscriptionIDFuncCall
+	mutex       sync.Mutex
+}
+
+// GenerateSubscriptionID delegates to the next hook function in the queue
+// and stores the parameter and result values of this invocation.
+func (m *MockStoreV1) GenerateSubscriptionID() (string, error) {
+	r0, r1 := m.GenerateSubscriptionIDFunc.nextHook()()
+	m.GenerateSubscriptionIDFunc.appendCall(StoreV1GenerateSubscriptionIDFuncCall{r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the
+// GenerateSubscriptionID method of the parent MockStoreV1 instance is
+// invoked and the hook queue is empty.
+func (f *StoreV1GenerateSubscriptionIDFunc) SetDefaultHook(hook func() (string, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// GenerateSubscriptionID method of the parent MockStoreV1 instance invokes
+// the hook at the front of the queue and discards it. After the queue is
+// empty, the default hook function is invoked for any future action.
+func (f *StoreV1GenerateSubscriptionIDFunc) PushHook(hook func() (string, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *StoreV1GenerateSubscriptionIDFunc) SetDefaultReturn(r0 string, r1 error) {
+	f.SetDefaultHook(func() (string, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *StoreV1GenerateSubscriptionIDFunc) PushReturn(r0 string, r1 error) {
+	f.PushHook(func() (string, error) {
+		return r0, r1
+	})
+}
+
+func (f *StoreV1GenerateSubscriptionIDFunc) nextHook() func() (string, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *StoreV1GenerateSubscriptionIDFunc) appendCall(r0 StoreV1GenerateSubscriptionIDFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of StoreV1GenerateSubscriptionIDFuncCall
+// objects describing the invocations of this function.
+func (f *StoreV1GenerateSubscriptionIDFunc) History() []StoreV1GenerateSubscriptionIDFuncCall {
+	f.mutex.Lock()
+	history := make([]StoreV1GenerateSubscriptionIDFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// StoreV1GenerateSubscriptionIDFuncCall is an object that describes an
+// invocation of method GenerateSubscriptionID on an instance of
+// MockStoreV1.
+type StoreV1GenerateSubscriptionIDFuncCall struct {
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 string
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c StoreV1GenerateSubscriptionIDFuncCall) Args() []interface{} {
+	return []interface{}{}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c StoreV1GenerateSubscriptionIDFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
 // StoreV1GetEnterpriseSubscriptionFunc describes the behavior when the
 // GetEnterpriseSubscription method of the parent MockStoreV1 instance is
 // invoked.
@@ -454,6 +609,111 @@ func (c StoreV1GetEnterpriseSubscriptionFuncCall) Args() []interface{} {
 // invocation.
 func (c StoreV1GetEnterpriseSubscriptionFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
+}
+
+// StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc describes the
+// behavior when the GetRequiredEnterpriseSubscriptionLicenseKeyTags method
+// of the parent MockStoreV1 instance is invoked.
+type StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc struct {
+	defaultHook func() []string
+	hooks       []func() []string
+	history     []StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall
+	mutex       sync.Mutex
+}
+
+// GetRequiredEnterpriseSubscriptionLicenseKeyTags delegates to the next
+// hook function in the queue and stores the parameter and result values of
+// this invocation.
+func (m *MockStoreV1) GetRequiredEnterpriseSubscriptionLicenseKeyTags() []string {
+	r0 := m.GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc.nextHook()()
+	m.GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc.appendCall(StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall{r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the
+// GetRequiredEnterpriseSubscriptionLicenseKeyTags method of the parent
+// MockStoreV1 instance is invoked and the hook queue is empty.
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) SetDefaultHook(hook func() []string) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// GetRequiredEnterpriseSubscriptionLicenseKeyTags method of the parent
+// MockStoreV1 instance invokes the hook at the front of the queue and
+// discards it. After the queue is empty, the default hook function is
+// invoked for any future action.
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) PushHook(hook func() []string) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) SetDefaultReturn(r0 []string) {
+	f.SetDefaultHook(func() []string {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) PushReturn(r0 []string) {
+	f.PushHook(func() []string {
+		return r0
+	})
+}
+
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) nextHook() func() []string {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) appendCall(r0 StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of
+// StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall objects
+// describing the invocations of this function.
+func (f *StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFunc) History() []StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall {
+	f.mutex.Lock()
+	history := make([]StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall is an
+// object that describes an invocation of method
+// GetRequiredEnterpriseSubscriptionLicenseKeyTags on an instance of
+// MockStoreV1.
+type StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall struct {
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 []string
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall) Args() []interface{} {
+	return []interface{}{}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c StoreV1GetRequiredEnterpriseSubscriptionLicenseKeyTagsFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
 }
 
 // StoreV1GetSAMSUserByIDFunc describes the behavior when the
@@ -1327,6 +1587,116 @@ func (c StoreV1RevokeEnterpriseSubscriptionLicenseFuncCall) Args() []interface{}
 // Results returns an interface slice containing the results of this
 // invocation.
 func (c StoreV1RevokeEnterpriseSubscriptionLicenseFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0, c.Result1}
+}
+
+// StoreV1SignEnterpriseSubscriptionLicenseKeyFunc describes the behavior
+// when the SignEnterpriseSubscriptionLicenseKey method of the parent
+// MockStoreV1 instance is invoked.
+type StoreV1SignEnterpriseSubscriptionLicenseKeyFunc struct {
+	defaultHook func(license.Info) (string, error)
+	hooks       []func(license.Info) (string, error)
+	history     []StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall
+	mutex       sync.Mutex
+}
+
+// SignEnterpriseSubscriptionLicenseKey delegates to the next hook function
+// in the queue and stores the parameter and result values of this
+// invocation.
+func (m *MockStoreV1) SignEnterpriseSubscriptionLicenseKey(v0 license.Info) (string, error) {
+	r0, r1 := m.SignEnterpriseSubscriptionLicenseKeyFunc.nextHook()(v0)
+	m.SignEnterpriseSubscriptionLicenseKeyFunc.appendCall(StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall{v0, r0, r1})
+	return r0, r1
+}
+
+// SetDefaultHook sets function that is called when the
+// SignEnterpriseSubscriptionLicenseKey method of the parent MockStoreV1
+// instance is invoked and the hook queue is empty.
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) SetDefaultHook(hook func(license.Info) (string, error)) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// SignEnterpriseSubscriptionLicenseKey method of the parent MockStoreV1
+// instance invokes the hook at the front of the queue and discards it.
+// After the queue is empty, the default hook function is invoked for any
+// future action.
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) PushHook(hook func(license.Info) (string, error)) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) SetDefaultReturn(r0 string, r1 error) {
+	f.SetDefaultHook(func(license.Info) (string, error) {
+		return r0, r1
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) PushReturn(r0 string, r1 error) {
+	f.PushHook(func(license.Info) (string, error) {
+		return r0, r1
+	})
+}
+
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) nextHook() func(license.Info) (string, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) appendCall(r0 StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of
+// StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall objects describing
+// the invocations of this function.
+func (f *StoreV1SignEnterpriseSubscriptionLicenseKeyFunc) History() []StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall {
+	f.mutex.Lock()
+	history := make([]StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall is an object that
+// describes an invocation of method SignEnterpriseSubscriptionLicenseKey on
+// an instance of MockStoreV1.
+type StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall struct {
+	// Arg0 is the value of the 1st argument passed to this method
+	// invocation.
+	Arg0 license.Info
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 string
+	// Result1 is the value of the 2nd result returned from this method
+	// invocation.
+	Result1 error
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall) Args() []interface{} {
+	return []interface{}{c.Arg0}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c StoreV1SignEnterpriseSubscriptionLicenseKeyFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
 }
 
