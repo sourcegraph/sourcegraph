@@ -127,8 +127,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if err := r.reconcileJaeger(ctx, &sourcegraph, &applianceSpec); err != nil {
 		return ctrl.Result{}, errors.Newf("failed to reconcile jaeger: %w", err)
 	}
-	if err := r.reconcileOtel(ctx, &sourcegraph, &applianceSpec); err != nil {
-		return ctrl.Result{}, errors.Newf("failed to reconcile OpenTelemetry Collector: %w", err)
+	if err := r.reconcileOtelAgent(ctx, &sourcegraph, &applianceSpec); err != nil {
+		return ctrl.Result{}, errors.Newf("failed to reconcile OpenTelemetry agent: %w", err)
+	}
+	if err := r.reconcileOtelCollector(ctx, &sourcegraph, &applianceSpec); err != nil {
+		return ctrl.Result{}, errors.Newf("failed to reconcile OpenTelemetry collector: %w", err)
 	}
 
 	// Set the current version annotation in case migration logic depends on it.

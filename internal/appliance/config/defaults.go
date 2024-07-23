@@ -176,6 +176,11 @@ func NewDefaultConfig() Sourcegraph {
 				},
 				Replicas: 1,
 			},
+			OtelCollector: OtelCollectorSpec{
+				StandardConfig: StandardConfig{
+					PrometheusPort: pointers.Ptr(8888),
+				},
+			},
 
 			// Jaeger is opt-in
 			Jaeger: JaegerSpec{

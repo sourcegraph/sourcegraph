@@ -1,0 +1,147 @@
+resources:
+  - apiVersion: v1
+    data:
+      spec: |
+        spec:
+          requestedVersion: "5.3.9104"
+
+          blobstore:
+            disabled: true
+
+          codeInsights:
+            disabled: true
+
+          codeIntel:
+            disabled: true
+
+          frontend:
+            disabled: true
+
+          grafana:
+            disabled: true
+
+          gitServer:
+            disabled: true
+
+          indexedSearch:
+            disabled: true
+
+          openTelemetryAgent:
+            disabled: true
+
+          openTelemetryCollector: {}
+
+          pgsql:
+            disabled: true
+
+          postgresExporter:
+            disabled: true
+
+          preciseCodeIntel:
+            disabled: true
+
+          redisCache:
+            disabled: true
+
+          redisExporter:
+            disabled: true
+
+          redisStore:
+            disabled: true
+
+          repoUpdater:
+            disabled: true
+
+          searcher:
+            disabled: true
+
+          symbols:
+            disabled: true
+
+          syntectServer:
+            disabled: true
+
+          worker:
+            disabled: true
+
+          prometheus:
+            disabled: true
+    kind: ConfigMap
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/currentVersion: 5.3.9104
+        appliance.sourcegraph.com/managed: "true"
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      name: sg
+      namespace: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: 351918b131db269be4e3420a263daeb89a500ebac785952791b7e404e480f2e9
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        deploy: sourcegraph
+      name: otel-collector
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        appliance.sourcegraph.com/configHash: 351918b131db269be4e3420a263daeb89a500ebac785952791b7e404e480f2e9
+        prometheus.io/port: "8888"
+        sourcegraph.prometheus/scrape: "true"
+      creationTimestamp: "2024-04-19T00:00:00Z"
+      labels:
+        app: otel-collector
+        app.kubernetes.io/component: otel-collector
+        deploy: sourcegraph
+      name: otel-collector
+      namespace: NORMALIZED_FOR_TESTING
+      ownerReferences:
+        - apiVersion: v1
+          blockOwnerDeletion: true
+          controller: true
+          kind: ConfigMap
+          name: sg
+          uid: NORMALIZED_FOR_TESTING
+      resourceVersion: NORMALIZED_FOR_TESTING
+      uid: NORMALIZED_FOR_TESTING
+    spec:
+      clusterIP: NORMALIZED_FOR_TESTING
+      clusterIPs:
+        - NORMALIZED_FOR_TESTING
+      internalTrafficPolicy: Cluster
+      ipFamilies:
+        - IPv4
+      ipFamilyPolicy: SingleStack
+      ports:
+        - name: otlp-grpc
+          port: 4317
+          protocol: TCP
+          targetPort: 4317
+        - name: otlp-http
+          port: 4318
+          protocol: TCP
+          targetPort: 4318
+        - name: metrics
+          port: 8888
+          protocol: TCP
+          targetPort: 8888
+      selector:
+        app: otel-collector
+      sessionAffinity: None
+      type: ClusterIP
+    status:
+      loadBalancer: {}

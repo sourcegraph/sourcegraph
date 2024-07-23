@@ -1,0 +1,64 @@
+spec:
+  requestedVersion: "5.3.9104"
+
+  blobstore:
+    disabled: true
+
+  codeInsights:
+    disabled: true
+
+  codeIntel:
+    disabled: true
+
+  frontend:
+    disabled: true
+
+  grafana:
+    disabled: true
+
+  gitServer:
+    disabled: true
+
+  indexedSearch:
+    disabled: true
+
+  openTelemetryAgent:
+    disabled: true
+
+  openTelemetryCollector: {}
+
+  pgsql:
+    disabled: true
+
+  postgresExporter:
+    disabled: true
+
+  preciseCodeIntel:
+    disabled: true
+
+  redisCache:
+    disabled: true
+
+  redisExporter:
+    disabled: true
+
+  redisStore:
+    disabled: true
+
+  repoUpdater:
+    disabled: true
+
+  searcher:
+    disabled: true
+
+  symbols:
+    disabled: true
+
+  syntectServer:
+    disabled: true
+
+  worker:
+    disabled: true
+
+  prometheus:
+    disabled: true

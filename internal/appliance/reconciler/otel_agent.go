@@ -18,9 +18,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
-// TODO split agent from collector? Some StandardConfig features might not work
-// particularly well if not... e.g. SA annotations
-func (r *Reconciler) reconcileOtel(ctx context.Context, sg *config.Sourcegraph, owner client.Object) error {
+func (r *Reconciler) reconcileOtelAgent(ctx context.Context, sg *config.Sourcegraph, owner client.Object) error {
 	if err := r.reconcileOtelAgentConfigmap(ctx, sg, owner); err != nil {
 		return errors.Wrap(err, "reconciling ConfigMap")
 	}
