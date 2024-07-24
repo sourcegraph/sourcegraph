@@ -14,6 +14,7 @@ import (
 	mockrequire "github.com/derision-test/go-mockgen/v2/testutil/require"
 	"github.com/google/uuid"
 	"github.com/hexops/autogold/v2"
+	"github.com/hexops/valast"
 	"github.com/sourcegraph/log/logtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,6 +45,10 @@ func newPredictableGenerator(ns string) func() (string, error) {
 	}
 }
 
+func newMockTime() time.Time {
+	return time.Date(2024, 1, 1, 1, 1, 0, 0, time.UTC)
+}
+
 func newTestHandlerV1(t *testing.T, tokenScopes ...scopes.Scope) *testHandlerV1 {
 	mockStore := NewMockStoreV1()
 	mockStore.IntrospectSAMSTokenFunc.SetDefaultReturn(
@@ -60,6 +65,13 @@ func newTestHandlerV1(t *testing.T, tokenScopes ...scopes.Scope) *testHandlerV1 
 	keySigner := newPredictableGenerator("signedkey")
 	mockStore.SignEnterpriseSubscriptionLicenseKeyFunc.SetDefaultHook(
 		func(i license.Info) (string, error) { return keySigner() })
+
+	// Stable time generator that increments by 1 second on each call
+	var timeSeq atomic.Int32
+	mockStore.NowFunc.SetDefaultHook(func() utctime.Time {
+		return utctime.FromTime(newMockTime().
+			Add(time.Duration(timeSeq.Add(1)) * time.Second))
+	})
 
 	return &testHandlerV1{
 		handlerV1: &handlerV1{
@@ -278,6 +290,13 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					String: "TestHandlerV1_CreateEnterpriseSubscription",
 					Valid:  true,
 				},
+				CreatedAt: utctime.Date(2024,
+					1,
+					1,
+					1,
+					1,
+					1,
+					0),
 				SalesforceSubscriptionID: &sql.NullString{},
 				SalesforceOpportunityID:  &sql.NullString{},
 			}),
@@ -300,6 +319,13 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					String: "TestHandlerV1_CreateEnterpriseSubscription",
 					Valid:  true,
 				},
+				CreatedAt: utctime.Date(2024,
+					1,
+					1,
+					1,
+					1,
+					1,
+					0),
 				SalesforceSubscriptionID: &sql.NullString{
 					String: "sf_sub",
 					Valid:  true,
@@ -335,9 +361,6 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			assert.Equal(t, subscriptionsv1.EnterpriseSubscriptionCondition_STATUS_CREATED,
 				conds[0].Status)
 
-			// Set to zero time for convenience with autogold
-			assert.NotZero(t, opts.CreatedAt)
-			opts.CreatedAt = utctime.Time{}
 			tc.wantUpsertOpts.Equal(t, opts)
 
 			return &subscriptions.SubscriptionWithConditions{}, nil
@@ -571,7 +594,13 @@ func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 				SubscriptionId: mockSubscriptionID,
 				Reason:         t.Name(),
 			},
-			wantUpsertOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{ArchivedAt: &utctime.Time{}}),
+			wantUpsertOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{ArchivedAt: valast.Ptr(utctime.Date(2024,
+				1,
+				1,
+				1,
+				1,
+				1,
+				0))}),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -607,10 +636,7 @@ func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 				assert.Equal(t, subscriptionsv1.EnterpriseSubscriptionCondition_STATUS_ARCHIVED,
 					conds[0].Status)
 
-				// Set to zero time for convenience with autogold
-				assert.NotZero(t, *opts.ArchivedAt)
-				opts.ArchivedAt = &utctime.Time{}
-				tc.wantUpsertOpts.Equal(t, opts)
+				tc.wantUpsertOpts.Equal(t, opts, autogold.ExportedOnly())
 
 				return &subscriptions.SubscriptionWithConditions{}, nil
 			})
@@ -712,9 +738,10 @@ func TestHandlerV1_CreateEnterpriseSubscriptionLicense(t *testing.T) {
 					License: &subscriptionsv1.EnterpriseSubscriptionLicense_Key{
 						Key: &subscriptionsv1.EnterpriseSubscriptionLicenseKey{
 							Info: &subscriptionsv1.EnterpriseSubscriptionLicenseKey_Info{
-								Tags:       requiredTags,
-								UserCount:  100,
-								ExpireTime: timestamppb.New(time.Now().Add(1 * time.Hour)),
+								Tags:      requiredTags,
+								UserCount: 100,
+								// time in the future relative to newMockTime
+								ExpireTime: timestamppb.New(newMockTime().Add(time.Hour)),
 							},
 						},
 					},
@@ -729,20 +756,20 @@ func TestHandlerV1_CreateEnterpriseSubscriptionLicense(t *testing.T) {
 					},
 					UserCount: 100,
 					CreatedAt: time.Date(2024,
-						7,
-						23,
-						23,
-						42,
-						34,
-						896271000,
+						1,
+						1,
+						1,
+						1,
+						1,
+						0,
 						time.UTC),
 					ExpiresAt: time.Date(2024,
-						7,
-						24,
+						1,
+						1,
+						2,
+						1,
 						0,
-						42,
-						34,
-						895452000,
+						0,
 						time.UTC),
 				},
 				SignedKey: "signedkey-1",
@@ -773,8 +800,11 @@ func TestHandlerV1_CreateEnterpriseSubscriptionLicense(t *testing.T) {
 				if id == archivedSubscriptionID {
 					return &subscriptions.SubscriptionWithConditions{
 						Subscription: subscriptions.Subscription{
-							ID:         id,
-							ArchivedAt: pointers.Ptr(utctime.Now()),
+							ID: id,
+							ArchivedAt: pointers.Ptr(utctime.FromTime(
+								// Archived in the past relative to newMockTime
+								newMockTime().Add(-1 * time.Hour)),
+							),
 						},
 					}, nil
 				}
@@ -859,7 +889,13 @@ func TestHandlerV1_RevokeEnterpriseSubscriptionLicense(t *testing.T) {
 			},
 			wantRevokeOpts: autogold.Expect(subscriptions.RevokeLicenseOpts{
 				Message: "TestHandlerV1_RevokeEnterpriseSubscriptionLicense",
-				Time:    &utctime.Time{},
+				Time: valast.Ptr(utctime.Date(2024,
+					1,
+					1,
+					1,
+					1,
+					1,
+					0)),
 			}),
 		},
 	} {
@@ -884,8 +920,6 @@ func TestHandlerV1_RevokeEnterpriseSubscriptionLicense(t *testing.T) {
 				// Condition must match upsert
 				assert.Equal(t, tc.revoke.GetReason(), opts.Message)
 
-				// Set to zero time for convenience with autogold
-				opts.Time = &utctime.Time{}
 				tc.wantRevokeOpts.Equal(t, opts)
 
 				return &subscriptions.LicenseWithConditions{

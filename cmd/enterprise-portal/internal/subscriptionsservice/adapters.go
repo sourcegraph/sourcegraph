@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -130,7 +129,7 @@ func convertLicenseKeyToLicenseKeyData(
 	signKeyFn func(license.Info) (string, error),
 ) (*subscriptions.DataLicenseKey, error) {
 	expires := key.GetInfo().GetExpireTime().AsTime()
-	if expires.Before(time.Now()) {
+	if expires.Before(createdAt.AsTime()) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expiry must be in the future"))
 	}
 	tags := key.GetInfo().GetTags()
@@ -152,7 +151,8 @@ func convertLicenseKeyToLicenseKeyData(
 		Tags:      tags,
 		UserCount: uint(key.GetInfo().GetUserCount()),
 		CreatedAt: createdAt.AsTime(),
-		ExpiresAt: expires.UTC(),
+		// Cast expiry to utctime and back for uniform representation
+		ExpiresAt: utctime.FromTime(expires).AsTime(),
 
 		// Inherited from subscription
 		SalesforceSubscriptionID: sub.SalesforceSubscriptionID,

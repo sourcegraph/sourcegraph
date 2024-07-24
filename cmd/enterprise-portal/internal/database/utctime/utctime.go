@@ -29,6 +29,11 @@ func Now() Time { return Time(time.Now()) }
 // FromTime returns a utctime.Time from a time.Time.
 func FromTime(t time.Time) Time { return Time(t.UTC().Round(time.Microsecond)) }
 
+// Date is analagous to time.Date, but only represents UTC time.
+func Date(year int, month time.Month, day, hour, min, sec, nsec int) Time {
+	return FromTime(time.Date(year, month, day, hour, min, sec, nsec, time.UTC))
+}
+
 var _ sql.Scanner = (*Time)(nil)
 
 func (t *Time) Scan(src any) error {

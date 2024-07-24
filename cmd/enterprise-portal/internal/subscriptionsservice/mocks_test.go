@@ -13,6 +13,7 @@ import (
 	sourcegraphaccountssdkgo "github.com/sourcegraph/sourcegraph-accounts-sdk-go"
 	v1 "github.com/sourcegraph/sourcegraph-accounts-sdk-go/clients/v1"
 	subscriptions "github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	utctime "github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/utctime"
 	license "github.com/sourcegraph/sourcegraph/internal/license"
 	iam "github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
 )
@@ -60,6 +61,9 @@ type MockStoreV1 struct {
 	// object controlling the behavior of the method
 	// ListEnterpriseSubscriptions.
 	ListEnterpriseSubscriptionsFunc *StoreV1ListEnterpriseSubscriptionsFunc
+	// NowFunc is an instance of a mock function object controlling the
+	// behavior of the method Now.
+	NowFunc *StoreV1NowFunc
 	// RevokeEnterpriseSubscriptionLicenseFunc is an instance of a mock
 	// function object controlling the behavior of the method
 	// RevokeEnterpriseSubscriptionLicense.
@@ -130,6 +134,11 @@ func NewMockStoreV1() *MockStoreV1 {
 		},
 		ListEnterpriseSubscriptionsFunc: &StoreV1ListEnterpriseSubscriptionsFunc{
 			defaultHook: func(context.Context, subscriptions.ListEnterpriseSubscriptionsOptions) (r0 []*subscriptions.SubscriptionWithConditions, r1 error) {
+				return
+			},
+		},
+		NowFunc: &StoreV1NowFunc{
+			defaultHook: func() (r0 utctime.Time) {
 				return
 			},
 		},
@@ -210,6 +219,11 @@ func NewStrictMockStoreV1() *MockStoreV1 {
 				panic("unexpected invocation of MockStoreV1.ListEnterpriseSubscriptions")
 			},
 		},
+		NowFunc: &StoreV1NowFunc{
+			defaultHook: func() utctime.Time {
+				panic("unexpected invocation of MockStoreV1.Now")
+			},
+		},
 		RevokeEnterpriseSubscriptionLicenseFunc: &StoreV1RevokeEnterpriseSubscriptionLicenseFunc{
 			defaultHook: func(context.Context, string, subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error) {
 				panic("unexpected invocation of MockStoreV1.RevokeEnterpriseSubscriptionLicense")
@@ -264,6 +278,9 @@ func NewMockStoreV1From(i StoreV1) *MockStoreV1 {
 		},
 		ListEnterpriseSubscriptionsFunc: &StoreV1ListEnterpriseSubscriptionsFunc{
 			defaultHook: i.ListEnterpriseSubscriptions,
+		},
+		NowFunc: &StoreV1NowFunc{
+			defaultHook: i.Now,
 		},
 		RevokeEnterpriseSubscriptionLicenseFunc: &StoreV1RevokeEnterpriseSubscriptionLicenseFunc{
 			defaultHook: i.RevokeEnterpriseSubscriptionLicense,
@@ -1472,6 +1489,104 @@ func (c StoreV1ListEnterpriseSubscriptionsFuncCall) Args() []interface{} {
 // invocation.
 func (c StoreV1ListEnterpriseSubscriptionsFuncCall) Results() []interface{} {
 	return []interface{}{c.Result0, c.Result1}
+}
+
+// StoreV1NowFunc describes the behavior when the Now method of the parent
+// MockStoreV1 instance is invoked.
+type StoreV1NowFunc struct {
+	defaultHook func() utctime.Time
+	hooks       []func() utctime.Time
+	history     []StoreV1NowFuncCall
+	mutex       sync.Mutex
+}
+
+// Now delegates to the next hook function in the queue and stores the
+// parameter and result values of this invocation.
+func (m *MockStoreV1) Now() utctime.Time {
+	r0 := m.NowFunc.nextHook()()
+	m.NowFunc.appendCall(StoreV1NowFuncCall{r0})
+	return r0
+}
+
+// SetDefaultHook sets function that is called when the Now method of the
+// parent MockStoreV1 instance is invoked and the hook queue is empty.
+func (f *StoreV1NowFunc) SetDefaultHook(hook func() utctime.Time) {
+	f.defaultHook = hook
+}
+
+// PushHook adds a function to the end of hook queue. Each invocation of the
+// Now method of the parent MockStoreV1 instance invokes the hook at the
+// front of the queue and discards it. After the queue is empty, the default
+// hook function is invoked for any future action.
+func (f *StoreV1NowFunc) PushHook(hook func() utctime.Time) {
+	f.mutex.Lock()
+	f.hooks = append(f.hooks, hook)
+	f.mutex.Unlock()
+}
+
+// SetDefaultReturn calls SetDefaultHook with a function that returns the
+// given values.
+func (f *StoreV1NowFunc) SetDefaultReturn(r0 utctime.Time) {
+	f.SetDefaultHook(func() utctime.Time {
+		return r0
+	})
+}
+
+// PushReturn calls PushHook with a function that returns the given values.
+func (f *StoreV1NowFunc) PushReturn(r0 utctime.Time) {
+	f.PushHook(func() utctime.Time {
+		return r0
+	})
+}
+
+func (f *StoreV1NowFunc) nextHook() func() utctime.Time {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	if len(f.hooks) == 0 {
+		return f.defaultHook
+	}
+
+	hook := f.hooks[0]
+	f.hooks = f.hooks[1:]
+	return hook
+}
+
+func (f *StoreV1NowFunc) appendCall(r0 StoreV1NowFuncCall) {
+	f.mutex.Lock()
+	f.history = append(f.history, r0)
+	f.mutex.Unlock()
+}
+
+// History returns a sequence of StoreV1NowFuncCall objects describing the
+// invocations of this function.
+func (f *StoreV1NowFunc) History() []StoreV1NowFuncCall {
+	f.mutex.Lock()
+	history := make([]StoreV1NowFuncCall, len(f.history))
+	copy(history, f.history)
+	f.mutex.Unlock()
+
+	return history
+}
+
+// StoreV1NowFuncCall is an object that describes an invocation of method
+// Now on an instance of MockStoreV1.
+type StoreV1NowFuncCall struct {
+	// Result0 is the value of the 1st result returned from this method
+	// invocation.
+	Result0 utctime.Time
+}
+
+// Args returns an interface slice containing the arguments of this
+// invocation.
+func (c StoreV1NowFuncCall) Args() []interface{} {
+	return []interface{}{}
+}
+
+// Results returns an interface slice containing the results of this
+// invocation.
+func (c StoreV1NowFuncCall) Results() []interface{} {
+	return []interface{}{c.Result0}
 }
 
 // StoreV1RevokeEnterpriseSubscriptionLicenseFunc describes the behavior

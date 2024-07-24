@@ -12,6 +12,7 @@ import (
 
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database"
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
+	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/utctime"
 	"github.com/sourcegraph/sourcegraph/internal/license"
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -22,6 +23,10 @@ import (
 // is meant to abstract away and limit the exposure of the underlying data layer
 // to the handler through a thin-wrapper.
 type StoreV1 interface {
+	// Now provides the current time. It should always be used instead of
+	// utctime.Now() or time.Now() for ease of mocking in tests.
+	Now() utctime.Time
+
 	// GenerateSubscriptionID generates a new subscription ID for subscription
 	// creation.
 	GenerateSubscriptionID() (string, error)
@@ -45,7 +50,8 @@ type StoreV1 interface {
 	// RevokeEnterpriseSubscriptionLicense premanently revokes a license.
 	RevokeEnterpriseSubscriptionLicense(ctx context.Context, licenseID string, opts subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error)
 
-	// Interfaces specific to 'ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY'
+	// Interfaces specific to 'ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY', grouped
+	// to clarify their purpose for future license key types.
 	licenseKeysStore
 
 	// IntrospectSAMSToken takes a SAMS access token and returns relevant metadata.
@@ -115,6 +121,8 @@ func NewStoreV1(opts NewStoreV1Options) StoreV1 {
 		LicenseKeyRequiredTags: opts.LicenseKeyRequiredTags,
 	}
 }
+
+func (s *storeV1) Now() utctime.Time { return utctime.Now() }
 
 func (s *storeV1) GenerateSubscriptionID() (string, error) {
 	id, err := uuid.NewRandom()

@@ -438,7 +438,7 @@ func (s *handlerV1) CreateEnterpriseSubscription(ctx context.Context, req *conne
 			"failed to check for existing subscription")
 	}
 
-	createdAt := utctime.Now()
+	createdAt := s.store.Now()
 	createdSub, err := s.store.UpsertEnterpriseSubscription(ctx, sub.Id,
 		subscriptions.UpsertSubscriptionOptions{
 			CreatedAt:                createdAt,
@@ -590,7 +590,7 @@ func (s *handlerV1) ArchiveEnterpriseSubscription(ctx context.Context, req *conn
 		return nil, connectutil.InternalError(ctx, logger, err, "failed to find subscription")
 	}
 
-	archivedAt := utctime.Now()
+	archivedAt := s.store.Now()
 	createdSub, err := s.store.UpsertEnterpriseSubscription(ctx, subscriptionID,
 		subscriptions.UpsertSubscriptionOptions{
 			ArchivedAt: pointers.Ptr(archivedAt),
@@ -644,7 +644,7 @@ func (s *handlerV1) CreateEnterpriseSubscriptionLicense(ctx context.Context, req
 			errors.New("target subscription is archived"))
 	}
 
-	createdAt := utctime.Now()
+	createdAt := s.store.Now()
 
 	var createdLicense *subscriptions.LicenseWithConditions
 	switch data := create.License.(type) {
@@ -707,7 +707,7 @@ func (s *handlerV1) RevokeEnterpriseSubscriptionLicense(ctx context.Context, req
 
 	license, err := s.store.RevokeEnterpriseSubscriptionLicense(ctx, licenseID, subscriptions.RevokeLicenseOpts{
 		Message: req.Msg.GetReason(),
-		Time:    pointers.Ptr(utctime.Now()),
+		Time:    pointers.Ptr(s.store.Now()),
 	})
 	if err != nil {
 		if errors.Is(err, subscriptions.ErrSubscriptionLicenseNotFound) {
