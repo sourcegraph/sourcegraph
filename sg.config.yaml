@@ -456,6 +456,8 @@ commands:
       # Connect to local development database, with the assumption that it will
       # have dotcom database tables.
       export DOTCOM_PGDSN_OVERRIDE="postgres://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$PGDATABASE?sslmode=$PGSSLMODE"
+      # Enterprise Portal is responsible for generating license keys.
+      export SOURCEGRAPH_LICENSE_GENERATION_KEY=$(cat ../dev-private/enterprise/dev/test-license-generation-key.pem)
       .bin/enterprise-portal
     install: |
       if [ -n "$DELVE" ]; then
@@ -2179,3 +2181,27 @@ tests:
       See more details: https://docs-legacy.sourcegraph.com/dev/how-to/testing#running-integration-tests
 
     cmd: pnpm test-integration:debug
+
+  enterprise-portal-e2e:
+    # After EP stops requiring dotcomdb, we can update this to just require
+    # `sg start -cmd enterprise-portal`
+    preamble:
+      An Enterprise Portal instance must be already running for these tests to
+      work, most commonly with `sg start dotcom`.
+
+      This will leave a lot of data behind in your local database - you can
+      delete everything using `psql -d sourcegraph -c TRUNCATE TABLE enterprise_portal_subscriptions CASCADE;`.
+
+      Subsequent runs do not conflict with existing data.
+    cmd: |
+      go test -v ./cmd/enterprise-portal/e2e/...
+    env:
+      EP_E2E_ENTERPRISEPORTAL_SERVER: "http://127.0.0.1:6081"
+      EP_E2E_SAMS_SERVER: "https://accounts.sgdev.org"
+    externalSecrets:
+      EP_E2E_SAMS_CLIENT_ID:
+        project: sourcegraph-local-dev
+        name: SG_LOCAL_DEV_SAMS_CLIENT_ID
+      EP_E2E_SAMS_CLIENT_SECRET:
+        project: sourcegraph-local-dev
+        name: SG_LOCAL_DEV_SAMS_CLIENT_SECRET
