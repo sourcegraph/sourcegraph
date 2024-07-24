@@ -387,7 +387,8 @@ func (s *handlerV1) ListEnterpriseSubscriptionLicenses(ctx context.Context, req 
 	for i, l := range licenses {
 		resp.Licenses[i], err = convertLicenseToProto(l)
 		if err != nil {
-			return nil, connectutil.InternalError(ctx, logger, err,
+			return nil, connectutil.InternalError(ctx, logger,
+				errors.Wrap(err, l.ID),
 				"failed to read Enterprise Subscription license")
 		}
 		accessedSubscriptions[resp.Licenses[i].GetSubscriptionId()] = struct{}{}
@@ -679,7 +680,9 @@ func (s *handlerV1) CreateEnterpriseSubscriptionLicense(ctx context.Context, req
 
 	proto, err := convertLicenseToProto(createdLicense)
 	if err != nil {
-		return nil, connectutil.InternalError(ctx, logger, err, "failed to parse license")
+		return nil, connectutil.InternalError(ctx, logger,
+			errors.Wrap(err, createdLicense.ID),
+			"failed to parse license")
 	}
 	logger.Scoped("audit").Info("CreateEnterpriseSubscriptionLicense",
 		log.String("subscription", subscriptionID),
@@ -761,7 +764,7 @@ func (s *handlerV1) UpdateEnterpriseSubscriptionMembership(ctx context.Context, 
 			if errors.Is(err, subscriptions.ErrSubscriptionNotFound) {
 				return nil, connect.NewError(connect.CodeNotFound, errors.New("subscription not found"))
 			}
-			return nil, connectutil.InternalError(ctx, logger, err, "get dotcom enterprise subscription")
+			return nil, connectutil.InternalError(ctx, logger, err, "get enterprise subscription")
 		}
 	} else if instanceDomain != "" {
 		// Validate and normalize the domain

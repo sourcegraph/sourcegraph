@@ -5,12 +5,12 @@ import (
 	"go/ast"
 	"go/token"
 
-	"github.com/hexops/valast/customtype"
+	"github.com/hexops/valast"
 )
 
 // Register custom representation for autogold.
 func init() {
-	customtype.Register(func(ut Time) ast.Expr {
+	valast.RegisterType(func(ut Time) ast.Expr {
 		t := ut.AsTime()
 		return &ast.CallExpr{
 			Fun: &ast.SelectorExpr{

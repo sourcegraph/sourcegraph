@@ -711,7 +711,7 @@ func TestHandlerV1_CreateEnterpriseSubscriptionLicense(t *testing.T) {
 					License:        &subscriptionsv1.EnterpriseSubscriptionLicense_Key{},
 				},
 			},
-			wantError: autogold.Expect("invalid_argument: expiry must be in the future"),
+			wantError: autogold.Expect("invalid_argument: user_count is invalid"),
 		},
 		{
 			name: "license key: expiration is required",

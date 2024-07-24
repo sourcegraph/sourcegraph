@@ -39,7 +39,7 @@ func convertLicenseToProto(license *subscriptions.LicenseWithConditions) (*subsc
 	case subscriptionsv1.EnterpriseSubscriptionLicenseType_ENTERPRISE_SUBSCRIPTION_LICENSE_TYPE_KEY.String():
 		var data subscriptions.DataLicenseKey
 		if err := json.Unmarshal(license.LicenseData, &data); err != nil {
-			return proto, errors.Wrap(err, "unmarshal license data")
+			return proto, errors.Wrapf(err, "unmarshal license data: %q", string(license.LicenseData))
 		}
 		proto.License = &subscriptionsv1.EnterpriseSubscriptionLicense_Key{
 			Key: &subscriptionsv1.EnterpriseSubscriptionLicenseKey{
@@ -54,6 +54,7 @@ func convertLicenseToProto(license *subscriptions.LicenseWithConditions) (*subsc
 				LicenseKey: data.SignedKey,
 			},
 		}
+
 	default:
 		return proto, errors.Newf("unknown license type %q", t)
 	}
@@ -118,7 +119,10 @@ func convertProtoRoleToIAMTupleObject(role subscriptionsv1.Role, subscriptionID 
 }
 
 // convertLicenseKeyToLicenseKeyData converts a create-license request into an
-// actual license key. It only returns valid Connect errors.
+// actual license key for creating a database entry.
+//
+// It may return Connect errors - all other errors should be considered internal
+// errors.
 func convertLicenseKeyToLicenseKeyData(
 	createdAt utctime.Time,
 	sub *subscriptions.Subscription,
@@ -128,6 +132,9 @@ func convertLicenseKeyToLicenseKeyData(
 	// StoreV1.SignEnterpriseSubscriptionLicenseKey
 	signKeyFn func(license.Info) (string, error),
 ) (*subscriptions.DataLicenseKey, error) {
+	if key.GetInfo().GetUserCount() == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user_count is invalid"))
+	}
 	expires := key.GetInfo().GetExpireTime().AsTime()
 	if expires.Before(createdAt.AsTime()) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("expiry must be in the future"))
