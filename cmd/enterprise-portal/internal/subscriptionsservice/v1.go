@@ -446,7 +446,6 @@ func (s *handlerV1) CreateEnterpriseSubscription(ctx context.Context, req *conne
 			DisplayName:              database.NewNullString(sub.GetDisplayName()),
 			InstanceDomain:           database.NewNullString(sub.GetInstanceDomain()),
 			SalesforceSubscriptionID: database.NewNullString(sub.GetSalesforce().GetSubscriptionId()),
-			SalesforceOpportunityID:  database.NewNullString(sub.GetSalesforce().GetOpportunityId()),
 		},
 		subscriptions.CreateSubscriptionConditionOptions{
 			Status:         subscriptionsv1.EnterpriseSubscriptionCondition_STATUS_CREATED,
@@ -505,9 +504,6 @@ func (s *handlerV1) UpdateEnterpriseSubscription(ctx context.Context, req *conne
 		if v := req.Msg.GetSubscription().GetSalesforce().GetSubscriptionId(); v != "" {
 			opts.SalesforceSubscriptionID = database.NewNullString(v)
 		}
-		if v := req.Msg.GetSubscription().GetSalesforce().GetOpportunityId(); v != "" {
-			opts.SalesforceOpportunityID = database.NewNullString(v)
-		}
 	} else {
 		for _, p := range fieldPaths {
 			var valid bool
@@ -529,11 +525,6 @@ func (s *handlerV1) UpdateEnterpriseSubscription(ctx context.Context, req *conne
 				valid = true
 				opts.SalesforceSubscriptionID =
 					database.NewNullString(req.Msg.GetSubscription().GetSalesforce().GetSubscriptionId())
-			}
-			if p == "salesforce.opportunity_id" || p == "*" {
-				valid = true
-				opts.SalesforceOpportunityID =
-					database.NewNullString(req.Msg.GetSubscription().GetSalesforce().GetOpportunityId())
 			}
 
 			if !valid {

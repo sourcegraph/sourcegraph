@@ -160,10 +160,10 @@ func convertLicenseKeyToLicenseKeyData(
 		CreatedAt: createdAt.AsTime(),
 		// Cast expiry to utctime and back for uniform representation
 		ExpiresAt: utctime.FromTime(expires).AsTime(),
-
+		// Provided at creation
+		SalesforceOpportunityID: pointers.NilIfZero(key.GetInfo().GetSalesforceOpportunityId()),
 		// Inherited from subscription
 		SalesforceSubscriptionID: sub.SalesforceSubscriptionID,
-		SalesforceOpportunityID:  sub.SalesforceOpportunityID,
 	}
 	signedKey, err := signKeyFn(info)
 	if err != nil {

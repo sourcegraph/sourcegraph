@@ -112,7 +112,6 @@ func TestConvertSubscriptionToProto(t *testing.T) {
 				DisplayName:              pointers.Ptr("s2"),
 				CreatedAt:                utctime.Time(created),
 				SalesforceSubscriptionID: pointers.Ptr("sf_sub_id"),
-				SalesforceOpportunityID:  pointers.Ptr("sf_opp_id"),
 			},
 			Conditions: []subscriptions.SubscriptionCondition{{
 				TransitionTime: utctime.Time(created),
@@ -326,7 +325,6 @@ func TestConvertLicenseKeyToLicenseKeyData(t *testing.T) {
 		name: "adds salesforce metadata",
 		sub: &subscriptions.Subscription{
 			SalesforceSubscriptionID: pointers.Ptr("sf_sub_id"),
-			SalesforceOpportunityID:  pointers.Ptr("sf_opp_id"),
 		},
 		key: &subscriptionsv1.EnterpriseSubscriptionLicenseKey{
 			Info: &subscriptionsv1.EnterpriseSubscriptionLicenseKey_Info{

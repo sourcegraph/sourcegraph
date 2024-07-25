@@ -298,7 +298,6 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					1,
 					0),
 				SalesforceSubscriptionID: &sql.NullString{},
-				SalesforceOpportunityID:  &sql.NullString{},
 			}),
 		},
 		{
@@ -308,7 +307,6 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					DisplayName: t.Name(),
 					Salesforce: &subscriptionsv1.EnterpriseSubscription_SalesforceMetadata{
 						SubscriptionId: "sf_sub",
-						OpportunityId:  "sf_opp",
 					},
 				},
 				Message: "hello world",
@@ -328,10 +326,6 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					0),
 				SalesforceSubscriptionID: &sql.NullString{
 					String: "sf_sub",
-					Valid:  true,
-				},
-				SalesforceOpportunityID: &sql.NullString{
-					String: "sf_opp",
 					Valid:  true,
 				},
 			}),
@@ -493,7 +487,6 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 				InstanceDomain:           &sql.NullString{},
 				DisplayName:              &sql.NullString{},
 				SalesforceSubscriptionID: &sql.NullString{},
-				SalesforceOpportunityID:  &sql.NullString{},
 				ForceUpdate:              true,
 			}),
 		},
