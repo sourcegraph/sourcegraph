@@ -235,17 +235,12 @@ const businessGroup: SiteAdminSideBarGroup = {
     header: { label: 'Business', icon: BriefcaseIcon },
     items: [
         {
-            label: 'Enterprise customers',
-            to: '/site-admin/dotcom/customers',
-            condition: () => SHOW_BUSINESS_FEATURES,
-        },
-        {
             label: 'Enterprise subscriptions',
             to: '/site-admin/dotcom/product/subscriptions',
             condition: () => SHOW_BUSINESS_FEATURES,
         },
         {
-            label: 'License key lookup',
+            label: 'Subscription license key lookup',
             to: '/site-admin/dotcom/product/licenses',
             condition: () => SHOW_BUSINESS_FEATURES,
         },

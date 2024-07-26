@@ -4,7 +4,7 @@ import { mdiChevronDown, mdiChevronUp } from '@mdi/js'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { useMutation } from '@sourcegraph/http-client'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Alert,
     Button,
@@ -23,7 +23,6 @@ import { CopyableText } from '../../../../components/CopyableText'
 import { LoaderButton } from '../../../../components/LoaderButton'
 import type { ProductLicenseFields, RevokeLicenseResult, RevokeLicenseVariables } from '../../../../graphql-operations'
 import { isProductLicenseExpired } from '../../../../productSubscription/helpers'
-import { AccountName } from '../../../dotcom/productSubscriptions/AccountName'
 import { ProductLicenseValidity } from '../../../dotcom/productSubscriptions/ProductLicenseValidity'
 import { ProductLicenseInfoDescription } from '../../../productSubscription/ProductLicenseInfoDescription'
 import { ProductLicenseTags, UnknownTagWarning, hasUnknownTags } from '../../../productSubscription/ProductLicenseTags'
@@ -93,9 +92,6 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                                             {node.subscription.name}
                                         </Link>
                                     </H3>
-                                    <span className="mr-3">
-                                        <AccountName account={node.subscription.account} />
-                                    </span>
                                 </div>
                             )}
                             {!loading && error && (

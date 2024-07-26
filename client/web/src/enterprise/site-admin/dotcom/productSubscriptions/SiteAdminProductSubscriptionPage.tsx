@@ -8,7 +8,7 @@ import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { logger } from '@sourcegraph/common'
 import { useMutation, useQuery } from '@sourcegraph/http-client'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-import { Button, Container, ErrorAlert, H3, Icon, Link, LoadingSpinner, PageHeader, Text } from '@sourcegraph/wildcard'
+import { Button, Container, ErrorAlert, H3, Icon, LoadingSpinner, PageHeader, Text } from '@sourcegraph/wildcard'
 
 import {
     ConnectionContainer,
@@ -27,7 +27,6 @@ import type {
     DotComProductSubscriptionResult,
     DotComProductSubscriptionVariables,
 } from '../../../../graphql-operations'
-import { AccountName } from '../../../dotcom/productSubscriptions/AccountName'
 import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { LicenseGenerationKeyWarning } from '../../../productSubscription/LicenseGenerationKeyWarning'
 
@@ -172,13 +171,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                 <th className="text-nowrap">Current Plan</th>
                                 <td className="w-100">
                                     <ProductSubscriptionLabel productSubscription={productSubscription} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th className="text-nowrap">Account</th>
-                                <td className="w-100">
-                                    <AccountName account={productSubscription.account} /> &mdash;{' '}
-                                    <Link to={productSubscription.url}>View as user</Link>
                                 </td>
                             </tr>
                             <tr>

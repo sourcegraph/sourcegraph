@@ -15,3 +15,11 @@ plugins:
     out: .
     opt:
       - paths=source_relative
+
+  # Generate connectrpc bindings in Typescript: https://buf.build/connectrpc/query-es?version=v1.4.1
+  - plugin: buf.build/connectrpc/query-es:v1.4.1
+    out: ../../../../client/web/src/enterprise/site-admin/dotcom/productSubscriptions/enterpriseportalgen
+    opt: target=ts
+  - plugin: buf.build/bufbuild/es:v1.10.0
+    out: ../../../../client/web/src/enterprise/site-admin/dotcom/productSubscriptions/enterpriseportalgen
+    opt: target=ts

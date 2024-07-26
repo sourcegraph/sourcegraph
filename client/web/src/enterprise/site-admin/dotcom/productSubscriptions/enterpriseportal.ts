@@ -2,7 +2,7 @@ import type { PartialMessage } from '@bufbuild/protobuf'
 import type { ConnectError, Transport } from '@connectrpc/connect'
 import { defaultOptions, useMutation, useQuery } from '@connectrpc/connect-query'
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { QueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query'
+import { QueryClient, type UseMutationResult, type UseQueryResult, keepPreviousData } from '@tanstack/react-query'
 
 import {
     getCodyGatewayAccess,
@@ -15,6 +15,16 @@ import type {
     UpdateCodyGatewayAccessRequest,
     UpdateCodyGatewayAccessResponse,
 } from './enterpriseportalgen/codyaccess_pb'
+import {
+    listEnterpriseSubscriptions,
+    listEnterpriseSubscriptionLicenses,
+} from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
+import type {
+    ListEnterpriseSubscriptionsResponse,
+    ListEnterpriseSubscriptionsFilter,
+    ListEnterpriseSubscriptionLicensesFilter,
+    ListEnterpriseSubscriptionLicensesResponse,
+} from './enterpriseportalgen/subscriptions_pb'
 
 /**
  * Use a shared QueryClient defined here and explicitly provided via
@@ -129,4 +139,39 @@ export function useUpdateCodyGatewayAccess(
     return useMutation(updateCodyGatewayAccess, {
         transport: mustGetEnvironment(env),
     })
+}
+
+export function useListEnterpriseSubscriptions(
+    env: EnterprisePortalEnvironment,
+    filters: PartialMessage<ListEnterpriseSubscriptionsFilter>[],
+    options: {
+        limit: number
+        shouldLoad: boolean
+    }
+): UseQueryResult<ListEnterpriseSubscriptionsResponse, ConnectError> {
+    return useQuery(
+        listEnterpriseSubscriptions,
+        {
+            filters,
+            pageSize: options.limit,
+        },
+        {
+            transport: mustGetEnvironment(env),
+            enabled: options.shouldLoad,
+            placeholderData: keepPreviousData,
+        }
+    )
+}
+
+export function useListEnterpriseSubscriptionLicenses(
+    env: EnterprisePortalEnvironment,
+    filters: ListEnterpriseSubscriptionLicensesFilter[]
+): UseQueryResult<ListEnterpriseSubscriptionLicensesResponse, ConnectError> {
+    return useQuery(
+        listEnterpriseSubscriptionLicenses,
+        {
+            filters,
+        },
+        { transport: mustGetEnvironment(env) }
+    )
 }

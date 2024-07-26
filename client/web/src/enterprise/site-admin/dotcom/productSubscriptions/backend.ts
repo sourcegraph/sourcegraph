@@ -198,37 +198,6 @@ export const useProductSubscriptionLicensesConnection = (
         },
     })
 
-export function queryProductSubscriptions(args: {
-    first?: number | null
-    query?: string
-}): Observable<ProductSubscriptionsDotComResult['dotcom']['productSubscriptions']> {
-    return queryGraphQL<ProductSubscriptionsDotComResult>(
-        gql`
-            query ProductSubscriptionsDotCom($first: Int, $account: ID, $query: String) {
-                dotcom {
-                    productSubscriptions(first: $first, account: $account, query: $query) {
-                        nodes {
-                            ...SiteAdminProductSubscriptionFields
-                        }
-                        totalCount
-                        pageInfo {
-                            hasNextPage
-                        }
-                    }
-                }
-            }
-            ${siteAdminProductSubscriptionFragment}
-        `,
-        {
-            first: args.first,
-            query: args.query,
-        } as Partial<ProductSubscriptionsDotComVariables>
-    ).pipe(
-        map(dataOrThrowErrors),
-        map(data => data.dotcom.productSubscriptions)
-    )
-}
-
 const QUERY_PRODUCT_LICENSES = gql`
     query DotComProductLicenses($first: Int, $licenseKeySubstring: String) {
         dotcom {
