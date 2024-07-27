@@ -20,7 +20,7 @@ func (c *CodeInsights) InsightHovers() (*AnalyticsFetcher, error) {
 	nodesQuery, summaryQuery, err := makeEventLogsQueries(
 		c.DateRange,
 		c.Grouping,
-		[]string{"InsightHover"},
+		[]string{"insight.hover"},
 	)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (c *CodeInsights) InsightDataPointClicks() (*AnalyticsFetcher, error) {
 	nodesQuery, summaryQuery, err := makeEventLogsQueries(
 		c.DateRange,
 		c.Grouping,
-		[]string{"InsightDataPointClick"},
+		[]string{"insight.dataPoint.click"},
 	)
 	if err != nil {
 		return nil, err
