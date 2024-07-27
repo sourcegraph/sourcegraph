@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "ci-slack-reports_lib",
+    srcs = [
+        "config.go",
+        "main.go",
+        "queries.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/ci-slack-reports",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//internal/version",
+        "//lib/errors",
+        "//lib/managedservicesplatform/runtime",
+        "//lib/managedservicesplatform/runtime/contract",
+        "@com_github_olekukonko_tablewriter//:tablewriter",
+        "@com_github_slack_go_slack//:slack",
+        "@com_github_sourcegraph_log//:log",
+        "@com_google_cloud_go_bigquery//:bigquery",
+        "@org_golang_google_api//iterator",
+        "@org_golang_google_api//option",
+        "@org_golang_x_oauth2//:oauth2",
+    ],
+)
+
+go_binary(
+    name = "ci-slack-reports",
+    embed = [":ci-slack-reports_lib"],
+    visibility = ["//visibility:public"],
+)
