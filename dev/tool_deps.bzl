@@ -11,6 +11,7 @@ P4_FUSION_VERSION = "v1.13.2-sg.04a293a"
 GH_VERSION = "2.45.0"
 PGUTILS_VERSION = "ad082497"
 LINEAR_SDK_VERSION = "21.1.0"
+SCIP_GO_VERSION = "v0.1.14"
 
 GH_BUILDFILE = """
 filegroup(
@@ -387,4 +388,51 @@ def tool_deps():
         url = "https://github.com/honeycombio/honeyvent/releases/download/v1.1.3/honeyvent-darwin-amd64",
         sha256 = "c9acaab8a48aa3345fd323c4315c8aaca52b2f6ce4c6f83b6fa162cd4c516725",
         executable = True,
+    )
+
+    http_archive(
+        name = "scip-go-linux-amd64",
+        url = "https://github.com/sourcegraph/scip-go/releases/download/v0.1.14/scip-go_0.1.14_linux_amd64.tar.gz",
+        integrity = "sha256-8ja7Q6fXAmftnFbmww9S1EpTDYVqgdm8pU2VjEW3hJs=",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["scip-go"])
+        """,
+    )
+
+    http_archive(
+        name = "scip-go-darwin-arm64",
+        url = "https://github.com/sourcegraph/scip-go/releases/download/v0.1.14/scip-go_0.1.14_darwin_arm64.tar.gz",
+        integrity = "sha256-wzFsXZiMnvp1yU4sJDFVYFD6Okf70w3a2jfjCDSxlqM=",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["scip-go"])
+        """,
+    )
+
+    http_archive(
+        name = "scip-go-darwin-amd64",
+        url = "https://github.com/sourcegraph/scip-go/releases/download/v0.1.14/scip-go_0.1.14_darwin_amd64.tar.gz",
+        integrity = "sha256-N+KSKkV0KvJGJV6+25W2A9WmvkRVjeAavwhSq0AsfOs=",
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["scip-go"])
+        """,
+    )
+
+    # Test repo for generating scip-go index
+    http_archive(
+        name = "go-diff",
+        url = "https://github.com/sgtest/go-diff/archive/f935979a5d70d2f3034edc6de94c77be621ce500.zip",
+        integrity = "sha256-dEGXFKOQXUq32RBKaw9AMCpdSZRJDul+wl66Ktdu1PI=",
+        build_file_content = """
+filegroup(
+    name = "src",
+    srcs = glob(["*/**"]),
+    visibility = ["//visibility:public"],
+)
+        """,
     )

@@ -28,6 +28,15 @@ tool(
 )
 
 tool(
+    name = "scip-go",
+    src = select({
+        "@bazel_tools//src/conditions:darwin_x86_64": ["@scip-go-darwin-amd64//:scip-go"],
+        "@bazel_tools//src/conditions:darwin_arm64": ["@scip-go-darwin-arm64//:scip-go"],
+        "@bazel_tools//src/conditions:linux_x86_64": ["@scip-go-linux-amd64//:scip-go"],
+    }),
+)
+
+tool(
     name = "gcloud",
     src = select({
         "@bazel_tools//src/conditions:darwin_x86_64": ["@gcloud-darwin-amd64//:gcloud"],
