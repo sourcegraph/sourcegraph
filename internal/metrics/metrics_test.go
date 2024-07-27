@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
+
+func TestNoGo(t *testing.T) {
+	t.Skip()
+	resp, err := http.Get("https://example.com/") // Need to call Close()
+	if err != nil {
+		panic(err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	_ = body
+	_ = err
+}
 
 func testingHTTPClient(handler http.Handler) (*http.Client, func()) {
 	s := httptest.NewServer(handler)
