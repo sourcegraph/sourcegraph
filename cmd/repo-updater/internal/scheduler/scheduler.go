@@ -268,6 +268,7 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 						schedError.WithLabelValues("requestRepoUpdate").Inc()
 						subLogger.Error("error requesting repo update", log.Error(err), log.String("uri", string(repo.Name)))
 					} else {
+						schedFetchResult.WithLabelValues("error").Inc()
 						schedError.WithLabelValues("repoUpdateResponse").Inc()
 						// We don't want to spam our logs when the rate limiter has been set to block all
 						// updates, or when repo-updater is shutting down.
@@ -276,6 +277,20 @@ func (s *UpdateScheduler) runUpdateLoop(ctx context.Context) {
 						}
 					}
 				} else {
+					gr, err := s.db.GitserverRepos().GetByID(ctx, repo.ID)
+					if err != nil {
+						subLogger.Error("failed to get gitserver_repo from database", log.Error(err))
+						return
+					} else {
+						// If the last_changed timestamp has changed, update the fetch latency metric
+						if !gr.LastChanged.IsZero() && gr.LastChanged.Truncate(time.Second) != lastChanged.Truncate(time.Second) {
+							fetchLatency := lastFetched.Sub(lastChanged)
+							schedFetchLatency.Observe(fetchLatency.Seconds())
+							schedFetchResult.WithLabelValues("changed").Inc()
+						} else {
+							schedFetchResult.WithLabelValues("unchanged").Inc()
+						}
+					}
 					// If the update succeeded, store the latest values for last_fetched
 					// and last_changed in the database.
 					if err := s.db.GitserverRepos().SetLastFetched(ctx, repo.Name, database.GitserverFetchData{
