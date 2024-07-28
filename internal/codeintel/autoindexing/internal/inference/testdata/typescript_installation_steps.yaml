@@ -2,8 +2,10 @@
     - root: ""
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - npm install
   local_steps:
+    - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
     - if [ -n "${VM_MEM_MB:-}" ]; then export NODE_OPTIONS="--max-old-space-size=$VM_MEM_MB"; fi
   root: ""
   indexer: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
@@ -17,12 +19,15 @@
     - root: ""
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - npm install
     - root: foo/bar
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - yarn
   local_steps:
+    - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
     - if [ -n "${VM_MEM_MB:-}" ]; then export NODE_OPTIONS="--max-old-space-size=$VM_MEM_MB"; fi
   root: foo/bar/baz
   indexer: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
@@ -36,16 +41,20 @@
     - root: ""
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - npm install
     - root: foo/bar
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - yarn
     - root: foo/bar/bonk
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - npm install
   local_steps:
+    - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
     - if [ -n "${VM_MEM_MB:-}" ]; then export NODE_OPTIONS="--max-old-space-size=$VM_MEM_MB"; fi
   root: foo/bar/bonk
   indexer: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
@@ -59,8 +68,10 @@
     - root: ""
       image: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
       commands:
+        - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
         - npm install
   local_steps:
+    - N_NODE_MIRROR=https://unofficial-builds.nodejs.org/download/release n --arch x64-musl auto
     - if [ -n "${VM_MEM_MB:-}" ]; then export NODE_OPTIONS="--max-old-space-size=$VM_MEM_MB"; fi
   root: foo/baz
   indexer: sourcegraph/scip-typescript@sha256:3df8b36a2ad4e073415bfbeaedf38b3cfff3e697614c8f578299f470d140c2c8
