@@ -1,0 +1,45 @@
+.root {
+    --progress-bg: rgba(167, 23, 242, 0.1);
+    --progress-blink: rgba(241, 208, 255, 1);
+    --progress-bar-gradient: linear-gradient(90deg, #a112ff 0%, #ff5544 25%, #00cbec 50%, #ff5544 75%, #a112ff 100%);
+
+    width: 100%;
+    height: 0.375rem;
+    border-radius: 3px;
+    background-color: var(--progress-bg);
+
+    &--with-no-progress {
+        animation: progress-blink 1.5s linear infinite;
+        background: linear-gradient(90deg, var(--progress-bg) 0%, var(--progress-blink) 20%, var(--progress-bg) 35%);
+        background-size: 200% 100%;
+    }
+
+    &--with-progress {
+        .bar {
+            animation: progress-blink 1.5s linear infinite;
+        }
+    }
+}
+
+.bar {
+    height: 100%;
+    // Round borders only in the beginning, right side
+    // goes with no round corners
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    background: var(--progress-bar-gradient);
+    background-size: 200% 100%;
+}
+
+/*
+ Background blink animation on the progress bar,
+ it's used on different elements by condition,
+  1. Progress = 0 - we add blink animation the progress root element
+  2. 0 < Progress < 100 - we add blink animation to progress bar
+  3. Progress = 100 - no animations since progress is complete
+*/
+@keyframes progress-blink {
+    to {
+        background-position-x: -200%;
+    }
+}
