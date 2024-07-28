@@ -31,6 +31,16 @@ type GitserverRepoStore interface {
 	// our repo and gitserver_repos table. It is impossible for us not to have a
 	// corresponding row in gitserver_repos because of the trigger on repos table.
 	// Use cursors and limit batch size to paginate through the full set.
+	// Note that this iterator SKIPS any repos that have been soft deleted and another
+	// undeleted row has taken their name.
+	// This usually happens when a repo is deleted on the code host and another repo
+	// with the same name is created, the name will be the same, the external ID will
+	// not.
+	// This is a patch to the fact that we do not have a unique mapping from repo dir
+	// to the repo table. Skipping helps us avoid marking the repo as cloned, which
+	// will cause it to be pruned, and then the new repo will be cloned again,
+	// and eventually the statesyncer will remove the repo again; causing an infinite
+	// clone loop.
 	IterateRepoGitserverStatus(ctx context.Context, options IterateRepoGitserverStatusOptions) (rs []types.RepoGitserverStatus, nextCursor int, err error)
 	GetByID(ctx context.Context, id api.RepoID) (*types.GitserverRepo, error)
 	GetByName(ctx context.Context, name api.RepoName) (*types.GitserverRepo, error)
@@ -184,19 +194,12 @@ ORDER BY deleted_at ASC
 type IterateRepoGitserverStatusOptions struct {
 	// If set, will only iterate over repos that have not been assigned to a shard
 	OnlyWithoutShard bool
-	// If true, also include deleted repos. Note that their repo name will start with
-	// 'DELETED-'
-	IncludeDeleted bool
-	BatchSize      int
-	NextCursor     int
+	BatchSize        int
+	NextCursor       int
 }
 
 func (s *gitserverRepoStore) IterateRepoGitserverStatus(ctx context.Context, options IterateRepoGitserverStatusOptions) (rs []types.RepoGitserverStatus, nextCursor int, err error) {
 	preds := []*sqlf.Query{}
-
-	if !options.IncludeDeleted {
-		preds = append(preds, sqlf.Sprintf("repo.deleted_at IS NULL"))
-	}
 
 	if options.OnlyWithoutShard {
 		preds = append(preds, sqlf.Sprintf("gr.shard_id = ''"))
@@ -264,7 +267,12 @@ SELECT
 	gr.corruption_logs
 FROM gitserver_repos gr
 JOIN repo ON gr.repo_id = repo.id
-WHERE %s
+WHERE
+	%s
+	-- If the repo is deleted, we need to check if there are any undeleted repos with the same name,
+	-- if so we skip over it. This is not ideal, but it fixes an issue in the state syncer where
+	-- this setup of repos causes an infinite reclone loop.
+	AND NOT (repo.deleted_at IS NOT NULL AND EXISTS (SELECT 1 FROM repo other WHERE regexp_replace(repo.name, '^DELETED-\d+\.\d+-', '') = other.name AND other.deleted_at IS NULL))
 ORDER BY gr.repo_id ASC
 %s
 `

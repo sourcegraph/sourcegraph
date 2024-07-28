@@ -158,6 +158,7 @@ All notable changes to Sourcegraph are documented in this file.
 - Selecting "View blame prior to this change" on a file that was moved will now correctly navigate to the old file location at the specified commit. [#61577](https://github.com/sourcegraph/sourcegraph/pull/61577)
 - Git blame performance on large files with a large number of commits has been drastically improved. [#61577](https://github.com/sourcegraph/sourcegraph/pull/61577)
 - Code Insights now properly ignores search API alerts, which previously would have led to a code insight error. [#61431](https://github.com/sourcegraph/sourcegraph/pull/61431)
+- Fixed an issue that could cause repositories to be recloned indefinitely when a repo has been deleted on a codehost and recreated under the same name. [#60643](https://github.com/sourcegraph/sourcegraph/pull/60643)
 
 ## 5.3.3
 

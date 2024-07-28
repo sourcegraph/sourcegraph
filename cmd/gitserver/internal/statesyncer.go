@@ -175,8 +175,6 @@ func syncRepoState(
 	}
 
 	options := database.IterateRepoGitserverStatusOptions{
-		// We also want to include deleted repos as they may still be cloned on disk
-		IncludeDeleted:   true,
 		BatchSize:        iteratePageSize,
 		OnlyWithoutShard: !fullSync,
 	}

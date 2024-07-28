@@ -47,6 +47,9 @@ func TestIterateRepoGitserverStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// And reinsert a repo with the same name (the case where a repo is deleted and recreated so the external ID changes)
+	require.NoError(t, db.Repos().Create(ctx, &types.Repo{Name: "github.com/sourcegraph/repo3"}))
+
 	if err := db.GitserverRepos().Update(ctx, &types.GitserverRepo{
 		RepoID:      repos[0].ID,
 		ShardID:     "shard-0",
@@ -96,16 +99,10 @@ func TestIterateRepoGitserverStatus(t *testing.T) {
 	}
 
 	t.Run("iterate with default options", func(t *testing.T) {
-		assert(t, 2, 2, IterateRepoGitserverStatusOptions{})
+		assert(t, 3, 3, IterateRepoGitserverStatusOptions{})
 	})
 	t.Run("iterate only repos without shard", func(t *testing.T) {
-		assert(t, 1, 1, IterateRepoGitserverStatusOptions{OnlyWithoutShard: true})
-	})
-	t.Run("include deleted", func(t *testing.T) {
-		assert(t, 3, 3, IterateRepoGitserverStatusOptions{IncludeDeleted: true})
-	})
-	t.Run("include deleted, but still only without shard", func(t *testing.T) {
-		assert(t, 2, 2, IterateRepoGitserverStatusOptions{OnlyWithoutShard: true, IncludeDeleted: true})
+		assert(t, 2, 2, IterateRepoGitserverStatusOptions{OnlyWithoutShard: true})
 	})
 }
 
