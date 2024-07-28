@@ -134,10 +134,7 @@
 
 (null) @constant.null
 
-[
-  (true)
-  (false)
-] @boolean
+[(true) (false)] @boolean
 
 [
   (nullable_modifier)

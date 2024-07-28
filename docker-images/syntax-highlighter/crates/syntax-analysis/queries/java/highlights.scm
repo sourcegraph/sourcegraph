@@ -78,10 +78,7 @@
   (string_literal)]
 @string
 
-[
-  (true)
-  (false)]
-@boolean
+[(true) (false)] @boolean
 
 (null_literal) @constant.null
 

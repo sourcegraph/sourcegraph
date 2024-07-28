@@ -125,8 +125,7 @@
 (float_literal) @float
 (imaginary_literal) @number
 
-(true) @boolean
-(false) @boolean
+[(true) (false)] @boolean
 (nil) @constant.null
 
 (comment) @comment

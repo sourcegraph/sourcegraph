@@ -18,11 +18,9 @@
 
 ; Literals
 
-[
-  (none)
-  (true)
-  (false)]
-@constant.builtin
+[(true) (false)] @boolean
+
+(none) @constant.builtin
 
 [
   (integer)

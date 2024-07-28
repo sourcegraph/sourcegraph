@@ -132,10 +132,7 @@
   (float)]
 @number
 
-[
-  (true)
-  (false)]
-@boolean
+[(true) (false)] @boolean
 
 (nil) @constant.null
 
