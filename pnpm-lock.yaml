@@ -1988,7 +1988,7 @@ packages:
       object-assign: 4.0.1
       skatejs: 0.13.17
       skatejs-template-html: 0.0.0
-      tether: github.com/atlassian/tether/bf85430889b5231fbe5b383416cce6281225bf06
+      tether: git@github.com+atlassian/tether/bf85430889b5231fbe5b383416cce6281225bf06
       trim-extra-html-whitespace: 1.3.0
       underscore: 1.13.1
       webcomponents.js: 0.7.20
@@ -19597,8 +19597,8 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /ip@1.1.8:
-    resolution: {integrity: sha512-PuExPYUiu6qMBQb4l06ecm6T6ujzhmh+MeJcW9wa89PoAz5pvd4zPgN5WJV104mb6S2T1AwNIAaB70JNrLQWhg==}
+  /ip@1.1.9:
+    resolution: {integrity: sha512-cyRxvOEpNHNtchU3Ln9KC/auJgup87llfQpQ+t5ghoC/UhL16SWzbueiCsdTnWmqAWl7LadfuwhlqmtOaqMHdQ==}
     dev: true
 
   /ip@2.0.1:
@@ -22972,7 +22972,7 @@ packages:
     engines: {node: '>= 8'}
     dependencies:
       degenerator: 3.0.2
-      ip: 1.1.8
+      ip: 1.1.9
       netmask: 2.0.2
     dev: true
 
@@ -28883,8 +28883,8 @@ packages:
       react: 18.1.0
     dev: false
 
-  github.com/atlassian/tether/bf85430889b5231fbe5b383416cce6281225bf06:
-    resolution: {tarball: https://codeload.github.com/atlassian/tether/tar.gz/bf85430889b5231fbe5b383416cce6281225bf06}
+  git@github.com+atlassian/tether/bf85430889b5231fbe5b383416cce6281225bf06:
+    resolution: {commit: bf85430889b5231fbe5b383416cce6281225bf06, repo: git@github.com:atlassian/tether.git, type: git}
     name: tether
     version: 0.6.5
     dev: true
