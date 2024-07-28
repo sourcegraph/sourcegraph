@@ -68,7 +68,7 @@
       "type": "chrome",
       "request": "attach",
       "port": 9222,
-      "webRoot": "${workspaceRoot}/web",
+      "webRoot": "${workspaceRoot}/client/web",
       "url": "http://localhost:3080/*",
       "sourceMaps": true
     },
