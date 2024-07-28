@@ -1,0 +1,2 @@
+This is a fork of the fastwalk code golang.org/x/tools/imports at commit
+8cab8a13. It exports fastWalk as Walk.
