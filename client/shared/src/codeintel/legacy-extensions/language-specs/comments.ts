@@ -18,6 +18,9 @@ export const leadingAtSymbolPattern = /^\s*@/
 /** Matches whitespace followed by a hash symbol at beginning of a line. */
 export const leadingHashPattern = /^\s*#/
 
+/** Matches one or more apostrophes followed by one optional space. */
+export const apostrophePattern = /'+\s?/
+
 export const cStyleBlockComment: BlockCommentStyle = {
     startRegex: /\/\*\*?/,
     endRegex: /\*\//,

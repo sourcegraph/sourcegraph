@@ -1,4 +1,5 @@
 import {
+    apostrophePattern,
     cStyleComment,
     dashPattern,
     javaStyleComment,
@@ -337,6 +338,13 @@ const thriftSpec: LanguageSpec = {
     commentStyles: [cStyleComment],
 }
 
+const vbnetSpec: LanguageSpec = {
+    languageID: 'vbnet',
+    stylized: 'VB.Net',
+    fileExts: ['vb'],
+    commentStyles: [{ lineRegex: apostrophePattern }],
+}
+
 const verilogSpec: LanguageSpec = {
     languageID: 'verilog',
     stylized: 'Verilog',
@@ -418,6 +426,7 @@ export const languageSpecs: LanguageSpec[] = [
     swiftSpec,
     thriftSpec,
     typescriptSpec,
+    vbnetSpec,
     verilogSpec,
     vhdlSpec,
     zigSpec,
