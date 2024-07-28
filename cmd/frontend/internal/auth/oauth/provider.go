@@ -19,6 +19,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/extsvc"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/azuredevops"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/bitbucketcloud"
+	"github.com/sourcegraph/sourcegraph/internal/extsvc/bitbucketserver"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/github"
 	"github.com/sourcegraph/sourcegraph/internal/extsvc/gitlab"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
@@ -66,6 +67,8 @@ func (p *Provider) CachedInfo() *providers.Info {
 		displayName = p.SourceConfig.Gitlab.DisplayName
 	case p.SourceConfig.Bitbucketcloud != nil && p.SourceConfig.Bitbucketcloud.DisplayName != "":
 		displayName = p.SourceConfig.Bitbucketcloud.DisplayName
+	case p.SourceConfig.Bitbucketserver != nil && p.SourceConfig.Bitbucketserver.DisplayName != "":
+		displayName = p.SourceConfig.Bitbucketserver.DisplayName
 	}
 	return &providers.Info{
 		ServiceID:   p.ServiceID,
@@ -90,6 +93,8 @@ func (p *Provider) ExternalAccountInfo(ctx context.Context, account extsvc.Accou
 		return gitlab.GetPublicExternalAccountData(ctx, &account.AccountData)
 	case extsvc.TypeBitbucketCloud:
 		return bitbucketcloud.GetPublicExternalAccountData(ctx, &account.AccountData)
+	case extsvc.TypeBitbucketServer:
+		return bitbucketserver.GetPublicExternalAccountData(ctx, &account.AccountData)
 	case extsvc.TypeAzureDevOps:
 		return azuredevops.GetPublicExternalAccountData(ctx, &account.AccountData)
 	}

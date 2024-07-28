@@ -69,24 +69,24 @@ func NewClient(urn string, config *schema.BitbucketServerConnection, httpClient 
 		return nil, err
 	}
 
-	if config.Authorization == nil {
-		if config.Token != "" {
-			client.Auth = &auth.OAuthBearerToken{Token: config.Token}
-		} else {
-			client.Auth = &auth.BasicAuth{
-				Username: config.Username,
-				Password: config.Password,
-			}
-		}
+	// if config.Authorization == nil {
+	if config.Token != "" {
+		client.Auth = &auth.OAuthBearerToken{Token: config.Token}
 	} else {
-		err := client.SetOAuth(
-			config.Authorization.Oauth.ConsumerKey,
-			config.Authorization.Oauth.SigningKey,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "authorization.oauth.signingKey")
+		client.Auth = &auth.BasicAuth{
+			Username: config.Username,
+			Password: config.Password,
 		}
 	}
+	// } else {
+	// 	err := client.SetOAuth(
+	// 		config.Authorization.Oauth.ConsumerKey,
+	// 		config.Authorization.Oauth.SigningKey,
+	// 	)
+	// 	if err != nil {
+	// 		return nil, errors.Wrap(err, "authorization.oauth.signingKey")
+	// 	}
+	// }
 
 	return client, nil
 }
@@ -1564,7 +1564,7 @@ func (e *httpError) ExtractPullRequest() (*PullRequest, error) {
 // the username in X-Ausername.
 // If no username is found in the response headers, an error is returned.
 func (c *Client) AuthenticatedUsername(ctx context.Context) (username string, err error) {
-	resp, err := c.send(ctx, "GET", "rest/api/1.0/users", url.Values{"limit": []string{"1"}}, nil, nil)
+	resp, err := c.send(ctx, "GET", "rest/api/1.0/application-properties", url.Values{"limit": []string{"1"}}, nil, nil)
 	if err != nil {
 		return "", err
 	}

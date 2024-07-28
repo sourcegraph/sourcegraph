@@ -222,6 +222,9 @@ const ProviderIcon: React.FunctionComponent<{ serviceType: AuthProvider['service
         case 'bitbucketCloud': {
             return <Icon aria-hidden={true} svgPath={mdiBitbucket} />
         }
+        case 'bitbucketServer': {
+            return <Icon aria-hidden={true} svgPath={mdiBitbucket} />
+        }
         case 'azuredevops': {
             return <Icon aria-hidden={true} svgPath={mdiMicrosoftAzureDevops} />
         }

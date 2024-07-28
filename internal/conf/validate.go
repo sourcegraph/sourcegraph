@@ -254,6 +254,9 @@ func UnredactSecrets(input string, raw conftypes.RawUnified) (string, error) {
 		if ap.Bitbucketcloud != nil {
 			oldAuthProviderSecrets[ap.Bitbucketcloud.ClientKey] = ap.Bitbucketcloud.ClientSecret
 		}
+		if ap.Bitbucketserver != nil {
+			oldAuthProviderSecrets[ap.Bitbucketserver.ClientKey] = ap.Bitbucketserver.ClientSecret
+		}
 		if ap.AzureDevOps != nil {
 			oldAuthProviderSecrets[ap.AzureDevOps.ClientID] = ap.AzureDevOps.ClientSecret
 		}
@@ -277,6 +280,9 @@ func UnredactSecrets(input string, raw conftypes.RawUnified) (string, error) {
 		}
 		if ap.Bitbucketcloud != nil && ap.Bitbucketcloud.ClientSecret == redactedSecret {
 			ap.Bitbucketcloud.ClientSecret = oldAuthProviderSecrets[ap.Bitbucketcloud.ClientKey]
+		}
+		if ap.Bitbucketserver != nil && ap.Bitbucketserver.ClientSecret == redactedSecret {
+			ap.Bitbucketserver.ClientSecret = oldAuthProviderSecrets[ap.Bitbucketserver.ClientKey]
 		}
 		if ap.AzureDevOps != nil && ap.AzureDevOps.ClientSecret == redactedSecret {
 			ap.AzureDevOps.ClientSecret = oldAuthProviderSecrets[ap.AzureDevOps.ClientID]
@@ -408,6 +414,9 @@ func redactConfSecrets(raw conftypes.RawUnified, hashSecrets bool) (empty confty
 		}
 		if ap.Bitbucketcloud != nil {
 			ap.Bitbucketcloud.ClientSecret = getRedactedSecret(ap.Bitbucketcloud.ClientSecret, hashSecrets)
+		}
+		if ap.Bitbucketserver != nil {
+			ap.Bitbucketserver.ClientSecret = getRedactedSecret(ap.Bitbucketserver.ClientSecret, hashSecrets)
 		}
 		if ap.AzureDevOps != nil {
 			ap.AzureDevOps.ClientSecret = getRedactedSecret(ap.AzureDevOps.ClientSecret, hashSecrets)

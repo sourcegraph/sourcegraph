@@ -2421,6 +2421,7 @@
             "enum": [
               "azureDevOps",
               "bitbucketcloud",
+              "bitbucketserver",
               "builtin",
               "gerrit",
               "github",
@@ -2437,6 +2438,9 @@
           },
           {
             "$ref": "#/definitions/BitbucketCloudAuthProvider"
+          },
+          {
+            "$ref": "#/definitions/BitbucketServerAuthProvider"
           },
           {
             "$ref": "#/definitions/BuiltinAuthProvider"
@@ -4247,6 +4251,55 @@
           "!go": {
             "pointer": true
           }
+        }
+      }
+    },
+    "BitbucketServerAuthProvider": {
+      "description": "Configures the Bitbucket Server OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App in Bitbucket Server: https://confluence.atlassian.com/bitbucketserver/configure-an-incoming-link-1108483657.html. The application should have the repository read scope and the callback URL set to the concatenation of your Sourcegraph instance URL and \"/.auth/bitbucketserver/callback\".",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url", "clientKey", "clientSecret"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "bitbucketserver"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the Bitbucket Server / Data Center instance."
+        },
+        "clientKey": {
+          "type": "string",
+          "description": "The Client Key of the Bitbucket OAuth app."
+        },
+        "clientSecret": {
+          "type": "string",
+          "description": "The Client Secret of the Bitbucket OAuth app."
+        },
+        "displayName": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/displayName"
+        },
+        "displayPrefix": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/displayPrefix",
+          "!go": {
+            "pointer": true
+          }
+        },
+        "hidden": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
+        },
+        "order": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/order"
+        },
+        "apiScope": {
+          "type": "string",
+          "description": "The OAuth API scope that should be used. Separate multiple values by comma.",
+          "default": "REPO_READ"
+        },
+        "allowSignup": {
+          "description": "Allows new visitors to sign up for accounts via Bitbucket Server authentication. If false, users signing in via Bitbucket Server must have an existing Sourcegraph account, which will be linked to their Bitbucket Server identity after sign-in.",
+          "default": true,
+          "type": "boolean"
         }
       }
     },

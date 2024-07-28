@@ -146,7 +146,7 @@ func (p *Provider) FetchUserPerms(ctx context.Context, account *extsvc.Account, 
 		return nil, errors.Wrap(err, "unmarshaling account data")
 	}
 
-	ids, err := p.repoIDs(ctx, user.Name, false)
+	ids, err := p.repoIDs(ctx, user.Name)
 
 	extIDs := make([]extsvc.RepoID, 0, len(ids))
 	for _, id := range ids {
@@ -188,16 +188,16 @@ func (p *Provider) FetchRepoPerms(ctx context.Context, repo *extsvc.Repository, 
 
 var errNoResults = errors.New("no results returned by the Bitbucket Server API")
 
-func (p *Provider) repoIDs(ctx context.Context, username string, public bool) ([]uint32, error) {
+func (p *Provider) repoIDs(ctx context.Context, username string) ([]uint32, error) {
 	if p.pluginPerm {
 		return p.repoIDsFromPlugin(ctx, username)
 	}
-	return p.repoIDsFromAPI(ctx, username, public)
+	return p.repoIDsFromAPI(ctx, username)
 }
 
 // repoIDsFromAPI returns all repositories for which the given user has the permission to read from
 // the Bitbucket Server API. when no username is given, only public repos are returned.
-func (p *Provider) repoIDsFromAPI(ctx context.Context, username string, public bool) (ids []uint32, err error) {
+func (p *Provider) repoIDsFromAPI(ctx context.Context, username string) (ids []uint32, err error) {
 	t := &bitbucketserver.PageToken{Limit: p.pageSize}
 	c := p.client
 
@@ -206,9 +206,9 @@ func (p *Provider) repoIDsFromAPI(ctx context.Context, username string, public b
 		filters = append(filters, "?visibility=public")
 	} else if c, err = c.Sudo(username); err != nil {
 		return nil, err
-	} else if !public {
-		filters = append(filters, "?visibility=private")
 	}
+
+	filters = append(filters, "?visibility=private")
 
 	for t.HasMore() {
 		repos, next, err := c.Repos(ctx, t, filters...)
