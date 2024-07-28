@@ -10679,6 +10679,43 @@ type PerforceChangelist {
     commit: GitCommit!
 }
 
+extend type Mutation {
+    """
+    Updates a code host's rate limit configurations. All rate limit values must be positive integers.
+    """
+    setCodeHostRateLimits(input: SetCodeHostRateLimitsInput!): EmptyResponse
+}
+
+"""
+SetCodeHostRateLimitsInput represents the input for configuring rate limits for a code host.
+"""
+input SetCodeHostRateLimitsInput {
+    """
+    ID of the code host for which rate limits are being set.
+    """
+    codeHostID: ID!
+
+    """
+    The maximum number of API requests allowed per time window defined by apiReplenishmentIntervalSeconds.
+    """
+    apiQuota: Int!
+
+    """
+    The time interval at which the apiQuota's worth of API requests are replenished.
+    """
+    apiReplenishmentIntervalSeconds: Int!
+
+    """
+    The maximum number of Git requests allowed per time window defined by gitReplenishmentIntervalSeconds.
+    """
+    gitQuota: Int!
+
+    """
+    The time interval at which the gitQuota's worth of Git requests are replenished.
+    """
+    gitReplenishmentIntervalSeconds: Int!
+}
+
 extend type Query {
     """
     List of all configured code hosts on this instance.

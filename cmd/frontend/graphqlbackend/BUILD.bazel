@@ -399,6 +399,7 @@ go_test(
         "access_tokens_test.go",
         "affiliated_namespaces_test.go",
         "client_configuration_test.go",
+        "code_host_test.go",
         "code_hosts_test.go",
         "event_log_test.go",
         "event_logs_test.go",
