@@ -136,7 +136,7 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 	}
 	globals.ConfigurationServerFrontendOnly = conf.InitConfigurationServerFrontendOnly(newConfigurationSource(logger, db))
 	conf.MustValidateDefaults()
-
+	setGlobals()
 	// now we can init the keyring, as it depends on site config
 	if err := keyring.Init(ctx); err != nil {
 		return errors.Wrap(err, "failed to initialize encryption keyring")
@@ -368,6 +368,16 @@ func makeExternalAPI(db database.DB, logger sglog.Logger, schema *graphql.Schema
 	server := httpserver.New(listener, httpServer, makeServerOptions()...)
 	logger.Debug("HTTP running", sglog.String("on", httpAddr))
 	return server, nil
+}
+
+// setGlobals is used to set the value of global/s prior to possible race conditions due to the
+// globals using conf.Watch.
+func setGlobals() {
+	if userMapping := conf.Get().PermissionsUserMapping; userMapping != nil {
+		if userMapping.BindID == "username" || userMapping.BindID == "email" {
+			globals.SetPermissionsUserMapping(conf.Get().PermissionsUserMapping)
+		}
+	}
 }
 
 func makeInternalAPI(
