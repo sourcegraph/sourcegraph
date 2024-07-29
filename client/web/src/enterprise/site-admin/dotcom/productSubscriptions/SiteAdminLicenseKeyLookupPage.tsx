@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react'
 
+import type { PartialMessage } from '@bufbuild/protobuf'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
+import { useDebounce } from 'use-debounce'
 
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { Container, PageHeader } from '@sourcegraph/wildcard'
@@ -11,38 +14,106 @@ import {
     ConnectionForm,
     ConnectionList,
     ConnectionLoading,
-    ConnectionSummary,
-    ShowMoreButton,
-    SummaryContainer,
 } from '../../../../components/FilteredConnection/ui'
 import { PageTitle } from '../../../../components/PageTitle'
 
-import { useQueryProductLicensesConnection } from './backend'
+import {
+    queryClient,
+    useListEnterpriseSubscriptionLicenses,
+    type EnterprisePortalEnvironment,
+} from './enterpriseportal'
+import {
+    type ListEnterpriseSubscriptionLicensesFilter,
+    EnterpriseSubscriptionLicenseType,
+} from './enterpriseportalgen/subscriptions_pb'
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
 
 interface Props extends TelemetryV2Props {}
 
-const SEARCH_PARAM_KEY = 'query'
-
 /**
  * Displays the product licenses that have been created on Sourcegraph.com.
  */
-export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsWithChildren<Props>> = ({
-    telemetryRecorder,
-}) => {
+export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsWithChildren<Props>> = props => (
+    <QueryClientProvider client={queryClient}>
+        <Page {...props} />
+    </QueryClientProvider>
+)
+
+const QUERY_PARAM_KEY = 'query'
+const QUERY_PARAM_ENV = 'env'
+const QUERY_PARAM_FILTER = 'filter'
+
+type FilterType = 'key_substring' | 'sf_opp_id'
+
+const MAX_RESULTS = 100
+
+const baseFilters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[] = [
+    {
+        filter: {
+            // This UI only manages old-school license keys.
+            case: 'type',
+            value: EnterpriseSubscriptionLicenseType.KEY,
+        },
+    },
+]
+
+const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemetryRecorder }) => {
     useEffect(() => telemetryRecorder.recordEvent('admin.licenseKeyLookup', 'view'), [telemetryRecorder])
 
     const [searchParams, setSearchParams] = useSearchParams()
 
-    const [search, setSearch] = useState<string>(searchParams.get(SEARCH_PARAM_KEY) ?? '')
-
-    const { loading, hasNextPage, fetchMore, refetchAll, connection, error } = useQueryProductLicensesConnection(search)
+    const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
+    const [filters, setFilters] = useState<{
+        env: EnterprisePortalEnvironment
+        filter: FilterType
+    }>({
+        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? 'prod',
+        filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'display_name',
+    })
 
     useEffect(() => {
-        const query = search?.trim() ?? ''
-        searchParams.set(SEARCH_PARAM_KEY, query)
+        searchParams.set(QUERY_PARAM_KEY, query?.trim() ?? '')
+        searchParams.set(QUERY_PARAM_ENV, filters.env)
+        searchParams.set(QUERY_PARAM_FILTER, filters.filter)
         setSearchParams(searchParams)
-    }, [search, searchParams, setSearchParams])
+    }, [query, searchParams, setSearchParams, filters])
+
+    const [debouncedQuery] = useDebounce(query, 500)
+
+    let listFilters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[] = []
+    switch (filters.filter) {
+        case 'key_substring': {
+            listFilters = [
+                {
+                    filter: {
+                        case: 'licenseKeySubstring',
+                        value: debouncedQuery,
+                    },
+                },
+            ]
+            break
+        }
+        case 'sf_opp_id': {
+            listFilters = [
+                {
+                    filter: {
+                        case: 'salesforceOpportunityId',
+                        value: debouncedQuery,
+                    },
+                },
+            ]
+            break
+        }
+    }
+    const { error, isFetching, data, refetch } = useListEnterpriseSubscriptionLicenses(
+        filters.env,
+        baseFilters.concat(listFilters),
+        {
+            limit: MAX_RESULTS,
+            // Only load when we have a query, and at least one filter
+            shouldLoad: !!(debouncedQuery && listFilters.length > 0),
+        }
+    )
 
     return (
         <div className="site-admin-product-subscriptions-page">
@@ -53,57 +124,93 @@ export const SiteAdminLicenseKeyLookupPage: React.FunctionComponent<React.PropsW
                 description="Find matching licenses and their associated enterprise subscriptions"
                 className="mb-3"
             />
+
             <ConnectionContainer>
                 <Container className="mb-3">
                     <ConnectionForm
-                        inputValue={search}
+                        inputValue={query}
+                        filterValues={filters}
+                        filters={[
+                            {
+                                id: 'env',
+                                type: 'radio',
+                                label: 'Environment',
+                                options: [
+                                    {
+                                        label: 'Production',
+                                        value: 'prod',
+                                        args: {},
+                                    },
+                                    {
+                                        label: 'Development',
+                                        value: 'dev',
+                                        args: {},
+                                    },
+                                ].concat(
+                                    window.context.deployType === 'dev'
+                                        ? [
+                                              {
+                                                  label: 'Local',
+                                                  value: 'local',
+                                                  args: {},
+                                              },
+                                          ]
+                                        : []
+                                ),
+                            },
+                            {
+                                id: 'filter',
+                                type: 'select',
+                                label: 'Filter by',
+                                options: [
+                                    {
+                                        args: {},
+                                        label: 'License key substring',
+                                        value: 'key_substring',
+                                    },
+                                    {
+                                        args: {},
+                                        label: 'Salesforce opportunity ID',
+                                        value: 'sf_opp_id',
+                                    },
+                                ],
+                            },
+                        ]}
                         onInputChange={event => {
-                            const search = event.target.value
-                            setSearch(search)
+                            setQuery(event.target.value)
                         }}
-                        inputPlaceholder="Enter a partial license key to find matches"
-                        inputClassName="mb-0"
-                        formClassName="mb-0"
+                        onFilterSelect={(filter, value) => {
+                            setFilters({ ...filters, [filter.id]: value })
+                        }}
+                        inputPlaceholder="Enter a query to list subscriptions"
                     />
                 </Container>
-                {search && (
+
+                {debouncedQuery && filters.filter && (
                     <>
                         <Container className="mb-3">
                             {error && <ConnectionError errors={[error.message]} />}
-                            {loading && !connection && <ConnectionLoading />}
-                            <ConnectionList
-                                as="ul"
-                                className="list-group list-group-flush mb-0"
-                                aria-label="Subscription licenses"
-                            >
-                                {connection?.nodes?.map(node => (
-                                    <SiteAdminProductLicenseNode
-                                        key={node.id}
-                                        node={node}
-                                        showSubscription={true}
-                                        onRevokeCompleted={refetchAll}
-                                        telemetryRecorder={telemetryRecorder}
-                                    />
-                                ))}
-                            </ConnectionList>
-                            {connection && (
-                                <SummaryContainer className="mt-2 mb-0">
-                                    <ConnectionSummary
-                                        centered={true}
-                                        connection={connection}
-                                        noun="product license"
-                                        pluralNoun="product licenses"
-                                        hasNextPage={hasNextPage}
-                                        noSummaryIfAllNodesVisible={true}
-                                        emptyElement={
-                                            <div className="w-100 text-center text-muted">
-                                                No matching license key found
-                                            </div>
-                                        }
-                                        className="mb-0"
-                                    />
-                                    {hasNextPage && <ShowMoreButton centered={true} onClick={fetchMore} />}
-                                </SummaryContainer>
+                            {isFetching && <ConnectionLoading />}
+                            {data?.licenses && data?.licenses.length >= MAX_RESULTS && (
+                                <ConnectionError
+                                    errors={[
+                                        `Only ${MAX_RESULTS} results are shown at a time - narrow your search for more accurate results.`,
+                                    ]}
+                                />
+                            )}
+                            {data && (
+                                <ConnectionList as="ul" aria-label="Enterprise subscription licenses">
+                                    {data?.licenses?.map(node => (
+                                        <SiteAdminProductLicenseNode
+                                            key={node.id}
+                                            env={filters.env}
+                                            node={node}
+                                            showSubscription={true}
+                                            onRevokeCompleted={refetch}
+                                            telemetryRecorder={telemetryRecorder}
+                                        />
+                                    ))}
+                                </ConnectionList>
                             )}
                         </Container>
                     </>

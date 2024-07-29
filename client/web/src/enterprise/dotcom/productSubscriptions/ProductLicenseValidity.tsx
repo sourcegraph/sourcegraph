@@ -6,8 +6,12 @@ import classNames from 'classnames'
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { Icon, Label } from '@sourcegraph/wildcard'
 
-import type { ProductLicenseFields } from '../../../graphql-operations'
 import { isProductLicenseExpired } from '../../../productSubscription/helpers'
+import {
+    EnterpriseSubscriptionLicenseCondition_Status,
+    type EnterpriseSubscriptionLicenseKey_Info,
+    type EnterpriseSubscriptionLicenseCondition,
+} from '../../site-admin/dotcom/productSubscriptions/enterpriseportalgen/subscriptions_pb'
 
 const getIcon = (isExpired: boolean, isRevoked: boolean): string => {
     if (isExpired) {
@@ -46,32 +50,36 @@ const getText = (isExpired: boolean, isRevoked: boolean): string => {
  */
 export const ProductLicenseValidity: React.FunctionComponent<
     React.PropsWithChildren<{
-        license: ProductLicenseFields
+        licenseInfo: EnterpriseSubscriptionLicenseKey_Info | undefined
+        licenseConditions: EnterpriseSubscriptionLicenseCondition[]
         variant?: 'icon-only' | 'no-icon'
         className?: string
     }>
-> = ({ license: { info, revokedAt, revokeReason }, variant, className = '' }) => {
-    const expiresAt = info?.expiresAt ?? 0
+> = ({ licenseInfo: info, licenseConditions: conditions, variant, className = '' }) => {
+    const expiresAt = info?.expireTime?.toDate() ?? 0
     const isExpired = isProductLicenseExpired(expiresAt)
-    const isRevoked = !!revokedAt
-    const timestamp = revokedAt ?? expiresAt
-    const timestampSuffix = isExpired || isRevoked ? 'ago' : 'remaining'
+
+    const revoked = conditions.find(
+        condition => condition.status === EnterpriseSubscriptionLicenseCondition_Status.REVOKED
+    )
+    const timestamp = revoked?.lastTransitionTime?.toDate() ?? expiresAt
+    const timestampSuffix = isExpired || revoked ? 'ago' : 'remaining'
 
     if (variant === 'icon-only') {
         return (
             <div className={className}>
-                <ValidityIcon isExpired={isExpired} isRevoked={isRevoked} />
+                <ValidityIcon isExpired={isExpired} isRevoked={!!revoked} />
             </div>
         )
     }
     return (
         <div className={className}>
-            {variant !== 'no-icon' && <ValidityIcon isExpired={isExpired} isRevoked={isRevoked} />}
-            {getText(isExpired, isRevoked)}, <Timestamp date={timestamp} noAbout={true} noAgo={true} utc={true} />{' '}
+            {variant !== 'no-icon' && <ValidityIcon isExpired={isExpired} isRevoked={!!revoked} />}
+            {getText(isExpired, !!revoked)}, <Timestamp date={timestamp} noAbout={true} noAgo={true} utc={true} />{' '}
             {timestampSuffix}
-            {!isExpired && isRevoked && revokeReason && (
+            {revoked?.message && (
                 <>
-                    <Label className="ml-2 mb-0 d-inline">Reason:</Label> {revokeReason}
+                    <Label className="ml-2 mb-0 d-inline">Reason:</Label> {revoked.message}
                 </>
             )}
         </div>

@@ -331,6 +331,14 @@ export class EnterpriseSubscriptionLicenseKey extends Message<EnterpriseSubscrip
    */
   licenseKey = "";
 
+  /**
+   * Generated display name representing the plan and some high-level attributes
+   * about the plan.
+   *
+   * @generated from field: string plan_display_name = 4;
+   */
+  planDisplayName = "";
+
   constructor(data?: PartialMessage<EnterpriseSubscriptionLicenseKey>) {
     super();
     proto3.util.initPartial(data, this);
@@ -342,6 +350,7 @@ export class EnterpriseSubscriptionLicenseKey extends Message<EnterpriseSubscrip
     { no: 1, name: "info_version", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
     { no: 2, name: "info", kind: "message", T: EnterpriseSubscriptionLicenseKey_Info },
     { no: 3, name: "license_key", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "plan_display_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnterpriseSubscriptionLicenseKey {

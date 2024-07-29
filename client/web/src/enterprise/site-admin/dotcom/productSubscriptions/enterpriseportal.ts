@@ -18,12 +18,15 @@ import type {
 import {
     listEnterpriseSubscriptions,
     listEnterpriseSubscriptionLicenses,
+    revokeEnterpriseSubscriptionLicense,
 } from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
 import type {
     ListEnterpriseSubscriptionsResponse,
     ListEnterpriseSubscriptionsFilter,
     ListEnterpriseSubscriptionLicensesFilter,
     ListEnterpriseSubscriptionLicensesResponse,
+    RevokeEnterpriseSubscriptionLicenseResponse,
+    RevokeEnterpriseSubscriptionLicenseRequest,
 } from './enterpriseportalgen/subscriptions_pb'
 
 /**
@@ -165,13 +168,34 @@ export function useListEnterpriseSubscriptions(
 
 export function useListEnterpriseSubscriptionLicenses(
     env: EnterprisePortalEnvironment,
-    filters: ListEnterpriseSubscriptionLicensesFilter[]
+    filters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[],
+    options: {
+        limit: number
+        shouldLoad: boolean
+    }
 ): UseQueryResult<ListEnterpriseSubscriptionLicensesResponse, ConnectError> {
     return useQuery(
         listEnterpriseSubscriptionLicenses,
         {
             filters,
         },
-        { transport: mustGetEnvironment(env) }
+        {
+            transport: mustGetEnvironment(env),
+            enabled: options.shouldLoad,
+            placeholderData: keepPreviousData,
+        }
     )
+}
+
+export function useRevokeEnterpriseSubscriptionLicense(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    RevokeEnterpriseSubscriptionLicenseResponse,
+    ConnectError,
+    PartialMessage<RevokeEnterpriseSubscriptionLicenseRequest>,
+    unknown
+> {
+    return useMutation(revokeEnterpriseSubscriptionLicense, {
+        transport: mustGetEnvironment(env),
+    })
 }

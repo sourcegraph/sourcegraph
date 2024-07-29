@@ -27,6 +27,10 @@ import {
 
 interface Props extends TelemetryV2Props {}
 
+/**
+ * Displays the enterprise subscriptions (formerly known as "product subscriptions") that have been
+ * created on Sourcegraph.com.
+ */
 export const SiteAdminProductSubscriptionsPage: React.FunctionComponent<React.PropsWithChildren<Props>> = props => (
     <QueryClientProvider client={queryClient}>
         <Page {...props} />
@@ -37,10 +41,10 @@ const QUERY_PARAM_KEY = 'query'
 const QUERY_PARAM_ENV = 'env'
 const QUERY_PARAM_FILTER = 'filter'
 
-/**
- * Displays the enterprise subscriptions (formerly known as "product subscriptions") that have been
- * created on Sourcegraph.com.
- */
+type FilterType = 'display_name' | 'sf_sub_id'
+
+const MAX_RESULTS = 100
+
 const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemetryRecorder }) => {
     useEffect(() => telemetryRecorder.recordEvent('admin.productSubscriptions', 'view'), [telemetryRecorder])
 
@@ -49,10 +53,10 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
     const [filters, setFilters] = useState<{
         env: EnterprisePortalEnvironment
-        filter: 'display_name' | 'sf_sub_id'
+        filter: FilterType
     }>({
         env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? 'prod',
-        filter: searchParams.get(QUERY_PARAM_FILTER) ?? 'display_name',
+        filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'display_name',
     })
 
     useEffect(() => {
@@ -89,9 +93,9 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             break
         }
     }
-    const { error, isLoading, data } = useListEnterpriseSubscriptions(filters.env, listFilters, {
-        limit: 100,
-        // Only load when all required parameters are provided
+    const { error, isFetching, data } = useListEnterpriseSubscriptions(filters.env, listFilters, {
+        limit: MAX_RESULTS,
+        // Only load when we have a query, and at least one filter
         shouldLoad: !!(debouncedQuery && listFilters.length > 0),
     })
 
@@ -167,7 +171,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         onFilterSelect={(filter, value) => {
                             setFilters({ ...filters, [filter.id]: value })
                         }}
-                        inputPlaceholder="Enter a query"
+                        inputPlaceholder="Enter a query to list subscriptions"
                     />
                 </Container>
 
@@ -175,15 +179,28 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     <>
                         <Container className="mb-3">
                             {error && <ConnectionError errors={[error.message]} />}
-                            {isLoading && !data && <ConnectionLoading />}
-                            <ConnectionList as="table" aria-label="Enterprise subscriptions">
-                                <SiteAdminProductSubscriptionNodeHeader />
-                                <tbody>
-                                    {data?.subscriptions?.map(node => (
-                                        <SiteAdminProductSubscriptionNode key={node.id} node={node} />
-                                    ))}
-                                </tbody>
-                            </ConnectionList>
+                            {data?.licenses && data?.licenses.length >= MAX_RESULTS && (
+                                <ConnectionError
+                                    errors={[
+                                        `Only ${MAX_RESULTS} results are shown at a time - narrow your search for more accurate results.`,
+                                    ]}
+                                />
+                            )}
+                            {isFetching && <ConnectionLoading />}
+                            {data && (
+                                <ConnectionList as="table" aria-label="Enterprise subscriptions">
+                                    <SiteAdminProductSubscriptionNodeHeader />
+                                    <tbody>
+                                        {data?.subscriptions?.map(node => (
+                                            <SiteAdminProductSubscriptionNode
+                                                key={node.id}
+                                                node={node}
+                                                env={filters.env}
+                                            />
+                                        ))}
+                                    </tbody>
+                                </ConnectionList>
+                            )}
                         </Container>
                     </>
                 )}

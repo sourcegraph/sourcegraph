@@ -2,12 +2,14 @@ import React from 'react'
 
 import { H3 } from '@sourcegraph/wildcard'
 
-import type { ProductLicenseInfoFields } from '../../graphql-operations'
 import { formatUserCount } from '../../productSubscription/helpers'
 
 export const ProductLicenseInfoDescription: React.FunctionComponent<
     React.PropsWithChildren<{
-        licenseInfo: ProductLicenseInfoFields
+        licenseInfo: {
+            productNameWithBrand: string
+            userCount: number
+        }
         className?: string
     }>
 > = ({ licenseInfo, className = '' }) => (

@@ -1,9 +1,5 @@
-import type { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
-
 import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
 
-import { queryGraphQL } from '../../../../backend/graphql'
 import {
     useShowMorePagination,
     type UseShowMorePaginationResult,
@@ -14,36 +10,7 @@ import type {
     ProductLicenseFields,
     ProductLicensesResult,
     ProductLicensesVariables,
-    ProductSubscriptionsDotComResult,
-    ProductSubscriptionsDotComVariables,
 } from '../../../../graphql-operations'
-
-const siteAdminProductSubscriptionFragment = gql`
-    fragment SiteAdminProductSubscriptionFields on ProductSubscription {
-        id
-        name
-        uuid
-        account {
-            id
-            username
-            displayName
-        }
-        activeLicense {
-            id
-            info {
-                productNameWithBrand
-                tags
-                userCount
-                expiresAt
-            }
-            licenseKey
-            createdAt
-        }
-        createdAt
-        isArchived
-        urlForSiteAdmin
-    }
-`
 
 export const DOTCOM_PRODUCT_SUBSCRIPTION = gql`
     query DotComProductSubscription($uuid: String!) {
@@ -232,13 +199,3 @@ export const useQueryProductLicensesConnection = (
             skip: !licenseKeySubstring,
         },
     })
-
-export const REVOKE_LICENSE = gql`
-    mutation RevokeLicense($id: ID!, $reason: String!) {
-        dotcom {
-            revokeLicense(id: $id, reason: $reason) {
-                alwaysNil
-            }
-        }
-    }
-`
