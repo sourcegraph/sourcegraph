@@ -305,7 +305,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					DisplayName: t.Name(),
-					Salesforce: &subscriptionsv1.EnterpriseSubscription_SalesforceMetadata{
+					Salesforce: &subscriptionsv1.EnterpriseSubscriptionSalesforceMetadata{
 						SubscriptionId: "sf_sub",
 					},
 				},

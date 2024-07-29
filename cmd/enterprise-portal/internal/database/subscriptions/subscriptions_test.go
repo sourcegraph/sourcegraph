@@ -61,7 +61,7 @@ func SubscriptionsStoreList(t *testing.T, ctx context.Context, s *subscriptions.
 		subscriptions.UpsertSubscriptionOptions{
 			DisplayName:              database.NewNullString("Subscription 1"),
 			InstanceDomain:           database.NewNullString("s1.sourcegraph.com"),
-			SalesforceSubscriptionID: pointers.Ptr("sf_sub_id"),
+			SalesforceSubscriptionID: database.NewNullString("sf_sub_id"),
 		},
 	)
 	require.NoError(t, err)
