@@ -1,6 +1,5 @@
 import React from 'react'
 
-import type { ProductSubscriptionFields, SiteAdminProductSubscriptionFields } from '../../../graphql-operations'
 import { formatUserCount } from '../../../productSubscription/helpers'
 
 /**
@@ -9,15 +8,15 @@ import { formatUserCount } from '../../../productSubscription/helpers'
  */
 export const ProductSubscriptionLabel: React.FunctionComponent<
     React.PropsWithChildren<{
-        productSubscription: ProductSubscriptionFields | SiteAdminProductSubscriptionFields
+        productName?: string
+        userCount?: number
         className?: string
     }>
-> = ({ productSubscription, className = '' }) => (
+> = ({ productName, userCount, className = '' }) => (
     <span className={className}>
-        {productSubscription.activeLicense?.info ? (
+        {productName && userCount ? (
             <>
-                {productSubscription.activeLicense.info.productNameWithBrand} (
-                {formatUserCount(productSubscription.activeLicense.info.userCount)})
+                {productName} ({formatUserCount(userCount)})
             </>
         ) : (
             <span className="text-muted font-italic">No plan selected</span>

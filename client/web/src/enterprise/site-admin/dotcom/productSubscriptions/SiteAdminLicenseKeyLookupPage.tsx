@@ -133,7 +133,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         filters={[
                             {
                                 id: 'env',
-                                type: 'radio',
+                                type: 'select',
                                 label: 'Environment',
                                 options: [
                                     {

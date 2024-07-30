@@ -12,61 +12,6 @@ import type {
     ProductLicensesVariables,
 } from '../../../../graphql-operations'
 
-export const DOTCOM_PRODUCT_SUBSCRIPTION = gql`
-    query DotComProductSubscription($uuid: String!) {
-        dotcom {
-            productSubscription(uuid: $uuid) {
-                id
-                name
-                account {
-                    id
-                    username
-                    displayName
-                }
-                productLicenses {
-                    nodes {
-                        id
-                        info {
-                            tags
-                            userCount
-                            expiresAt
-                            salesforceSubscriptionID
-                            salesforceOpportunityID
-                        }
-                        licenseKey
-                        createdAt
-                        revokedAt
-                        revokeReason
-                        siteID
-                        version
-                    }
-                    totalCount
-                    pageInfo {
-                        hasNextPage
-                    }
-                }
-                activeLicense {
-                    id
-                    info {
-                        productNameWithBrand
-                        tags
-                        userCount
-                        expiresAt
-                        salesforceSubscriptionID
-                        salesforceOpportunityID
-                    }
-                    licenseKey
-                    createdAt
-                }
-                currentSourcegraphAccessToken
-                createdAt
-                isArchived
-                url
-            }
-        }
-    }
-`
-
 export const ARCHIVE_PRODUCT_SUBSCRIPTION = gql`
     mutation ArchiveProductSubscription($id: ID!) {
         dotcom {
@@ -147,23 +92,6 @@ export const PRODUCT_LICENSES = gql`
     }
     ${siteAdminProductLicenseFragment}
 `
-
-export const useProductSubscriptionLicensesConnection = (
-    subscriptionUUID: string
-): UseShowMorePaginationResult<ProductLicensesResult, ProductLicenseFields> =>
-    useShowMorePagination<ProductLicensesResult, ProductLicensesVariables, ProductLicenseFields>({
-        query: PRODUCT_LICENSES,
-        variables: {
-            subscriptionUUID,
-        },
-        getConnection: result => {
-            const { dotcom } = dataOrThrowErrors(result)
-            return dotcom.productSubscription.productLicenses
-        },
-        options: {
-            fetchPolicy: 'cache-and-network',
-        },
-    })
 
 const QUERY_PRODUCT_LICENSES = gql`
     query DotComProductLicenses($first: Int, $licenseKeySubstring: String) {

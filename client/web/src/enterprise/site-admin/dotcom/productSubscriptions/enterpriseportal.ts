@@ -19,6 +19,7 @@ import {
     listEnterpriseSubscriptions,
     listEnterpriseSubscriptionLicenses,
     revokeEnterpriseSubscriptionLicense,
+    getEnterpriseSubscription,
 } from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
 import type {
     ListEnterpriseSubscriptionsResponse,
@@ -27,6 +28,7 @@ import type {
     ListEnterpriseSubscriptionLicensesResponse,
     RevokeEnterpriseSubscriptionLicenseResponse,
     RevokeEnterpriseSubscriptionLicenseRequest,
+    GetEnterpriseSubscriptionResponse,
 } from './enterpriseportalgen/subscriptions_pb'
 
 /**
@@ -198,4 +200,17 @@ export function useRevokeEnterpriseSubscriptionLicense(
     return useMutation(revokeEnterpriseSubscriptionLicense, {
         transport: mustGetEnvironment(env),
     })
+}
+
+export function useGetEnterpriseSubscription(
+    env: EnterprisePortalEnvironment,
+    subscriptionUUID: string
+): UseQueryResult<GetEnterpriseSubscriptionResponse, ConnectError> {
+    return useQuery(
+        getEnterpriseSubscription,
+        {
+            query: { value: subscriptionUUID, case: 'id' },
+        },
+        { transport: mustGetEnvironment(env) }
+    )
 }

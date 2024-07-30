@@ -40,6 +40,7 @@ import { ExpirationDate } from '../../../productSubscription/ExpirationDate'
 import { hasUnknownTags, ProductLicenseTags, UnknownTagWarning } from '../../../productSubscription/ProductLicenseTags'
 
 import { GENERATE_PRODUCT_LICENSE } from './backend'
+import { EnterpriseSubscriptionLicense } from './enterpriseportalgen/subscriptions_pb'
 import {
     ALL_PLANS,
     TAG_AIR_GAPPED,
@@ -64,8 +65,7 @@ interface License extends Omit<ProductLicenseFields, 'subscription' | 'info'> {
 }
 interface Props extends TelemetryV2Props {
     subscriptionID: Scalars['ID']
-    subscriptionAccount: string
-    latestLicense: License | undefined
+    latestLicense: EnterpriseSubscriptionLicense | undefined
     onGenerate: () => void
     onCancel: () => void
 }
@@ -73,8 +73,6 @@ interface Props extends TelemetryV2Props {
 interface FormData {
     /** Comma-separated additional license tags. */
     tags: string
-    customer: string
-    salesforceSubscriptionID: string
     salesforceOpportunityID: string
     plan: string
     userCount: number
@@ -87,11 +85,9 @@ interface FormData {
     codeInsights: boolean
 }
 
-const getEmptyFormData = (account: string, latestLicense: License | undefined): FormData => {
+const getEmptyFormData = (latestLicense: EnterpriseSubscriptionLicense | undefined): FormData => {
     const formData: FormData = {
         tags: '',
-        customer: account,
-        salesforceSubscriptionID: latestLicense?.info?.salesforceSubscriptionID ?? '',
         salesforceOpportunityID: latestLicense?.info?.salesforceOpportunityID ?? '',
         plan: latestLicense?.info?.tags.find(tag => tag.startsWith('plan:'))?.slice('plan:'.length) ?? '',
         userCount: latestLicense?.info?.userCount ?? 1,
@@ -136,7 +132,6 @@ const tagsFromString = (tagString: string): string[] =>
 const getTagsFromFormData = (formData: FormData): string[] =>
     Array.from(
         new Set([
-            `customer:${formData.customer}`,
             ...(formData.plan ? [`plan:${formData.plan}`] : []),
             ...(formData.trueUp &&
             ALL_PLANS.find(other => other.label === formData.plan)?.additionalTags?.some(
@@ -172,12 +167,12 @@ const HANDBOOK_INFO_URL =
  */
 export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionComponent<
     React.PropsWithChildren<Props>
-> = ({ latestLicense, subscriptionID, subscriptionAccount, onGenerate, onCancel, telemetryRecorder }) => {
+> = ({ latestLicense, subscriptionID, onGenerate, onCancel, telemetryRecorder }) => {
     const labelId = 'generateLicense'
 
     const [hasAcknowledgedInfo, setHasAcknowledgedInfo] = useState(false)
 
-    const [formData, setFormData] = useState<FormData>(getEmptyFormData(subscriptionAccount, latestLicense))
+    const [formData, setFormData] = useState<FormData>(getEmptyFormData(latestLicense))
 
     const onPlanChange = useCallback<React.ChangeEventHandler<HTMLSelectElement>>(
         event => setFormData(formData => ({ ...formData, plan: event.target.value })),
@@ -259,7 +254,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
 
             const date: Date = dateRegex.test(event.target.value)
                 ? new UTCDate(event.target.value)
-                : getEmptyFormData(subscriptionAccount, latestLicense).expiresAt
+                : getEmptyFormData(latestLicense).expiresAt
 
             const expiresAt = endOfDay(new UTCDate(date))
 
@@ -268,7 +263,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                 expiresAt,
             }))
         },
-        [subscriptionAccount, latestLicense]
+        [latestLicense]
     )
 
     const [generateLicense, { loading, error }] = useMutation<
@@ -281,10 +276,6 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                 tags: getTagsFromFormData(formData),
                 userCount: formData.userCount,
                 expiresAt: Math.floor(formData.expiresAt.getTime() / 1000),
-                salesforceSubscriptionID:
-                    formData.salesforceSubscriptionID.trim().length > 0
-                        ? formData.salesforceSubscriptionID.trim()
-                        : undefined,
                 salesforceOpportunityID:
                     formData.salesforceOpportunityID.trim().length > 0
                         ? formData.salesforceOpportunityID.trim()
@@ -408,27 +399,6 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                             onChange={onIsTrialChange}
                                         />
                                     </div>
-
-                                    <Input
-                                        id="site-admin-create-product-subscription-page__customer_input"
-                                        label="Customer"
-                                        description="Name of the customer. Will be encoded into the key for easier identification."
-                                        type="text"
-                                        disabled={loading}
-                                        value={formData.customer || ''}
-                                        onChange={onCustomerChange}
-                                        required={true}
-                                    />
-
-                                    <Input
-                                        id="site-admin-create-product-subscription-page__salesforce_sub_id_input"
-                                        label="Salesforce Subscription ID"
-                                        description="Enter the corresponding Subscription ID from Salesforce."
-                                        type="text"
-                                        disabled={loading}
-                                        value={formData.salesforceSubscriptionID}
-                                        onChange={onSFSubscriptionIDChange}
-                                    />
 
                                     <Input
                                         id="site-admin-create-product-subscription-page__salesforce_op_id_input"

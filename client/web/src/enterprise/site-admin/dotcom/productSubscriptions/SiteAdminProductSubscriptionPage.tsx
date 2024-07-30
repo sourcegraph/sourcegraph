@@ -1,42 +1,54 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
+import type { ConnectError } from '@connectrpc/connect'
 import { mdiPlus } from '@mdi/js'
-import { QueryClientProvider } from '@tanstack/react-query'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { QueryClientProvider, type UseQueryResult } from '@tanstack/react-query'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { logger } from '@sourcegraph/common'
-import { useMutation, useQuery } from '@sourcegraph/http-client'
+import { useMutation } from '@sourcegraph/http-client'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-import { Button, Container, ErrorAlert, H3, Icon, LoadingSpinner, PageHeader, Text } from '@sourcegraph/wildcard'
+import {
+    Button,
+    Container,
+    ErrorAlert,
+    H3,
+    Icon,
+    LoadingSpinner,
+    PageHeader,
+    Select,
+    Text,
+} from '@sourcegraph/wildcard'
 
 import {
     ConnectionContainer,
     ConnectionError,
     ConnectionList,
     ConnectionLoading,
-    ConnectionSummary,
-    ShowMoreButton,
-    SummaryContainer,
 } from '../../../../components/FilteredConnection/ui'
 import { PageTitle } from '../../../../components/PageTitle'
 import { useScrollToLocationHash } from '../../../../components/useScrollToLocationHash'
 import type {
     ArchiveProductSubscriptionResult,
     ArchiveProductSubscriptionVariables,
-    DotComProductSubscriptionResult,
-    DotComProductSubscriptionVariables,
 } from '../../../../graphql-operations'
 import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { LicenseGenerationKeyWarning } from '../../../productSubscription/LicenseGenerationKeyWarning'
 
-import {
-    ARCHIVE_PRODUCT_SUBSCRIPTION,
-    DOTCOM_PRODUCT_SUBSCRIPTION,
-    useProductSubscriptionLicensesConnection,
-} from './backend'
+import { ARCHIVE_PRODUCT_SUBSCRIPTION } from './backend'
 import { CodyServicesSection } from './CodyServicesSection'
-import { queryClient, type EnterprisePortalEnvironment } from './enterpriseportal'
+import {
+    queryClient,
+    useGetEnterpriseSubscription,
+    useListEnterpriseSubscriptionLicenses,
+    type EnterprisePortalEnvironment,
+} from './enterpriseportal'
+import {
+    EnterpriseSubscriptionCondition_Status,
+    EnterpriseSubscriptionLicenseType,
+    type ListEnterpriseSubscriptionLicensesResponse,
+} from './enterpriseportalgen/subscriptions_pb'
 import { SiteAdminGenerateProductLicenseForSubscriptionForm } from './SiteAdminGenerateProductLicenseForSubscriptionForm'
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
 import { enterprisePortalID } from './utils'
@@ -49,6 +61,8 @@ export const SiteAdminProductSubscriptionPage: React.FunctionComponent<React.Pro
     </QueryClientProvider>
 )
 
+const QUERY_PARAM_ENV = 'env'
+
 /**
  * Displays a product subscription in the site admin area.
  */
@@ -57,15 +71,39 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const { subscriptionUUID = '' } = useParams<{ subscriptionUUID: string }>()
     useEffect(() => telemetryRecorder.recordEvent('admin.productSubscription', 'view'), [telemetryRecorder])
 
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [env, setEnv] = useState<EnterprisePortalEnvironment>(
+        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'dev' : 'prod'
+    )
+
+    useEffect(() => {
+        searchParams.set(QUERY_PARAM_ENV, env)
+        setSearchParams(searchParams)
+    }, [env, setSearchParams, searchParams])
+
+    const { data, isLoading, error } = useGetEnterpriseSubscription(env, subscriptionUUID)
+
     const [showGenerate, setShowGenerate] = useState<boolean>(false)
 
-    const { data, loading, error, refetch } = useQuery<
-        DotComProductSubscriptionResult,
-        DotComProductSubscriptionVariables
-    >(DOTCOM_PRODUCT_SUBSCRIPTION, {
-        variables: { uuid: subscriptionUUID },
-        errorPolicy: 'all',
-    })
+    const licenses = useListEnterpriseSubscriptionLicenses(
+        env,
+        [
+            {
+                filter: {
+                    case: 'subscriptionId',
+                    value: subscriptionUUID,
+                },
+            },
+            {
+                filter: {
+                    // This UI only manages old-school license keys.
+                    case: 'type',
+                    value: EnterpriseSubscriptionLicenseType.KEY,
+                },
+            },
+        ],
+        { limit: 100, shouldLoad: !!data }
+    )
 
     const [archiveProductSubscription, { loading: archiveLoading, error: archiveError }] = useMutation<
         ArchiveProductSubscriptionResult,
@@ -85,7 +123,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         }
         try {
             telemetryRecorder.recordEvent('admin.productSubscription', 'archive')
-            await archiveProductSubscription({ variables: { id: data.dotcom.productSubscription.id } })
+            await archiveProductSubscription({ variables: { id: data?.subscription?.id || '' } })
             navigate('/site-admin/dotcom/product/subscriptions')
         } catch (error) {
             logger.error(error)
@@ -94,172 +132,153 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
 
     const toggleShowGenerate = useCallback((): void => setShowGenerate(previousValue => !previousValue), [])
 
-    const refetchRef = useRef<(() => void) | null>(null)
-    const setRefetchRef = useCallback(
-        (refetch: (() => void) | null) => {
-            refetchRef.current = refetch
-        },
-        [refetchRef]
-    )
-
     const onLicenseUpdate = useCallback(async () => {
-        await refetch()
-        if (refetchRef.current) {
-            refetchRef.current()
-        }
+        await licenses.refetch()
         setShowGenerate(false)
-    }, [refetch, refetchRef])
+    }, [licenses])
 
-    if (loading && !data) {
+    if (isLoading && !data) {
         return <LoadingSpinner />
     }
 
-    // If there's an error, simply render an error page.
-    if (error) {
-        return <ErrorAlert className="my-2" error={error} />
-    }
+    const subscription = data?.subscription
 
-    const productSubscription = data!.dotcom.productSubscription
-
-    /**
-     * TODO(@robert): As part of https://linear.app/sourcegraph/issue/CORE-100,
-     * eventually dev subscriptions will only live on Enterprise Portal dev and
-     * prod subscriptions will only live on Enterprise Portal prod. Until we
-     * cut over, we use license tags to determine what Enterprise Portal
-     * environment to target.
-     */
-    const enterprisePortalEnvironment: EnterprisePortalEnvironment =
-        window.context.deployType === 'dev'
-            ? 'local'
-            : productSubscription.activeLicense?.info?.tags?.includes('dev')
-            ? 'dev'
-            : 'prod'
+    const created = subscription?.conditions?.find(
+        condition => condition.status === EnterpriseSubscriptionCondition_Status.CREATED
+    )
 
     return (
-        <>
-            <div className="site-admin-product-subscription-page">
-                <PageTitle title="Enterprise subscription" />
-                <PageHeader
-                    headingElement="h2"
-                    path={[
-                        { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
-                        { text: enterprisePortalID(subscriptionUUID) },
-                    ]}
-                    description={
+        <div className="site-admin-product-subscription-page">
+            <PageTitle title="Enterprise subscription" />
+            <PageHeader
+                headingElement="h2"
+                path={[
+                    { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
+                    { text: enterprisePortalID(subscriptionUUID) },
+                ]}
+                description={
+                    subscription &&
+                    created?.lastTransitionTime && (
                         <span className="text-muted">
-                            Created <Timestamp date={productSubscription.createdAt} />
+                            Created <Timestamp date={created.lastTransitionTime.toDate()} />
+                            {created?.message && <strong>{created.message}</strong>}
                         </span>
-                    }
-                    actions={
+                    )
+                }
+                actions={
+                    <>
+                        <Select
+                            id=""
+                            name="env"
+                            onChange={event => {
+                                setEnv(event.target.value as EnterprisePortalEnvironment)
+                            }}
+                            value={env ?? undefined}
+                            className="mb-0"
+                            isCustomStyle={true}
+                            label="Environment"
+                        >
+                            {[
+                                { label: 'Production', value: 'prod' },
+                                { label: 'Development', value: 'dev' },
+                            ]
+                                .concat(window.context.deployType === 'dev' ? [{ label: 'Local', value: 'local' }] : [])
+                                .map(opt => (
+                                    <option key={opt.value} value={opt.value} label={opt.label} />
+                                ))}
+                        </Select>
+                        ,
                         <Button onClick={onArchive} disabled={archiveLoading} variant="danger">
                             Archive
                         </Button>
-                    }
-                    className="mb-3"
-                />
-                {archiveError && <ErrorAlert className="mt-2" error={archiveError} />}
+                    </>
+                }
+                className="mb-3"
+            />
+            {archiveError && <ErrorAlert className="mt-2" error={archiveError} />}
+            {error && <ErrorAlert className="mt-2" error={error} />}
 
-                <H3>Details</H3>
-                <Container className="mb-3">
-                    <table className="table mb-0">
-                        <tbody>
-                            <tr>
-                                <th className="text-nowrap">ID</th>
-                                <td className="w-100">{enterprisePortalID(subscriptionUUID)}</td>
-                            </tr>
-                            <tr>
-                                <th className="text-nowrap">Current Plan</th>
+            {data && (
+                <>
+                    <H3>Details</H3>
+                    <Container className="mb-3">
+                        <table className="table mb-0">
+                            <tbody>
+                                <tr>
+                                    <th className="text-nowrap">ID</th>
+                                    <td className="w-100">{enterprisePortalID(subscriptionUUID)}</td>
+                                </tr>
                                 <td className="w-100">
-                                    <ProductSubscriptionLabel productSubscription={productSubscription} />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th className="text-nowrap">Salesforce Opportunity</th>
-                                <td className="w-100">
-                                    {(!productSubscription.activeLicense ||
-                                        productSubscription.activeLicense.info?.salesforceOpportunityID === null) && (
-                                        <span className="text-muted">None</span>
+                                    {licenses.data?.licenses && licenses.data?.licenses?.length > 0 && (
+                                        <ProductSubscriptionLabel
+                                            productName={licenses.data?.licenses[0].license.value?.planDisplayName}
+                                            userCount={licenses.data?.licenses[0].license.value?.info?.userCount}
+                                        />
                                     )}
-                                    {productSubscription.activeLicense &&
-                                        productSubscription.activeLicense.info?.salesforceOpportunityID !== null && (
-                                            <>{productSubscription.activeLicense.info?.salesforceOpportunityID}</>
-                                        )}
                                 </td>
-                            </tr>
-                            <tr>
-                                <th className="text-nowrap">Salesforce Subscription</th>
-                                <td className="w-100">
-                                    {(!productSubscription.activeLicense ||
-                                        productSubscription.activeLicense.info?.salesforceSubscriptionID === null) && (
-                                        <span className="text-muted">None</span>
-                                    )}
-                                    {productSubscription.activeLicense &&
-                                        productSubscription.activeLicense.info?.salesforceSubscriptionID !== null && (
-                                            <>{productSubscription.activeLicense.info?.salesforceSubscriptionID}</>
+                                <tr>
+                                    <th className="text-nowrap">Salesforce Subscription</th>
+                                    <td className="w-100">
+                                        {subscription?.salesforce?.subscriptionId ? (
+                                            <>{subscription?.salesforce?.subscriptionId}</>
+                                        ) : (
+                                            <span className="text-muted">None</span>
                                         )}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </Container>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </Container>
 
-                <CodyServicesSection
-                    enterprisePortalEnvironment={enterprisePortalEnvironment}
-                    viewerCanAdminister={true}
-                    productSubscriptionUUID={subscriptionUUID}
-                    telemetryRecorder={telemetryRecorder}
-                />
-
-                <H3 className="d-flex align-items-start">
-                    Licenses
-                    <Button className="ml-auto" onClick={toggleShowGenerate} variant="primary">
-                        <Icon aria-hidden={true} svgPath={mdiPlus} /> New license key
-                    </Button>
-                </H3>
-                <LicenseGenerationKeyWarning className="mb-2" />
-                <Container className="mb-2">
-                    <ProductSubscriptionLicensesConnection
-                        subscriptionUUID={subscriptionUUID}
-                        toggleShowGenerate={toggleShowGenerate}
-                        setRefetch={setRefetchRef}
+                    <CodyServicesSection
+                        enterprisePortalEnvironment={env}
+                        viewerCanAdminister={true}
+                        productSubscriptionUUID={subscriptionUUID}
                         telemetryRecorder={telemetryRecorder}
                     />
-                </Container>
-            </div>
 
-            {showGenerate && (
+                    <H3 className="d-flex align-items-start">
+                        Licenses
+                        <Button className="ml-auto" onClick={toggleShowGenerate} variant="primary">
+                            <Icon aria-hidden={true} svgPath={mdiPlus} /> New license key
+                        </Button>
+                    </H3>
+                    <LicenseGenerationKeyWarning className="mb-2" />
+                    <Container className="mb-2">
+                        <ProductSubscriptionLicensesConnection
+                            env={env}
+                            licenses={licenses}
+                            toggleShowGenerate={toggleShowGenerate}
+                            telemetryRecorder={telemetryRecorder}
+                        />
+                    </Container>
+                </>
+            )}
+            {subscription && showGenerate && (
                 <SiteAdminGenerateProductLicenseForSubscriptionForm
-                    subscriptionID={productSubscription.id}
-                    subscriptionAccount={productSubscription.account?.username || ''}
-                    latestLicense={productSubscription.productLicenses?.nodes[0] ?? undefined}
+                    subscriptionID={subscription.id}
+                    latestLicense={licenses.data?.licenses[0] ?? undefined}
                     onGenerate={onLicenseUpdate}
                     onCancel={() => setShowGenerate(false)}
                     telemetryRecorder={telemetryRecorder}
                 />
             )}
-        </>
+        </div>
     )
 }
 
 interface ProductSubscriptionLicensesConnectionProps extends TelemetryV2Props {
-    subscriptionUUID: string
+    env: EnterprisePortalEnvironment
+    licenses: UseQueryResult<ListEnterpriseSubscriptionLicensesResponse, ConnectError>
     toggleShowGenerate: () => void
-    setRefetch: (refetch: () => void) => void
 }
 
 const ProductSubscriptionLicensesConnection: React.FunctionComponent<ProductSubscriptionLicensesConnectionProps> = ({
-    subscriptionUUID,
-    setRefetch,
+    env,
+    licenses: { data, refetch, error, isLoading },
     toggleShowGenerate,
     telemetryRecorder,
 }) => {
-    const { loading, hasNextPage, fetchMore, refetchAll, connection, error } =
-        useProductSubscriptionLicensesConnection(subscriptionUUID)
-
-    useEffect(() => {
-        setRefetch(refetchAll)
-    }, [setRefetch, refetchAll])
-
     const location = useLocation()
     const licenseIDFromLocationHash = useMemo(() => {
         if (location.hash.length > 1) {
@@ -272,32 +291,21 @@ const ProductSubscriptionLicensesConnection: React.FunctionComponent<ProductSubs
     return (
         <ConnectionContainer>
             {error && <ConnectionError errors={[error.message]} />}
-            {loading && !connection && <ConnectionLoading />}
+            {isLoading && !data && <ConnectionLoading />}
             <ConnectionList as="ul" className="list-group list-group-flush mb-0" aria-label="Subscription licenses">
-                {connection?.nodes?.map(node => (
+                {data?.licenses?.map(node => (
                     <SiteAdminProductLicenseNode
+                        env={env}
                         key={node.id}
                         node={node}
                         defaultExpanded={node.id === licenseIDFromLocationHash}
                         showSubscription={false}
-                        onRevokeCompleted={refetchAll}
+                        onRevokeCompleted={refetch}
                         telemetryRecorder={telemetryRecorder}
                     />
                 ))}
             </ConnectionList>
-            {connection && (
-                <SummaryContainer centered={true}>
-                    <ConnectionSummary
-                        centered={true}
-                        connection={connection}
-                        noun="product license"
-                        pluralNoun="product licenses"
-                        hasNextPage={hasNextPage}
-                        emptyElement={<NoProductLicense toggleShowGenerate={toggleShowGenerate} />}
-                    />
-                    {hasNextPage && <ShowMoreButton centered={true} onClick={fetchMore} />}
-                </SummaryContainer>
-            )}
+            {data?.licenses?.length === 0 && <NoProductLicense toggleShowGenerate={toggleShowGenerate} />}
         </ConnectionContainer>
     )
 }

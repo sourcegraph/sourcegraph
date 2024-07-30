@@ -122,7 +122,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         filters={[
                             {
                                 id: 'env',
-                                type: 'radio',
+                                type: 'select',
                                 label: 'Environment',
                                 options: [
                                     {
@@ -179,7 +179,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     <>
                         <Container className="mb-3">
                             {error && <ConnectionError errors={[error.message]} />}
-                            {data?.licenses && data?.licenses.length >= MAX_RESULTS && (
+                            {data?.subscriptions && data?.subscriptions.length >= MAX_RESULTS && (
                                 <ConnectionError
                                     errors={[
                                         `Only ${MAX_RESULTS} results are shown at a time - narrow your search for more accurate results.`,

@@ -23,7 +23,7 @@ import { CopyableText } from '../../../../components/CopyableText'
 import { LoaderButton } from '../../../../components/LoaderButton'
 import { isProductLicenseExpired } from '../../../../productSubscription/helpers'
 import { ProductLicenseValidity } from '../../../dotcom/productSubscriptions/ProductLicenseValidity'
-import { ProductLicenseInfoDescription } from '../../../productSubscription/ProductLicenseInfoDescription'
+import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { ProductLicenseTags, UnknownTagWarning, hasUnknownTags } from '../../../productSubscription/ProductLicenseTags'
 
 import { useRevokeEnterpriseSubscriptionLicense, type EnterprisePortalEnvironment } from './enterpriseportal'
@@ -123,11 +123,9 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                             )}
                             <div className="mb-1">
                                 {info && (
-                                    <ProductLicenseInfoDescription
-                                        licenseInfo={{
-                                            productNameWithBrand: licenseKey.planDisplayName,
-                                            userCount: Number(info.userCount),
-                                        }}
+                                    <ProductSubscriptionLabel
+                                        productName={licenseKey.planDisplayName}
+                                        userCount={Number(info.userCount)}
                                         className="mb-0"
                                     />
                                 )}
