@@ -11,6 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/utctime"
 	"github.com/sourcegraph/sourcegraph/internal/license"
+	"github.com/sourcegraph/sourcegraph/internal/licensing"
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
@@ -51,7 +52,8 @@ func convertLicenseToProto(license *subscriptions.LicenseWithConditions) (*subsc
 					SalesforceSubscriptionId: pointers.DerefZero(data.Info.SalesforceSubscriptionID),
 					SalesforceOpportunityId:  pointers.DerefZero(data.Info.SalesforceOpportunityID),
 				},
-				LicenseKey: data.SignedKey,
+				LicenseKey:      data.SignedKey,
+				PlanDisplayName: licensing.ProductNameWithBrand(data.Info.Tags),
 			},
 		}
 
