@@ -171,6 +171,8 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
     const onMessageChange = useOnChange('message')
     const onSFOpportunityIDChange = useOnChange('salesforceOpportunityID')
 
+    const [sfOpportunityIDError, setSFOpportunityIDError] = useState<string | undefined>(undefined)
+
     const onTagsChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
         event => setFormData(formData => ({ ...formData, tags: event.target.value || '' })),
         []
@@ -408,11 +410,35 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                     <Input
                                         id="site-admin-create-product-subscription-page__salesforce_op_id_input"
                                         label="Salesforce Opportunity ID"
-                                        description="Enter the corresponding Opportunity ID from Salesforce."
+                                        description="Enter the corresponding Opportunity ID from Salesforce. This is VERY important to provide for all subscriptions used by customers. It cannot be changed after a license has been created."
                                         type="text"
                                         disabled={isLoading}
+                                        error={sfOpportunityIDError}
                                         value={formData.salesforceOpportunityID}
-                                        onChange={onSFOpportunityIDChange}
+                                        onChange={event => {
+                                            onSFOpportunityIDChange(event)
+                                            const { value } = event.target
+                                            if (!value) {
+                                                setSFOpportunityIDError(undefined)
+                                                return
+                                            }
+
+                                            if (!value.startsWith('006')) {
+                                                setSFOpportunityIDError(
+                                                    'Salesforce opportunity ID must start with "006"'
+                                                )
+                                                return
+                                            }
+                                            if (value.length < 17) {
+                                                setSFOpportunityIDError(
+                                                    'Salesforce opportunity ID must be longer than 17 characters'
+                                                )
+                                                return
+                                            }
+
+                                            // No problems
+                                            setSFOpportunityIDError(undefined)
+                                        }}
                                     />
 
                                     <Input
@@ -607,7 +633,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                 </Button>
                                 <LoaderButton
                                     type="submit"
-                                    disabled={isLoading || !selectedPlan}
+                                    disabled={isLoading || !selectedPlan || !sfOpportunityIDError}
                                     variant="primary"
                                     loading={isLoading}
                                     alwaysShowLabel={true}

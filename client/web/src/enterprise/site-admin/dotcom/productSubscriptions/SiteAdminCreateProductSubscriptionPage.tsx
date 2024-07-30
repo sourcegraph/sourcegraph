@@ -1,122 +1,40 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
-import { mdiPlus } from '@mdi/js'
-import { Navigate } from 'react-router-dom'
-import { merge, of, type Observable } from 'rxjs'
-import { catchError, concatMap, map, tap } from 'rxjs/operators'
+import { useSearchParams } from 'react-router-dom'
 
-import { asError, type ErrorLike, isErrorLike } from '@sourcegraph/common'
-import { dataOrThrowErrors, gql } from '@sourcegraph/http-client'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
-import { Button, useEventObservable, Link, Alert, Icon, Form, Container, PageHeader } from '@sourcegraph/wildcard'
+import {
+    Alert,
+    Form,
+    Container,
+    PageHeader,
+    useForm,
+    Select,
+    ErrorAlert,
+    getDefaultInputProps,
+    useField,
+    createRequiredValidator,
+    Input,
+} from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
-import { mutateGraphQL, queryGraphQL } from '../../../../backend/graphql'
-import { FilteredConnection } from '../../../../components/FilteredConnection'
+import { LoaderButton } from '../../../../components/LoaderButton'
 import { PageTitle } from '../../../../components/PageTitle'
-import type {
-    CreateProductSubscriptionVariables,
-    ProductSubscriptionAccountsResult,
-    ProductSubscriptionAccountsVariables,
-    ProductSubscriptionAccountFields,
-    CreateProductSubscriptionResult,
-} from '../../../../graphql-operations'
 
-interface UserCreateSubscriptionNodeProps extends TelemetryV2Props {
-    /**
-     * The user to display in this list item.
-     */
-    node: ProductSubscriptionAccountFields
-    authenticatedUser: AuthenticatedUser
-}
-
-const createProductSubscription = (
-    args: CreateProductSubscriptionVariables
-): Observable<CreateProductSubscriptionResult['dotcom']['createProductSubscription']> =>
-    mutateGraphQL<CreateProductSubscriptionResult>(
-        gql`
-            mutation CreateProductSubscription($accountID: ID!) {
-                dotcom {
-                    createProductSubscription(accountID: $accountID) {
-                        urlForSiteAdmin
-                        uuid
-                    }
-                }
-            }
-        `,
-        args
-    ).pipe(
-        map(dataOrThrowErrors),
-        map(data => data.dotcom.createProductSubscription)
-    )
-
-const UserCreateSubscriptionNode: React.FunctionComponent<React.PropsWithChildren<UserCreateSubscriptionNodeProps>> = (
-    props: UserCreateSubscriptionNodeProps
-) => {
-    const [onSubmit, createdSubscription] = useEventObservable(
-        useCallback(
-            (
-                submits: Observable<React.FormEvent<HTMLFormElement>>
-            ): Observable<
-                CreateProductSubscriptionResult['dotcom']['createProductSubscription'] | 'saving' | ErrorLike
-            > =>
-                submits.pipe(
-                    tap(event => event.preventDefault()),
-                    tap(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions', 'create')),
-                    concatMap(() =>
-                        merge(
-                            of('saving' as const),
-                            createProductSubscription({ accountID: props.node.id }).pipe(
-                                catchError(error => [asError(error)])
-                            )
-                        )
-                    )
-                ),
-            [props.node.id, props.telemetryRecorder]
-        )
-    )
-
-    return (
-        <>
-            {createdSubscription &&
-                createdSubscription !== 'saving' &&
-                !isErrorLike(createdSubscription) &&
-                createdSubscription.urlForSiteAdmin && (
-                    <Navigate replace={true} to={createdSubscription.urlForSiteAdmin} />
-                )}
-            <li className="list-group-item py-2">
-                <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                        <Link to={`/users/${props.node.username}`}>{props.node.username}</Link>
-                    </div>
-                    <div>
-                        <Form onSubmit={onSubmit}>
-                            <Button
-                                type="submit"
-                                disabled={createdSubscription === 'saving'}
-                                variant="secondary"
-                                size="sm"
-                            >
-                                <Icon aria-hidden={true} svgPath={mdiPlus} /> Create new subscription
-                            </Button>
-                        </Form>
-                    </div>
-                </div>
-                {isErrorLike(createdSubscription) && <Alert variant="danger">{createdSubscription.message}</Alert>}
-                {createdSubscription &&
-                    createdSubscription !== 'saving' &&
-                    !isErrorLike(createdSubscription) &&
-                    !createdSubscription.urlForSiteAdmin && (
-                        <Alert variant="danger">No subscription URL available (only accessible to site admins)</Alert>
-                    )}
-            </li>
-        </>
-    )
-}
+import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscription } from './enterpriseportal'
 
 interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
 }
+
+interface FormData {
+    displayName: string
+    salesforceSubscriptionID?: string
+    instanceDomain?: string
+    message: string
+}
+
+const QUERY_PARAM_ENV = 'env'
 
 /**
  * Creates a product subscription for an account based on information provided in the displayed form.
@@ -127,49 +45,171 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
     React.PropsWithChildren<Props>
 > = props => {
     useEffect(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions.create', 'view'))
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [env, setEnv] = useState<EnterprisePortalEnvironment>(
+        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'dev' : 'prod'
+    )
+    useEffect(() => {
+        searchParams.set(QUERY_PARAM_ENV, env)
+        setSearchParams(searchParams)
+    }, [env, setSearchParams, searchParams])
+
+    const { mutate: createSubscription, isPending, error } = useCreateEnterpriseSubscription(env)
+
+    const {
+        formAPI,
+        ref: formRef,
+        handleSubmit,
+    } = useForm<FormData>({
+        initialValues: {
+            displayName: '',
+            message: '',
+        },
+        onSubmit: ({ message, displayName, instanceDomain, salesforceSubscriptionID }: FormData) => {
+            props.telemetryRecorder.recordEvent('admin.productSubscriptions', 'create')
+            createSubscription(
+                {
+                    message,
+                    subscription: {
+                        displayName,
+                        instanceDomain,
+                        salesforce: salesforceSubscriptionID
+                            ? {
+                                  subscriptionId: salesforceSubscriptionID,
+                              }
+                            : undefined,
+                    },
+                },
+                {
+                    onSuccess: ({ subscription }) => {
+                        // Redirect to the newly created subscription
+                        if (subscription) {
+                            window.location.replace(
+                                `/site-admin/dotcom/product/subscriptions/${subscription.id}&env=${env}`
+                            )
+                        }
+                    },
+                }
+            )
+        },
+    })
+
+    const displayName = useField({
+        name: 'displayName',
+        formApi: formAPI,
+        validators: {
+            sync: createRequiredValidator(
+                'A unique display name about this subscription is required. This can be changed later.'
+            ),
+        },
+    })
+
+    const message = useField({
+        name: 'message',
+        formApi: formAPI,
+        validators: {
+            sync: createRequiredValidator('A message about the creation of this subscription is required.'),
+        },
+    })
+
+    const salesforceSubscriptionID = useField({
+        name: 'salesforceSubscriptionID',
+        formApi: formAPI,
+        validators: {
+            sync: value => {
+                if (!value?.startsWith('a1a')) {
+                    return 'Salesforce subscription ID must start with "a1a"'
+                }
+                if (value?.length < 17) {
+                    return 'Salesforce subscription ID must be 17 characters long'
+                }
+                return
+            },
+        },
+    })
+
+    const instanceDomain = useField({
+        name: 'instanceDomain',
+        formApi: formAPI,
+    })
+
     return (
         <div className="site-admin-create-product-subscription-page">
             <PageTitle title="Create product subscription" />
-            <PageHeader headingElement="h2" path={[{ text: 'Create product subscription' }]} className="mb-2" />
+            <PageHeader
+                headingElement="h2"
+                path={[{ text: 'Create Enterprise subscription' }]}
+                className="mb-2"
+                actions={
+                    <Select
+                        id=""
+                        name="env"
+                        onChange={event => {
+                            setEnv(event.target.value as EnterprisePortalEnvironment)
+                        }}
+                        value={env ?? undefined}
+                        className="mb-0"
+                        isCustomStyle={true}
+                        label="Environment"
+                    >
+                        {[
+                            { label: 'Production', value: 'prod' },
+                            { label: 'Development', value: 'dev' },
+                        ]
+                            .concat(window.context.deployType === 'dev' ? [{ label: 'Local', value: 'local' }] : [])
+                            .map(opt => (
+                                <option key={opt.value} value={opt.value} label={opt.label} />
+                            ))}
+                    </Select>
+                }
+            />
             <Container className="mb-3">
-                <FilteredConnection<ProductSubscriptionAccountFields, Props>
-                    {...props}
-                    className="list-group list-group-flush"
-                    noun="user"
-                    pluralNoun="users"
-                    queryConnection={queryAccounts}
-                    nodeComponent={UserCreateSubscriptionNode}
-                    nodeComponentProps={props}
-                />
+                {error && <ErrorAlert className="mt-2" error={error} />}
+                <Alert variant="info">
+                    You are creating an Enterprise subscription for a SINGLE Sourcegraph instance. Customers with
+                    multiple Sourcegraph instances should have a separate subscription for each. Each subscription
+                    should only have licenses for a SINGLE Sourcegraph instance.
+                    <br />
+                    The Salesforce subscription ID can be set to link subscriptions corresponding to a single customer.
+                </Alert>
+                <Form ref={formRef} onSubmit={handleSubmit}>
+                    <Input
+                        autoFocus={true}
+                        required={true}
+                        message="Subscription display name"
+                        about="Human-friendly name for this Enterprise instance subscription. Can be changed later."
+                        placeholder="Example: 'Acme Corp. (testing instance)'"
+                        {...getDefaultInputProps(displayName)}
+                    />
+                    <Input
+                        message="Salesforce subscription ID"
+                        about="This is VERY important to provide for all subscriptions used by customers. Only leave blank if this subscription is for development purposes. Can be changed later."
+                        {...getDefaultInputProps(salesforceSubscriptionID)}
+                    />
+                    <Input
+                        message="Instance domain"
+                        about="External domain of the Sourcegraph instance that will be used by this subscription. Required for Cody Analytics. Can be changed later."
+                        placeholder="Example: 'acmecorp.com'"
+                        {...getDefaultInputProps(instanceDomain)}
+                    />
+                    <Input
+                        required={true}
+                        message="Message"
+                        about="Permanent note to associate with the creation of this Enterprise instance subscription."
+                        placeholder="Example: 'Set up test instance subscription for Acme Corp.'"
+                        {...getDefaultInputProps(message)}
+                    />
+                    <LoaderButton
+                        type="submit"
+                        disabled={isPending || formAPI.submitting || !formAPI.valid}
+                        variant="primary"
+                        loading={isPending || formAPI.submitting}
+                        alwaysShowLabel={true}
+                        label="Generate key"
+                    />
+                </Form>
             </Container>
         </div>
-    )
-}
-
-function queryAccounts(
-    args: Partial<ProductSubscriptionAccountsVariables>
-): Observable<ProductSubscriptionAccountsResult['users']> {
-    return queryGraphQL<ProductSubscriptionAccountsResult>(
-        gql`
-            query ProductSubscriptionAccounts($first: Int, $query: String) {
-                users(first: $first, query: $query) {
-                    nodes {
-                        ...ProductSubscriptionAccountFields
-                    }
-                    totalCount
-                    pageInfo {
-                        hasNextPage
-                    }
-                }
-            }
-            fragment ProductSubscriptionAccountFields on User {
-                id
-                username
-            }
-        `,
-        args
-    ).pipe(
-        map(dataOrThrowErrors),
-        map(data => data.users)
     )
 }

@@ -7,7 +7,6 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 
 import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { logger } from '@sourcegraph/common'
-import { useMutation } from '@sourcegraph/http-client'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Button,
@@ -29,17 +28,13 @@ import {
 } from '../../../../components/FilteredConnection/ui'
 import { PageTitle } from '../../../../components/PageTitle'
 import { useScrollToLocationHash } from '../../../../components/useScrollToLocationHash'
-import type {
-    ArchiveProductSubscriptionResult,
-    ArchiveProductSubscriptionVariables,
-} from '../../../../graphql-operations'
 import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { LicenseGenerationKeyWarning } from '../../../productSubscription/LicenseGenerationKeyWarning'
 
-import { ARCHIVE_PRODUCT_SUBSCRIPTION } from './backend'
 import { CodyServicesSection } from './CodyServicesSection'
 import {
     queryClient,
+    useArchiveEnterpriseSubscription,
     useGetEnterpriseSubscription,
     useListEnterpriseSubscriptionLicenses,
     type EnterprisePortalEnvironment,
@@ -75,7 +70,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const [env, setEnv] = useState<EnterprisePortalEnvironment>(
         searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'dev' : 'prod'
     )
-
     useEffect(() => {
         searchParams.set(QUERY_PARAM_ENV, env)
         setSearchParams(searchParams)
@@ -105,30 +99,36 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         { limit: 100, shouldLoad: !!data }
     )
 
-    const [archiveProductSubscription, { loading: archiveLoading, error: archiveError }] = useMutation<
-        ArchiveProductSubscriptionResult,
-        ArchiveProductSubscriptionVariables
-    >(ARCHIVE_PRODUCT_SUBSCRIPTION)
+    const {
+        mutateAsync: archiveProductSubscription,
+        isPending: archiveLoading,
+        error: archiveError,
+    } = useArchiveEnterpriseSubscription(env)
+
+    const subscription = data?.subscription
 
     const onArchive = useCallback(async () => {
-        if (!data) {
+        if (!subscription) {
             return
         }
-        if (
-            !window.confirm(
-                'Do you really want to archive this product subscription? This will hide it from site admins and users.\n\nHowever, it does NOT:\n\n- invalidate the license key\n- refund payment or cancel billing\n\nYou must manually do those things.'
-            )
-        ) {
+        const reason = window.prompt(
+            'Do you really want to PERMANENTLY archive this subscription? All licenses associated with this subscription will be PERMANENTLY revoked, it will no longer be available for various Sourcegraph services, and changes can no longer be made to this subscription.\n\nHowever, it does NOT refund payment or cancel billing for you.\n\nEnter a revocation reason to continue.'
+        )
+        if (!reason || reason.length <= 3) {
+            window.alert('Aborting.')
             return
         }
         try {
             telemetryRecorder.recordEvent('admin.productSubscription', 'archive')
-            await archiveProductSubscription({ variables: { id: data?.subscription?.id || '' } })
+            await archiveProductSubscription({
+                reason,
+                subscriptionId: subscription.id,
+            })
             navigate('/site-admin/dotcom/product/subscriptions')
         } catch (error) {
             logger.error(error)
         }
-    }, [data, archiveProductSubscription, navigate, telemetryRecorder])
+    }, [subscription, archiveProductSubscription, navigate, telemetryRecorder])
 
     const toggleShowGenerate = useCallback((): void => setShowGenerate(previousValue => !previousValue), [])
 
@@ -140,8 +140,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     if (isLoading && !data) {
         return <LoadingSpinner />
     }
-
-    const subscription = data?.subscription
 
     const created = subscription?.conditions?.find(
         condition => condition.status === EnterpriseSubscriptionCondition_Status.CREATED

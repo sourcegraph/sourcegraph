@@ -125,7 +125,7 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                                 {info && (
                                     <ProductSubscriptionLabel
                                         productName={licenseKey.planDisplayName}
-                                        userCount={Number(info.userCount)}
+                                        userCount={info.userCount}
                                         className="mb-0"
                                     />
                                 )}
