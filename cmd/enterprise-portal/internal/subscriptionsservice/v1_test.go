@@ -29,6 +29,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/samsm2m"
 	"github.com/sourcegraph/sourcegraph/internal/license"
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
+	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/managedservicesplatform/iam"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
@@ -550,6 +551,7 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 	ctx := context.Background()
 	const mockSubscriptionID = "es_80ca12e2-54b4-448c-a61a-390b1a9c1224"
+	const mockLicenseID = "esl_80ca12e2-54b4-448c-a61a-390b1a9c1224"
 
 	for _, tc := range []struct {
 		name           string
@@ -609,7 +611,7 @@ func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 				}
 			}
 			h := newTestHandlerV1(t, tc.tokenScopes...)
-			h.mockStore.GetEnterpriseSubscriptionFunc.SetDefaultHook(func(ctx context.Context, id string) (*subscriptions.SubscriptionWithConditions, error) {
+			h.mockStore.GetEnterpriseSubscriptionFunc.SetDefaultHook(func(_ context.Context, id string) (*subscriptions.SubscriptionWithConditions, error) {
 				if id == mockSubscriptionID {
 					return &subscriptions.SubscriptionWithConditions{
 						Subscription: subscriptions.Subscription{
@@ -618,6 +620,27 @@ func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 					}, nil
 				}
 				return nil, subscriptions.ErrSubscriptionNotFound
+			})
+			h.mockStore.ListEnterpriseSubscriptionLicensesFunc.SetDefaultHook(func(_ context.Context, opts subscriptions.ListLicensesOpts) ([]*subscriptions.LicenseWithConditions, error) {
+				if opts.SubscriptionID == mockSubscriptionID {
+					return []*subscriptions.LicenseWithConditions{{
+						SubscriptionLicense: subscriptions.SubscriptionLicense{
+							ID: mockLicenseID,
+						},
+					}, {
+						SubscriptionLicense: subscriptions.SubscriptionLicense{
+							ID:        "esl_already_revoked",
+							RevokedAt: pointers.Ptr(utctime.Now()),
+						},
+					}}, nil
+				}
+				return nil, errors.New("unexpected subscription ID")
+			})
+			h.mockStore.RevokeEnterpriseSubscriptionLicenseFunc.SetDefaultHook(func(_ context.Context, l string, opts subscriptions.RevokeLicenseOpts) (*subscriptions.LicenseWithConditions, error) {
+				assert.Equal(t, mockLicenseID, l)
+				assert.Contains(t, opts.Message, tc.archive.GetReason())
+				require.NotNil(t, opts.Time)
+				return &subscriptions.LicenseWithConditions{}, nil
 			})
 			h.mockStore.UpsertEnterpriseSubscriptionFunc.SetDefaultHook(func(_ context.Context, _ string, opts subscriptions.UpsertSubscriptionOptions, conds ...subscriptions.CreateSubscriptionConditionOptions) (*subscriptions.SubscriptionWithConditions, error) {
 				require.Len(t, conds, 1) // create must have condition
@@ -642,6 +665,7 @@ func TestHandlerV1_ArchiveEnterpriseSubscription(t *testing.T) {
 			}
 			if tc.wantUpsertOpts != nil {
 				mockrequire.CalledOnce(t, h.mockStore.UpsertEnterpriseSubscriptionFunc)
+				mockrequire.CalledOnce(t, h.mockStore.RevokeEnterpriseSubscriptionLicenseFunc)
 			} else {
 				mockrequire.NotCalled(t, h.mockStore.UpsertEnterpriseSubscriptionFunc)
 			}

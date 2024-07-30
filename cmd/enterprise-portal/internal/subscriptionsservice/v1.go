@@ -2,6 +2,7 @@ package subscriptionsservice
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -583,6 +584,42 @@ func (s *handlerV1) ArchiveEnterpriseSubscription(ctx context.Context, req *conn
 	}
 
 	archivedAt := s.store.Now()
+
+	// First, revoke all licenses associated with this subscription
+	licenses, err := s.store.ListEnterpriseSubscriptionLicenses(ctx, subscriptions.ListLicensesOpts{
+		SubscriptionID: subscriptionID,
+	})
+	if err != nil {
+		return nil, connectutil.InternalError(ctx, logger, err, "failed to list licenses for subscription")
+	}
+	revokedLicenses := make([]string, 0, len(licenses))
+	for _, lc := range licenses {
+		// Already revoked - nothing to do
+		if lc.RevokedAt != nil {
+			continue
+		}
+
+		licenseRevokeReason := "Subscription archival"
+		if reason := req.Msg.GetReason(); reason != "" {
+			licenseRevokeReason = fmt.Sprintf("Subscription archival: %s", reason)
+		}
+		_, err := s.store.RevokeEnterpriseSubscriptionLicense(ctx, lc.ID, subscriptions.RevokeLicenseOpts{
+			Message: licenseRevokeReason,
+			Time:    &archivedAt,
+		})
+		if err != nil {
+			// Audit-log the licenses we did manage to revoke
+			logger.Scoped("audit").Info("ArchiveEnterpriseSubscription",
+				log.Strings("revokedLicenses", revokedLicenses))
+
+			return nil, connectutil.InternalError(ctx, logger, err,
+				fmt.Sprintf("failed to revoke license %q", lc.ID))
+		}
+
+		revokedLicenses = append(revokedLicenses, lc.ID)
+	}
+
+	// Then, archive the parent subscription
 	createdSub, err := s.store.UpsertEnterpriseSubscription(ctx, subscriptionID,
 		subscriptions.UpsertSubscriptionOptions{
 			ArchivedAt: pointers.Ptr(archivedAt),
@@ -601,7 +638,8 @@ func (s *handlerV1) ArchiveEnterpriseSubscription(ctx context.Context, req *conn
 
 	protoSub := convertSubscriptionToProto(createdSub)
 	logger.Scoped("audit").Info("ArchiveEnterpriseSubscription",
-		log.String("archivedSubscription", protoSub.GetId()))
+		log.String("archivedSubscription", protoSub.GetId()),
+		log.Strings("revokedLicenses", revokedLicenses))
 	return connect.NewResponse(&subscriptionsv1.ArchiveEnterpriseSubscriptionResponse{}), nil
 }
 
