@@ -63,6 +63,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const [searchParams, setSearchParams] = useSearchParams()
 
     const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
+    const [debouncedQuery] = useDebounce(query, 500)
+
     const [filters, setFilters] = useState<{
         env: EnterprisePortalEnvironment
         filter: FilterType
@@ -77,8 +79,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         searchParams.set(QUERY_PARAM_FILTER, filters.filter)
         setSearchParams(searchParams)
     }, [query, searchParams, setSearchParams, filters])
-
-    const [debouncedQuery] = useDebounce(query, 500)
 
     let listFilters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[] = []
     switch (filters.filter) {

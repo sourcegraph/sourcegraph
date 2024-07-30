@@ -20,6 +20,8 @@ import {
     listEnterpriseSubscriptionLicenses,
     revokeEnterpriseSubscriptionLicense,
     getEnterpriseSubscription,
+    createEnterpriseSubscriptionLicense,
+    createEnterpriseSubscription,
 } from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
 import type {
     ListEnterpriseSubscriptionsResponse,
@@ -29,6 +31,10 @@ import type {
     RevokeEnterpriseSubscriptionLicenseResponse,
     RevokeEnterpriseSubscriptionLicenseRequest,
     GetEnterpriseSubscriptionResponse,
+    CreateEnterpriseSubscriptionLicenseResponse,
+    CreateEnterpriseSubscriptionLicenseRequest,
+    CreateEnterpriseSubscriptionRequest,
+    CreateEnterpriseSubscriptionResponse,
 } from './enterpriseportalgen/subscriptions_pb'
 
 /**
@@ -213,4 +219,30 @@ export function useGetEnterpriseSubscription(
         },
         { transport: mustGetEnvironment(env) }
     )
+}
+
+export function useCreateEnterpriseSubscriptionLicense(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    CreateEnterpriseSubscriptionLicenseResponse,
+    ConnectError,
+    PartialMessage<CreateEnterpriseSubscriptionLicenseRequest>,
+    unknown
+> {
+    return useMutation(createEnterpriseSubscriptionLicense, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useCreateEnterpriseSubscription(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    CreateEnterpriseSubscriptionResponse,
+    ConnectError,
+    PartialMessage<CreateEnterpriseSubscriptionRequest>,
+    unknown
+> {
+    return useMutation(createEnterpriseSubscription, {
+        transport: mustGetEnvironment(env),
+    })
 }

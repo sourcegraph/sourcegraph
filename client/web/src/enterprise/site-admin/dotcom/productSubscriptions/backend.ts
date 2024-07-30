@@ -8,8 +8,6 @@ import type {
     DotComProductLicensesResult,
     DotComProductLicensesVariables,
     ProductLicenseFields,
-    ProductLicensesResult,
-    ProductLicensesVariables,
 } from '../../../../graphql-operations'
 
 export const ARCHIVE_PRODUCT_SUBSCRIPTION = gql`
@@ -17,16 +15,6 @@ export const ARCHIVE_PRODUCT_SUBSCRIPTION = gql`
         dotcom {
             archiveProductSubscription(id: $id) {
                 alwaysNil
-            }
-        }
-    }
-`
-
-export const GENERATE_PRODUCT_LICENSE = gql`
-    mutation GenerateProductLicenseForSubscription($productSubscriptionID: ID!, $license: ProductLicenseInput!) {
-        dotcom {
-            generateProductLicenseForSubscription(productSubscriptionID: $productSubscriptionID, license: $license) {
-                id
             }
         }
     }

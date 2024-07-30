@@ -256,7 +256,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             )}
             {subscription && showGenerate && (
                 <SiteAdminGenerateProductLicenseForSubscriptionForm
-                    subscriptionID={subscription.id}
+                    env={env}
+                    subscription={subscription}
                     latestLicense={licenses.data?.licenses[0] ?? undefined}
                     onGenerate={onLicenseUpdate}
                     onCancel={() => setShowGenerate(false)}

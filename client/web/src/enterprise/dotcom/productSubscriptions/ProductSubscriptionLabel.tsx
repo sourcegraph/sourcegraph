@@ -9,14 +9,14 @@ import { formatUserCount } from '../../../productSubscription/helpers'
 export const ProductSubscriptionLabel: React.FunctionComponent<
     React.PropsWithChildren<{
         productName?: string
-        userCount?: number
+        userCount?: bigint
         className?: string
     }>
 > = ({ productName, userCount, className = '' }) => (
     <span className={className}>
         {productName && userCount ? (
             <>
-                {productName} ({formatUserCount(userCount)})
+                {productName} ({formatUserCount(Number(userCount))})
             </>
         ) : (
             <span className="text-muted font-italic">No plan selected</span>
