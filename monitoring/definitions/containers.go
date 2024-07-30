@@ -67,7 +67,7 @@ func Containers() *monitoring.Dashboard {
 				},
 			},
 			{
-				Title:  "Containers: Provisioning Indicators (not available on server)",
+				Title:  "Containers: Resource utilization (not available on server)",
 				Hidden: false,
 				Rows: []monitoring.Row{
 					{

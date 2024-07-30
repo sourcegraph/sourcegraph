@@ -14,7 +14,7 @@ import (
 //
 // These observables should only use cAdvisor metrics, and are thus only available on
 // Kubernetes and docker-compose deployments.
-const TitleProvisioningIndicators = "Provisioning indicators (not available on server)"
+const TitleResourceUtilization = "Resource utilization (not available on server)"
 
 var (
 	ProvisioningCPUUsageLongTerm sharedObservable = func(containerName string, owner monitoring.ObservableOwner) Observable {
@@ -124,7 +124,7 @@ func NewProvisioningIndicatorsGroup(containerName string, owner monitoring.Obser
 		options = &ContainerProvisioningIndicatorsGroupOptions{}
 	}
 
-	title := TitleProvisioningIndicators
+	title := TitleResourceUtilization
 	if options.CustomTitle != "" {
 		title = options.CustomTitle
 	}

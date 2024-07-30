@@ -1125,10 +1125,10 @@ func Zoekt() *monitoring.Dashboard {
 			}),
 
 			shared.NewProvisioningIndicatorsGroup(indexServerContainerName, monitoring.ObservableOwnerSearchCore, &shared.ContainerProvisioningIndicatorsGroupOptions{
-				CustomTitle: fmt.Sprintf("[%s] %s", indexServerContainerName, shared.TitleProvisioningIndicators),
+				CustomTitle: fmt.Sprintf("[%s] %s", indexServerContainerName, shared.TitleResourceUtilization),
 			}),
 			shared.NewProvisioningIndicatorsGroup(webserverContainerName, monitoring.ObservableOwnerSearchCore, &shared.ContainerProvisioningIndicatorsGroupOptions{
-				CustomTitle: fmt.Sprintf("[%s] %s", webserverContainerName, shared.TitleProvisioningIndicators),
+				CustomTitle: fmt.Sprintf("[%s] %s", webserverContainerName, shared.TitleResourceUtilization),
 			}),
 
 			shared.NewGolangMonitoringGroup(indexServerJob, monitoring.ObservableOwnerSearchCore, &shared.GolangMonitoringOptions{ContainerNameInTitle: true}),

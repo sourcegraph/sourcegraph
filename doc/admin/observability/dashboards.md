@@ -5342,7 +5342,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^(frontend|sourcegraph-fronte
 
 <br />
 
-### Frontend: Provisioning indicators (not available on server)
+### Frontend: Resource utilization (not available on server)
 
 #### frontend: provisioning_container_cpu_usage_long_term
 
@@ -10474,7 +10474,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^gitserver.*"}[1h]) + rate(co
 
 <br />
 
-### Git Server: Provisioning indicators (not available on server)
+### Git Server: Resource utilization (not available on server)
 
 #### gitserver: provisioning_container_cpu_usage_long_term
 
@@ -10933,7 +10933,7 @@ max by (relname)(pg_index_bloat_ratio) * 100
 
 <br />
 
-### Postgres: Provisioning indicators (not available on server)
+### Postgres: Resource utilization (not available on server)
 
 #### postgres: provisioning_container_cpu_usage_long_term
 
@@ -12369,7 +12369,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^precise-code-intel-worker.*"
 
 <br />
 
-### Precise Code Intel Worker: Provisioning indicators (not available on server)
+### Precise Code Intel Worker: Resource utilization (not available on server)
 
 #### precise-code-intel-worker: provisioning_container_cpu_usage_long_term
 
@@ -12614,7 +12614,7 @@ redis_up{app="redis-cache"}
 
 <br />
 
-### Redis: Provisioning indicators (not available on server)
+### Redis: Resource utilization (not available on server)
 
 #### redis: provisioning_container_cpu_usage_long_term
 
@@ -12729,7 +12729,7 @@ max by (name) (container_oom_events_total{name=~"^redis-cache.*"})
 
 <br />
 
-### Redis: Provisioning indicators (not available on server)
+### Redis: Resource utilization (not available on server)
 
 #### redis: provisioning_container_cpu_usage_long_term
 
@@ -16600,7 +16600,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^worker.*"}[1h]) + rate(conta
 
 <br />
 
-### Worker: Provisioning indicators (not available on server)
+### Worker: Resource utilization (not available on server)
 
 #### worker: provisioning_container_cpu_usage_long_term
 
@@ -20090,7 +20090,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^repo-updater.*"}[1h]) + rate
 
 <br />
 
-### Repo Updater: Provisioning indicators (not available on server)
+### Repo Updater: Resource utilization (not available on server)
 
 #### repo-updater: provisioning_container_cpu_usage_long_term
 
@@ -21767,7 +21767,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^searcher.*"}[1h]) + rate(con
 
 <br />
 
-### Searcher: Provisioning indicators (not available on server)
+### Searcher: Resource utilization (not available on server)
 
 #### searcher: provisioning_container_cpu_usage_long_term
 
@@ -24041,7 +24041,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^symbols.*"}[1h]) + rate(cont
 
 <br />
 
-### Symbols: Provisioning indicators (not available on server)
+### Symbols: Resource utilization (not available on server)
 
 #### symbols: provisioning_container_cpu_usage_long_term
 
@@ -24425,7 +24425,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^syntect-server.*"}[1h]) + ra
 
 <br />
 
-### Syntect Server: Provisioning indicators (not available on server)
+### Syntect Server: Resource utilization (not available on server)
 
 #### syntect-server: provisioning_container_cpu_usage_long_term
 
@@ -27356,7 +27356,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^zoekt-webserver.*"}[1h]) + r
 
 <br />
 
-### Zoekt: [zoekt-indexserver] Provisioning indicators (not available on server)
+### Zoekt: [zoekt-indexserver] Resource utilization (not available on server)
 
 #### zoekt: provisioning_container_cpu_usage_long_term
 
@@ -27471,7 +27471,7 @@ max by (name) (container_oom_events_total{name=~"^zoekt-indexserver.*"})
 
 <br />
 
-### Zoekt: [zoekt-webserver] Provisioning indicators (not available on server)
+### Zoekt: [zoekt-webserver] Resource utilization (not available on server)
 
 #### zoekt: provisioning_container_cpu_usage_long_term
 
@@ -28078,7 +28078,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^prometheus.*"}[1h]) + rate(c
 
 <br />
 
-### Prometheus: Provisioning indicators (not available on server)
+### Prometheus: Resource utilization (not available on server)
 
 #### prometheus: provisioning_container_cpu_usage_long_term
 
@@ -30075,7 +30075,7 @@ cadvisor_container_cpu_usage_percentage_total{name=~"^(frontend|sourcegraph-fron
 
 <br />
 
-### Global Containers Resource Usage: Containers: Provisioning Indicators (not available on server)
+### Global Containers Resource Usage: Containers: Resource utilization (not available on server)
 
 #### containers: container_memory_usage_provisioning
 
@@ -38786,7 +38786,7 @@ sum by(name) (rate(container_fs_reads_total{name=~"^embeddings.*"}[1h]) + rate(c
 
 <br />
 
-### Embeddings: Provisioning indicators (not available on server)
+### Embeddings: Resource utilization (not available on server)
 
 #### embeddings: provisioning_container_cpu_usage_long_term
 
