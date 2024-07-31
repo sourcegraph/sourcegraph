@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package testing.testpb.v1;
+
+option go_package = ".;testpb";
+
+message PingEmptyRequest {
+}
+
+message PingEmptyResponse {
+}
+
+message PingRequest {
+  string value = 1;
+  int32 sleep_time_ms = 2;
+  uint32 error_code_returned = 3;
+}
+
+message PingResponse {
+  string value = 1;
+  int32 counter = 2;
+}
+
+message PingErrorRequest {
+  string value = 1;
+  int32 sleep_time_ms = 2;
+  uint32 error_code_returned = 3;
+}
+
+message PingErrorResponse {
+  string value = 1;
+  int32 counter = 2;
+}
+
+message PingListRequest {
+  string value = 1;
+  int32 sleep_time_ms = 2;
+  uint32 error_code_returned = 3;
+}
+
+message PingListResponse {
+  string value = 1;
+  int32 counter = 2;
+}
+
+message PingStreamRequest {
+  string value = 1;
+  int32 sleep_time_ms = 2;
+  uint32 error_code_returned = 3;
+}
+
+message PingStreamResponse {
+  string value = 1;
+  int32 counter = 2;
+}
+
+service TestService {
+  rpc PingEmpty(PingEmptyRequest) returns (PingEmptyResponse) {}
+
+  rpc Ping(PingRequest) returns (PingResponse) {}
+
+  rpc PingError(PingErrorRequest) returns (PingErrorResponse) {}
+
+  rpc PingList(PingListRequest) returns (stream PingListResponse) {}
+
+  rpc PingStream(stream PingStreamRequest) returns (stream PingStreamResponse) {}
+
+}

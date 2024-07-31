@@ -1,0 +1,28 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "testpb_proto",
+    srcs = ["test.proto"],
+    strip_import_prefix = "/internal",
+    visibility = ["//:__subpackages__"],
+)
+
+go_proto_library(
+    name = "testpb_go_proto",
+    compilers = [
+        "//:gen-go-grpc",
+        "@io_bazel_rules_go//proto:go_proto",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/grpc/retry/testpb/v1",
+    proto = ":testpb_proto",
+    visibility = ["//:__subpackages__"],
+)
+
+go_library(
+    name = "testpb",
+    embed = [":testpb_go_proto"],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/grpc/retry/testpb/v1",
+    visibility = ["//:__subpackages__"],
+)
