@@ -12,6 +12,7 @@ go_library(
         "//cmd/frontend/graphqlbackend/graphqlutil",
         "//cmd/frontend/internal/guardrails/attribution",
         "//internal/guardrails",
+        "//lib/pointers",
     ],
 )
 

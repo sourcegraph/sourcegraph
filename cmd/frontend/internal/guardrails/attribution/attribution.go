@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 
@@ -20,7 +21,7 @@ import (
 // Service is for the attribution service which searches for matches on
 // snippets of code.
 type Service interface {
-	SnippetAttribution(ctx context.Context, snippet string, limit int) (result *SnippetAttributions, err error)
+	SnippetAttribution(ctx context.Context, snippet string, limit int, timeout time.Duration) (result *SnippetAttributions, err error)
 }
 
 // SnippetAttributions is holds the collection of attributions for a snippet.
@@ -51,7 +52,7 @@ type SnippetAttributions struct {
 
 type Uninitialized struct{}
 
-func (_ Uninitialized) SnippetAttribution(context.Context, string, int) (result *SnippetAttributions, err error) {
+func (_ Uninitialized) SnippetAttribution(context.Context, string, int, time.Duration) (result *SnippetAttributions, err error) {
 	return nil, errors.New("Attribution is not initialized. Please update site config.")
 }
 
@@ -74,14 +75,17 @@ func NewGatewayProxy(observationCtx *observation.Context, client codygateway.Cli
 
 // SnippetAttribution will search the instances indexed code for code matching
 // snippet and return the attribution results.
-func (c *gatewayProxy) SnippetAttribution(ctx context.Context, snippet string, limit int) (result *SnippetAttributions, err error) {
+func (c *gatewayProxy) SnippetAttribution(ctx context.Context, snippet string, limit int, timeout time.Duration) (result *SnippetAttributions, err error) {
 	ctx, traceLogger, endObservation := c.operations.snippetAttribution.With(ctx, &err, observation.Args{
 		Attrs: []attribute.KeyValue{
 			attribute.Int("snippet.len", len(snippet)),
 			attribute.Int("limit", limit),
+			attribute.Stringer("timeout", timeout),
 		},
 	})
 	defer endObservationWithResult(traceLogger, endObservation, &result)()
+	// TODO check if there is another repo that needs updating, or if I can
+	// just update this request?
 	attribution, err := c.client.Attribution(ctx, snippet, limit)
 	if err != nil {
 		return nil, err
@@ -109,7 +113,7 @@ func NewLocalSearch(observationCtx *observation.Context, client client.SearchCli
 	}
 }
 
-func (c *localSearch) SnippetAttribution(ctx context.Context, snippet string, limit int) (result *SnippetAttributions, err error) {
+func (c *localSearch) SnippetAttribution(ctx context.Context, snippet string, limit int, timeout time.Duration) (result *SnippetAttributions, err error) {
 	ctx, traceLogger, endObservation := c.operations.snippetAttributionLocal.With(ctx, &err, observation.Args{})
 	defer endObservationWithResult(traceLogger, endObservation, &result)()
 
@@ -119,8 +123,13 @@ func (c *localSearch) SnippetAttribution(ctx context.Context, snippet string, li
 		protocol   = search.Streaming
 	)
 
+	timeoutPart := ""
+	if timeout != 0 {
+		timeoutPart = fmt.Sprintf("timeout:%s", timeout)
+	}
+
 	patternType := "literal"
-	searchQuery := fmt.Sprintf("type:file select:repo index:only case:yes count:%d content:%q", limit, snippet)
+	searchQuery := fmt.Sprintf("type:file select:repo index:only case:yes %s count:%d content:%q", timeoutPart, limit, snippet)
 
 	inputs, err := c.client.Plan(
 		ctx,

@@ -30,7 +30,7 @@ func (f fakeGateway) Attribution(ctx context.Context, snippet string, limit int)
 func TestProxySuccess(t *testing.T) {
 	gateway := fakeGateway{}
 	service := NewGatewayProxy(observation.TestContextTB(t), gateway)
-	attribution, err := service.SnippetAttribution(context.Background(), "snippet", 3)
+	attribution, err := service.SnippetAttribution(context.Background(), "snippet", 3, 0)
 	require.NoError(t, err)
 	require.Equal(t, &SnippetAttributions{
 		RepositoryNames: []string{"repo1", "repo2"},
@@ -84,7 +84,7 @@ func TestSearchSuccess(t *testing.T) {
 		repos: []string{"foo1", "bar2"},
 	}
 	service := NewLocalSearch(observation.TestContextTB(t), fs)
-	attribution, err := service.SnippetAttribution(context.Background(), "snippet", 3)
+	attribution, err := service.SnippetAttribution(context.Background(), "snippet", 3, 0)
 	require.NoError(t, err)
 	require.Equal(t, &SnippetAttributions{
 		RepositoryNames: []string{"foo1", "bar2"},

@@ -114,7 +114,7 @@ func NewAttributionTest(observationCtx *observation.Context, conf conftypes.Site
 			return true, nil
 		}
 		// Attribution not available. Mode is permissive.
-		attribution, err := initLogic.Service().SnippetAttribution(ctx, snippet, 1)
+		attribution, err := initLogic.Service().SnippetAttribution(ctx, snippet, 1, 0)
 		// Attribution not available. Mode is permissive.
 		if err != nil {
 			return true, err

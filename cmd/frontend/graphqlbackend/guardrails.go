@@ -12,7 +12,8 @@ type GuardrailsResolver interface {
 
 type SnippetAttributionArgs struct {
 	graphqlutil.ConnectionArgs
-	Snippet string
+	Snippet   string
+	TimeoutMs *int32
 }
 
 type SnippetAttributionConnectionResolver interface {

@@ -3,6 +3,7 @@ package resolvers
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -17,7 +18,7 @@ type fakeAttributionService struct {
 	err          error
 }
 
-func (s *fakeAttributionService) SnippetAttribution(ctx context.Context, snippet string, limit int) (result *attribution.SnippetAttributions, err error) {
+func (s *fakeAttributionService) SnippetAttribution(ctx context.Context, snippet string, limit int, timeout time.Duration) (result *attribution.SnippetAttributions, err error) {
 	return &attribution.SnippetAttributions{
 		RepositoryNames: s.searchResult,
 		TotalCount:      len(s.searchResult),

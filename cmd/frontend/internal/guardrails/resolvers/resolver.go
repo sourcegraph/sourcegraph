@@ -3,11 +3,13 @@ package resolvers
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/graphqlbackend/graphqlutil"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/guardrails/attribution"
 	"github.com/sourcegraph/sourcegraph/internal/guardrails"
+	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
 var _ graphqlbackend.GuardrailsResolver = &GuardrailsResolver{}
@@ -45,7 +47,8 @@ func (c *GuardrailsResolver) SnippetAttribution(ctx context.Context, args *graph
 		// snippetThreshold.searchPerformed field within the resolver indicates this case.
 		return snippetAttributionConnectionResolver{}, nil
 	}
-	result, err := c.service().SnippetAttribution(ctx, args.Snippet, limit)
+	timeout := time.Duration(pointers.DerefZero(args.TimeoutMs)) * time.Millisecond
+	result, err := c.service().SnippetAttribution(ctx, args.Snippet, limit, timeout)
 	if err != nil {
 		return nil, err
 	}

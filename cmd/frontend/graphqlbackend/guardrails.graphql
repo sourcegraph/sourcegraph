@@ -2,7 +2,7 @@ extend type Query {
     """
     EXPERIMENTAL: Searches the instances indexed code for code matching snippet.
     """
-    snippetAttribution(snippet: String!, first: Int): SnippetAttributionConnection!
+    snippetAttribution(snippet: String!, first: Int, timeoutMs: Int): SnippetAttributionConnection!
 }
 
 """
