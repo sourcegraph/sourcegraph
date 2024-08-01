@@ -44,9 +44,9 @@ type ResourceOptions struct {
 // will be run _directly_ on the host. Otherwise, the command will be run inside
 // a one-shot docker container subject to the resource limits specified in the
 // given options.
-func NewDockerSpec(workingDir string, image string, scriptPath string, spec Spec, options DockerOptions) Spec {
+func NewDockerSpec(workingDir string, scriptPath string, spec Spec, options DockerOptions) Spec {
 	// TODO - remove this once src-cli is not required anymore for SSBC.
-	if image == "" {
+	if spec.Image == "" {
 		env := spec.Env
 		if options.ConfigPath != "" {
 			env = append(env, fmt.Sprintf("DOCKER_CONFIG=%s", options.ConfigPath))
@@ -67,12 +67,12 @@ func NewDockerSpec(workingDir string, image string, scriptPath string, spec Spec
 
 	return Spec{
 		Key:       spec.Key,
-		Command:   formatDockerCommand(hostDir, image, scriptPath, spec, options),
+		Command:   formatDockerCommand(hostDir, scriptPath, spec, options),
 		Operation: spec.Operation,
 	}
 }
 
-func formatDockerCommand(hostDir string, image string, scriptPath string, spec Spec, options DockerOptions) []string {
+func formatDockerCommand(hostDir string, scriptPath string, spec Spec, options DockerOptions) []string {
 	return Flatten(
 		"docker",
 		dockerConfigFlag(options.ConfigPath),
@@ -84,7 +84,7 @@ func formatDockerCommand(hostDir string, image string, scriptPath string, spec S
 		dockerWorkingDirectoryFlags(spec.Dir),
 		dockerEnvFlags(spec.Env),
 		dockerEntrypointFlags,
-		image,
+		spec.Image,
 		filepath.Join("/data", files.ScriptsPath, scriptPath),
 	)
 }

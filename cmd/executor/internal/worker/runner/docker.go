@@ -95,6 +95,6 @@ func (r *dockerRunner) Teardown(ctx context.Context) error {
 }
 
 func (r *dockerRunner) Run(ctx context.Context, spec Spec) error {
-	dockerSpec := command.NewDockerSpec(r.dir, spec.Image, spec.ScriptPath, spec.CommandSpecs[0], r.options)
+	dockerSpec := command.NewDockerSpec(r.dir, spec.ScriptPath, spec.CommandSpecs[0], r.options)
 	return r.cmd.Run(ctx, r.commandLogger, dockerSpec)
 }

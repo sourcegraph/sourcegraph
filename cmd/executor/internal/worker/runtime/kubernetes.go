@@ -95,9 +95,9 @@ func (r *kubernetesRuntime) NewRunnerSpecs(ws workspace.Workspace, job types.Job
 						Dir:       step.Dir,
 						Env:       step.Env,
 						Operation: r.operations.Exec,
+						Image:     step.Image,
 					},
 				},
-				Image: step.Image,
 			}
 		}
 		return runnerSpecs, nil

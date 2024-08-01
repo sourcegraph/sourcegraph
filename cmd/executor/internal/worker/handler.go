@@ -357,9 +357,9 @@ func (h *handler) handle(ctx context.Context, logger log.Logger, commandLogger c
 					Dir:       dockerStep.Dir,
 					Env:       dockerStep.Env,
 					Operation: h.operations.Exec,
+					Image:     dockerStep.Image,
 				},
 			},
-			Image:      dockerStep.Image,
 			ScriptPath: ws.ScriptFilenames()[i],
 			Job:        job,
 		}

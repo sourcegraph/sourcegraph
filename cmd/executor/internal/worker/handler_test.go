@@ -477,9 +477,9 @@ func TestHandler_Handle(t *testing.T) {
 								Dir:       ".",
 								Env:       []string{"FOO=bar"},
 								Operation: operations.Exec,
+								Image:     "my-image",
 							},
 						},
-						Image:      "my-image",
 						ScriptPath: "./foo",
 					},
 				}, nil)
@@ -499,9 +499,9 @@ func TestHandler_Handle(t *testing.T) {
 				assert.Equal(t, ".", jobRuntime.NewRunnerSpecsFunc.History()[0].Arg1.DockerSteps[0].Dir)
 				assert.Equal(t, []string{"FOO=bar"}, jobRuntime.NewRunnerSpecsFunc.History()[0].Arg1.DockerSteps[0].Env)
 				require.Len(t, jobRunner.RunFunc.History(), 1)
-				assert.Equal(t, "my-image", jobRunner.RunFunc.History()[0].Arg1.Image)
-				assert.Equal(t, "./foo", jobRunner.RunFunc.History()[0].Arg1.ScriptPath)
 				require.Len(t, jobRunner.RunFunc.History()[0].Arg1.CommandSpecs, 1)
+				assert.Equal(t, "my-image", jobRunner.RunFunc.History()[0].Arg1.CommandSpecs[0].Image)
+				assert.Equal(t, "./foo", jobRunner.RunFunc.History()[0].Arg1.ScriptPath)
 				assert.Equal(t, []string{"echo", "hello"}, jobRunner.RunFunc.History()[0].Arg1.CommandSpecs[0].Command)
 			},
 		},
@@ -575,9 +575,9 @@ func TestHandler_Handle(t *testing.T) {
 								Dir:       ".",
 								Env:       []string{"FOO=bar"},
 								Operation: operations.Exec,
+								Image:     "my-image",
 							},
 						},
-						Image:      "my-image",
 						ScriptPath: "./foo",
 					},
 				}, nil)

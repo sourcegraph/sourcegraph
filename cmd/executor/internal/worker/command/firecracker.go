@@ -15,15 +15,15 @@ const (
 )
 
 // NewFirecrackerSpec returns a spec that will run the given command in a firecracker VM.
-func NewFirecrackerSpec(vmName string, image string, scriptPath string, spec Spec, options DockerOptions) Spec {
-	dockerSpec := NewDockerSpec(FirecrackerContainerDir, image, scriptPath, spec, options)
+func NewFirecrackerSpec(vmName string, scriptPath string, spec Spec, options DockerOptions) Spec {
+	dockerSpec := NewDockerSpec(FirecrackerContainerDir, scriptPath, spec, options)
 	innerCommand := shellquote.Join(dockerSpec.Command...)
 
 	// Note: src-cli run commands don't receive env vars in firecracker so we
 	// have to prepend them inline to the script.
 	// TODO: This branch should disappear when we make src-cli a non-special cased
 	// thing.
-	if image == "" && len(dockerSpec.Env) > 0 {
+	if spec.Image == "" && len(dockerSpec.Env) > 0 {
 		innerCommand = fmt.Sprintf("%s %s", strings.Join(quoteEnv(dockerSpec.Env), " "), innerCommand)
 	}
 	if dockerSpec.Dir != "" {

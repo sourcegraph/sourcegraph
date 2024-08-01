@@ -12,7 +12,6 @@ func TestNewDockerSpec(t *testing.T) {
 	tests := []struct {
 		name         string
 		workingDir   string
-		image        string
 		scriptPath   string
 		spec         command.Spec
 		options      command.DockerOptions
@@ -21,9 +20,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "Converts to docker spec",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "script/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -51,9 +50,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "Docker Host Mount Path",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -86,9 +85,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "Config Path",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -121,9 +120,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "Docker Host Gateway",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -155,9 +154,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "CPU and Memory",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -195,9 +194,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "Default Spec Dir",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Env:     []string{"FOO=BAR"},
@@ -224,9 +223,9 @@ func TestNewDockerSpec(t *testing.T) {
 		{
 			name:       "No environment variables",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -286,7 +285,7 @@ func TestNewDockerSpec(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualSpec := command.NewDockerSpec(test.workingDir, test.image, test.scriptPath, test.spec, test.options)
+			actualSpec := command.NewDockerSpec(test.workingDir, test.scriptPath, test.spec, test.options)
 			assert.Equal(t, test.expectedSpec, actualSpec)
 		})
 	}

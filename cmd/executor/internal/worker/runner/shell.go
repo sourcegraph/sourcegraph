@@ -62,6 +62,6 @@ func (r *shellRunner) Teardown(ctx context.Context) error {
 }
 
 func (r *shellRunner) Run(ctx context.Context, spec Spec) error {
-	shellSpec := command.NewShellSpec(r.dir, spec.Image, spec.ScriptPath, spec.CommandSpecs[0], r.options)
+	shellSpec := command.NewShellSpec(r.dir, spec.ScriptPath, spec.CommandSpecs[0], r.options)
 	return r.cmd.Run(ctx, r.commandLogger, shellSpec)
 }

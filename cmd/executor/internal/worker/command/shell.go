@@ -7,9 +7,9 @@ import (
 )
 
 // NewShellSpec creates a new spec for a shell command.
-func NewShellSpec(workingDir string, image string, scriptPath string, spec Spec, options DockerOptions) Spec {
+func NewShellSpec(workingDir string, scriptPath string, spec Spec, options DockerOptions) Spec {
 	// TODO - remove this once src-cli is not required anymore for SSBC.
-	if image == "" {
+	if spec.Image == "" {
 		env := spec.Env
 		return Spec{
 			Key:       spec.Key,

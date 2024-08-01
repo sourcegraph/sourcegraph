@@ -352,6 +352,6 @@ func (r *firecrackerRunner) newCommandSpec(key string, cmd []string, env []strin
 }
 
 func (r *firecrackerRunner) Run(ctx context.Context, spec Spec) error {
-	firecrackerSpec := command.NewFirecrackerSpec(r.vmName, spec.Image, spec.ScriptPath, spec.CommandSpecs[0], r.options.DockerOptions)
+	firecrackerSpec := command.NewFirecrackerSpec(r.vmName, spec.ScriptPath, spec.CommandSpecs[0], r.options.DockerOptions)
 	return r.cmd.Run(ctx, r.cmdLogger, firecrackerSpec)
 }

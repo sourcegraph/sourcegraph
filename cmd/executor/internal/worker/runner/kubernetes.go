@@ -158,7 +158,7 @@ func (r *kubernetesRunner) Run(ctx context.Context, spec Spec) error {
 	} else {
 		job = command.NewKubernetesJob(
 			fmt.Sprintf("sg-executor-job-%s-%d-%s", spec.Job.Queue, spec.Job.ID, spec.CommandSpecs[0].Key),
-			spec.Image,
+			spec.CommandSpecs[0].Image,
 			spec.CommandSpecs[0],
 			r.dir,
 			r.options,

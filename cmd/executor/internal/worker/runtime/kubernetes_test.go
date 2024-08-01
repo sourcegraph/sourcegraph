@@ -62,9 +62,9 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 						Dir:       ".",
 						Env:       []string{"FOO=bar"},
 						Operation: operations.Exec,
+						Image:     "my-image",
 					},
 				},
-				Image: "my-image",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
 				require.Len(t, ws.ScriptFilenamesFunc.History(), 1)
@@ -103,9 +103,9 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 							Dir:       ".",
 							Env:       []string{"FOO=bar"},
 							Operation: operations.Exec,
+							Image:     "my-image",
 						},
 					},
-					Image: "my-image",
 				},
 				{
 					CommandSpecs: []command.Spec{
@@ -116,9 +116,9 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 							Dir:       ".",
 							Env:       []string{"FOO=bar"},
 							Operation: operations.Exec,
+							Image:     "my-image",
 						},
 					},
-					Image: "my-image",
 				},
 			},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
@@ -149,9 +149,9 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 						Dir:       ".",
 						Env:       []string{"FOO=bar"},
 						Operation: operations.Exec,
+						Image:     "my-image",
 					},
 				},
-				Image: "my-image",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
 				require.Len(t, ws.ScriptFilenamesFunc.History(), 1)
@@ -221,7 +221,6 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					}
 					require.Greater(t, len(actualSpec.CommandSpecs), 0)
 
-					assert.Equal(t, expected.Image, actualSpec.Image)
 					assert.Equal(t, expected.ScriptPath, actualSpec.ScriptPath)
 					assert.Equal(t, expected.CommandSpecs[0], actualSpec.CommandSpecs[0])
 				}

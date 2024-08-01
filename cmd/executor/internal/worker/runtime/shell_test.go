@@ -60,9 +60,9 @@ func TestShellRuntime_NewRunnerSpecs(t *testing.T) {
 						Dir:       ".",
 						Env:       []string{"FOO=bar"},
 						Operation: operations.Exec,
+						Image:     "my-image",
 					},
 				},
-				Image:      "my-image",
 				ScriptPath: "script.sh",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
@@ -101,9 +101,9 @@ func TestShellRuntime_NewRunnerSpecs(t *testing.T) {
 							Dir:       ".",
 							Env:       []string{"FOO=bar"},
 							Operation: operations.Exec,
+							Image:     "my-image",
 						},
 					},
-					Image:      "my-image",
 					ScriptPath: "script1.sh",
 				},
 				{
@@ -114,9 +114,9 @@ func TestShellRuntime_NewRunnerSpecs(t *testing.T) {
 							Dir:       ".",
 							Env:       []string{"FOO=bar"},
 							Operation: operations.Exec,
+							Image:     "my-image",
 						},
 					},
-					Image:      "my-image",
 					ScriptPath: "script2.sh",
 				},
 			},
@@ -147,9 +147,9 @@ func TestShellRuntime_NewRunnerSpecs(t *testing.T) {
 						Dir:       ".",
 						Env:       []string{"FOO=bar"},
 						Operation: operations.Exec,
+						Image:     "my-image",
 					},
 				},
-				Image:      "my-image",
 				ScriptPath: "script.sh",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
@@ -182,7 +182,6 @@ func TestShellRuntime_NewRunnerSpecs(t *testing.T) {
 							break
 						}
 					}
-					assert.Equal(t, expected.Image, actualSpec.Image)
 					assert.Equal(t, expected.ScriptPath, actualSpec.ScriptPath)
 					assert.Equal(t, expected.CommandSpecs[0], actualSpec.CommandSpecs[0])
 				}

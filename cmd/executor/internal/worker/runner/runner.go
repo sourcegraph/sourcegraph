@@ -29,12 +29,10 @@ type Runner interface {
 }
 
 // Spec represents a command that can be run on a machine, whether that
-// is the host, in a virtual machine, or in a docker container. If an image is
-// supplied, then the command will be run in a one-shot docker container.
+// is the host, in a virtual machine, or in a docker container.
 type Spec struct {
 	Job          types.Job
 	CommandSpecs []command.Spec
-	Image        string
 	ScriptPath   string
 }
 

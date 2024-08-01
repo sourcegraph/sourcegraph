@@ -151,9 +151,9 @@ func TestKubernetesRunner_Run(t *testing.T) {
 						Command: []string{"echo", "hello"},
 						Dir:     "/workingdir",
 						Env:     []string{"FOO=bar"},
+						Image:   "alpine",
 					},
 				},
-				Image:      "alpine",
 				ScriptPath: "/some/script",
 				Job: types.Job{
 					ID:    42,

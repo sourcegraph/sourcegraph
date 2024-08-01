@@ -13,7 +13,6 @@ func TestNewShellSpec(t *testing.T) {
 	tests := []struct {
 		name         string
 		workingDir   string
-		image        string
 		scriptPath   string
 		spec         command.Spec
 		options      command.DockerOptions
@@ -22,9 +21,9 @@ func TestNewShellSpec(t *testing.T) {
 		{
 			name:       "Converts to docker spec",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -41,9 +40,9 @@ func TestNewShellSpec(t *testing.T) {
 		{
 			name:       "Docker Host Mount Path",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -65,9 +64,9 @@ func TestNewShellSpec(t *testing.T) {
 		{
 			name:       "Default Spec Dir",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Env:     []string{"FOO=BAR"},
@@ -83,9 +82,9 @@ func TestNewShellSpec(t *testing.T) {
 		{
 			name:       "No environment variables",
 			workingDir: "/workingDirectory",
-			image:      "some-image",
 			scriptPath: "some/path",
 			spec: command.Spec{
+				Image:   "some-image",
 				Key:     "some-key",
 				Command: []string{"some", "command"},
 				Dir:     "/some/dir",
@@ -117,7 +116,7 @@ func TestNewShellSpec(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actualSpec := command.NewShellSpec(test.workingDir, test.image, test.scriptPath, test.spec, test.options)
+			actualSpec := command.NewShellSpec(test.workingDir, test.scriptPath, test.spec, test.options)
 			assert.Equal(t, test.expectedSpec, actualSpec)
 		})
 	}
