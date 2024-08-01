@@ -18,6 +18,7 @@ type Config struct {
 
 	k8sConfig              *rest.Config
 	metrics                metricsConfig
+	pprofAddr              string
 	grpc                   grpcConfig
 	http                   httpConfig
 	namespace              string
@@ -43,6 +44,7 @@ func (c *Config) Load() {
 
 	c.k8sConfig = k8sConfig
 	c.metrics.addr = c.Get("APPLIANCE_METRICS_ADDR", ":8734", "Appliance metrics server address.")
+	c.pprofAddr = c.Get("APPLIANCE_PPROF_ADDR", ":6060", "Server on which to expose pprof")
 	c.metrics.secure = c.GetBool("APPLIANCE_METRICS_SECURE", "false", "Appliance metrics server uses https.")
 	c.grpc.addr = c.Get("APPLIANCE_GRPC_ADDR", ":9000", "Appliance gRPC address.")
 	c.http.addr = c.Get("APPLIANCE_HTTP_ADDR", ":8888", "Appliance http address.")

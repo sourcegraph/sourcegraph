@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strconv"
@@ -129,6 +130,9 @@ func Start(ctx context.Context, observationCtx *observation.Context, ready servi
 
 	g, ctx := errgroup.WithContext(ctx)
 	ctx = shutdownOnSignal(ctx)
+
+	// fire-and-forget a pprof server
+	go http.ListenAndServe(config.pprofAddr, nil)
 
 	g.Go(func() error {
 		logger.Info("gRPC server listening", log.String("address", listener.Addr().String()))
