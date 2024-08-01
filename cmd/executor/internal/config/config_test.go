@@ -58,8 +58,6 @@ func TestConfig_Load(t *testing.T) {
 			return `[{"labelSelector": {"matchExpressions": [{"key": "foo", "operator": "In", "values": ["bar"]}]}, "topologyKey": "kubernetes.io/hostname"}]`
 		case "EXECUTOR_KUBERNETES_NODE_TOLERATIONS":
 			return `[{"key": "foo", "operator": "Equal", "value": "bar", "effect": "NoSchedule"}]`
-		case "KUBERNETES_SINGLE_JOB_POD":
-			return "false"
 		case "KUBERNETES_JOB_VOLUME_TYPE":
 			return "pvc"
 		case "KUBERNETES_JOB_VOLUME_SIZE":
@@ -68,7 +66,7 @@ func TestConfig_Load(t *testing.T) {
 			return `[{"name": "foo", "configMap": {"name": "bar"}}]`
 		case "KUBERNETES_ADDITIONAL_JOB_VOLUME_MOUNTS":
 			return `[{"name": "foo", "mountPath": "/foo"}]`
-		case "KUBERNETES_SINGLE_JOB_STEP_IMAGE":
+		case "KUBERNETES_JOB_STEP_IMAGE":
 			return "sourcegraph/step-image:latest"
 		case "KUBERNETES_JOB_ANNOTATIONS":
 			return `{"foo": "bar", "faz": "baz"}`
@@ -163,7 +161,6 @@ func TestConfig_Load(t *testing.T) {
 		[]corev1.Toleration{{Key: "foo", Operator: corev1.TolerationOpEqual, Value: "bar", Effect: corev1.TaintEffectNoSchedule}},
 		cfg.KubernetesNodeTolerations,
 	)
-	assert.False(t, cfg.KubernetesSingleJobPod)
 	assert.Equal(t, "pvc", cfg.KubernetesJobVolumeType)
 	assert.Equal(t, "10Gi", cfg.KubernetesJobVolumeSize)
 	assert.Equal(
@@ -176,7 +173,7 @@ func TestConfig_Load(t *testing.T) {
 		[]corev1.VolumeMount{{Name: "foo", MountPath: "/foo"}},
 		cfg.KubernetesAdditionalJobVolumeMounts,
 	)
-	assert.Equal(t, "sourcegraph/step-image:latest", cfg.KubernetesSingleJobStepImage)
+	assert.Equal(t, "sourcegraph/step-image:latest", cfg.KubernetesJobStepImage)
 
 	assert.Len(t, cfg.KubernetesJobAnnotations, 2)
 	assert.Equal(t, "bar", cfg.KubernetesJobAnnotations["foo"])
@@ -234,12 +231,11 @@ func TestConfig_Load_Defaults(t *testing.T) {
 	assert.Equal(t, -1, cfg.KubernetesSecurityContextRunAsUser)
 	assert.Equal(t, -1, cfg.KubernetesSecurityContextRunAsGroup)
 	assert.Equal(t, 1000, cfg.KubernetesSecurityContextFSGroup)
-	assert.True(t, cfg.KubernetesSingleJobPod)
 	assert.Equal(t, "emptyDir", cfg.KubernetesJobVolumeType)
 	assert.Equal(t, "5Gi", cfg.KubernetesJobVolumeSize)
 	assert.Empty(t, cfg.KubernetesAdditionalJobVolumes)
 	assert.Empty(t, cfg.KubernetesAdditionalJobVolumeMounts)
-	assert.Equal(t, "sourcegraph/batcheshelper:insiders", cfg.KubernetesSingleJobStepImage)
+	assert.Equal(t, "sourcegraph/batcheshelper:insiders", cfg.KubernetesJobStepImage)
 	assert.Nil(t, cfg.KubernetesJobAnnotations)
 	assert.Nil(t, cfg.KubernetesJobPodAnnotations)
 	assert.Empty(t, cfg.KubernetesImagePullSecrets)

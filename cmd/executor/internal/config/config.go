@@ -77,13 +77,11 @@ type Config struct {
 	KubernetesJobAnnotations                       map[string]string
 	KubernetesJobPodAnnotations                    map[string]string
 	KubernetesImagePullSecrets                     string
-	// TODO remove in 5.2
-	KubernetesSingleJobPod              bool
-	KubernetesJobVolumeType             string
-	KubernetesJobVolumeSize             string
-	KubernetesAdditionalJobVolumes      []corev1.Volume
-	KubernetesAdditionalJobVolumeMounts []corev1.VolumeMount
-	KubernetesSingleJobStepImage        string
+	KubernetesJobVolumeType                        string
+	KubernetesJobVolumeSize                        string
+	KubernetesAdditionalJobVolumes                 []corev1.Volume
+	KubernetesAdditionalJobVolumeMounts            []corev1.VolumeMount
+	KubernetesJobStepImage                         string
 	// TODO remove in 5.2 if we have moved to a custom image to do the setup work.
 	KubernetesGitCACert string
 
@@ -160,12 +158,11 @@ func (c *Config) Load() {
 	c.KubernetesSecurityContextRunAsUser = c.GetInt("KUBERNETES_RUN_AS_USER", "-1", "The user ID to run Kubernetes jobs as.")
 	c.KubernetesSecurityContextRunAsGroup = c.GetInt("KUBERNETES_RUN_AS_GROUP", "-1", "The group ID to run Kubernetes jobs as.")
 	c.KubernetesSecurityContextFSGroup = c.GetInt("KUBERNETES_FS_GROUP", "1000", "The group ID to run all containers in the Kubernetes jobs as. Defaults to 1000, the group ID of the docker group in the executor container.")
-	c.KubernetesSingleJobPod = c.GetBool("KUBERNETES_SINGLE_JOB_POD", "true", "Determine if a single Job Pod should be used to process a workspace")
 	c.KubernetesJobVolumeType = c.Get("KUBERNETES_JOB_VOLUME_TYPE", "emptyDir", "Determines the type of volume to use with the single job. Options are 'emptyDir' and 'pvc'.")
 	c.KubernetesJobVolumeSize = c.Get("KUBERNETES_JOB_VOLUME_SIZE", "5Gi", "Determines the size of the job volume.")
 	c.kubernetesAdditionalJobVolumes = c.GetOptional("KUBERNETES_ADDITIONAL_JOB_VOLUMES", "Additional volumes to associate with the Jobs. e.g. [{\"name\": \"my-volume\", \"configMap\": {\"name\": \"cluster-volume\"}}]")
 	c.kubernetesAdditionalJobVolumeMounts = c.GetOptional("KUBERNETES_ADDITIONAL_JOB_VOLUME_MOUNTS", "Volumes to mount to the Jobs. e.g. [{\"name\":\"my-volume\", \"mountPath\":\"/foo/bar\"}]")
-	c.KubernetesSingleJobStepImage = c.Get("KUBERNETES_SINGLE_JOB_STEP_IMAGE", "sourcegraph/batcheshelper:insiders", "The image to use for intermediate steps in the single job. Defaults to sourcegraph/batcheshelper:latest.")
+	c.KubernetesJobStepImage = c.Get("KUBERNETES_JOB_STEP_IMAGE", c.Get("KUBERNETES_SINGLE_JOB_STEP_IMAGE", "sourcegraph/batcheshelper:insiders", ""), "The image to use for intermediate steps in the single job. Defaults to sourcegraph/batcheshelper:latest.")
 	c.KubernetesGitCACert = c.GetOptional("KUBERNETES_GIT_CA_CERT", "The CA certificate to use for git operations. If not set, the system CA bundle will be used. e.g. /path/to/ca.crt")
 	c.kubernetesJobAnnotations = c.GetOptional("KUBERNETES_JOB_ANNOTATIONS", "The JSON encoded annotations to add to the Kubernetes Jobs. e.g. {\"foo\": \"bar\"}")
 	c.kubernetesJobPodAnnotations = c.GetOptional("KUBERNETES_JOB_POD_ANNOTATIONS", "The JSON encoded annotations to add to the Kubernetes Job Pods. e.g. {\"foo\": \"bar\"}")

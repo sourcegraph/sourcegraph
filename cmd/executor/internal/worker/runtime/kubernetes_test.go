@@ -23,7 +23,6 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 	tests := []struct {
 		name           string
 		job            types.Job
-		singleJob      bool
 		mockFunc       func(ws *MockWorkspace)
 		expected       []runner.Spec
 		expectedErr    error
@@ -50,24 +49,23 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					},
 				},
 			},
-			mockFunc: func(ws *MockWorkspace) {
-				ws.ScriptFilenamesFunc.SetDefaultReturn([]string{"script.sh"})
-			},
 			expected: []runner.Spec{{
 				CommandSpecs: []command.Spec{
 					{
-						Key:       "step.kubernetes.key-1",
-						Name:      "step-kubernetes-key-1",
-						Command:   []string{"/bin/sh", "/job/.sourcegraph-executor/script.sh"},
-						Dir:       ".",
-						Env:       []string{"FOO=bar"},
-						Operation: operations.Exec,
+						Key:     "step.kubernetes.key-1",
+						Name:    "step-kubernetes-key-1",
+						Command: []string{"/bin/sh", "/job/.sourcegraph-executor/0.0_@.sh"},
+						Dir:     ".",
+						Env:     []string{"FOO=bar"},
+						Image:   "my-image",
 					},
 				},
 				Image: "my-image",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
-				require.Len(t, ws.ScriptFilenamesFunc.History(), 1)
+				// for single job pods, the script filename comes from the job id + other attributes
+				// and not from the workspace
+				require.Len(t, ws.ScriptFilenamesFunc.History(), 0)
 			},
 		},
 		{
@@ -90,39 +88,33 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					},
 				},
 			},
-			mockFunc: func(ws *MockWorkspace) {
-				ws.ScriptFilenamesFunc.SetDefaultReturn([]string{"script1.sh", "script2.sh"})
-			},
 			expected: []runner.Spec{
 				{
 					CommandSpecs: []command.Spec{
 						{
-							Key:       "step.kubernetes.key-1",
-							Name:      "step-kubernetes-key-1",
-							Command:   []string{"/bin/sh", "/job/.sourcegraph-executor/script1.sh"},
-							Dir:       ".",
-							Env:       []string{"FOO=bar"},
-							Operation: operations.Exec,
+							Key:     "step.kubernetes.key-1",
+							Name:    "step-kubernetes-key-1",
+							Command: []string{"/bin/sh", "/job/.sourcegraph-executor/0.0_@.sh"},
+							Dir:     ".",
+							Env:     []string{"FOO=bar"},
+							Image:   "my-image",
 						},
-					},
-					Image: "my-image",
-				},
-				{
-					CommandSpecs: []command.Spec{
 						{
-							Key:       "step.kubernetes.key-2",
-							Name:      "step-kubernetes-key-2",
-							Command:   []string{"/bin/sh", "/job/.sourcegraph-executor/script2.sh"},
-							Dir:       ".",
-							Env:       []string{"FOO=bar"},
-							Operation: operations.Exec,
+							Key:     "step.kubernetes.key-2",
+							Name:    "step-kubernetes-key-2",
+							Command: []string{"/bin/sh", "/job/.sourcegraph-executor/0.0_@.sh"},
+							Dir:     ".",
+							Env:     []string{"FOO=bar"},
+							Image:   "my-image",
 						},
 					},
 					Image: "my-image",
 				},
 			},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
-				require.Len(t, ws.ScriptFilenamesFunc.History(), 2)
+				// for single job pods, the script filename comes from the job id + other attributes
+				// and not from the workspace
+				require.Len(t, ws.ScriptFilenamesFunc.History(), 0)
 			},
 		},
 		{
@@ -137,29 +129,27 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					},
 				},
 			},
-			mockFunc: func(ws *MockWorkspace) {
-				ws.ScriptFilenamesFunc.SetDefaultReturn([]string{"script.sh"})
-			},
 			expected: []runner.Spec{{
 				CommandSpecs: []command.Spec{
 					{
-						Key:       "step.kubernetes.0",
-						Name:      "step-kubernetes-0",
-						Command:   []string{"/bin/sh", "/job/.sourcegraph-executor/script.sh"},
-						Dir:       ".",
-						Env:       []string{"FOO=bar"},
-						Operation: operations.Exec,
+						Key:     "step.kubernetes.0",
+						Name:    "step-kubernetes-0",
+						Command: []string{"/bin/sh", "/job/.sourcegraph-executor/0.0_@.sh"},
+						Dir:     ".",
+						Env:     []string{"FOO=bar"},
+						Image:   "my-image",
 					},
 				},
 				Image: "my-image",
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
-				require.Len(t, ws.ScriptFilenamesFunc.History(), 1)
+				// for single job pods, the script filename comes from the job id + other attributes
+				// and not from the workspace
+				require.Len(t, ws.ScriptFilenamesFunc.History(), 0)
 			},
 		},
 		{
-			name:      "Single job",
-			singleJob: true,
+			name: "Single pod job",
 			job: types.Job{
 				ID:             42,
 				RepositoryName: "github.com/sourcegraph/sourcegraph",
@@ -174,9 +164,6 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					},
 				},
 			},
-			mockFunc: func(ws *MockWorkspace) {
-				ws.ScriptFilenamesFunc.SetDefaultReturn([]string{"script.sh"})
-			},
 			expected: []runner.Spec{{
 				CommandSpecs: []command.Spec{
 					{
@@ -190,19 +177,22 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 				},
 			}},
 			assertMockFunc: func(t *testing.T, ws *MockWorkspace) {
+				// for single job pods, the script filename comes from the job id + other attributes
+				// and not from the workspace
 				require.Len(t, ws.ScriptFilenamesFunc.History(), 0)
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+
 			ws := NewMockWorkspace()
 
 			if test.mockFunc != nil {
 				test.mockFunc(ws)
 			}
 
-			r := &kubernetesRuntime{options: command.KubernetesContainerOptions{SingleJobPod: test.singleJob}, operations: operations}
+			r := &kubernetesRuntime{options: command.KubernetesContainerOptions{}, operations: operations}
 			actual, err := r.NewRunnerSpecs(ws, test.job)
 			if test.expectedErr != nil {
 				require.Error(t, err)
@@ -210,6 +200,9 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Len(t, actual, len(test.expected))
+				if len(test.expected) > 0 {
+					require.Len(t, actual[0].CommandSpecs, len(test.expected[0].CommandSpecs))
+				}
 				for _, expected := range test.expected {
 					// find the matching actual spec based on the command spec key. There will only ever be one command spec per spec.
 					var actualSpec runner.Spec
@@ -221,7 +214,6 @@ func TestKubernetesRuntime_NewRunnerSpecs(t *testing.T) {
 					}
 					require.Greater(t, len(actualSpec.CommandSpecs), 0)
 
-					assert.Equal(t, expected.Image, actualSpec.Image)
 					assert.Equal(t, expected.ScriptPath, actualSpec.ScriptPath)
 					assert.Equal(t, expected.CommandSpecs[0], actualSpec.CommandSpecs[0])
 				}

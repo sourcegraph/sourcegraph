@@ -541,78 +541,6 @@ func TestNewKubernetesJob(t *testing.T) {
 		os.Unsetenv("KUBERNETES_SERVICE_HOST")
 	})
 
-	spec := command.Spec{
-		Key:     "my.container",
-		Name:    "my-container",
-		Command: []string{"echo", "hello"},
-		Env:     []string{"FOO=bar"},
-	}
-	options := command.KubernetesContainerOptions{
-		Namespace:      "default",
-		NodeName:       "my-node",
-		JobAnnotations: map[string]string{"foo": "bar"},
-		ImagePullSecrets: []corev1.LocalObjectReference{
-			{Name: "my-secret"},
-		},
-		PersistenceVolumeName: "my-pvc",
-		ResourceLimit: command.KubernetesResource{
-			CPU:    resource.MustParse("10"),
-			Memory: resource.MustParse("10Gi"),
-		},
-		ResourceRequest: command.KubernetesResource{
-			CPU:    resource.MustParse("1"),
-			Memory: resource.MustParse("1Gi"),
-		},
-		SecurityContext: command.KubernetesSecurityContext{
-			FSGroup: pointer.Int64(1000),
-		},
-	}
-	job := command.NewKubernetesJob("my-job", "my-image:latest", spec, "/my/path", options)
-
-	assert.Equal(t, "my-job", job.Name)
-	assert.Equal(t, map[string]string{"foo": "bar"}, job.Annotations)
-	assert.Equal(t, int32(0), *job.Spec.BackoffLimit)
-
-	assert.Equal(t, "my-node", job.Spec.Template.Spec.NodeName)
-	assert.Equal(t, corev1.RestartPolicyNever, job.Spec.Template.Spec.RestartPolicy)
-	assert.Equal(t, "my-secret", job.Spec.Template.Spec.ImagePullSecrets[0].Name)
-
-	require.Len(t, job.Spec.Template.Spec.Containers, 1)
-	assert.Equal(t, "my-container", job.Spec.Template.Spec.Containers[0].Name)
-	assert.Equal(t, "my-image:latest", job.Spec.Template.Spec.Containers[0].Image)
-	assert.Equal(t, []string{"echo", "hello"}, job.Spec.Template.Spec.Containers[0].Command)
-	assert.Equal(t, "/job", job.Spec.Template.Spec.Containers[0].WorkingDir)
-
-	require.Len(t, job.Spec.Template.Spec.Containers[0].Env, 1)
-	assert.Equal(t, "FOO", job.Spec.Template.Spec.Containers[0].Env[0].Name)
-	assert.Equal(t, "bar", job.Spec.Template.Spec.Containers[0].Env[0].Value)
-
-	assert.Equal(t, resource.MustParse("10"), *job.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu())
-	assert.Equal(t, resource.MustParse("10Gi"), *job.Spec.Template.Spec.Containers[0].Resources.Limits.Memory())
-	assert.Equal(t, resource.MustParse("1"), *job.Spec.Template.Spec.Containers[0].Resources.Requests.Cpu())
-	assert.Equal(t, resource.MustParse("1Gi"), *job.Spec.Template.Spec.Containers[0].Resources.Requests.Memory())
-
-	require.Len(t, job.Spec.Template.Spec.Containers[0].VolumeMounts, 1)
-	assert.Equal(t, "sg-executor-job-volume", job.Spec.Template.Spec.Containers[0].VolumeMounts[0].Name)
-	assert.Equal(t, "/job", job.Spec.Template.Spec.Containers[0].VolumeMounts[0].MountPath)
-	assert.Equal(t, "/my/path", job.Spec.Template.Spec.Containers[0].VolumeMounts[0].SubPath)
-
-	require.Len(t, job.Spec.Template.Spec.Volumes, 1)
-	assert.Equal(t, "sg-executor-job-volume", job.Spec.Template.Spec.Volumes[0].Name)
-	assert.Equal(t, "my-pvc", job.Spec.Template.Spec.Volumes[0].PersistentVolumeClaim.ClaimName)
-
-	assert.Nil(t, job.Spec.Template.Spec.SecurityContext.RunAsUser)
-	assert.Nil(t, job.Spec.Template.Spec.SecurityContext.RunAsGroup)
-	assert.Equal(t, int64(1000), *job.Spec.Template.Spec.SecurityContext.FSGroup)
-}
-
-func TestNewKubernetesSingleJob(t *testing.T) {
-	err := os.Setenv("KUBERNETES_SERVICE_HOST", "http://localhost")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		os.Unsetenv("KUBERNETES_SERVICE_HOST")
-	})
-
 	specs := []command.Spec{
 		{
 			Key:     "my.container.0",
@@ -675,7 +603,7 @@ func TestNewKubernetesSingleJob(t *testing.T) {
 		},
 		StepImage: "step-image:latest",
 	}
-	job := command.NewKubernetesSingleJob(
+	job := command.NewKubernetesJob(
 		"my-job",
 		specs,
 		workspaceFiles,

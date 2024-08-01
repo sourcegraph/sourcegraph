@@ -20,14 +20,14 @@ rules:
       - get
       - list
       - watch
-# Secrets are required if KUBERNETES_SINGLE_JOB_POD is "true"
- - apiGroups:
-     - ""
-   resources:
-     - secrets
-   verbs:
-     - create
-     - delete
+# Secrets are required post 5.5, when all pods run a single job
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
 # PVCs are required if KUBERNETES_JOB_VOLUME_TYPE is "pvc"
 #  - apiGroups:
 #      - ""

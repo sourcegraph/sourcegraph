@@ -250,7 +250,9 @@ func TestHandler_Handle_Legacy(t *testing.T) {
 			},
 			assertMockFunc: func(t *testing.T, cmdRunner *MockCmdRunner, cmd *MockCommand, logStore *MockExecutionLogEntryStore, filesStore *MockStore) {
 				require.Len(t, cmdRunner.CombinedOutputFunc.History(), 0)
-
+				for x, h := range cmd.RunFunc.History() {
+					t.Logf("%d: %s", x, h.Arg2.Command)
+				}
 				require.Len(t, cmd.RunFunc.History(), 7)
 				assert.Equal(t, "step.docker.some-step", cmd.RunFunc.History()[6].Arg2.Key)
 				// There is a temporary directory in the command. We don't want to assert on it. The value of command

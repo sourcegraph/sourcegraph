@@ -114,56 +114,46 @@ func (r *kubernetesRunner) Teardown(ctx context.Context) error {
 
 func (r *kubernetesRunner) Run(ctx context.Context, spec Spec) error {
 	var job *batchv1.Job
-	if r.options.SingleJobPod {
-		workspaceFiles, err := files.GetWorkspaceFiles(ctx, r.filesStore, spec.Job, command.KubernetesJobMountPath)
-		if err != nil {
-			return err
-		}
-
-		jobName := fmt.Sprintf("sg-executor-job-%s-%d", spec.Job.Queue, spec.Job.ID)
-
-		r.secretName = jobName + "-secrets"
-		secrets, err := r.cmd.CreateSecrets(ctx, r.options.Namespace, r.secretName, map[string]string{"TOKEN": spec.Job.Token})
-		if err != nil {
-			return err
-		}
-
-		if r.options.JobVolume.Type == command.KubernetesVolumeTypePVC {
-			r.volumeName = jobName + "-pvc"
-			if err = r.cmd.CreateJobPVC(ctx, r.options.Namespace, r.volumeName, r.options.JobVolume.Size); err != nil {
-				return err
-			}
-		}
-
-		relativeURL, err := makeRelativeURL(r.options.CloneOptions.EndpointURL, r.options.CloneOptions.GitServicePath, spec.Job.RepositoryName)
-		if err != nil {
-			return errors.Wrap(err, "failed to make relative URL")
-		}
-
-		repoOptions := command.RepositoryOptions{
-			JobID:               spec.Job.ID,
-			CloneURL:            relativeURL.String(),
-			RepositoryDirectory: spec.Job.RepositoryDirectory,
-			Commit:              spec.Job.Commit,
-		}
-		job = command.NewKubernetesSingleJob(
-			jobName,
-			spec.CommandSpecs,
-			workspaceFiles,
-			secrets,
-			r.volumeName,
-			repoOptions,
-			r.options,
-		)
-	} else {
-		job = command.NewKubernetesJob(
-			fmt.Sprintf("sg-executor-job-%s-%d-%s", spec.Job.Queue, spec.Job.ID, spec.CommandSpecs[0].Key),
-			spec.Image,
-			spec.CommandSpecs[0],
-			r.dir,
-			r.options,
-		)
+	workspaceFiles, err := files.GetWorkspaceFiles(ctx, r.filesStore, spec.Job, command.KubernetesJobMountPath)
+	if err != nil {
+		return err
 	}
+
+	jobName := fmt.Sprintf("sg-executor-job-%s-%d", spec.Job.Queue, spec.Job.ID)
+
+	r.secretName = jobName + "-secrets"
+	secrets, err := r.cmd.CreateSecrets(ctx, r.options.Namespace, r.secretName, map[string]string{"TOKEN": spec.Job.Token})
+	if err != nil {
+		return err
+	}
+
+	if r.options.JobVolume.Type == command.KubernetesVolumeTypePVC {
+		r.volumeName = jobName + "-pvc"
+		if err = r.cmd.CreateJobPVC(ctx, r.options.Namespace, r.volumeName, r.options.JobVolume.Size); err != nil {
+			return err
+		}
+	}
+
+	relativeURL, err := makeRelativeURL(r.options.CloneOptions.EndpointURL, r.options.CloneOptions.GitServicePath, spec.Job.RepositoryName)
+	if err != nil {
+		return errors.Wrap(err, "failed to make relative URL")
+	}
+
+	repoOptions := command.RepositoryOptions{
+		JobID:               spec.Job.ID,
+		CloneURL:            relativeURL.String(),
+		RepositoryDirectory: spec.Job.RepositoryDirectory,
+		Commit:              spec.Job.Commit,
+	}
+	job = command.NewKubernetesJob(
+		jobName,
+		spec.CommandSpecs,
+		workspaceFiles,
+		secrets,
+		r.volumeName,
+		repoOptions,
+		r.options,
+	)
 	r.internalLogger.Debug("Creating job", log.Int("jobID", spec.Job.ID))
 	if _, err := r.cmd.CreateJob(ctx, r.options.Namespace, job); err != nil {
 		return errors.Wrap(err, "creating job")

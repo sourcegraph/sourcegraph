@@ -59,7 +59,6 @@ type KubernetesContainerOptions struct {
 	Deadline              *int64
 	KeepJobs              bool
 	SecurityContext       KubernetesSecurityContext
-	SingleJobPod          bool
 	StepImage             string
 	GitCACert             string
 	JobVolume             KubernetesJobVolume
@@ -429,77 +428,6 @@ var ErrKubernetesPodFailed = errors.New("pod failed")
 // ErrKubernetesPodNotScheduled is returned when a Kubernetes pod could not be scheduled and was deleted.
 var ErrKubernetesPodNotScheduled = errors.New("deleted by scheduler: pod could not be scheduled")
 
-// NewKubernetesJob creates a Kubernetes job with the given name, image, volume path, and spec.
-func NewKubernetesJob(name string, image string, spec Spec, path string, options KubernetesContainerOptions) *batchv1.Job {
-	jobEnvs := newEnvVars(spec.Env)
-
-	affinity := newAffinity(options)
-	resourceLimit := newResourceLimit(options)
-	resourceRequest := newResourceRequest(options)
-
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        name,
-			Annotations: options.JobAnnotations,
-		},
-		Spec: batchv1.JobSpec{
-			// Prevent K8s from retrying. This will lead to the retried jobs always failing as the workspace will get
-			// cleaned up from the first failure.
-			BackoffLimit: pointers.Ptr[int32](0),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Annotations: options.PodAnnotations,
-				},
-				Spec: corev1.PodSpec{
-					NodeName:         options.NodeName,
-					NodeSelector:     options.NodeSelector,
-					ImagePullSecrets: options.ImagePullSecrets,
-					SecurityContext: &corev1.PodSecurityContext{
-						RunAsUser:  options.SecurityContext.RunAsUser,
-						RunAsGroup: options.SecurityContext.RunAsGroup,
-						FSGroup:    options.SecurityContext.FSGroup,
-					},
-					Affinity:              affinity,
-					RestartPolicy:         corev1.RestartPolicyNever,
-					Tolerations:           options.Tolerations,
-					ActiveDeadlineSeconds: options.Deadline,
-					Containers: []corev1.Container{
-						{
-							Name:            spec.Name,
-							Image:           image,
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Command:         spec.Command,
-							WorkingDir:      filepath.Join(KubernetesJobMountPath, spec.Dir),
-							Env:             jobEnvs,
-							Resources: corev1.ResourceRequirements{
-								Limits:   resourceLimit,
-								Requests: resourceRequest,
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      kubernetesJobVolumeName,
-									MountPath: KubernetesJobMountPath,
-									SubPath:   strings.TrimPrefix(path, kubernetesExecutorVolumeMountSubPath),
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: kubernetesJobVolumeName,
-							VolumeSource: corev1.VolumeSource{
-								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: options.PersistenceVolumeName,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
 // RepositoryOptions contains the options for a repository job.
 type RepositoryOptions struct {
 	JobID               int
@@ -508,8 +436,8 @@ type RepositoryOptions struct {
 	Commit              string
 }
 
-// NewKubernetesSingleJob creates a Kubernetes job with the given name, image, volume path, and spec.
-func NewKubernetesSingleJob(
+// NewKubernetesJob creates a Kubernetes job with the given name, image, volume path, and spec.
+func NewKubernetesJob(
 	name string,
 	specs []Spec,
 	workspaceFiles []files.WorkspaceFile,

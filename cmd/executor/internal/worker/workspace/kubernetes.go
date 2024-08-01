@@ -4,12 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/sourcegraph/sourcegraph/cmd/executor/internal/worker/cmdlogger"
-	"github.com/sourcegraph/sourcegraph/cmd/executor/internal/worker/command"
-	"github.com/sourcegraph/sourcegraph/cmd/executor/internal/worker/files"
-	"github.com/sourcegraph/sourcegraph/internal/executor/types"
 )
 
 type kubernetesWorkspace struct {
@@ -20,45 +16,9 @@ type kubernetesWorkspace struct {
 
 // NewKubernetesWorkspace creates a new workspace for a job.
 func NewKubernetesWorkspace(
-	ctx context.Context,
-	filesStore files.Store,
-	job types.Job,
-	cmd command.Command,
 	logger cmdlogger.Logger,
-	cloneOpts CloneOptions,
-	mountPath string,
-	singleJob bool,
-	operations *command.Operations,
 ) (Workspace, error) {
-	// TODO switch to the single job in 5.2
-	if singleJob {
-		return &kubernetesWorkspace{logger: logger}, nil
-	}
-
-	workspaceDir := filepath.Join(mountPath, fmt.Sprintf("job-%d", job.ID))
-
-	if err := os.MkdirAll(workspaceDir, os.ModePerm); err != nil {
-		return nil, err
-	}
-
-	if job.RepositoryName != "" {
-		if err := cloneRepo(ctx, workspaceDir, job, cmd, logger, cloneOpts, operations); err != nil {
-			_ = os.RemoveAll(workspaceDir)
-			return nil, err
-		}
-	}
-
-	scriptPaths, err := prepareScripts(ctx, filesStore, job, workspaceDir, logger)
-	if err != nil {
-		_ = os.RemoveAll(workspaceDir)
-		return nil, err
-	}
-
-	return &kubernetesWorkspace{
-		scriptFilenames: scriptPaths,
-		workspaceDir:    workspaceDir,
-		logger:          logger,
-	}, nil
+	return &kubernetesWorkspace{logger: logger}, nil
 }
 
 func (w kubernetesWorkspace) Path() string {

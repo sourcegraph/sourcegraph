@@ -64,18 +64,31 @@ func TestKubernetesRunner_Run(t *testing.T) {
 				clientset.PrependWatchReactor("pods", k8stesting.DefaultWatchReactor(watcher, nil))
 			},
 			mockAssertFunc: func(t *testing.T, actions []k8stesting.Action) {
-				require.Len(t, actions, 3)
+				require.Len(t, actions, 5)
 
-				assert.Equal(t, "create", actions[0].GetVerb())
-				assert.Equal(t, "jobs", actions[0].GetResource().Resource)
-				assert.Equal(t, "sg-executor-job-some-queue-42-some-key", actions[0].(k8stesting.CreateAction).GetObject().(*batchv1.Job).Name)
+				i := 0
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42-secrets", actions[i].(k8stesting.CreateAction).GetObject().(*corev1.Secret).Name)
 
-				assert.Equal(t, "watch", actions[1].GetVerb())
-				assert.Equal(t, "pods", actions[1].GetResource().Resource)
+				i = 1
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "jobs", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42", actions[i].(k8stesting.CreateAction).GetObject().(*batchv1.Job).Name)
 
-				assert.Equal(t, "delete", actions[2].GetVerb())
-				assert.Equal(t, "jobs", actions[2].GetResource().Resource)
-				assert.Equal(t, "sg-executor-job-some-queue-42-some-key", actions[2].(k8stesting.DeleteAction).GetName())
+				i = 2
+				assert.Equal(t, "watch", actions[i].GetVerb())
+				assert.Equal(t, "pods", actions[i].GetResource().Resource)
+
+				i = 3
+				assert.Equal(t, "delete", actions[i].GetVerb())
+				assert.Equal(t, "jobs", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42", actions[i].(k8stesting.DeleteAction).GetName())
+
+				i = 4
+				assert.Equal(t, "delete", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42-secrets", actions[i].(k8stesting.DeleteAction).GetName())
 			},
 		},
 		{
@@ -86,10 +99,21 @@ func TestKubernetesRunner_Run(t *testing.T) {
 				})
 			},
 			mockAssertFunc: func(t *testing.T, actions []k8stesting.Action) {
-				require.Len(t, actions, 1)
+				require.Len(t, actions, 3)
 
-				assert.Equal(t, "create", actions[0].GetVerb())
-				assert.Equal(t, "jobs", actions[0].GetResource().Resource)
+				i := 0
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42-secrets", actions[i].(k8stesting.CreateAction).GetObject().(*corev1.Secret).Name)
+
+				i = 1
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "jobs", actions[i].GetResource().Resource)
+
+				i = 2
+				assert.Equal(t, "delete", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
+				assert.Equal(t, "sg-executor-job-some-queue-42-secrets", actions[i].(k8stesting.DeleteAction).GetName())
 			},
 			expectedErr: errors.New("creating job: failed"),
 		},
@@ -99,18 +123,29 @@ func TestKubernetesRunner_Run(t *testing.T) {
 				clientset.PrependWatchReactor("pods", k8stesting.DefaultWatchReactor(nil, errors.New("failed")))
 			},
 			mockAssertFunc: func(t *testing.T, actions []k8stesting.Action) {
-				require.Len(t, actions, 3)
+				require.Len(t, actions, 5)
 
-				assert.Equal(t, "create", actions[0].GetVerb())
-				assert.Equal(t, "jobs", actions[0].GetResource().Resource)
+				i := 0
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
 
-				assert.Equal(t, "watch", actions[1].GetVerb())
-				assert.Equal(t, "pods", actions[1].GetResource().Resource)
+				i = 1
+				assert.Equal(t, "create", actions[i].GetVerb())
+				assert.Equal(t, "jobs", actions[i].GetResource().Resource)
 
-				assert.Equal(t, "delete", actions[2].GetVerb())
-				assert.Equal(t, "jobs", actions[2].GetResource().Resource)
+				i = 2
+				assert.Equal(t, "watch", actions[i].GetVerb())
+				assert.Equal(t, "pods", actions[i].GetResource().Resource)
+
+				i = 3
+				assert.Equal(t, "delete", actions[i].GetVerb())
+				assert.Equal(t, "jobs", actions[i].GetResource().Resource)
+
+				i = 4
+				assert.Equal(t, "delete", actions[i].GetVerb())
+				assert.Equal(t, "secrets", actions[i].GetResource().Resource)
 			},
-			expectedErr: errors.New("waiting for job sg-executor-job-some-queue-42-some-key to complete: watching pod: failed"),
+			expectedErr: errors.New("waiting for job sg-executor-job-some-queue-42 to complete: watching pod: failed"),
 		},
 	}
 	for _, test := range tests {
