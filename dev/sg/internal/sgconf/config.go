@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/env"
 	"gopkg.in/yaml.v2"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/run"
@@ -12,6 +13,74 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
+
+func parseConfigFile2(name string, isOverwriteConfig bool) (*Config2, error) {
+	file, err := os.Open(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot open file %q", name)
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, errors.Wrap(err, "reading configuration file")
+	}
+
+	return parseConfig2(data, isOverwriteConfig)
+}
+
+func parseConfig2(data []byte, isOverwriteConfig bool) (*Config2, error) {
+	var tmpConfig struct {
+		Env               map[string]string `yaml:"env"`
+		DefaultCommandset string            `yaml:"defaultCommandset"`
+		Commandsets       map[string]*struct {
+			Name           string            `yaml:"-"`
+			Commands       []string          `yaml:"commands"`
+			BazelCommands  []string          `yaml:"bazelCommands"`
+			DockerCommands []string          `yaml:"dockerCommands"`
+			Checks         []string          `yaml:"checks"`
+			Env            map[string]string `yaml:"env"`
+		} `yaml:"commandsets"`
+
+		Commands map[string]*run.Command `yaml:"commands"`
+		//BazelCommands     map[string]*run.BazelCommand  `yaml:"bazelCommands"`
+		//DockerCommands    map[string]*run.DockerCommand `yaml:"dockerCommands"`
+		//Tests             map[string]*run.Command       `yaml:"tests"`
+	}
+	if err := yaml.Unmarshal(data, &tmpConfig); err != nil {
+		return nil, err
+	}
+
+	var conf Config2
+
+	conf.Env = make(map[string]env.EnvVar, len(tmpConfig.Env))
+	conf.Env = env.ConvertEnvMap(tmpConfig.Env, env.GlobalEnvPriority)
+
+	conf.DefaultCommandset = tmpConfig.DefaultCommandset
+
+	conf.Commandsets = make(map[string]*Commandset2, len(tmpConfig.Commandsets))
+	commandsetEnvPriority := env.BaseCommandsetEnvPriority
+	if isOverwriteConfig {
+		commandsetEnvPriority = env.OverrideCommandsetEnvPriority
+	}
+	for name, set := range tmpConfig.Commandsets {
+		conf.Commandsets[name] = &Commandset2{
+			Name:           set.Name,
+			Checks:         set.Checks,
+			Commands:       set.Commands,
+			BazelCommands:  set.BazelCommands,
+			DockerCommands: set.DockerCommands,
+			Env:            env.ConvertEnvMap(set.Env, commandsetEnvPriority),
+		}
+	}
+
+	//root, err := root.RepositoryRoot()
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	return &conf, nil
+}
 
 func parseConfigFile(name string) (*Config, error) {
 	file, err := os.Open(name)
@@ -133,6 +202,77 @@ func (c *Commandset) Merge(other *Commandset) *Commandset {
 	}
 
 	return merged
+}
+
+type Commandset2 struct {
+	Name           string                `yaml:"-"`
+	Commands       []string              `yaml:"commands"`
+	BazelCommands  []string              `yaml:"bazelCommands"`
+	DockerCommands []string              `yaml:"dockerCommands"`
+	Checks         []string              `yaml:"checks"`
+	Env            map[string]env.EnvVar `yaml:"env"`
+}
+
+// UnmarshalYAML implements the Unmarshaler interface.
+func (c *Commandset2) UnmarshalYAML(unmarshal func(any) error) error {
+	// To be backwards compatible we first try to unmarshal as a simple list.
+	var list []string
+	if err := unmarshal(&list); err == nil {
+		c.Commands = list
+		return nil
+	}
+
+	// If it's not a list we try to unmarshal it as a Commandset. In order to
+	// not recurse infinitely (calling UnmarshalYAML over and over) we create a
+	// temporary type alias.
+	type rawCommandset Commandset2
+	if err := unmarshal((*rawCommandset)(c)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Commandset2) Merge(other *Commandset2) *Commandset2 {
+	merged := c
+
+	if other.Name != merged.Name && other.Name != "" {
+		merged.Name = other.Name
+	}
+
+	if len(other.Commands) != 0 {
+		merged.Commands = other.Commands
+	}
+
+	if len(other.Checks) != 0 {
+		merged.Checks = other.Checks
+	}
+
+	if len(other.BazelCommands) != 0 {
+		merged.BazelCommands = other.BazelCommands
+	}
+
+	if len(other.DockerCommands) != 0 {
+		merged.DockerCommands = other.DockerCommands
+	}
+
+	for k, v := range other.Env {
+		merged.Env[k] = v
+	}
+
+	return merged
+}
+
+// If you add an entry here, remember to add it to the merge function.
+type Config2 struct {
+	Env               map[string]env.EnvVar
+	DefaultCommandset string
+	Commandsets       map[string]*Commandset2
+	//Commands          map[string]*run.Command       `yaml:"commands"`
+	//BazelCommands     map[string]*run.BazelCommand  `yaml:"bazelCommands"`
+	//DockerCommands    map[string]*run.DockerCommand `yaml:"dockerCommands"`
+	//DefaultCommandset string                        `yaml:"defaultCommandset"`
+	//Tests             map[string]*run.Command       `yaml:"tests"`
 }
 
 // If you add an entry here, remember to add it to the merge function.

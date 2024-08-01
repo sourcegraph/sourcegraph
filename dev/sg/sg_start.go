@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	hashstructure "github.com/mitchellh/hashstructure/v2"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
 
@@ -255,16 +254,16 @@ go tool pprof -help
 
 func start(ctx context.Context, args StartArgs) error {
 	// Start the config watcher
-	configs, err := watchConfig(ctx)
+	configs, err := watchConfig2(ctx)
 	if err != nil {
 		return err
 	}
 
 	var (
-		childCtx context.Context
-		cancel   func()
-		errs     = make(chan error)
-		hash     uint64
+		//childCtx context.Context
+		//cancel   func()
+		errs = make(chan error)
+		//hash     uint64
 	)
 	for {
 		select {
@@ -275,52 +274,54 @@ func start(ctx context.Context, args StartArgs) error {
 				return err
 			}
 		case conf := <-configs:
+			fmt.Println(conf, " <== this the conf")
+			return nil
 			// Construct the new commands definition and only restart if the changes
 			// to the config file are relevant to the commands we're running
-			cmds, err := args.toCommands(conf)
-			if err != nil {
-				return err
-			}
+			//cmds, err := args.toCommands(conf)
+			//if err != nil {
+			//	return err
+			//}
 
-			newHash, err := hashstructure.Hash(cmds, hashstructure.FormatV2, nil)
-			if err != nil {
-				return err
-			}
-			if hash == newHash {
-				continue
-			} else {
-				hash = newHash
-			}
-
-			// Cancel current context if exists, wait for it to close then create a new one
-			if cancel != nil {
-				cancel()
-
-				// Wait for the context to close and make sure it's a context cancellation error.
-				// In the case where all watched commands have already exited with 0 status,
-				// there won't be an error so we can just continue
-				select {
-				case err := <-errs:
-					if !errors.Is(err, context.Canceled) {
-						return err
-					}
-				case <-time.After(500 * time.Millisecond):
-				}
-			}
-
-			// Create a new child context and restart the process
-			childCtx, cancel = context.WithCancel(ctx)
-			defer cancel()
-
-			std.Out.ClearScreen()
-
-			go func() {
-				if args.Describe {
-					errs <- cmds.describe(conf)
-				} else {
-					errs <- cmds.start(childCtx)
-				}
-			}()
+			//newHash, err := hashstructure.Hash(cmds, hashstructure.FormatV2, nil)
+			//if err != nil {
+			//	return err
+			//}
+			//if hash == newHash {
+			//	continue
+			//} else {
+			//	hash = newHash
+			//}
+			//
+			//// Cancel current context if exists, wait for it to close then create a new one
+			//if cancel != nil {
+			//	cancel()
+			//
+			//	// Wait for the context to close and make sure it's a context cancellation error.
+			//	// In the case where all watched commands have already exited with 0 status,
+			//	// there won't be an error so we can just continue
+			//	select {
+			//	case err := <-errs:
+			//		if !errors.Is(err, context.Canceled) {
+			//			return err
+			//		}
+			//	case <-time.After(500 * time.Millisecond):
+			//	}
+			//}
+			//
+			//// Create a new child context and restart the process
+			//childCtx, cancel = context.WithCancel(ctx)
+			//defer cancel()
+			//
+			//std.Out.ClearScreen()
+			//
+			//go func() {
+			//	if args.Describe {
+			//		errs <- cmds.describe(conf)
+			//	} else {
+			//		errs <- cmds.start(childCtx)
+			//	}
+			//}()
 		}
 	}
 }

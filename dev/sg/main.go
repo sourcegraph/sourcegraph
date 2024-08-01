@@ -394,6 +394,16 @@ func getConfig() (*sgconf.Config, error) {
 	return sgconf.Get(configFile, configOverwriteFile)
 }
 
+func watchConfig2(ctx context.Context) (<-chan *sgconf.Config2, error) {
+	conf, err := sgconf.GetUnbuffered2(configFile, configOverwriteFile, disableOverwrite)
+	if err != nil {
+		return nil, err
+	}
+	output := make(chan *sgconf.Config2, 1)
+	output <- conf
+	return output, nil
+}
+
 // watchConfig starts a file watcher for the sg configuration files. It returns a channel
 // that will receive the updated configuration whenever the file changes to a valid configuration,
 // distinct from the last parsed value (invalid or unparseable updates will be dropped). The
