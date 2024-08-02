@@ -391,10 +391,10 @@ message CreateEnterpriseSubscriptionRequest {
   //
   // Required attributes:
   // - display_name
+  // - instance_type
   //
   // Optional attributes:
   // - instance_domain
-  // - instance_type
   // - salesforce.subscription_id
   EnterpriseSubscription subscription = 1;
 

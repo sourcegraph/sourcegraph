@@ -1940,10 +1940,10 @@ type CreateEnterpriseSubscriptionRequest struct {
 	//
 	// Required attributes:
 	// - display_name
+	// - instance_type
 	//
 	// Optional attributes:
 	// - instance_domain
-	// - instance_type
 	// - salesforce.subscription_id
 	Subscription *EnterpriseSubscription `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription,omitempty"`
 	// Message to associate with the subscription creation event.
