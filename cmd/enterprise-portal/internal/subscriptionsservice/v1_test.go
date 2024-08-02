@@ -274,7 +274,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					Id:           "not-allowed",
 					DisplayName:  t.Name(),
-					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_TYPE_INTERNAL,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 				},
 			},
 			wantError: autogold.Expect("permission_denied: insufficient scope"),
@@ -284,7 +284,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					DisplayName:  t.Name(),
-					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_TYPE_INTERNAL,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 				},
 			},
 			wantUpsertOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{
@@ -312,7 +312,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					DisplayName:  t.Name(),
-					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_TYPE_INTERNAL,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 					Salesforce: &subscriptionsv1.EnterpriseSubscriptionSalesforceMetadata{
 						SubscriptionId: "sf_sub",
 					},
@@ -501,7 +501,7 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 			update: &subscriptionsv1.UpdateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					Id:           mockSubscriptionID,
-					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_TYPE_INTERNAL,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 					// Should not be included, as only instance_domain is in
 					// the field mask.
 					DisplayName: "My Test Subscription",

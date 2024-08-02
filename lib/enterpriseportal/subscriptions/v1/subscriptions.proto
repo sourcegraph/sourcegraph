@@ -103,13 +103,13 @@ message EnterpriseSubscriptionSalesforceMetadata {
 // EnterpriseSubscriptionInstanceType describes what kind of Sourcegraph
 // instance an Enterprise Subscription is designated for.
 enum EnterpriseSubscriptionInstanceType {
-  TYPE_UNSPECIFIED = 0;
+  ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_UNSPECIFIED = 0;
   // Represents a primary, production instance.
-  TYPE_PRIMARY = 1;
+  ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_PRIMARY = 1;
   // Represents a secondary (e.g. dev or testing) instance.
-  TYPE_SECONDARY = 2;
+  ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_SECONDARY = 2;
   // Represents a Sourcegraph-internal instance.
-  TYPE_INTERNAL = 3;
+  ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL = 3;
 }
 
 // EnterpriseSubscription represents a Sourcegraph Enterprise subscription.
