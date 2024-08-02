@@ -52,7 +52,17 @@ import type {
  * Portal gets its own dedicated UI:
  * https://linear.app/sourcegraph/project/kr-p-enterprise-portal-user-interface-dadd5ff28bd8
  */
-export const queryClient = new QueryClient({ defaultOptions })
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        ...defaultOptions,
+        queries: {
+            retry: false,
+        },
+        mutations: {
+            retry: false,
+        },
+    },
+})
 
 /**
  * Use proxy that routes to a locally running Enterprise Portal at localhost:6081

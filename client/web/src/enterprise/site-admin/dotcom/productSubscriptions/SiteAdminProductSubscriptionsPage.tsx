@@ -55,7 +55,10 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         env: EnterprisePortalEnvironment
         filter: FilterType
     }>({
-        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? 'prod',
+        env:
+            (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? window.context.deployType === 'dev'
+                ? 'local'
+                : 'prod',
         filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'display_name',
     })
 
@@ -101,10 +104,10 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
 
     return (
         <div className="site-admin-product-subscriptions-page">
-            <PageTitle title="Enterprise subscriptions" />
+            <PageTitle title="Enterprise instance subscriptions" />
             <PageHeader
                 headingElement="h2"
-                path={[{ text: 'Enterprise subscriptions' }]}
+                path={[{ text: 'Enterprise instance subscriptions' }]}
                 actions={
                     <Button to="./new" variant="primary" as={Link}>
                         <Icon aria-hidden={true} svgPath={mdiPlus} />

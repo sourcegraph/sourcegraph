@@ -40,7 +40,7 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
     return (
         <tr>
             <td>
-                <LinkOrSpan to={`/site-admin/dotcom/product/subscriptions/${node.id}&env=${env}`} className="mr-2">
+                <LinkOrSpan to={`/site-admin/dotcom/product/subscriptions/${node.id}?env=${env}`} className="mr-2">
                     {node.displayName}
                 </LinkOrSpan>
                 {archived && (

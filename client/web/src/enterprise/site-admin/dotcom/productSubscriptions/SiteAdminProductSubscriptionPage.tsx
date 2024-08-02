@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { ConnectError } from '@connectrpc/connect'
-import { mdiPlus } from '@mdi/js'
+import { mdiInformationOutline, mdiCircle, mdiPlus } from '@mdi/js'
 import { QueryClientProvider, type UseQueryResult } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
@@ -14,12 +14,15 @@ import {
     ErrorAlert,
     H3,
     Icon,
+    Link,
     LoadingSpinner,
     PageHeader,
     Select,
     Text,
+    Tooltip,
 } from '@sourcegraph/wildcard'
 
+import { Collapsible } from '../../../../components/Collapsible'
 import {
     ConnectionContainer,
     ConnectionError,
@@ -27,8 +30,13 @@ import {
     ConnectionLoading,
 } from '../../../../components/FilteredConnection/ui'
 import { PageTitle } from '../../../../components/PageTitle'
+import { Timeline, type TimelineStage } from '../../../../components/Timeline'
 import { useScrollToLocationHash } from '../../../../components/useScrollToLocationHash'
-import { ProductSubscriptionLabel } from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
+import { isProductLicenseExpired } from '../../../../productSubscription/helpers'
+import {
+    ProductSubscriptionLabel,
+    productSubscriptionLabel,
+} from '../../../dotcom/productSubscriptions/ProductSubscriptionLabel'
 import { LicenseGenerationKeyWarning } from '../../../productSubscription/LicenseGenerationKeyWarning'
 
 import { CodyServicesSection } from './CodyServicesSection'
@@ -40,13 +48,16 @@ import {
     type EnterprisePortalEnvironment,
 } from './enterpriseportal'
 import {
+    type EnterpriseSubscriptionCondition,
+    type EnterpriseSubscriptionLicenseCondition,
     EnterpriseSubscriptionCondition_Status,
     EnterpriseSubscriptionLicenseType,
     type ListEnterpriseSubscriptionLicensesResponse,
+    EnterpriseSubscriptionLicenseCondition_Status,
+    type EnterpriseSubscriptionLicenseKey,
 } from './enterpriseportalgen/subscriptions_pb'
 import { SiteAdminGenerateProductLicenseForSubscriptionForm } from './SiteAdminGenerateProductLicenseForSubscriptionForm'
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
-import { enterprisePortalID } from './utils'
 
 interface Props extends TelemetryV2Props {}
 
@@ -63,19 +74,19 @@ const QUERY_PARAM_ENV = 'env'
  */
 const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemetryRecorder }) => {
     const navigate = useNavigate()
-    const { subscriptionUUID = '' } = useParams<{ subscriptionUUID: string }>()
+    const { subscriptionUUID: paramSubscriptionUUID = '' } = useParams<{ subscriptionUUID: string }>()
     useEffect(() => telemetryRecorder.recordEvent('admin.productSubscription', 'view'), [telemetryRecorder])
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [env, setEnv] = useState<EnterprisePortalEnvironment>(
-        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'dev' : 'prod'
+        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'local' : 'prod'
     )
     useEffect(() => {
         searchParams.set(QUERY_PARAM_ENV, env)
         setSearchParams(searchParams)
     }, [env, setSearchParams, searchParams])
 
-    const { data, isLoading, error } = useGetEnterpriseSubscription(env, subscriptionUUID)
+    const { data, isLoading, error } = useGetEnterpriseSubscription(env, paramSubscriptionUUID)
 
     const [showGenerate, setShowGenerate] = useState<boolean>(false)
 
@@ -85,7 +96,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             {
                 filter: {
                     case: 'subscriptionId',
-                    value: subscriptionUUID,
+                    value: paramSubscriptionUUID,
                 },
             },
             {
@@ -144,15 +155,27 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const created = subscription?.conditions?.find(
         condition => condition.status === EnterpriseSubscriptionCondition_Status.CREATED
     )
+    const archived = subscription?.conditions?.find(
+        condition => condition.status === EnterpriseSubscriptionCondition_Status.ARCHIVED
+    )
+
+    const activeLicense = licenses?.data?.licenses?.find(
+        // Exists if it is the first license, has an expiry, and expiry is before
+        // now
+        ({ license }, idx) =>
+            idx === 0 &&
+            license?.value?.info?.expireTime &&
+            isProductLicenseExpired(license?.value?.info?.expireTime?.toDate())
+    )
 
     return (
         <div className="site-admin-product-subscription-page">
-            <PageTitle title="Enterprise subscription" />
+            <PageTitle title="Enterprise instance subscription" />
             <PageHeader
                 headingElement="h2"
                 path={[
-                    { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
-                    { text: enterprisePortalID(subscriptionUUID) },
+                    { text: 'Enterprise instance subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
+                    { text: subscription?.displayName || subscription?.id || paramSubscriptionUUID },
                 ]}
                 description={
                     subscription &&
@@ -164,9 +187,9 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     )
                 }
                 actions={
-                    <>
+                    <div className="flex">
                         <Select
-                            id=""
+                            id="env"
                             name="env"
                             onChange={event => {
                                 setEnv(event.target.value as EnterprisePortalEnvironment)
@@ -175,6 +198,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                             className="mb-0"
                             isCustomStyle={true}
                             label="Environment"
+                            selectSize="sm"
+                            labelVariant="block"
                         >
                             {[
                                 { label: 'Production', value: 'prod' },
@@ -185,42 +210,95 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     <option key={opt.value} value={opt.value} label={opt.label} />
                                 ))}
                         </Select>
-                        ,
-                        <Button onClick={onArchive} disabled={archiveLoading} variant="danger">
+                        <Button onClick={onArchive} disabled={archiveLoading || !!archived} variant="danger">
                             Archive
                         </Button>
-                    </>
+                    </div>
                 }
                 className="mb-3"
             />
             {archiveError && <ErrorAlert className="mt-2" error={archiveError} />}
             {error && <ErrorAlert className="mt-2" error={error} />}
 
-            {data && (
+            {subscription && (
                 <>
                     <H3>Details</H3>
                     <Container className="mb-3">
                         <table className="table mb-0">
                             <tbody>
                                 <tr>
-                                    <th className="text-nowrap">ID</th>
-                                    <td className="w-100">{enterprisePortalID(subscriptionUUID)}</td>
+                                    <th className="text-nowrap">
+                                        Subscription ID{' '}
+                                        <Tooltip content="This identifier represents a subscription for a single Enterprise Sourcegraph instance.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        <span className="text-monospace">{subscription?.id}</span>
+                                    </td>
                                 </tr>
-                                <td className="w-100">
-                                    {licenses.data?.licenses && licenses.data?.licenses?.length > 0 && (
-                                        <ProductSubscriptionLabel
-                                            productName={licenses.data?.licenses[0].license.value?.planDisplayName}
-                                            userCount={licenses.data?.licenses[0].license.value?.info?.userCount}
-                                        />
-                                    )}
-                                </td>
                                 <tr>
-                                    <th className="text-nowrap">Salesforce Subscription</th>
+                                    <th className="text-nowrap">Display name</th>
+                                    <td className="w-100">
+                                        {subscription?.displayName ? (
+                                            <>{subscription?.displayName}</>
+                                        ) : (
+                                            <span className="text-muted">Not set</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Active license{' '}
+                                        <Tooltip content="The most recently created, non-expired license is considered the 'active license'.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        {activeLicense ? (
+                                            <>
+                                                <ProductSubscriptionLabel
+                                                    productName={activeLicense.license.value?.planDisplayName}
+                                                    userCount={activeLicense.license.value?.info?.userCount}
+                                                />{' '}
+                                                - <Link to={`#${activeLicense.id}`}>view license</Link>
+                                            </>
+                                        ) : (
+                                            <span className="text-muted">No active license</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Salesforce subscription ID{' '}
+                                        <Tooltip content="The ID of the corresponding Salesforce subscription.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
                                     <td className="w-100">
                                         {subscription?.salesforce?.subscriptionId ? (
-                                            <>{subscription?.salesforce?.subscriptionId}</>
+                                            <span className="text-monospace">
+                                                {subscription?.salesforce?.subscriptionId}
+                                            </span>
                                         ) : (
-                                            <span className="text-muted">None</span>
+                                            <span className="text-muted">Not set</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Instance domain{' '}
+                                        <Tooltip content="The known 'external URL' of this Sourcegraph instance. This must be set manually, and is required for Cody Analytics.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        {subscription?.instanceDomain ? (
+                                            <Link to={subscription?.instanceDomain}>
+                                                {subscription?.instanceDomain}
+                                            </Link>
+                                        ) : (
+                                            <span className="text-muted">Not set</span>
                                         )}
                                     </td>
                                 </tr>
@@ -228,16 +306,40 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         </table>
                     </Container>
 
+                    <Collapsible title={<H3>History</H3>} titleAtStart={true} defaultExpanded={false} className="mb-3">
+                        <Container className="mb-3">
+                            {subscription && licenses.data ? (
+                                <ConditionsTimeline
+                                    subscriptionConditions={subscription.conditions}
+                                    licensesConditions={licenses.data.licenses.flatMap(({ id, conditions, license }) =>
+                                        conditions.map(condition => ({
+                                            licenseID: id,
+                                            license: license.value,
+                                            condition,
+                                        }))
+                                    )}
+                                />
+                            ) : (
+                                <LoadingSpinner />
+                            )}
+                        </Container>
+                    </Collapsible>
+
                     <CodyServicesSection
                         enterprisePortalEnvironment={env}
                         viewerCanAdminister={true}
-                        productSubscriptionUUID={subscriptionUUID}
+                        productSubscriptionUUID={subscription?.id}
                         telemetryRecorder={telemetryRecorder}
                     />
 
                     <H3 className="d-flex align-items-start">
                         Licenses
-                        <Button className="ml-auto" onClick={toggleShowGenerate} variant="primary">
+                        <Button
+                            className="ml-auto"
+                            onClick={toggleShowGenerate}
+                            variant="primary"
+                            disabled={!!archived || archiveLoading}
+                        >
                             <Icon aria-hidden={true} svgPath={mdiPlus} /> New license key
                         </Button>
                     </H3>
@@ -319,3 +421,75 @@ const NoProductLicense: React.FunctionComponent<{
         </Button>
     </>
 )
+
+interface ConditionsTimelineProps {
+    subscriptionConditions: EnterpriseSubscriptionCondition[]
+    /**
+     * Combined conditions of all licenses found.
+     */
+    licensesConditions: {
+        licenseID: string
+        license: EnterpriseSubscriptionLicenseKey | undefined
+        condition: EnterpriseSubscriptionLicenseCondition
+    }[]
+}
+
+const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
+    subscriptionConditions,
+    licensesConditions,
+}) => {
+    const allConditions: {
+        lastTransitionTime: Date
+        summary: string
+        details: React.ReactNode
+    }[] = subscriptionConditions
+        .map(condition => ({
+            lastTransitionTime: condition.lastTransitionTime!.toDate(),
+            summary: `Subscription ${EnterpriseSubscriptionCondition_Status[condition.status].toLowerCase()}`,
+            details: (
+                <>
+                    {condition.message ? (
+                        <>{condition.message}</>
+                    ) : (
+                        <span className="text-muted">No details provided.</span>
+                    )}
+                </>
+            ),
+        }))
+        .concat(
+            ...licensesConditions.map(({ licenseID, license, condition }) => ({
+                lastTransitionTime: condition.lastTransitionTime!.toDate(),
+                summary: `License ${EnterpriseSubscriptionLicenseCondition_Status[
+                    condition.status
+                ].toLowerCase()}: ${productSubscriptionLabel(license?.planDisplayName, license?.info?.userCount)}`,
+                details: (
+                    <>
+                        {condition.message ? (
+                            <>{condition.message}</>
+                        ) : (
+                            <span className="text-muted">No details provided.</span>
+                        )}
+                        <div className="mt-3">
+                            <Link to={`#${licenseID}`}>
+                                View license <span className="text-monospace">{licenseID}</span>
+                            </Link>
+                        </div>
+                    </>
+                ),
+            }))
+        )
+        .sort((a, b) => (a.lastTransitionTime > b.lastTransitionTime ? -1 : 1))
+
+    const stages = allConditions?.map(
+        (condition): TimelineStage => ({
+            icon: <Icon aria-label="event" svgPath={mdiCircle} />,
+            date: condition.lastTransitionTime.toISOString(),
+            className: condition.summary.includes('created') ? 'bg-success' : 'bg-danger',
+
+            text: condition.summary,
+            details: <Container>{condition.details}</Container>,
+        })
+    )
+
+    return <Timeline showDurations={false} stages={stages} />
+}

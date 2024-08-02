@@ -456,6 +456,8 @@ commands:
       # Connect to local development database, with the assumption that it will
       # have dotcom database tables.
       export DOTCOM_PGDSN_OVERRIDE="postgres://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$PGDATABASE?sslmode=$PGSSLMODE"
+      # Enable license key signing
+      export SOURCEGRAPH_LICENSE_GENERATION_KEY=$(cat ../dev-private/enterprise/dev/test-license-generation-key.pem)
       .bin/enterprise-portal
     install: |
       if [ -n "$DELVE" ]; then

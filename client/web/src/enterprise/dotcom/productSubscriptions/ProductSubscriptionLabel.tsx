@@ -15,11 +15,13 @@ export const ProductSubscriptionLabel: React.FunctionComponent<
 > = ({ productName, userCount, className = '' }) => (
     <span className={className}>
         {productName && userCount ? (
-            <>
-                {productName} ({formatUserCount(Number(userCount))})
-            </>
+            <>{productSubscriptionLabel(productName, userCount)}</>
         ) : (
             <span className="text-muted font-italic">No plan selected</span>
         )}
     </span>
 )
+
+export function productSubscriptionLabel(productName?: string, userCount?: bigint): string {
+    return `${productName} (${formatUserCount(Number(userCount))})`
+}

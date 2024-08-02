@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
+import { QueryClientProvider } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
@@ -21,20 +22,11 @@ import type { AuthenticatedUser } from '../../../../auth'
 import { LoaderButton } from '../../../../components/LoaderButton'
 import { PageTitle } from '../../../../components/PageTitle'
 
-import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscription } from './enterpriseportal'
+import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscription, queryClient } from './enterpriseportal'
 
 interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
 }
-
-interface FormData {
-    displayName: string
-    salesforceSubscriptionID?: string
-    instanceDomain?: string
-    message: string
-}
-
-const QUERY_PARAM_ENV = 'env'
 
 /**
  * Creates a product subscription for an account based on information provided in the displayed form.
@@ -43,12 +35,27 @@ const QUERY_PARAM_ENV = 'env'
  */
 export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
     React.PropsWithChildren<Props>
-> = props => {
+> = props => (
+    <QueryClientProvider client={queryClient}>
+        <Page {...props} />
+    </QueryClientProvider>
+)
+
+interface FormData {
+    displayName: string
+    salesforceSubscriptionID: string
+    instanceDomain: string
+    message: string
+}
+
+const QUERY_PARAM_ENV = 'env'
+
+export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
     useEffect(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions.create', 'view'))
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [env, setEnv] = useState<EnterprisePortalEnvironment>(
-        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'dev' : 'prod'
+        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'local' : 'prod'
     )
     useEffect(() => {
         searchParams.set(QUERY_PARAM_ENV, env)
@@ -65,6 +72,8 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
         initialValues: {
             displayName: '',
             message: '',
+            salesforceSubscriptionID: '',
+            instanceDomain: '',
         },
         onSubmit: ({ message, displayName, instanceDomain, salesforceSubscriptionID }: FormData) => {
             props.telemetryRecorder.recordEvent('admin.productSubscriptions', 'create')
@@ -86,7 +95,7 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
                         // Redirect to the newly created subscription
                         if (subscription) {
                             window.location.replace(
-                                `/site-admin/dotcom/product/subscriptions/${subscription.id}&env=${env}`
+                                `/site-admin/dotcom/product/subscriptions/${subscription.id}?env=${env}`
                             )
                         }
                     },
@@ -118,10 +127,13 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
         formApi: formAPI,
         validators: {
             sync: value => {
-                if (!value?.startsWith('a1a')) {
+                if (!value) {
+                    return // not required
+                }
+                if (value.startsWith('a1a')) {
                     return 'Salesforce subscription ID must start with "a1a"'
                 }
-                if (value?.length < 17) {
+                if (value.length < 17) {
                     return 'Salesforce subscription ID must be 17 characters long'
                 }
                 return
@@ -139,11 +151,11 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
             <PageTitle title="Create product subscription" />
             <PageHeader
                 headingElement="h2"
-                path={[{ text: 'Create Enterprise subscription' }]}
+                path={[{ text: 'Create Enterprise instance subscription' }]}
                 className="mb-2"
                 actions={
                     <Select
-                        id=""
+                        id="env"
                         name="env"
                         onChange={event => {
                             setEnv(event.target.value as EnterprisePortalEnvironment)
@@ -202,9 +214,9 @@ export const SiteAdminCreateProductSubscriptionPage: React.FunctionComponent<
                     />
                     <LoaderButton
                         type="submit"
-                        disabled={isPending || formAPI.submitting || !formAPI.valid}
+                        disabled={isPending || !formAPI.valid}
                         variant="primary"
-                        loading={isPending || formAPI.submitting}
+                        loading={isPending}
                         alwaysShowLabel={true}
                         label="Generate key"
                     />

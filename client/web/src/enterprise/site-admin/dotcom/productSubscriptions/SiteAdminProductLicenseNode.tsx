@@ -94,7 +94,7 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
     )
 
     return (
-        <li className="list-group-item p-3 mb-3 border">
+        <li className="list-group-item p-3 mb-3 border" id={node.id}>
             <Collapse isOpen={open} onOpenChange={setOpen}>
                 <Grid columnCount={2} templateColumns="auto 1fr" spacing={0}>
                     <Button variant="icon" onClick={toggleOpen} className="pr-3">
@@ -110,7 +110,7 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                                     <H3>
                                         License in{' '}
                                         <Link
-                                            to={`/site-admin/dotcom/product/subscriptions/${node.subscriptionId}&env=${env}`}
+                                            to={`/site-admin/dotcom/product/subscriptions/${node.subscriptionId}#${node.id}?env=${env}`}
                                             className="mr-3"
                                         >
                                             {node.subscriptionId}

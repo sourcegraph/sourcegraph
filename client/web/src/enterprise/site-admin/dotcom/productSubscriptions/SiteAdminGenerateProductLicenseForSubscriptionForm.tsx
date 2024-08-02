@@ -179,7 +179,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
     )
 
     const onUserCountChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
-        event => setFormData(formData => ({ ...formData, userCount: BigInt(event.target.valueAsNumber) })),
+        event => setFormData(formData => ({ ...formData, userCount: BigInt(event.target.valueAsNumber || 0) })),
         []
     )
 
@@ -589,7 +589,8 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                                 <Text className="text-danger">
                                                     Note that specifying tags manually is no longer required and the
                                                     form should handle all options. For example, the{' '}
-                                                    <pre>customer:</pre> tag is automatically added on license creation.
+                                                    <span className="text-monospace">customer:</span> tag is
+                                                    automatically added on license creation.
                                                     <br />
                                                     Only use this if you know what you're doing!
                                                     <br />
@@ -633,7 +634,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                 </Button>
                                 <LoaderButton
                                     type="submit"
-                                    disabled={isLoading || !selectedPlan || !sfOpportunityIDError}
+                                    disabled={isLoading || !selectedPlan || !!sfOpportunityIDError}
                                     variant="primary"
                                     loading={isLoading}
                                     alwaysShowLabel={true}
