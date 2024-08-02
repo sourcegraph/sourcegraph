@@ -8,10 +8,11 @@ import (
 	"io"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/testing/testpb"
 	logger "github.com/sourcegraph/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+
+	"github.com/sourcegraph/sourcegraph/internal/grpc/retry/testpb"
 )
 
 var cc *grpc.ClientConn
