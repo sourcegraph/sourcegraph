@@ -1024,6 +1024,7 @@ ts_project(
         "src/enterprise/site-admin/backend.ts",
         "src/enterprise/site-admin/dotcom/productSubscriptions/CodyGatewayRateLimitModal.tsx",
         "src/enterprise/site-admin/dotcom/productSubscriptions/CodyServicesSection.tsx",
+        "src/enterprise/site-admin/dotcom/productSubscriptions/EnterprisePortalEnvSelector.tsx",
         "src/enterprise/site-admin/dotcom/productSubscriptions/SiteAdminCreateProductSubscriptionPage.tsx",
         "src/enterprise/site-admin/dotcom/productSubscriptions/SiteAdminGenerateProductLicenseForSubscriptionForm.tsx",
         "src/enterprise/site-admin/dotcom/productSubscriptions/SiteAdminLicenseKeyLookupPage.tsx",

@@ -26,6 +26,7 @@ import { LoaderButton } from '../../../../components/LoaderButton'
 import { PageTitle } from '../../../../components/PageTitle'
 
 import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscription, queryClient } from './enterpriseportal'
+import { getDefaultEnterprisePortalEnv, EnterprisePortalEnvSelector } from './EnterprisePortalEnvSelector'
 import { EnterpriseSubscriptionInstanceType } from './enterpriseportalgen/subscriptions_pb'
 
 interface Props extends TelemetryV2Props {
@@ -74,12 +75,12 @@ const SALESFORCE_SUBSCRIPTION_ID_VALIDATOR: (value: string | undefined) => Valid
     return
 }
 
-export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
+const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
     useEffect(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions.create', 'view'))
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [env, setEnv] = useState<EnterprisePortalEnvironment>(
-        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'local' : 'prod'
+        (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv()
     )
     useEffect(() => {
         searchParams.set(QUERY_PARAM_ENV, env)
@@ -181,28 +182,7 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
                 headingElement="h2"
                 path={[{ text: 'Create Enterprise instance subscription' }]}
                 className="mb-2"
-                actions={
-                    <Select
-                        id="env"
-                        name="env"
-                        onChange={event => {
-                            setEnv(event.target.value as EnterprisePortalEnvironment)
-                        }}
-                        value={env ?? undefined}
-                        className="mb-0"
-                        isCustomStyle={true}
-                        label="Environment"
-                    >
-                        {[
-                            { label: 'Production', value: 'prod' },
-                            { label: 'Development', value: 'dev' },
-                        ]
-                            .concat(window.context.deployType === 'dev' ? [{ label: 'Local', value: 'local' }] : [])
-                            .map(opt => (
-                                <option key={opt.value} value={opt.value} label={opt.label} />
-                            ))}
-                    </Select>
-                }
+                actions={<EnterprisePortalEnvSelector env={env} setEnv={setEnv} />}
             />
             <Container className="mb-3">
                 {error && <ErrorAlert className="mt-2" error={error} />}

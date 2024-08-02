@@ -22,6 +22,7 @@ import {
     useListEnterpriseSubscriptionLicenses,
     type EnterprisePortalEnvironment,
 } from './enterpriseportal'
+import { getDefaultEnterprisePortalEnv, getEnterprisePortalEnvFilterOptions } from './EnterprisePortalEnvSelector'
 import {
     type ListEnterpriseSubscriptionLicensesFilter,
     EnterpriseSubscriptionLicenseType,
@@ -69,10 +70,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         env: EnterprisePortalEnvironment
         filter: FilterType
     }>({
-        env:
-            (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? window.context.deployType === 'dev'
-                ? 'local'
-                : 'prod',
+        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv(),
         filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'key_substring',
     })
 
@@ -138,28 +136,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                 id: 'env',
                                 type: 'select',
                                 label: 'Environment',
-                                options: [
-                                    {
-                                        label: 'Production',
-                                        value: 'prod',
-                                        args: {},
-                                    },
-                                    {
-                                        label: 'Development',
-                                        value: 'dev',
-                                        args: {},
-                                    },
-                                ].concat(
-                                    window.context.deployType === 'dev'
-                                        ? [
-                                              {
-                                                  label: 'Local',
-                                                  value: 'local',
-                                                  args: {},
-                                              },
-                                          ]
-                                        : []
-                                ),
+                                options: getEnterprisePortalEnvFilterOptions(),
                             },
                             {
                                 id: 'filter',

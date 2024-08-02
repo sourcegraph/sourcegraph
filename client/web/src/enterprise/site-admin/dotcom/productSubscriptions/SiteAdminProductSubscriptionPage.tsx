@@ -17,7 +17,6 @@ import {
     Link,
     LoadingSpinner,
     PageHeader,
-    Select,
     Text,
     Tooltip,
 } from '@sourcegraph/wildcard'
@@ -47,6 +46,7 @@ import {
     useListEnterpriseSubscriptionLicenses,
     type EnterprisePortalEnvironment,
 } from './enterpriseportal'
+import { EnterprisePortalEnvSelector, getDefaultEnterprisePortalEnv } from './EnterprisePortalEnvSelector'
 import {
     type EnterpriseSubscriptionCondition,
     type EnterpriseSubscriptionLicenseCondition,
@@ -79,7 +79,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
 
     const [searchParams, setSearchParams] = useSearchParams()
     const [env, setEnv] = useState<EnterprisePortalEnvironment>(
-        searchParams.get(QUERY_PARAM_ENV) || window.context.deployType === 'dev' ? 'local' : 'prod'
+        (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv()
     )
     useEffect(() => {
         searchParams.set(QUERY_PARAM_ENV, env)
@@ -187,28 +187,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                 }
                 actions={
                     <div className="flex">
-                        <Select
-                            id="env"
-                            name="env"
-                            onChange={event => {
-                                setEnv(event.target.value as EnterprisePortalEnvironment)
-                            }}
-                            value={env ?? undefined}
-                            className="mb-0"
-                            isCustomStyle={true}
-                            label="Environment"
-                            selectSize="sm"
-                            labelVariant="block"
-                        >
-                            {[
-                                { label: 'Production', value: 'prod' },
-                                { label: 'Development', value: 'dev' },
-                            ]
-                                .concat(window.context.deployType === 'dev' ? [{ label: 'Local', value: 'local' }] : [])
-                                .map(opt => (
-                                    <option key={opt.value} value={opt.value} label={opt.label} />
-                                ))}
-                        </Select>
+                        <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
                         <Button onClick={onArchive} disabled={archiveLoading || !!archived} variant="danger">
                             Archive
                         </Button>
