@@ -22,7 +22,7 @@ import {
     useListEnterpriseSubscriptionLicenses,
     type EnterprisePortalEnvironment,
 } from './enterpriseportal'
-import { getDefaultEnterprisePortalEnv, getEnterprisePortalEnvFilterOptions } from './EnterprisePortalEnvSelector'
+import { EnterprisePortalEnvSelector, getDefaultEnterprisePortalEnv } from './EnterprisePortalEnvSelector'
 import {
     type ListEnterpriseSubscriptionLicensesFilter,
     EnterpriseSubscriptionLicenseType,
@@ -62,24 +62,24 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     useEffect(() => telemetryRecorder.recordEvent('admin.licenseKeyLookup', 'view'), [telemetryRecorder])
 
     const [searchParams, setSearchParams] = useSearchParams()
-
+    const [env, setEnv] = useState<EnterprisePortalEnvironment>(
+        (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv()
+    )
     const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
     const [debouncedQuery] = useDebounce(query, 200)
 
     const [filters, setFilters] = useState<{
-        env: EnterprisePortalEnvironment
         filter: FilterType
     }>({
-        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv(),
         filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'key_substring',
     })
 
     useEffect(() => {
         searchParams.set(QUERY_PARAM_KEY, query?.trim() ?? '')
-        searchParams.set(QUERY_PARAM_ENV, filters.env)
+        searchParams.set(QUERY_PARAM_ENV, env)
         searchParams.set(QUERY_PARAM_FILTER, filters.filter)
         setSearchParams(searchParams)
-    }, [query, searchParams, setSearchParams, filters])
+    }, [query, searchParams, setSearchParams, filters, env])
 
     let listFilters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[] = []
     switch (filters.filter) {
@@ -107,7 +107,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         }
     }
     const { error, isFetching, data, refetch } = useListEnterpriseSubscriptionLicenses(
-        filters.env,
+        env,
         baseFilters.concat(listFilters),
         {
             limit: MAX_RESULTS,
@@ -124,6 +124,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                 headingElement="h2"
                 description="Find matching licenses and their associated enterprise subscriptions"
                 className="mb-3"
+                actions={<EnterprisePortalEnvSelector env={env} setEnv={setEnv} />}
             />
 
             <ConnectionContainer>
@@ -131,13 +132,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     <ConnectionForm
                         inputValue={query}
                         filterValues={filters}
+                        inputClassName="ml-2"
                         filters={[
-                            {
-                                id: 'env',
-                                type: 'select',
-                                label: 'Environment',
-                                options: getEnterprisePortalEnvFilterOptions(),
-                            },
                             {
                                 id: 'filter',
                                 type: 'select',
@@ -160,7 +156,9 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                             setQuery(event.target.value)
                         }}
                         onFilterSelect={(filter, value) => {
-                            setFilters({ ...filters, [filter.id]: value })
+                            if (value) {
+                                setFilters({ ...filters, [filter.id]: value as FilterType })
+                            }
                         }}
                         inputPlaceholder="Enter a query to list subscriptions"
                     />
@@ -183,7 +181,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     {data?.licenses?.map(node => (
                                         <SiteAdminProductLicenseNode
                                             key={node.id}
-                                            env={filters.env}
+                                            env={env}
                                             node={node}
                                             showSubscription={true}
                                             onRevokeCompleted={refetch}

@@ -19,7 +19,7 @@ import {
 import { PageTitle } from '../../../../components/PageTitle'
 
 import { queryClient, useListEnterpriseSubscriptions, type EnterprisePortalEnvironment } from './enterpriseportal'
-import { getDefaultEnterprisePortalEnv, getEnterprisePortalEnvFilterOptions } from './EnterprisePortalEnvSelector'
+import { EnterprisePortalEnvSelector, getDefaultEnterprisePortalEnv } from './EnterprisePortalEnvSelector'
 import type { ListEnterpriseSubscriptionsFilter } from './enterpriseportalgen/subscriptions_pb'
 import {
     SiteAdminProductSubscriptionNode,
@@ -50,22 +50,20 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     useEffect(() => telemetryRecorder.recordEvent('admin.productSubscriptions', 'view'), [telemetryRecorder])
 
     const [searchParams, setSearchParams] = useSearchParams()
-
+    const [env, setEnv] = useState<EnterprisePortalEnvironment>(
+        (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv()
+    )
     const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
-    const [filters, setFilters] = useState<{
-        env: EnterprisePortalEnvironment
-        filter: FilterType
-    }>({
-        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) || getDefaultEnterprisePortalEnv(),
+    const [filters, setFilters] = useState<{ filter: FilterType }>({
         filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'display_name',
     })
 
     useEffect(() => {
         searchParams.set(QUERY_PARAM_KEY, query?.trim() ?? '')
-        searchParams.set(QUERY_PARAM_ENV, filters.env)
+        searchParams.set(QUERY_PARAM_ENV, env)
         searchParams.set(QUERY_PARAM_FILTER, filters.filter)
         setSearchParams(searchParams)
-    }, [query, searchParams, setSearchParams, filters])
+    }, [query, searchParams, setSearchParams, filters, env])
 
     const [debouncedQuery] = useDebounce(query, 200)
 
@@ -94,7 +92,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             break
         }
     }
-    const { error, isFetching, data } = useListEnterpriseSubscriptions(filters.env, listFilters, {
+    const { error, isFetching, data } = useListEnterpriseSubscriptions(env, listFilters, {
         limit: MAX_RESULTS,
         // Only load when we have a query, and at least one filter
         shouldLoad: !!(debouncedQuery && listFilters.length > 0),
@@ -107,10 +105,18 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                 headingElement="h2"
                 path={[{ text: 'Enterprise instance subscriptions' }]}
                 actions={
-                    <Button to="./new" variant="primary" as={Link}>
-                        <Icon aria-hidden={true} svgPath={mdiPlus} />
-                        Create Enterprise subscription
-                    </Button>
+                    <div className="align-items-right d-flex">
+                        <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
+                        <Button
+                            to={`./new?env=${env}`}
+                            variant="primary"
+                            as={Link}
+                            className="d-flex align-items-center"
+                        >
+                            <Icon aria-hidden={true} svgPath={mdiPlus} />
+                            Create Enterprise subscription
+                        </Button>
+                    </div>
                 }
                 className="mb-3"
             />
@@ -120,13 +126,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     <ConnectionForm
                         inputValue={query}
                         filterValues={filters}
+                        inputClassName="ml-2"
                         filters={[
-                            {
-                                id: 'env',
-                                type: 'select',
-                                label: 'Environment',
-                                options: getEnterprisePortalEnvFilterOptions(),
-                            },
                             {
                                 id: 'filter',
                                 type: 'select',
@@ -149,7 +150,9 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                             setQuery(event.target.value)
                         }}
                         onFilterSelect={(filter, value) => {
-                            setFilters({ ...filters, [filter.id]: value })
+                            if (value) {
+                                setFilters({ ...filters, [filter.id]: value as FilterType })
+                            }
                         }}
                         inputPlaceholder="Enter a query to list subscriptions"
                     />
@@ -172,11 +175,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     <SiteAdminProductSubscriptionNodeHeader />
                                     <tbody>
                                         {data?.subscriptions?.map(node => (
-                                            <SiteAdminProductSubscriptionNode
-                                                key={node.id}
-                                                node={node}
-                                                env={filters.env}
-                                            />
+                                            <SiteAdminProductSubscriptionNode key={node.id} node={node} env={env} />
                                         ))}
                                     </tbody>
                                 </ConnectionList>

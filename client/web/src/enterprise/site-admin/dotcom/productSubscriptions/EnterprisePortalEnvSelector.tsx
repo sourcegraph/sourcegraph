@@ -1,8 +1,8 @@
 import React from 'react'
 
-import { Select } from '@sourcegraph/wildcard'
+import { mdiInformationOutline } from '@mdi/js'
 
-import type { BasicFilterArgs, FilterOption } from '../../../../components/FilteredConnection'
+import { Icon, Select, Tooltip } from '@sourcegraph/wildcard'
 
 import type { EnterprisePortalEnvironment } from './enterpriseportal'
 
@@ -20,7 +20,16 @@ export const EnterprisePortalEnvSelector: React.FunctionComponent<Props> = ({ en
         }}
         value={env ?? undefined}
         isCustomStyle={true}
-        label="Environment"
+        selectSize="sm"
+        className="mr-2 ml-2 mb-0 mt-0"
+        label={
+            <>
+                Enterprise Portal{' '}
+                <Tooltip content="Selects the Enterprise Portal server to interact with.">
+                    <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                </Tooltip>
+            </>
+        }
     >
         {[
             { label: 'Production', value: 'prod' },
@@ -35,29 +44,4 @@ export const EnterprisePortalEnvSelector: React.FunctionComponent<Props> = ({ en
 
 export function getDefaultEnterprisePortalEnv(): EnterprisePortalEnvironment {
     return window.context.deployType === 'dev' ? 'local' : 'prod'
-}
-
-export function getEnterprisePortalEnvFilterOptions(): FilterOption<BasicFilterArgs>[] {
-    return [
-        {
-            label: 'Production',
-            value: 'prod',
-            args: {},
-        },
-        {
-            label: 'Development',
-            value: 'dev',
-            args: {},
-        },
-    ].concat(
-        window.context.deployType === 'dev'
-            ? [
-                  {
-                      label: 'Local',
-                      value: 'local',
-                      args: {},
-                  },
-              ]
-            : []
-    )
 }

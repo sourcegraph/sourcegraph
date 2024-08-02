@@ -186,7 +186,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     )
                 }
                 actions={
-                    <div className="flex">
+                    <div className="align-items-right d-flex">
                         <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
                         <Button onClick={onArchive} disabled={archiveLoading || !!archived} variant="danger">
                             Archive
