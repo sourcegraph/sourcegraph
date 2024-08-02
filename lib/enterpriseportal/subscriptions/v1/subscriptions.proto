@@ -100,6 +100,18 @@ message EnterpriseSubscriptionSalesforceMetadata {
   string subscription_id = 1;
 }
 
+// EnterpriseSubscriptionInstanceType describes what kind of Sourcegraph
+// instance an Enterprise Subscription is designated for.
+enum EnterpriseSubscriptionInstanceType {
+  TYPE_UNSPECIFIED = 0;
+  // Represents a primary, production instance.
+  TYPE_PRIMARY = 1;
+  // Represents a secondary (e.g. dev or testing) instance.
+  TYPE_SECONDARY = 2;
+  // Represents a Sourcegraph-internal instance.
+  TYPE_INTERNAL = 3;
+}
+
 // EnterpriseSubscription represents a Sourcegraph Enterprise subscription.
 message EnterpriseSubscription {
   // ID is the external, prefixed UUID-format identifier for this subscription
@@ -114,6 +126,9 @@ message EnterpriseSubscription {
 
   // Salesforce details associated with this subscription.
   EnterpriseSubscriptionSalesforceMetadata salesforce = 5;
+
+  // The use case for the instance used in this Enterprise subscription.
+  EnterpriseSubscriptionInstanceType instance_type = 6;
 }
 
 // EnterpriseSubscriptionLicenseKey is the classic offline Sourcegraph license
@@ -351,9 +366,9 @@ message UpdateEnterpriseSubscriptionRequest {
   // The list of fields to update, fields are specified relative to the EnterpriseSubscription.
   // Updatable fields are:
   //  - instance_domain
+  //  - instance_type
   //  - display_name
   //  - salesforce.subscription_id
-  //  - salesforce.opportunity_id
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -379,6 +394,7 @@ message CreateEnterpriseSubscriptionRequest {
   //
   // Optional attributes:
   // - instance_domain
+  // - instance_type
   // - salesforce.subscription_id
   EnterpriseSubscription subscription = 1;
 
