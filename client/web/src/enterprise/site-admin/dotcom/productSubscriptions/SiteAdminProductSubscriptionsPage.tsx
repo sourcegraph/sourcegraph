@@ -69,7 +69,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         setSearchParams(searchParams)
     }, [query, searchParams, setSearchParams, filters])
 
-    const [debouncedQuery] = useDebounce(query, 500)
+    const [debouncedQuery] = useDebounce(query, 200)
 
     let listFilters: PartialMessage<ListEnterpriseSubscriptionsFilter>[] = []
     switch (filters.filter) {

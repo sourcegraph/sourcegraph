@@ -182,7 +182,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     created?.lastTransitionTime && (
                         <span className="text-muted">
                             Created <Timestamp date={created.lastTransitionTime.toDate()} />
-                            {created?.message && <strong>{created.message}</strong>}
                         </span>
                     )
                 }
@@ -227,6 +226,16 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         <table className="table mb-0">
                             <tbody>
                                 <tr>
+                                    <th className="text-nowrap">Display name</th>
+                                    <td className="w-100">
+                                        {subscription?.displayName ? (
+                                            <>{subscription?.displayName}</>
+                                        ) : (
+                                            <span className="text-muted">Not set</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th className="text-nowrap">
                                         Subscription ID{' '}
                                         <Tooltip content="This identifier represents a subscription for a single Enterprise Sourcegraph instance.">
@@ -235,16 +244,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     </th>
                                     <td className="w-100">
                                         <span className="text-monospace">{subscription?.id}</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th className="text-nowrap">Display name</th>
-                                    <td className="w-100">
-                                        {subscription?.displayName ? (
-                                            <>{subscription?.displayName}</>
-                                        ) : (
-                                            <span className="text-muted">Not set</span>
-                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -297,6 +296,23 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                             <Link to={subscription?.instanceDomain}>
                                                 {subscription?.instanceDomain}
                                             </Link>
+                                        ) : (
+                                            <span className="text-muted">Not set</span>
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Instance type{' '}
+                                        <Tooltip content="This indicates what this subscription's instance is used for.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        {subscription?.instanceType ? (
+                                            <span className="text-monospace">
+                                                {subscription?.instanceType.toString()}
+                                            </span>
                                         ) : (
                                             <span className="text-muted">Not set</span>
                                         )}

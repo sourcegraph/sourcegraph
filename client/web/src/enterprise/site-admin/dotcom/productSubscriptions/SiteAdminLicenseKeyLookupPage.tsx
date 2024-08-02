@@ -63,14 +63,17 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     const [searchParams, setSearchParams] = useSearchParams()
 
     const [query, setQuery] = useState<string>(searchParams.get(QUERY_PARAM_KEY) ?? '')
-    const [debouncedQuery] = useDebounce(query, 500)
+    const [debouncedQuery] = useDebounce(query, 200)
 
     const [filters, setFilters] = useState<{
         env: EnterprisePortalEnvironment
         filter: FilterType
     }>({
-        env: (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? 'prod',
-        filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'display_name',
+        env:
+            (searchParams.get(QUERY_PARAM_ENV) as EnterprisePortalEnvironment) ?? window.context.deployType === 'dev'
+                ? 'local'
+                : 'prod',
+        filter: (searchParams.get(QUERY_PARAM_FILTER) as FilterType) ?? 'key_substring',
     })
 
     useEffect(() => {

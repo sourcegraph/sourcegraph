@@ -7,6 +7,47 @@ import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialM
 import { FieldMask, Message, proto3, protoInt64, Timestamp } from "@bufbuild/protobuf";
 
 /**
+ * EnterpriseSubscriptionInstanceType describes what kind of Sourcegraph
+ * instance an Enterprise Subscription is designated for.
+ *
+ * @generated from enum enterpriseportal.subscriptions.v1.EnterpriseSubscriptionInstanceType
+ */
+export enum EnterpriseSubscriptionInstanceType {
+  /**
+   * @generated from enum value: ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Represents a primary, production instance.
+   *
+   * @generated from enum value: ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_PRIMARY = 1;
+   */
+  PRIMARY = 1,
+
+  /**
+   * Represents a secondary (e.g. dev or testing) instance.
+   *
+   * @generated from enum value: ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_SECONDARY = 2;
+   */
+  SECONDARY = 2,
+
+  /**
+   * Represents a Sourcegraph-internal instance.
+   *
+   * @generated from enum value: ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL = 3;
+   */
+  INTERNAL = 3,
+}
+// Retrieve enum metadata with: proto3.getEnumType(EnterpriseSubscriptionInstanceType)
+proto3.util.setEnumType(EnterpriseSubscriptionInstanceType, "enterpriseportal.subscriptions.v1.EnterpriseSubscriptionInstanceType", [
+  { no: 0, name: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_UNSPECIFIED" },
+  { no: 1, name: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_PRIMARY" },
+  { no: 2, name: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_SECONDARY" },
+  { no: 3, name: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL" },
+]);
+
+/**
  * EnterpriseSubscriptionLicenseType can be used to denote different types of
  * licenses.
  *
@@ -269,6 +310,13 @@ export class EnterpriseSubscription extends Message<EnterpriseSubscription> {
    */
   salesforce?: EnterpriseSubscriptionSalesforceMetadata;
 
+  /**
+   * The use case for the instance used in this Enterprise subscription.
+   *
+   * @generated from field: enterpriseportal.subscriptions.v1.EnterpriseSubscriptionInstanceType instance_type = 6;
+   */
+  instanceType = EnterpriseSubscriptionInstanceType.UNSPECIFIED;
+
   constructor(data?: PartialMessage<EnterpriseSubscription>) {
     super();
     proto3.util.initPartial(data, this);
@@ -282,6 +330,7 @@ export class EnterpriseSubscription extends Message<EnterpriseSubscription> {
     { no: 3, name: "display_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "instance_domain", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "salesforce", kind: "message", T: EnterpriseSubscriptionSalesforceMetadata },
+    { no: 6, name: "instance_type", kind: "enum", T: proto3.getEnumType(EnterpriseSubscriptionInstanceType) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EnterpriseSubscription {
@@ -1291,9 +1340,9 @@ export class UpdateEnterpriseSubscriptionRequest extends Message<UpdateEnterpris
    * The list of fields to update, fields are specified relative to the EnterpriseSubscription.
    * Updatable fields are:
    *  - instance_domain
+   *  - instance_type
    *  - display_name
    *  - salesforce.subscription_id
-   *  - salesforce.opportunity_id
    *
    * @generated from field: google.protobuf.FieldMask update_mask = 2;
    */
@@ -1454,6 +1503,7 @@ export class CreateEnterpriseSubscriptionRequest extends Message<CreateEnterpris
    *
    * Required attributes:
    * - display_name
+   * - instance_type
    *
    * Optional attributes:
    * - instance_domain

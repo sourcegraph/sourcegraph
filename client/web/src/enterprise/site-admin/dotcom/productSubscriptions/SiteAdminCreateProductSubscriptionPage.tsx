@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -15,7 +15,10 @@ import {
     getDefaultInputProps,
     useField,
     createRequiredValidator,
+    composeValidators,
     Input,
+    Label,
+    type ValidationResult,
 } from '@sourcegraph/wildcard'
 
 import type { AuthenticatedUser } from '../../../../auth'
@@ -23,6 +26,7 @@ import { LoaderButton } from '../../../../components/LoaderButton'
 import { PageTitle } from '../../../../components/PageTitle'
 
 import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscription, queryClient } from './enterpriseportal'
+import { EnterpriseSubscriptionInstanceType } from './enterpriseportalgen/subscriptions_pb'
 
 interface Props extends TelemetryV2Props {
     authenticatedUser: AuthenticatedUser
@@ -45,10 +49,30 @@ interface FormData {
     displayName: string
     salesforceSubscriptionID: string
     instanceDomain: string
+    instanceType: EnterpriseSubscriptionInstanceType
     message: string
 }
 
 const QUERY_PARAM_ENV = 'env'
+
+const DISPLAY_NAME_VALIDATOR = createRequiredValidator(
+    'A unique display name about this subscription is required. This can be changed later.'
+)
+
+const MESSAGE_VALIDATOR = createRequiredValidator('A message about the creation of this subscription is required.')
+
+const SALESFORCE_SUBSCRIPTION_ID_VALIDATOR: (value: string | undefined) => ValidationResult = value => {
+    if (!value) {
+        return // not required
+    }
+    if (!value.startsWith('a1a')) {
+        return 'Salesforce subscription ID must start with "a1a"'
+    }
+    if (value.length < 17) {
+        return 'Salesforce subscription ID must be 17 characters long'
+    }
+    return
+}
 
 export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
     useEffect(() => props.telemetryRecorder.recordEvent('admin.productSubscriptions.create', 'view'))
@@ -62,7 +86,7 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
         setSearchParams(searchParams)
     }, [env, setSearchParams, searchParams])
 
-    const { mutate: createSubscription, isPending, error } = useCreateEnterpriseSubscription(env)
+    const { mutateAsync: createSubscription, error } = useCreateEnterpriseSubscription(env)
 
     const {
         formAPI,
@@ -74,33 +98,33 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
             message: '',
             salesforceSubscriptionID: '',
             instanceDomain: '',
+            instanceType: EnterpriseSubscriptionInstanceType.PRIMARY,
         },
-        onSubmit: ({ message, displayName, instanceDomain, salesforceSubscriptionID }: FormData) => {
+        onSubmit: async ({
+            message,
+            displayName,
+            instanceDomain,
+            salesforceSubscriptionID,
+            instanceType,
+        }: FormData) => {
             props.telemetryRecorder.recordEvent('admin.productSubscriptions', 'create')
-            createSubscription(
-                {
-                    message,
-                    subscription: {
-                        displayName,
-                        instanceDomain,
-                        salesforce: salesforceSubscriptionID
-                            ? {
-                                  subscriptionId: salesforceSubscriptionID,
-                              }
-                            : undefined,
-                    },
+            const { subscription } = await createSubscription({
+                message,
+                subscription: {
+                    displayName,
+                    instanceDomain,
+                    instanceType,
+                    salesforce: salesforceSubscriptionID
+                        ? {
+                              subscriptionId: salesforceSubscriptionID,
+                          }
+                        : undefined,
                 },
-                {
-                    onSuccess: ({ subscription }) => {
-                        // Redirect to the newly created subscription
-                        if (subscription) {
-                            window.location.replace(
-                                `/site-admin/dotcom/product/subscriptions/${subscription.id}?env=${env}`
-                            )
-                        }
-                    },
-                }
-            )
+            })
+            // Redirect to the newly created subscription
+            if (subscription) {
+                window.location.replace(`/site-admin/dotcom/product/subscriptions/${subscription.id}?env=${env}`)
+            }
         },
     })
 
@@ -108,9 +132,7 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
         name: 'displayName',
         formApi: formAPI,
         validators: {
-            sync: createRequiredValidator(
-                'A unique display name about this subscription is required. This can be changed later.'
-            ),
+            sync: DISPLAY_NAME_VALIDATOR,
         },
     })
 
@@ -118,26 +140,32 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
         name: 'message',
         formApi: formAPI,
         validators: {
-            sync: createRequiredValidator('A message about the creation of this subscription is required.'),
+            sync: MESSAGE_VALIDATOR,
         },
+    })
+
+    const instanceType = useField({
+        name: 'instanceType',
+        formApi: formAPI,
     })
 
     const salesforceSubscriptionID = useField({
         name: 'salesforceSubscriptionID',
         formApi: formAPI,
         validators: {
-            sync: value => {
-                if (!value) {
-                    return // not required
-                }
-                if (value.startsWith('a1a')) {
-                    return 'Salesforce subscription ID must start with "a1a"'
-                }
-                if (value.length < 17) {
-                    return 'Salesforce subscription ID must be 17 characters long'
-                }
-                return
-            },
+            sync: useMemo(
+                () =>
+                    composeValidators<string, unknown>([
+                        value => {
+                            if (instanceType.input.value !== EnterpriseSubscriptionInstanceType.INTERNAL && !value) {
+                                return 'Salesforce subscription ID is required for non-internal instances.'
+                            }
+                            return
+                        },
+                        SALESFORCE_SUBSCRIPTION_ID_VALIDATOR,
+                    ]),
+                [instanceType.input.value]
+            ),
         },
     })
 
@@ -179,46 +207,83 @@ export const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = pro
             <Container className="mb-3">
                 {error && <ErrorAlert className="mt-2" error={error} />}
                 <Alert variant="info">
-                    You are creating an Enterprise subscription for a SINGLE Sourcegraph instance. Customers with
-                    multiple Sourcegraph instances should have a separate subscription for each. Each subscription
-                    should only have licenses for a SINGLE Sourcegraph instance.
-                    <br />
-                    The Salesforce subscription ID can be set to link subscriptions corresponding to a single customer.
+                    <div>
+                        You are creating an Enterprise subscription <strong>for a SINGLE Sourcegraph instance</strong>.
+                        Customers with multiple Sourcegraph instances should have a separate subscription for each. Each
+                        subscription should only have licenses for a SINGLE Sourcegraph instance.
+                    </div>
+                    <div>
+                        The Salesforce subscription ID can be set to link multiple Enterprise subscriptions
+                        corresponding to a single customer.
+                    </div>
                 </Alert>
                 <Form ref={formRef} onSubmit={handleSubmit}>
-                    <Input
-                        autoFocus={true}
-                        required={true}
-                        message="Subscription display name"
-                        about="Human-friendly name for this Enterprise instance subscription. Can be changed later."
-                        placeholder="Example: 'Acme Corp. (testing instance)'"
-                        {...getDefaultInputProps(displayName)}
-                    />
-                    <Input
-                        message="Salesforce subscription ID"
-                        about="This is VERY important to provide for all subscriptions used by customers. Only leave blank if this subscription is for development purposes. Can be changed later."
-                        {...getDefaultInputProps(salesforceSubscriptionID)}
-                    />
-                    <Input
-                        message="Instance domain"
-                        about="External domain of the Sourcegraph instance that will be used by this subscription. Required for Cody Analytics. Can be changed later."
-                        placeholder="Example: 'acmecorp.com'"
-                        {...getDefaultInputProps(instanceDomain)}
-                    />
-                    <Input
-                        required={true}
-                        message="Message"
-                        about="Permanent note to associate with the creation of this Enterprise instance subscription."
-                        placeholder="Example: 'Set up test instance subscription for Acme Corp.'"
-                        {...getDefaultInputProps(message)}
-                    />
+                    <Label className="w-100 mt-2">
+                        Display name
+                        <Input
+                            message="Short, human-friendly name for this Enterprise instance subscription."
+                            placeholder="Example: 'Acme Corp. (testing instance)'"
+                            disabled={formAPI.submitted}
+                            {...getDefaultInputProps(displayName)}
+                        />
+                    </Label>
+                    <Select
+                        id="instance-type"
+                        label="Instance type"
+                        message="Select the type of instance this subscription is used for - a production instance might be a PRIMARY instance, while a dev or staging instance would be a SECONDARY instance."
+                        value={instanceType.input.value}
+                        disabled={formAPI.submitted}
+                        onChange={event => {
+                            instanceType.input.onChange(
+                                parseInt(event.target.value, 10) as EnterpriseSubscriptionInstanceType
+                            )
+                        }}
+                    >
+                        {[
+                            EnterpriseSubscriptionInstanceType.PRIMARY,
+                            EnterpriseSubscriptionInstanceType.SECONDARY,
+                            EnterpriseSubscriptionInstanceType.INTERNAL,
+                        ].map(type => (
+                            <option key={type} value={type}>
+                                {EnterpriseSubscriptionInstanceType[type].toString()}
+                            </option>
+                        ))}
+                    </Select>
+                    <Label className="w-100 mt-2">
+                        Salesforce subscription ID
+                        <Input
+                            message="This is VERY important to provide for all subscriptions used by customers. Only leave blank if this subscription is for internal usage."
+                            placeholder="Example: 'a1a...'"
+                            disabled={formAPI.submitted}
+                            {...getDefaultInputProps(salesforceSubscriptionID)}
+                        />
+                    </Label>
+                    <Label className="w-100 mt-2">
+                        Instance domain
+                        <Input
+                            message="External domain of the Sourcegraph instance that will be used by this subscription. Must be set manually. Required for Cody Analytics."
+                            placeholder="Example: 'acmecorp.com'"
+                            disabled={formAPI.submitted}
+                            {...getDefaultInputProps(instanceDomain)}
+                        />
+                    </Label>
+                    <Label className="w-100 mt-2">
+                        Message
+                        <Input
+                            message="Note to associate with the creation of this Enterprise instance subscription."
+                            placeholder="Example: 'Set up test instance subscription for Acme Corp.'"
+                            disabled={formAPI.submitted}
+                            {...getDefaultInputProps(message)}
+                        />
+                    </Label>
                     <LoaderButton
                         type="submit"
-                        disabled={isPending || !formAPI.valid}
+                        className="mt-2"
+                        disabled={formAPI.submitted || !formAPI.valid || formAPI.validating}
                         variant="primary"
-                        loading={isPending}
+                        loading={formAPI.submitted}
                         alwaysShowLabel={true}
-                        label="Generate key"
+                        label="Create Enterprise instance subscription"
                     />
                 </Form>
             </Container>
