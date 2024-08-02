@@ -1,0 +1,11 @@
+# Configuration file for https://buf.build/, which we use for Protobuf code generation.
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/go:v1.29.1
+    out: .
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/grpc/go:v1.3.0
+    out: .
+    opt:
+      - paths=source_relative
