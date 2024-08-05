@@ -58,6 +58,7 @@
         defaultBranch: string
         display?: ComponentProps<ButtonGroup>['display']
         placement?: Placement
+        isPerforceDepot?: boolean
         onSelect?: (revision: string) => void
         getRepositoryTags: (query: string) => PromiseLike<RepositoryTags>
         getRepositoryCommits: (query: string) => PromiseLike<RepositoryCommits>
@@ -70,6 +71,7 @@
     export let commitID: $$Props['commitID'] = undefined
     export let defaultBranch: $$Props['defaultBranch']
     export let placement: $$Props['placement'] = 'right-start'
+    export let isPerforceDepot: $$Props['isPerforceDepot'] = false
     export let display: $$Props['display'] = undefined
     /**
      * Optional handler for revision selection.
@@ -93,7 +95,6 @@
     $: isOnSpecificRev = revisionLabel !== defaultBranch
 
     const buttonClass = getButtonClassName({ variant: 'secondary', outline: false, size: 'sm' })
-    $: isPerforceDepot = getDepotChangelists !== null
 </script>
 
 <Popover let:registerTrigger let:registerTarget let:toggle {placement}>
@@ -290,7 +291,6 @@
             }
         }
 
-        .commit-subject,
         .changelist-subject {
             overflow: hidden;
             text-overflow: ellipsis;
