@@ -18,6 +18,7 @@ query RepositoryGitCommits($repoName: String!, $query: String!, $revision: Strin
         }
     }
 }
+
 query ResolveRepoRevision($repoName: String!, $revision: String!) {
     repositoryRedirect(name: $repoName) {
         __typename
@@ -55,4 +56,40 @@ fragment ResolvedRepository on Repository {
     ...RepoPage_ResolvedRevision
     ...BlobPage_ResolvedRevision
     ...CodySidebar_ResolvedRevision
+}
+
+query DepotChangelists($depotName: String!, $revision: String!) {
+    repository(name: $depotName) {
+		changelist: commit(rev: $revision) {
+            ...RevPickerChangelist
+        }
+        ancestorChangelists: commit(rev: $revision) {
+            ancestors(first: 15) {
+                nodes {
+                    ...RevPickerChangelist
+                }
+            }
+        }
+    }
+}
+
+fragment RevPickerChangelist on GitCommit {
+    __typename
+    id
+    subject
+    perforceChangelist {
+        cid
+        canonicalURL
+    }
+    ...DepotChangelistAuthor
+}
+
+fragment DepotChangelistAuthor on GitCommit {
+    author {
+        date
+        person {
+            __typename
+            ...Avatar_Person
+        }
+    }
 }
