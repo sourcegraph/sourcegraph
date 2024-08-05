@@ -23,6 +23,7 @@ import {
     createEnterpriseSubscriptionLicense,
     createEnterpriseSubscription,
     archiveEnterpriseSubscription,
+    updateEnterpriseSubscription,
 } from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
 import type {
     ListEnterpriseSubscriptionsResponse,
@@ -38,6 +39,8 @@ import type {
     CreateEnterpriseSubscriptionResponse,
     ArchiveEnterpriseSubscriptionResponse,
     ArchiveEnterpriseSubscriptionRequest,
+    UpdateEnterpriseSubscriptionRequest,
+    UpdateEnterpriseSubscriptionResponse,
 } from './enterpriseportalgen/subscriptions_pb'
 
 /**
@@ -269,6 +272,19 @@ export function useArchiveEnterpriseSubscription(
     unknown
 > {
     return useMutation(archiveEnterpriseSubscription, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useUpdateEnterpriseSubscription(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    UpdateEnterpriseSubscriptionResponse,
+    ConnectError,
+    PartialMessage<UpdateEnterpriseSubscriptionRequest>,
+    unknown
+> {
+    return useMutation(updateEnterpriseSubscription, {
         transport: mustGetEnvironment(env),
     })
 }
