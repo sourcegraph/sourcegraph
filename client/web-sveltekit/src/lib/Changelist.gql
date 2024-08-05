@@ -1,0 +1,25 @@
+fragment Changelist on GitCommit {
+    id
+    subject
+    body
+    author {
+        date
+        person {
+            name
+            email
+            ...Avatar_Person
+        }
+    }
+    committer {
+        date
+        person {
+            name
+            email
+            ...Avatar_Person
+        }
+    }
+    perforceChangelist {
+        canonicalURL
+        cid
+    }
+}

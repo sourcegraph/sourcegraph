@@ -115,10 +115,11 @@ export const load: LayoutLoad = async ({ params, url, depends }) => {
                 ),
 
         // Depot pickers queries (changelists, @TODO: labels)
-        getDepotChangelists: () =>
+        getDepotChangelists: (searchTerm: string) =>
             client
                 .query(DepotChangelists, {
                     depotName: repoName,
+                    query: searchTerm,
                     revision: resolvedRepository.commit?.oid || ''
                 })
                 .then(
