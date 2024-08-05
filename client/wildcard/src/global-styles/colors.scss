@@ -81,6 +81,7 @@ $violet-09: #5f3dc4;
     --gray-12: #14171f;
     --black: #0f111a;
 
+
     // Other root palette colors.
     --blue: #{$blue};
     --light-blue: #4393e7;
@@ -178,6 +179,8 @@ $violet-09: #5f3dc4;
     --border-color-2: var(--gray-04);
     --border-active-color: var(--primary);
     --border-primary-color: #0f59aa; // = dark variant of primary-2
+
+
     // Start query highlighting
     --search-query-text-color: var(--gray-12);
     --search-filter-keyword-color: var(--primary);
@@ -360,6 +363,8 @@ $violet-09: #5f3dc4;
     --border-color-2: var(--gray-08);
     --border-active-color: var(--light-blue);
     --border-primary-color: #0f59aa; // = dark variant of primary-2
+    --border-green-color: #BFF9C9;
+
     // Start query highlighting
     --search-query-text-color: var(--gray-04);
     --search-filter-keyword-color: var(--light-blue);

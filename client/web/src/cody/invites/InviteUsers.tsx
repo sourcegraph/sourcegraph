@@ -107,11 +107,8 @@ export const InviteUsers: React.FunctionComponent<InviteUsersProps> = ({ telemet
 
     if (updateSubscriptionMutation.isSuccess) {
         return (
-            <CodyAlert variant="greenSuccess">
-                <H1 as="p" className="mb-2">
-                    Remaining invites removed from plan
-                </H1>
-                <Text className="mb-0">You can add more seats at any time with the "Add seats" button.</Text>
+            <CodyAlert title="Remaining invites removed from plan" variant="green">
+                <Text>You can add more seats at any time with the "Add seats" button.</Text>
             </CodyAlert>
         )
     }
@@ -125,22 +122,19 @@ export const InviteUsers: React.FunctionComponent<InviteUsersProps> = ({ telemet
     return (
         <>
             {sendInviteMutation.status === 'success' && (
-                <CodyAlert variant="greenSuccess">
-                    <H3>
-                        {emailAddresses.length} {pluralize('invite', emailAddresses.length)} sent!
-                    </H3>
+                <CodyAlert
+                    title={`${emailAddresses.length} ${pluralize('invite', emailAddresses.length)} sent!`}
+                    variant="green"
+                >
                     <Text size="small" className="mb-0">
                         Invitees will receive an email from cody@sourcegraph.com.
                     </Text>
                 </CodyAlert>
             )}
             {sendInviteMutation.status === 'error' && (
-                <CodyAlert variant="error">
-                    <H3>Invites not sent.</H3>
-                    <Text size="small" className="text-muted mb-0">
-                        Error sending invites: {sendInviteMutation.error?.message}
-                    </Text>
-                    <Text size="small" className="mb-0">
+                <CodyAlert title="Invites not sent." variant="error">
+                    <Text size="small">Error sending invites: {sendInviteMutation.error?.message}</Text>
+                    <Text size="small" className="mt-2">
                         If you encounter this issue repeatedly, please contact support at{' '}
                         <Link to="mailto:support@sourcegraph.com">support@sourcegraph.com</Link>.
                     </Text>
