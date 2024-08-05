@@ -18,7 +18,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/search/zoektquery"
 	"github.com/sourcegraph/sourcegraph/internal/symbols"
-	"github.com/sourcegraph/sourcegraph/internal/trace/policy"
 	"github.com/sourcegraph/sourcegraph/internal/types"
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -237,7 +236,6 @@ func searchZoekt(
 	final := query.Simplify(query.NewAnd(ands...))
 	match := limitOrDefault(first) + 1
 	resp, err := z.Search(ctx, final, &zoekt.SearchOptions{
-		Trace:              policy.ShouldTrace(ctx),
 		MaxWallTime:        3 * time.Second,
 		ShardMaxMatchCount: match * 25,
 		TotalMaxMatchCount: match * 25,

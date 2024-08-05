@@ -38,7 +38,6 @@ go_library(
         "//internal/search/streaming/http",
         "//internal/searcher/protocol",
         "//internal/trace",
-        "//internal/trace/policy",
         "//internal/types",
         "//lib/errors",
         "//schema",

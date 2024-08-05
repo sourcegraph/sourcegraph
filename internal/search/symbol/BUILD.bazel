@@ -16,7 +16,6 @@ go_library(
         "//internal/search/result",
         "//internal/search/zoektquery",
         "//internal/symbols",
-        "//internal/trace/policy",
         "//internal/types",
         "//lib/errors",
         "@com_github_grafana_regexp//:regexp",

@@ -6133,8 +6133,8 @@ def go_dependencies():
         patches = [
             "//third_party/com_github_sourcegraph_zoekt:x_defs_version.patch",
         ],
-        sum = "h1:66S/mbdSXfoJT4S4dEEU1ZLZUKwzTfgeTcWZNyI5oA8=",
-        version = "v0.0.0-20240801154129-764fe4f9de0e",
+        sum = "h1:kf3b+ofYN1A/NQ5OhpwArIqEcdfDsHK7LokDwmk8sQY=",
+        version = "v0.0.0-20240802105940-9d583f6b21d1",
     )
     go_repository(
         name = "com_github_spaolacci_murmur3",

@@ -15,7 +15,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/search/result"
 	"github.com/sourcegraph/sourcegraph/internal/searcher/protocol"
-	"github.com/sourcegraph/sourcegraph/internal/trace/policy"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/featureflag"
@@ -185,7 +184,6 @@ func (o *ZoektParameters) ToSearchOptions(ctx context.Context) (searchOpts *zoek
 
 	defaultTimeout := 20 * time.Second
 	searchOpts = &zoekt.SearchOptions{
-		Trace:           policy.ShouldTrace(ctx),
 		MaxWallTime:     defaultTimeout,
 		ChunkMatches:    true,
 		UseBM25Scoring:  o.PatternType == query.SearchTypeCodyContext && o.Typ == TextRequest,
