@@ -58,20 +58,23 @@
         defaultBranch: string
         display?: ComponentProps<ButtonGroup>['display']
         placement?: Placement
-        isPerforceDepot?: boolean
         onSelect?: (revision: string) => void
-        getRepositoryTags: (query: string) => PromiseLike<RepositoryTags>
-        getRepositoryCommits: (query: string) => PromiseLike<RepositoryCommits>
-        getRepositoryBranches: (query: string) => PromiseLike<RepositoryBranches>
-        getDepotChangelists: (query: string) => PromiseLike<DepotChangelists>
-    }
+    } & (
+            | {
+                  getRepositoryTags: (query: string) => PromiseLike<RepositoryTags>
+                  getRepositoryCommits: (query: string) => PromiseLike<RepositoryCommits>
+                  getRepositoryBranches: (query: string) => PromiseLike<RepositoryBranches>
+              }
+            | {
+                  getDepotChangelists: (query: string) => PromiseLike<DepotChangelists>
+              }
+        )
 
     export let repoURL: $$Props['repoURL']
     export let revision: $$Props['revision'] = undefined
     export let commitID: $$Props['commitID'] = undefined
     export let defaultBranch: $$Props['defaultBranch']
     export let placement: $$Props['placement'] = 'right-start'
-    export let isPerforceDepot: $$Props['isPerforceDepot'] = false
     export let display: $$Props['display'] = undefined
     /**
      * Optional handler for revision selection.
@@ -80,10 +83,10 @@
     export let onSelect = defaultHandleSelect
 
     // Pickers data sources
-    export let getRepositoryTags: (query: string) => PromiseLike<RepositoryTags>
-    export let getRepositoryCommits: (query: string) => PromiseLike<RepositoryCommits>
-    export let getRepositoryBranches: (query: string) => PromiseLike<RepositoryBranches>
-    export let getDepotChangelists: (query: string) => PromiseLike<DepotChangelists>
+    export let getRepositoryTags: ((query: string) => PromiseLike<RepositoryTags>) | undefined = undefined
+    export let getRepositoryCommits: ((query: string) => PromiseLike<RepositoryCommits>) | undefined = undefined
+    export let getRepositoryBranches: ((query: string) => PromiseLike<RepositoryBranches>) | undefined = undefined
+    export let getDepotChangelists: ((query: string) => PromiseLike<DepotChangelists>) | undefined = undefined
 
     function defaultHandleSelect(revision: string) {
         goto(replaceRevisionInURL(location.pathname + location.search + location.hash, revision))
@@ -130,7 +133,7 @@
 
     <div slot="content" class="content" let:toggle>
         <Tabs>
-            {#if !isPerforceDepot}
+            {#if getRepositoryCommits && getRepositoryTags && getRepositoryBranches}
                 <TabPanel title="Branches" shortcut={branchesHotkey}>
                     <Picker
                         name="branches"
@@ -198,7 +201,7 @@
                         </RepositoryRevPickerItem>
                     </Picker>
                 </TabPanel>
-            {:else}
+            {:else if getDepotChangelists}
                 <TabPanel title="Changelists" shortcut={commitsHotkey}>
                     <Picker
                         name="changelists"

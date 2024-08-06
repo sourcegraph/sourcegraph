@@ -70,10 +70,6 @@
             commitID={data.resolvedRevision.commitID}
             defaultBranch={data.defaultBranch}
             placement="bottom-start"
-            isPerforceDepot={data.isPerforceDepot}
-            getRepositoryBranches={data.getRepoBranches}
-            getRepositoryCommits={data.getRepoCommits}
-            getRepositoryTags={data.getRepoTags}
             getDepotChangelists={data.getDepotChangelists}
         />
     </div>

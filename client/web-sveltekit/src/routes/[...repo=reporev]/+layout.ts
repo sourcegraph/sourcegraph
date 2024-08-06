@@ -124,10 +124,13 @@ export const load: LayoutLoad = async ({ params, url, depends }) => {
                 })
                 .then(
                     mapOrThrow(({ data, error }) => {
+                        let nodes = data?.repository?.ancestorChangelists?.ancestors.nodes ?? []
+
                         if (error) {
                             throw new Error('Could not load depot changelists:', error)
                         }
-                        return data?.repository?.ancestorChangelists
+
+                        return { nodes }
                     })
                 )
     }
