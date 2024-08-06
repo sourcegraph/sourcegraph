@@ -1,14 +1,36 @@
 fragment ChangelistsPage_GitCommitConnection on GitCommitConnection {
     nodes {
-        canonicalURL
+        id
         oid
         abbreviatedOID
+        canonicalURL
+        subject
+        body
         externalURLs {
             serviceKind
             url
         }
 
-        ...Changelist
+        author {
+            date
+            person {
+                name
+                email
+                ...Avatar_Person
+            }
+        }
+        committer {
+            date
+            person {
+                name
+                email
+                ...Avatar_Person
+            }
+        }
+        perforceChangelist {
+            canonicalURL
+            cid
+        }
     }
     pageInfo {
         hasNextPage

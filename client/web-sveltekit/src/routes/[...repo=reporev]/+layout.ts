@@ -120,7 +120,7 @@ export const load: LayoutLoad = async ({ params, url, depends }) => {
                 .query(DepotChangelists, {
                     depotName: repoName,
                     query: searchTerm,
-                    revision: resolvedRepository.commit?.oid || ''
+                    revision: resolvedRepository.commit?.oid || '',
                 })
                 .then(
                     mapOrThrow(({ data, error }) => {
@@ -132,7 +132,7 @@ export const load: LayoutLoad = async ({ params, url, depends }) => {
 
                         return { nodes }
                     })
-                )
+                ),
     }
 }
 

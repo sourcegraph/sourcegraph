@@ -1,25 +1,29 @@
-fragment Changelist on GitCommit {
-    id
-    subject
-    body
-    author {
-        date
-        person {
-            name
-            email
-            ...Avatar_Person
+fragment Changelist on PerforceChangelist {
+    cid
+    canonicalURL
+    commit {
+        message
+        oid
+        body
+        subject
+        author {
+            person {
+                ...Avatar_Person
+            }
+            date
         }
-    }
-    committer {
-        date
-        person {
-            name
-            email
-            ...Avatar_Person
+        parents {
+            id
+            oid
+            abbreviatedOID
+            parent: perforceChangelist {
+                cid
+                canonicalURL
+            }
         }
-    }
-    perforceChangelist {
-        canonicalURL
-        cid
+        perforceChangelist {
+            cid
+                canonicalURL
+        }
     }
 }

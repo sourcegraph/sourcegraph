@@ -1,9 +1,10 @@
-import { IncrementalRestoreStrategy, getGraphQLClient, infinityQuery } from "$lib/graphql"
-import { resolveRevision } from "$lib/repo/utils"
-import { parseRepoRevision } from "@sourcegraph/shared/src/util/url"
-import type { PageLoad } from "./$types"
+import { parseRepoRevision } from '@sourcegraph/shared/src/util/url'
 
-import { ChangelistsPage_ChangelistsQuery } from "./page.gql"
+import { IncrementalRestoreStrategy, getGraphQLClient, infinityQuery } from '$lib/graphql'
+import { resolveRevision } from '$lib/repo/utils'
+
+import type { PageLoad } from './$types'
+import { ChangelistsPage_ChangelistsQuery } from './page.gql'
 
 const PAGE_SIZE = 20
 
@@ -31,7 +32,7 @@ export const load: PageLoad = ({ parent, params }) => {
                         ? { afterCursor: ancestors.pageInfo.endCursor }
                         : undefined,
                 data: ancestors?.nodes,
-                error: result.error
+                error: result.error,
             }
         },
         merge: (previous, next) => (previous ?? []).concat(next ?? []),
@@ -45,6 +46,6 @@ export const load: PageLoad = ({ parent, params }) => {
 
     return {
         changelistsQuery,
-        path
+        path,
     }
 }

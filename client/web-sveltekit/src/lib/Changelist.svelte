@@ -27,6 +27,7 @@
         </Tooltip>
     </div>
     <div class="title">
+        <!-- TODO need subject-->
         <a class="subject" href={changelist.perforceChangelist?.canonicalURL}>{changelist.subject}</a>
         {#if !alwaysExpanded && changelist.body && !$isViewportMobile}
             <Button
