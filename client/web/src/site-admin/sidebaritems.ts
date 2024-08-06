@@ -235,7 +235,7 @@ const businessGroup: SiteAdminSideBarGroup = {
     header: { label: 'Business', icon: BriefcaseIcon },
     items: [
         {
-            label: 'Enterprise instance subscriptions',
+            label: 'Enterprise subscriptions',
             to: '/site-admin/dotcom/product/subscriptions',
             condition: () => SHOW_BUSINESS_FEATURES,
         },

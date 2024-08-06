@@ -178,11 +178,11 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
 
     return (
         <div className="site-admin-product-subscription-page">
-            <PageTitle title="Enterprise instance subscription" />
+            <PageTitle title="Enterprise subscription" />
             <PageHeader
                 headingElement="h2"
                 path={[
-                    { text: 'Enterprise instance subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
+                    { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
                     { text: subscription?.displayName || subscription?.id || paramSubscriptionUUID },
                 ]}
                 description="This subscription tracks a single Enterprise instance."

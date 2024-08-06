@@ -100,22 +100,19 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
 
     return (
         <div className="site-admin-product-subscriptions-page">
-            <PageTitle title="Enterprise instance subscriptions" />
+            <PageTitle title="Enterprise subscriptions" />
             <PageHeader
                 headingElement="h2"
-                path={[{ text: 'Enterprise instance subscriptions' }]}
+                path={[{ text: 'Enterprise subscriptions' }]}
                 actions={
-                    <div className="align-items-right d-flex">
+                    <div className="align-items-end d-flex">
                         <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
-                        <Button
-                            to={`./new?env=${env}`}
-                            variant="primary"
-                            as={Link}
-                            className="d-flex align-items-center"
-                        >
-                            <Icon aria-hidden={true} svgPath={mdiPlus} />
-                            Create Enterprise subscription
-                        </Button>
+                        <div>
+                            <Button to={`./new?env=${env}`} variant="primary" as={Link} display="block">
+                                <Icon aria-hidden={true} svgPath={mdiPlus} />
+                                Create Enterprise subscription
+                            </Button>
+                        </div>
                     </div>
                 }
                 className="mb-3"
@@ -131,17 +128,20 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                             {
                                 id: 'filter',
                                 type: 'select',
-                                label: 'Filter by',
+                                label: 'Filter',
                                 options: [
                                     {
                                         args: {},
                                         label: 'Display name',
                                         value: 'display_name',
+                                        tooltip: 'Partial, case-insensitive match on the subscription display name',
                                     },
                                     {
                                         args: {},
                                         label: 'Salesforce subscription ID',
                                         value: 'sf_sub_id',
+                                        tooltip:
+                                            'Exact match on the Salesforce subscription ID associated with the subscription',
                                     },
                                 ],
                             },

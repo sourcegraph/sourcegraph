@@ -17,6 +17,7 @@ import {
     createRequiredValidator,
     composeValidators,
     Input,
+    Text,
     Label,
     type ValidationResult,
 } from '@sourcegraph/wildcard'
@@ -177,31 +178,35 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
 
     return (
         <div className="site-admin-create-product-subscription-page">
-            <PageTitle title="Create product subscription" />
+            <PageTitle title="Create Enterprise subscription" />
             <PageHeader
                 headingElement="h2"
-                path={[{ text: 'Create Enterprise instance subscription' }]}
+                path={[
+                    { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
+                    { text: 'Create Enterprise subscription' },
+                ]}
                 className="mb-2"
                 actions={<EnterprisePortalEnvSelector env={env} setEnv={setEnv} />}
             />
             <Container className="mb-3">
                 {error && <ErrorAlert className="mt-2" error={error} />}
                 <Alert variant="info">
-                    <div>
-                        You are creating an Enterprise subscription <strong>for a SINGLE Sourcegraph instance</strong>.
-                        Customers with multiple Sourcegraph instances should have a separate subscription for each. Each
-                        subscription should only have licenses for a SINGLE Sourcegraph instance.
-                    </div>
-                    <div>
+                    <Text>
+                        <strong>You are creating an Enterprise subscription for a SINGLE Sourcegraph instance</strong>.
+                        Customers with multiple Sourcegraph instances should have a separate subscription for each.{' '}
+                        <strong>Each subscription should only have licenses for a SINGLE Sourcegraph instance.</strong>
+                    </Text>
+                    <Text>
                         The Salesforce subscription ID can be set to link multiple Enterprise subscriptions
                         corresponding to a single customer.
-                    </div>
+                    </Text>
                 </Alert>
                 <Form ref={formRef} onSubmit={handleSubmit}>
                     <Label className="w-100 mt-2">
                         Display name
                         <Input
-                            message="Short, human-friendly name for this Enterprise instance subscription."
+                            autoFocus={true}
+                            message="Short, human-friendly name for this Enterprise subscription."
                             placeholder="Example: 'Acme Corp. (testing instance)'"
                             disabled={formAPI.submitted}
                             {...getDefaultInputProps(displayName)}
@@ -210,7 +215,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
                     <Select
                         id="instance-type"
                         label="Instance type"
-                        message="Select the type of instance this subscription is used for - a production instance might be a PRIMARY instance, while a dev or staging instance would be a SECONDARY instance."
+                        message="Select the type of instance this subscription is used for. A production instance might be a PRIMARY instance, while a dev or staging instance would be a SECONDARY instance. INTERNAL instances are used internally at Sourcegraph."
                         value={instanceType.input.value}
                         disabled={formAPI.submitted}
                         onChange={event => {
@@ -241,7 +246,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
                     <Label className="w-100 mt-2">
                         Instance domain
                         <Input
-                            message="External domain of the Sourcegraph instance that will be used by this subscription. Must be set manually. Required for Cody Analytics."
+                            message="External domain of the Sourcegraph instance that will be used by this subscription. Required for Cody Analytics. Must be set manually."
                             placeholder="Example: 'acmecorp.com'"
                             disabled={formAPI.submitted}
                             {...getDefaultInputProps(instanceDomain)}
@@ -250,7 +255,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
                     <Label className="w-100 mt-2">
                         Message
                         <Input
-                            message="Note to associate with the creation of this Enterprise instance subscription."
+                            message="Note to associate with the creation of this Enterprise subscription."
                             placeholder="Example: 'Set up test instance subscription for Acme Corp.'"
                             disabled={formAPI.submitted}
                             {...getDefaultInputProps(message)}
@@ -263,7 +268,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
                         variant="primary"
                         loading={formAPI.submitted}
                         alwaysShowLabel={true}
-                        label="Create Enterprise instance subscription"
+                        label="Create subscription"
                     />
                 </Form>
             </Container>

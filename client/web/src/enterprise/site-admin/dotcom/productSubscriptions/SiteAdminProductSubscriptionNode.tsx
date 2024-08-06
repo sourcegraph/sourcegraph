@@ -49,7 +49,13 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
                     </Badge>
                 )}
             </td>
-            <td className="text-nowrap">{node.salesforce?.subscriptionId || ''}</td>
+            <td className="text-nowrap">
+                {node?.salesforce?.subscriptionId ? (
+                    <span className="text-monospace">{node?.salesforce?.subscriptionId}</span>
+                ) : (
+                    <span className="text-muted">Not set</span>
+                )}
+            </td>
             <td className="text-nowrap">
                 {created?.lastTransitionTime && <Timestamp date={created.lastTransitionTime.toDate()} />}
             </td>

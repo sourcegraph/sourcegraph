@@ -137,17 +137,19 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                             {
                                 id: 'filter',
                                 type: 'select',
-                                label: 'Filter by',
+                                label: 'Filter',
                                 options: [
                                     {
                                         args: {},
                                         label: 'License key substring',
                                         value: 'key_substring',
+                                        tooltip: 'Partial match on the signed license key',
                                     },
                                     {
                                         args: {},
                                         label: 'Salesforce opportunity ID',
                                         value: 'sf_opp_id',
+                                        tooltip: 'Exact match on the Salesforce opportunity ID attached to the license',
                                     },
                                 ],
                             },
