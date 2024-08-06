@@ -380,6 +380,12 @@
   package: main
   interfaces:
     - BigQueryWriter
+- filename: dev/build-tracker/build/mocks.go
+  path: github.com/sourcegraph/sourcegraph/dev/build-tracker/build
+  package: build
+  interfaces:
+    - Locker
+    - RedisClient
 - filename: cmd/cody-gateway/internal/actor/productsubscription/productsubscriptiontest/mocks.go
   package: productsubscriptiontest
   sources:

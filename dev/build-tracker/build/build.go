@@ -9,7 +9,6 @@ import (
 
 	"github.com/buildkite/go-buildkite/v3/buildkite"
 	"github.com/go-redsync/redsync/v4"
-	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	"github.com/redis/go-redis/v9"
 	"github.com/sourcegraph/log"
 
@@ -229,16 +228,26 @@ func (b *Event) GetBuildNumber() int {
 type Store struct {
 	logger log.Logger
 
-	r  *redis.Client
-	m1 *redsync.Mutex
+	r  RedisClient
+	m1 Locker
 }
 
-func NewBuildStore(logger log.Logger, rclient *redis.Client) *Store {
+type Locker interface {
+	Lock() error
+	Unlock() (bool, error)
+}
+
+type RedisClient interface {
+	redis.StringCmdable
+	redis.GenericCmdable
+}
+
+func NewBuildStore(logger log.Logger, rclient RedisClient, lock Locker) *Store {
 	return &Store{
 		logger: logger.Scoped("store"),
 
 		r:  rclient,
-		m1: redsync.New(goredis.NewPool(rclient)).NewMutex("build-tracker", redsync.WithExpiry(time.Minute)),
+		m1: lock,
 	}
 }
 
@@ -273,14 +282,19 @@ func (s *Store) Add(event *Event) {
 	// if we don't know about this build, convert it and add it to the store
 	if err == redis.Nil {
 		build = event.WrappedBuild()
+	}
+
+	// write out the build to redis at the end, once all mutations are applied
+	defer func() {
 		buildb, _ = json.Marshal(build)
 		s.r.Set(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber()), buildb, 0)
-	}
+	}()
 
 	// if the build is finished replace the original build with the replaced one since it
 	// will be more up to date, and tack on some finalized data
 	if event.IsBuildFinished() {
 		build.updateFromEvent(event)
+
 		s.logger.Debug("build finished", log.Int("buildNumber", event.GetBuildNumber()),
 			log.Int("totalSteps", len(build.Steps)),
 			log.String("status", build.GetState()))
@@ -299,7 +313,8 @@ func (s *Store) Add(event *Event) {
 					return
 				}
 				parentBuild.AppendSteps(build.Steps)
-				// TODO: write this out again
+				buildb, _ = json.Marshal(parentBuild)
+				s.r.Set(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber()), buildb, 0)
 			} else if err == redis.Nil {
 				// If the triggered build doesn't exist, we'll just leave log a message
 				s.logger.Warn(
@@ -317,7 +332,7 @@ func (s *Store) Add(event *Event) {
 		failuresKey := fmt.Sprintf("%s/%s", build.Pipeline.GetName(), build.GetBranch())
 		if build.IsFailed() {
 			i, _ := s.r.Incr(context.Background(), failuresKey).Result()
-			s.r.JSONSet(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber()), "consecutiveFailures", i)
+			build.ConsecutiveFailure = int(i)
 		} else {
 			// We got a pass, reset the global count
 			s.r.Set(context.Background(), failuresKey, 0, 0).Result()

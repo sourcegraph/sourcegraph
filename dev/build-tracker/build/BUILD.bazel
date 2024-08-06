@@ -1,3 +1,4 @@
+load("//dev:go_mockgen.bzl", "go_mockgen")
 load("//dev:go_defs.bzl", "go_test")
 load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
@@ -5,6 +6,7 @@ go_library(
     name = "build",
     srcs = [
         "build.go",
+        "mocks.go",
         "steps.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/dev/build-tracker/build",
@@ -15,6 +17,8 @@ go_library(
         "//lib/errors",
         "//lib/pointers",
         "@com_github_buildkite_go_buildkite_v3//buildkite",
+        "@com_github_go_redsync_redsync_v4//:redsync",
+        "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_sourcegraph_log//:log",
     ],
 )
@@ -27,8 +31,20 @@ go_test(
     tags = [TAG_INFRA_DEVINFRA],
     deps = [
         "@com_github_buildkite_go_buildkite_v3//buildkite",
+        "@com_github_redis_go_redis_v9//:go-redis",
         "@com_github_sourcegraph_log//logtest",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",
     ],
+)
+
+go_mockgen(
+    name = "generate_mocks",
+    out = "mocks.go",
+    manifests = [
+        "//:mockgen.yaml",
+        "//:mockgen.test.yaml",
+        "//:mockgen.temp.yaml",
+    ],
+    deps = [":build"],
 )
