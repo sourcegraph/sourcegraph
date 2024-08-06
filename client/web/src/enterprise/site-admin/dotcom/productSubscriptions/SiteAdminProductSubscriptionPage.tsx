@@ -580,10 +580,38 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
     subscriptionConditions,
     licensesConditions,
 }) => {
+    const getSubscriptionConditionBackgroundClassName = (status: EnterpriseSubscriptionCondition_Status) => {
+        switch (status) {
+            case EnterpriseSubscriptionCondition_Status.CREATED: {
+                return 'bg-success'
+            }
+            case EnterpriseSubscriptionCondition_Status.ARCHIVED: {
+                return 'bg-danger'
+            }
+            default: {
+                return 'bg-info'
+            }
+        }
+    }
+    const getLicenseConditionBackgroundClassName = (status: EnterpriseSubscriptionLicenseCondition_Status) => {
+        switch (status) {
+            case EnterpriseSubscriptionLicenseCondition_Status.CREATED: {
+                return 'bg-success'
+            }
+            case EnterpriseSubscriptionLicenseCondition_Status.REVOKED: {
+                return 'bg-danger'
+            }
+            default: {
+                return 'bg-info'
+            }
+        }
+    }
+
     const allConditions: {
         lastTransitionTime: Date
         summary: string
         details: React.ReactNode
+        className: string
     }[] = subscriptionConditions
         .map(condition => ({
             lastTransitionTime: condition.lastTransitionTime!.toDate(),
@@ -597,6 +625,7 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
                     )}
                 </>
             ),
+            className: getSubscriptionConditionBackgroundClassName(condition.status),
         }))
         .concat(
             ...licensesConditions.map(({ licenseID, license, condition }) => ({
@@ -618,6 +647,7 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
                         </div>
                     </>
                 ),
+                className: getLicenseConditionBackgroundClassName(condition.status),
             }))
         )
         .sort((a, b) => (a.lastTransitionTime > b.lastTransitionTime ? -1 : 1))
@@ -626,7 +656,7 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
         (condition): TimelineStage => ({
             icon: <Icon aria-label="event" svgPath={mdiCircle} />,
             date: condition.lastTransitionTime.toISOString(),
-            className: condition.summary.includes('created') ? 'bg-success' : 'bg-danger',
+            className: condition.className,
 
             text: condition.summary,
             details: <Container>{condition.details}</Container>,
