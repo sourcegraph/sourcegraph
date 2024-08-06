@@ -156,7 +156,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         setShowGenerate(false)
     }, [licenses])
 
-    if (isLoading || subscriptionUpdating) {
+    if (isLoading || licenses.isLoading || subscriptionUpdating) {
         return <LoadingSpinner />
     }
 
@@ -173,7 +173,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         ({ license }, idx) =>
             idx === 0 &&
             license?.value?.info?.expireTime &&
-            isProductLicenseExpired(license?.value?.info?.expireTime?.toDate())
+            !isProductLicenseExpired(license?.value?.info?.expireTime?.toDate())
     )
 
     return (
@@ -256,27 +256,6 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     </th>
                                     <td className="w-100">
                                         <span className="text-monospace">{subscription?.id}</span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th className="text-nowrap">
-                                        Active license{' '}
-                                        <Tooltip content="The most recently created, non-expired license is considered the 'active license'.">
-                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
-                                        </Tooltip>
-                                    </th>
-                                    <td className="w-100">
-                                        {activeLicense ? (
-                                            <>
-                                                <ProductSubscriptionLabel
-                                                    productName={activeLicense.license.value?.planDisplayName}
-                                                    userCount={activeLicense.license.value?.info?.userCount}
-                                                />{' '}
-                                                - <Link to={`#${activeLicense.id}`}>view license</Link>
-                                            </>
-                                        ) : (
-                                            <span className="text-muted">No active license</span>
-                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -421,6 +400,27 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                                 })
                                             }}
                                         />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Active license{' '}
+                                        <Tooltip content="The most recently created, non-expired license is considered the 'active license'.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        {activeLicense ? (
+                                            <>
+                                                <ProductSubscriptionLabel
+                                                    productName={activeLicense.license.value?.planDisplayName}
+                                                    userCount={activeLicense.license.value?.info?.userCount}
+                                                />{' '}
+                                                - <Link to={`#${activeLicense.id}`}>view license</Link>
+                                            </>
+                                        ) : (
+                                            <span className="text-muted">No active license</span>
+                                        )}
                                     </td>
                                 </tr>
                             </tbody>
