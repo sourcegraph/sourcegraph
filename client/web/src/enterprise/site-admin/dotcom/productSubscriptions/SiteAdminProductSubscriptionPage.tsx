@@ -88,7 +88,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         setSearchParams(searchParams)
     }, [env, setSearchParams, searchParams])
 
-    const { data, isLoading, error, refetch } = useGetEnterpriseSubscription(env, paramSubscriptionUUID)
+    const { data, isFetching: isLoading, error, refetch } = useGetEnterpriseSubscription(env, paramSubscriptionUUID)
 
     const [showGenerate, setShowGenerate] = useState<boolean>(false)
 
@@ -156,7 +156,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         setShowGenerate(false)
     }, [licenses])
 
-    if ((isLoading && !data) || subscriptionUpdating) {
+    if (isLoading || subscriptionUpdating) {
         return <LoadingSpinner />
     }
 
@@ -185,7 +185,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     { text: 'Enterprise instance subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
                     { text: subscription?.displayName || subscription?.id || paramSubscriptionUUID },
                 ]}
-                description={
+                description="This subscription tracks a single Enterprise instance."
+                byline={
                     subscription &&
                     created?.lastTransitionTime && (
                         <span className="text-muted">
@@ -194,11 +195,18 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     )
                 }
                 actions={
-                    <div className="align-items-right d-flex">
+                    <div className="align-items-end d-flex">
                         <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
-                        <Button onClick={onArchive} disabled={archiveLoading || !!archived} variant="danger">
-                            Archive
-                        </Button>
+                        <div>
+                            <Button
+                                onClick={onArchive}
+                                disabled={archiveLoading || !!archived}
+                                variant="danger"
+                                display="block"
+                            >
+                                Archive
+                            </Button>
+                        </div>
                     </div>
                 }
                 className="mb-3"
@@ -390,13 +398,17 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                                 ]
                                                 const instanceType = window.prompt(
                                                     `Enter an instance type to assign (one of: ${types
-                                                        .map(type => type.toString())
+                                                        .map(type => EnterpriseSubscriptionInstanceType[type])
                                                         .join(', ')})`
                                                 )
                                                 if (instanceType === null) {
                                                     return
                                                 }
-                                                const type = types.find(type => type.toString() === instanceType)
+                                                const type = types.find(
+                                                    type =>
+                                                        EnterpriseSubscriptionInstanceType[type].toLowerCase() ===
+                                                        instanceType.toLowerCase()
+                                                )
                                                 if (!type) {
                                                     window.alert(`Invalid instance type ${instanceType}`)
                                                     return
