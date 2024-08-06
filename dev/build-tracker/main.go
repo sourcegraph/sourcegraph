@@ -12,6 +12,7 @@ import (
 
 	"github.com/buildkite/go-buildkite/v3/buildkite"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/exp/maps"
 
 	"github.com/sourcegraph/log"
@@ -47,7 +48,7 @@ type Server struct {
 }
 
 // NewServer creatse a new server to listen for Buildkite webhook events.
-func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQueryWriter) *Server {
+func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQueryWriter, rclient *redis.Client) *Server {
 	logger = logger.Scoped("server")
 
 	if testutil.IsTest && c.BuildkiteToken == "" {
@@ -62,7 +63,7 @@ func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQuer
 
 	server := &Server{
 		logger:       logger,
-		store:        build.NewBuildStore(logger),
+		store:        build.NewBuildStore(logger, rclient),
 		config:       &c,
 		notifyClient: notify.NewClient(logger, c.SlackToken, c.SlackChannel),
 		bqWriter:     bqWriter,
@@ -423,7 +424,13 @@ func (s Service) Initialize(ctx context.Context, logger log.Logger, contract run
 		return nil, err
 	}
 
-	server := NewServer(fmt.Sprintf(":%d", contract.Port), logger, config, bqWriter)
+	redisOpts, err := redis.ParseURL(*contract.RedisEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	rclient := redis.NewClient(redisOpts)
+
+	server := NewServer(fmt.Sprintf(":%d", contract.Port), logger, config, bqWriter, rclient)
 
 	return background.CombinedRoutine{
 		server,
