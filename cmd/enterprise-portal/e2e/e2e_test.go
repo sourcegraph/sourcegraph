@@ -125,6 +125,7 @@ func runLifecycleTest(t *testing.T, ctx context.Context, clients *Clients, runID
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
 					DisplayName:    subscriptionName,
 					InstanceDomain: subscriptionDomain,
+					InstanceType:   subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 				},
 				Message: "E2E test",
 			},
