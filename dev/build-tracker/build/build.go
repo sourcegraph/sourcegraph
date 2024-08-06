@@ -251,7 +251,7 @@ func NewBuildStore(logger log.Logger, rclient RedisClient, lock Locker) *Store {
 	}
 }
 
-func (s *Store) Add(event *Event) {
+func (s *Store) lock() (func(), error) {
 	for {
 		err := s.m1.Lock()
 		if err == redsync.ErrFailed {
@@ -259,11 +259,23 @@ func (s *Store) Add(event *Event) {
 			continue
 		} else if err != nil {
 			s.logger.Error("failed to acquire lock", log.Error(err))
-			return
+			return nil, err
 		}
 		break
 	}
-	defer s.m1.Unlock()
+	return func() {
+		if _, err := s.m1.Unlock(); err != nil {
+			s.logger.Error("failed to unlock", log.Error(err))
+		}
+	}, nil
+}
+
+func (s *Store) Add(event *Event) {
+	unlock, err := s.lock()
+	if err != nil {
+		return
+	}
+	defer unlock()
 
 	buildb, err := s.r.Get(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber())).Bytes()
 	if err != nil && err != redis.Nil {
@@ -369,36 +381,22 @@ func (s *Store) Add(event *Event) {
 }
 
 func (s *Store) Set(build *Build) {
-	for {
-		err := s.m1.Lock()
-		if err == redsync.ErrFailed {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		} else if err != nil {
-			s.logger.Error("failed to acquire lock", log.Error(err))
-			return
-		}
-		break
+	unlock, err := s.lock()
+	if err != nil {
+		return
 	}
-	defer s.m1.Unlock()
+	defer unlock()
 
 	buildb, _ := json.Marshal(build)
 	s.r.Set(context.Background(), "build/"+strconv.Itoa(*build.Number), buildb, 0)
 }
 
 func (s *Store) GetByBuildNumber(num int) *Build {
-	for {
-		err := s.m1.Lock()
-		if err == redsync.ErrFailed {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		} else if err != nil {
-			s.logger.Error("failed to acquire lock", log.Error(err))
-			return nil
-		}
-		break
+	unlock, err := s.lock()
+	if err != nil {
+		return nil
 	}
-	defer s.m1.Unlock()
+	defer unlock()
 
 	buildb, err := s.r.Get(context.Background(), "build/"+strconv.Itoa(num)).Bytes()
 	if err != nil && err != redis.Nil {
@@ -417,18 +415,11 @@ func (s *Store) GetByBuildNumber(num int) *Build {
 }
 
 func (s *Store) DelByBuildNumber(buildNumbers ...int) {
-	for {
-		err := s.m1.Lock()
-		if err == redsync.ErrFailed {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		} else if err != nil {
-			s.logger.Error("failed to acquire lock", log.Error(err))
-			return
-		}
-		break
+	unlock, err := s.lock()
+	if err != nil {
+		return
 	}
-	defer s.m1.Unlock()
+	defer unlock()
 
 	nums := make([]string, 0, len(buildNumbers))
 	for _, num := range buildNumbers {
@@ -441,18 +432,11 @@ func (s *Store) DelByBuildNumber(buildNumbers ...int) {
 }
 
 func (s *Store) FinishedBuilds() []*Build {
-	for {
-		err := s.m1.Lock()
-		if err == redsync.ErrFailed {
-			time.Sleep(100 * time.Millisecond)
-			continue
-		} else if err != nil {
-			s.logger.Error("failed to acquire lock", log.Error(err))
-			return nil
-		}
-		break
+	unlock, err := s.lock()
+	if err != nil {
+		return nil
 	}
-	defer s.m1.Unlock()
+	defer unlock()
 
 	buildKeys, err := s.r.Keys(context.Background(), "build/*").Result()
 	if err != nil {
