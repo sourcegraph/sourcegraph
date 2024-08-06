@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sourcegraph/log"
+
 	"github.com/sourcegraph/sourcegraph/internal/appliance"
 	"github.com/sourcegraph/sourcegraph/internal/releaseregistry"
 	"github.com/sourcegraph/sourcegraph/lib/errors"

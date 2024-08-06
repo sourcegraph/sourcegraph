@@ -121,9 +121,17 @@ func kubebuilderAssetPathLocalDev() (string, error) {
 }
 
 func NewNoopReconciler(mgr ctrl.Manager) KubernetesController {
-	return noopReconicler{}
+	return noopReconciler{}
 }
 
-type noopReconicler struct{}
+type noopReconciler struct{}
 
-func (noopReconicler) SetupWithManager(_ ctrl.Manager) error { return nil }
+func (noopReconciler) SetupWithManager(_ ctrl.Manager) error { return nil }
+
+func IsSetupEnvTestInstalled() bool {
+	_, err := exec.LookPath("setup-envtest")
+	if err != nil {
+		return false
+	}
+	return true
+}

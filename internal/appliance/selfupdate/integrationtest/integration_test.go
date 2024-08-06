@@ -19,6 +19,7 @@ import (
 	"github.com/sourcegraph/log"
 	"github.com/sourcegraph/log/logr"
 	"github.com/sourcegraph/log/logtest"
+
 	"github.com/sourcegraph/sourcegraph/internal/appliance/config"
 	"github.com/sourcegraph/sourcegraph/internal/appliance/k8senvtest"
 	"github.com/sourcegraph/sourcegraph/internal/appliance/selfupdate"
