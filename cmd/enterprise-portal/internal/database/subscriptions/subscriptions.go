@@ -75,6 +75,7 @@ func subscriptionTableColumns() []string {
 	return []string{
 		"id",
 		"instance_domain",
+		"instance_type",
 		"display_name",
 		"created_at",
 		"updated_at",
@@ -91,6 +92,7 @@ func scanSubscription(row pgx.Row) (*SubscriptionWithConditions, error) {
 	err := row.Scan(
 		&s.ID,
 		&s.InstanceDomain,
+		&s.InstanceType,
 		&s.DisplayName,
 		&s.CreatedAt,
 		&s.UpdatedAt,
