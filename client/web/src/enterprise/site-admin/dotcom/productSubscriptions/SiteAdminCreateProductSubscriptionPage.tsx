@@ -58,7 +58,7 @@ interface FormData {
 const QUERY_PARAM_ENV = 'env'
 
 const DISPLAY_NAME_VALIDATOR = createRequiredValidator(
-    'A unique display name about this subscription is required. This can be changed later.'
+    'Brief, human-friendly, globally unique name for this subscription is required. This can be changed later.'
 )
 
 const MESSAGE_VALIDATOR = createRequiredValidator('A message about the creation of this subscription is required.')
@@ -206,7 +206,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = props => {
                         Display name
                         <Input
                             autoFocus={true}
-                            message="Short, human-friendly name for this Enterprise subscription."
+                            message="Brief, human-friendly, globally unique name for this subscription."
                             placeholder="Example: 'Acme Corp. (testing instance)'"
                             disabled={formAPI.submitted}
                             {...getDefaultInputProps(displayName)}

@@ -9,6 +9,7 @@ import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { logger } from '@sourcegraph/common'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
+    Alert,
     Button,
     Container,
     ErrorAlert,
@@ -185,7 +186,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                     { text: 'Enterprise subscriptions', to: '/site-admin/dotcom/product/subscriptions' },
                     { text: subscription?.displayName || subscription?.id || paramSubscriptionUUID },
                 ]}
-                description="This subscription tracks a single Enterprise instance."
+                description="This subscription tracks a single Enterprise Sourcegraph instance."
                 byline={
                     subscription &&
                     created?.lastTransitionTime && (
@@ -215,6 +216,8 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             {subscriptionUpdateError && <ErrorAlert className="mt-2" error={subscriptionUpdateError} />}
             {error && <ErrorAlert className="mt-2" error={error} />}
 
+            {archived && <Alert variant="danger">This subscription has been permanently archived.</Alert>}
+
             {subscription && (
                 <>
                     <H3>Details</H3>
@@ -222,35 +225,9 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         <table className="table mb-0">
                             <tbody>
                                 <tr>
-                                    <th className="text-nowrap">Display name</th>
-                                    <td className="w-100">
-                                        {subscription?.displayName ? (
-                                            <>{subscription?.displayName}</>
-                                        ) : (
-                                            <span className="text-muted">Not set</span>
-                                        )}
-                                        <EditAttributeButtonProps
-                                            label="Edit display name"
-                                            refetch={refetch}
-                                            onClick={async () => {
-                                                const displayName = window.prompt(
-                                                    'Enter instance display name to assign:',
-                                                    subscription?.displayName
-                                                )
-                                                if (displayName === null) {
-                                                    return
-                                                }
-                                                await updateEnterpriseSubscription({
-                                                    subscription: { id: subscription?.id, displayName },
-                                                })
-                                            }}
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
                                     <th className="text-nowrap">
                                         Subscription ID{' '}
-                                        <Tooltip content="This identifier represents a subscription for a single Enterprise Sourcegraph instance.">
+                                        <Tooltip content="This immutable identifier represents a subscription for a single Enterprise Sourcegraph instance tracked by the Enterprise Portal service.">
                                             <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
                                         </Tooltip>
                                     </th>
@@ -260,8 +237,41 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                 </tr>
                                 <tr>
                                     <th className="text-nowrap">
-                                        Salesforce subscription ID{' '}
-                                        <Tooltip content="The ID of the corresponding Salesforce subscription.">
+                                        Display name{' '}
+                                        <Tooltip content="Brief, human-friendly, globally unique name for this subscription.">
+                                            <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
+                                        </Tooltip>
+                                    </th>
+                                    <td className="w-100">
+                                        {subscription?.displayName ? (
+                                            <>{subscription?.displayName}</>
+                                        ) : (
+                                            <span className="text-muted">Not set</span>
+                                        )}
+                                        {!archived && (
+                                            <EditAttributeButton
+                                                label="Edit display name"
+                                                refetch={refetch}
+                                                onClick={async () => {
+                                                    const displayName = window.prompt(
+                                                        'Enter instance display name to assign:',
+                                                        subscription?.displayName
+                                                    )
+                                                    if (displayName === null) {
+                                                        return
+                                                    }
+                                                    await updateEnterpriseSubscription({
+                                                        subscription: { id: subscription?.id, displayName },
+                                                    })
+                                                }}
+                                            />
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th className="text-nowrap">
+                                        Salesforce subscription{' '}
+                                        <Tooltip content="The ID of the corresponding Salesforce subscription, of the format 'a1a...'.">
                                             <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
                                         </Tooltip>
                                     </th>
@@ -273,38 +283,40 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                         ) : (
                                             <span className="text-muted">Not set</span>
                                         )}
-                                        <EditAttributeButtonProps
-                                            label="Edit Salesforce subscription ID"
-                                            refetch={refetch}
-                                            onClick={async () => {
-                                                const salesforceSubscriptionID = window.prompt(
-                                                    'Enter the Salesforce subscription ID to assign:',
-                                                    subscription?.salesforce?.subscriptionId
-                                                )
-                                                if (salesforceSubscriptionID === null) {
-                                                    return
-                                                }
-                                                if (salesforceSubscriptionID === '') {
-                                                    await updateEnterpriseSubscription({
-                                                        subscription: {
-                                                            id: subscription?.id,
-                                                        },
-                                                        updateMask: {
-                                                            paths: ['salesforce.subscription_id'],
-                                                        },
-                                                    })
-                                                } else {
-                                                    await updateEnterpriseSubscription({
-                                                        subscription: {
-                                                            id: subscription?.id,
-                                                            salesforce: {
-                                                                subscriptionId: salesforceSubscriptionID,
+                                        {!archived && (
+                                            <EditAttributeButton
+                                                label="Edit Salesforce subscription ID"
+                                                refetch={refetch}
+                                                onClick={async () => {
+                                                    const salesforceSubscriptionID = window.prompt(
+                                                        'Enter the Salesforce subscription ID to assign:',
+                                                        subscription?.salesforce?.subscriptionId
+                                                    )
+                                                    if (salesforceSubscriptionID === null) {
+                                                        return
+                                                    }
+                                                    if (salesforceSubscriptionID === '') {
+                                                        await updateEnterpriseSubscription({
+                                                            subscription: {
+                                                                id: subscription?.id,
                                                             },
-                                                        },
-                                                    })
-                                                }
-                                            }}
-                                        />
+                                                            updateMask: {
+                                                                paths: ['salesforce.subscription_id'],
+                                                            },
+                                                        })
+                                                    } else {
+                                                        await updateEnterpriseSubscription({
+                                                            subscription: {
+                                                                id: subscription?.id,
+                                                                salesforce: {
+                                                                    subscriptionId: salesforceSubscriptionID,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                }}
+                                            />
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -322,33 +334,35 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                         ) : (
                                             <span className="text-muted">Not set</span>
                                         )}
-                                        <EditAttributeButtonProps
-                                            label="Edit instance domain"
-                                            refetch={refetch}
-                                            onClick={async () => {
-                                                const instanceDomain = window.prompt(
-                                                    'Enter instance domain to assign (leave empty to unassign):',
-                                                    subscription?.instanceDomain
-                                                )
-                                                if (instanceDomain === null) {
-                                                    return
-                                                }
-                                                if (instanceDomain === '') {
-                                                    await updateEnterpriseSubscription({
-                                                        subscription: {
-                                                            id: subscription?.id,
-                                                        },
-                                                        updateMask: {
-                                                            paths: ['instance_domain'],
-                                                        },
-                                                    })
-                                                } else {
-                                                    await updateEnterpriseSubscription({
-                                                        subscription: { id: subscription?.id, instanceDomain },
-                                                    })
-                                                }
-                                            }}
-                                        />
+                                        {!archived && (
+                                            <EditAttributeButton
+                                                label="Edit instance domain"
+                                                refetch={refetch}
+                                                onClick={async () => {
+                                                    const instanceDomain = window.prompt(
+                                                        'Enter instance domain to assign (leave empty to unassign):',
+                                                        subscription?.instanceDomain
+                                                    )
+                                                    if (instanceDomain === null) {
+                                                        return
+                                                    }
+                                                    if (instanceDomain === '') {
+                                                        await updateEnterpriseSubscription({
+                                                            subscription: {
+                                                                id: subscription?.id,
+                                                            },
+                                                            updateMask: {
+                                                                paths: ['instance_domain'],
+                                                            },
+                                                        })
+                                                    } else {
+                                                        await updateEnterpriseSubscription({
+                                                            subscription: { id: subscription?.id, instanceDomain },
+                                                        })
+                                                    }
+                                                }}
+                                            />
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -361,45 +375,47 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                     <td className="w-100">
                                         {subscription?.instanceType ? (
                                             <span className="text-monospace">
-                                                {subscription?.instanceType.toString()}
+                                                {EnterpriseSubscriptionInstanceType[subscription?.instanceType]}
                                             </span>
                                         ) : (
                                             <span className="text-muted">Not set</span>
                                         )}
-                                        <EditAttributeButtonProps
-                                            label="Edit instance type"
-                                            refetch={refetch}
-                                            onClick={async () => {
-                                                const types = [
-                                                    EnterpriseSubscriptionInstanceType.PRIMARY,
-                                                    EnterpriseSubscriptionInstanceType.SECONDARY,
-                                                    EnterpriseSubscriptionInstanceType.INTERNAL,
-                                                ]
-                                                const instanceType = window.prompt(
-                                                    `Enter an instance type to assign (one of: ${types
-                                                        .map(type => EnterpriseSubscriptionInstanceType[type])
-                                                        .join(', ')})`
-                                                )
-                                                if (instanceType === null) {
-                                                    return
-                                                }
-                                                const type = types.find(
-                                                    type =>
-                                                        EnterpriseSubscriptionInstanceType[type].toLowerCase() ===
-                                                        instanceType.toLowerCase()
-                                                )
-                                                if (!type) {
-                                                    window.alert(`Invalid instance type ${instanceType}`)
-                                                    return
-                                                }
-                                                await updateEnterpriseSubscription({
-                                                    subscription: {
-                                                        id: subscription?.id,
-                                                        instanceType: type,
-                                                    },
-                                                })
-                                            }}
-                                        />
+                                        {!archived && (
+                                            <EditAttributeButton
+                                                label="Edit instance type"
+                                                refetch={refetch}
+                                                onClick={async () => {
+                                                    const types = [
+                                                        EnterpriseSubscriptionInstanceType.PRIMARY,
+                                                        EnterpriseSubscriptionInstanceType.SECONDARY,
+                                                        EnterpriseSubscriptionInstanceType.INTERNAL,
+                                                    ]
+                                                    const instanceType = window.prompt(
+                                                        `Enter an instance type to assign (one of: ${types
+                                                            .map(type => EnterpriseSubscriptionInstanceType[type])
+                                                            .join(', ')})`
+                                                    )
+                                                    if (instanceType === null) {
+                                                        return
+                                                    }
+                                                    const type = types.find(
+                                                        type =>
+                                                            EnterpriseSubscriptionInstanceType[type].toLowerCase() ===
+                                                            instanceType.toLowerCase()
+                                                    )
+                                                    if (!type) {
+                                                        window.alert(`Invalid instance type ${instanceType}`)
+                                                        return
+                                                    }
+                                                    await updateEnterpriseSubscription({
+                                                        subscription: {
+                                                            id: subscription?.id,
+                                                            instanceType: type,
+                                                        },
+                                                    })
+                                                }}
+                                            />
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -427,7 +443,12 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                         </table>
                     </Container>
 
-                    <Collapsible title={<H3>History</H3>} titleAtStart={true} defaultExpanded={false} className="mb-3">
+                    <Collapsible
+                        title={<H3>History</H3>}
+                        titleAtStart={true}
+                        defaultExpanded={!!archived}
+                        className="mb-3"
+                    >
                         <Container className="mb-3">
                             {subscription && licenses.data ? (
                                 <ConditionsTimeline
@@ -621,7 +642,7 @@ interface EditAttributeButtonProps {
     refetch: () => void
 }
 
-const EditAttributeButtonProps: React.FunctionComponent<EditAttributeButtonProps> = ({ label, onClick, refetch }) => (
+const EditAttributeButton: React.FunctionComponent<EditAttributeButtonProps> = ({ label, onClick, refetch }) => (
     <Button
         size="sm"
         variant="link"

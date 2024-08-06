@@ -154,7 +154,9 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                     <CollapsePanel className="mt-4">
                         <div className="d-flex">
                             <Label>License Key ID</Label>
-                            <Text className="ml-3">{node.id}</Text>
+                            <Text className="ml-3">
+                                <span className="text-monospace">{node.id}</span>
+                            </Text>
                         </div>
                         <div className="d-flex">
                             <Label>Key Version</Label>
@@ -165,7 +167,11 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                                 <div className="d-flex">
                                     <Label>Salesforce Opportunity ID</Label>
                                     <Text className="ml-3">
-                                        {info?.salesforceOpportunityId ?? <span className="text-muted">Uknown</span>}
+                                        {info?.salesforceOpportunityId ? (
+                                            <span className="text-monospace">{info?.salesforceOpportunityId}</span>
+                                        ) : (
+                                            <span className="text-muted">Uknown</span>
+                                        )}
                                     </Text>
                                 </div>
                             </>

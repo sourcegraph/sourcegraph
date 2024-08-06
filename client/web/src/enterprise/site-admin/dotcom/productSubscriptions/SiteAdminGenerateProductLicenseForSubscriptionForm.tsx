@@ -317,13 +317,16 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
             {!hasAcknowledgedInfo && (
                 <>
                     <Alert variant="danger" className="flex-shrink-0">
-                        Each subscription must map to exactly ONE Sourcegraph instance. DO NOT create licenses used by
-                        multiple Sourcegraph instances within a single subscription - instead, create a NEW subscription
-                        with the appropriate Salesforce subscription ID and a relevant display name.
+                        Each subscription must map to exactly ONE Sourcegraph instance.{' '}
+                        <strong>
+                            DO NOT create licenses used by multiple Sourcegraph instances within a single subscription
+                        </strong>{' '}
+                        - instead, create a NEW subscription with the appropriate Salesforce subscription ID and a
+                        relevant display name.
                     </Alert>
 
                     <Alert variant="info" className="flex-shrink-0">
-                        Existing licenses can be re-linked to a new subscription by reaching out to
+                        Existing licenses can be re-linked to a new subscription by reaching out to{' '}
                         <Link rel="noopener" target="_blank" to="https://sourcegraph.slack.com/archives/C05GJPTSZCZ">
                             #discuss-core-services
                         </Link>

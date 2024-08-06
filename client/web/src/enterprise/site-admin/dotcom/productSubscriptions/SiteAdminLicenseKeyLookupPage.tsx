@@ -122,7 +122,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             <PageHeader
                 path={[{ text: 'License key lookup' }]}
                 headingElement="h2"
-                description="Find matching licenses and their associated enterprise subscriptions"
+                description="Find matching licenses and their associated enterprise subscriptions."
                 className="mb-3"
                 actions={<EnterprisePortalEnvSelector env={env} setEnv={setEnv} />}
             />

@@ -1,12 +1,12 @@
 import * as React from 'react'
 
-import { Timestamp } from '@sourcegraph/branded/src/components/Timestamp'
 import { Badge, LinkOrSpan } from '@sourcegraph/wildcard'
 
 import type { EnterprisePortalEnvironment } from './enterpriseportal'
 import {
     type EnterpriseSubscription,
     EnterpriseSubscriptionCondition_Status,
+    EnterpriseSubscriptionInstanceType,
 } from './enterpriseportalgen/subscriptions_pb'
 
 export const SiteAdminProductSubscriptionNodeHeader: React.FunctionComponent<React.PropsWithChildren<unknown>> = () => (
@@ -14,7 +14,8 @@ export const SiteAdminProductSubscriptionNodeHeader: React.FunctionComponent<Rea
         <tr>
             <th>Display name</th>
             <th>Salesforce subscription</th>
-            <th>Created</th>
+            <th>Instance type</th>
+            <th>Instance domain</th>
         </tr>
     </thead>
 )
@@ -30,9 +31,6 @@ export interface SiteAdminProductSubscriptionNodeProps {
 export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
     React.PropsWithChildren<SiteAdminProductSubscriptionNodeProps>
 > = ({ env, node }) => {
-    const created = node.conditions.find(
-        condition => condition.status === EnterpriseSubscriptionCondition_Status.CREATED
-    )
     const archived = node.conditions.find(
         condition => condition.status === EnterpriseSubscriptionCondition_Status.ARCHIVED
     )
@@ -40,14 +38,14 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
     return (
         <tr>
             <td>
-                <LinkOrSpan to={`/site-admin/dotcom/product/subscriptions/${node.id}?env=${env}`} className="mr-2">
-                    {node.displayName}
-                </LinkOrSpan>
                 {archived && (
-                    <Badge variant="danger" small={true}>
+                    <Badge variant="danger" small={true} className="mr-2">
                         Archived
                     </Badge>
                 )}
+                <LinkOrSpan to={`/site-admin/dotcom/product/subscriptions/${node.id}?env=${env}`}>
+                    {node.displayName}
+                </LinkOrSpan>
             </td>
             <td className="text-nowrap">
                 {node?.salesforce?.subscriptionId ? (
@@ -57,7 +55,14 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
                 )}
             </td>
             <td className="text-nowrap">
-                {created?.lastTransitionTime && <Timestamp date={created.lastTransitionTime.toDate()} />}
+                {node?.instanceType ? (
+                    <span className="text-monospace">{EnterpriseSubscriptionInstanceType[node?.instanceType]}</span>
+                ) : (
+                    <span className="text-muted">Not set</span>
+                )}
+            </td>
+            <td className="text-nowrap">
+                {node?.instanceDomain ? <>{node?.instanceDomain}</> : <span className="text-muted">Not set</span>}
             </td>
         </tr>
     )

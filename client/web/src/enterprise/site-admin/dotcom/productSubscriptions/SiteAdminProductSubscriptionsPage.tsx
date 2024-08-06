@@ -104,6 +104,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
             <PageHeader
                 headingElement="h2"
                 path={[{ text: 'Enterprise subscriptions' }]}
+                description="List subscriptions for Enterprise Sourcegraph instances."
                 actions={
                     <div className="align-items-end d-flex">
                         <EnterprisePortalEnvSelector env={env} setEnv={setEnv} />
