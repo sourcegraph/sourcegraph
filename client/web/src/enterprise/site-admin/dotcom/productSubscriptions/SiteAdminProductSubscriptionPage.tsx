@@ -58,6 +58,7 @@ import {
     EnterpriseSubscriptionLicenseCondition_Status,
     type EnterpriseSubscriptionLicenseKey,
     EnterpriseSubscriptionInstanceType,
+    EnterpriseSubscriptionLicense,
 } from './enterpriseportalgen/subscriptions_pb'
 import { SiteAdminGenerateProductLicenseForSubscriptionForm } from './SiteAdminGenerateProductLicenseForSubscriptionForm'
 import { SiteAdminProductLicenseNode } from './SiteAdminProductLicenseNode'
@@ -168,14 +169,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
         condition => condition.status === EnterpriseSubscriptionCondition_Status.ARCHIVED
     )
 
-    const activeLicense = licenses?.data?.licenses?.find(
-        // Exists if it is the first license, has an expiry, and expiry is before
-        // now
-        ({ license }, idx) =>
-            idx === 0 &&
-            license?.value?.info?.expireTime &&
-            !isProductLicenseExpired(license?.value?.info?.expireTime?.toDate())
-    )
+    const activeLicense = getActiveLicense(licenses?.data?.licenses)
 
     return (
         <div className="site-admin-product-subscription-page">
@@ -510,6 +504,20 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
     )
 }
 
+function getActiveLicense(
+    licenses: EnterpriseSubscriptionLicense[] | undefined
+): EnterpriseSubscriptionLicense | undefined {
+    return licenses?.find(
+        // Exists if it is the first license, has an expiry, and expiry is before
+        // now
+        ({ license, conditions }, idx) =>
+            idx === 0 &&
+            license?.value?.info?.expireTime &&
+            !isProductLicenseExpired(license?.value?.info?.expireTime?.toDate()) &&
+            !conditions.find(condition => condition.status === EnterpriseSubscriptionLicenseCondition_Status.REVOKED)
+    )
+}
+
 interface ProductSubscriptionLicensesConnectionProps extends TelemetryV2Props {
     env: EnterprisePortalEnvironment
     licenses: UseQueryResult<ListEnterpriseSubscriptionLicensesResponse, ConnectError>
@@ -545,6 +553,7 @@ const ProductSubscriptionLicensesConnection: React.FunctionComponent<ProductSubs
                         showSubscription={false}
                         onRevokeCompleted={refetch}
                         telemetryRecorder={telemetryRecorder}
+                        isActiveLicense={node.id === getActiveLicense(data?.licenses)?.id}
                     />
                 ))}
             </ConnectionList>
@@ -580,7 +589,7 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
     subscriptionConditions,
     licensesConditions,
 }) => {
-    const getSubscriptionConditionBackgroundClassName = (status: EnterpriseSubscriptionCondition_Status) => {
+    const getSubscriptionConditionBackgroundClassName = (status: EnterpriseSubscriptionCondition_Status): string => {
         switch (status) {
             case EnterpriseSubscriptionCondition_Status.CREATED: {
                 return 'bg-success'
@@ -593,7 +602,7 @@ const ConditionsTimeline: React.FunctionComponent<ConditionsTimelineProps> = ({
             }
         }
     }
-    const getLicenseConditionBackgroundClassName = (status: EnterpriseSubscriptionLicenseCondition_Status) => {
+    const getLicenseConditionBackgroundClassName = (status: EnterpriseSubscriptionLicenseCondition_Status): string => {
         switch (status) {
             case EnterpriseSubscriptionLicenseCondition_Status.CREATED: {
                 return 'bg-success'

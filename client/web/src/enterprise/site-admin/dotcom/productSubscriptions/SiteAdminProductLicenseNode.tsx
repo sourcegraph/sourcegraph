@@ -17,6 +17,7 @@ import {
     Label,
     Link,
     Text,
+    Badge,
 } from '@sourcegraph/wildcard'
 
 import { CopyableText } from '../../../../components/CopyableText'
@@ -38,6 +39,7 @@ export interface SiteAdminProductLicenseNodeProps extends TelemetryV2Props {
     showSubscription: boolean
     defaultExpanded?: boolean
     onRevokeCompleted: () => void
+    isActiveLicense?: boolean
 }
 
 /**
@@ -45,7 +47,15 @@ export interface SiteAdminProductLicenseNodeProps extends TelemetryV2Props {
  */
 export const SiteAdminProductLicenseNode: React.FunctionComponent<
     React.PropsWithChildren<SiteAdminProductLicenseNodeProps>
-> = ({ env, node, showSubscription, onRevokeCompleted, defaultExpanded = false, telemetryRecorder }) => {
+> = ({
+    env,
+    node,
+    showSubscription,
+    onRevokeCompleted,
+    defaultExpanded = false,
+    telemetryRecorder,
+    isActiveLicense,
+}) => {
     const {
         mutate: revoke,
         isPending: isRevokeLoading,
@@ -128,6 +138,11 @@ export const SiteAdminProductLicenseNode: React.FunctionComponent<
                                         userCount={info.userCount}
                                         className="mb-0"
                                     />
+                                )}
+                                {isActiveLicense && (
+                                    <Badge variant="primary" className="ml-2" small={true}>
+                                        Active license
+                                    </Badge>
                                 )}
                             </div>
                             {created?.lastTransitionTime && (
