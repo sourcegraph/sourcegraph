@@ -237,7 +237,6 @@ func preferUploadsWithLongestRoots(uploads []shared.CompletedUpload) []shared.Co
 
 func (r *rootResolver) UsagesForSymbol(ctx context.Context, unresolvedArgs *resolverstubs.UsagesForSymbolArgs) (_ resolverstubs.UsageConnectionResolver, err error) {
 	ctx, trace, endObservation := r.operations.usagesForSymbol.With(ctx, &err, observation.Args{Attrs: unresolvedArgs.Attrs()})
-
 	numPreciseResults := 0
 	numSyntacticResults := 0
 	numSearchBasedResults := 0
@@ -288,6 +287,8 @@ func (r *rootResolver) UsagesForSymbol(ctx context.Context, unresolvedArgs *reso
 			Commit:      args.CommitID,
 			Path:        args.Path,
 			SymbolRange: args.Range,
+			Limit:       args.RemainingCount,
+			Cursor:      cursor,
 		}
 		nextSyntacticCursor, syntacticUsageResolvers, prevSearch := r.syntacticUsages(ctx, trace, gitTreeTranslator, usagesForSymbolArgs)
 		previousSyntacticSearch = prevSearch
@@ -303,6 +304,8 @@ func (r *rootResolver) UsagesForSymbol(ctx context.Context, unresolvedArgs *reso
 			Commit:      args.CommitID,
 			Path:        args.Path,
 			SymbolRange: args.Range,
+			Limit:       args.RemainingCount,
+			Cursor:      cursor,
 		}
 		nextSearchBasedCursor, searchBasedUsageResolvers := r.searchBasedUsages(
 			ctx, trace, gitTreeTranslator, usagesForSymbolArgs, previousSyntacticSearch,

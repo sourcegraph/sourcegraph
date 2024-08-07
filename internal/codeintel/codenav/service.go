@@ -1150,6 +1150,8 @@ type UsagesForSymbolArgs struct {
 	Commit      api.CommitID
 	Path        core.RepoRelPath
 	SymbolRange scip.Range
+	Limit       int32
+	Cursor      UsagesCursor
 }
 
 func (s *Service) SyntacticUsages(
@@ -1163,6 +1165,7 @@ func (s *Service) SyntacticUsages(
 		attribute.String("commit", string(args.Commit)),
 		attribute.String("path", args.Path.RawValue()),
 		attribute.String("symbolRange", args.SymbolRange.String()),
+		attribute.Int("limit", int(args.Limit)),
 	}})
 	defer endObservation(1, observation.Args{})
 
@@ -1234,6 +1237,7 @@ func (s *Service) SearchBasedUsages(
 		attribute.String("commit", string(args.Commit)),
 		attribute.String("path", args.Path.RawValue()),
 		attribute.String("symbolRange", args.SymbolRange.String()),
+		attribute.Int("limit", int(args.Limit)),
 	}})
 	defer endObservation(1, observation.Args{})
 

@@ -24,16 +24,16 @@ func TestSearchBasedUsages_ResultWithoutSymbols(t *testing.T) {
 		WithFile("path.java", ChunkMatchWithLine(refRange, refRangeLineContent), ChunkMatch(refRange2)).
 		Build()
 
-	result, err := searchBasedUsagesImpl(
+	searchResult, err := searchBasedUsagesImpl(
 		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
-		UsagesForSymbolArgs{}, "symbol", "Java", core.None[MappedIndex](),
+		UsagesForSymbolArgs{Limit: 100}, "symbol", "Java", core.None[MappedIndex](),
 	)
 	require.NoError(t, err)
-	expectRanges(t, result.Matches, refRange, refRange2)
-	expectContent(t, result.Matches, refRange, refRangeLineContent)
+	expectRanges(t, searchResult.Matches, refRange, refRange2)
+	expectContent(t, searchResult.Matches, refRange, refRangeLineContent)
 }
 
-func TestSearchBasedUsages_ResultWithSymbol(t *testing.T) {
+func TestSearchBasedUsages_ResultWithSymbols(t *testing.T) {
 	refRange := testRange(1)
 	defRange := testRange(2)
 	refRange2 := testRange(3)
@@ -43,13 +43,13 @@ func TestSearchBasedUsages_ResultWithSymbol(t *testing.T) {
 		WithSymbols("path.java", defRange).
 		Build()
 
-	result, err := searchBasedUsagesImpl(
+	searchResult, err := searchBasedUsagesImpl(
 		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
-		UsagesForSymbolArgs{}, "symbol", "Java", core.None[MappedIndex](),
+		UsagesForSymbolArgs{Limit: 100}, "symbol", "Java", core.None[MappedIndex](),
 	)
 	require.NoError(t, err)
-	expectRanges(t, result.Matches, refRange, refRange2, defRange)
-	expectDefinitionRanges(t, result.Matches, defRange)
+	expectRanges(t, searchResult.Matches, refRange, refRange2, defRange)
+	expectDefinitionRanges(t, searchResult.Matches, defRange)
 }
 
 func TestSearchBasedUsages_SyntacticMatchesGetRemovedFromSearchBasedResults(t *testing.T) {
@@ -63,12 +63,61 @@ func TestSearchBasedUsages_SyntacticMatchesGetRemovedFromSearchBasedResults(t *t
 	upload, lsifStore := setupUpload(commit, "", doc("path.java", ref("ref", syntacticRange)))
 	fakeMappedIndex := NewMappedIndexFromTranslator(lsifStore, noopTranslator(), upload, commit)
 
-	result, err := searchBasedUsagesImpl(
+	searchResult, err := searchBasedUsagesImpl(
 		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
-		UsagesForSymbolArgs{}, "symbol", "Java", core.Some(fakeMappedIndex),
+		UsagesForSymbolArgs{Limit: 100}, "symbol", "Java", core.Some(fakeMappedIndex),
 	)
 	require.NoError(t, err)
-	expectRanges(t, result.Matches, commentRange)
+	expectRanges(t, searchResult.Matches, commentRange)
+}
+
+func TestSearchBasedUsages_CountLimitExcludesFiles(t *testing.T) {
+	ranges1 := testRanges(0, 5)
+	ranges2 := testRanges(5, 10)
+	mockSearchClient := FakeSearchClient().
+		WithFile("a.java", ChunkMatches(ranges1...)...).
+		WithFile("b.java", ChunkMatches(ranges2...)...).
+		Build()
+
+	searchResult, err := searchBasedUsagesImpl(
+		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
+		UsagesForSymbolArgs{Limit: 5}, "symbol", "Java", core.None[MappedIndex](),
+	)
+	require.NoError(t, err)
+	expectRanges(t, searchResult.Matches, ranges1...)
+	expectSome(t, searchResult.NextCursor)
+}
+
+func TestSearchBasedUsages_CountLimitOnFileBoundary(t *testing.T) {
+	ranges1 := testRanges(0, 5)
+	ranges2 := testRanges(5, 10)
+	mockSearchClient := FakeSearchClient().
+		WithFile("a.java", ChunkMatches(ranges1...)...).
+		WithFile("b.java", ChunkMatches(ranges2...)...).
+		Build()
+	searchResult, err := searchBasedUsagesImpl(
+		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
+		UsagesForSymbolArgs{Limit: 6}, "symbol", "Java", core.None[MappedIndex](),
+	)
+	require.NoError(t, err)
+	expectRanges(t, searchResult.Matches, testRanges(0, 10)...)
+	expectSome(t, searchResult.NextCursor)
+}
+
+func TestSearchBasedUsages_CountLimitLargerThanMatchCount(t *testing.T) {
+	ranges1 := testRanges(0, 5)
+	ranges2 := testRanges(5, 10)
+	mockSearchClient := FakeSearchClient().
+		WithFile("a.java", ChunkMatches(ranges1...)...).
+		WithFile("b.java", ChunkMatches(ranges2...)...).
+		Build()
+	searchResult, err := searchBasedUsagesImpl(
+		context.Background(), observation.TestTraceLogger(log.NoOp()), mockSearchClient,
+		UsagesForSymbolArgs{Limit: 11}, "symbol", "Java", core.None[MappedIndex](),
+	)
+	require.NoError(t, err)
+	expectRanges(t, searchResult.Matches, testRanges(0, 10)...)
+	expectNone(t, searchResult.NextCursor)
 }
 
 func TestSyntacticUsages(t *testing.T) {
@@ -99,6 +148,7 @@ func TestSyntacticUsages(t *testing.T) {
 			Commit:      commit,
 			Path:        core.NewRepoRelPathUnchecked("initial.java"),
 			SymbolRange: initialRange,
+			Limit:       100,
 		},
 	)
 	if err != nil {
@@ -127,6 +177,7 @@ func TestSyntacticUsages_DocumentNotInIndex(t *testing.T) {
 			Commit:      commit,
 			Path:        core.NewRepoRelPathUnchecked("initial.java"),
 			SymbolRange: initialRange,
+			Limit:       100,
 		},
 	)
 	if err != nil {
@@ -166,6 +217,7 @@ func TestSyntacticUsages_IndexCommitTranslated(t *testing.T) {
 			Commit:      targetCommit,
 			Path:        core.NewRepoRelPathUnchecked("initial.java"),
 			SymbolRange: initialRange,
+			Limit:       100,
 		},
 	)
 	if err != nil {
