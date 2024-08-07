@@ -71,7 +71,7 @@ func NewPeriodicImporter(
 	interval time.Duration,
 ) background.Routine {
 	if interval == 0 {
-		logger.Warn("importer disabled")
+		logger.Info("importer disabled")
 		return background.NoopRoutine("dotcom.importer.disabled")
 	}
 	return goroutine.NewPeriodicGoroutine(

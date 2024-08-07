@@ -63,7 +63,7 @@ func (c *Config) Load(env *runtime.Env) {
 		"For local dev: custom PostgreSQL DSN, overrides DOTCOM_CLOUDSQL_* options")
 	c.DotComDB.IncludeProductionLicenses = env.GetBool("DOTCOM_INCLUDE_PRODUCTION_LICENSES", "false",
 		"Include production licenses in API results")
-	c.DotComDB.ImportInterval = env.GetInterval("DOTCOM_IMPORT_INTERVAL", "10m",
+	c.DotComDB.ImportInterval = env.GetInterval("DOTCOM_IMPORT_INTERVAL", "0s", // disable by default
 		"Interval at which to import data from Sourcegraph.com")
 
 	c.SAMS.ConnConfig = sams.NewConnConfigFromEnv(env)
