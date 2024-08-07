@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/subscriptions"
@@ -19,6 +20,20 @@ import (
 	subscriptionsv1 "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptions/v1"
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
+
+// Protojson output isn't stable by injecting randomized whitespace,
+// so we re-marshal it to stabilize the output for golden tests.
+// https://github.com/golang/protobuf/issues/1082
+func mustMarshalStableProtoJSON(t *testing.T, m protoreflect.ProtoMessage) string {
+	t.Helper()
+
+	protoJSON, err := protojson.Marshal(m)
+	require.NoError(t, err)
+
+	var gotJSON map[string]any
+	require.NoError(t, json.Unmarshal(protoJSON, &gotJSON))
+	return mustMarshal(json.MarshalIndent(gotJSON, "", "  "))
+}
 
 func mustMarshal(d []byte, err error) string {
 	if err != nil {
@@ -96,14 +111,14 @@ func TestConvertSubscriptionToProto(t *testing.T) {
 			}},
 		},
 		want: autogold.Expect(`{
-  "id":  "es_subscription_id",
-  "conditions":  [
+  "conditions": [
     {
-      "lastTransitionTime":  "2024-01-01T01:01:00Z",
-      "status":  "STATUS_CREATED"
+      "lastTransitionTime": "2024-01-01T01:01:00Z",
+      "status": "STATUS_CREATED"
     }
   ],
-  "instanceDomain":  "sourcegraph.com"
+  "id": "es_subscription_id",
+  "instanceDomain": "sourcegraph.com"
 }`),
 	}, {
 		name: "with salesforce details",
@@ -120,25 +135,23 @@ func TestConvertSubscriptionToProto(t *testing.T) {
 			}},
 		},
 		want: autogold.Expect(`{
-  "id":  "es_subscription_id",
-  "conditions":  [
+  "conditions": [
     {
-      "lastTransitionTime":  "2024-01-01T01:01:00Z",
-      "status":  "STATUS_CREATED"
+      "lastTransitionTime": "2024-01-01T01:01:00Z",
+      "status": "STATUS_CREATED"
     }
   ],
-  "displayName":  "s2",
-  "salesforce":  {
-    "subscriptionId":  "sf_sub_id",
-    "opportunityId":  "sf_opp_id"
+  "displayName": "s2",
+  "id": "es_subscription_id",
+  "salesforce": {
+    "subscriptionId": "sf_sub_id"
   }
 }`),
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := convertSubscriptionToProto(tc.sub)
 
-			tc.want.Equal(t, mustMarshal(
-				protojson.MarshalOptions{Multiline: true}.Marshal(got)))
+			tc.want.Equal(t, mustMarshalStableProtoJSON(t, got))
 		})
 	}
 }
@@ -353,7 +366,6 @@ func TestConvertLicenseKeyToLicenseKeyData(t *testing.T) {
 					0,
 					time.UTC),
 				SalesforceSubscriptionID: valast.Ptr("sf_sub_id"),
-				SalesforceOpportunityID:  valast.Ptr("sf_opp_id"),
 			},
 			SignedKey: "signed-key",
 		}),
