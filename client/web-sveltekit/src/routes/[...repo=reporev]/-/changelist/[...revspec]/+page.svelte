@@ -74,11 +74,11 @@
                 </div>
                 <ul class="actions">
                     <li>
-                        <span>Changelist:</span>
+                        <span>Changelist ID:</span>
                         <Badge variant="secondary"><code>{cid}</code></Badge>&nbsp;<CopyButton value={cid} />
                     </li>
                     <li>
-                        <span>{pluralize('Parent', data.changelist.commit.parents.length)}:</span>
+                        <span>{pluralize('Parent ID', data.changelist.commit.parents.length)}:</span>
                         {#each data.changelist.commit.parents as parent}
                             <Badge variant="link"><a href={parent.parent?.canonicalURL}>{parent.parent?.cid}</a></Badge
                             >&nbsp;<CopyButton value={parent.parent?.cid ?? ''} />{' '}
@@ -142,6 +142,7 @@
         --icon-color: currentColor;
         all: unset;
         list-style: none;
+        text-align: right;
 
         span,
         a {

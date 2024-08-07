@@ -212,16 +212,27 @@
                     </button>
                 </Tooltip>
 
-                <RepositoryRevPicker
-                    display="block"
-                    repoURL={data.repoURL}
-                    revision={data.revision}
-                    commitID={data.resolvedRevision.commitID}
-                    defaultBranch={data.defaultBranch}
-                    getRepositoryBranches={data.getRepoBranches}
-                    getRepositoryCommits={data.getRepoCommits}
-                    getRepositoryTags={data.getRepoTags}
-                />
+                {#if data.isPerforceDepot}
+                    <RepositoryRevPicker
+                        display="block"
+                        repoURL={data.repoURL}
+                        revision={data.revision}
+                        commitID={data.resolvedRevision.commitID}
+                        defaultBranch={data.defaultBranch}
+                        getDepotChangelists={data.getDepotChangelists}
+                    />
+                {:else}
+                    <RepositoryRevPicker
+                        display="block"
+                        repoURL={data.repoURL}
+                        revision={data.revision}
+                        commitID={data.resolvedRevision.commitID}
+                        defaultBranch={data.defaultBranch}
+                        getRepositoryBranches={data.getRepoBranches}
+                        getRepositoryCommits={data.getRepoCommits}
+                        getRepositoryTags={data.getRepoTags}
+                    />
+                {/if}
 
                 <Tooltip tooltip={isCollapsed ? 'Open search fuzzy finder' : ''}>
                     <button class="{sidebarButtonClass} search-files-button" on:click={() => openFuzzyFinder('files')}>

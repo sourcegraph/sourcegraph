@@ -52,7 +52,6 @@
         })
     }
     $: filteredData = $data.value ? $data.value.nodes : []
-    $: console.log('filtered data:', $filteredData)
 </script>
 
 <div class="root" data-picker-root>
