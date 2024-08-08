@@ -11,7 +11,10 @@ import (
 	"time"
 
 	"github.com/buildkite/go-buildkite/v3/buildkite"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/exp/maps"
 
 	"github.com/sourcegraph/log"
@@ -47,7 +50,7 @@ type Server struct {
 }
 
 // NewServer creatse a new server to listen for Buildkite webhook events.
-func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQueryWriter) *Server {
+func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQueryWriter, rclient build.RedisClient, rlock build.Locker) *Server {
 	logger = logger.Scoped("server")
 
 	if testutil.IsTest && c.BuildkiteToken == "" {
@@ -62,7 +65,7 @@ func NewServer(addr string, logger log.Logger, c config.Config, bqWriter BigQuer
 
 	server := &Server{
 		logger:       logger,
-		store:        build.NewBuildStore(logger),
+		store:        build.NewBuildStore(logger, rclient, rlock),
 		config:       &c,
 		notifyClient: notify.NewClient(logger, c.SlackToken, c.SlackChannel),
 		bqWriter:     bqWriter,
@@ -221,10 +224,6 @@ func (s *Server) notifyIfFailed(b *build.Build) error {
 
 	if info.BuildStatus == string(build.BuildFailed) || info.BuildStatus == string(build.BuildFixed) {
 		s.logger.Info("sending notification for build", log.Int("buildNumber", b.GetNumber()), log.String("status", string(info.BuildStatus)))
-		// We lock the build while we send a notification so that we can ensure any late jobs do not interfere with what
-		// we're about to send.
-		b.Lock()
-		defer b.Unlock()
 		err := s.notifyClient.Send(info)
 		return err
 	}
@@ -423,7 +422,14 @@ func (s Service) Initialize(ctx context.Context, logger log.Logger, contract run
 		return nil, err
 	}
 
-	server := NewServer(fmt.Sprintf(":%d", contract.Port), logger, config, bqWriter)
+	redisOpts, err := redis.ParseURL(*contract.RedisEndpoint)
+	if err != nil {
+		return nil, err
+	}
+	rclient := redis.NewClient(redisOpts)
+	rlock := redsync.New(goredis.NewPool(rclient)).NewMutex("build-tracker", redsync.WithExpiry(time.Minute))
+
+	server := NewServer(fmt.Sprintf(":%d", contract.Port), logger, config, bqWriter, rclient, rlock)
 
 	return background.CombinedRoutine{
 		server,

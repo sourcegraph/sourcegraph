@@ -130,5 +130,6 @@ write_source_files(
         "//internal/codeintel/codenav/internal/lsifstore/mocks:generate_mocks",
         "//cmd/frontend/internal/auth/userpasswd:generate_mocks",
         "//internal/codeintel/uploads/internal/storemocks:generate_mocks",
+        "//dev/build-tracker/build:generate_mocks",
     ],
 )

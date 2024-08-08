@@ -1,10 +1,15 @@
 package build
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"sync"
+	"strconv"
+	"time"
 
 	"github.com/buildkite/go-buildkite/v3/buildkite"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/redis/go-redis/v9"
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/dev/build-tracker/notify"
@@ -28,9 +33,6 @@ type Build struct {
 
 	// ConsecutiveFailure indicates whether this build is the nth consecutive failure.
 	ConsecutiveFailure int `json:"consecutiveFailures"`
-
-	// Mutex is used to to control and stop other changes being made to the build.
-	sync.Mutex
 }
 
 type Step struct {
@@ -226,45 +228,85 @@ func (b *Event) GetBuildNumber() int {
 type Store struct {
 	logger log.Logger
 
-	builds map[int]*Build
-	// consecutiveFailures tracks how many consecutive build failed events has been
-	// received by pipeline and branch
-	consecutiveFailures map[string]int
-
-	// m locks all writes to BuildStore properties.
-	m sync.RWMutex
+	r  RedisClient
+	m1 Locker
 }
 
-func NewBuildStore(logger log.Logger) *Store {
+type Locker interface {
+	Lock() error
+	Unlock() (bool, error)
+}
+
+type RedisClient interface {
+	redis.StringCmdable
+	redis.GenericCmdable
+}
+
+func NewBuildStore(logger log.Logger, rclient RedisClient, lock Locker) *Store {
 	return &Store{
 		logger: logger.Scoped("store"),
 
-		builds:              make(map[int]*Build),
-		consecutiveFailures: make(map[string]int),
-
-		m: sync.RWMutex{},
+		r:  rclient,
+		m1: lock,
 	}
 }
 
-func (s *Store) Add(event *Event) {
-	s.m.Lock()
-	defer s.m.Unlock()
+func (s *Store) lock() (func(), error) {
+	for {
+		err := s.m1.Lock()
+		if err == redsync.ErrFailed {
+			time.Sleep(100 * time.Millisecond)
+			continue
+		} else if err != nil {
+			s.logger.Error("failed to acquire lock", log.Error(err))
+			return nil, err
+		}
+		break
+	}
+	return func() {
+		if _, err := s.m1.Unlock(); err != nil {
+			s.logger.Error("failed to unlock", log.Error(err))
+		}
+	}, nil
+}
 
-	build, ok := s.builds[event.GetBuildNumber()]
-	// if we don't know about this build, convert it and add it to the store
-	if !ok {
-		build = event.WrappedBuild()
-		s.builds[event.GetBuildNumber()] = build
+func (s *Store) Add(event *Event) {
+	unlock, err := s.lock()
+	if err != nil {
+		return
+	}
+	defer unlock()
+
+	buildb, err := s.r.Get(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber())).Bytes()
+	if err != nil && err != redis.Nil {
+		s.logger.Error("failed to get build from redis", log.Error(err))
+		return
 	}
 
-	// Now that we have a build, lets make sure it isn't modified while we look and possibly update it
-	build.Lock()
-	defer build.Unlock()
+	var build *Build
+	if err == nil {
+		if err := json.Unmarshal(buildb, &build); err != nil {
+			s.logger.Error("failed to unmarshal build", log.Error(err))
+			return
+		}
+	}
+
+	// if we don't know about this build, convert it and add it to the store
+	if err == redis.Nil {
+		build = event.WrappedBuild()
+	}
+
+	// write out the build to redis at the end, once all mutations are applied
+	defer func() {
+		buildb, _ = json.Marshal(build)
+		s.r.Set(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber()), buildb, 0)
+	}()
 
 	// if the build is finished replace the original build with the replaced one since it
 	// will be more up to date, and tack on some finalized data
 	if event.IsBuildFinished() {
 		build.updateFromEvent(event)
+
 		s.logger.Debug("build finished", log.Int("buildNumber", event.GetBuildNumber()),
 			log.Int("totalSteps", len(build.Steps)),
 			log.String("status", build.GetState()))
@@ -275,12 +317,17 @@ func (s *Store) Add(event *Event) {
 		// We do this because we do not rely on the state of the build to determine if a build is "successful" or not.
 		// We instead depend on the state of the jobs associated with said build.
 		if event.Build.TriggeredFrom != nil {
-			parentBuild, ok := s.builds[*event.Build.TriggeredFrom.BuildNumber]
-			if ok {
-				parentBuild.Lock()
+			parentBuildb, err := s.r.Get(context.Background(), "build/"+strconv.Itoa(*event.Build.TriggeredFrom.BuildNumber)).Bytes()
+			if err == nil {
+				var parentBuild *Build
+				if err := json.Unmarshal(parentBuildb, &parentBuild); err != nil {
+					s.logger.Error("failed to unmarshal build", log.Error(err))
+					return
+				}
 				parentBuild.AppendSteps(build.Steps)
-				parentBuild.Unlock()
-			} else {
+				buildb, _ = json.Marshal(parentBuild)
+				s.r.Set(context.Background(), "build/"+strconv.Itoa(event.GetBuildNumber()), buildb, 0)
+			} else if err == redis.Nil {
 				// If the triggered build doesn't exist, we'll just leave log a message
 				s.logger.Warn(
 					"build triggered from non-existent build",
@@ -296,17 +343,17 @@ func (s *Store) Add(event *Event) {
 		// if we get a pass, we reset the global count of consecutiveFailures
 		failuresKey := fmt.Sprintf("%s/%s", build.Pipeline.GetName(), build.GetBranch())
 		if build.IsFailed() {
-			s.consecutiveFailures[failuresKey] += 1
-			build.ConsecutiveFailure = s.consecutiveFailures[failuresKey]
+			i, _ := s.r.Incr(context.Background(), failuresKey).Result()
+			build.ConsecutiveFailure = int(i)
 		} else {
 			// We got a pass, reset the global count
-			s.consecutiveFailures[failuresKey] = 0
+			s.r.Set(context.Background(), failuresKey, 0, 0).Result()
 		}
 	}
 
 	// Keep track of the job, if there is one
 	newJob := event.WrappedJob()
-	err := build.AddJob(newJob)
+	err = build.AddJob(newJob)
 	if err != nil {
 		s.logger.Warn("job not added",
 			log.Error(err),
@@ -334,34 +381,91 @@ func (s *Store) Add(event *Event) {
 }
 
 func (s *Store) Set(build *Build) {
-	s.m.RLock()
-	defer s.m.RUnlock()
-	s.builds[build.GetNumber()] = build
+	unlock, err := s.lock()
+	if err != nil {
+		return
+	}
+	defer unlock()
+
+	buildb, _ := json.Marshal(build)
+	s.r.Set(context.Background(), "build/"+strconv.Itoa(*build.Number), buildb, 0)
 }
 
 func (s *Store) GetByBuildNumber(num int) *Build {
-	s.m.RLock()
-	defer s.m.RUnlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return nil
+	}
+	defer unlock()
 
-	return s.builds[num]
+	buildb, err := s.r.Get(context.Background(), "build/"+strconv.Itoa(num)).Bytes()
+	if err != nil && err != redis.Nil {
+		s.logger.Error("failed to get build from redis", log.Error(err))
+		return nil
+	}
+
+	var build *Build
+	if err == nil {
+		if err := json.Unmarshal(buildb, &build); err != nil {
+			s.logger.Error("failed to unmarshal build", log.Error(err))
+			return nil
+		}
+	}
+	return build
 }
 
 func (s *Store) DelByBuildNumber(buildNumbers ...int) {
-	s.m.Lock()
-	defer s.m.Unlock()
-
-	for _, num := range buildNumbers {
-		delete(s.builds, num)
+	unlock, err := s.lock()
+	if err != nil {
+		return
 	}
+	defer unlock()
+
+	nums := make([]string, 0, len(buildNumbers))
+	for _, num := range buildNumbers {
+		nums = append(nums, "build/"+strconv.Itoa(num))
+	}
+
+	s.r.Del(context.Background(), nums...)
+
 	s.logger.Info("deleted builds", log.Int("totalBuilds", len(buildNumbers)))
 }
 
 func (s *Store) FinishedBuilds() []*Build {
-	s.m.RLock()
-	defer s.m.RUnlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return nil
+	}
+	defer unlock()
+
+	buildKeys, err := s.r.Keys(context.Background(), "build/*").Result()
+	if err != nil {
+		s.logger.Error("failed to get build keys", log.Error(err))
+		return nil
+	}
+
+	builds := make([]*Build, 0, len(buildKeys))
+
+	values, err := s.r.MGet(context.Background(), buildKeys...).Result()
+	if err != nil {
+		s.logger.Error("failed to get build values", log.Error(err))
+		return nil
+	}
+
+	for _, value := range values {
+		if value == nil {
+			continue
+		}
+		var build *Build
+		if err := json.Unmarshal([]byte(value.(string)), &build); err != nil {
+			s.logger.Error("failed to unmarshal build", log.Error(err))
+			continue
+		}
+		builds = append(builds, build)
+	}
 
 	finished := make([]*Build, 0)
-	for _, b := range s.builds {
+	for _, b := range builds {
 		if b.IsFinished() {
 			s.logger.Debug("build is finished", log.Int("buildNumber", b.GetNumber()), log.String("state", b.GetState()))
 			finished = append(finished, b)
