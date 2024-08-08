@@ -156,7 +156,7 @@ func (opts ListEnterpriseSubscriptionsOptions) toQueryConditions() (where, limit
 		if *opts.IsArchived {
 			whereConds = append(whereConds, "archived_at IS NOT NULL")
 		} else {
-			whereConds = append(whereConds, "archived IS NUlL")
+			whereConds = append(whereConds, "archived_at IS NUlL")
 		}
 	}
 	if len(opts.DisplayNameSubstring) > 0 {
