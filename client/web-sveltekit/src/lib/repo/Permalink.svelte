@@ -28,7 +28,6 @@
     })
 
     $: href = revID ? replaceRevisionInURL($page.url.toString(), revID) : ''
-    $: console.log('href', href)
     $: if (href) {
         hotkey.enable()
     } else {

@@ -73,6 +73,17 @@ query DepotChangelists($depotName: String!, $revision: String!) {
     }
 }
 
+query DepotChangelist($depotName: String!, $revision: String!) {
+    repository(name: $depotName) {
+		commit(rev: $revision) {
+            perforceChangelist {
+                    cid
+                    canonicalURL
+            }
+        }
+    }
+}
+
 fragment RevPickerChangelist on GitCommit {
     __typename
     id
