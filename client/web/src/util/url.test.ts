@@ -53,7 +53,6 @@ describe('parseBrowserRepoURL', () => {
         })
     })
 
-
     test('should parse github repo with revision', () => {
         const parsed = parseBrowserRepoURL('https://sourcegraph.com/github.com/gorilla/mux@branch')
         assertDeepStrictEqual(parsed, {
@@ -86,7 +85,7 @@ describe('parseBrowserRepoURL', () => {
             repoName: 'gorilla/mux',
             revision: '136130',
             rawRevision: 'changelist/136130',
-            filePath: 'mux.go'
+            filePath: 'mux.go',
         })
     })
 

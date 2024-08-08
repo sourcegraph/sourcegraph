@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit'
+import { error, redirect } from '@sveltejs/kit'
 
 import { IncrementalRestoreStrategy, getGraphQLClient, infinityQuery } from '$lib/graphql'
 import { parseRepoRevision } from '$lib/shared'
@@ -8,7 +8,7 @@ import { CommitPage_CommitQuery, CommitPage_DiffQuery } from './page.gql'
 
 const PAGE_SIZE = 20
 
-export const load: PageLoad = async ({ params }) => {
+export const load: PageLoad = async ({ url, params }) => {
     const client = getGraphQLClient()
     const { repoName } = parseRepoRevision(params.repo)
 
@@ -19,9 +19,16 @@ export const load: PageLoad = async ({ params }) => {
     }
 
     const commit = result.data?.repository?.commit
+    const isPerforceDepot = commit?.perforceChangelist !== null
 
     if (!commit) {
         error(404, 'Commit not found')
+    }
+
+    if (isPerforceDepot) {
+        const redirectURL = new URL(url)
+        redirectURL.pathname = `${params.repo}/-/changelist/${commit.perforceChangelist?.cid}`
+        redirect(301, redirectURL)
     }
 
     // parents is an empty array for the initial commit
