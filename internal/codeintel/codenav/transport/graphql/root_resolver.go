@@ -304,8 +304,14 @@ func (r *rootResolver) UsagesForSymbol(ctx context.Context, unresolvedArgs *reso
 			Path:        args.Path,
 			SymbolRange: args.Range,
 		}
+		var syntacticFilter codenav.SearchBasedSyntacticFilter
+		if provsForSCIPData.Syntactic {
+			syntacticFilter = codenav.NewSyntacticFilter(previousSyntacticSearch)
+		} else {
+			syntacticFilter = codenav.NoSyntacticFilter()
+		}
 		nextSearchBasedCursor, searchBasedUsageResolvers := r.searchBasedUsages(
-			ctx, trace, gitTreeTranslator, usagesForSymbolArgs, previousSyntacticSearch,
+			ctx, trace, gitTreeTranslator, usagesForSymbolArgs, syntacticFilter,
 		)
 		usageResolvers = append(usageResolvers, searchBasedUsageResolvers...)
 		numSearchBasedResults = len(searchBasedUsageResolvers)
@@ -392,9 +398,9 @@ func (r *rootResolver) syntacticUsages(
 
 func (r *rootResolver) searchBasedUsages(
 	ctx context.Context, trace observation.TraceLogger, gitTreeTranslator codenav.GitTreeTranslator,
-	args codenav.UsagesForSymbolArgs, previousSyntacticSearch core.Option[codenav.PreviousSyntacticSearch],
+	args codenav.UsagesForSymbolArgs, syntacticFilter codenav.SearchBasedSyntacticFilter,
 ) (core.Option[codenav.UsagesCursor], []resolverstubs.UsageResolver) {
-	result, err := r.svc.SearchBasedUsages(ctx, gitTreeTranslator, args, previousSyntacticSearch)
+	result, err := r.svc.SearchBasedUsages(ctx, gitTreeTranslator, args, syntacticFilter)
 	if err != nil {
 		trace.Error("CodeNavService.SearchBasedUsages", log.Error(err))
 		return core.None[codenav.UsagesCursor](), nil

@@ -32,7 +32,7 @@ type CodeNavService interface {
 	// Subsequent calls can pass the returned cursor (if non-empty) via args.Cursor.
 	PreciseUsages(ctx context.Context, requestState codenav.RequestState, args codenav.UsagesForSymbolResolvedArgs) (_ []shared.UploadUsage, nextCursor core.Option[codenav.UsagesCursor], err error)
 	SyntacticUsages(context.Context, codenav.GitTreeTranslator, codenav.UsagesForSymbolArgs) (codenav.SyntacticUsagesResult, *codenav.SyntacticUsagesError)
-	SearchBasedUsages(context.Context, codenav.GitTreeTranslator, codenav.UsagesForSymbolArgs, core.Option[codenav.PreviousSyntacticSearch]) (codenav.SearchBasedUsagesResult, error)
+	SearchBasedUsages(context.Context, codenav.GitTreeTranslator, codenav.UsagesForSymbolArgs, codenav.SearchBasedSyntacticFilter) (codenav.SearchBasedUsagesResult, error)
 }
 
 var _ CodeNavService = &codenav.Service{}
