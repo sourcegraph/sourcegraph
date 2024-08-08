@@ -158,15 +158,16 @@ type AuthProviderCommon struct {
 	Order int `json:"order,omitempty"`
 }
 type AuthProviders struct {
-	AzureDevOps    *AzureDevOpsAuthProvider
-	Bitbucketcloud *BitbucketCloudAuthProvider
-	Builtin        *BuiltinAuthProvider
-	Gerrit         *GerritAuthProvider
-	Github         *GitHubAuthProvider
-	Gitlab         *GitLabAuthProvider
-	HttpHeader     *HTTPHeaderAuthProvider
-	Openidconnect  *OpenIDConnectAuthProvider
-	Saml           *SAMLAuthProvider
+	AzureDevOps     *AzureDevOpsAuthProvider
+	Bitbucketcloud  *BitbucketCloudAuthProvider
+	Bitbucketserver *BitbucketServerAuthProvider
+	Builtin         *BuiltinAuthProvider
+	Gerrit          *GerritAuthProvider
+	Github          *GitHubAuthProvider
+	Gitlab          *GitLabAuthProvider
+	HttpHeader      *HTTPHeaderAuthProvider
+	Openidconnect   *OpenIDConnectAuthProvider
+	Saml            *SAMLAuthProvider
 }
 
 func (v AuthProviders) MarshalJSON() ([]byte, error) {
@@ -175,6 +176,9 @@ func (v AuthProviders) MarshalJSON() ([]byte, error) {
 	}
 	if v.Bitbucketcloud != nil {
 		return json.Marshal(v.Bitbucketcloud)
+	}
+	if v.Bitbucketserver != nil {
+		return json.Marshal(v.Bitbucketserver)
 	}
 	if v.Builtin != nil {
 		return json.Marshal(v.Builtin)
@@ -211,6 +215,8 @@ func (v *AuthProviders) UnmarshalJSON(data []byte) error {
 		return json.Unmarshal(data, &v.AzureDevOps)
 	case "bitbucketcloud":
 		return json.Unmarshal(data, &v.Bitbucketcloud)
+	case "bitbucketserver":
+		return json.Unmarshal(data, &v.Bitbucketserver)
 	case "builtin":
 		return json.Unmarshal(data, &v.Builtin)
 	case "gerrit":
@@ -226,7 +232,7 @@ func (v *AuthProviders) UnmarshalJSON(data []byte) error {
 	case "saml":
 		return json.Unmarshal(data, &v.Saml)
 	}
-	return fmt.Errorf("tagged union type must have a %q property whose value is one of %s", "type", []string{"azureDevOps", "bitbucketcloud", "builtin", "gerrit", "github", "gitlab", "http-header", "openidconnect", "saml"})
+	return fmt.Errorf("tagged union type must have a %q property whose value is one of %s", "type", []string{"azureDevOps", "bitbucketcloud", "bitbucketserver", "builtin", "gerrit", "github", "gitlab", "http-header", "openidconnect", "saml"})
 }
 
 // AzureDevOpsAuthProvider description: Azure auth provider for dev.azure.com
@@ -405,12 +411,31 @@ type BitbucketCloudRateLimit struct {
 	RequestsPerHour float64 `json:"requestsPerHour"`
 }
 
+// BitbucketServerAuthProvider description: Configures the Bitbucket Server OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your Bitbucket Server instance: https://confluence.atlassian.com/bitbucketserver0720/configure-an-incoming-link-1116282013.html. The application should have the repository read permission and the callback URL set to the concatenation of your Sourcegraph instance URL and "/.auth/bitbucketserver/callback".
+type BitbucketServerAuthProvider struct {
+	// AllowSignup description: Allows new visitors to sign up for accounts via Bitbucket Server OAuth. If false, users signing in via Bitbucket Server must have an existing Sourcegraph account, which will be linked to their Bitbucket Server identity after sign-in.
+	AllowSignup bool `json:"allowSignup,omitempty"`
+	// ClientID description: The ID of the Bitbucket OAuth app.
+	ClientID string `json:"clientID"`
+	// ClientSecret description: The Client Secret of the Bitbucket OAuth app.
+	ClientSecret  string  `json:"clientSecret"`
+	DisplayName   string  `json:"displayName,omitempty"`
+	DisplayPrefix *string `json:"displayPrefix,omitempty"`
+	Hidden        bool    `json:"hidden,omitempty"`
+	NoSignIn      bool    `json:"noSignIn,omitempty"`
+	Order         int     `json:"order,omitempty"`
+	Type          string  `json:"type"`
+	// Url description: URL of the Bitbucket Server instance.
+	Url string `json:"url,omitempty"`
+}
+
 // BitbucketServerAuthorization description: If non-null, enforces Bitbucket Server / Bitbucket Data Center repository permissions.
 type BitbucketServerAuthorization struct {
 	// IdentityProvider description: The source of identity to use when computing permissions. This defines how to compute the Bitbucket Server / Bitbucket Data Center identity to use for a given Sourcegraph user. When 'username' is used, Sourcegraph assumes usernames are identical in Sourcegraph and Bitbucket Server / Bitbucket Data Center accounts and `auth.enableUsernameChanges` must be set to false for security reasons.
-	IdentityProvider BitbucketServerIdentityProvider `json:"identityProvider"`
+	IdentityProvider *BitbucketServerIdentityProvider `json:"identityProvider,omitempty"`
 	// Oauth description: OAuth configuration specified when creating the Bitbucket Server / Bitbucket Data Center Application Link with incoming authentication. Two Legged OAuth with 'ExecuteAs=admin' must be enabled as well as user impersonation.
-	Oauth BitbucketServerOAuth `json:"oauth"`
+	Oauth  *BitbucketServerOAuth `json:"oauth,omitempty"`
+	Oauth2 bool                  `json:"oauth2,omitempty"`
 }
 
 // BitbucketServerConnection description: Configuration for a connection to Bitbucket Server / Bitbucket Data Center.

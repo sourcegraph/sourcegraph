@@ -5,6 +5,7 @@ go_library(
     name = "bitbucketserver",
     srcs = [
         "authz.go",
+        "oauthprovider.go",
         "provider.go",
     ],
     importpath = "github.com/sourcegraph/sourcegraph/internal/authz/providers/bitbucketserver",
@@ -13,10 +14,14 @@ go_library(
     deps = [
         "//internal/authz",
         "//internal/authz/types",
+        "//internal/database",
         "//internal/encryption",
         "//internal/extsvc",
+        "//internal/extsvc/auth",
         "//internal/extsvc/bitbucketserver",
+        "//internal/httpcli",
         "//internal/licensing",
+        "//internal/oauthtoken",
         "//internal/trace",
         "//internal/types",
         "//lib/errors",

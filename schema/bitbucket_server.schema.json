@@ -209,8 +209,18 @@
       "description": "If non-null, enforces Bitbucket Server / Bitbucket Data Center repository permissions.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["identityProvider", "oauth"],
+      "oneOf": [
+        {
+          "required": ["identityProvider", "oauth"]
+        },
+        {
+          "required": ["oauth2"]
+        }
+      ],
       "properties": {
+        "oauth2": {
+          "type": "boolean"
+        },
         "identityProvider": {
           "description": "The source of identity to use when computing permissions. This defines how to compute the Bitbucket Server / Bitbucket Data Center identity to use for a given Sourcegraph user. When 'username' is used, Sourcegraph assumes usernames are identical in Sourcegraph and Bitbucket Server / Bitbucket Data Center accounts and `auth.enableUsernameChanges` must be set to false for security reasons.",
           "title": "BitbucketServerIdentityProvider",

@@ -69,7 +69,7 @@ func NewClient(urn string, config *schema.BitbucketServerConnection, httpClient 
 		return nil, err
 	}
 
-	if config.Authorization == nil {
+	if config.Authorization == nil || config.Authorization.Oauth == nil {
 		if config.Token != "" {
 			client.Auth = &auth.OAuthBearerToken{Token: config.Token}
 		} else {
@@ -582,7 +582,6 @@ func (c *Client) CreatePullRequest(ctx context.Context, pr *PullRequest) error {
 	)
 
 	resp, err := c.send(ctx, "POST", path, nil, payload, pr)
-
 	if err != nil {
 		var code int
 		if resp != nil {
@@ -946,7 +945,6 @@ func (c *Client) page(ctx context.Context, path string, qry url.Values, token *P
 		PageToken: &next,
 		Values:    results,
 	})
-
 	if err != nil {
 		return nil, err
 	}

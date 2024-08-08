@@ -2424,6 +2424,7 @@
             "enum": [
               "azureDevOps",
               "bitbucketcloud",
+              "bitbucketserver",
               "builtin",
               "gerrit",
               "github",
@@ -2440,6 +2441,9 @@
           },
           {
             "$ref": "#/definitions/BitbucketCloudAuthProvider"
+          },
+          {
+            "$ref": "#/definitions/BitbucketServerAuthProvider"
           },
           {
             "$ref": "#/definitions/BuiltinAuthProvider"
@@ -4394,6 +4398,54 @@
         },
         "allowSignup": {
           "description": "Allows new visitors to sign up for accounts via Bitbucket Cloud authentication. If false, users signing in via Bitbucket Cloud must have an existing Sourcegraph account, which will be linked to their Bitbucket Cloud identity after sign-in.",
+          "default": true,
+          "type": "boolean"
+        }
+      }
+    },
+    "BitbucketServerAuthProvider": {
+      "description": "Configures the Bitbucket Server OAuth authentication provider for SSO. In addition to specifying this configuration object, you must also create a OAuth App on your Bitbucket Server instance: https://confluence.atlassian.com/bitbucketserver0720/configure-an-incoming-link-1116282013.html. The application should have the repository read permission and the callback URL set to the concatenation of your Sourcegraph instance URL and \"/.auth/bitbucketserver/callback\".",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "clientID", "clientSecret"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "bitbucketserver"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the Bitbucket Server instance.",
+          "default": "https://bitbucket.example.org/"
+        },
+        "clientID": {
+          "type": "string",
+          "description": "The ID of the Bitbucket OAuth app."
+        },
+        "clientSecret": {
+          "type": "string",
+          "description": "The Client Secret of the Bitbucket OAuth app."
+        },
+        "displayName": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/displayName"
+        },
+        "displayPrefix": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/displayPrefix",
+          "!go": {
+            "pointer": true
+          }
+        },
+        "hidden": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/hidden"
+        },
+        "noSignIn": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/noSignIn"
+        },
+        "order": {
+          "$ref": "#/definitions/AuthProviderCommon/properties/order"
+        },
+        "allowSignup": {
+          "description": "Allows new visitors to sign up for accounts via Bitbucket Server OAuth. If false, users signing in via Bitbucket Server must have an existing Sourcegraph account, which will be linked to their Bitbucket Server identity after sign-in.",
           "default": true,
           "type": "boolean"
         }

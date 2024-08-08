@@ -13,6 +13,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/authutil"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/azureoauth"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/bitbucketcloudoauth"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/bitbucketserveroauth"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/gerrit"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/githuboauth"
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/auth/gitlaboauth"
@@ -32,6 +33,7 @@ func Init(logger log.Logger, db database.DB) {
 	userpasswd.Init()
 	azureoauth.Init(logger, db)
 	bitbucketcloudoauth.Init(logger, db)
+	bitbucketserveroauth.Init(logger, db)
 	gerrit.Init()
 	githuboauth.Init(logger, db)
 	gitlaboauth.Init(logger, db)
@@ -50,6 +52,7 @@ func Init(logger log.Logger, db database.DB) {
 		githuboauth.Middleware(db),
 		gitlaboauth.Middleware(db),
 		bitbucketcloudoauth.Middleware(db),
+		bitbucketserveroauth.Middleware(db),
 		azureoauth.Middleware(db),
 	)
 
@@ -80,6 +83,8 @@ func Init(logger log.Logger, db database.DB) {
 				name = "GitLab OAuth"
 			case p.Bitbucketcloud != nil:
 				name = "Bitbucket Cloud OAuth"
+			case p.Bitbucketserver != nil:
+				name = "Bitbucket Server OAuth"
 			case p.AzureDevOps != nil:
 				name = "Azure DevOps"
 			case p.HttpHeader != nil:
