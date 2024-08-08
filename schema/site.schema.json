@@ -1807,7 +1807,7 @@
       }
     },
     "externalURL": {
-      "description": "The externally accessible URL for Sourcegraph (i.e., what you type into your browser). Previously called `appURL`. Only root URLs are allowed.",
+      "description": "The externally accessible URL for this Sourcegraph instance. \n\ni.e. the address you enter in your browser's address bar. \n\nThis is required to be configured for Sourcegraph to work correctly. \n\nOnly root URLs are allowed. \n\nNote: When configured to the recommended https:// users will not be able to log in using http://",
       "type": "string",
       "examples": ["https://sourcegraph.example.com"]
     },
