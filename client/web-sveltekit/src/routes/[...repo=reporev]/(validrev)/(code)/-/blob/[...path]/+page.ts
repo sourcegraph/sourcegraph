@@ -154,11 +154,14 @@ async function loadFileView({ parent, params, url }: PageLoadEvent) {
                 depotName: repoName,
                 revision: revision
             })
-            .then(result => result.data?.repository?.commit)
+            .then(result => result.data?.repository?.commit?.perforceChangelist)
 
-        const redirectURL = new URL(url)
-        redirectURL.pathname = `${repoName}@changelist/${changelistInfo?.perforceChangelist?.cid}`
-        redirect(301, redirectURL)
+        if (changelistInfo?.cid) {
+            const redirectURL = new URL(url)
+
+            redirectURL.pathname = `${repoName}@changelist/${changelistInfo?.cid}/-/blob/${filePath}`
+            redirect(301, redirectURL)
+        }
     }
 
     // Create a BehaviorSubject so preloading does not create a subscriberless observable
