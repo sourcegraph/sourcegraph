@@ -68,27 +68,26 @@ func TestConvertLicenseToProto(t *testing.T) {
 	require.NoError(t, err)
 
 	autogold.Expect(`{
-  "id": "esl_license_id",
-  "subscriptionId": "es_subscription_id",
   "conditions": [
     {
       "lastTransitionTime": "2024-01-01T01:01:00Z",
       "status": "STATUS_CREATED"
     }
   ],
+  "id": "esl_license_id",
   "key": {
-    "infoVersion": 1,
     "info": {
+      "expireTime": "2024-01-01T02:01:00Z",
       "tags": [
         "foo"
-      ],
-      "expireTime": "2024-01-01T02:01:00Z"
+      ]
     },
+    "infoVersion": 1,
     "licenseKey": "asdf",
     "planDisplayName": "Sourcegraph Enterprise"
-  }
-}`).Equal(t, mustMarshal(
-		protojson.MarshalOptions{Multiline: true}.Marshal(got)))
+  },
+  "subscriptionId": "es_subscription_id"
+}`).Equal(t, mustMarshalStableProtoJSON(t, got))
 }
 
 func TestConvertSubscriptionToProto(t *testing.T) {
