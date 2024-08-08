@@ -23,6 +23,7 @@
 
     $: treeEntriesWithCommitInfo.set(data.treeEntriesWithCommitInfo)
     $: isCodyAvailable = data.isCodyAvailable
+    $: isPerforceDepot = data.isPerforceDepot
 
     afterNavigate(() => {
         repositoryContext.set({ directoryPath: data.filePath })
@@ -38,7 +39,7 @@
 
 <FileHeader type="tree" repoName={data.repoName} revision={data.revision} path={data.filePath}>
     <svelte:fragment slot="actions">
-        <Permalink revID={data.resolvedRevision.commitID} />
+        <Permalink revID={data.resolvedRevision.commitID} {isPerforceDepot} />
         {#if isCodyAvailable}
             <OpenCodyAction />
         {/if}
