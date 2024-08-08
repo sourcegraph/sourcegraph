@@ -181,7 +181,7 @@
             {#if blob}
                 <OpenInCodeHostAction data={blob} lineOrPosition={data.lineOrPosition} />
             {/if}
-            <Permalink {commitID} />
+            <Permalink revID={commitID} />
             {#if $isCodyAvailable}
                 <OpenCodyAction />
             {/if}

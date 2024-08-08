@@ -11,7 +11,7 @@
     import Tooltip from '$lib/Tooltip.svelte'
     import { parseBrowserRepoURL } from '$lib/web'
 
-    export let commitID: string
+    export let revID: string
 
     const hotkey = createHotkey({
         keys: { key: 'y' },
@@ -19,7 +19,7 @@
         handler: () => {
             const { revision } = parseBrowserRepoURL($page.url.pathname)
             // Only navigate if necessary. We don't want to add unnecessary history entries.
-            if (revision !== commitID) {
+            if (revision !== revID) {
                 goto(href, { noScroll: true, keepFocus: true }).catch(() => {
                     // TODO: log error with Sentry
                 })
@@ -27,7 +27,7 @@
         },
     })
 
-    $: href = commitID ? replaceRevisionInURL($page.url.toString(), commitID) : ''
+    $: href = revID ? replaceRevisionInURL($page.url.toString(), revID) : ''
     $: if (href) {
         hotkey.enable()
     } else {
