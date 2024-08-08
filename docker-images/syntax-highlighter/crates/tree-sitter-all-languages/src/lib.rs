@@ -38,37 +38,38 @@ pub enum ParserId {
 impl ParserId {
     pub fn language(self) -> Language {
         match self {
-            ParserId::C => tree_sitter_c::language(),
-            ParserId::Cpp => tree_sitter_cpp::language(),
-            ParserId::C_Sharp => tree_sitter_c_sharp::language(),
-            ParserId::Dart => tree_sitter_dart::language(),
-            ParserId::Go => tree_sitter_go::language(),
-            ParserId::Hack => tree_sitter_hack::language(),
-            ParserId::Java => tree_sitter_java::language(),
-            ParserId::Javascript => tree_sitter_javascript::language(),
-            ParserId::Jsonnet => tree_sitter_jsonnet::language(),
-            ParserId::Kotlin => tree_sitter_kotlin::language(),
-            ParserId::Magik => tree_sitter_magik::language(),
-            ParserId::Matlab => tree_sitter_matlab::language(),
-            ParserId::Nickel => tree_sitter_nickel::language(),
-            ParserId::Perl => tree_sitter_perl::language(),
-            ParserId::Pkl => tree_sitter_pkl::language(),
-            ParserId::Pod => tree_sitter_pod::language(),
-            ParserId::Python => tree_sitter_python::language(),
-            ParserId::Ruby => tree_sitter_ruby::language(),
-            ParserId::Rust => tree_sitter_rust::language(),
-            ParserId::Scala => tree_sitter_scala::language(),
-            ParserId::Sql => tree_sitter_sql::language(),
-            ParserId::Typescript => tree_sitter_typescript::language_typescript(),
-            ParserId::Tsx => tree_sitter_typescript::language_tsx(),
-            ParserId::Xlsg => tree_sitter_xlsg::language(),
-            ParserId::Zig => tree_sitter_zig::language(),
+            // ParserId::C => tree_sitter_c::language(),
+            // ParserId::Cpp => tree_sitter_cpp::language(),
+            // ParserId::C_Sharp => tree_sitter_c_sharp::language(),
+            // ParserId::Dart => tree_sitter_dart::language(),
+            // ParserId::Go => tree_sitter_go::language(),
+            // ParserId::Hack => tree_sitter_hack::language(),
+            // ParserId::Java => tree_sitter_java::language(),
+            // ParserId::Javascript => tree_sitter_javascript::language(),
+            // ParserId::Jsonnet => tree_sitter_jsonnet::language(),
+            // ParserId::Kotlin => tree_sitter_kotlin::language(),
+            // ParserId::Magik => tree_sitter_magik::language(),
+            // ParserId::Matlab => tree_sitter_matlab::language(),
+            // ParserId::Nickel => tree_sitter_nickel::language(),
+            // ParserId::Perl => tree_sitter_perl::language(),
+            // ParserId::Pkl => tree_sitter_pkl::language(),
+            // ParserId::Pod => tree_sitter_pod::language(),
+            // ParserId::Python => tree_sitter_python::language(),
+            // ParserId::Ruby => tree_sitter_ruby::language(),
+            // ParserId::Rust => tree_sitter_rust::language(),
+            // ParserId::Scala => tree_sitter_scala::language(),
+            // ParserId::Sql => tree_sitter_sql::language(),
+            // ParserId::Typescript => tree_sitter_typescript::language_typescript(),
+            // ParserId::Tsx => tree_sitter_typescript::language_tsx(),
+            // ParserId::Xlsg => tree_sitter_xlsg::language(),
+            // ParserId::Zig => tree_sitter_zig::language(),
+            _ => todo!("Not updated yet: {self:?}"),
         }
     }
 
     pub fn get_parser(self) -> tree_sitter::Parser {
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(self.language()).expect("Error assigning language to parser, likely a version mismatch between compiled grammar and tree-sitter library.");
+        parser.set_language(&self.language()).expect("Error assigning language to parser, likely a version mismatch between compiled grammar and tree-sitter library.");
         parser
     }
 

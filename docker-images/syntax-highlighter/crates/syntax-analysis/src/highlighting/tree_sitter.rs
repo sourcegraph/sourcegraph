@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use paste::paste;
 use scip::types::{Document, Occurrence, SyntaxKind};
 use tree_sitter_all_languages::ParserId;
 use tree_sitter_highlight::{
@@ -102,7 +101,8 @@ macro_rules! create_configurations {
             {
                 // Create HighlightConfiguration language
                 let mut lang = HighlightConfiguration::new(
-                    paste! { ParserId::$name.language() },
+                    ParserId::$name.language(),
+                    stringify!("{}", $name),
                     include_scip_query!($dirname, "highlights"),
                     include_scip_query!($dirname, "injections"),
                     include_scip_query!($dirname, "locals"),
@@ -123,6 +123,7 @@ macro_rules! create_configurations {
             ];
             let mut lang = HighlightConfiguration::new(
                 ParserId::Typescript.language(),
+                "typescript",
                 &highlights.join("\n"),
                 include_scip_query!("typescript", "injections"),
                 include_scip_query!("typescript", "locals"),
@@ -138,6 +139,7 @@ macro_rules! create_configurations {
             ];
             let mut lang = HighlightConfiguration::new(
                 ParserId::Tsx.language(),
+                "tsx",
                 &highlights.join("\n"),
                 include_scip_query!("tsx", "injections"),
                 include_scip_query!("tsx", "locals"),
@@ -156,6 +158,7 @@ macro_rules! create_configurations {
             ];
             let mut lang = HighlightConfiguration::new(
                 ParserId::Javascript.language(),
+                "javascript",
                 &highlights.join("\n"),
                 include_scip_query!("javascript", "injections"),
                 include_scip_query!("javascript", "locals"),

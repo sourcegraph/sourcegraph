@@ -29,8 +29,12 @@ syntax-analysis = { path = "./crates/syntax-analysis" }
 # we can remove this, but until then, this works just fine for building
 # with bazel (and we rarely update rocket, so this is fine).
 futures = { version = "^0.3.27", features = ["std"], default-features = false }
-futures-util = { version = "^0.3.27", features = ["std"], default-features = false }
-futures-task = { version = "^0.3.27", features = ["std"], default-features = false }
+futures-util = { version = "^0.3.27", features = [
+    "std",
+], default-features = false }
+futures-task = { version = "^0.3.27", features = [
+    "std",
+], default-features = false }
 
 # Prior version do not build when cross-compiling. It's needed by transitive deps
 # and this forces to bump it.
@@ -56,8 +60,8 @@ serde_json = "1.0"
 string-interner = "0.14.0"
 # Since there is no version tag, we pin the dependency to a specific revision
 syntect = { git = "https://github.com/sourcegraph/syntect", rev = "7e02c5b4085e6d935b960b8106cdd85da04532d2" }
-tree-sitter = "0.20.9"
-tree-sitter-highlight = "0.20.1"
+tree-sitter = "0.22.6"
+tree-sitter-highlight = "0.22.6"
 walkdir = "2"
 path-clean = "1"
 camino = "1.1"

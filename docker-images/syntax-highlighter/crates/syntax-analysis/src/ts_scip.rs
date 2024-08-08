@@ -17,10 +17,10 @@ pub fn capture_name_to_descriptor(capture: &str, name: String) -> Descriptor {
     }
 }
 
-pub fn captures_to_kind(kind: &Option<&String>) -> symbol_information::Kind {
+pub fn captures_to_kind(kind: &Option<&str>) -> symbol_information::Kind {
     use symbol_information::Kind::*;
 
-    kind.map_or(UnspecifiedKind, |kind| match kind.as_str() {
+    kind.map_or(UnspecifiedKind, |kind| match kind {
         "kind.accessor" => Accessor,
         "kind.class" => Class,
         "kind.constant" => Constant,

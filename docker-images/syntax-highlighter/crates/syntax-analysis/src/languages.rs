@@ -49,7 +49,7 @@ impl TagConfiguration {
             _ => query_text.to_string(),
         };
 
-        let query = Query::new(language, &query_text).expect("to parse query");
+        let query = Query::new(&language, &query_text).expect("to parse query");
 
         let mut transforms = HashMap::new();
         let mut filters = HashMap::new();
@@ -142,7 +142,9 @@ impl TagConfiguration {
 
     pub fn get_parser(&self) -> Parser {
         let mut parser = Parser::new();
-        parser.set_language(self.language).expect("to get a parser");
+        parser
+            .set_language(&self.language)
+            .expect("to get a parser");
         parser
     }
 
@@ -185,7 +187,9 @@ pub struct LocalConfiguration {
 impl LocalConfiguration {
     pub fn get_parser(&self) -> Parser {
         let mut parser = Parser::new();
-        parser.set_language(self.language).expect("to get a parser");
+        parser
+            .set_language(&self.language)
+            .expect("to get a parser");
         parser
     }
 }
@@ -258,8 +262,8 @@ mod locals {
                     let query = include_scip_query!($file, "scip-locals");
 
                     LocalConfiguration {
+                        query: Query::new(&language, query).unwrap(),
                         language,
-                        query: Query::new(language, query).unwrap(),
                     }
                 })
             }

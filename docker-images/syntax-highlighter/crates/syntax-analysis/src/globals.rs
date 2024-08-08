@@ -176,7 +176,7 @@ pub fn parse_tree<'a>(
         let mut kind = None;
 
         for capture in m.captures {
-            let capture_name = capture_names
+            let capture_name = *capture_names
                 .get(capture.index as usize)
                 .context("capture indexes should always work")?;
 

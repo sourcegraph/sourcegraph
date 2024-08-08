@@ -593,6 +593,7 @@ impl<'a> LocalResolver<'a> {
                 let Some(capture_name) = capture_names.get(capture.index as usize) else {
                     continue;
                 };
+                let capture_name = *capture_name;
                 if capture_name.starts_with("scope") {
                     let kind = capture_name.strip_prefix("scope.").unwrap_or(capture_name);
                     scopes.push(ScopeCapture {
