@@ -10,6 +10,10 @@ query CommitPage_CommitQuery($repoName: String!, $revspec: String!) {
                 abbreviatedOID
                 canonicalURL
             }
+            perforceChangelist {
+                cid
+                canonicalURL
+            }
             externalURLs {
                 url
                 serviceKind

@@ -6,11 +6,11 @@
     import FileHeader from '$lib/repo/FileHeader.svelte'
     import type { TreeEntryWithCommitInfo } from '$lib/repo/FileTable.gql'
     import FileTable from '$lib/repo/FileTable.svelte'
+    import OpenCodyAction from '$lib/repo/OpenCodyAction.svelte'
     import Permalink from '$lib/repo/Permalink.svelte'
     import Readme from '$lib/repo/Readme.svelte'
     import { createPromiseStore } from '$lib/utils'
     import { Alert } from '$lib/wildcard'
-    import OpenCodyAction from '$lib/repo/OpenCodyAction.svelte'
 
     import { getRepositoryPageContext } from '../../../../../context'
 
@@ -23,6 +23,7 @@
 
     $: treeEntriesWithCommitInfo.set(data.treeEntriesWithCommitInfo)
     $: isCodyAvailable = data.isCodyAvailable
+    $: isPerforceDepot = data.isPerforceDepot
 
     afterNavigate(() => {
         repositoryContext.set({ directoryPath: data.filePath })
@@ -38,7 +39,7 @@
 
 <FileHeader type="tree" repoName={data.repoName} revision={data.revision} path={data.filePath}>
     <svelte:fragment slot="actions">
-        <Permalink commitID={data.resolvedRevision.commitID} />
+        <Permalink revID={data.resolvedRevision.commitID} {isPerforceDepot} />
         {#if isCodyAvailable}
             <OpenCodyAction />
         {/if}

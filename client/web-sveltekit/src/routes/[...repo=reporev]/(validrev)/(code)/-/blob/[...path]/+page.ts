@@ -26,8 +26,10 @@ import {
     BlobFileViewHighlightedFileQuery,
     BlobViewCodeGraphDataNextPage,
 } from './page.gql'
+import { redirect } from '@sveltejs/kit'
+import { DepotChangelist } from '../../../../../layout.gql'
 
-function loadDiffView({ params, url }: PageLoadEvent) {
+async function loadDiffView({ params, url }: PageLoadEvent) {
     const client = getGraphQLClient()
     const revisionOverride = url.searchParams.get('rev')
     const { repoName } = parseRepoRevision(params.repo)
@@ -144,6 +146,23 @@ async function loadFileView({ parent, params, url }: PageLoadEvent) {
     const { repoName, revision = '' } = parseRepoRevision(params.repo)
     const resolvedRevision = revisionOverride ? Promise.resolve(revisionOverride) : resolveRevision(parent, revision)
     const filePath = decodeURIComponent(params.path)
+    const isPerforceDepot = await parent().then(parent => parent.isPerforceDepot)
+
+    if (isPerforceDepot) {
+        const changelistInfo = await client
+            .query(DepotChangelist, {
+                depotName: repoName,
+                revision: revision
+            })
+            .then(result => result.data?.repository?.commit?.perforceChangelist)
+
+        if (changelistInfo?.cid) {
+            const redirectURL = new URL(url)
+
+            redirectURL.pathname = `${repoName}@changelist/${changelistInfo?.cid}/-/blob/${filePath}`
+            redirect(301, redirectURL)
+        }
+    }
 
     // Create a BehaviorSubject so preloading does not create a subscriberless observable
     const blameData = new BehaviorSubject<BlameHunkData>({ current: undefined, externalURLs: undefined })
@@ -197,11 +216,11 @@ async function loadFileView({ parent, params, url }: PageLoadEvent) {
         // We can ignore the error because if the revision doesn't exist, other queries will fail as well
         revisionOverride: revisionOverride
             ? await client
-                  .query(BlobFileViewCommitQuery_revisionOverride, {
-                      repoName,
-                      revspec: revisionOverride,
-                  })
-                  .then(result => result.data?.repository?.commit)
+                .query(BlobFileViewCommitQuery_revisionOverride, {
+                    repoName,
+                    revspec: revisionOverride,
+                })
+                .then(result => result.data?.repository?.commit)
             : null,
         externalServiceType: parent()
             .then(({ resolvedRevision }) => resolvedRevision.repo?.externalRepository?.serviceType)
@@ -213,12 +232,13 @@ async function loadFileView({ parent, params, url }: PageLoadEvent) {
     }
 }
 
-export const load: PageLoad = event => {
+export const load: PageLoad = (event) => {
     const showDiff = event.url.searchParams.has('diff')
     const revisionOverride = event.url.searchParams.get('rev')
 
     if (showDiff && revisionOverride) {
         return loadDiffView(event)
     }
+
     return loadFileView(event)
 }

@@ -470,6 +470,7 @@ export function parseBrowserRepoURL(href: string): ParsedRepoURI & Pick<ParsedRe
     } else {
         repoRevision = pathname.slice(0, indexOfSeparator) // the whole string leading up to the separator (allows revision to be multiple path parts)
     }
+    console.log('repoRevision:', repoRevision)
     const { repoName, revision, rawRevision } = parseRepoRevision(repoRevision)
     if (!repoName) {
         throw new Error('unexpected repo url: ' + href)

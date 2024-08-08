@@ -3,6 +3,10 @@ query BlobDiffViewCommitQuery($repoName: String!, $revspec: String!, $path: Stri
         id
         commit(rev: $revspec) {
             id
+            perforceChangelist {
+                cid
+                canonicalURL
+            }
 
             blob(path: $path) {
                 ...DiffViewGitBlob
@@ -22,6 +26,10 @@ query BlobFileViewBlobQuery($repoName: String!, $revspec: String!, $path: String
             oid
             blob(path: $path) {
                 ...FileViewGitBlob
+            }
+            perforceChangelist {
+                cid
+                canonicalURL
             }
         }
     }
@@ -82,6 +90,10 @@ query BlobFileViewCommitQuery_revisionOverride($repoName: String!, $revspec: Str
     repository(name: $repoName) {
         commit(rev: $revspec) {
             ...FileViewCommit
+            perforceChangelist {
+                cid
+                canonicalURL
+            }
         }
     }
 }

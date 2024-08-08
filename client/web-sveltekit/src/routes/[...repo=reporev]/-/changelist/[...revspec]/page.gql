@@ -1,0 +1,82 @@
+query ChangelistPage_ChangelistQuery($repoName: String!, $cid: String!) {
+    repository(name: $repoName) {
+        id
+    	changelist(cid: $cid) {
+            cid
+            canonicalURL
+            commit {
+
+                message
+                oid
+            body
+        subject
+        author {
+            person {
+                ...Avatar_Person
+            }
+            date
+        }
+        parents {
+            id
+                oid
+                abbreviatedOID
+                parent: perforceChangelist {
+                    cid
+                        canonicalURL
+                }
+        }
+        perforceChangelist {
+            cid
+                canonicalURL
+        }
+
+            }
+        }
+    }
+}
+
+query ChangelistPage_DiffQuery($repoName: String!, $base: String, $head: String, $first: Int, $after: String) {
+    repository(name: $repoName) {
+        id
+        comparison(base: $base, head: $head) {
+            fileDiffs(first: $first, after: $after) {
+                ...ChangelistPage_DiffConnection
+            }
+        }
+    }
+}
+
+fragment ChangelistPage_DiffConnection on FileDiffConnection {
+    nodes {
+        ...ChangelistFileDiff_Diff
+    }
+    pageInfo {
+        endCursor
+        hasNextPage
+    }
+}
+
+fragment ChangelistFileDiff_Diff on FileDiff {
+    mostRelevantFile {
+        canonicalURL # key field
+        url
+        path
+    }
+    newFile {
+        canonicalURL # key field
+        path
+        binary
+    }
+    oldFile {
+        canonicalURL # key field
+        path
+        binary
+    }
+    stat {
+        added
+        deleted
+    }
+    hunks {
+        ...FileDiffHunks_Hunk
+    }
+}

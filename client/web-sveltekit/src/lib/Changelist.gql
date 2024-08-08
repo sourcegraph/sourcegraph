@@ -1,0 +1,29 @@
+fragment Changelist on PerforceChangelist {
+    cid
+    canonicalURL
+    commit {
+        message
+        oid
+        body
+        subject
+        author {
+            person {
+                ...Avatar_Person
+            }
+            date
+        }
+        parents {
+            id
+            oid
+            abbreviatedOID
+            parent: perforceChangelist {
+                cid
+                canonicalURL
+            }
+        }
+        perforceChangelist {
+            cid
+                canonicalURL
+        }
+    }
+}

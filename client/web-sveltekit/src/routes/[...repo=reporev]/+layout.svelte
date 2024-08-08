@@ -48,7 +48,7 @@
     export let data: LayoutData
 
     const menuOpen = writable(false)
-    const navEntries: MenuEntry[] = [
+    const gitNavEntries: MenuEntry[] = [
         { path: '', icon: ILucideCode, label: 'Code', visibility: 'user', preserveRevision: true },
         {
             path: '/-/commits',
@@ -60,6 +60,21 @@
         { path: '/-/branches', icon: ILucideGitBranch, label: 'Branches', visibility: 'user' },
         { path: '/-/tags', icon: ILucideTag, label: 'Tags', visibility: 'user' },
         { path: '/-/stats/contributors', icon: ILucideUsers, label: 'Contributors', visibility: 'user' },
+    ]
+    const perforceNavEntries: MenuEntry[] = [
+        {
+            path: '/-/changelists',
+            icon: ILucideGitCommitVertical,
+            label: 'Changelists',
+            visibility: 'user',
+            preserveRevision: true,
+        },
+        {
+            path: '/-/stats/contributors',
+            icon: ILucideUsers,
+            label: 'Contributors',
+            visibility: 'user',
+        },
     ]
     const menuEntries: MenuEntry[] = [
         { path: '/-/compare', icon: ILucideGitCompare, label: 'Compare', visibility: 'user' },
@@ -85,7 +100,7 @@
 
     setRepositoryPageContext(repositoryContext)
 
-    $: viewableNavEntries = navEntries.filter(
+    $: viewableNavEntries = (data.isPerforceDepot ? perforceNavEntries : gitNavEntries).filter(
         entry => entry.visibility === 'user' || (entry.visibility === 'admin' && data.user?.siteAdmin)
     )
     $: visibleNavEntryCount = viewableNavEntries.length

@@ -1,47 +1,54 @@
-import { error, redirect } from '@sveltejs/kit'
+import { error } from '@sveltejs/kit'
+
+import { parseRepoRevision } from '@sourcegraph/shared/src/util/url'
 
 import { IncrementalRestoreStrategy, getGraphQLClient, infinityQuery } from '$lib/graphql'
-import { parseRepoRevision } from '$lib/shared'
 
 import type { PageLoad } from './$types'
-import { CommitPage_CommitQuery, CommitPage_DiffQuery } from './page.gql'
+import { ChangelistPage_ChangelistQuery, ChangelistPage_DiffQuery } from './page.gql'
 
 const PAGE_SIZE = 20
 
-export const load: PageLoad = async ({ url, params }) => {
+export const load: PageLoad = async ({ params }) => {
     const client = getGraphQLClient()
-    const { repoName } = parseRepoRevision(params.repo)
+    const { repoName, revision } = parseRepoRevision(params.repo + '@' + params.revspec)
 
-    const result = await client.query(CommitPage_CommitQuery, { repoName, revspec: params.revspec })
+    // @PROBLEM: We use the url to generate variables to run this query.
+    // In this case, the URL rightly includes the Changelist ID, not the commit hash.
+    // However, the GraphQL API expects a commit hash, a changelist ID will break the page
+    // because it won't return any data.
+    //
+    // @SOLUTION: Figure out how to get the commit hash into this loader so we can use it
+    // to fetch the data we need.
+    //
+    // IDEA: is there a way to include the commit hash in the URL as well, then redirect
+    // to the correct URL once we've got the data?
+    //
+    // Redirect Docs: https://kit.svelte.dev/docs/load#redirects
+    const result = await client.query(ChangelistPage_ChangelistQuery, { repoName: params.repo, cid: revision ?? '' })
 
     if (result.error) {
         error(500, `Unable to load commit data: ${result.error}`)
     }
 
-    const commit = result.data?.repository?.commit
-    const isPerforceDepot = commit?.perforceChangelist !== null
+    const changelist = result.data?.repository?.changelist
 
-    if (!commit) {
-        error(404, 'Commit not found')
-    }
-
-    if (isPerforceDepot) {
-        const redirectURL = new URL(url)
-        redirectURL.pathname = `${params.repo}/-/changelist/${commit.perforceChangelist?.cid}`
-        redirect(301, redirectURL)
+    if (!changelist) {
+        error(404, 'Changelist not found')
     }
 
     // parents is an empty array for the initial commit
     // We currently don't support diffs for the initial commit on the backend
+
     const diff =
-        commit?.oid && commit?.parents[0]?.oid
+        changelist.cid && changelist?.commit.parents[0]?.parent?.cid
             ? infinityQuery({
                   client,
-                  query: CommitPage_DiffQuery,
+                  query: ChangelistPage_DiffQuery,
                   variables: {
                       repoName,
-                      base: commit.parents[0].oid,
-                      head: commit.oid,
+                      base: changelist.commit.parents[0].oid,
+                      head: changelist.commit.oid,
                       first: PAGE_SIZE,
                       after: null as string | null,
                   },
@@ -64,7 +71,7 @@ export const load: PageLoad = async ({ url, params }) => {
             : null
 
     return {
-        commit,
+        changelist,
         diff,
     }
 }

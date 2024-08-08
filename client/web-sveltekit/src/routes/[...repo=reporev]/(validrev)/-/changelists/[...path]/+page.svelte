@@ -3,49 +3,47 @@
     import { get } from 'svelte/store'
 
     import { navigating } from '$app/stores'
-    import Commit from '$lib/Commit.svelte'
+    import Changelist from '$lib/Changelist.svelte'
     import LoadingSpinner from '$lib/LoadingSpinner.svelte'
     import RepositoryRevPicker from '$lib/repo/RepositoryRevPicker.svelte'
-    import { getHumanNameForCodeHost } from '$lib/repo/shared/codehost'
     import Scroller, { type Capture as ScrollerCapture } from '$lib/Scroller.svelte'
-    import CodeHostIcon from '$lib/search/CodeHostIcon.svelte'
     import { Alert, Badge } from '$lib/wildcard'
 
     import type { PageData, Snapshot } from './$types'
 
     export let data: PageData
 
-    // This tracks the number of commits that have been loaded and the current scroll
+    // This tracks the number of changelists that have been loaded and the current scroll
     // position, so both can be restored when the user refreshes the page or navigates
     // back to it.
     export const snapshot: Snapshot<{
-        commits: ReturnType<typeof data.commitsQuery.capture>
+        changelists: ReturnType<typeof data.changelistsQuery.capture>
         scroller: ScrollerCapture
     }> = {
         capture() {
             return {
-                commits: commitsQuery.capture(),
+                changelists: changelistsQuery.capture(),
                 scroller: scroller.capture(),
             }
         },
         async restore(snapshot) {
             if (get(navigating)?.type === 'popstate') {
-                await commitsQuery?.restore(snapshot.commits)
+                await changelistsQuery?.restore(snapshot.changelists)
             }
             scroller.restore(snapshot.scroller)
         },
     }
 
     function fetchMore() {
-        commitsQuery?.fetchMore()
+        changelistsQuery?.fetchMore()
     }
 
     let scroller: Scroller
 
-    $: commitsQuery = data.commitsQuery
-    $: commits = $commitsQuery.data
+    $: changelistsQuery = data.changelistsQuery
+    $: changelists = $changelistsQuery.data
     $: pageTitle = (() => {
-        const parts = ['Commits']
+        const parts = ['Changelists']
         if (data.path) {
             parts.push(data.path)
         }
@@ -60,7 +58,7 @@
 
 <header>
     <h2>
-        Commit History
+        Changelists
         {#if data.path}
             in <code>{data.path}</code>
         {/if}
@@ -72,58 +70,50 @@
             commitID={data.resolvedRevision.commitID}
             defaultBranch={data.defaultBranch}
             placement="bottom-start"
-            getRepositoryBranches={data.getRepoBranches}
-            getRepositoryCommits={data.getRepoCommits}
-            getRepositoryTags={data.getRepoTags}
+            getDepotChangelists={data.getDepotChangelists}
         />
     </div>
 </header>
 <section>
     <Scroller bind:this={scroller} margin={600} on:more={fetchMore}>
-        {#if commits}
-            <ul class="commits">
-                {#each commits as commit (commit.canonicalURL)}
+        {#if changelists}
+            <ul class="changelists">
+                {#each changelists as changelist (changelist.perforceChangelist?.canonicalURL)}
                     <li>
-                        <div class="commit">
-                            <Commit {commit} />
+                        <div class="changelist">
+                            <Changelist {changelist} />
                         </div>
                         <ul class="actions">
                             <li>
+                                Changelist ID:
                                 <Badge variant="link">
-                                    <a href={commit.canonicalURL} title="View commit">{commit.abbreviatedOID}</a>
+                                    <a href={changelist.perforceChangelist?.canonicalURL} title="View changelist"
+                                        >{changelist.perforceChangelist?.cid}</a
+                                    >
                                 </Badge>
                             </li>
-                            <li><a href="/{data.repoName}@{commit.oid}">Browse files</a></li>
-                            {#each commit.externalURLs as { url, serviceKind }}
-                                <li>
-                                    <a href={url}>
-                                        View on
-                                        {#if serviceKind}
-                                            <CodeHostIcon repository={serviceKind} disableTooltip />
-                                            {getHumanNameForCodeHost(serviceKind)}
-                                        {:else}
-                                            code host
-                                        {/if}
-                                    </a>
-                                </li>
-                            {/each}
+                            <li>
+                                <a href="/{data.repoName}@changelist/{changelist.perforceChangelist?.cid}"
+                                    >Browse files</a
+                                ></li
+                            >
                         </ul>
                     </li>
                 {:else}
                     <li>
-                        <Alert variant="info">No commits found</Alert>
+                        <Alert variant="info">No changelists found</Alert>
                     </li>
                 {/each}
             </ul>
         {/if}
-        {#if $commitsQuery.fetching}
+        {#if $changelistsQuery.fetching}
             <div class="footer">
                 <LoadingSpinner />
             </div>
-        {:else if !$commitsQuery.fetching && $commitsQuery.error}
+        {:else if !$changelistsQuery.fetching && $changelistsQuery.error}
             <div class="footer">
                 <Alert variant="danger">
-                    Unable to fetch commits: {$commitsQuery.error.message}
+                    Unable to fetch changelists: {$changelistsQuery.error.message}
                 </Alert>
             </div>
         {/if}
@@ -154,7 +144,7 @@
     }
 
     header,
-    ul.commits,
+    ul.changelists,
     .footer {
         max-width: var(--viewport-xl);
         width: 100%;
@@ -170,7 +160,7 @@
         list-style: none;
     }
 
-    ul.commits {
+    ul.changelists {
         --avatar-size: 2.5rem;
         padding-top: 0;
 
@@ -196,13 +186,14 @@
                 }
             }
 
-            .commit {
+            .changelist {
                 flex: 1;
                 min-width: 0;
             }
 
             .actions {
                 --icon-color: currentColor;
+                text-align: right;
 
                 flex-shrink: 0;
             }

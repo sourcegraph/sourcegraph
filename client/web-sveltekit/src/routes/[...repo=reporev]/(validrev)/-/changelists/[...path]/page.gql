@@ -1,0 +1,57 @@
+fragment ChangelistsPage_GitCommitConnection on GitCommitConnection {
+    nodes {
+        id
+        oid
+        abbreviatedOID
+        canonicalURL
+        subject
+        body
+        externalURLs {
+            serviceKind
+            url
+        }
+
+        author {
+            date
+            person {
+                name
+                email
+                ...Avatar_Person
+            }
+        }
+        committer {
+            date
+            person {
+                name
+                email
+                ...Avatar_Person
+            }
+        }
+        perforceChangelist {
+            canonicalURL
+            cid
+        }
+    }
+    pageInfo {
+        hasNextPage
+        endCursor
+    }
+}
+
+query ChangelistsPage_ChangelistsQuery(
+    $depotName: String!
+    $revision: String!
+    $first: Int
+    $path: String
+    $afterCursor: String
+) {
+    repository(name: $depotName) {
+        id
+        commit(rev: $revision) {
+            id
+            ancestors(first: $first, afterCursor: $afterCursor, path: $path) {
+                ...ChangelistsPage_GitCommitConnection
+            }
+        }
+    }
+}

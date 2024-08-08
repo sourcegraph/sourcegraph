@@ -70,6 +70,25 @@ describe('parseBrowserRepoURL', () => {
         })
     })
 
+    test('should parse perforce depot with changelist ID', () => {
+        const parsed = parseBrowserRepoURL('https://sourcegraph.com/gorilla/mux@changelist/136130')
+        assertDeepStrictEqual(parsed, {
+            repoName: 'gorilla/mux',
+            revision: '136130',
+            rawRevision: 'changelist/136130',
+        })
+    })
+
+    test('should parse perforce depot with multi-path-part changelist', () => {
+        const parsed = parseBrowserRepoURL('https://sourcegraph.com/gorilla/mux@changelist/136130/-/blob/mux.go')
+        assertDeepStrictEqual(parsed, {
+            repoName: 'gorilla/mux',
+            revision: '136130',
+            rawRevision: 'changelist/136130',
+            filePath: 'mux.go',
+        })
+    })
+
     test('should parse github repo with multi-path-part revision', () => {
         const parsed = parseBrowserRepoURL('https://sourcegraph.com/github.com/gorilla/mux@foo/baz/bar')
         assertDeepStrictEqual(parsed, {
