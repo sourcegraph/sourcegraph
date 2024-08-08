@@ -484,11 +484,14 @@ func (s *handlerV1) UpdateEnterpriseSubscription(ctx context.Context, req *conne
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("subscription.id is required"))
 	}
 
-	if _, err := s.store.GetEnterpriseSubscription(ctx, subscriptionID); err != nil {
+	if existing, err := s.store.GetEnterpriseSubscription(ctx, subscriptionID); err != nil {
 		if errors.Is(err, subscriptions.ErrSubscriptionNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, err)
 		}
 		return nil, connectutil.InternalError(ctx, logger, err, "failed to find subscription")
+	} else if existing.ArchivedAt != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("archived subscriptions cannot be updated"))
 	}
 
 	var opts subscriptions.UpsertSubscriptionOptions
