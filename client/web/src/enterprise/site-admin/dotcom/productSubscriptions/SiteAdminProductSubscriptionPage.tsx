@@ -415,7 +415,7 @@ const Page: React.FunctionComponent<React.PropsWithChildren<Props>> = ({ telemet
                                 <tr>
                                     <th className="text-nowrap">
                                         Active license{' '}
-                                        <Tooltip content="The most recently created, non-expired license is considered the 'active license'.">
+                                        <Tooltip content="The most recently created, non-expired, non-revoked license is considered the 'active license'.">
                                             <Icon aria-label="Show help text" svgPath={mdiInformationOutline} />
                                         </Tooltip>
                                     </th>

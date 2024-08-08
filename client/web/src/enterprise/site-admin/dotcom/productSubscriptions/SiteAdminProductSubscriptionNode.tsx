@@ -9,6 +9,8 @@ import {
     EnterpriseSubscriptionInstanceType,
 } from './enterpriseportalgen/subscriptions_pb'
 
+import styles from './SiteAdminProductSubscriptionNode.module.scss'
+
 export const SiteAdminProductSubscriptionNodeHeader: React.FunctionComponent<React.PropsWithChildren<unknown>> = () => (
     <thead>
         <tr>
@@ -36,7 +38,7 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
     )
 
     return (
-        <tr>
+        <tr className={styles.row}>
             <td>
                 {archived && (
                     <Badge variant="danger" small={true} className="mr-2">
@@ -44,7 +46,7 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
                     </Badge>
                 )}
                 <LinkOrSpan to={`/site-admin/dotcom/product/subscriptions/${node.id}?env=${env}`}>
-                    {node.displayName}
+                    <strong>{node.displayName}</strong>
                 </LinkOrSpan>
             </td>
             <td className="text-nowrap">
@@ -62,7 +64,11 @@ export const SiteAdminProductSubscriptionNode: React.FunctionComponent<
                 )}
             </td>
             <td className="text-nowrap">
-                {node?.instanceDomain ? <>{node?.instanceDomain}</> : <span className="text-muted">Not set</span>}
+                {node?.instanceDomain ? (
+                    <small>{node?.instanceDomain}</small>
+                ) : (
+                    <span className="text-muted">Not set</span>
+                )}
             </td>
         </tr>
     )
