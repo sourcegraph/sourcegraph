@@ -1,16 +1,16 @@
 meta:
   productName: sourcegraph
-  repository: 'github.com/sourcegraph/sourcegraph'
+  repository: "github.com/sourcegraph/sourcegraph"
   owners:
-    - '@sourcegraph/release'
+    - "@sourcegraph/release"
 
 requirements:
   # We use wget here, because curl --fail-with-body was introduced in a version ulterior to what we can have on the CI agents.
-  - name: 'wget'
-    cmd: 'wget --help'
-  - name: 'jq'
-    cmd: 'jq --help'
-  - name: 'Buidkite access token'
+  - name: "wget"
+    cmd: "wget --help"
+  - name: "jq"
+    cmd: "jq --help"
+  - name: "Buidkite access token"
     # `write_builds` permission is all that's needed here
     # You also need to ensure you add access to the Sourcegraph organization on Buildkite.
     env: BUILDKITE_ACCESS_TOKEN
@@ -26,7 +26,33 @@ internal:
   create:
     steps:
       patch:
-        - name: 'buildkite'
+        - name: "buildkite"
+          cmd: |
+            echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
+            body=$(wget --content-on-error -O- --header="Content-Type: application/json" --header="Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" --post-data '{
+              "commit": "HEAD",
+              "branch": "{{git.branch}}",
+              "message": "Internal release build for {{version}}",
+              "env": {
+                    "RELEASE_INTERNAL": "true",
+                    "VERSION": "{{tag}}",
+                    "IS_DEVELOPMENT_RELEASE": "{{is_development}}"
+              }
+            }' https://api.buildkite.com/v2/organizations/sourcegraph/pipelines/sourcegraph/builds)
+            exit_code=$?
+
+            if [ $exit_code != 0 ]; then
+              echo "❌ Failed to create build on Buildkite, got:"
+              echo "--- raw body ---"
+              echo $body
+              echo "--- raw body ---"
+              exit $exit_code
+            else
+              echo "Build created, see:"
+              echo $body | jq .web_url
+            fi
+      minor:
+        - name: "buildkite"
           cmd: |
             echo "Triggering build on sourcegraph/sourcegraph with VERSION={{version}} on branch {{git.branch}}"
             body=$(wget --content-on-error -O- --header="Content-Type: application/json" --header="Authorization: Bearer $BUILDKITE_ACCESS_TOKEN" --post-data '{
@@ -53,7 +79,7 @@ internal:
             fi
   finalize:
     steps:
-      - name: 'Register on release registry'
+      - name: "Register on release registry"
         cmd: |
           echo "Registering internal sourcegraph/sourcegraph {{version}} release on release registry"
           body=$(wget --content-on-error -O- --header="Content-Type: application/json" --header="Authorization: ${RELEASE_REGISTRY_TOKEN}" --post-data '{
@@ -73,12 +99,12 @@ internal:
             echo "Release created, see:"
             echo $body
           fi
-      - name: 'Trigger Security scan'
+      - name: "Trigger Security scan"
         cmd: |
           set -eu
 
           curl --location 'https://security-manager.sgdev.org/internal-release-scan?release={{tag}}' --request POST --header "Authorization: Bearer ${SECURITY_SCANNER_TOKEN}"
-      - name: 'notifications'
+      - name: "notifications"
         cmd: |
           set -eu
 
@@ -89,14 +115,14 @@ internal:
 
 test:
   steps:
-    - name: 'check:git tag does not exist'
+    - name: "check:git tag does not exist"
       cmd: |
         tags=$(git ls-remote --tags origin | sort -t '/' -k 3 | cut -f 2 | awk -F '/' '{gsub(/\^\{\}$/, "", $3); print $3}' | uniq)
         if echo "${tags}" | grep -q "^{{version}}$"; then
           echo "❌ Tag '{{version}}' already exists"
           exit 1
         fi
-    - name: 'check:frontend and server image contain bundle'
+    - name: "check:frontend and server image contain bundle"
       cmd: |
         set -eu
 
@@ -123,7 +149,7 @@ test:
             exit 1
           fi
         done
-    - name: 'check:migrator-schemas'
+    - name: "check:migrator-schemas"
       cmd: |
         set -eu
 
@@ -159,7 +185,7 @@ test:
           echo "migrator:{{tag}} does not contain the correct amount of schema description files for this release - expected more than 300 got ${count}"
           exit 1
         fi
-    - name: 'db:migration:coherence_test'
+    - name: "db:migration:coherence_test"
       cmd: |
         set -eu
 
@@ -206,7 +232,7 @@ promoteToPublic:
       #       echo "cannot promote a development release"
       #       exit 1
       #     fi
-      - name: 'buildkite'
+      - name: "buildkite"
         cmd: |
           # We set DISABLE_ASPECT_WORKFLOWS to true, because the promotion is purely about retagging images
           # and we don't rely on AW at all.
@@ -236,7 +262,7 @@ promoteToPublic:
           fi
   finalize:
     steps:
-      - name: 'Promote on release registry'
+      - name: "Promote on release registry"
         cmd: |
           echo "Promoting sourcegraph/sourcegraph {{version}} release on release registry"
           body=$(wget --content-on-error -O- --header="Content-Type: application/json" --header="Authorization: ${RELEASE_REGISTRY_TOKEN}" --post-data '' "https://releaseregistry.sourcegraph.com/v1/releases/sourcegraph/{{version}}/promote")
@@ -252,7 +278,7 @@ promoteToPublic:
             echo "Release promoted, see:"
             echo $body
           fi
-      - name: 'git:tag'
+      - name: "git:tag"
         cmd: |
           set -eu
 
@@ -269,7 +295,7 @@ promoteToPublic:
           Please note that some release artifacts will not be available until the tag's pipeline completes. You can follow this at https://buildkite.com/sourcegraph/sourcegraph/builds?branch={{version}}
           EOF
 
-      - name: 'git:release:create'
+      - name: "git:release:create"
         cmd: |
           tag="{{tag}}"
           version="{{version}}"
@@ -301,7 +327,7 @@ promoteToPublic:
 
       # tag is usually in the format `5.3.2`
       # while version is usually the tag prepended with a v, `v5.3.2`
-      - name: 'Slack notification (#announce-engineering, #team-cloud-ops)'
+      - name: "Slack notification (#announce-engineering, #team-cloud-ops)"
         cmd: |
           echo "Posting slack notification for release"
           tag="{{tag}}"
@@ -325,7 +351,7 @@ promoteToPublic:
               echo "Posted to slack."
             fi
           done
-      - name: 'Generate and submit changelog pull request on sourcegraph/docs'
+      - name: "Generate and submit changelog pull request on sourcegraph/docs"
         cmd: |
           set -eu -o pipefail
 
