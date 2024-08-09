@@ -1,0 +1,61 @@
+load("//dev:go_defs.bzl", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc//doc:defs.bzl", "doc_template_compile")
+load("@rules_buf//buf:defs.bzl", "buf_lint_test")
+
+# Bazel-generated files are different from what is generated locally by buf and
+# causes compilation errors - the next line disables Gazelle-generated Bazel
+# configuration that overrides the generated code that gets committed.
+# https://github.com/sourcegraph/devx-support/issues/932#issuecomment-2103608521
+# gazelle:proto disable_global
+
+proto_library(
+    name = "v1_proto",
+    srcs = ["subscriptionlicensechecks.proto"],
+    strip_import_prefix = "/lib",  # keep
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_protobuf//:field_mask_proto",
+        "@com_google_protobuf//:timestamp_proto",
+    ],
+)
+
+go_library(
+    name = "subscriptionlicensechecks",
+    srcs = [
+        "subscriptionlicensechecks.pb.go",
+        "subscriptionlicensechecks_grpc.pb.go",
+        "v1.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptionlicensechecks/v1",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/errors",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//reflect/protoreflect",
+        "@org_golang_google_protobuf//runtime/protoimpl",
+        "@org_golang_google_protobuf//types/known/fieldmaskpb",
+        "@org_golang_google_protobuf//types/known/timestamppb",
+    ],
+)
+
+buf_lint_test(
+    name = "v1_proto_lint",
+    timeout = "short",
+    config = "//internal:buf.yaml",
+    targets = [":v1_proto"],
+)
+
+go_test(
+    name = "subscriptionlicensechecks_test",
+    srcs = ["v1_test.go"],
+    embed = [":subscriptionlicensechecks"],
+    deps = [
+        "@com_github_hexops_autogold_v2//:autogold",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)
