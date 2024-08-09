@@ -185,6 +185,7 @@ func buildServerOptions(logger log.Logger, opts serverOptions) []grpc.ServerOpti
 			propagator.StreamServerPropagator(tenant.TenantPropagator{}),
 			propagator.StreamServerPropagator(actor.ActorPropagator{}),
 			propagator.StreamServerPropagator(policy.ShouldTracePropagator{}),
+			tenant.StreamServerInterceptor,
 			otelgrpc.StreamServerInterceptor(otelOpts...), //lint:ignore SA1019 the advertised replacement doesn't seem to be a drop-in replacement, use deprecated mechanism for now
 			contextconv.StreamServerInterceptor,
 		),
@@ -198,6 +199,7 @@ func buildServerOptions(logger log.Logger, opts serverOptions) []grpc.ServerOpti
 			propagator.UnaryServerPropagator(tenant.TenantPropagator{}),
 			propagator.UnaryServerPropagator(actor.ActorPropagator{}),
 			propagator.UnaryServerPropagator(policy.ShouldTracePropagator{}),
+			tenant.UnaryServerInterceptor,
 			otelgrpc.UnaryServerInterceptor(otelOpts...), //lint:ignore SA1019 the advertised replacement doesn't seem to be a drop-in replacement, use deprecated mechanism for now
 			contextconv.UnaryServerInterceptor,
 		),

@@ -1,8 +1,10 @@
 package tenant
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"runtime/pprof"
 	"strconv"
 
 	"github.com/sourcegraph/log"
@@ -84,8 +86,10 @@ func InternalHTTPMiddleware(logger log.Logger, next http.Handler) http.Handler {
 
 			// Valid tenant
 			ctx = withTenant(ctx, tntID)
-		}
 
-		next.ServeHTTP(rw, req.WithContext(ctx))
+			pprof.Do(ctx, pprof.Labels("tenant", strconv.Itoa(tntID)), func(ctx context.Context) {
+				next.ServeHTTP(rw, req.WithContext(ctx))
+			})
+		}
 	})
 }

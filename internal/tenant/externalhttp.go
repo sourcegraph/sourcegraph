@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime/pprof"
+	"strconv"
 	"strings"
 
 	"github.com/sourcegraph/sourcegraph/internal/errcode"
@@ -37,7 +39,10 @@ func ExternalTenantFromHostnameMiddleware(tenantForHostname TenantHostnameMapper
 		}
 
 		ctx = withTenant(ctx, tenantID)
-		next.ServeHTTP(rw, req.WithContext(ctx))
+
+		pprof.Do(ctx, pprof.Labels("tenant", strconv.Itoa(tenantID)), func(ctx context.Context) {
+			next.ServeHTTP(rw, req.WithContext(ctx))
+		})
 	})
 }
 

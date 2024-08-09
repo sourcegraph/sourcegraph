@@ -2,11 +2,15 @@ package tenant
 
 import (
 	"context"
+	"runtime/pprof"
 	"strconv"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -47,4 +51,34 @@ func (TenantPropagator) InjectContext(ctx context.Context, md metadata.MD) (cont
 		}
 		return withTenant(ctx, uid), nil
 	}
+}
+
+// UnaryServerInterceptor is a grpc.UnaryServerInterceptor that injects the tenant ID
+// from the context into pprof labels.
+func UnaryServerInterceptor(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (response any, err error) {
+	if tnt, err := FromContext(ctx); err == nil {
+		defer pprof.SetGoroutineLabels(ctx)
+		ctx = pprof.WithLabels(ctx, pprof.Labels("tenant", strconv.Itoa(tnt.ID())))
+		pprof.SetGoroutineLabels(ctx)
+	}
+
+	return handler(ctx, req)
+}
+
+// StreamServerInterceptor is a grpc.StreamServerInterceptor that injects the tenant ID
+// from the context into pprof labels.
+func StreamServerInterceptor(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	if tnt, err := FromContext(ss.Context()); err == nil {
+		ctx := ss.Context()
+		defer pprof.SetGoroutineLabels(ctx)
+		ctx = pprof.WithLabels(ctx, pprof.Labels("tenant", strconv.Itoa(tnt.ID())))
+		pprof.SetGoroutineLabels(ctx)
+
+		ss = &grpc_middleware.WrappedServerStream{
+			ServerStream:   ss,
+			WrappedContext: ctx,
+		}
+	}
+
+	return handler(srv, ss)
 }
