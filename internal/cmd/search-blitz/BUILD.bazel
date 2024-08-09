@@ -1,5 +1,7 @@
 load("//dev:go_defs.bzl", "go_test")
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//dev:oci_defs.bzl", "image_repository", "oci_image", "oci_push", "oci_tarball", "pkg_tar")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 go_library(
     name = "search-blitz_lib",
@@ -49,4 +51,46 @@ go_test(
     srcs = ["config_test.go"],
     embed = [":search-blitz_lib"],
     tags = [TAG_PLATFORM_SEARCH],
+)
+
+pkg_tar(
+    name = "tar_search_blitz",
+    srcs = [":search-blitz"],
+)
+
+oci_image(
+    name = "image",
+    base = "//wolfi-images/sourcegraph-base:base_image",
+    entrypoint = [
+        "/sbin/tini",
+        "--",
+        "/search-blitz",
+    ],
+    tars = [":tar_search_blitz"],
+    user = "sourcegraph",
+)
+
+oci_tarball(
+    name = "image_tarball",
+    image = ":image",
+    repo_tags = ["search-blitz:candidate"],
+)
+
+container_structure_test(
+    name = "image_test",
+    timeout = "short",
+    configs = ["image_test.yaml"],
+    driver = "docker",
+    image = ":image",
+    tags = [
+        "exclusive",
+        "requires-network",
+        TAG_PLATFORM_SEARCH,
+    ],
+)
+
+oci_push(
+    name = "candidate_push",
+    image = ":image",
+    repository = image_repository("search-blitz"),
 )

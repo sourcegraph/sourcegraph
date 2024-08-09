@@ -24,7 +24,7 @@ const (
 	envLogDir = "LOG_DIR"
 )
 
-func run(ctx context.Context, wg *sync.WaitGroup, env string) {
+func run(ctx context.Context, wg *sync.WaitGroup, config *Config) {
 	defer wg.Done()
 
 	bc, err := newClient()
@@ -33,11 +33,6 @@ func run(ctx context.Context, wg *sync.WaitGroup, env string) {
 	}
 
 	sc, err := newStreamClient()
-	if err != nil {
-		panic(err)
-	}
-
-	config, err := loadQueries(env)
 	if err != nil {
 		panic(err)
 	}
@@ -196,10 +191,16 @@ func main() {
 	defer cleanup()
 
 	env := os.Getenv("SEARCH_BLITZ_ENV")
+	queryFile := os.Getenv("SEARCH_BLITZ_QUERY_FILE")
+
+	config, err := loadConfig(queryFile, env)
+	if err != nil {
+		panic(err)
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	go run(ctx, &wg, env)
+	go run(ctx, &wg, config)
 
 	wg.Add(1)
 	srv := startServer(&wg)

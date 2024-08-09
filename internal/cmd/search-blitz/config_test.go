@@ -5,7 +5,7 @@ import "testing"
 func TestLoadQueries(t *testing.T) {
 	for _, env := range []string{"", "cloud", "dogfood"} {
 		t.Run(env, func(t *testing.T) {
-			c, err := loadQueries(env)
+			c, err := loadConfig("", env)
 			if err != nil {
 				t.Fatal(err)
 			}

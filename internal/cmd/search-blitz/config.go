@@ -5,6 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"io/fs"
+	"os"
 	"strings"
 	"time"
 
@@ -26,7 +27,7 @@ type QueryConfig struct {
 	Snippet string
 	Name    string
 
-	// An unset interval defaults to 1m
+	// An unset interval defaults to 5m
 	Interval time.Duration
 
 	// An empty value for Protocols means "all"
@@ -43,7 +44,21 @@ const (
 	Stream
 )
 
-func loadQueries(env string) (_ *Config, err error) {
+// Loads queries from queryFile if set, otherwise falls back to
+// embedded set of queries.
+func loadConfig(queryFile, env string) (_ *Config, err error) {
+	if queryFile != "" {
+		queriesRaw, err := os.ReadFile(queryFile)
+		if err != nil {
+			return nil, err
+		}
+		queries, err := parseQueries(queriesRaw)
+		if err != nil {
+			return nil, err
+		}
+		return &Config{Queries: queries}, nil
+	}
+
 	if env == "" {
 		env = "cloud"
 	}
@@ -69,6 +84,16 @@ func loadQueries(env string) (_ *Config, err error) {
 	}
 	queries = append(queries, attributions...)
 
+	parsedQueries, err := parseQueries(queriesRaw)
+	if err != nil {
+		return nil, err
+	}
+	queries = append(queries, parsedQueries...)
+
+	return &Config{Queries: queries}, nil
+}
+
+func parseQueries(queriesRaw []byte) (queries []*QueryConfig, err error) {
 	var current QueryConfig
 	add := func() {
 		q := &QueryConfig{
@@ -97,10 +122,7 @@ func loadQueries(env string) (_ *Config, err error) {
 		}
 	}
 	add()
-
-	return &Config{
-		Queries: queries,
-	}, err
+	return queries, err
 }
 
 func loadAttributions() ([]*QueryConfig, error) {
