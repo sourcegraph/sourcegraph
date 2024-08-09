@@ -2,7 +2,7 @@ import type { PartialMessage } from '@bufbuild/protobuf'
 import type { ConnectError, Transport } from '@connectrpc/connect'
 import { defaultOptions, useMutation, useQuery } from '@connectrpc/connect-query'
 import { createConnectTransport } from '@connectrpc/connect-web'
-import { QueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query'
+import { QueryClient, type UseMutationResult, type UseQueryResult, keepPreviousData } from '@tanstack/react-query'
 
 import {
     getCodyGatewayAccess,
@@ -15,6 +15,33 @@ import type {
     UpdateCodyGatewayAccessRequest,
     UpdateCodyGatewayAccessResponse,
 } from './enterpriseportalgen/codyaccess_pb'
+import {
+    listEnterpriseSubscriptions,
+    listEnterpriseSubscriptionLicenses,
+    revokeEnterpriseSubscriptionLicense,
+    getEnterpriseSubscription,
+    createEnterpriseSubscriptionLicense,
+    createEnterpriseSubscription,
+    archiveEnterpriseSubscription,
+    updateEnterpriseSubscription,
+} from './enterpriseportalgen/subscriptions-SubscriptionsService_connectquery'
+import type {
+    ListEnterpriseSubscriptionsResponse,
+    ListEnterpriseSubscriptionsFilter,
+    ListEnterpriseSubscriptionLicensesFilter,
+    ListEnterpriseSubscriptionLicensesResponse,
+    RevokeEnterpriseSubscriptionLicenseResponse,
+    RevokeEnterpriseSubscriptionLicenseRequest,
+    GetEnterpriseSubscriptionResponse,
+    CreateEnterpriseSubscriptionLicenseResponse,
+    CreateEnterpriseSubscriptionLicenseRequest,
+    CreateEnterpriseSubscriptionRequest,
+    CreateEnterpriseSubscriptionResponse,
+    ArchiveEnterpriseSubscriptionResponse,
+    ArchiveEnterpriseSubscriptionRequest,
+    UpdateEnterpriseSubscriptionRequest,
+    UpdateEnterpriseSubscriptionResponse,
+} from './enterpriseportalgen/subscriptions_pb'
 
 /**
  * Use a shared QueryClient defined here and explicitly provided via
@@ -28,7 +55,17 @@ import type {
  * Portal gets its own dedicated UI:
  * https://linear.app/sourcegraph/project/kr-p-enterprise-portal-user-interface-dadd5ff28bd8
  */
-export const queryClient = new QueryClient({ defaultOptions })
+export const queryClient = new QueryClient({
+    defaultOptions: {
+        ...defaultOptions,
+        queries: {
+            retry: false,
+        },
+        mutations: {
+            retry: false,
+        },
+    },
+})
 
 /**
  * Use proxy that routes to a locally running Enterprise Portal at localhost:6081
@@ -127,6 +164,127 @@ export function useUpdateCodyGatewayAccess(
     unknown
 > {
     return useMutation(updateCodyGatewayAccess, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useListEnterpriseSubscriptions(
+    env: EnterprisePortalEnvironment,
+    filters: PartialMessage<ListEnterpriseSubscriptionsFilter>[],
+    options: {
+        limit: number
+        shouldLoad: boolean
+    }
+): UseQueryResult<ListEnterpriseSubscriptionsResponse, ConnectError> {
+    return useQuery(
+        listEnterpriseSubscriptions,
+        {
+            filters,
+            pageSize: options.limit,
+        },
+        {
+            transport: mustGetEnvironment(env),
+            enabled: options.shouldLoad,
+            placeholderData: keepPreviousData,
+        }
+    )
+}
+
+export function useListEnterpriseSubscriptionLicenses(
+    env: EnterprisePortalEnvironment,
+    filters: PartialMessage<ListEnterpriseSubscriptionLicensesFilter>[],
+    options: {
+        limit: number
+        shouldLoad: boolean
+    }
+): UseQueryResult<ListEnterpriseSubscriptionLicensesResponse, ConnectError> {
+    return useQuery(
+        listEnterpriseSubscriptionLicenses,
+        {
+            filters,
+        },
+        {
+            transport: mustGetEnvironment(env),
+            enabled: options.shouldLoad,
+            placeholderData: keepPreviousData,
+        }
+    )
+}
+
+export function useRevokeEnterpriseSubscriptionLicense(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    RevokeEnterpriseSubscriptionLicenseResponse,
+    ConnectError,
+    PartialMessage<RevokeEnterpriseSubscriptionLicenseRequest>,
+    unknown
+> {
+    return useMutation(revokeEnterpriseSubscriptionLicense, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useGetEnterpriseSubscription(
+    env: EnterprisePortalEnvironment,
+    subscriptionUUID: string
+): UseQueryResult<GetEnterpriseSubscriptionResponse, ConnectError> {
+    return useQuery(
+        getEnterpriseSubscription,
+        {
+            query: { value: subscriptionUUID, case: 'id' },
+        },
+        { transport: mustGetEnvironment(env) }
+    )
+}
+
+export function useCreateEnterpriseSubscriptionLicense(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    CreateEnterpriseSubscriptionLicenseResponse,
+    ConnectError,
+    PartialMessage<CreateEnterpriseSubscriptionLicenseRequest>,
+    unknown
+> {
+    return useMutation(createEnterpriseSubscriptionLicense, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useCreateEnterpriseSubscription(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    CreateEnterpriseSubscriptionResponse,
+    ConnectError,
+    PartialMessage<CreateEnterpriseSubscriptionRequest>,
+    unknown
+> {
+    return useMutation(createEnterpriseSubscription, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useArchiveEnterpriseSubscription(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    ArchiveEnterpriseSubscriptionResponse,
+    ConnectError,
+    PartialMessage<ArchiveEnterpriseSubscriptionRequest>,
+    unknown
+> {
+    return useMutation(archiveEnterpriseSubscription, {
+        transport: mustGetEnvironment(env),
+    })
+}
+
+export function useUpdateEnterpriseSubscription(
+    env: EnterprisePortalEnvironment
+): UseMutationResult<
+    UpdateEnterpriseSubscriptionResponse,
+    ConnectError,
+    PartialMessage<UpdateEnterpriseSubscriptionRequest>,
+    unknown
+> {
+    return useMutation(updateEnterpriseSubscription, {
         transport: mustGetEnvironment(env),
     })
 }

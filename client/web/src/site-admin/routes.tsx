@@ -114,10 +114,6 @@ const SiteAdminProductSubscriptionPage = lazyComponent(
     () => import('../enterprise/site-admin/productSubscription/SiteAdminProductSubscriptionPage'),
     'SiteAdminProductSubscriptionPage'
 )
-const SiteAdminProductCustomersPage = lazyComponent(
-    () => import('../enterprise/site-admin/dotcom/customers/SiteAdminCustomersPage'),
-    'SiteAdminProductCustomersPage'
-)
 const SiteAdminCreateProductSubscriptionPage = lazyComponent(
     () => import('../enterprise/site-admin/dotcom/productSubscriptions/SiteAdminCreateProductSubscriptionPage'),
     'SiteAdminCreateProductSubscriptionPage'
@@ -366,11 +362,6 @@ export const otherSiteAdminRoutes: readonly SiteAdminAreaRoute[] = [
         render: props => (
             <SiteAdminProductSubscriptionPage telemetryRecorder={props.platformContext.telemetryRecorder} />
         ),
-    },
-    {
-        path: '/dotcom/customers',
-        render: props => <SiteAdminProductCustomersPage telemetryRecorder={props.platformContext.telemetryRecorder} />,
-        condition: () => SHOW_BUSINESS_FEATURES,
     },
     {
         path: '/dotcom/product/subscriptions/new',

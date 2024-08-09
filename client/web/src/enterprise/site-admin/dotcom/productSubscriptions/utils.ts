@@ -40,11 +40,3 @@ export function errorForPath(error: ApolloError | undefined, path: (string | num
 }
 
 export const numberFormatter = new Intl.NumberFormat()
-
-/**
- * Prefixes the ID with subscriptionsv1.EnterpriseSubscriptionIDPrefix to get
- * the Enterprise Portal external subscription UUID format.
- */
-export function enterprisePortalID(id: string): string {
-    return `es_${id}`
-}

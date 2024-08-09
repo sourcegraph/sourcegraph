@@ -1,14 +1,13 @@
 import React, { useState, useCallback } from 'react'
 
+import { Timestamp } from '@bufbuild/protobuf'
 import { UTCDate } from '@date-fns/utc'
 import { mdiChatQuestionOutline } from '@mdi/js'
 import classNames from 'classnames'
 import { addDays, endOfDay } from 'date-fns'
 import { noop } from 'lodash'
 
-import { useMutation } from '@sourcegraph/http-client'
-import type { Scalars } from '@sourcegraph/shared/src/graphql-operations'
-import { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
+import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     Alert,
     Button,
@@ -30,16 +29,11 @@ import {
 
 import { Collapsible } from '../../../../components/Collapsible'
 import { LoaderButton } from '../../../../components/LoaderButton'
-import type {
-    GenerateProductLicenseForSubscriptionResult,
-    GenerateProductLicenseForSubscriptionVariables,
-    ProductLicenseFields,
-    ProductLicenseInfoFields,
-} from '../../../../graphql-operations'
 import { ExpirationDate } from '../../../productSubscription/ExpirationDate'
 import { hasUnknownTags, ProductLicenseTags, UnknownTagWarning } from '../../../productSubscription/ProductLicenseTags'
 
-import { GENERATE_PRODUCT_LICENSE } from './backend'
+import { type EnterprisePortalEnvironment, useCreateEnterpriseSubscriptionLicense } from './enterpriseportal'
+import type { EnterpriseSubscription, EnterpriseSubscriptionLicense } from './enterpriseportalgen/subscriptions_pb'
 import {
     ALL_PLANS,
     TAG_AIR_GAPPED,
@@ -52,32 +46,21 @@ import {
 
 import styles from './SiteAdminGenerateProductLicenseForSubscriptionForm.module.scss'
 
-// TODO: Maybe a field for a custom comment on what instance the key is for?
-// In accordance with:
-// Add trial and instance:test or instance:whatever_name_is_appropriate tags, so that we can identify which license keys are test and which are not
-// from https://handbook.sourcegraph.com/departments/technical-success/ce/process/license_keys.
-
-// TODO: Add MAU switch.
-
-interface License extends Omit<ProductLicenseFields, 'subscription' | 'info'> {
-    info: Omit<ProductLicenseInfoFields, 'productNameWithBrand'> | null
-}
 interface Props extends TelemetryV2Props {
-    subscriptionID: Scalars['ID']
-    subscriptionAccount: string
-    latestLicense: License | undefined
+    env: EnterprisePortalEnvironment
+    subscription: EnterpriseSubscription
+    latestLicense: EnterpriseSubscriptionLicense | undefined
     onGenerate: () => void
     onCancel: () => void
 }
 
 interface FormData {
+    message: string
     /** Comma-separated additional license tags. */
     tags: string
-    customer: string
-    salesforceSubscriptionID: string
     salesforceOpportunityID: string
     plan: string
-    userCount: number
+    userCount: bigint
     expiresAt: Date
     trueUp: boolean
     trial: boolean
@@ -87,31 +70,31 @@ interface FormData {
     codeInsights: boolean
 }
 
-const getEmptyFormData = (account: string, latestLicense: License | undefined): FormData => {
+const getEmptyFormData = (latestLicense: EnterpriseSubscriptionLicense | undefined): FormData => {
+    const licenseData = latestLicense?.license?.value
     const formData: FormData = {
+        message: '',
         tags: '',
-        customer: account,
-        salesforceSubscriptionID: latestLicense?.info?.salesforceSubscriptionID ?? '',
-        salesforceOpportunityID: latestLicense?.info?.salesforceOpportunityID ?? '',
-        plan: latestLicense?.info?.tags.find(tag => tag.startsWith('plan:'))?.slice('plan:'.length) ?? '',
-        userCount: latestLicense?.info?.userCount ?? 1,
+        salesforceOpportunityID: licenseData?.info?.salesforceOpportunityId ?? '',
+        plan: licenseData?.info?.tags.find(tag => tag.startsWith('plan:'))?.slice('plan:'.length) ?? '',
+        userCount: licenseData?.info?.userCount ?? BigInt(1),
         expiresAt: endOfDay(new UTCDate(UTCDate.now())),
-        trial: latestLicense?.info?.tags.includes(TAG_TRIAL.tagValue) ?? false,
-        trueUp: latestLicense?.info?.tags.includes(TAG_TRUEUP.tagValue) ?? false,
-        airGapped: latestLicense?.info?.tags.includes(TAG_AIR_GAPPED.tagValue) ?? false,
-        batchChanges: latestLicense?.info?.tags.includes(TAG_BATCH_CHANGES.tagValue) ?? false,
-        codeInsights: latestLicense?.info?.tags.includes(TAG_CODE_INSIGHTS.tagValue) ?? false,
-        disableTelemetry: latestLicense?.info?.tags.includes(TAG_DISABLE_TELEMETRY_EXPORT.tagValue) ?? false,
+        trial: licenseData?.info?.tags.includes(TAG_TRIAL.tagValue) ?? false,
+        trueUp: licenseData?.info?.tags.includes(TAG_TRUEUP.tagValue) ?? false,
+        airGapped: licenseData?.info?.tags.includes(TAG_AIR_GAPPED.tagValue) ?? false,
+        batchChanges: licenseData?.info?.tags.includes(TAG_BATCH_CHANGES.tagValue) ?? false,
+        codeInsights: licenseData?.info?.tags.includes(TAG_CODE_INSIGHTS.tagValue) ?? false,
+        disableTelemetry: licenseData?.info?.tags.includes(TAG_DISABLE_TELEMETRY_EXPORT.tagValue) ?? false,
     }
 
-    if (latestLicense?.info) {
+    if (licenseData?.info) {
         // Based on the tag-less formData created above, generate the list of tags to add.
         // We then only add additional tags for the things that aren't yet expressed,
         // to avoid duplicates and let the specific flags on form data handle addition
         // of their tag values.
         const presentTags = getTagsFromFormData(formData)
         formData.tags =
-            latestLicense?.info?.tags
+            licenseData?.info?.tags
                 .filter(tag => !tag.startsWith('plan:') && !tag.startsWith('customer:') && !presentTags.includes(tag))
                 .join(',') ?? ''
     }
@@ -136,7 +119,6 @@ const tagsFromString = (tagString: string): string[] =>
 const getTagsFromFormData = (formData: FormData): string[] =>
     Array.from(
         new Set([
-            `customer:${formData.customer}`,
             ...(formData.plan ? [`plan:${formData.plan}`] : []),
             ...(formData.trueUp &&
             ALL_PLANS.find(other => other.label === formData.plan)?.additionalTags?.some(
@@ -162,9 +144,6 @@ const getTagsForTelemetry = (formData: FormData): { [key: string]: number } => (
     disableTelemetry: formData.disableTelemetry ? 1 : 0,
 })
 
-const HANDBOOK_INFO_URL =
-    'https://handbook.sourcegraph.com/ce/license_keys#how-to-create-a-license-key-for-a-new-prospect-or-new-customer'
-
 /**
  * Displays a form to generate a new product license for a product subscription.
  *
@@ -172,12 +151,12 @@ const HANDBOOK_INFO_URL =
  */
 export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionComponent<
     React.PropsWithChildren<Props>
-> = ({ latestLicense, subscriptionID, subscriptionAccount, onGenerate, onCancel, telemetryRecorder }) => {
+> = ({ env, latestLicense, subscription, onGenerate, onCancel, telemetryRecorder }) => {
     const labelId = 'generateLicense'
 
     const [hasAcknowledgedInfo, setHasAcknowledgedInfo] = useState(false)
 
-    const [formData, setFormData] = useState<FormData>(getEmptyFormData(subscriptionAccount, latestLicense))
+    const [formData, setFormData] = useState<FormData>(getEmptyFormData(latestLicense))
 
     const onPlanChange = useCallback<React.ChangeEventHandler<HTMLSelectElement>>(
         event => setFormData(formData => ({ ...formData, plan: event.target.value })),
@@ -189,9 +168,10 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
             event => setFormData(formData => ({ ...formData, [key]: event.target.value })),
             [key]
         )
-    const onCustomerChange = useOnChange('customer')
-    const onSFSubscriptionIDChange = useOnChange('salesforceSubscriptionID')
+    const onMessageChange = useOnChange('message')
     const onSFOpportunityIDChange = useOnChange('salesforceOpportunityID')
+
+    const [sfOpportunityIDError, setSFOpportunityIDError] = useState<string | undefined>(undefined)
 
     const onTagsChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
         event => setFormData(formData => ({ ...formData, tags: event.target.value || '' })),
@@ -199,7 +179,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
     )
 
     const onUserCountChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
-        event => setFormData(formData => ({ ...formData, userCount: event.target.valueAsNumber })),
+        event => setFormData(formData => ({ ...formData, userCount: BigInt(event.target.valueAsNumber || 0) })),
         []
     )
 
@@ -259,7 +239,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
 
             const date: Date = dateRegex.test(event.target.value)
                 ? new UTCDate(event.target.value)
-                : getEmptyFormData(subscriptionAccount, latestLicense).expiresAt
+                : getEmptyFormData(latestLicense).expiresAt
 
             const expiresAt = endOfDay(new UTCDate(date))
 
@@ -268,31 +248,10 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                 expiresAt,
             }))
         },
-        [subscriptionAccount, latestLicense]
+        [latestLicense]
     )
 
-    const [generateLicense, { loading, error }] = useMutation<
-        GenerateProductLicenseForSubscriptionResult['dotcom']['generateProductLicenseForSubscription'],
-        GenerateProductLicenseForSubscriptionVariables
-    >(GENERATE_PRODUCT_LICENSE, {
-        variables: {
-            productSubscriptionID: subscriptionID,
-            license: {
-                tags: getTagsFromFormData(formData),
-                userCount: formData.userCount,
-                expiresAt: Math.floor(formData.expiresAt.getTime() / 1000),
-                salesforceSubscriptionID:
-                    formData.salesforceSubscriptionID.trim().length > 0
-                        ? formData.salesforceSubscriptionID.trim()
-                        : undefined,
-                salesforceOpportunityID:
-                    formData.salesforceOpportunityID.trim().length > 0
-                        ? formData.salesforceOpportunityID.trim()
-                        : undefined,
-            },
-        },
-        onCompleted: onGenerate,
-    })
+    const { mutate: generateLicense, isPending: isLoading, error } = useCreateEnterpriseSubscriptionLicense(env)
 
     const onSubmit = useCallback<React.FormEventHandler>(
         event => {
@@ -300,10 +259,34 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
             telemetryRecorder.recordEvent('admin.productSubscription.license', 'generate', {
                 metadata: getTagsForTelemetry(formData),
             })
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            generateLicense()
+            generateLicense(
+                {
+                    message: formData.message,
+                    license: {
+                        subscriptionId: subscription.id,
+                        license: {
+                            // We only support creating old-school license keys
+                            case: 'key',
+                            value: {
+                                info: {
+                                    tags: getTagsFromFormData(formData),
+                                    userCount: formData.userCount,
+                                    expireTime: Timestamp.fromDate(formData.expiresAt),
+                                    salesforceOpportunityId:
+                                        formData.salesforceOpportunityID.trim().length > 0
+                                            ? formData.salesforceOpportunityID.trim()
+                                            : undefined,
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    onSuccess: onGenerate,
+                }
+            )
         },
-        [formData, telemetryRecorder, generateLicense]
+        [formData, telemetryRecorder, generateLicense, subscription, onGenerate]
     )
 
     const tags = useDebounce<string[]>(tagsFromString(formData.tags), 300)
@@ -321,14 +304,11 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
             <H3 className="flex-shrink-0" id={labelId}>
                 Generate new Sourcegraph license
                 {hasAcknowledgedInfo && (
-                    <>
-                        {' '}
-                        <Link rel="noopener" target="_blank" to={HANDBOOK_INFO_URL}>
-                            <Tooltip content="Show handbook page with additional information on the license issuance process">
-                                <Icon aria-label="Show handbook page" svgPath={mdiChatQuestionOutline} />
-                            </Tooltip>
-                        </Link>
-                    </>
+                    <Button variant="icon" onClick={() => setHasAcknowledgedInfo(false)}>
+                        <Tooltip content="Show additional information on the license issuance process">
+                            <Icon aria-label="Show handbook page" svgPath={mdiChatQuestionOutline} />
+                        </Tooltip>
+                    </Button>
                 )}
             </H3>
 
@@ -336,12 +316,23 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
 
             {!hasAcknowledgedInfo && (
                 <>
-                    <Alert variant="info" className="flex-shrink-0">
-                        Please read the{' '}
-                        <Link rel="noopener" target="_blank" to={HANDBOOK_INFO_URL}>
-                            guide for how to create a license key for a new prospect or new customer.
-                        </Link>
+                    <Alert variant="danger" className="flex-shrink-0">
+                        Each subscription must map to exactly ONE Sourcegraph instance.{' '}
+                        <strong>
+                            DO NOT create licenses used by multiple Sourcegraph instances within a single subscription
+                        </strong>{' '}
+                        - instead, create a NEW subscription with the appropriate Salesforce subscription ID and a
+                        relevant display name.
                     </Alert>
+
+                    <Alert variant="info" className="flex-shrink-0">
+                        Existing licenses can be re-linked to a new subscription by reaching out to{' '}
+                        <Link rel="noopener" target="_blank" to="https://sourcegraph.slack.com/archives/C05GJPTSZCZ">
+                            #discuss-core-services
+                        </Link>
+                        .
+                    </Alert>
+
                     <Button variant="secondary" onClick={() => setHasAcknowledgedInfo(true)}>
                         Acknowledge information
                     </Button>
@@ -357,10 +348,20 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                         )}
                     >
                         <Form onSubmit={onSubmit}>
+                            <Input
+                                id="site-admin-create-product-subscription-page__salesforce_op_id_input"
+                                label="Message"
+                                description="Enter a message about the creation of this license."
+                                type="text"
+                                required={true}
+                                disabled={isLoading}
+                                value={formData.message}
+                                onChange={onMessageChange}
+                            />
                             <Select
                                 id="site-admin-create-product-subscription-page__plan_select"
                                 label="Plan"
-                                disabled={loading}
+                                disabled={isLoading}
                                 value={formData.plan}
                                 onChange={onPlanChange}
                                 description="Select the plan the license is for."
@@ -403,41 +404,44 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                             id="productSubscription__trial"
                                             aria-label="Is trial"
                                             label="This license is for a trial"
-                                            disabled={loading}
+                                            disabled={isLoading}
                                             checked={formData.trial}
                                             onChange={onIsTrialChange}
                                         />
                                     </div>
 
                                     <Input
-                                        id="site-admin-create-product-subscription-page__customer_input"
-                                        label="Customer"
-                                        description="Name of the customer. Will be encoded into the key for easier identification."
-                                        type="text"
-                                        disabled={loading}
-                                        value={formData.customer || ''}
-                                        onChange={onCustomerChange}
-                                        required={true}
-                                    />
-
-                                    <Input
-                                        id="site-admin-create-product-subscription-page__salesforce_sub_id_input"
-                                        label="Salesforce Subscription ID"
-                                        description="Enter the corresponding Subscription ID from Salesforce."
-                                        type="text"
-                                        disabled={loading}
-                                        value={formData.salesforceSubscriptionID}
-                                        onChange={onSFSubscriptionIDChange}
-                                    />
-
-                                    <Input
                                         id="site-admin-create-product-subscription-page__salesforce_op_id_input"
                                         label="Salesforce Opportunity ID"
-                                        description="Enter the corresponding Opportunity ID from Salesforce."
+                                        description="Enter the corresponding Opportunity ID from Salesforce. This is VERY important to provide for all subscriptions used by customers. It cannot be changed after a license has been created."
                                         type="text"
-                                        disabled={loading}
+                                        disabled={isLoading}
+                                        error={sfOpportunityIDError}
                                         value={formData.salesforceOpportunityID}
-                                        onChange={onSFOpportunityIDChange}
+                                        onChange={event => {
+                                            onSFOpportunityIDChange(event)
+                                            const { value } = event.target
+                                            if (!value) {
+                                                setSFOpportunityIDError(undefined)
+                                                return
+                                            }
+
+                                            if (!value.startsWith('006')) {
+                                                setSFOpportunityIDError(
+                                                    'Salesforce opportunity ID must start with "006"'
+                                                )
+                                                return
+                                            }
+                                            if (value.length < 17) {
+                                                setSFOpportunityIDError(
+                                                    'Salesforce opportunity ID must be longer than 17 characters'
+                                                )
+                                                return
+                                            }
+
+                                            // No problems
+                                            setSFOpportunityIDError(undefined)
+                                        }}
                                     />
 
                                     <Input
@@ -445,8 +449,8 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                         label="Users"
                                         min={1}
                                         id="site-admin-create-product-subscription-page__userCount"
-                                        disabled={!selectedPlan || loading}
-                                        value={formData.userCount}
+                                        disabled={!selectedPlan || isLoading}
+                                        value={Number(formData.userCount)}
                                         onChange={onUserCountChange}
                                         description="The maximum number of users permitted on this license."
                                         className="w-100"
@@ -579,7 +583,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                             type="text"
                                             label="Tags"
                                             id="site-admin-create-product-subscription-page__tags"
-                                            disabled={loading}
+                                            disabled={isLoading}
                                             value={formData.tags}
                                             onChange={onTagsChange}
                                             list="known-tags"
@@ -587,11 +591,13 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                             message={
                                                 <Text className="text-danger">
                                                     Note that specifying tags manually is no longer required and the
-                                                    form should handle all options.
+                                                    form should handle all options. For example, the{' '}
+                                                    <span className="text-monospace">customer:</span> tag is
+                                                    automatically added on license creation.
                                                     <br />
                                                     Only use this if you know what you're doing!
                                                     <br />
-                                                    All the tags are displayed at the end of the form as well.
+                                                    All final tags are displayed at the end of the form as well.
                                                 </Text>
                                             }
                                             className="mt-2"
@@ -621,7 +627,7 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
 
                             <div className="d-flex justify-content-end">
                                 <Button
-                                    disabled={loading}
+                                    disabled={isLoading}
                                     className="mr-2"
                                     onClick={onCancel}
                                     outline={true}
@@ -631,9 +637,9 @@ export const SiteAdminGenerateProductLicenseForSubscriptionForm: React.FunctionC
                                 </Button>
                                 <LoaderButton
                                     type="submit"
-                                    disabled={loading || !selectedPlan}
+                                    disabled={isLoading || !selectedPlan || !!sfOpportunityIDError}
                                     variant="primary"
-                                    loading={loading}
+                                    loading={isLoading}
                                     alwaysShowLabel={true}
                                     label="Generate key"
                                 />

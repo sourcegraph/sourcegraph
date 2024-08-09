@@ -9,7 +9,6 @@ import { logger } from '@sourcegraph/common'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import {
     H3,
-    ProductStatusBadge,
     Container,
     Text,
     H4,
@@ -112,21 +111,31 @@ export const CodyServicesSection: React.FunctionComponent<Props> = ({
         telemetryRecorder,
     ])
 
+    const header = <H3>Cody services</H3>
+
     if (getCodyGatewayAccessLoading && !codyGatewayAccessResponse) {
-        return <LoadingSpinner />
+        return (
+            <>
+                {header}
+                <LoadingSpinner />
+            </>
+        )
     }
 
     if (getCodyGatewayAccessError) {
-        return <ErrorAlert className="my-2" error={getCodyGatewayAccessError} />
+        return (
+            <>
+                {header}
+                <ErrorAlert className="my-2" error={getCodyGatewayAccessError} />
+            </>
+        )
     }
 
     const { access: codyGatewayAccess } = codyGatewayAccessResponse!
 
     return (
         <>
-            <H3>
-                Cody services <ProductStatusBadge status="beta" />
-            </H3>
+            {header}
             <Container className="mb-3">
                 <>
                     <div className="form-group mb-2">
