@@ -9,7 +9,8 @@ To regenerate all relevant bindings:
 ```sh
 sg gen buf \
   lib/enterpriseportal/subscriptions/v1/buf.gen.yaml \
-  lib/enterpriseportal/codyaccess/v1/buf.gen.yaml
+  lib/enterpriseportal/codyaccess/v1/buf.gen.yaml \
+  lib/enterpriseportal/subscriptionlicensechecks/v1/buf.gen.yaml
 ```
 
 > [!CAUTION]

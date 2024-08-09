@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package enterpriseportal.subscriptionlicensechecks.v1;
+
+option go_package = "github.com/sourcegraph/sourcegraph/lib/enterpriseportal/subscriptionlicensechecks/v1";
+
+// SubscriptionLicenseCheckService is the *public-facing* API specification for
+// Enterprise Portal's online license checks.
+//
+// Product implementations can use these endpoints to verify the status of a
+// license.
+service SubscriptionLicenseChecksService {
+  // CheckLicenseKey returns the status of a license key. It expects bearer
+  // authorization with a token of the format 'slk_$hex($sha256(licenseKey))'.
+  rpc CheckLicenseKey(CheckLicenseKeyRequest) returns (CheckLicenseKeyResponse) {}
+}
+
+message CheckLicenseKeyRequest {
+  // Self-reported Sourcegraph instance identifier (also known as 'site ID').
+  string instance_id = 1;
+}
+
+message CheckLicenseKeyResponse {
+  // Valid indicates whether the license key is valid.
+  bool valid = 1;
+  // Reason can contain a human-readable explanation of the response.
+  string reason = 2;
+}
