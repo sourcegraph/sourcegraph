@@ -445,27 +445,18 @@ type GitserverServiceClient interface {
 	// If no common merge base exists, an empty string is returned.
 	// See the following diagrams from git-merge-base docs on what octopus merge bases
 	// are:
-	// Given three commits A, B, and C, git merge-base A B C will compute the merge base between A and a hypothetical commit M, which is a merge between B and C. For example, with this topology:
+	// Given three commits A, B, and C, MergeBaseOctopus(A, B, C) will compute the
+	// best common ancestor of all commits.
+	// For example, with this topology:
 	//
-	//	 o---o---o---o---C
-	//	/
+	//	       o---o---o---o---C
+	//	      /
+	//	     /   o---o---o---B
+	//	    /   /
+	//	---2---1---o---o---o---A
 	//
-	// /   o---o---o---B
-	// /   /
-	// ---2---1---o---o---o---A
-	//
-	// the result of git merge-base A B C is 1. This is because the equivalent topology with a merge commit M between B and C is:
-	//
-	//	 o---o---o---o---o
-	//	/                 \
-	//
-	// /   o---o---o---o---M
-	// /   /
-	// ---2---1---o---o---o---A
-	//
-	// and the result of git merge-base A M is 1. Commit 2 is also a common ancestor between A and M, but 1 is a better common ancestor, because 2 is an ancestor of 1. Hence, 2 is not a merge base.
-	//
-	// The result of git merge-base --octopus A B C is 2, because 2 is the best common ancestor of all commits.
+	// The result of MergeBaseOctopus(A, B, C) is 2, because 2 is the
+	// best common ancestor of all commits.
 	//
 	// If the given repo is not cloned, it will be enqueued for cloning and a
 	// NotFound error will be returned, with a RepoNotFoundPayload in the details.
@@ -1225,27 +1216,18 @@ type GitserverServiceServer interface {
 	// If no common merge base exists, an empty string is returned.
 	// See the following diagrams from git-merge-base docs on what octopus merge bases
 	// are:
-	// Given three commits A, B, and C, git merge-base A B C will compute the merge base between A and a hypothetical commit M, which is a merge between B and C. For example, with this topology:
+	// Given three commits A, B, and C, MergeBaseOctopus(A, B, C) will compute the
+	// best common ancestor of all commits.
+	// For example, with this topology:
 	//
-	//	 o---o---o---o---C
-	//	/
+	//	       o---o---o---o---C
+	//	      /
+	//	     /   o---o---o---B
+	//	    /   /
+	//	---2---1---o---o---o---A
 	//
-	// /   o---o---o---B
-	// /   /
-	// ---2---1---o---o---o---A
-	//
-	// the result of git merge-base A B C is 1. This is because the equivalent topology with a merge commit M between B and C is:
-	//
-	//	 o---o---o---o---o
-	//	/                 \
-	//
-	// /   o---o---o---o---M
-	// /   /
-	// ---2---1---o---o---o---A
-	//
-	// and the result of git merge-base A M is 1. Commit 2 is also a common ancestor between A and M, but 1 is a better common ancestor, because 2 is an ancestor of 1. Hence, 2 is not a merge base.
-	//
-	// The result of git merge-base --octopus A B C is 2, because 2 is the best common ancestor of all commits.
+	// The result of MergeBaseOctopus(A, B, C) is 2, because 2 is the
+	// best common ancestor of all commits.
 	//
 	// If the given repo is not cloned, it will be enqueued for cloning and a
 	// NotFound error will be returned, with a RepoNotFoundPayload in the details.

@@ -28,6 +28,7 @@ func FromJobNode(node query.Node) QueryNode {
 			Value:     n.Value,
 			IsNegated: n.Negated,
 			IsRegExp:  n.IsRegExp(),
+			Boost:     n.Annotation.Labels.IsSet(query.Boost),
 		}
 	case query.Operator:
 		children := make([]QueryNode, 0, len(n.Operands))
@@ -109,6 +110,9 @@ type PatternNode struct {
 
 	// IsRegExp if true will treat the Value as a regular expression.
 	IsRegExp bool
+
+	// Boost indicates whether this pattern should have its score boosted in Zoekt ranking
+	Boost bool
 }
 
 func (rn *PatternNode) String() string {
@@ -131,6 +135,7 @@ func (rn *PatternNode) ToProto() *proto.QueryNode {
 				Value:     rn.Value,
 				IsNegated: rn.IsNegated,
 				IsRegexp:  rn.IsRegExp,
+				Boost:     rn.Boost,
 			},
 		},
 	}

@@ -224,6 +224,7 @@ func NodeFromProto(p *proto.QueryNode) QueryNode {
 			Value:     v.Pattern.Value,
 			IsRegExp:  v.Pattern.IsRegexp,
 			IsNegated: v.Pattern.IsNegated,
+			Boost:     v.Pattern.Boost,
 		}
 	case *proto.QueryNode_And:
 		children := make([]QueryNode, 0, len(v.And.Children))

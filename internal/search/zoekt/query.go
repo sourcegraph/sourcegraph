@@ -178,7 +178,7 @@ func toZoektPattern(
 			}
 
 			if n.Annotation.Labels.IsSet(query.Boost) {
-				q = &zoekt.Boost{Child: q, Boost: 20}
+				q = &zoekt.Boost{Child: q, Boost: query.ZoektScoreBoost}
 			}
 
 			return q, nil

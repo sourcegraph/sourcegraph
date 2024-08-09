@@ -72,3 +72,6 @@ func LangToFileRegexp(lang string) string {
 	// We always treat lang filters as case insensitive.
 	return CaseInsensitiveRegExp(UnionRegExps(patterns))
 }
+
+// ZoektScoreBoost is the scoring boost applied to exact phrases, used mainly in ExperimentalPhraseBoost.
+const ZoektScoreBoost = 20

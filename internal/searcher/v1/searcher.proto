@@ -145,6 +145,9 @@ message PatternNode {
 
   // is_regexp if true will treat the pattern as a regular expression.
   bool is_regexp = 3;
+
+  // boost indicates whether the pattern's score should be boosted in Zoekt's ranking
+  bool boost = 4;
 }
 
 message AndNode {

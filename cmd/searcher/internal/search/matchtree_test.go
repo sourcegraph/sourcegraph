@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/regexp"
+	"github.com/hexops/autogold/v2"
 	"github.com/sourcegraph/zoekt/query"
 	"github.com/stretchr/testify/require"
 )
@@ -59,7 +60,8 @@ func TestToZoektQuery(t *testing.T) {
 						isNegated: true,
 					},
 					&regexMatchTree{
-						re: regexp.MustCompile("bbbb*"),
+						re:    regexp.MustCompile("bbbb*"),
+						boost: true,
 					},
 				},
 			},
@@ -74,24 +76,23 @@ func TestToZoektQuery(t *testing.T) {
 		name         string
 		matchContent bool
 		matchPath    bool
-		want         string
+		want         autogold.Value
 	}{{
 		name:         "matches content only",
 		matchContent: true,
 		matchPath:    false,
-		want:         `(and (or (not case_regex:"aaaaa") case_regex:"bbbb*") regex:"cccc?")`,
+		want:         autogold.Expect(`(and (or (not case_regex:"aaaaa") (boost 20.00 case_regex:"bbbb*")) regex:"cccc?")`),
 	}, {
 		name:         "matches path only",
 		matchContent: false,
 		matchPath:    true,
-		want:         `(and (or (not case_file_regex:"aaaaa") case_file_regex:"bbbb*") file_regex:"cccc?")`,
+		want:         autogold.Expect(`(and (or (not case_file_regex:"aaaaa") (boost 20.00 case_file_regex:"bbbb*")) file_regex:"cccc?")`),
+	}, {
+		name:         "matches content and path",
+		matchContent: true,
+		matchPath:    true,
+		want:         autogold.Expect(`(and (or (not case_regex:"aaaaa") (not case_file_regex:"aaaaa") (boost 20.00 (or case_regex:"bbbb*" case_file_regex:"bbbb*"))) (or regex:"cccc?" file_regex:"cccc?"))`),
 	},
-		{
-			name:         "matches content and path",
-			matchContent: true,
-			matchPath:    true,
-			want:         `(and (or (not case_regex:"aaaaa") (not case_file_regex:"aaaaa") case_regex:"bbbb*" case_file_regex:"bbbb*") (or regex:"cccc?" file_regex:"cccc?"))`,
-		},
 	}
 
 	for _, c := range cases {
@@ -100,7 +101,7 @@ func TestToZoektQuery(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			require.Equal(t, c.want, query.Simplify(got).String())
+			c.want.Equal(t, query.Simplify(got).String())
 		})
 	}
 }
