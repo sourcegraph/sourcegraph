@@ -13,6 +13,7 @@
 </script>
 
 <script lang="ts">
+    import { beforeNavigate } from '$app/navigation'
     import { page } from '$app/stores'
     import { onClickOutside } from '$lib/dom'
     import Icon from '$lib/Icon.svelte'
@@ -50,6 +51,10 @@
             openedMenu = ''
         }, 500)
     }
+    beforeNavigate(() => {
+        // Always close the sidebar when navigating to a new page
+        sidebarNavigationOpen = false
+    })
 </script>
 
 <header class="root" data-global-header class:withCustomContent class:sidebarMode>
