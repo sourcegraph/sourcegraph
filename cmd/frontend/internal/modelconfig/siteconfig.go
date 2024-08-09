@@ -26,6 +26,11 @@ func maybeGetSiteModelConfiguration(logger log.Logger, siteConfig schema.SiteCon
 		logger.Info("converting completions configuration data", log.String("apiProvider", string(compConfig.Provider)))
 		return convertCompletionsConfig(compConfig)
 	}
+
+	// There are some situations where conf.GetCompletionsConfig will return nil, even though there
+	// is some configuration data put in the site config. e.g. if Cody isn't enabled on the Sourcegraph
+	// license, or there are some validation errors such as a required endpoint not being set.
+	logger.Warn("no site model configuration found")
 	return nil, nil
 }
 

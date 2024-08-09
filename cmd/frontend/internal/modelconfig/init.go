@@ -158,6 +158,7 @@ func (m *manager) applyNewSiteConfig(latestSiteConfig schema.SiteConfiguration) 
 	m.builder.siteConfigData = latestSiteModelConfiguration
 	updatedConfig, err := m.builder.build()
 	if err != nil {
+		m.logger.Error("error calculating modelconfig", log.Error(err))
 		return nil, err
 	}
 
