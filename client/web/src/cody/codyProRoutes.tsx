@@ -4,7 +4,6 @@ import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
 
 import { LegacyRoute, type LegacyLayoutRouteContext } from '../LegacyRouteContext'
 
-import { QueryClientProvider } from './management/api/react-query/QueryClientProvider'
 import { isEmbeddedCodyProUIEnabled } from './util'
 
 export enum CodyProRoutes {
@@ -78,9 +77,5 @@ interface CodyProPageProps extends Pick<LegacyLayoutRouteContext, 'authenticated
  */
 const CodyProPage: React.FC<CodyProPageProps> = props => {
     const Component = routeComponents[props.path]
-    return (
-        <QueryClientProvider>
-            <Component authenticatedUser={props.authenticatedUser} telemetryRecorder={props.telemetryRecorder} />
-        </QueryClientProvider>
-    )
+    return <Component authenticatedUser={props.authenticatedUser} telemetryRecorder={props.telemetryRecorder} />
 }

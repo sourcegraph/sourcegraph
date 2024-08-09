@@ -2,12 +2,14 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import sinon from 'sinon'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, afterEach, describe, expect, test, vi, beforeEach } from 'vitest'
 
 import { NOOP_TELEMETRY_SERVICE } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { MockedTestProvider } from '@sourcegraph/shared/src/testing/apollo'
 import { AnchorLink, RouterLink, setLinkComponent } from '@sourcegraph/wildcard'
 import { renderWithBrandedContext } from '@sourcegraph/wildcard/src/testing'
+
+import * as codyProHooks from '../cody/useCodyProNavLinks'
 
 import { UserNavItem, type UserNavItemProps } from './UserNavItem'
 
@@ -28,6 +30,14 @@ describe('UserNavItem', () => {
 
     afterAll(() => {
         setLinkComponent(AnchorLink)
+    })
+
+    const useCodyProNavLinksMock = vi.spyOn(codyProHooks, 'useCodyProNavLinks')
+    beforeEach(() => {
+        useCodyProNavLinksMock.mockReturnValue([])
+    })
+    afterEach(() => {
+        useCodyProNavLinksMock.mockReset()
     })
 
     const USER: UserNavItemProps['authenticatedUser'] = {
@@ -97,5 +107,55 @@ describe('UserNavItem', () => {
 
         expect(result.locationRef.entries.length).toBe(1)
         expect(result.locationRef.entries.find(({ pathname }) => pathname.includes('sign-out'))).toBe(undefined)
+    })
+
+    describe('Cody Pro section', () => {
+        const setup = (isSourcegraphDotCom: boolean) => {
+            renderWithBrandedContext(
+                <MockedTestProvider>
+                    <UserNavItem
+                        showKeyboardShortcutsHelp={() => undefined}
+                        authenticatedUser={USER}
+                        isSourcegraphDotCom={isSourcegraphDotCom}
+                        showFeedbackModal={() => undefined}
+                        telemetryService={NOOP_TELEMETRY_SERVICE}
+                    />
+                </MockedTestProvider>
+            )
+            userEvent.click(screen.getByRole('button'))
+        }
+
+        describe('dotcom', () => {
+            test('renders provided links', () => {
+                const links = [
+                    { to: '/foo', label: 'Foo' },
+                    { to: '/bar', label: 'Bar' },
+                ]
+                useCodyProNavLinksMock.mockReturnValue(links)
+                setup(true)
+
+                for (const link of links) {
+                    const el = screen.getByText(link.label)
+                    expect(el).toHaveAttribute('href', link.to)
+                }
+            })
+
+            test('is not rendered if no links provided', () => {
+                useCodyProNavLinksMock.mockReturnValue([])
+                setup(true)
+
+                expect(useCodyProNavLinksMock).toHaveBeenCalled()
+                expect(screen.queryByText('Cody Pro')).not.toBeInTheDocument()
+            })
+        })
+
+        describe('enterprise', () => {
+            test('is not rendered', () => {
+                setup(false)
+
+                // Cody Pro section is not rendered thus useCodyProNavLinks hook is not called
+                expect(useCodyProNavLinksMock).not.toHaveBeenCalled()
+            })
+        })
     })
 })

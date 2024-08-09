@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider as ReactQueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Tweak the default queries and mutations behavior.
 // See defaults here: https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults
@@ -15,6 +15,10 @@ const queryClient = new QueryClient({
     },
 })
 
-export const QueryClientProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => (
-    <ReactQueryClientProvider client={queryClient}>{children}</ReactQueryClientProvider>
+/**
+ * CodyProApiProvider wraps its children with the react-query QueryClientProvider.
+ * It is used to access the Cody Pro API and is only utilized on dotcom.
+ */
+export const CodyProApiProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 )

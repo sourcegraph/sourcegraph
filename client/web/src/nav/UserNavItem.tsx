@@ -27,6 +27,7 @@ import {
 
 import type { AuthenticatedUser } from '../auth'
 import { CodyProRoutes } from '../cody/codyProRoutes'
+import { useCodyProNavLinks } from '../cody/useCodyProNavLinks'
 import { PageRoutes } from '../routes.constants'
 import { enableDevSettings, isSourcegraphDev, useDeveloperSettings } from '../stores'
 
@@ -132,6 +133,7 @@ export const UserNavItem: FC<UserNavItemProps> = props => {
                             <MenuHeader className={styles.dropdownHeader}>
                                 Signed in as <strong>@{authenticatedUser.username}</strong>
                             </MenuHeader>
+                            {isSourcegraphDotCom && <CodyProSection />}
                             <MenuDivider className={styles.dropdownDivider} />
                             <MenuLink as={Link} to={authenticatedUser.settingsURL!}>
                                 Settings
@@ -253,6 +255,27 @@ export const UserNavItem: FC<UserNavItemProps> = props => {
                     </>
                 )}
             </Menu>
+        </>
+    )
+}
+
+const CodyProSection: React.FC = () => {
+    const links = useCodyProNavLinks()
+
+    if (!links.length) {
+        return null
+    }
+
+    return (
+        <>
+            <MenuDivider className={styles.dropdownDivider} />
+            <MenuHeader className={styles.dropdownHeader}>Cody PRO</MenuHeader>
+
+            {links.map(({ to, label }) => (
+                <MenuLink as={Link} key={to} to={to}>
+                    {label}
+                </MenuLink>
+            ))}
         </>
     )
 }
