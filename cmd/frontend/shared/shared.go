@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/sourcegraph/log"
+	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/codycontext"
 
 	// sourcegraph/internal
 	"github.com/sourcegraph/sourcegraph/cmd/frontend/internal/prompts"
@@ -62,6 +63,7 @@ var initFunctions = map[string]EnterpriseInitializer{
 	"batches":        batches.Init,
 	"codeintel":      codeintelinit.Init,
 	"codemonitors":   codemonitors.Init,
+	"codycontext":    codycontext.Init,
 	"completions":    completions.Init,
 	"compute":        compute.Init,
 	"dotcom":         dotcom.Init,

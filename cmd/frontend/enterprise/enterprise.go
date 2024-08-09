@@ -49,6 +49,9 @@ type Services struct {
 	// Handler for code completions endpoint.
 	NewCodeCompletionsHandler NewCodeCompletionsHandler
 
+	// Handler for embeddings endpoint.
+	NewEmbeddingsHandler NewEmbeddingsHandler
+
 	// Handler for license v2 check.
 	NewDotcomLicenseCheckHandler NewDotcomLicenseCheckHandler
 
@@ -93,6 +96,9 @@ type NewCodeCompletionsHandler func() http.Handler
 // NewDotcomLicenseCheckHandler creates a new handler for the dotcom license check endpoint.
 type NewDotcomLicenseCheckHandler func() http.Handler
 
+// NewEmbeddingsHandler creates a new handler for the embeddings endpoints.
+type NewEmbeddingsHandler func() http.Handler
+
 // DefaultServices creates a new Services value that has default implementations for all services.
 func DefaultServices() Services {
 	return Services{
@@ -119,6 +125,7 @@ func DefaultServices() Services {
 		NewDotcomLicenseCheckHandler:    func() http.Handler { return makeNotFoundHandler("dotcom license check handler") },
 		NewChatCompletionsStreamHandler: func() http.Handler { return makeNotFoundHandler("chat completions streaming endpoint") },
 		NewCodeCompletionsHandler:       func() http.Handler { return makeNotFoundHandler("code completions streaming endpoint") },
+		NewEmbeddingsHandler:            func() http.Handler { return makeNotFoundHandler("embeddings endpoint") },
 		SearchJobsDataExportHandler:     makeNotFoundHandler("search jobs data export handler"),
 		SearchJobsLogsHandler:           makeNotFoundHandler("search jobs logs handler"),
 	}

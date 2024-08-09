@@ -89,6 +89,8 @@ type Handlers struct {
 	// Completions stream
 	NewChatCompletionsStreamHandler enterprise.NewChatCompletionsStreamHandler
 	NewCodeCompletionsHandler       enterprise.NewCodeCompletionsHandler
+	// Embeddings endpoints
+	NewEmbeddingsHandler enterprise.NewEmbeddingsHandler
 }
 
 // NewHandler returns a new API handler.
@@ -173,6 +175,8 @@ func NewHandler(
 
 	m.Path("/completions/stream").Methods("POST").Handler(handlers.NewChatCompletionsStreamHandler())
 	m.Path("/completions/code").Methods("POST").Handler(handlers.NewCodeCompletionsHandler())
+
+	m.Path("/embeddings/chunk").Methods("POST").Handler(handlers.NewEmbeddingsHandler())
 
 	// HTTP endpoints related to Cody client configuration.
 	clientConfigHandlers := clientconfig.NewHandlers(db, logger)

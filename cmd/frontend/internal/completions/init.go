@@ -29,18 +29,18 @@ func Init(
 
 	enterpriseServices.NewChatCompletionsStreamHandler = func() http.Handler {
 		completionsHandler := completions.NewChatCompletionsStreamHandler(logger, db)
-		return requireVerifiedEmailMiddleware(db, observationCtx.Logger, completionsHandler)
+		return RequireVerifiedEmailMiddleware(db, observationCtx.Logger, completionsHandler)
 	}
 	enterpriseServices.NewCodeCompletionsHandler = func() http.Handler {
 		codeCompletionsHandler := completions.NewCodeCompletionsHandler(logger, db, guardrails.NewAttributionTest(observationCtx, conf))
-		return requireVerifiedEmailMiddleware(db, observationCtx.Logger, codeCompletionsHandler)
+		return RequireVerifiedEmailMiddleware(db, observationCtx.Logger, codeCompletionsHandler)
 	}
 	enterpriseServices.CompletionsResolver = resolvers.NewCompletionsResolver(db, observationCtx.Logger)
 
 	return nil
 }
 
-func requireVerifiedEmailMiddleware(db database.DB, logger log.Logger, next http.Handler) http.Handler {
+func RequireVerifiedEmailMiddleware(db database.DB, logger log.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := cody.CheckVerifiedEmailRequirement(r.Context(), db, logger); err != nil {
 			// Report HTTP 403 Forbidden if user has no verified email address.
