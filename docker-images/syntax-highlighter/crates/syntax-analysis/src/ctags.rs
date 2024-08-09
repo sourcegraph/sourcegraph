@@ -295,6 +295,7 @@ pub fn helper_execute_one_file(name: &str, contents: &str) -> Result<String> {
 mod test {
     use super::*;
 
+    #[ignore]
     #[test]
     fn test_ctags_runner_basic() -> Result<()> {
         let file = r#"

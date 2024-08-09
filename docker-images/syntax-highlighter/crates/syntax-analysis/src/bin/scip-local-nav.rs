@@ -91,10 +91,10 @@ fn main() {
         ..Default::default()
     };
 
-    let config = syntax_analysis::languages::get_local_configuration(ParserId::Go).unwrap();
-    index
-        .documents
-        .extend(parse_files(config, directory, directory));
+    // let config = syntax_analysis::languages::get_local_configuration(ParserId::Go).unwrap();
+    // index
+    //     .documents
+    //     .extend(parse_files(config, directory, directory));
 
     println!("{:?}", index.documents.len());
     write_message_to_file(directory.join("index.scip"), index).expect("to write the file");

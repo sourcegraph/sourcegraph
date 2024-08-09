@@ -68,8 +68,8 @@ fn rocket() -> _ {
     // load configurations on-startup instead of on-first-request.
     // TODO: load individual languages lazily on-request instead, currently
     // CONFIGURATIONS.get will load every configured configuration together.
-    syntax_analysis::highlighting::tree_sitter::CONFIGURATIONS
-        .get(&tree_sitter_all_languages::ParserId::Go);
+    // syntax_analysis::highlighting::tree_sitter::CONFIGURATIONS
+    //     .get(&tree_sitter_all_languages::ParserId::Go);
 
     // Only list features if QUIET != "true"
     match std::env::var("QUIET") {

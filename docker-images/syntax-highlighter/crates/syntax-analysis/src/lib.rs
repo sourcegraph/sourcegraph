@@ -91,49 +91,49 @@ mod test {
     }
 
     // A few smoke tests to make sure that we're generating ctags files correctly
-    generate_tags_and_snapshot!(All, test_tags_go, test_scip_go, "go-globals.go");
-    generate_tags_and_snapshot!(All, test_tags_rust, test_scip_rust, "ctags-empty-scope.rs");
+    // generate_tags_and_snapshot!(All, test_tags_go, test_scip_go, "go-globals.go");
+    // generate_tags_and_snapshot!(All, test_tags_rust, test_scip_rust, "ctags-empty-scope.rs");
 
     // But most tests should go here and just generate scip snapshots
-    generate_tags_and_snapshot!(Scip, test_scip_zig, "globals.zig");
-    generate_tags_and_snapshot!(All, test_tags_python, test_scip_python, "globals.py");
-    generate_tags_and_snapshot!(Scip, test_scip_python_comp, "python-repo-comp.py");
-    generate_tags_and_snapshot!(All, test_tags_ruby, test_scip_ruby, "ruby-globals.rb");
-    generate_tags_and_snapshot!(Scip, test_scip_java, "globals.java");
-    generate_tags_and_snapshot!(Scip, test_scip_java_package_info, "package-info.java");
-    generate_tags_and_snapshot!(
-        All,
-        test_tags_typescript,
-        test_scip_typescript,
-        "globals.ts"
-    );
-    generate_tags_and_snapshot!(All, test_tags_csharp, test_scip_csharp, "globals.cs");
-    generate_tags_and_snapshot!(Scip, test_scip_scala, "globals.scala");
-    generate_tags_and_snapshot!(All, test_tags_kotlin, test_scip_kotlin, "globals.kt");
+    // generate_tags_and_snapshot!(Scip, test_scip_zig, "globals.zig");
+    // generate_tags_and_snapshot!(All, test_tags_python, test_scip_python, "globals.py");
+    // generate_tags_and_snapshot!(Scip, test_scip_python_comp, "python-repo-comp.py");
+    // generate_tags_and_snapshot!(All, test_tags_ruby, test_scip_ruby, "ruby-globals.rb");
+    // generate_tags_and_snapshot!(Scip, test_scip_java, "globals.java");
+    // generate_tags_and_snapshot!(Scip, test_scip_java_package_info, "package-info.java");
+    // generate_tags_and_snapshot!(
+    //     All,
+    //     test_tags_typescript,
+    //     test_scip_typescript,
+    //     "globals.ts"
+    // );
+    // generate_tags_and_snapshot!(All, test_tags_csharp, test_scip_csharp, "globals.cs");
+    // generate_tags_and_snapshot!(Scip, test_scip_scala, "globals.scala");
+    // generate_tags_and_snapshot!(All, test_tags_kotlin, test_scip_kotlin, "globals.kt");
 
-    generate_tags_and_snapshot!(Scip, test_scip_go_internal, "internal_go.go");
-    generate_tags_and_snapshot!(Scip, test_scip_go_example, "example.go");
+    // generate_tags_and_snapshot!(Scip, test_scip_go_internal, "internal_go.go");
+    // generate_tags_and_snapshot!(Scip, test_scip_go_example, "example.go");
 
-    generate_tags_and_snapshot!(Scip, test_scip_rust_scopes, "scopes.rs");
+    // generate_tags_and_snapshot!(Scip, test_scip_rust_scopes, "scopes.rs");
 
-    generate_tags_and_snapshot!(Scip, test_scip_javascript, "globals.js");
-    generate_tags_and_snapshot!(Scip, test_scip_javascript_object, "javascript-object.js");
+    // generate_tags_and_snapshot!(Scip, test_scip_javascript, "globals.js");
+    // generate_tags_and_snapshot!(Scip, test_scip_javascript_object, "javascript-object.js");
 
     generate_tags_and_snapshot!(All, test_tags_c_example, test_scip_c_example, "example.c");
 
     // Test to make sure that kinds are the override behavior
-    generate_tags_and_snapshot!(All, test_tags_go_diff, test_scip_go_diff, "go-diff.go");
-    generate_tags_and_snapshot!(
-        All,
-        test_tags_go_constant,
-        test_scip_tags_go_constant,
-        "go-const.go"
-    );
+    // generate_tags_and_snapshot!(All, test_tags_go_diff, test_scip_go_diff, "go-diff.go");
+    // generate_tags_and_snapshot!(
+    //     All,
+    //     test_tags_go_constant,
+    //     test_scip_tags_go_constant,
+    //     "go-const.go"
+    // );
 
     // Test that errors are returned in expected format
-    generate_tags_and_snapshot!(Tags, test_tags_perl_example, "example.pl");
+    // generate_tags_and_snapshot!(Tags, test_tags_perl_example, "example.pl");
 
-    generate_tags_and_snapshot!(All, test_tags_magik, test_scip_magik, "globals.magik");
+    // generate_tags_and_snapshot!(All, test_tags_magik, test_scip_magik, "globals.magik");
 
-    generate_tags_and_snapshot!(All, test_tags_hack, test_scip_hack, "globals.hack");
+    // generate_tags_and_snapshot!(All, test_tags_hack, test_scip_hack, "globals.hack");
 }

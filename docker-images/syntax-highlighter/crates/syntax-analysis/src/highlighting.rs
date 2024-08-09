@@ -189,6 +189,7 @@ impl SublimeLanguageName {
 }
 
 // Somewhat ad-hoc set of names based on existing Tree-sitter grammars.
+#[derive(Debug)]
 pub struct TreeSitterLanguageName {
     raw: String,
 }

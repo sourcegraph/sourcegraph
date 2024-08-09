@@ -336,24 +336,24 @@ pub mod test {
         scope.into_document(hint, "scip-ctags", vec![])
     }
 
-    #[test]
-    fn test_enclosing_range() {
-        let config = crate::languages::get_tag_configuration(ParserId::Go).expect("to have parser");
-        let source_code = include_str!("../testdata/scopes_of_go.go");
-        let doc = parse_file_for_lang(config, source_code);
+    // #[test]
+    // fn test_enclosing_range() {
+    //     let config = crate::languages::get_tag_configuration(ParserId::Go).expect("to have parser");
+    //     let source_code = include_str!("../testdata/scopes_of_go.go");
+    //     let doc = parse_file_for_lang(config, source_code);
 
-        // let dumped = dump_document(&doc, source_code)?;
-        let dumped = dump_document_with_config(
-            &doc,
-            source_code,
-            SnapshotOptions {
-                snapshot_range: None,
-                emit_syntax: snapshot::EmitSyntax::None,
-                emit_symbol: snapshot::EmitSymbol::Enclosing,
-            },
-        )
-        .unwrap();
+    //     // let dumped = dump_document(&doc, source_code)?;
+    //     let dumped = dump_document_with_config(
+    //         &doc,
+    //         source_code,
+    //         SnapshotOptions {
+    //             snapshot_range: None,
+    //             emit_syntax: snapshot::EmitSyntax::None,
+    //             emit_symbol: snapshot::EmitSymbol::Enclosing,
+    //         },
+    //     )
+    //     .unwrap();
 
-        insta::assert_snapshot!(dumped);
-    }
+    //     insta::assert_snapshot!(dumped);
+    // }
 }

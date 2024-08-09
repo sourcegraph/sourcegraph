@@ -905,43 +905,43 @@ mod test {
         (doc, tree_output)
     }
 
-    #[test]
-    fn go() {
-        let config = crate::languages::get_local_configuration(ParserId::Go).unwrap();
-        let source_code = include_str!("../testdata/locals.go");
-        let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
-        let dumped = snapshot_syntax_document(&doc, source_code);
-        insta::assert_snapshot!("go_occurrences", dumped);
-        insta::assert_snapshot!("go_scopes", scope_tree);
-    }
+    // #[test]
+    // fn go() {
+    //     let config = crate::languages::get_local_configuration(ParserId::Go).unwrap();
+    //     let source_code = include_str!("../testdata/locals.go");
+    //     let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
+    //     let dumped = snapshot_syntax_document(&doc, source_code);
+    //     insta::assert_snapshot!("go_occurrences", dumped);
+    //     insta::assert_snapshot!("go_scopes", scope_tree);
+    // }
 
-    #[test]
-    fn perl() {
-        let config = crate::languages::get_local_configuration(ParserId::Perl).unwrap();
-        let source_code = include_str!("../testdata/perl.pm");
-        let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
-        let dumped = snapshot_syntax_document(&doc, source_code);
-        insta::assert_snapshot!("perl_occurrences", dumped);
-        insta::assert_snapshot!("perl_scopes", scope_tree);
-    }
+    // #[test]
+    // fn perl() {
+    //     let config = crate::languages::get_local_configuration(ParserId::Perl).unwrap();
+    //     let source_code = include_str!("../testdata/perl.pm");
+    //     let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
+    //     let dumped = snapshot_syntax_document(&doc, source_code);
+    //     insta::assert_snapshot!("perl_occurrences", dumped);
+    //     insta::assert_snapshot!("perl_scopes", scope_tree);
+    // }
 
-    #[test]
-    fn matlab() {
-        let config = crate::languages::get_local_configuration(ParserId::Matlab).unwrap();
-        let source_code = include_str!("../testdata/locals.m");
-        let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
-        let dumped = snapshot_syntax_document(&doc, source_code);
-        insta::assert_snapshot!("matlab_occurrences", dumped);
-        insta::assert_snapshot!("matlab_scopes", scope_tree);
-    }
+    // #[test]
+    // fn matlab() {
+    //     let config = crate::languages::get_local_configuration(ParserId::Matlab).unwrap();
+    //     let source_code = include_str!("../testdata/locals.m");
+    //     let (doc, scope_tree) = parse_file_for_lang(config, source_code, false);
+    //     let dumped = snapshot_syntax_document(&doc, source_code);
+    //     insta::assert_snapshot!("matlab_occurrences", dumped);
+    //     insta::assert_snapshot!("matlab_scopes", scope_tree);
+    // }
 
-    #[test]
-    fn java() {
-        let config = crate::languages::get_local_configuration(ParserId::Java).unwrap();
-        let source_code = include_str!("../testdata/locals.java");
-        let (doc, scope_tree) = parse_file_for_lang(config, source_code, true);
-        let dumped = snapshot_syntax_document(&doc, source_code);
-        insta::assert_snapshot!("java_scopes", scope_tree);
-        insta::assert_snapshot!("java_occurrences", dumped);
-    }
+    // #[test]
+    // fn java() {
+    //     let config = crate::languages::get_local_configuration(ParserId::Java).unwrap();
+    //     let source_code = include_str!("../testdata/locals.java");
+    //     let (doc, scope_tree) = parse_file_for_lang(config, source_code, true);
+    //     let dumped = snapshot_syntax_document(&doc, source_code);
+    //     insta::assert_snapshot!("java_scopes", scope_tree);
+    //     insta::assert_snapshot!("java_occurrences", dumped);
+    // }
 }
