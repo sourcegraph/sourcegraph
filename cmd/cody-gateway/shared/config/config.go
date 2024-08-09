@@ -138,7 +138,7 @@ type FlaggingConfig struct {
 	AllowedPromptPatterns []string
 
 	// Phrases we look for in a flagged request to consider blocking the response.
-	// Each phrase is lower case. Can be empty (to disable blocking).
+	// Each phrase is converted to lower case. Can be empty (to disable blocking).
 	BlockedPromptPatterns []string
 
 	// Identifiers (of actors) for which we will log all prompts
@@ -406,7 +406,7 @@ func (c *Config) loadFlaggingConfig(cfg *FlaggingConfig, envVarPrefix string) {
 
 	// Loads a comma-separated env var, and converts it to lower-case.
 	maybeLoadLowercaseSlice := func(envVar, description string) []string {
-		value := c.GetOptional(envVarPrefix+envVar, description)
+		value := c.GetOptional(envVar, description)
 		values := splitMaybe(value)
 		return toLower(values)
 	}
@@ -414,15 +414,15 @@ func (c *Config) loadFlaggingConfig(cfg *FlaggingConfig, envVarPrefix string) {
 	cfg.MaxTokensToSample = c.GetInt(envVarPrefix+"MAX_TOKENS_TO_SAMPLE", "4000", "Maximum permitted value of maxTokensToSample")
 	cfg.MaxTokensToSampleFlaggingLimit = c.GetInt(envVarPrefix+"MAX_TOKENS_TO_SAMPLE_FLAGGING_LIMIT", "4000", "Maximum value of max_tokens_to_sample to allow without flagging.")
 
-	cfg.AllowedPromptPatterns = maybeLoadLowercaseSlice("ALLOWED_PROMPT_PATTERNS", "Allowed prompt patterns")
-	cfg.BlockedPromptPatterns = maybeLoadLowercaseSlice("BLOCKED_PROMPT_PATTERNS", "Patterns to block in prompt.")
+	cfg.AllowedPromptPatterns = maybeLoadLowercaseSlice(envVarPrefix+"ALLOWED_PROMPT_PATTERNS", "Allowed prompt patterns")
+	cfg.BlockedPromptPatterns = maybeLoadLowercaseSlice(envVarPrefix+"BLOCKED_PROMPT_PATTERNS", "Patterns to block in prompt.")
 	cfg.RequestBlockingEnabled = c.GetBool(envVarPrefix+"REQUEST_BLOCKING_ENABLED", "false", "Whether we should block requests that match our blocking criteria.")
 
 	cfg.PromptTokenBlockingLimit = c.GetInt(envVarPrefix+"PROMPT_TOKEN_BLOCKING_LIMIT", "20000", "Maximum number of prompt tokens to allow without blocking.")
 	cfg.PromptTokenFlaggingLimit = c.GetInt(envVarPrefix+"PROMPT_TOKEN_FLAGGING_LIMIT", "18000", "Maximum number of prompt tokens to allow without flagging.")
 	cfg.ResponseTokenBlockingLimit = c.GetInt(envVarPrefix+"RESPONSE_TOKEN_BLOCKING_LIMIT", "4000", "Maximum number of completion tokens to allow without blocking.")
 
-	cfg.FlaggedModelNames = maybeLoadLowercaseSlice("FLAGGED_MODEL_NAMES", "LLM models that will always lead to the request getting flagged.")
+	cfg.FlaggedModelNames = maybeLoadLowercaseSlice(envVarPrefix+"FLAGGED_MODEL_NAMES", "LLM models that will always lead to the request getting flagged.")
 }
 
 // splitMaybe splits the provided string on commas, but returns nil if given the empty string.

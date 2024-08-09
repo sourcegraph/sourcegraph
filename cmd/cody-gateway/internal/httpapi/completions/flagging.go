@@ -16,7 +16,7 @@ type flaggingConfig struct {
 	// Each phrase is lower case.
 	AllowedPromptPatterns []string
 	// Phrases we look for in a flagged request to consider blocking the response.
-	// Each phrase is lower case. Can be empty (to disable blocking).
+	// Each phrase is converted to lower case. Can be empty (to disable blocking).
 	BlockedPromptPatterns []string
 	// Phrases we look for in a request to collect data.
 	// Each phrase is lower case. Can be empty (to disable data collection).
