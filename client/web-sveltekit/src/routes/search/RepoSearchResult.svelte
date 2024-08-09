@@ -1,6 +1,8 @@
 <svelte:options immutable />
 
 <script lang="ts">
+    import { onMount } from 'svelte'
+
     import { highlightRanges } from '$lib/dom'
     import { featureFlag } from '$lib/featureflags'
     import Icon from '$lib/Icon.svelte'
@@ -23,10 +25,18 @@
     $: repositoryMatches = result.repositoryMatches?.map(simplifyLineRange) ?? []
     $: descriptionMatches = result.descriptionMatches?.map(simplifyLineRange) ?? []
     $: rev = result.branches?.[0]
+
+    let title: HTMLElement
+    onMount(() => {
+        const repoLink = title.querySelector<HTMLElement>('a')
+        if (repoLink) {
+            repoLink.dataset.focusableSearchResult = 'true'
+        }
+    })
 </script>
 
 <SearchResult>
-    <div slot="title">
+    <div bind:this={title} slot="title" class="title">
         <RepoRev repoName={result.repository} {rev} highlights={repositoryMatches} />
         {#if result.fork}
             <span class="info">
@@ -101,5 +111,11 @@
         border-left: 1px solid var(--border-color);
         margin-left: 0.5rem;
         padding-left: 0.5rem;
+    }
+
+    .title {
+        :global([data-focusable-search-result]:focus) {
+            box-shadow: var(--focus-shadow-inset);
+        }
     }
 </style>

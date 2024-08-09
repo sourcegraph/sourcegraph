@@ -23,6 +23,11 @@
 // links, buttons, inputs, etc. We have to have some common "global"
 // styles for them (like focus ring).
 
+body {
+    --focus-shadow-inset: 0 0 0 2px var(--primary-2) inset;
+    --focus-shadow: 0 0 0 2px var(--primary-2);
+}
+
 :focus {
     outline: none;
 }
@@ -32,13 +37,13 @@ a:focus-visible {
     // that don't have any spacing between their border and
     // overflowed parent visible border (so any outside shadow
     // is visually cut/cropped)
-    box-shadow: 0 0 0 2px var(--primary-2) inset;
+    box-shadow: var(--focus-shadow-inset);
 }
 
 button:focus-visible,
 input:focus-visible,
 summary:focus-visible {
-    box-shadow: 0 0 0 2px var(--primary-2);
+    box-shadow: var(--focus-shadow);
 }
 
 // Taken from https://www.a11yproject.com/posts/how-to-hide-content/

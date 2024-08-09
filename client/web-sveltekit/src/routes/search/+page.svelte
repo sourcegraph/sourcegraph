@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { registerHotkey } from '$lib/Hotkey'
     // @sg EnableRollout
     import { queryStateStore } from '$lib/search/state'
     import { settings } from '$lib/stores'
@@ -25,6 +26,25 @@
 
     const queryState = queryStateStore(data.queryOptions ?? {}, $settings)
     let searchResults: SearchResults | undefined
+
+    for (const key of ['j', 'down']) {
+        registerHotkey({
+            keys: { key },
+            handler: () => {
+                searchResults?.focusNextResult('down')
+            },
+        })
+    }
+
+    for (const key of ['k', 'up']) {
+        registerHotkey({
+            keys: { key },
+            handler: () => {
+                searchResults?.focusNextResult('up')
+            },
+        })
+    }
+
     $: queryState.set(data.queryOptions ?? {})
     $: queryState.setSettings($settings)
 </script>

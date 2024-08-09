@@ -36,11 +36,11 @@
 <script lang="ts">
     import type { Action } from 'svelte/action'
 
+    import RepoStars from '$lib/repo/RepoStars.svelte'
     import { type CommitMatch, getMatchUrl } from '$lib/shared'
     import Timestamp from '$lib/Timestamp.svelte'
 
     import RepoRev from './RepoRev.svelte'
-    import RepoStars from '$lib/repo/RepoStars.svelte'
     import SearchResult from './SearchResult.svelte'
 
     export let result: CommitMatch
@@ -63,7 +63,7 @@
     <div slot="title" data-sveltekit-preload-data="tap">
         <RepoRev repoName={result.repository} rev={commitOid} />
         <span aria-hidden={true} class="interpunct">·</span>
-        <a href={commitURL}>
+        <a href={commitURL} data-focusable-search-result>
             {result.authorName}: {subject}
         </a>
     </div>
@@ -99,5 +99,9 @@
         margin: 0;
         font-family: var(--code-font-family);
         font-size: var(--code-font-size);
+    }
+
+    [data-focusable-search-result]:focus {
+        box-shadow: var(--focus-shadow);
     }
 </style>

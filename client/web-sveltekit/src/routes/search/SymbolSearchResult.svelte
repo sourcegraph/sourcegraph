@@ -42,7 +42,7 @@
     <svelte:fragment slot="body">
         <div use:observeIntersection={$scrollContainer} on:intersecting={event => (visible = event.detail)}>
             {#each result.symbols as symbol, index}
-                <a href={symbol.url}>
+                <a href={symbol.url} data-focusable-search-result>
                     <div class="result">
                         <SymbolKindIcon symbolKind={symbol.kind} />
                         {#await highlightedHTMLRows then result}
@@ -69,13 +69,20 @@
         gap: 0.5rem;
         border-bottom: 1px solid var(--border-color);
 
-        background-color: var(--code-bg);
         &:hover {
             background-color: var(--subtle-bg-2);
         }
     }
 
-    a:hover {
-        text-decoration: none;
+    a {
+        display: block;
+        box-sizing: border-box;
+        &:hover {
+            text-decoration: none;
+        }
+    }
+
+    [data-focusable-search-result]:focus {
+        box-shadow: var(--focus-shadow-inset);
     }
 </style>

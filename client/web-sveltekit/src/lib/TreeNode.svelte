@@ -146,7 +146,7 @@
             box-shadow: none;
 
             > .label {
-                box-shadow: var(--focus-shadow-inner);
+                box-shadow: var(--focus-shadow-inset);
             }
         }
 

@@ -9,6 +9,7 @@ import type {
     SymbolMatch,
     TeamMatch,
     SearchEvent,
+    RepositoryMatch,
 } from '$lib/shared'
 
 import { SymbolKind } from '../lib/graphql-types'
@@ -188,6 +189,14 @@ export function createSymbolMatch(): SymbolMatch {
             }),
             { count: { min: 1, max: 5 } }
         ),
+    }
+}
+
+export function createRepositoryMatch(): RepositoryMatch {
+    return {
+        type: 'repo',
+        repository: createRepoName(),
+        repoStars: createRepoStars(),
     }
 }
 
