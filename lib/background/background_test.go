@@ -46,9 +46,25 @@ func TestMonitorBackgroundRoutinesSignal(t *testing.T) {
 }
 
 func TestMonitorBackgroundRoutinesContextCancel(t *testing.T) {
+	// fnIfErrCancelled emulates the behaviour a routine SHOULD exhibit if
+	// Stop is correctly implemented: attempt to stop until context cancellation.
+	// If the context is cancelled, return the error.
+	fnIfErrCancelled := func(ctx context.Context) error {
+		<-ctx.Done()
+		return errors.Wrap(ctx.Err(), "context cancelled")
+	}
+
 	r1 := NewMockRoutine()
+	r1.NameFunc.SetDefaultReturn("r1")
+	r1.StopFunc.SetDefaultHook(fnIfErrCancelled)
+
 	r2 := NewMockRoutine()
+	r2.NameFunc.SetDefaultReturn("r2")
+	r2.StopFunc.SetDefaultHook(fnIfErrCancelled)
+
 	r3 := NewMockRoutine()
+	r3.NameFunc.SetDefaultReturn("r3")
+	r3.StopFunc.SetDefaultHook(fnIfErrCancelled)
 
 	signals := make(chan os.Signal, 1)
 	defer close(signals)
@@ -59,7 +75,7 @@ func TestMonitorBackgroundRoutinesContextCancel(t *testing.T) {
 	go func() {
 		defer close(unblocked)
 		err := monitorBackgroundRoutines(ctx, signals, r1, r2, r3)
-		assert.EqualError(t, err, "unable to stop routines gracefully: context canceled")
+		assert.ErrorIs(t, err, context.Canceled)
 	}()
 
 	cancel()

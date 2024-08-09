@@ -895,7 +895,7 @@ func TestSyncerMultipleServices(t *testing.T) {
 				DequeueInterval: 1 * time.Millisecond,
 			})...,
 		)
-		assert.EqualError(t, err, "unable to stop routines gracefully: context canceled")
+		assert.NoError(t, err)
 		done <- struct{}{}
 	}()
 

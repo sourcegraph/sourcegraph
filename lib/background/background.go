@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
@@ -61,8 +62,12 @@ func startAll(wg *sync.WaitGroup, routines ...Routine) {
 }
 
 // stopAll calls each routine's Stop method in its own goroutine and registers
-// each running goroutine with the given waitgroup. It waits for all routines to
-// stop or the context to be canceled.
+// each running goroutine with the given waitgroup.
+//
+// It initiates all goroutines to Stop concurrently. Individual implementations
+// are expected to handle cancellation correctly.
+//
+// It waits for all goroutines to complete until the context's deadline is exceeded.
 func stopAll(ctx context.Context, wg *sync.WaitGroup, routines ...Routine) error {
 	var stopErrs error
 	var stopErrsLock sync.Mutex
@@ -79,6 +84,21 @@ func stopAll(ctx context.Context, wg *sync.WaitGroup, routines ...Routine) error
 		})
 	}
 
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		// If there is no deadline, wait until all work is complete.
+		wg.Wait()
+		return stopErrs
+	}
+
+	// Otherwise, wait until the work completes or the deadline is exceeded.
+	// We need to specifically wait for the deadline event, instead of the
+	// general ctx.Done() event, as the latter also handles explicit cancellation
+	// that can prevent goroutine Stops from being called at all, which is not
+	// desirable.
+	contextTimeout := time.NewTimer(time.Until(deadline))
+	defer contextTimeout.Stop()
+
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
@@ -88,7 +108,10 @@ func stopAll(ctx context.Context, wg *sync.WaitGroup, routines ...Routine) error
 	select {
 	case <-done:
 		return stopErrs
-	case <-ctx.Done():
+	case <-contextTimeout.C:
+		// Deadline is exceeded, we now need to wait for the context to also be
+		// cancelled by its internal deadline.
+		<-ctx.Done()
 		stopErrsLock.Lock()
 		defer stopErrsLock.Unlock()
 		if stopErrs != nil {

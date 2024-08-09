@@ -145,16 +145,19 @@ func TestOldBuildsGetDeleted(t *testing.T) {
 		b = finishedBuild(3, "failed", time.Now().AddDate(0, 0, -1))
 		server.store.Set(b)
 
+		done := make(chan struct{})
 		ctx, cancel := context.WithCancel(context.Background())
 		go func() {
 			err := goroutine.MonitorBackgroundRoutines(
 				ctx,
 				deleteOldBuilds(logger, server.store, 10*time.Millisecond, 24*time.Hour),
 			)
-			assert.EqualError(t, err, "unable to stop routines gracefully: context canceled")
+			assert.NoError(t, err)
+			done <- struct{}{}
 		}()
 		time.Sleep(20 * time.Millisecond)
 		cancel()
+		<-done
 
 		builds := server.store.FinishedBuilds()
 
