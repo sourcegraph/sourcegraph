@@ -1,0 +1,49 @@
+name: release-sourcegraph-[[ .Version ]]
+description: |
+    This batch change is used to create relevant changesets for the upcoming [[ .Version ]] release
+    of Sourcegraph.
+
+on:
+    - repository: github.com/sourcegraph/sourcegraph
+    - repository: github.com/sourcegraph/about
+    - repository: github.com/sourcegraph/deploy-sourcegraph
+    - repository: github.com/sourcegraph/deploy-sourcegraph-k8s
+    - repository: github.com/sourcegraph/deploy-sourcegraph-docker
+    - repository: github.com/sourcegraph/deploy-sourcegraph-docker-customer-replica-1
+    - repository: github.com/sourcegraph/deploy-sourcegraph-aws
+    - repository: github.com/sourcegraph/deploy-sourcegraph-digitalocean
+    - repository: github.com/sourcegraph/deploy-sourcegraph-helm
+
+steps:
+    - container: alpine:3
+      if: ${{ eq repository.name "github.com/sourcegraph/about" }}
+      run: find . -type f -name '*.tsx' -exec sed -E -i '' 's/sourcegraph\\/server:${versionRegex}/sourcegraph\\/server:${release.version.version}/g' {} +
+
+# Describe the changeset (e.g., GitHub pull request) you want for each repository.
+changesetTemplate:
+  title: [[ .DefaultPRMessage ]]
+
+  body: |
+    ${{ if eq repository.name "github.com/sourcegraph/about" }}
+    This pull request is part of the Sourcegraph [[ .Version ]] release.
+    [[ if not .IsPatchRelease ]]
+    Note that this PR does *not* include the release blog post.
+    [[ end ]]
+
+    * [Release batch change]([[ .SrcEndpoint ]]/organizations/sourcegraph/batch-changes/${{ batch_change.name }})
+    [[ if eq .TrackingIssueURL "" ]]
+    * No tracking issue exists for this release
+    [[ else ]]
+    * [Tracking issue]([[ .TrackingIssueURL ]])
+    [[ end ]]
+
+    ### Test plan
+
+    CI checks in this repository should pass, and a manual review should confirm if the generated changes are correct.
+
+    ${{ end }}
+
+  commit:
+    message: [[ .DefaultPRMessage ]]
+
+  branch: publish-[[ .Version ]]
