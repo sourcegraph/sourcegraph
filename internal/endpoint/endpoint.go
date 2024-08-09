@@ -49,7 +49,7 @@ type endpoints struct {
 // New creates a new Map for the URL specifier.
 //
 // If the scheme is prefixed with "k8s+", one URL is expected and the format is
-// expected to match e.g. k8s+http://service.namespace:port/path. namespace,
+// expected to match e.g. k8s+http://service.namespace:port/path. Namespace,
 // port and path are optional. URLs of this form will consistently hash among
 // the endpoints for the Kubernetes service. The values returned by Get will
 // look like http://endpoint:port/path.

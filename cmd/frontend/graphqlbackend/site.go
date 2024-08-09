@@ -175,7 +175,7 @@ func (r *siteResolver) SettingsURL() *string { return strptr("/site-admin/global
 
 func (r *siteResolver) CanReloadSite(ctx context.Context) bool {
 	err := auth.CheckCurrentUserIsSiteAdmin(ctx, r.db)
-	return canReloadSite && err == nil
+	return isGoremanSite && err == nil
 }
 
 func (r *siteResolver) BuildVersion() string { return version.Version() }
