@@ -95,7 +95,38 @@ pnpm dev
 pnpm test:dev
 ```
 
-Both vitest and playwright tests are run in CI.
+In CI, we run vitest and playwright via the `BUILD.bazel` file. You can run e2e tests locally with
+
+```sh
+sg bazel test //client/web-sveltekit:e2e_test
+```
+
+### Updating Playwright
+
+The Playwright version is defined in the `package.json` of this package. The browser versions are defined in `dev/tool_deps.bzl`.
+
+You may have to find the right combination for both tools to work nicely with each other. The easiest is to start with updating
+Playwright, pushing it to CI, and seeing what happens. We will first upgrade
+Playwright and install the new browsers, and then update `dev/tool_deps.bzl` based on the newly installed browsers.
+
+**1. Upgrade Playwright**
+
+To [update Playwright](https://playwright.dev/docs/intro#updating-playwright), navigate to `clients/web-sveltekit` and
+run `pnpm add @playwright/test@latest playwright@latest` followed by `pnpm exec playwright install --with-deps`.
+
+**2. Update Bazel**
+
+The `install` command from above may have downloaded new browsers. You may see a log message like (on macOS) `Chromium 128.0.6613.18 (playwright build v1129) downloaded to /Users/your-user/Library/Caches/ms-playwright/chromium-1129`.
+
+If you don't have the logs anymore, you can run `pnpm exec playwright install --dry-run` to get an overview.
+
+If your latest browser version is newer than what's listed in `dev/tool_deps.bzl`, you'll need to update `dev/tool_deps.bzl` to
+include the new browser version and the zip file's sha integrity. You can calculate it yourself, or
+run e.g. `bazel test //client/web-sveltekit:e2e_test` to see the new integrity sha. Example below:
+
+```
+Error in download_and_extract: java.io.IOException: Error downloading [https://playwright.azureedge.net/builds/chromium/1129/chromium-mac-arm64.zip] to /private/var/tmp/_bazel_michael/680fb57cd51801cfe03bf19f9d7a0d3e/external/chromium-darwin-arm64/temp15834460500730224298/chromium-mac-arm64.zip: Checksum was sha256-WdF50K2a15LlHbga7y17zBZOb130NMCBiI+760VovQ4= but wanted sha256-5wj+iZyUU7WSAyA8Unriu9swRag3JyAxUUgGgVM+fTw=
+```
 
 ### Formatting and linting
 
