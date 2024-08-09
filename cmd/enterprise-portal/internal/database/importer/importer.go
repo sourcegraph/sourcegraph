@@ -245,7 +245,7 @@ func (i *Importer) importSubscription(ctx context.Context, dotcomSub *dotcomdb.S
 				}
 				return pointers.Ptr(utctime.FromTime(*dotcomSub.ArchivedAt))
 			}(),
-			SalesforceSubscriptionID: activeLicense.SalesforceSubscriptionID,
+			SalesforceSubscriptionID: database.NewNullStringPtr(activeLicense.SalesforceSubscriptionID),
 		},
 		conditions...,
 	); err != nil {

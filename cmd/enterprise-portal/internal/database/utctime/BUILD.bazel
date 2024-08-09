@@ -2,11 +2,15 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "utctime",
-    srcs = ["utctime.go"],
+    srcs = [
+        "utctime.go",
+        "valast.go",
+    ],
     importpath = "github.com/sourcegraph/sourcegraph/cmd/enterprise-portal/internal/database/utctime",
     visibility = ["//cmd/enterprise-portal:__subpackages__"],
     deps = [
         "//lib/errors",
         "//lib/pointers",
+        "@com_github_hexops_valast//:valast",
     ],
 )

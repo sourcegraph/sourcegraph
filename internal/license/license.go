@@ -21,6 +21,13 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
+// GenerationPrivateKeyURL is the URL where Sourcegraph staff can find the private key for
+// generating licenses.
+//
+// NOTE: If you change this, use text search to replace other instances of it (in source code
+// comments).
+const GenerationPrivateKeyURL = "https://team-sourcegraph.1password.com/vaults/dnrhbauihkhjs5ag6vszsme45a/allitems/zkdx6gpw4uqejs3flzj7ef5j4i"
+
 // Info contains information about a license key. In the signed license key that Sourcegraph
 // provides to customers, this value is signed but not encrypted. This value is not secret, and
 // anyone with a license key can view (but not forge) this information.

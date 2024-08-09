@@ -3430,8 +3430,9 @@ def go_dependencies():
         name = "com_github_hexops_valast",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/hexops/valast",
-        sum = "h1:rETyycw+/L2ZVJHHNxEBgh8KUn+87WugH9MxcEv9PGs=",
-        version = "v1.4.4",
+        replace = "github.com/bobheadxi/valast",
+        sum = "h1:cK/ixaJaSyXAKglOrY2CLE0pM9C+m2LbijsVW5k675E=",
+        version = "v0.0.0-20240724215614-eb5cb82e0c6f",
     )
     go_repository(
         name = "com_github_hhatto_gocloc",

@@ -362,7 +362,7 @@ VALUES (
 `, pgx.NamedArgs{
 		"licenseID":      licenseID,
 		"subscriptionID": subscriptionID,
-		"licenseType":    subscriptionsv1.EnterpriseSubscriptionLicenseType_name[int32(licenseType)],
+		"licenseType":    licenseType.String(),
 		"licenseData":    licenseData,
 		"createdAt":      opts.Time,
 		"expireAt":       opts.ExpireTime,
@@ -422,6 +422,9 @@ WHERE id = @licenseID
 		"revokedAt": opts.Time,
 		"licenseID": licenseID,
 	}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrSubscriptionLicenseNotFound
+		}
 		return nil, errors.Wrap(err, "revoke license")
 	}
 

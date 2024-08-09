@@ -221,7 +221,7 @@ type UpsertSubscriptionOptions struct {
 	CreatedAt  utctime.Time
 	ArchivedAt *utctime.Time
 
-	SalesforceSubscriptionID *string
+	SalesforceSubscriptionID *sql.NullString
 
 	// ForceUpdate indicates whether to force update all fields of the subscription
 	// record.
@@ -249,9 +249,14 @@ func (opts UpsertSubscriptionOptions) apply(ctx context.Context, db upsert.Exece
 	return b.Exec(ctx, db)
 }
 
+var ErrInvalidArgument = errors.New("invalid argument")
+
 // Upsert upserts a subscription record based on the given options. If the
 // operation has additional application meaning, conditions can be provided
 // for insert as well.
+//
+// Constraint errors are returned as a human-friendly error that wraps
+// ErrInvalidArgument.
 func (s *Store) Upsert(
 	ctx context.Context,
 	subscriptionID string,
@@ -281,7 +286,12 @@ func (s *Store) Upsert(
 	if err := opts.apply(ctx, tx, subscriptionID); err != nil {
 		if pgxerrors.IsContraintError(err, "idx_enterprise_portal_subscriptions_display_name") {
 			return nil, errors.WithSafeDetails(
-				errors.Newf("display_name %q is already in use", opts.DisplayName.String),
+				errors.Wrapf(ErrInvalidArgument, "display_name %q is already in use", opts.DisplayName.String),
+				"%+v", err)
+		}
+		if pgxerrors.IsContraintError(err, "idx_enterprise_portal_subscriptions_instance_domain") {
+			return nil, errors.WithSafeDetails(
+				errors.Wrapf(ErrInvalidArgument, "instance_domain %q is assigned to another subscription", opts.DisplayName.String),
 				"%+v", err)
 		}
 		return nil, errors.Wrap(err, "upsert")
