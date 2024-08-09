@@ -44,6 +44,7 @@ go_test(
         "command_test.go",
         "docker_command_test.go",
         "logger_test.go",
+        "run_test.go",
     ],
     embed = [":run"],
     tags = [TAG_INFRA_DEVINFRA],

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/env"
 	"gopkg.in/yaml.v2"
 
 	"github.com/sourcegraph/sourcegraph/dev/sg/internal/run"
@@ -13,7 +14,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/pointers"
 )
 
-func parseConfigFile(name string) (*Config, error) {
+func parseConfigFile(name string, isOverwriteFile bool) (*Config, error) {
 	file, err := os.Open(name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot open file %q", name)
@@ -25,34 +26,84 @@ func parseConfigFile(name string) (*Config, error) {
 		return nil, errors.Wrap(err, "reading configuration file")
 	}
 
-	return parseConfig(data)
+	return parseConfig(data, isOverwriteFile)
 }
 
-func parseConfig(data []byte) (*Config, error) {
-	var conf Config
-	if err := yaml.Unmarshal(data, &conf); err != nil {
+func parseConfig(data []byte, isOverwriteFile bool) (*Config, error) {
+	var tmpConf struct {
+		Env               map[string]string             `yaml:"env"`
+		Commands          map[string]*run.Command       `yaml:"commands"`
+		BazelCommands     map[string]*run.BazelCommand  `yaml:"bazelCommands"`
+		DockerCommands    map[string]*run.DockerCommand `yaml:"dockerCommands"`
+		Commandsets       map[string]*Commandset        `yaml:"commandsets"`
+		DefaultCommandset string                        `yaml:"defaultCommandset"`
+		Tests             map[string]*run.Command       `yaml:"tests"`
+	}
+	if err := yaml.Unmarshal(data, &tmpConf); err != nil {
 		return nil, err
 	}
+
+	var conf Config
+
+	//conf.Commands = tmpConf.Commands
+	//conf.BazelCommands = tmpConf.BazelCommands
+	//conf.DockerCommands = tmpConf.DockerCommands
+	//conf.Commandsets = tmpConf.Commandsets
+	//conf.DefaultCommandset = tmpConf.DefaultCommandset
+	//conf.Tests = tmpConf.Tests
 
 	root, err := root.RepositoryRoot()
 	if err != nil {
 		return nil, err
 	}
 
-	for name, cmd := range conf.BazelCommands {
+	conf.NewEnv = make(map[string]env.EnvVar, len(tmpConf.Env))
+	for k, v := range tmpConf.Env {
+		conf.NewEnv[k] = env.New(k, v, env.GlobalEnvPriority)
+	}
+
+	conf.BazelCommands = make(map[string]*run.BazelCommand, len(tmpConf.BazelCommands))
+	for name, cmd := range tmpConf.BazelCommands {
 		cmd.Config.Name = name
 		cmd.Config.RepositoryRoot = root
+
+		tmpCommand, ok := tmpConf.BazelCommands[name]
+		if !ok {
+			return nil, errors.New("cannot find command in temp config")
+		}
+		cmd.Config.NewEnv = make(map[string]env.EnvVar, len(tmpCommand.Config.Env))
+		for k, v := range tmpCommand.Config.Env {
+			cmd.Config.NewEnv[k] = env.New(k, v, env.BaseCommandEnvPriority)
+		}
 	}
 
 	for name, cmd := range conf.DockerCommands {
 		cmd.Config.Name = name
 		cmd.Config.RepositoryRoot = root
+
+		tmpCommand, ok := tmpConf.DockerCommands[name]
+		if !ok {
+			return nil, errors.New("cannot find command in temp config")
+		}
+		cmd.Config.NewEnv = make(map[string]env.EnvVar, len(tmpCommand.Config.Env))
+		for k, v := range tmpCommand.Config.Env {
+			cmd.Config.NewEnv[k] = env.New(k, v, env.BaseCommandEnvPriority)
+		}
 	}
 
 	for name, cmd := range conf.Commands {
 		cmd.Config.Name = name
 		cmd.Config.RepositoryRoot = root
 		normalizeCmd(cmd)
+
+		tmpCommand, ok := tmpConf.Commands[name]
+		if !ok {
+			return nil, errors.New("cannot find command in temp config")
+		}
+		cmd.Config.NewEnv = make(map[string]env.EnvVar, len(tmpCommand.Config.Env))
+		for k, v := range tmpCommand.Config.Env {
+			cmd.Config.NewEnv[k] = env.New(k, v, env.BaseCommandEnvPriority)
+		}
 	}
 
 	for name, cmd := range conf.Commandsets {
@@ -149,7 +200,42 @@ type Config struct {
 	Commandsets       map[string]*Commandset        `yaml:"commandsets"`
 	DefaultCommandset string                        `yaml:"defaultCommandset"`
 	Tests             map[string]*run.Command       `yaml:"tests"`
+
+	NewEnv map[string]env.EnvVar
 }
+
+//func (c *Config) SetIsOverwriteConfig(b bool) {
+//	c.isOverwriteConfig = b
+//}
+//
+//func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
+//	println("unmarshalling ...", c.Env)
+//	var tempConfig struct {
+//		Env               map[string]string             `yaml:"env"`
+//		Commands          map[string]*run.Command       `yaml:"commands"`
+//		BazelCommands     map[string]*run.BazelCommand  `yaml:"bazelCommands"`
+//		DockerCommands    map[string]*run.DockerCommand `yaml:"dockerCommands"`
+//		Commandsets       map[string]*Commandset        `yaml:"commandsets"`
+//		DefaultCommandset string                        `yaml:"defaultCommandset"`
+//		Tests             map[string]*run.Command       `yaml:"tests"`
+//	}
+//
+//	if err := unmarshal(&tempConfig); err != nil {
+//		return err
+//	}
+//
+//	c.NewEnv = make(map[string]env.EnvVar, len(tempConfig.Env))
+//	for k, v := range tempConfig.Env {
+//		c.NewEnv[k] = env.New(k, v, env.GlobalEnvPriority)
+//	}
+//	c.Commands = tempConfig.Commands
+//	c.BazelCommands = tempConfig.BazelCommands
+//	c.DockerCommands = tempConfig.DockerCommands
+//	c.Commandsets = tempConfig.Commandsets
+//	c.DefaultCommandset = tempConfig.DefaultCommandset
+//	c.Tests = tempConfig.Tests
+//	return nil
+//}
 
 // Merge merges the top-level entries of two Config objects, using the
 // values from `other` if they are set as overrides and returns a new config

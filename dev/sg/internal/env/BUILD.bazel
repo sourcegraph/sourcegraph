@@ -1,0 +1,8 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "env",
+    srcs = ["env.go"],
+    importpath = "github.com/sourcegraph/sourcegraph/dev/sg/internal/env",
+    visibility = ["//dev/sg:__subpackages__"],
+)

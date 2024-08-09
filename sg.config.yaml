@@ -2,29 +2,29 @@
 # https://github.com/sourcegraph/sourcegraph/blob/main/doc/dev/background-information/sg/index.md#configuration
 env:
   GITSERVER_MEMORY_OBSERVATION_ENABLED: 'true'
-  PGPORT: 5432
-  PGHOST: localhost
-  PGUSER: sourcegraph
-  PGPASSWORD: sourcegraph
-  PGDATABASE: sourcegraph
-  PGSSLMODE: disable
-  SG_DEV_MIGRATE_ON_APPLICATION_STARTUP: 'true'
-  INSECURE_DEV: true
-
-  SRC_REPOS_DIR: $HOME/.sourcegraph/repos
-  SRC_LOG_LEVEL: info
-  SRC_LOG_FORMAT: condensed
-  SRC_TRACE_LOG: false
-  # Set this to true to show an iTerm link to the file:line where the log message came from
-  SRC_LOG_SOURCE_LINK: false
-
-  # Use two gitserver instances in local dev
-  SRC_GIT_SERVER_1: 127.0.0.1:3501
-  SRC_GIT_SERVER_2: 127.0.0.1:3502
-  SRC_GIT_SERVERS: 127.0.0.1:3501 127.0.0.1:3502
-
-  # Enable sharded indexed search mode:
-  INDEXED_SEARCH_SERVERS: localhost:3070 localhost:3071
+#  PGPORT: 5432
+#  PGHOST: localhost
+#  PGUSER: sourcegraph
+#  PGPASSWORD: sourcegraph
+#  PGDATABASE: sourcegraph
+#  PGSSLMODE: disable
+#  SG_DEV_MIGRATE_ON_APPLICATION_STARTUP: 'true'
+#  INSECURE_DEV: true
+#
+#  SRC_REPOS_DIR: $HOME/.sourcegraph/repos
+#  SRC_LOG_LEVEL: info
+#  SRC_LOG_FORMAT: condensed
+#  SRC_TRACE_LOG: false
+#  # Set this to true to show an iTerm link to the file:line where the log message came from
+#  SRC_LOG_SOURCE_LINK: false
+#
+#  # Use two gitserver instances in local dev
+#  SRC_GIT_SERVER_1: 127.0.0.1:3501
+#  SRC_GIT_SERVER_2: 127.0.0.1:3502
+#  SRC_GIT_SERVERS: 127.0.0.1:3501 127.0.0.1:3502
+#
+#  # Enable sharded indexed search mode:
+#  INDEXED_SEARCH_SERVERS: localhost:3070 localhost:3071
 
   GO111MODULE: 'on'
 
@@ -32,117 +32,124 @@ env:
 
   SRC_HTTP_ADDR: ':3082'
 
-  # I don't think we even need to set these?
-  SEARCHER_URL: http://127.0.0.1:3181
-  REPO_UPDATER_URL: http://127.0.0.1:3182
-  REDIS_ENDPOINT: 127.0.0.1:6379
-  SYMBOLS_URL: http://localhost:3184
-  SRC_SYNTECT_SERVER: http://localhost:9238
-  SRC_FRONTEND_INTERNAL: localhost:3090
-  GRAFANA_SERVER_URL: http://localhost:3370
-  PROMETHEUS_URL: http://localhost:9090
-  JAEGER_SERVER_URL: http://localhost:16686
+#  # I don't think we even need to set these?
+#  SEARCHER_URL: http://127.0.0.1:3181
+#  REPO_UPDATER_URL: http://127.0.0.1:3182
+#  REDIS_ENDPOINT: 127.0.0.1:6379
+#  SYMBOLS_URL: http://localhost:3184
+#  SRC_SYNTECT_SERVER: http://localhost:9238
+#  SRC_FRONTEND_INTERNAL: localhost:3090
+#  GRAFANA_SERVER_URL: http://localhost:3370
+#  PROMETHEUS_URL: http://localhost:9090
+#  JAEGER_SERVER_URL: http://localhost:16686
+#
+#  SRC_DEVELOPMENT: 'true'
+#  SRC_PROF_HTTP: ''
+#  SRC_PROF_SERVICES: |
+#    [
+#      { "Name": "frontend", "Host": "127.0.0.1:6063" },
+#      { "Name": "gitserver-0", "Host": "127.0.0.1:3551" },
+#      { "Name": "gitserver-1", "Host": "127.0.0.1:3552" },
+#      { "Name": "searcher", "Host": "127.0.0.1:6069" },
+#      { "Name": "symbols", "Host": "127.0.0.1:6071" },
+#      { "Name": "repo-updater", "Host": "127.0.0.1:6074" },
+#      { "Name": "codeintel-worker", "Host": "127.0.0.1:6088" },
+#      { "Name": "worker", "Host": "127.0.0.1:6089" },
+#      { "Name": "worker-executors", "Host": "127.0.0.1:6996" },
+#      { "Name": "embeddings", "Host": "127.0.0.1:6099" },
+#      { "Name": "zoekt-index-0", "Host": "127.0.0.1:6072" },
+#      { "Name": "zoekt-index-1", "Host": "127.0.0.1:6073" },
+#      { "Name": "syntactic-code-intel-worker-0", "Host": "127.0.0.1:6075" },
+#      { "Name": "syntactic-code-intel-worker-1", "Host": "127.0.0.1:6076" },
+#      { "Name": "zoekt-web-0", "Host": "127.0.0.1:3070", "DefaultPath": "/debug/requests/" },
+#      { "Name": "zoekt-web-1", "Host": "127.0.0.1:3071", "DefaultPath": "/debug/requests/" }
+#    ]
+#  # Settings/config
+#  SITE_CONFIG_FILE: ./dev/site-config.json
+#  SITE_CONFIG_ALLOW_EDITS: true
+#  GLOBAL_SETTINGS_FILE: ./dev/global-settings.json
+#  GLOBAL_SETTINGS_ALLOW_EDITS: true
 
-  SRC_DEVELOPMENT: 'true'
-  SRC_PROF_HTTP: ''
-  SRC_PROF_SERVICES: |
-    [
-      { "Name": "frontend", "Host": "127.0.0.1:6063" },
-      { "Name": "gitserver-0", "Host": "127.0.0.1:3551" },
-      { "Name": "gitserver-1", "Host": "127.0.0.1:3552" },
-      { "Name": "searcher", "Host": "127.0.0.1:6069" },
-      { "Name": "symbols", "Host": "127.0.0.1:6071" },
-      { "Name": "repo-updater", "Host": "127.0.0.1:6074" },
-      { "Name": "codeintel-worker", "Host": "127.0.0.1:6088" },
-      { "Name": "worker", "Host": "127.0.0.1:6089" },
-      { "Name": "worker-executors", "Host": "127.0.0.1:6996" },
-      { "Name": "embeddings", "Host": "127.0.0.1:6099" },
-      { "Name": "zoekt-index-0", "Host": "127.0.0.1:6072" },
-      { "Name": "zoekt-index-1", "Host": "127.0.0.1:6073" },
-      { "Name": "syntactic-code-intel-worker-0", "Host": "127.0.0.1:6075" },
-      { "Name": "syntactic-code-intel-worker-1", "Host": "127.0.0.1:6076" },
-      { "Name": "zoekt-web-0", "Host": "127.0.0.1:3070", "DefaultPath": "/debug/requests/" },
-      { "Name": "zoekt-web-1", "Host": "127.0.0.1:3071", "DefaultPath": "/debug/requests/" }
-    ]
-  # Settings/config
-  SITE_CONFIG_FILE: ./dev/site-config.json
-  SITE_CONFIG_ALLOW_EDITS: true
-  GLOBAL_SETTINGS_FILE: ./dev/global-settings.json
-  GLOBAL_SETTINGS_ALLOW_EDITS: true
-
-  # Point codeintel to the `frontend` database in development
-  CODEINTEL_PGPORT: $PGPORT
-  CODEINTEL_PGHOST: $PGHOST
-  CODEINTEL_PGUSER: $PGUSER
-  CODEINTEL_PGPASSWORD: $PGPASSWORD
-  CODEINTEL_PGDATABASE: $PGDATABASE
-  CODEINTEL_PGSSLMODE: $PGSSLMODE
-  CODEINTEL_PGDATASOURCE: $PGDATASOURCE
-  CODEINTEL_PG_ALLOW_SINGLE_DB: true
-
-  # Required for `frontend` and `web` commands
-  SOURCEGRAPH_HTTPS_DOMAIN: sourcegraph.test
-  SOURCEGRAPH_HTTPS_PORT: 3443
-
-  # Required for `web` commands
-  NODE_OPTIONS: '--max_old_space_size=8192'
-  # Default `NODE_ENV` to `development`
-  NODE_ENV: development
-
-  # Required for codeintel object storage
-  PRECISE_CODE_INTEL_UPLOAD_AWS_ENDPOINT: http://localhost:9000
-  PRECISE_CODE_INTEL_UPLOAD_BACKEND: blobstore
-
-  # Required for embeddings job upload
-  EMBEDDINGS_UPLOAD_AWS_ENDPOINT: http://localhost:9000
-
-  # Required for upload of search job results
-  SEARCH_JOBS_UPLOAD_AWS_ENDPOINT: http://localhost:9000
-
-  # Point code insights to the `frontend` database in development
-  CODEINSIGHTS_PGPORT: $PGPORT
-  CODEINSIGHTS_PGHOST: $PGHOST
-  CODEINSIGHTS_PGUSER: $PGUSER
-  CODEINSIGHTS_PGPASSWORD: $PGPASSWORD
-  CODEINSIGHTS_PGDATABASE: $PGDATABASE
-  CODEINSIGHTS_PGSSLMODE: $PGSSLMODE
-  CODEINSIGHTS_PGDATASOURCE: $PGDATASOURCE
-
-  # Disable code insights by default
-  DB_STARTUP_TIMEOUT: 120s # codeinsights-db needs more time to start in some instances.
-  DISABLE_CODE_INSIGHTS_HISTORICAL: true
-  DISABLE_CODE_INSIGHTS: true
-
-  # # OpenTelemetry in dev - use single http/json endpoint
-  # OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
-  # OTEL_EXPORTER_OTLP_PROTOCOL: http/json
-
-  # Enable gRPC Web UI for debugging
-  GRPC_WEB_UI_ENABLED: 'true'
-
-  # Enable full protobuf message logging when an internal error occurred
-  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_ENABLED: 'true'
-  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_JSON_TRUNCATION_SIZE_BYTES: '1KB'
-  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_HANDLING_MAX_MESSAGE_SIZE_BYTES: '100MB'
-  ## zoekt-specific message logging
-  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_ENABLED: 'true'
-  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_JSON_TRUNCATION_SIZE_BYTES: '1KB'
-  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_HANDLING_MAX_MESSAGE_SIZE_BYTES: '100MB'
-
-  # Telemetry V2 export configuration. By default, this points to a test
-  # instance (go/msp-ops/telemetry-gateway#dev). Set the following:
-  #
-  #   TELEMETRY_GATEWAY_EXPORTER_EXPORT_ADDR: 'http://127.0.0.1:6080'
-  #
-  # in 'sg.config.overwrite.yaml' to point to a locally running Telemetry
-  # Gateway instead (via 'sg run telemetry-gateway')
-  TELEMETRY_GATEWAY_EXPORTER_EXPORT_ADDR: "https://telemetry-gateway.sgdev.org:443"
-  SRC_TELEMETRY_EVENTS_EXPORT_ALL: 'true'
-
-  # By default, allow temporary edits to external services.
-  EXTSVC_CONFIG_ALLOW_EDITS: true
+#  # Point codeintel to the `frontend` database in development
+#  CODEINTEL_PGPORT: $PGPORT
+#  CODEINTEL_PGHOST: $PGHOST
+#  CODEINTEL_PGUSER: $PGUSER
+#  CODEINTEL_PGPASSWORD: $PGPASSWORD
+#  CODEINTEL_PGDATABASE: $PGDATABASE
+#  CODEINTEL_PGSSLMODE: $PGSSLMODE
+#  CODEINTEL_PGDATASOURCE: $PGDATASOURCE
+#  CODEINTEL_PG_ALLOW_SINGLE_DB: true
+#
+#  # Required for `frontend` and `web` commands
+#  SOURCEGRAPH_HTTPS_DOMAIN: sourcegraph.test
+#  SOURCEGRAPH_HTTPS_PORT: 3443
+#
+#  # Required for `web` commands
+#  NODE_OPTIONS: '--max_old_space_size=8192'
+#  # Default `NODE_ENV` to `development`
+#  NODE_ENV: development
+#
+#  # Required for codeintel object storage
+#  PRECISE_CODE_INTEL_UPLOAD_AWS_ENDPOINT: http://localhost:9000
+#  PRECISE_CODE_INTEL_UPLOAD_BACKEND: blobstore
+#
+#  # Required for embeddings job upload
+#  EMBEDDINGS_UPLOAD_AWS_ENDPOINT: http://localhost:9000
+#
+#  # Required for upload of search job results
+#  SEARCH_JOBS_UPLOAD_AWS_ENDPOINT: http://localhost:9000
+#
+#  # Point code insights to the `frontend` database in development
+#  CODEINSIGHTS_PGPORT: $PGPORT
+#  CODEINSIGHTS_PGHOST: $PGHOST
+#  CODEINSIGHTS_PGUSER: $PGUSER
+#  CODEINSIGHTS_PGPASSWORD: $PGPASSWORD
+#  CODEINSIGHTS_PGDATABASE: $PGDATABASE
+#  CODEINSIGHTS_PGSSLMODE: $PGSSLMODE
+#  CODEINSIGHTS_PGDATASOURCE: $PGDATASOURCE
+#
+#  # Disable code insights by default
+#  DB_STARTUP_TIMEOUT: 120s # codeinsights-db needs more time to start in some instances.
+#  DISABLE_CODE_INSIGHTS_HISTORICAL: true
+#  DISABLE_CODE_INSIGHTS: true
+#
+#  # # OpenTelemetry in dev - use single http/json endpoint
+#  # OTEL_EXPORTER_OTLP_ENDPOINT: http://127.0.0.1:4318
+#  # OTEL_EXPORTER_OTLP_PROTOCOL: http/json
+#
+#  # Enable gRPC Web UI for debugging
+#  GRPC_WEB_UI_ENABLED: 'true'
+#
+#  # Enable full protobuf message logging when an internal error occurred
+#  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_ENABLED: 'true'
+#  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_JSON_TRUNCATION_SIZE_BYTES: '1KB'
+#  SRC_GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_HANDLING_MAX_MESSAGE_SIZE_BYTES: '100MB'
+#  ## zoekt-specific message logging
+#  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_ENABLED: 'true'
+#  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_JSON_TRUNCATION_SIZE_BYTES: '1KB'
+#  GRPC_INTERNAL_ERROR_LOGGING_LOG_PROTOBUF_MESSAGES_HANDLING_MAX_MESSAGE_SIZE_BYTES: '100MB'
+#
+#  # Telemetry V2 export configuration. By default, this points to a test
+#  # instance (go/msp-ops/telemetry-gateway#dev). Set the following:
+#  #
+#  #   TELEMETRY_GATEWAY_EXPORTER_EXPORT_ADDR: 'http://127.0.0.1:6080'
+#  #
+#  # in 'sg.config.overwrite.yaml' to point to a locally running Telemetry
+#  # Gateway instead (via 'sg run telemetry-gateway')
+#  TELEMETRY_GATEWAY_EXPORTER_EXPORT_ADDR: "https://telemetry-gateway.sgdev.org:443"
+#  SRC_TELEMETRY_EVENTS_EXPORT_ALL: 'true'
+#
+#  # By default, allow temporary edits to external services.
+#  EXTSVC_CONFIG_ALLOW_EDITS: true
 
 commands:
+  bolaji:
+    cmd: |
+      echo $BOLAJI_ENV_VAR
+      echo $BOLAJI_NODE_ENV
+    env:
+      BOLAJI_ENV_VAR: 'base command'
+      BOLAJI_NODE_ENV: development
   server:
     description: Run an all-in-one sourcegraph/server image
     cmd: ./dev/run-server-image.sh
@@ -1514,6 +1521,14 @@ dockerCommands:
 #
 defaultCommandset: enterprise
 commandsets:
+  obolaji:
+    checks:
+      - redis
+    commands:
+      - bolaji
+    env:
+      BOLAJI_ENV_VAR: 'base commandset'
+      WILLIAMS_CHECK: true
   enterprise-bazel: &enterprise_bazel_set
     checks:
       - redis

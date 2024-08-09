@@ -1,6 +1,9 @@
 package run
 
-import "github.com/sourcegraph/sourcegraph/dev/sg/internal/secrets"
+import (
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/env"
+	"github.com/sourcegraph/sourcegraph/dev/sg/internal/secrets"
+)
 
 // Common sg command parameters shared by all command types
 type SGConfigCommandOptions struct {
@@ -23,6 +26,7 @@ type SGConfigCommandOptions struct {
 	Logfile         string                            `yaml:"logfile"`
 	ExternalSecrets map[string]secrets.ExternalSecret `yaml:"externalSecrets"`
 
+	NewEnv         map[string]env.EnvVar
 	RepositoryRoot string
 }
 

@@ -237,6 +237,7 @@ go tool pprof -help
 	args := StartArgs{
 		Describe: ctx.Bool("describe"),
 	}
+
 	if ctx.Bool("commands") {
 		args.Commands = ctx.Args().Slice()
 	} else {
@@ -249,7 +250,6 @@ go tool pprof -help
 			args.CommandSet = commandsets[0]
 		}
 	}
-
 	return start(ctx.Context, args)
 }
 
@@ -277,7 +277,13 @@ func start(ctx context.Context, args StartArgs) error {
 		case conf := <-configs:
 			// Construct the new commands definition and only restart if the changes
 			// to the config file are relevant to the commands we're running
+			fmt.Println(conf.Env, conf.NewEnv)
+			return nil
 			cmds, err := args.toCommands(conf)
+			for _, cc := range cmds.Commands {
+				fmt.Println("command env: ", cc.GetConfig().Env, " \n command name: ", cc.GetConfig().Name)
+			}
+			fmt.Println(len(cmds.Commands))
 			if err != nil {
 				return err
 			}
@@ -312,7 +318,7 @@ func start(ctx context.Context, args StartArgs) error {
 			childCtx, cancel = context.WithCancel(ctx)
 			defer cancel()
 
-			std.Out.ClearScreen()
+			//std.Out.ClearScreen()
 
 			go func() {
 				if args.Describe {

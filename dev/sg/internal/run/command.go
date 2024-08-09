@@ -267,7 +267,7 @@ type outputOptions struct {
 }
 
 func startSgCmd(ctx context.Context, cmd SGConfigCommand, parentEnv map[string]string) (*startedCmd, error) {
-	exec, err := cmd.GetExecCmd(ctx)
+	ex, err := cmd.GetExecCmd(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -281,9 +281,12 @@ func startSgCmd(ctx context.Context, cmd SGConfigCommand, parentEnv map[string]s
 	}
 
 	opts := commandOptions{
-		name:   conf.Name,
-		exec:   exec,
-		env:    makeEnv(parentEnv, secretsEnv, conf.Env),
+		name: conf.Name,
+		exec: ex,
+		// The ordering here is quite important because we want to allow the `parentEnv` and `secretsEnv`
+		// to override the config values for a command. This ensures env vars in the sg overwrite file
+		// are always the final authority.
+		env:    makeEnv(conf.Env, parentEnv, secretsEnv),
 		dir:    conf.RepositoryRoot,
 		stdout: outputOptions{ignore: conf.IgnoreStdout},
 		stderr: outputOptions{ignore: conf.IgnoreStderr},

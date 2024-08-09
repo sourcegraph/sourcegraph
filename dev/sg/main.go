@@ -411,6 +411,7 @@ func watchConfig(ctx context.Context) (<-chan *sgconf.Config, error) {
 	}
 	output := make(chan *sgconf.Config, 1)
 	output <- conf
+	return output, nil
 
 	// start file watcher on configuration files
 	paths := []string{configFile}
