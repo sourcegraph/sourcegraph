@@ -47,7 +47,6 @@
         <QueryExamples
             showQueryPage={data.showExampleQueries}
             queryExample={data.queryExample}
-            queryState={$queryState}
         />
         <svelte:component this={data.footer} />
     </SearchHome>

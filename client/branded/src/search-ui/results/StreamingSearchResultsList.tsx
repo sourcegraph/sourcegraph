@@ -8,7 +8,6 @@ import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import { type FilePrefetcher, PrefetchableFile } from '@sourcegraph/shared/src/components/PrefetchableFile'
 import { displayRepoName } from '@sourcegraph/shared/src/components/RepoLink'
 import { VirtualList } from '@sourcegraph/shared/src/components/VirtualList'
-import { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type { BuildSearchQueryURLParameters, QueryState, SearchContextProps } from '@sourcegraph/shared/src/search'
 import {
@@ -68,11 +67,9 @@ export interface StreamingSearchResultsListProps
 
     showQueryExamplesOnNoResultsPage?: boolean
     /**
-     *  Determines the type of search pattern for the query examples.
-     *  For now, we only want to show the query examples in the style
-     *  of keyword search on the homepage and the search results page.
+     * Whether to show keyword search examples instead of standard search examples.
      */
-    queryExamplesPatternType?: SearchPatternType
+    showQueryExamplesForKeywordSearch?: boolean
     /**
      * The query state to be used for the query examples and owner search.
      * If not provided, the query examples and owner search will not
@@ -117,11 +114,11 @@ export const StreamingSearchResultsList: React.FunctionComponent<
     prefetchFileEnabled,
     enableKeyboardNavigation,
     showQueryExamplesOnNoResultsPage,
+    showQueryExamplesForKeywordSearch = true,
     queryState,
     buildSearchURLQueryFromQueryState,
     logSearchResultClicked,
     enableRepositoryMetadata,
-    queryExamplesPatternType = SearchPatternType.standard,
     className,
     hideFilePreviewButton = false,
 }) => {
@@ -309,7 +306,7 @@ export const StreamingSearchResultsList: React.FunctionComponent<
                                 telemetryRecorder={telemetryRecorder}
                                 showSearchContext={searchContextsEnabled}
                                 showQueryExamples={showQueryExamplesOnNoResultsPage}
-                                queryExamplesPatternType={queryExamplesPatternType}
+                                showQueryExamplesForKeywordSearch={showQueryExamplesForKeywordSearch}
                             />
                         )}
                     </>

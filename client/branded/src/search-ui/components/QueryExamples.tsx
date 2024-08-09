@@ -30,7 +30,7 @@ import styles from './QueryExamples.module.scss'
 export interface QueryExamplesProps extends TelemetryProps, TelemetryV2Props {
     selectedSearchContextSpec?: string
     isSourcegraphDotCom?: boolean
-    patternType: SearchPatternType
+    showQueryExamplesForKeywordSearch: boolean
 }
 
 export const QueryExamples: React.FunctionComponent<QueryExamplesProps> = ({
@@ -38,13 +38,15 @@ export const QueryExamples: React.FunctionComponent<QueryExamplesProps> = ({
     telemetryService,
     telemetryRecorder,
     isSourcegraphDotCom = false,
-    patternType,
+    showQueryExamplesForKeywordSearch,
 }) => {
     const exampleSyntaxColumns = useQueryExamples(
         selectedSearchContextSpec ?? 'global',
         isSourcegraphDotCom,
-        patternType === SearchPatternType.keyword
+        showQueryExamplesForKeywordSearch
     )
+
+    const patternType = showQueryExamplesForKeywordSearch ? SearchPatternType.keyword : SearchPatternType.standard
 
     const onQueryExampleClick = useCallback(
         (query: string) => {

@@ -2,20 +2,27 @@
     import type { Readable } from 'svelte/store'
 
     import { isDefined } from '$lib/common'
-    import { SearchPatternType } from '$lib/graphql-types'
     import Icon from '$lib/Icon.svelte'
-    import type { QueryState } from '$lib/search/state'
     import SyntaxHighlightedQuery from '$lib/search/SyntaxHighlightedQuery.svelte'
     import { buildSearchURLQuery } from '$lib/shared'
+    import { settings } from '$lib/stores'
     import TabPanel from '$lib/TabPanel.svelte'
     import Tabs from '$lib/Tabs.svelte'
+    import { defaultPatternTypeFromSettings } from '$lib/web'
     import ProductStatusBadge from '$lib/wildcard/ProductStatusBadge.svelte'
+    import { SearchPatternType } from '$lib/graphql-operations'
 
     import { basicSyntaxColumns, exampleQueryColumns, type QueryExample } from './queryExamples'
 
     export let showQueryPage = false
     export let queryExample: Readable<QueryExample | null>
-    export let queryState: QueryState
+
+    const defaultPatternType = defaultPatternTypeFromSettings({ final: $settings, subjects: [] })
+    const showQueryExamplesForKeywordSearch =
+        defaultPatternType === SearchPatternType.keyword || defaultPatternType === SearchPatternType.regexp
+    const patternTypeForQueryLinks = showQueryExamplesForKeywordSearch
+        ? SearchPatternType.keyword
+        : SearchPatternType.standard
 
     $: tabs = [
         $queryExample
@@ -25,7 +32,7 @@
                       $queryExample.fileName,
                       $queryExample.repoName,
                       $queryExample.orgName,
-                      queryState.patternType === SearchPatternType.keyword
+                      showQueryExamplesForKeywordSearch
                   ),
               }
             : null,
@@ -55,7 +62,7 @@
                                                     class="chip"
                                                     href="/search?{buildSearchURLQuery(
                                                         example.query,
-                                                        queryState.patternType,
+                                                        patternTypeForQueryLinks,
                                                         false
                                                     )}"
                                                 >

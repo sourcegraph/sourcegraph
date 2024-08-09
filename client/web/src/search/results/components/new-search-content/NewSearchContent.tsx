@@ -17,7 +17,7 @@ import type { Observable } from 'rxjs'
 import { StreamingProgress, StreamingSearchResultsList, useSearchResultState } from '@sourcegraph/branded'
 import type { FetchFileParameters } from '@sourcegraph/shared/src/backend/file'
 import type { FilePrefetcher } from '@sourcegraph/shared/src/components/PrefetchableFile'
-import { HighlightResponseFormat, type SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
+import { HighlightResponseFormat, SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import type { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import type {
     QueryState,
@@ -35,6 +35,7 @@ import {
     type StreamSearchOptions,
 } from '@sourcegraph/shared/src/search/stream'
 import type { SettingsCascadeProps } from '@sourcegraph/shared/src/settings/settings'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import type { TelemetryV2Props } from '@sourcegraph/shared/src/telemetry'
 import { NOOP_TELEMETRY_SERVICE, type TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
 import { lazyComponent } from '@sourcegraph/shared/src/util/lazyComponent'
@@ -45,6 +46,7 @@ import type { SearchJobsProps } from '../../../../enterprise/search-jobs'
 import { fetchBlob } from '../../../../repo/blob/backend'
 import { buildSearchURLQueryFromQueryState } from '../../../../stores'
 import { GettingStartedTour } from '../../../../tour/GettingStartedTour'
+import { defaultPatternTypeFromSettings } from '../../../../util/settings'
 import { DidYouMean } from '../../../suggestion/DidYouMean'
 import { SmartSearch } from '../../../suggestion/SmartSearch'
 import { SearchFiltersSidebar } from '../../sidebar/SearchFiltersSidebar'
@@ -181,6 +183,10 @@ export const NewSearchContent: FC<NewSearchContentProps> = props => {
         telemetryService.log('SearchFilePreviewClose', {}, {})
         telemetryRecorder.recordEvent('search.filePreview', 'close')
     }, [telemetryService, clearPreview, telemetryRecorder])
+
+    const defaultPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+    const showQueryExamplesForKeywordSearch =
+        defaultPatternType === SearchPatternType.keyword || defaultPatternType === SearchPatternType.regexp
 
     return (
         <div className={classNames(styles.root, { [styles.rootWithNewFilters]: newFiltersEnabled })}>
@@ -329,12 +335,12 @@ export const NewSearchContent: FC<NewSearchContentProps> = props => {
                         prefetchFileEnabled={true}
                         prefetchFile={prefetchFile}
                         enableKeyboardNavigation={true}
-                        showQueryExamplesOnNoResultsPage={true}
                         queryState={queryState}
                         buildSearchURLQueryFromQueryState={buildSearchURLQueryFromQueryState}
                         selectedSearchContextSpec={selectedSearchContextSpec}
                         logSearchResultClicked={onLogSearchResultClick}
-                        queryExamplesPatternType={patternType}
+                        showQueryExamplesOnNoResultsPage={true}
+                        showQueryExamplesForKeywordSearch={showQueryExamplesForKeywordSearch}
                     />
                 )}
             </div>

@@ -7,6 +7,7 @@ import { QueryExamples } from '@sourcegraph/branded/src/search-ui/components/Que
 import type { QueryState } from '@sourcegraph/shared/src/search'
 import { getGlobalSearchContextFilter } from '@sourcegraph/shared/src/search/query/query'
 import { appendContextFilter, omitFilter } from '@sourcegraph/shared/src/search/query/transformer'
+import { useSettingsCascade } from '@sourcegraph/shared/src/settings/settings'
 import { useIsLightTheme } from '@sourcegraph/shared/src/theme'
 import { Label, Tooltip, useLocalStorage } from '@sourcegraph/wildcard'
 
@@ -15,9 +16,9 @@ import { useFeatureFlag } from '../../../featureFlags/useFeatureFlag'
 import { SearchPatternType } from '../../../graphql-operations'
 import { useLegacyContext_onlyInStormRoutes } from '../../../LegacyRouteContext'
 import { useV2QueryInput } from '../../../search/useV2QueryInput'
-import { useNavbarQueryState } from '../../../stores'
 import { GettingStartedTour } from '../../../tour/GettingStartedTour'
 import { useShowOnboardingTour } from '../../../tour/hooks'
+import { defaultPatternTypeFromSettings } from '../../../util/settings'
 
 import { AddCodeHostWidget } from './AddCodeHostWidget'
 import { KeywordSearchCtaSection } from './KeywordSearchCtaSection'
@@ -73,7 +74,10 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
     const [simpleSearchEnabled] = useFeatureFlag('enable-simple-search', false)
 
     const showOnboardingTour = useShowOnboardingTour({ authenticatedUser, isSourcegraphDotCom })
-    const patternType = useNavbarQueryState.getState().searchPatternType
+
+    const defaultPatternType = defaultPatternTypeFromSettings(useSettingsCascade())
+    const showQueryExamplesForKeywordSearch =
+        defaultPatternType === SearchPatternType.keyword || defaultPatternType === SearchPatternType.regexp
 
     return (
         <div className={classNames('d-flex flex-column align-items-center px-3', styles.searchPage)}>
@@ -137,7 +141,7 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
                                 authenticatedUser={authenticatedUser}
                             />
                         )}
-                        {patternType === SearchPatternType.keyword ? <KeywordSearchCtaSection /> : <></>}
+                        {showQueryExamplesForKeywordSearch ? <KeywordSearchCtaSection /> : <></>}
                     </>
                 )}
             </div>
@@ -149,7 +153,7 @@ export const SearchPageContent: FC<SearchPageContentProps> = props => {
                             telemetryService={telemetryService}
                             telemetryRecorder={telemetryRecorder}
                             isSourcegraphDotCom={isSourcegraphDotCom}
-                            patternType={patternType}
+                            showQueryExamplesForKeywordSearch={showQueryExamplesForKeywordSearch}
                         />
                     )}
                 </div>

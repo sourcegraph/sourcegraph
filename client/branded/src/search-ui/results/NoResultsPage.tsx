@@ -3,7 +3,6 @@ import React, { useCallback, useEffect } from 'react'
 import { mdiClose, mdiOpenInNew } from '@mdi/js'
 import classNames from 'classnames'
 
-import type { SearchPatternType } from '@sourcegraph/shared/src/graphql-operations'
 import type { SearchContextProps } from '@sourcegraph/shared/src/search'
 import { NoResultsSectionID as SectionID } from '@sourcegraph/shared/src/settings/temporary/searchSidebar'
 import { useTemporarySetting } from '@sourcegraph/shared/src/settings/temporary/useTemporarySetting'
@@ -51,7 +50,7 @@ interface NoResultsPageProps
         Pick<SearchContextProps, 'searchContextsEnabled'> {
     isSourcegraphDotCom: boolean
     showSearchContext: boolean
-    queryExamplesPatternType: SearchPatternType
+    showQueryExamplesForKeywordSearch: boolean
     showQueryExamples?: boolean
     selectedSearchContextSpec?: string
 }
@@ -64,7 +63,7 @@ export const NoResultsPage: React.FunctionComponent<React.PropsWithChildren<NoRe
     showSearchContext,
     showQueryExamples,
     selectedSearchContextSpec,
-    queryExamplesPatternType,
+    showQueryExamplesForKeywordSearch,
 }) => {
     const [hiddenSectionIDs, setHiddenSectionIds] = useTemporarySetting('search.hiddenNoResultsSections')
 
@@ -95,7 +94,7 @@ export const NoResultsPage: React.FunctionComponent<React.PropsWithChildren<NoRe
                             telemetryService={telemetryService}
                             telemetryRecorder={telemetryRecorder}
                             isSourcegraphDotCom={isSourcegraphDotCom}
-                            patternType={queryExamplesPatternType}
+                            showQueryExamplesForKeywordSearch={showQueryExamplesForKeywordSearch}
                         />
                     </div>
                 </>

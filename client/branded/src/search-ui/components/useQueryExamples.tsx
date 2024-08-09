@@ -65,8 +65,8 @@ function getRepoFilterExamples(repositoryName: string): { singleRepoExample: str
 
 export function useQueryExamples(
     selectedSearchContextSpec: string,
-    isSourcegraphDotCom: boolean = false,
-    keywordSearch: boolean = false
+    isSourcegraphDotCom: boolean,
+    keywordSearch: boolean
 ): QueryExamplesSection[][] {
     const [queryExamplesContent, setQueryExamplesContent] = useState<QueryExamplesContent>()
     const [cachedQueryExamplesContent, setCachedQueryExamplesContent, cachedQueryExamplesContentLoadStatus] =

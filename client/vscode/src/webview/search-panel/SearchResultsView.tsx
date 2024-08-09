@@ -391,10 +391,12 @@ export const SearchResultsView: React.FunctionComponent<React.PropsWithChildren<
                             fetchHighlightedFileLineRanges={fetchHighlightedFileLineRangesWithContext}
                             executedQuery={context.submittedSearchQueryState.queryState.query}
                             resultClassName="mr-0"
-                            showQueryExamplesOnNoResultsPage={true}
                             selectedSearchContextSpec={context.selectedSearchContextSpec}
                             // The VSCode extension does not support file preview, so turn that off in the search results.
                             hideFilePreviewButton={true}
+                            showQueryExamplesOnNoResultsPage={true}
+                            // For VSCode, the default pattern type is hardcoded to "standard".
+                            showQueryExamplesForKeywordSearch={false}
                         />
                     </MatchHandlersContext.Provider>
                 </div>
