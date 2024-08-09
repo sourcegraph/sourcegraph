@@ -27,20 +27,21 @@ import styles from './GitHubAppsPage.module.scss'
 
 interface Props extends TelemetryV2Props {
     batchChangesEnabled: boolean
+    userOwned: boolean
 }
 
-export const GitHubAppsPage: React.FC<Props> = ({ batchChangesEnabled, telemetryRecorder }) => {
+export const GitHubAppsPage: React.FC<Props> = ({ batchChangesEnabled, telemetryRecorder, userOwned }) => {
     const { data, loading, error, refetch } = useQuery<GitHubAppsResult, GitHubAppsVariables>(GITHUB_APPS_QUERY, {
         variables: {
-            domain: GitHubAppDomain.REPOS,
+            domain: userOwned ? GitHubAppDomain.BATCHES : GitHubAppDomain.REPOS,
         },
     })
     const gitHubApps = useMemo(() => data?.gitHubApps?.nodes ?? [], [data])
 
     useEffect(() => {
-        EVENT_LOGGER.logPageView('SiteAdminGitHubApps')
-        telemetryRecorder.recordEvent('admin.GitHubApps', 'view')
-    }, [telemetryRecorder])
+        EVENT_LOGGER.logPageView(userOwned ? 'UserGitHubApps' : 'SiteAdminGitHubApps')
+        telemetryRecorder.recordEvent(userOwned ? 'user.GitHubApps' : 'admin.GitHubApps', 'view')
+    }, [telemetryRecorder, userOwned])
 
     const location = useLocation()
     const success = new URLSearchParams(location.search).get('success') === 'true'
@@ -63,11 +64,26 @@ export const GitHubAppsPage: React.FC<Props> = ({ batchChangesEnabled, telemetry
                 className={classNames(styles.pageHeader, 'mb-3')}
                 description={
                     <>
-                        Create and connect a GitHub App to better manage GitHub code host connections.{' '}
-                        <Link to="/help/admin/code_hosts/github#using-a-github-app" target="_blank">
-                            See how GitHub App configuration works.
-                        </Link>
-                        {batchChangesEnabled && (
+                        {userOwned ? (
+                            batchChangesEnabled ? (
+                                <>Use personal GitHub Apps to act on your behalf when running Batch Changes.</>
+                            ) : (
+                                <>
+                                    Personal GitHub Apps are currently only used for Batch Changes, but this feature is
+                                    not enabled on your instance.
+                                </>
+                            )
+                        ) : (
+                            <>
+                                Create and connect a GitHub App to better manage GitHub code host connections.{' '}
+                                <Link to="/help/admin/code_hosts/github#using-a-github-app" target="_blank">
+                                    See how GitHub App configuration works.
+                                </Link>
+                            </>
+                        )}
+                        {batchChangesEnabled && userOwned ? (
+                            <> To create a GitHub App to sign Batch Changes commits, ask your site admin.</>
+                        ) : (
                             <>
                                 {' '}
                                 To create a GitHub App to sign Batch Changes commits, visit{' '}
@@ -77,14 +93,18 @@ export const GitHubAppsPage: React.FC<Props> = ({ batchChangesEnabled, telemetry
                     </>
                 }
                 actions={
-                    <ButtonLink
-                        to="/site-admin/github-apps/new"
-                        className="ml-auto text-nowrap"
-                        variant="primary"
-                        as={Link}
-                    >
-                        <Icon aria-hidden={true} svgPath={mdiPlus} /> Create GitHub App
-                    </ButtonLink>
+                    userOwned ? (
+                        <></>
+                    ) : (
+                        <ButtonLink
+                            to="/site-admin/github-apps/new"
+                            className="ml-auto text-nowrap"
+                            variant="primary"
+                            as={Link}
+                        >
+                            <Icon aria-hidden={true} svgPath={mdiPlus} /> Create GitHub App
+                        </ButtonLink>
+                    )
                 }
             />
             <Container className="mb-3">

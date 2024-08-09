@@ -1691,6 +1691,7 @@ ts_project(
         "src/user/settings/RedirectToUserPage.tsx",
         "src/user/settings/RedirectToUserSettings.tsx",
         "src/user/settings/ScimAlert.tsx",
+        "src/user/settings/UserGitHubAppsArea.tsx",
         "src/user/settings/UserSettingsArea.tsx",
         "src/user/settings/UserSettingsSidebar.tsx",
         "src/user/settings/accessTokens/UserSettingsCreateAccessTokenCallbackPage.tsx",

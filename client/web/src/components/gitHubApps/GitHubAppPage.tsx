@@ -27,7 +27,12 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import type { BreadcrumbItem } from '@sourcegraph/wildcard/src/components/PageHeader'
 
-import { GitHubAppDomain, type GitHubAppByIDResult, type GitHubAppByIDVariables } from '../../graphql-operations'
+import {
+    GitHubAppDomain,
+    type GitHubAppByIDResult,
+    type GitHubAppByIDVariables,
+    GitHubAppKind,
+} from '../../graphql-operations'
 import { ExternalServiceNode } from '../externalServices/ExternalServiceNode'
 import { ConnectionList, ConnectionSummary, SummaryContainer } from '../FilteredConnection/ui'
 import { PageTitle } from '../PageTitle'
@@ -44,6 +49,7 @@ interface Props extends TelemetryProps, TelemetryV2Props {
      * The parent breadcrumb item to show for this page in the header.
      */
     headerParentBreadcrumb: BreadcrumbItem
+    userOwned: boolean
     /** An optional annotation to show in the page header. */
     headerAnnotation?: React.ReactNode
 }
@@ -53,15 +59,16 @@ export const GitHubAppPage: FC<Props> = ({
     telemetryRecorder,
     headerParentBreadcrumb,
     headerAnnotation,
+    userOwned,
 }) => {
     const { appID } = useParams()
     const navigate = useNavigate()
     const [removeModalOpen, setRemoveModalOpen] = useState<boolean>(false)
 
     useEffect(() => {
-        telemetryService.logPageView('SiteAdminGitHubApp')
-        telemetryRecorder.recordEvent('admin.GitHubApp', 'view')
-    }, [telemetryService, telemetryRecorder])
+        telemetryService.logPageView(userOwned ? 'UserGitHubApp' : 'SiteAdminGitHubApp')
+        telemetryRecorder.recordEvent(userOwned ? 'user.GitHubApp' : 'admin.GitHubApp', 'view')
+    }, [telemetryService, telemetryRecorder, userOwned])
     const [fetchError, setError] = useState<ErrorLike>()
 
     const { data, loading, error } = useQuery<GitHubAppByIDResult, GitHubAppByIDVariables>(GITHUB_APP_BY_ID_QUERY, {
@@ -81,7 +88,9 @@ export const GitHubAppPage: FC<Props> = ({
 
     const onAddInstallation = async (app: NonNullable<GitHubAppByIDResult['gitHubApp']>): Promise<void> => {
         try {
-            const req = await fetch(`/githubapp/state?id=${app?.id}&domain=${app?.domain}`)
+            const req = await fetch(
+                `/githubapp/state?id=${app?.id}&domain=${app?.domain}&kind=${GitHubAppKind.USER_CREDENTIAL}`
+            )
             const state = await req.text()
             const trailingSlash = app.appURL.endsWith('/') ? '' : '/'
             window.location.assign(`${app.appURL}${trailingSlash}installations/new?state=${state}`)
@@ -100,7 +109,7 @@ export const GitHubAppPage: FC<Props> = ({
                     {removeModalOpen && (
                         <RemoveGitHubAppModal
                             onCancel={() => setRemoveModalOpen(false)}
-                            afterDelete={() => navigate('/site-admin/github-apps')}
+                            afterDelete={() => navigate(`/${userOwned ? 'user/settings' : 'site-admin'}/github-apps`)}
                             app={app}
                         />
                     )}

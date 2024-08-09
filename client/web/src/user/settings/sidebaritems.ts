@@ -61,4 +61,9 @@ export const userSettingsSideBarItems: UserSettingsSidebarItems = [
         label: 'Event log',
         condition: ({ user: { viewerCanAdminister } }) => viewerCanAdminister,
     },
+    {
+        to: '/github-apps',
+        label: 'GitHub Apps',
+        condition: ({ user: { viewerCanAdminister } }) => viewerCanAdminister,
+    },
 ]

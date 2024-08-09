@@ -137,6 +137,7 @@ func (srv *gitHubAppServer) stateHandler(w http.ResponseWriter, r *http.Request)
 	gqlID := r.URL.Query().Get("id")
 	domain := r.URL.Query().Get("domain")
 	baseURL := r.URL.Query().Get("baseURL")
+	kind := r.URL.Query().Get("kind")
 	if gqlID == "" {
 		// we marshal an empty `gitHubAppStateDetails` struct because we want the values saved in the cache
 		// to always conform to the same structure.
@@ -160,6 +161,7 @@ func (srv *gitHubAppServer) stateHandler(w http.ResponseWriter, r *http.Request)
 		AppID:   int(id64),
 		Domain:  domain,
 		BaseURL: baseURL,
+		Kind:    kind,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unexpected error when marshalling state: %s", err.Error()), http.StatusInternalServerError)

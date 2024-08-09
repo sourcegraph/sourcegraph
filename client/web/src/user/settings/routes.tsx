@@ -107,6 +107,12 @@ export const userSettingsAreaRoutes: readonly UserSettingsAreaRoute[] = [
         ),
         condition: shouldRenderBatchChangesPage,
     },
+    {
+        path: 'github-apps/*',
+        render: lazyComponent(() => import('./UserGitHubAppsArea'), 'UserGitHubAppsArea'),
+        // GitHub Apps are currently only relevant for users who use them with batch changes. If they are used for other things too, you can remove this condition.
+        condition: shouldRenderBatchChangesPage,
+    },
 ]
 
 interface UserSettingAreaIndexPageProps extends PlatformContextProps, SettingsCascadeProps, TelemetryProps {
