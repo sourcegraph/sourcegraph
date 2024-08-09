@@ -58,8 +58,8 @@
             <Icon icon={ILucideMenu} aria-label="Navigation menu" />
         </button>
 
-        <a href="/search">
-            <Icon icon={ISgMark} aria-label="Sourcegraph" aria-hidden="true" --icon-color="initial" />
+        <a class="home-link" href="/search" aria-label="Got to search home">
+            <Icon icon={ISgMark} aria-label="Sourcegraph" aria-hidden="true" />
         </a>
     </div>
 
@@ -174,18 +174,22 @@
             margin-left: 0;
         }
 
-        :global([data-icon]):hover {
-            @keyframes spin {
-                50% {
-                    transform: rotate(180deg) scale(1.2);
-                }
-                100% {
-                    transform: rotate(180deg) scale(1);
-                }
-            }
+        .home-link {
+            --icon-color: initial;
 
-            @media (prefers-reduced-motion: no-preference) {
-                animation: spin 0.5s ease-in-out 1;
+            &:hover {
+                @keyframes spin {
+                    50% {
+                        transform: rotate(180deg) scale(1.2);
+                    }
+                    100% {
+                        transform: rotate(180deg) scale(1);
+                    }
+                }
+
+                @media (prefers-reduced-motion: no-preference) {
+                    animation: spin 0.5s ease-in-out 1;
+                }
             }
         }
     }
