@@ -111,6 +111,31 @@ func TestNewActor(t *testing.T) {
 }`),
 		},
 		{
+			name: "enabled, rate limit has invalid duration",
+			args: args{
+				&codyaccessv1.CodyGatewayAccess{
+					SubscriptionId:          "es_1234uuid",
+					SubscriptionDisplayName: "My Subscription",
+					Enabled:                 true,
+					EmbeddingsRateLimit: &codyaccessv1.CodyGatewayRateLimit{
+						Limit:            10,
+						IntervalDuration: &durationpb.Duration{},
+					},
+				},
+			},
+			wantActor: autogold.Expect(`{
+  "key": "sekret_token",
+  "id": "1234uuid",
+  "name": "My Subscription",
+  "accessEnabled": true,
+  "endpointAccess": {
+    "/v1/attribution": true
+  },
+  "rateLimits": {},
+  "lastUpdated": "2024-06-03T20:03:07-07:00"
+}`),
+		},
+		{
 			name: "disabled",
 			args: args{
 				&codyaccessv1.CodyGatewayAccess{

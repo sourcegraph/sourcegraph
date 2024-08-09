@@ -324,7 +324,7 @@ func newActor(
 		Source:      source,
 	}
 
-	if rl := s.GetChatCompletionsRateLimit(); rl != nil {
+	if rl := s.GetChatCompletionsRateLimit(); rl != nil && rl.IntervalDuration.AsDuration() > 0 {
 		a.RateLimits[codygateway.FeatureChatCompletions] = actor.NewRateLimitWithPercentageConcurrency(
 			int64(rl.Limit),
 			rl.IntervalDuration.AsDuration(),
@@ -333,7 +333,7 @@ func newActor(
 		)
 	}
 
-	if rl := s.GetCodeCompletionsRateLimit(); rl != nil {
+	if rl := s.GetCodeCompletionsRateLimit(); rl != nil && rl.IntervalDuration.AsDuration() > 0 {
 		a.RateLimits[codygateway.FeatureCodeCompletions] = actor.NewRateLimitWithPercentageConcurrency(
 			int64(rl.Limit),
 			rl.IntervalDuration.AsDuration(),
@@ -342,7 +342,7 @@ func newActor(
 		)
 	}
 
-	if rl := s.GetEmbeddingsRateLimit(); rl != nil {
+	if rl := s.GetEmbeddingsRateLimit(); rl != nil && rl.IntervalDuration.AsDuration() > 0 {
 		a.RateLimits[codygateway.FeatureEmbeddings] = actor.NewRateLimitWithPercentageConcurrency(
 			int64(rl.Limit),
 			rl.IntervalDuration.AsDuration(),

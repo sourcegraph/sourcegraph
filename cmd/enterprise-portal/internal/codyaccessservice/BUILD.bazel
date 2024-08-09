@@ -51,6 +51,8 @@ go_test(
     deps = [
         "//cmd/enterprise-portal/internal/database/codyaccess",
         "//cmd/enterprise-portal/internal/samsm2m",
+        "//internal/license",
+        "//internal/licensing",
         "//lib/enterpriseportal/codyaccess/v1:codyaccess",
         "@com_connectrpc_connect//:connect",
         "@com_github_derision_test_go_mockgen_v2//testutil/require",

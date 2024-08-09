@@ -104,21 +104,26 @@ func maybeApplyOverride[T ~int32 | ~int64](limit *T, overrideValue T, overrideVa
 // plan and applying known overrides on top. This closely models the existing
 // codyGatewayAccessResolver in 'cmd/frontend/internal/dotcom/productsubscription'.
 func evaluateCodyGatewayAccessRateLimits(access *codyaccess.CodyGatewayAccessWithSubscriptionDetails) CodyGatewayRateLimits {
-	// Set defaults for everything based on active licnese plan and user count.
+	// Set defaults for everything based on active license plan and user count.
 	// If there isn't one, zero values apply.
-	activeLicense := pointers.DerefZero(access.ActiveLicenseInfo)
-	p := licensing.PlanFromTags(activeLicense.Tags)
-	userCount := pointers.Ptr(int(activeLicense.UserCount))
+	limits := CodyGatewayRateLimits{}
+	if access.ActiveLicenseInfo != nil {
+		// Infer defaults for the active license
+		var (
+			activeLicense = *access.ActiveLicenseInfo
+			plan          = licensing.PlanFromTags(activeLicense.Tags)
+			userCount     = pointers.Ptr(int(activeLicense.UserCount))
+		)
+		limits = CodyGatewayRateLimits{
+			ChatSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
+			Chat:       licensing.NewCodyGatewayChatRateLimit(plan, userCount),
 
-	limits := CodyGatewayRateLimits{
-		ChatSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
-		Chat:       licensing.NewCodyGatewayChatRateLimit(p, userCount),
+			CodeSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
+			Code:       licensing.NewCodyGatewayCodeRateLimit(plan, userCount),
 
-		CodeSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
-		Code:       licensing.NewCodyGatewayCodeRateLimit(p, userCount),
-
-		EmbeddingsSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
-		Embeddings:       licensing.NewCodyGatewayEmbeddingsRateLimit(p, userCount),
+			EmbeddingsSource: codyaccessv1.CodyGatewayRateLimitSource_CODY_GATEWAY_RATE_LIMIT_SOURCE_PLAN,
+			Embeddings:       licensing.NewCodyGatewayEmbeddingsRateLimit(plan, userCount),
+		}
 	}
 
 	// Chat
