@@ -1,0 +1,36 @@
+name: Changelog Auditor
+
+# We only want to trigger this workflow when a pull request
+# is approved.
+on:
+  pull_request_review:
+    types: [ submitted ]
+
+jobs:
+  checkPRTitle:
+    name: |
+      PR Title Check
+    if: github.event.review.state == 'APPROVED'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'sourcegraph/devx-service'
+          token: ${{ secrets.PR_AUDITOR_TOKEN }}
+
+      - uses: actions/setup-go@v4
+        with: { go-version: '1.22' }
+
+      - run: |
+          echo "checking..."
+          echo $GITHUB_EVENT_PATH
+          cat $GITHUB_EVENT_PATH
+        env:
+          GITHUB_EVENT_PATH: ${{ env.GITHUB_EVENT_PATH }}
+
+      - run: |
+          go run ./cmd/changelog audit
+        env:
+          GITHUB_EVENT_PATH: ${{ env.GITHUB_EVENT_PATH }}
+          GH_TOKEN: ${{ secrets.PR_AUDITOR_TOKEN }}
+          GITHUB_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
