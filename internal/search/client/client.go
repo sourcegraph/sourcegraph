@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/regexp"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/sourcegraph/log"
@@ -15,7 +13,6 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/conf"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/dotcom"
-	"github.com/sourcegraph/sourcegraph/internal/featureflag"
 	"github.com/sourcegraph/sourcegraph/internal/gitserver"
 	"github.com/sourcegraph/sourcegraph/internal/search"
 	"github.com/sourcegraph/sourcegraph/internal/search/job"
@@ -148,7 +145,7 @@ func (s *searchClient) Plan(
 		SearchMode:             searchMode,
 		UserSettings:           settings,
 		OnSourcegraphDotCom:    s.sourcegraphDotComMode,
-		Features:               ToFeatures(featureflag.FromContext(ctx), s.runtimeClients.Logger),
+		Features:               search.FeaturesFromContext(ctx),
 		PatternType:            searchType,
 		Protocol:               protocol,
 		ContextLines:           finalContextLines,
@@ -307,26 +304,6 @@ func overrideSearchType(input string, searchType query.SearchType) query.SearchT
 	})
 	return searchType
 }
-
-func ToFeatures(flagSet *featureflag.FlagSet, logger log.Logger) *search.Features {
-	if flagSet == nil {
-		flagSet = &featureflag.FlagSet{}
-		metricFeatureFlagUnavailable.Inc()
-		logger.Warn("search feature flags are not available")
-	}
-
-	// When adding a new feature flag remember to add it to the list in
-	// client/web/src/featureFlags/featureFlags.ts to allow overriding.
-	return &search.Features{
-		ContentBasedLangFilters: flagSet.GetBoolOr("search-content-based-lang-detection", false),
-		Debug:                   flagSet.GetBoolOr("search-debug", false),
-	}
-}
-
-var metricFeatureFlagUnavailable = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "src_search_featureflag_unavailable",
-	Help: "temporary counter to check if we have feature flag available in practice.",
-})
 
 func getBoolPtr(b *bool, def bool) bool {
 	if b == nil {

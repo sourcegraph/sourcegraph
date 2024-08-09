@@ -409,6 +409,20 @@ type Features struct {
 	CodyFileMatcher func(repo api.RepoID, path string) bool `json:"-"`
 }
 
+func FeaturesFromContext(ctx context.Context) *Features {
+	flagSet := featureflag.FromContext(ctx)
+	if flagSet == nil {
+		flagSet = &featureflag.FlagSet{}
+	}
+
+	// When adding a new feature flag remember to add it to the list in
+	// client/web/src/featureFlags/featureFlags.ts to allow overriding.
+	return &Features{
+		ContentBasedLangFilters: flagSet.GetBoolOr("search-content-based-lang-detection", false),
+		Debug:                   flagSet.GetBoolOr("search-debug", false),
+	}
+}
+
 func (f *Features) String() string {
 	jsonObject, err := json.Marshal(f)
 	if err != nil {
