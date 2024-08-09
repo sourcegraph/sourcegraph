@@ -99,7 +99,7 @@ func (suite *ApplianceTestSuite) TestFrontendDeploymentRollsWhenPGSecretsChange(
 		suite.Run(tc.secret, func() {
 			// Create the frontend before the PGSQL secret exists. In general, this
 			// might happen, depending on the order of the reconcile loop. If we
-			// introducce concurrency to this, we'll have little control over what
+			// introduce concurrency to this, we'll have little control over what
 			// happens first.
 			namespace := suite.createConfigMapAndAwaitReconciliation("frontend/default")
 
@@ -142,7 +142,7 @@ func (suite *ApplianceTestSuite) TestFrontendDeploymentRollsWhenRedisSecretsChan
 		suite.Run(tc.secret, func() {
 			// Create the frontend before the PGSQL secret exists. In general, this
 			// might happen, depending on the order of the reconcile loop. If we
-			// introducce concurrency to this, we'll have little control over what
+			// introduce concurrency to this, we'll have little control over what
 			// happens first.
 			namespace := suite.createConfigMapAndAwaitReconciliation("frontend/default")
 

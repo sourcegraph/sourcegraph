@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcegraph/log/logtest"
+
 	"github.com/sourcegraph/sourcegraph/internal/releaseregistry"
 	"github.com/sourcegraph/sourcegraph/internal/releaseregistry/mocks"
 )

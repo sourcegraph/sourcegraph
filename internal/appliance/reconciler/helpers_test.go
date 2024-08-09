@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcegraph/log/logr"
 	"github.com/sourcegraph/log/logtest"
+
 	"github.com/sourcegraph/sourcegraph/internal/appliance/config"
 	"github.com/sourcegraph/sourcegraph/internal/appliance/k8senvtest"
 )
@@ -32,6 +33,9 @@ type ApplianceTestSuite struct {
 }
 
 func TestApplianceTestSuite(t *testing.T) {
+	if !k8senvtest.IsSetupEnvTestInstalled() {
+		t.Skip("setup-envtest is not installed, skipping ApplianceTestSuite")
+	}
 	suite.Run(t, new(ApplianceTestSuite))
 }
 

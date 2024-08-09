@@ -16,6 +16,7 @@ import (
 	"github.com/sourcegraph/log"
 	"github.com/sourcegraph/log/logr"
 	"github.com/sourcegraph/log/logtest"
+
 	"github.com/sourcegraph/sourcegraph/internal/appliance/k8senvtest"
 	"github.com/sourcegraph/sourcegraph/internal/k8s/resource/service"
 )
@@ -30,6 +31,11 @@ func TestMain(m *testing.M) {
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
+
+	if !k8senvtest.IsSetupEnvTestInstalled() {
+		fmt.Println("setup-envtest is not installed, skipping Appliance healthchecker tests")
+		os.Exit(0)
+	}
 
 	logger := log.Scoped("appliance-healthchecker-tests")
 	k8sConfig, cleanup, err := k8senvtest.SetupEnvtest(ctx, logr.New(logger), k8senvtest.NewNoopReconciler)
