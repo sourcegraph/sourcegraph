@@ -1,0 +1,46 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "codehosts",
+    srcs = [
+        "code_host_identifier.go",
+        "code_hosts_migrator.go",
+        "rate_limit.go",
+        "util.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codehosts",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/database/basestore",
+        "//internal/encryption",
+        "//internal/jsonc",
+        "//internal/oobmigration",
+        "//internal/oobmigration/migrations/codehosts/schema",
+        "//lib/errors",
+        "//lib/pointers",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_lib_pq//:pq",
+        "@com_github_sourcegraph_log//:log",
+        "@org_golang_x_time//rate",
+    ],
+)
+
+go_test(
+    name = "codehosts_test",
+    srcs = ["code_hosts_migrator_test.go"],
+    embed = [":codehosts"],
+    deps = [
+        "//internal/database",
+        "//internal/database/basestore",
+        "//internal/database/dbtest",
+        "//internal/encryption/testing",
+        "//internal/oobmigration/migrations/codehosts/schema",
+        "//lib/pointers",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_keegancsmith_sqlf//:sqlf",
+        "@com_github_sourcegraph_log//logtest",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
+    ],
+)

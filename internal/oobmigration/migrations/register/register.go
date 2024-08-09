@@ -19,6 +19,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/batches"
+	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codehosts"
 	lsifMigrations "github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/codeintel/lsif"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/iam"
 	"github.com/sourcegraph/sourcegraph/internal/oobmigration/migrations/insights"
@@ -66,6 +67,7 @@ func registerOSSMigrators(runner *oobmigration.Runner, noDelay bool, deps migrat
 	return RegisterAll(runner, noDelay, []TaggedMigrator{
 		batches.NewExternalServiceWebhookMigratorWithDB(deps.store, deps.keyring.ExternalServiceKey, 50),
 		batches.NewUserRoleAssignmentMigrator(deps.store, 250),
+		codehosts.NewMigratorWithDB(deps.store, deps.keyring.ExternalServiceKey),
 	})
 }
 

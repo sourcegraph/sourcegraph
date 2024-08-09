@@ -16,6 +16,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"golang.org/x/time/rate"
 
+	"github.com/sourcegraph/sourcegraph/internal/api"
+
 	"github.com/sourcegraph/log"
 
 	"github.com/sourcegraph/sourcegraph/internal/api"
@@ -1676,16 +1678,16 @@ func (e *externalServiceStore) recalculateFields(es *types.ExternalService, rawC
 
 func ensureCodeHost(ctx context.Context, tx *externalServiceStore, kind string, config string) (codeHostID int32, _ error) {
 	// Ensure a code host for this external service exists.
-	// TODO: Use this method for the OOB migrator as well.
 	codeHostIdentifier, err := extsvc.UniqueCodeHostIdentifier(kind, config)
 	if err != nil {
 		return 0, err
 	}
-	// TODO: Use this method for the OOB migrator as well.
+
 	rateLimit, isDefaultRateLimit, err := extsvc.ExtractRateLimit(config, kind)
 	if err != nil && !errors.HasType[extsvc.ErrRateLimitUnsupported](err) {
 		return 0, err
 	}
+
 	ch := &types.CodeHost{
 		Kind:      kind,
 		URL:       codeHostIdentifier,
