@@ -28,7 +28,7 @@ func (j *autoindexingDependencyScheduler) Config() []env.Config {
 	}
 }
 
-func (j *autoindexingDependencyScheduler) Routines(_ context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
+func (j *autoindexingDependencyScheduler) Routines(ctx context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
 	services, err := codeintel.InitServices(observationCtx)
 	if err != nil {
 		return nil, err
@@ -40,6 +40,7 @@ func (j *autoindexingDependencyScheduler) Routines(_ context.Context, observatio
 	}
 
 	return autoindexing.NewDependencyIndexSchedulers(
+		ctx,
 		observationCtx,
 		db,
 		services.UploadsService,

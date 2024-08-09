@@ -123,9 +123,9 @@ func (j *searchJob) newSearchJobRoutines(
 			newExhaustiveSearchRepoRevisionWorker(workCtx, observationCtx, revWorkerStore, exhaustiveSearchStore, newSearcher, uploadStore, j.config),
 
 			// resetters
-			newExhaustiveSearchWorkerResetter(observationCtx, searchWorkerStore),
-			newExhaustiveSearchRepoWorkerResetter(observationCtx, repoWorkerStore),
-			newExhaustiveSearchRepoRevisionWorkerResetter(observationCtx, revWorkerStore),
+			newExhaustiveSearchWorkerResetter(workCtx, observationCtx, searchWorkerStore),
+			newExhaustiveSearchRepoWorkerResetter(workCtx, observationCtx, repoWorkerStore),
+			newExhaustiveSearchRepoRevisionWorkerResetter(workCtx, observationCtx, revWorkerStore),
 
 			newJanitorJob(observationCtx, db, svc),
 		}

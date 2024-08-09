@@ -80,7 +80,7 @@ func NewSyncWorker(ctx context.Context, observationCtx *observation.Context, dbH
 		Metrics:           newWorkerMetrics(observationCtx),
 	})
 
-	resetter := dbworker.NewResetter(observationCtx.Logger.Scoped("repo.sync.worker.Resetter"), store, dbworker.ResetterOptions{
+	resetter := dbworker.NewResetter(ctx, observationCtx.Logger.Scoped("repo.sync.worker.Resetter"), store, dbworker.ResetterOptions{
 		Name:     "repo_sync_worker_resetter",
 		Interval: 5 * time.Minute,
 		Metrics:  newResetterMetrics(observationCtx),

@@ -62,7 +62,7 @@ func (j *permsSyncerJob) Routines(_ context.Context, observationCtx *observation
 		makeWorker(workCtx, observationCtx, userWorkerStore, permsSyncer, syncTypeUser, permissionSyncJobStore),
 		// Type of store (repo/user) for resetter doesn't matter, because it has its
 		// separate name for logging and metrics.
-		makeResetter(observationCtx, repoWorkerStore),
+		makeResetter(workCtx, observationCtx, repoWorkerStore),
 	}
 
 	return routines, nil

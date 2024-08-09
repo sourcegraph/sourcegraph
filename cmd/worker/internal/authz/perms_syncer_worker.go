@@ -159,8 +159,8 @@ func makeWorker(ctx context.Context, observationCtx *observation.Context, worker
 	})
 }
 
-func makeResetter(observationCtx *observation.Context, workerStore dbworkerstore.Store[*database.PermissionSyncJob]) *dbworker.Resetter[*database.PermissionSyncJob] {
-	return dbworker.NewResetter(observationCtx.Logger, workerStore, dbworker.ResetterOptions{
+func makeResetter(ctx context.Context, observationCtx *observation.Context, workerStore dbworkerstore.Store[*database.PermissionSyncJob]) *dbworker.Resetter[*database.PermissionSyncJob] {
+	return dbworker.NewResetter(ctx, observationCtx.Logger, workerStore, dbworker.ResetterOptions{
 		Name:     "permissions_sync_job_worker_resetter",
 		Interval: time.Second * 30, // Check for orphaned jobs every 30 seconds
 		Metrics:  dbworker.NewResetterMetrics(observationCtx, "permissions_sync_job_worker"),

@@ -29,6 +29,7 @@ func (v TestRecord) RecordUID() string {
 }
 
 func TestResetter(t *testing.T) {
+	ctx := context.Background()
 	logger := logtest.Scoped(t)
 	s := storemocks.NewMockStore[*TestRecord]()
 	clock := glock.NewMockClock()
@@ -42,7 +43,7 @@ func TestResetter(t *testing.T) {
 		},
 	}
 
-	resetter := newResetter(logger, store.Store[*TestRecord](s), options, clock)
+	resetter := newResetter(ctx, logger, store.Store[*TestRecord](s), options, clock)
 	go func() { resetter.Start() }()
 	clock.BlockingAdvance(time.Second)
 	err := resetter.Stop(context.Background())

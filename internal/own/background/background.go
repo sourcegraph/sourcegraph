@@ -158,7 +158,7 @@ func makeWorker(ctx context.Context, db database.DB, observationCtx *observation
 		Metrics:           workerutil.NewMetrics(observationCtx, "own_background_worker_processor"),
 	})
 
-	resetter := dbworker.NewResetter(log.Scoped("OwnBackgroundResetter"), workerStore, dbworker.ResetterOptions{
+	resetter := dbworker.NewResetter(ctx, log.Scoped("OwnBackgroundResetter"), workerStore, dbworker.ResetterOptions{
 		Name:     "own_background_worker_resetter",
 		Interval: time.Second * 20,
 		Metrics:  dbworker.NewResetterMetrics(observationCtx, "own_background_worker"),

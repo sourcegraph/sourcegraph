@@ -1,6 +1,7 @@
 package dependencies
 
 import (
+	"context"
 	"time"
 
 	"github.com/sourcegraph/log"
@@ -13,8 +14,8 @@ import (
 // NewIndexResetter returns a background routine that periodically resets index
 // records that are marked as being processed but are no longer being processed
 // by a worker.
-func NewIndexResetter(logger log.Logger, interval time.Duration, store dbworkerstore.Store[uploadsshared.AutoIndexJob], metrics *resetterMetrics) *dbworker.Resetter[uploadsshared.AutoIndexJob] {
-	return dbworker.NewResetter(logger.Scoped("indexResetter"), store, dbworker.ResetterOptions{
+func NewIndexResetter(ctx context.Context, logger log.Logger, interval time.Duration, store dbworkerstore.Store[uploadsshared.AutoIndexJob], metrics *resetterMetrics) *dbworker.Resetter[uploadsshared.AutoIndexJob] {
+	return dbworker.NewResetter(ctx, logger.Scoped("indexResetter"), store, dbworker.ResetterOptions{
 		Name:     "precise_code_intel_index_worker_resetter",
 		Interval: interval,
 		Metrics: dbworker.ResetterMetrics{
@@ -28,8 +29,8 @@ func NewIndexResetter(logger log.Logger, interval time.Duration, store dbworkers
 // NewDependencyIndexResetter returns a background routine that periodically resets
 // dependency index records that are marked as being processed but are no longer being
 // processed by a worker.
-func NewDependencyIndexResetter(logger log.Logger, interval time.Duration, store dbworkerstore.Store[dependencyIndexingJob], metrics *resetterMetrics) *dbworker.Resetter[dependencyIndexingJob] {
-	return dbworker.NewResetter(logger.Scoped("dependencyIndexResetter"), store, dbworker.ResetterOptions{
+func NewDependencyIndexResetter(ctx context.Context, logger log.Logger, interval time.Duration, store dbworkerstore.Store[dependencyIndexingJob], metrics *resetterMetrics) *dbworker.Resetter[dependencyIndexingJob] {
+	return dbworker.NewResetter(ctx, logger.Scoped("dependencyIndexResetter"), store, dbworker.ResetterOptions{
 		Name:     "precise_code_intel_dependency_index_worker_resetter",
 		Interval: interval,
 		Metrics: dbworker.ResetterMetrics{

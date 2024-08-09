@@ -35,9 +35,9 @@ func (*sender) Config() []env.Config {
 	return nil
 }
 
-func (s *sender) Routines(_ context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
+func (s *sender) Routines(ctx context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
 	observationCtx = observation.NewContext(observationCtx.Logger.Scoped("sender"))
-	ctx := actor.WithInternalActor(context.Background())
+	ctx = actor.WithInternalActor(ctx)
 
 	db, err := workerdb.InitDB(observationCtx)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *sender) Routines(_ context.Context, observationCtx *observation.Context
 			database.OutboundWebhooksWith(db, key),
 			database.OutboundWebhookLogsWith(db, key),
 		),
-		makeResetter(observationCtx, workerStore),
+		makeResetter(ctx, observationCtx, workerStore),
 		makeJanitor(observationCtx, db.OutboundWebhookJobs(key)),
 	}, nil
 }
@@ -85,11 +85,12 @@ func makeWorker(
 }
 
 func makeResetter(
+	ctx context.Context,
 	observationCtx *observation.Context,
 	workerStore store.Store[*types.OutboundWebhookJob],
 ) *dbworker.Resetter[*types.OutboundWebhookJob] {
 	return dbworker.NewResetter(
-		observationCtx.Logger, workerStore, dbworker.ResetterOptions{
+		ctx, observationCtx.Logger, workerStore, dbworker.ResetterOptions{
 			Name:     "outbound_webhook_job_resetter",
 			Interval: 5 * time.Minute,
 			Metrics:  dbworker.NewResetterMetrics(observationCtx, "outbound_webhook_job_resetter"),

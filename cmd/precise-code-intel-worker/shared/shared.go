@@ -75,6 +75,7 @@ func Main(ctx context.Context, observationCtx *observation.Context, ready servic
 
 	// Initialize worker
 	worker := uploads.NewUploadProcessorJob(
+		ctx,
 		observationCtx,
 		services.UploadsService,
 		db,

@@ -58,7 +58,7 @@ func (j *bitbucketProjectPermissionsJob) Config() []env.Config {
 
 // Routines is called by the worker service to start the worker.
 // It returns a list of goroutines that the worker service should start and manage.
-func (j *bitbucketProjectPermissionsJob) Routines(_ context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
+func (j *bitbucketProjectPermissionsJob) Routines(ctx context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
 	db, err := workerdb.InitDB(observationCtx)
 	if err != nil {
 		return nil, err
@@ -66,11 +66,11 @@ func (j *bitbucketProjectPermissionsJob) Routines(_ context.Context, observation
 
 	bbProjectMetrics := newMetricsForBitbucketProjectPermissionsQueries(observationCtx.Logger)
 
-	rootContext := actor.WithInternalActor(context.Background())
+	rootContext := actor.WithInternalActor(ctx)
 
 	return []goroutine.BackgroundRoutine{
 		newBitbucketProjectPermissionsWorker(rootContext, observationCtx, db, ConfigInst, bbProjectMetrics),
-		newBitbucketProjectPermissionsResetter(observationCtx, db, ConfigInst, bbProjectMetrics),
+		newBitbucketProjectPermissionsResetter(rootContext, observationCtx, db, ConfigInst, bbProjectMetrics),
 	}, nil
 }
 
@@ -372,7 +372,7 @@ func newBitbucketProjectPermissionsWorker(ctx context.Context, observationCtx *o
 
 // newBitbucketProjectPermissionsResetter implements resetter for the explicit_permissions_bitbucket_projects_jobs table.
 // See resetter documentation for more details. https://docs-legacy.sourcegraph.com/dev/background-information/workers#dequeueing-and-resetting-jobs
-func newBitbucketProjectPermissionsResetter(observationCtx *observation.Context, db database.DB, cfg *config, metrics bitbucketProjectPermissionsMetrics) *dbworker.Resetter[*types.BitbucketProjectPermissionJob] {
+func newBitbucketProjectPermissionsResetter(ctx context.Context, observationCtx *observation.Context, db database.DB, cfg *config, metrics bitbucketProjectPermissionsMetrics) *dbworker.Resetter[*types.BitbucketProjectPermissionJob] {
 	observationCtx = observation.ContextWithLogger(observationCtx.Logger.Scoped("BitbucketProjectPermissionsResetter"), observationCtx)
 
 	workerStore := createBitbucketProjectPermissionsStore(observationCtx, db, cfg)
@@ -386,7 +386,7 @@ func newBitbucketProjectPermissionsResetter(observationCtx *observation.Context,
 			RecordResets:        metrics.resets,
 		},
 	}
-	return dbworker.NewResetter(observationCtx.Logger, workerStore, options)
+	return dbworker.NewResetter(ctx, observationCtx.Logger, workerStore, options)
 }
 
 // createBitbucketProjectPermissionsStore creates a store that reads and writes to the explicit_permissions_bitbucket_projects_jobs table.

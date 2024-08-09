@@ -1,6 +1,8 @@
 package autoindexing
 
 import (
+	"context"
+
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/scheduler"
@@ -67,6 +69,7 @@ func NewIndexSchedulers(
 }
 
 func NewDependencyIndexSchedulers(
+	ctx context.Context,
 	observationCtx *observation.Context,
 	db database.DB,
 	uploadSvc UploadService,
@@ -74,6 +77,7 @@ func NewDependencyIndexSchedulers(
 	autoindexingSvc *Service,
 ) []goroutine.BackgroundRoutine {
 	return background.NewDependencyIndexSchedulers(
+		ctx,
 		scopedContext("dependencies", observationCtx),
 		db,
 		uploadSvc,

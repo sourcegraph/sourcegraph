@@ -28,17 +28,17 @@ func (j *repoEmbeddingJanitorJob) Config() []env.Config {
 	return []env.Config{}
 }
 
-func (j *repoEmbeddingJanitorJob) Routines(_ context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
+func (j *repoEmbeddingJanitorJob) Routines(ctx context.Context, observationCtx *observation.Context) ([]goroutine.BackgroundRoutine, error) {
 	db, err := workerdb.InitDB(observationCtx)
 	if err != nil {
 		return nil, err
 	}
 	store := repoembeddingsbg.NewRepoEmbeddingJobWorkerStore(observationCtx, db.Handle())
-	return []goroutine.BackgroundRoutine{newRepoEmbeddingJobResetter(observationCtx, store)}, nil
+	return []goroutine.BackgroundRoutine{newRepoEmbeddingJobResetter(ctx, observationCtx, store)}, nil
 }
 
-func newRepoEmbeddingJobResetter(observationCtx *observation.Context, workerStore dbworkerstore.Store[*repoembeddingsbg.RepoEmbeddingJob]) *dbworker.Resetter[*repoembeddingsbg.RepoEmbeddingJob] {
-	return dbworker.NewResetter(observationCtx.Logger, workerStore, dbworker.ResetterOptions{
+func newRepoEmbeddingJobResetter(ctx context.Context, observationCtx *observation.Context, workerStore dbworkerstore.Store[*repoembeddingsbg.RepoEmbeddingJob]) *dbworker.Resetter[*repoembeddingsbg.RepoEmbeddingJob] {
+	return dbworker.NewResetter(ctx, observationCtx.Logger, workerStore, dbworker.ResetterOptions{
 		Name:     "repo_embedding_job_worker_resetter",
 		Interval: time.Minute, // Check for orphaned jobs every minute
 		Metrics:  dbworker.NewResetterMetrics(observationCtx, "repo_embedding_job_worker"),

@@ -1,6 +1,7 @@
 package background
 
 import (
+	"context"
 	"os"
 	"strings"
 
@@ -23,6 +24,7 @@ import (
 )
 
 func NewUploadProcessorJob(
+	ctx context.Context,
 	observationCtx *observation.Context,
 	store uploadsstore.Store,
 	dataStore codegraph.DataStore,
@@ -48,7 +50,7 @@ func NewUploadProcessorJob(
 			uploadStore,
 			config,
 		),
-		processor.NewUploadResetter(observationCtx.Logger, uploadsResetterStore, metrics),
+		processor.NewUploadResetter(ctx, observationCtx.Logger, uploadsResetterStore, metrics),
 	}
 }
 

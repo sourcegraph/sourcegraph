@@ -1,6 +1,8 @@
 package background
 
 import (
+	"context"
+
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/dependencies"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/scheduler"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/autoindexing/internal/background/summary"
@@ -50,6 +52,7 @@ func NewIndexSchedulers(
 }
 
 func NewDependencyIndexSchedulers(
+	ctx context.Context,
 	observationCtx *observation.Context,
 	db database.DB,
 	uploadSvc dependencies.UploadService,
@@ -88,8 +91,8 @@ func NewDependencyIndexSchedulers(
 			config,
 		),
 
-		dependencies.NewIndexResetter(observationCtx.Logger.Scoped("indexResetter"), config.ResetterInterval, indexStore, metrics),
-		dependencies.NewDependencyIndexResetter(observationCtx.Logger.Scoped("dependencyIndexResetter"), config.ResetterInterval, dependencyIndexingStore, metrics),
+		dependencies.NewIndexResetter(ctx, observationCtx.Logger.Scoped("indexResetter"), config.ResetterInterval, indexStore, metrics),
+		dependencies.NewDependencyIndexResetter(ctx, observationCtx.Logger.Scoped("dependencyIndexResetter"), config.ResetterInterval, dependencyIndexingStore, metrics),
 	}
 }
 

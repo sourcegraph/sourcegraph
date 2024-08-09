@@ -75,16 +75,16 @@ func NewResetterMetrics(observationCtx *observation.Context, metricNameRoot stri
 	}
 }
 
-func NewResetter[T workerutil.Record](logger log.Logger, store store.Store[T], options ResetterOptions) *Resetter[T] {
-	return newResetter(logger, store, options, glock.NewRealClock())
+func NewResetter[T workerutil.Record](ctx context.Context, logger log.Logger, store store.Store[T], options ResetterOptions) *Resetter[T] {
+	return newResetter(ctx, logger, store, options, glock.NewRealClock())
 }
 
-func newResetter[T workerutil.Record](logger log.Logger, store store.Store[T], options ResetterOptions, clock glock.Clock) *Resetter[T] {
+func newResetter[T workerutil.Record](ctx context.Context, logger log.Logger, store store.Store[T], options ResetterOptions, clock glock.Clock) *Resetter[T] {
 	if options.Name == "" {
 		panic("no name supplied to github.com/sourcegraph/sourcegraph/internal/dbworker/newResetter")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 
 	return &Resetter[T]{
 		store:    store,
@@ -137,8 +137,12 @@ loop:
 }
 
 // Stop will cause the resetter loop to exit after the current iteration.
-func (r *Resetter[T]) Stop(context.Context) error {
+func (r *Resetter[T]) Stop(ctx context.Context) error {
 	r.cancel()
-	<-r.finished
-	return nil
+	select {
+	case <-r.finished:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }

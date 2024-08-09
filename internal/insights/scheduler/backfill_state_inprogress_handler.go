@@ -75,7 +75,7 @@ func makeInProgressWorker(ctx context.Context, config JobMonitorConfig) (*worker
 		Metrics:           workerutil.NewMetrics(config.ObservationCtx, name),
 	})
 
-	resetter := dbworker.NewResetter(log.Scoped("resetter"), workerStore, dbworker.ResetterOptions{
+	resetter := dbworker.NewResetter(ctx, log.Scoped("resetter"), workerStore, dbworker.ResetterOptions{
 		Name:     fmt.Sprintf("%s_resetter", name),
 		Interval: time.Second * 20,
 		Metrics:  dbworker.NewResetterMetrics(config.ObservationCtx, name),

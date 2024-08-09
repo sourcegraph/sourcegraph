@@ -89,7 +89,7 @@ func NewResetter(ctx context.Context, logger log.Logger, workerStore dbworkersto
 		Interval: 1 * time.Minute,
 		Metrics:  metrics,
 	}
-	return dbworker.NewResetter(logger, workerStore, options)
+	return dbworker.NewResetter(ctx, logger, workerStore, options)
 }
 
 // CreateDBWorkerStore creates the dbworker store for the query runner worker.

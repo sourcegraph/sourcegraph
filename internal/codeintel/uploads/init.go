@@ -1,6 +1,7 @@
 package uploads
 
 import (
+	"context"
 	"time"
 
 	lsifstore "github.com/sourcegraph/sourcegraph/internal/codeintel/codegraph"
@@ -48,6 +49,7 @@ var (
 )
 
 func NewUploadProcessorJob(
+	ctx context.Context,
 	observationCtx *observation.Context,
 	uploadSvc *Service,
 	db database.DB,
@@ -63,6 +65,7 @@ func NewUploadProcessorJob(
 	ProcessorConfigInst.MaximumRuntimePerJob = maximumRuntimePerJob
 
 	return background.NewUploadProcessorJob(
+		ctx,
 		scopedContext("processor", observationCtx),
 		uploadSvc.store,
 		uploadSvc.codeGraphDataStore,

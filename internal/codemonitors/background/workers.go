@@ -62,7 +62,7 @@ func newTriggerQueryEnqueuer(ctx context.Context, store database.CodeMonitorStor
 	)
 }
 
-func newTriggerQueryResetter(_ context.Context, observationCtx *observation.Context, s database.CodeMonitorStore, metrics codeMonitorsMetrics) *dbworker.Resetter[*database.TriggerJob] {
+func newTriggerQueryResetter(ctx context.Context, observationCtx *observation.Context, s database.CodeMonitorStore, metrics codeMonitorsMetrics) *dbworker.Resetter[*database.TriggerJob] {
 	workerStore := createDBWorkerStoreForTriggerJobs(observationCtx, s)
 
 	options := dbworker.ResetterOptions{
@@ -74,7 +74,7 @@ func newTriggerQueryResetter(_ context.Context, observationCtx *observation.Cont
 			RecordResets:        metrics.resets,
 		},
 	}
-	return dbworker.NewResetter(observationCtx.Logger, workerStore, options)
+	return dbworker.NewResetter(ctx, observationCtx.Logger, workerStore, options)
 }
 
 func newTriggerJobsLogDeleter(ctx context.Context, store database.CodeMonitorStore) goroutine.BackgroundRoutine {
@@ -107,7 +107,7 @@ func newActionRunner(ctx context.Context, observationCtx *observation.Context, s
 	return worker
 }
 
-func newActionJobResetter(_ context.Context, observationCtx *observation.Context, s database.CodeMonitorStore, metrics codeMonitorsMetrics) *dbworker.Resetter[*database.ActionJob] {
+func newActionJobResetter(ctx context.Context, observationCtx *observation.Context, s database.CodeMonitorStore, metrics codeMonitorsMetrics) *dbworker.Resetter[*database.ActionJob] {
 	workerStore := createDBWorkerStoreForActionJobs(observationCtx, s)
 
 	options := dbworker.ResetterOptions{
@@ -119,7 +119,7 @@ func newActionJobResetter(_ context.Context, observationCtx *observation.Context
 			RecordResets:        metrics.resets,
 		},
 	}
-	return dbworker.NewResetter(observationCtx.Logger, workerStore, options)
+	return dbworker.NewResetter(ctx, observationCtx.Logger, workerStore, options)
 }
 
 func createDBWorkerStoreForTriggerJobs(observationCtx *observation.Context, s basestore.ShareableStore) dbworkerstore.Store[*database.TriggerJob] {

@@ -104,7 +104,7 @@ func NewResetter(ctx context.Context, logger log.Logger, workerStore dbworkersto
 		Interval: 1 * time.Minute,
 		Metrics:  metrics,
 	}
-	return dbworker.NewResetter(logger, workerStore, options)
+	return dbworker.NewResetter(ctx, logger, workerStore, options)
 }
 
 func CreateDBWorkerStore(observationCtx *observation.Context, store *basestore.Store) dbworkerstore.Store[*DataRetentionJob] {
