@@ -41,6 +41,42 @@ export const highlightCodeSafe = (code: string, language?: string): string => {
     }
 }
 
+export interface RenderMarkdownOptions {
+    /**
+     * Whether to render markdown inline, without paragraph tags
+     */
+    inline?: boolean
+    /**
+     * Whether to render line breaks as HTML `<br>`s
+     */
+    breaks?: boolean
+    /**
+     * Whether to disable autolinks. Explicit links using `[text](url)` are still allowed.
+     */
+    disableAutolinks?: boolean
+    /**
+     * A custom renderer to use
+     */
+    renderer?: marked.Renderer
+    /**
+     * A prefix to add to all header IDs
+     */
+    headerPrefix?: string
+    /**
+     * Strip off any HTML and return a plain text string, useful for previews
+     */
+    plainText?: boolean
+    /**
+     * DOMPurify configuration to use
+     */
+    dompurifyConfig?: DOMPurifyConfig & { RETURN_DOM_FRAGMENT?: false; RETURN_DOM?: false }
+    /**
+     * Add target="_blank" and rel="noopener" to all <a> links that have a href value.
+     * This affects all markdown-formatted links and all inline HTML links.
+     */
+    addTargetBlankToAllLinks?: boolean
+}
+
 /**
  * Renders the given markdown to HTML, highlighting code and sanitizing dangerous HTML.
  * Can throw an exception on parse errors.
@@ -55,18 +91,7 @@ export const highlightCodeSafe = (code: string, language?: string): string => {
  * @param options.addTargetBlankToAllLinks Add target="_blank" and rel="noopener" to all <a> links
  * that have a href value. This affects all markdown-formatted links and all inline HTML links.
  */
-export const renderMarkdown = (
-    markdown: string,
-    options: {
-        breaks?: boolean
-        disableAutolinks?: boolean
-        renderer?: marked.Renderer
-        headerPrefix?: string
-        plainText?: boolean
-        dompurifyConfig?: DOMPurifyConfig & { RETURN_DOM_FRAGMENT?: false; RETURN_DOM?: false }
-        addTargetBlankToAllLinks?: boolean
-    } = {}
-): string => {
+export const renderMarkdown = (markdown: string, options: RenderMarkdownOptions = {}): string => {
     const tokenizer = new marked.Tokenizer()
     if (options.disableAutolinks) {
         // Why the odd double-casting below?
@@ -76,7 +101,7 @@ export const renderMarkdown = (
         tokenizer.url = () => undefined as unknown as marked.Tokens.Link
     }
 
-    const rendered = marked(markdown, {
+    const rendered = (options.inline ? marked.parseInline : marked)(markdown, {
         gfm: true,
         breaks: options.breaks,
         highlight: (code, language) => highlightCodeSafe(code, language),

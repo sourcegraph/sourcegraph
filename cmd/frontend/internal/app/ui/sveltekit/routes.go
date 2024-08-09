@@ -69,6 +69,11 @@ var svelteKitRoutes = []svelteKitRoute{
 		Tag:     tags.EnableOptIn | tags.EnableRollout,
 	},
 	{
+		Id:      "/[community=communitySearchContext]",
+		Pattern: regexp.MustCompile("^/(backstage|chakraui|cncf|julia|kubernetes|o3de|stackstorm|stanford|temporal)/?$"),
+		Tag:     tags.EnableOptIn | tags.EnableRollout | tags.Dotcom,
+	},
+	{
 		Id:      "/search",
 		Pattern: regexp.MustCompile("^/search/?$"),
 		Tag:     tags.EnableOptIn | tags.EnableRollout,

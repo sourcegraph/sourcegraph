@@ -6,7 +6,7 @@ export { createAggregateError, asError } from '@sourcegraph/common/src/errors/er
 export { memoizeObservable, resetAllMemoizationCaches } from '@sourcegraph/common/src/util/rxjs/memoizeObservable'
 export { encodeURIPathComponent } from '@sourcegraph/common/src/util/url'
 export { pluralize, numberWithCommas } from '@sourcegraph/common/src/util/strings'
-export { renderMarkdown } from '@sourcegraph/common/src/util/markdown/markdown'
+export { renderMarkdown, type RenderMarkdownOptions } from '@sourcegraph/common/src/util/markdown/markdown'
 export { highlightNodeMultiline, highlightNode } from '@sourcegraph/common/src/util/highlightNode'
 export { logger } from '@sourcegraph/common/src/util/logger'
 export { isSafari } from '@sourcegraph/common/src/util/browserDetection'

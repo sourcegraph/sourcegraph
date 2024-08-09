@@ -1,0 +1,12 @@
+query CommunitySearchPage_SearchContext($spec: String!) {
+    searchContextBySpec(spec: $spec) {
+        repositories {
+            repository {
+                name
+                externalURLs {
+                    url
+                }
+            }
+        }
+    }
+}

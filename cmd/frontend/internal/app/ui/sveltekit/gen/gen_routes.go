@@ -183,6 +183,7 @@ var (
 	tagPattern           = regexp.MustCompile(`^\s*//\s+@sg\s+`)
 	groupPattern         = regexp.MustCompile(`^\([^)]+\)$`)
 	restParamPattern     = regexp.MustCompile(`^\[\.\.\.(\w+)(?:=(\w+))?\]$`)
+	paramPattern = regexp.MustCompile(`^\[(\w+)(?:=(\w+))?\]$`)
 	optionalParamPattern = regexp.MustCompile(`^\[\[(\w+)(?:=(\w+))?\]\]$`)
 )
 
@@ -227,6 +228,7 @@ func getRouteInfo(path string) (*routeInfo, error) {
 // because parameter matchers in SvelteKit are functions that can perform arbitrary logic.
 var paramMatchers = map[string]string{
 	"reporev": "/" + routevar.RepoPatternNonCapturing + `(?:@` + routevar.RevPatternNonCapturing + `)?`,
+	"communitySearchContext": "/(backstage|chakraui|cncf|julia|kubernetes|o3de|stackstorm|stanford|temporal)",
 }
 
 // This code follows the regex generation logic from
@@ -254,6 +256,19 @@ func patternForRouteId(routeId string) (string, error) {
 				}
 			}
 			b.WriteString(`(?:/.*)?`)
+			continue
+		}
+
+		// [param]
+		if paramPattern.MatchString(segment) {
+			matches := paramPattern.FindStringSubmatch(segment)
+			if len(matches) == 3 {
+				if matcher, ok := paramMatchers[matches[2]]; ok {
+					b.WriteString(matcher)
+					continue
+				}
+			}
+			b.WriteString(`(?:/[^/]+)`)
 			continue
 		}
 

@@ -62,6 +62,11 @@ export const svelteKitRoutes: SvelteKitRoute[] = [
         isRepoRoot: false,
     },
     {
+        id: '/[community=communitySearchContext]',
+        pattern: new RegExp('^/(backstage|chakraui|cncf|julia|kubernetes|o3de|stackstorm|stanford|temporal)/?$'),
+        isRepoRoot: false,
+    },
+    {
         id: '/search',
         pattern: new RegExp('^/search/?$'),
         isRepoRoot: false,
