@@ -83,10 +83,18 @@ func convertSubscriptionToProto(subscription *subscriptions.SubscriptionWithCond
 		}
 	}
 
+	var instanceType subscriptionsv1.EnterpriseSubscriptionInstanceType
+	if subscription.InstanceType != nil {
+		instanceType = subscriptionsv1.EnterpriseSubscriptionInstanceType(
+			subscriptionsv1.EnterpriseSubscriptionInstanceType_value[*subscription.InstanceType],
+		)
+	}
+
 	return &subscriptionsv1.EnterpriseSubscription{
 		Id:             subscriptionsv1.EnterpriseSubscriptionIDPrefix + subscription.ID,
 		Conditions:     conds,
 		InstanceDomain: pointers.DerefZero(subscription.InstanceDomain),
+		InstanceType:   instanceType,
 		DisplayName:    pointers.DerefZero(subscription.DisplayName),
 		Salesforce:     sf,
 	}

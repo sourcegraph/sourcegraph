@@ -260,7 +260,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					DisplayName: t.Name(),
 				},
 			},
-			wantError: autogold.Expect("invalid_argument: subscription_id can not be set"),
+			wantError: autogold.Expect("invalid_argument: instance_type is required"),
 		},
 		{
 			name: "insufficient scopes",
@@ -272,8 +272,9 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			},
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
-					Id:          "not-allowed",
-					DisplayName: t.Name(),
+					Id:           "not-allowed",
+					DisplayName:  t.Name(),
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 				},
 			},
 			wantError: autogold.Expect("permission_denied: insufficient scope"),
@@ -282,7 +283,8 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 			name: "with required params only",
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
-					DisplayName: t.Name(),
+					DisplayName:  t.Name(),
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 				},
 			},
 			wantUpsertOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{
@@ -299,13 +301,18 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					1,
 					0),
 				SalesforceSubscriptionID: &sql.NullString{},
+				InstanceType: &sql.NullString{
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
+					Valid:  true,
+				},
 			}),
 		},
 		{
 			name: "with message and optional fields",
 			create: &subscriptionsv1.CreateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
-					DisplayName: t.Name(),
+					DisplayName:  t.Name(),
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
 					Salesforce: &subscriptionsv1.EnterpriseSubscriptionSalesforceMetadata{
 						SubscriptionId: "sf_sub",
 					},
@@ -327,6 +334,10 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					0),
 				SalesforceSubscriptionID: &sql.NullString{
 					String: "sf_sub",
+					Valid:  true,
+				},
+				InstanceType: &sql.NullString{
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
 					Valid:  true,
 				},
 			}),
@@ -424,6 +435,17 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 			wantError: autogold.Expect("not_found: subscription not found"),
 		},
 		{
+			name: "invalid type",
+			update: &subscriptionsv1.UpdateEnterpriseSubscriptionRequest{
+				Subscription: &subscriptionsv1.EnterpriseSubscription{
+					Id:           mockSubscriptionID,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType(999),
+				},
+				UpdateMask: nil,
+			},
+			wantError: autogold.Expect("invalid_argument: invalid 'instance_type' 999"),
+		},
+		{
 			name: "no update mask",
 			update: &subscriptionsv1.UpdateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
@@ -475,6 +497,23 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 			}}),
 		},
 		{
+			name: "specified field mask with instance category enum",
+			update: &subscriptionsv1.UpdateEnterpriseSubscriptionRequest{
+				Subscription: &subscriptionsv1.EnterpriseSubscription{
+					Id:           mockSubscriptionID,
+					InstanceType: subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL,
+					// Should not be included, as only instance_domain is in
+					// the field mask.
+					DisplayName: "My Test Subscription",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"instance_type"}},
+			},
+			wantUpdateOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{InstanceType: &sql.NullString{
+				String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
+				Valid:  true,
+			}}),
+		},
+		{
 			name: "* update_mask",
 			update: &subscriptionsv1.UpdateEnterpriseSubscriptionRequest{
 				Subscription: &subscriptionsv1.EnterpriseSubscription{
@@ -488,7 +527,11 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 				InstanceDomain:           &sql.NullString{},
 				DisplayName:              &sql.NullString{},
 				SalesforceSubscriptionID: &sql.NullString{},
-				ForceUpdate:              true,
+				InstanceType: &sql.NullString{
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_UNSPECIFIED",
+					Valid:  true,
+				},
+				ForceUpdate: true,
 			}),
 		},
 		{

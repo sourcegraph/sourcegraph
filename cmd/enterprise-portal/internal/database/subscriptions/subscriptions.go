@@ -41,6 +41,9 @@ type Subscription struct {
 	//
 	// It must be unique across all currently un-archived subscriptions.
 	InstanceDomain *string `gorm:"uniqueIndex:,where:archived_at IS NULL"`
+	// InstanceType is the category of the instance associated with this
+	// subscription, e.g. 'TYPE_PRIMARY' or 'TYPE_SECONDARY'.
+	InstanceType *string
 
 	// WARNING: The below fields are not yet used in production.
 
@@ -72,6 +75,7 @@ func subscriptionTableColumns() []string {
 	return []string{
 		"id",
 		"instance_domain",
+		"instance_type",
 		"display_name",
 		"created_at",
 		"updated_at",
@@ -88,6 +92,7 @@ func scanSubscription(row pgx.Row) (*SubscriptionWithConditions, error) {
 	err := row.Scan(
 		&s.ID,
 		&s.InstanceDomain,
+		&s.InstanceType,
 		&s.DisplayName,
 		&s.CreatedAt,
 		&s.UpdatedAt,
@@ -223,6 +228,8 @@ type UpsertSubscriptionOptions struct {
 
 	SalesforceSubscriptionID *sql.NullString
 
+	InstanceType *sql.NullString
+
 	// ForceUpdate indicates whether to force update all fields of the subscription
 	// record.
 	ForceUpdate bool
@@ -233,7 +240,10 @@ type UpsertSubscriptionOptions struct {
 func (opts UpsertSubscriptionOptions) apply(ctx context.Context, db upsert.Execer, id string) error {
 	b := upsert.New("enterprise_portal_subscriptions", "id", opts.ForceUpdate)
 	upsert.Field(b, "id", id)
+
 	upsert.Field(b, "instance_domain", opts.InstanceDomain)
+	upsert.Field(b, "instance_type", opts.InstanceType)
+
 	upsert.Field(b, "display_name", opts.DisplayName)
 
 	upsert.Field(b, "created_at", opts.CreatedAt,
@@ -246,6 +256,7 @@ func (opts UpsertSubscriptionOptions) apply(ctx context.Context, db upsert.Exece
 		upsert.WithIgnoreZeroOnForceUpdate())
 
 	upsert.Field(b, "salesforce_subscription_id", opts.SalesforceSubscriptionID)
+
 	return b.Exec(ctx, db)
 }
 

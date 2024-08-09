@@ -335,6 +335,9 @@ func SubscriptionsStoreGet(t *testing.T, ctx context.Context, s *subscriptions.S
 		uuid.New().String(),
 		subscriptions.UpsertSubscriptionOptions{
 			InstanceDomain: database.NewNullString("s1.sourcegraph.com"),
+			InstanceType: database.NewNullString(
+				subscriptionsv1.EnterpriseSubscriptionInstanceType_ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_PRIMARY.String(),
+			),
 		},
 	)
 	require.NoError(t, err)
@@ -348,6 +351,11 @@ func SubscriptionsStoreGet(t *testing.T, ctx context.Context, s *subscriptions.S
 		got, err := s.Get(ctx, s1.ID)
 		require.NoError(t, err)
 		assert.Equal(t, s1.ID, got.ID)
+
+		assert.NotEmpty(t, got.InstanceDomain)
 		assert.Equal(t, s1.InstanceDomain, got.InstanceDomain)
+
+		assert.NotEmpty(t, got.InstanceType)
+		assert.Equal(t, s1.InstanceType, got.InstanceType)
 	})
 }

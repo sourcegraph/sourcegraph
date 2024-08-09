@@ -146,6 +146,30 @@ func TestConvertSubscriptionToProto(t *testing.T) {
     "subscriptionId": "sf_sub_id"
   }
 }`),
+	}, {
+		name: "with instance category",
+		sub: &subscriptions.SubscriptionWithConditions{
+			Subscription: subscriptions.Subscription{
+				ID:             "subscription_id",
+				InstanceDomain: pointers.Ptr("sourcegraph.com"),
+				InstanceType:   pointers.Ptr("CATEGORY_PRIMARY"),
+				CreatedAt:      utctime.Time(created),
+			},
+			Conditions: []subscriptions.SubscriptionCondition{{
+				TransitionTime: utctime.Time(created),
+				Status:         "STATUS_CREATED",
+			}},
+		},
+		want: autogold.Expect(`{
+  "conditions": [
+    {
+      "lastTransitionTime": "2024-01-01T01:01:00Z",
+      "status": "STATUS_CREATED"
+    }
+  ],
+  "id": "es_subscription_id",
+  "instanceDomain": "sourcegraph.com"
+}`),
 	}} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := convertSubscriptionToProto(tc.sub)
