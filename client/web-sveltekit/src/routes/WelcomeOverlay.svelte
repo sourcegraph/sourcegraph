@@ -1,4 +1,6 @@
 <script lang="ts">
+    import screenshotDark from '$lib/assets/welcome-screenshot-dark.svg'
+    import screenshotLight from '$lib/assets/welcome-screenshot-light.svg'
     import { allHotkey } from '$lib/fuzzyfinder/keys'
     import Icon from '$lib/Icon.svelte'
     import KeyboardShortcut from '$lib/KeyboardShortcut.svelte'
@@ -6,9 +8,6 @@
     import { isLightTheme } from '$lib/theme'
     import Button from '$lib/wildcard/Button.svelte'
     import ProductStatusBadge from '$lib/wildcard/ProductStatusBadge.svelte'
-
-    import WelcomeOverlayScreenshotDark from './WelcomeOverlayScreenshotDark.svelte'
-    import WelcomeOverlayScreenshotLight from './WelcomeOverlayScreenshotLight.svelte'
 
     let dialog: HTMLDialogElement | undefined
     let inner: HTMLDivElement | undefined
@@ -76,11 +75,10 @@
                 </p>
             </div>
         </div>
-        {#if $isLightTheme}
-            <WelcomeOverlayScreenshotLight />
-        {:else}
-            <WelcomeOverlayScreenshotDark />
-        {/if}
+        <img
+            src={$isLightTheme ? screenshotLight : screenshotDark}
+            alt="Screenshot of the new Code Search experience"
+        />
 
         <Button variant="icon" aria-label="Close welcome overlay" on:click={() => handleDismiss()}>
             <Icon icon={ILucideX} aria-hidden="true" />
@@ -124,11 +122,12 @@
     }
 
     .inner {
-        > :global(svg) {
+        > img {
             position: absolute;
             right: 0;
             bottom: 0;
             filter: drop-shadow(0px 25px 50px rgba(15, 17, 26, 0.25));
+
             @container (width < 975px) {
                 display: none;
             }
