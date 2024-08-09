@@ -175,7 +175,7 @@ require (
 	github.com/sergi/go-diff v1.3.1
 	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0
 	github.com/slack-go/slack v0.10.1
-	github.com/smacker/go-tree-sitter v0.0.0-20231219031718-233c2f923ac7
+	github.com/smacker/go-tree-sitter v0.0.0-20240625050157-a31a98a7c0f6
 	github.com/sourcegraph/go-ctags v0.0.0-20240424152308-4faeee4849da
 	github.com/sourcegraph/go-diff v0.6.2-0.20221123165719-f8cd299c40f3
 	github.com/sourcegraph/go-jsonschema v0.0.0-20221230021921-34aaf28fc4ac
@@ -656,7 +656,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opsgenie/opsgenie-go-sdk-v2 v1.2.22
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/cachecontrol v0.2.0 // indirect

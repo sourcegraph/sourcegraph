@@ -1,0 +1,48 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("//dev:go_defs.bzl", "go_test")
+
+go_library(
+    name = "chunkers",
+    srcs = [
+        "chunker.go",
+        "classic_chunker.go",
+        "tree_sitter_chunker.go",
+    ],
+    importpath = "github.com/sourcegraph/sourcegraph/internal/codeintel/context/chunkers",
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//internal/codeintel/context",
+        "@com_github_pkg_errors//:errors",
+        "@com_github_smacker_go_tree_sitter//:go-tree-sitter",
+        "@com_github_smacker_go_tree_sitter//bash",
+        "@com_github_smacker_go_tree_sitter//c",
+        "@com_github_smacker_go_tree_sitter//cpp",
+        "@com_github_smacker_go_tree_sitter//csharp",
+        "@com_github_smacker_go_tree_sitter//golang",
+        "@com_github_smacker_go_tree_sitter//java",
+        "@com_github_smacker_go_tree_sitter//javascript",
+        "@com_github_smacker_go_tree_sitter//kotlin",
+        "@com_github_smacker_go_tree_sitter//php",
+        "@com_github_smacker_go_tree_sitter//python",
+        "@com_github_smacker_go_tree_sitter//ruby",
+        "@com_github_smacker_go_tree_sitter//rust",
+        "@com_github_smacker_go_tree_sitter//scala",
+        "@com_github_smacker_go_tree_sitter//typescript/tsx",
+        "@com_github_smacker_go_tree_sitter//typescript/typescript",
+    ],
+)
+
+go_test(
+    name = "chunkers_test",
+    srcs = [
+        "classic_chunker_test.go",
+        "tree_sitter_chunker_test.go",
+    ],
+    embed = [":chunkers"],
+    deps = [
+        "//internal/codeintel/context",
+        "@com_github_smacker_go_tree_sitter//:go-tree-sitter",
+        "@com_github_smacker_go_tree_sitter//javascript",
+        "@com_github_stretchr_testify//suite",
+    ],
+)
