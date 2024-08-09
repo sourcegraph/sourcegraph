@@ -33,6 +33,18 @@ type Build struct {
 	sync.Mutex
 }
 
+func FromBuildkiteBuild(bb buildkite.Build) *Build {
+	b := &Build{
+		Build:    bb,
+		Pipeline: &Pipeline{Pipeline: *bb.Pipeline},
+		Steps:    make(map[string]*Step),
+	}
+	for _, j := range bb.Jobs {
+		b.AddJob(&Job{Job: *j})
+	}
+	return b
+}
+
 type Step struct {
 	Name string `json:"steps"`
 	Jobs []*Job `json:"jobs"`
