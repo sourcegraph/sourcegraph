@@ -12,6 +12,8 @@
 
     export interface ExplorePanelContext {
         openReferences(occurrence: ActiveOccurrence): void
+        openDefinitions(occurrence: ActiveOccurrence): void
+        openImplementations(occurrence: ActiveOccurrence): void
     }
 
     const exploreContextKey = Symbol('explore context key')

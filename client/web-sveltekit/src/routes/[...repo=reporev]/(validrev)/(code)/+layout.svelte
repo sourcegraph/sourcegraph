@@ -112,12 +112,15 @@
         disableScope: true,
     })
     const exploreInputs = writable<ExplorePanelInputs>({})
+    function openExploreTab(usageKindFilter: SymbolUsageKind, occurrence: ActiveOccurrence) {
+        exploreInputs.set({ activeOccurrence: occurrence, usageKindFilter })
+        // Open the tab when we find references
+        selectedTab = TabPanels.References
+    }
     setExplorePanelContext({
-        openReferences(occurrence: ActiveOccurrence) {
-            exploreInputs.set({ activeOccurrence: occurrence, usageKindFilter: SymbolUsageKind.REFERENCE })
-            // Open the tab when we find references
-            selectedTab = TabPanels.References
-        },
+        openReferences: openExploreTab.bind(null, SymbolUsageKind.REFERENCE),
+        openDefinitions: openExploreTab.bind(null, SymbolUsageKind.DEFINITION),
+        openImplementations: openExploreTab.bind(null, SymbolUsageKind.IMPLEMENTATION),
     })
     $: usagesConnection = $exploreInputs.activeOccurrence
         ? getUsagesStore(
