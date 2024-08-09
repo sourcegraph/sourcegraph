@@ -19,6 +19,7 @@ go_library(
         "//lib/enterpriseportal/subscriptions/v1:subscriptions",
         "//lib/errors",
         "@com_github_gregjones_httpcache//:httpcache",
+        "@com_github_sourcegraph_conc//:conc",
         "@com_github_sourcegraph_log//:log",
         "@io_opentelemetry_go_otel//:otel",
         "@io_opentelemetry_go_otel//attribute",

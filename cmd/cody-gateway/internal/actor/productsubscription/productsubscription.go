@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gregjones/httpcache"
+	"github.com/sourcegraph/conc"
 	"github.com/sourcegraph/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -168,6 +169,7 @@ func (s *Source) Sync(ctx context.Context) (seen int, errs error) {
 		return seen, errors.Wrap(err, "failed to list Enterprise subscriptions")
 	}
 
+	var cacheActorsWg conc.WaitGroup
 	for _, access := range resp.GetAccesses() {
 		for _, token := range access.GetAccessTokens() {
 			select {
@@ -184,12 +186,21 @@ func (s *Source) Sync(ctx context.Context) (seen int, errs error) {
 				errs = errors.Append(errs, err)
 				continue
 			}
-			s.cache.Set(token.GetToken(), data)
+
+			cacheActorsWg.Go(func() {
+				s.cache.Set(token.GetToken(), data)
+			})
+
 			seenTokens.Add(token.GetToken())
 			seen++
 		}
 	}
+
+	// We can start removing unseen tokens while we wait for the seen actors to
+	// be written to cache.
 	removeUnseenTokens(ctx, syncLog, seenTokens, s.cache)
+	cacheActorsWg.Wait()
+
 	return seen, errs
 }
 
