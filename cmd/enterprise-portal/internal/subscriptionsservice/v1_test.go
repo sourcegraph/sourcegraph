@@ -302,7 +302,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					0),
 				SalesforceSubscriptionID: &sql.NullString{},
 				InstanceType: &sql.NullString{
-					String: "TYPE_INTERNAL",
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
 					Valid:  true,
 				},
 			}),
@@ -337,7 +337,7 @@ func TestHandlerV1_CreateEnterpriseSubscription(t *testing.T) {
 					Valid:  true,
 				},
 				InstanceType: &sql.NullString{
-					String: "TYPE_INTERNAL",
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
 					Valid:  true,
 				},
 			}),
@@ -509,7 +509,7 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"instance_type"}},
 			},
 			wantUpdateOpts: autogold.Expect(subscriptions.UpsertSubscriptionOptions{InstanceType: &sql.NullString{
-				String: "TYPE_INTERNAL",
+				String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_INTERNAL",
 				Valid:  true,
 			}}),
 		},
@@ -528,7 +528,7 @@ func TestHandlerV1_UpdateEnterpriseSubscription(t *testing.T) {
 				DisplayName:              &sql.NullString{},
 				SalesforceSubscriptionID: &sql.NullString{},
 				InstanceType: &sql.NullString{
-					String: "TYPE_UNSPECIFIED",
+					String: "ENTERPRISE_SUBSCRIPTION_INSTANCE_TYPE_UNSPECIFIED",
 					Valid:  true,
 				},
 				ForceUpdate: true,
