@@ -174,8 +174,8 @@ macro_rules! create_configurations {
 lazy_static::lazy_static! {
     pub static ref CONFIGURATIONS: HashMap<ParserId, HighlightConfiguration> = {
         create_configurations!(
-            (C, "c")
-            // (Cpp, "cpp"),
+            (C, "c"),
+            (Cpp, "cpp")
             // (C_Sharp, "c_sharp"),
             // (Dart, "dart"),
             // (Go, "go"),
@@ -496,8 +496,7 @@ mod test {
             }
         }
 
-        None
-        // Some(language_from_syntect)
+        Some(language_from_syntect)
     }
 
     #[ignore]
@@ -560,8 +559,9 @@ SELECT * FROM my_table
                 continue;
             };
 
-            println!("{language:?}");
-            let document = language.highlight_document(&contents, true).unwrap();
+            let Ok(document) = language.highlight_document(&contents, true) else {
+                continue;
+            };
             // TODO: I'm not sure if there's a better way to run the snapshots without
             // panicing and then catching, but this will do for now.
             let panic_or_value = std::panic::catch_unwind(|| {

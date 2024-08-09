@@ -5,7 +5,7 @@ use tree_sitter::Language;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ParserId {
     C,
-    // Cpp,
+    Cpp,
     // #[allow(non_camel_case_types)]
     // C_Sharp,
     // Dart,
@@ -39,7 +39,7 @@ impl ParserId {
     pub fn language(self) -> Language {
         match self {
             ParserId::C => tree_sitter_c::language(),
-            // ParserId::Cpp => tree_sitter_cpp::language(),
+            ParserId::Cpp => tree_sitter_cpp::language(),
             // ParserId::C_Sharp => tree_sitter_c_sharp::language(),
             // ParserId::Dart => tree_sitter_dart::language(),
             // ParserId::Go => tree_sitter_go::language(),
@@ -75,7 +75,7 @@ impl ParserId {
     pub fn from_name(name: &str) -> Option<Self> {
         match name {
             "c" => Some(ParserId::C),
-            // "cpp" => Some(ParserId::Cpp),
+            "cpp" => Some(ParserId::Cpp),
             // "c_sharp" => Some(ParserId::C_Sharp),
             // "dart" => Some(ParserId::Dart),
             // "go" => Some(ParserId::Go),
@@ -106,7 +106,7 @@ impl ParserId {
     pub fn name(&self) -> &str {
         match self {
             ParserId::C => "c",
-            // ParserId::Cpp => "cpp",
+            ParserId::Cpp => "cpp",
             // ParserId::C_Sharp => "c_sharp",
             // ParserId::Dart => "dart",
             // ParserId::Go => "go",
@@ -152,7 +152,7 @@ impl ParserId {
     pub fn from_file_extension(extension: &str) -> Option<Self> {
         match extension {
             "c" => Some(ParserId::C),
-            // "cpp" => Some(ParserId::Cpp),
+            "cpp" => Some(ParserId::Cpp),
             // "cs" => Some(ParserId::C_Sharp),
             // "dart" => Some(ParserId::Dart),
             // "go" => Some(ParserId::Go),

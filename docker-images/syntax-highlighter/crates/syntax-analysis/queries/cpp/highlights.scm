@@ -1,3 +1,21 @@
+(literal_suffix) @identifier
+(identifier) @identifier
+(namespace_identifier) @identifier.module
+(field_identifier) @identifier.attribute
+(statement_identifier) @identifier.attribute
+(type_identifier) @type
+(primitive_type) @type.builtin
+(sized_type_specifier) @type.builtin
+(static_assert_declaration ("static_assert") @identifier.builtin)
+(attribute name: (identifier) @identifier.attribute)
+
+(this) @constant.builtin
+(comment) @comment
+(operator_name "operator" @keyword)
+(operator_name) @identifier
+(auto) @keyword
+
+
 (string_literal) @string
 (system_lib_string) @string
 (raw_string_literal) @string
@@ -24,24 +42,6 @@
 (preproc_function_def
   name: (identifier) @identifier.function)
 
-(attribute name: (identifier) @identifier.attribute)
-(field_identifier) @identifier.attribute
-(statement_identifier) @identifier.attribute
-(type_identifier) @type
-(static_assert_declaration ("static_assert") @identifier.builtin)
-(primitive_type) @type.builtin
-(sized_type_specifier) @type.builtin
-
-(literal_suffix) @identifier
-(identifier) @identifier
-(namespace_identifier) @identifier.module
-
-(this) @constant.builtin
-(comment) @comment
-(operator_name "operator" @keyword)
-(operator_name) @identifier
-(auto) @keyword
-
 [
   "#define"
   "#elif"
@@ -65,7 +65,6 @@
   "protected"
   "private"
   "final"
-  "virtual"
   "friend"
   "goto"
   "do"
@@ -96,4 +95,5 @@
   "volatile"
   "constexpr"
   "while"
+  (virtual)
   (preproc_directive)] @keyword
