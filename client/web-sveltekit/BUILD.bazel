@@ -162,17 +162,6 @@ compile_app(
     visibility = ["//client/web/dist:__pkg__"],
 )
 
-playwright_test_bin.playwright_test(
-    name = "playwright_install",
-    args = [
-        "install",
-    ],
-    local = True,
-    tags = [
-        "requires-network",
-    ],
-)
-
 PLAYWRIGHT_DEPS = [
     "//client/web-sveltekit:node_modules/@playwright/test",
     "//client/web-sveltekit:node_modules/playwright",
