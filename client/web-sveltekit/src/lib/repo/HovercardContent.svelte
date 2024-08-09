@@ -76,7 +76,6 @@
         font-size: 0.75rem;
         line-height: (16/12);
         color: var(--hover-overlay-content-color);
-        overflow-x: auto;
         word-wrap: normal;
 
         > :global(*:first-child) {
