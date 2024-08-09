@@ -129,6 +129,29 @@ func TestLog(t *testing.T) {
 				"entity":  "test entity",
 			}}),
 		},
+		{
+			name:              "missing client & missing actor",
+			actor:             &actor.Actor{ /*missing data*/ },
+			client:            &requestclient.Client{ /*missing data*/ },
+			additionalContext: []log.Field{log.String("additional", "stuff")},
+			expectedEntry: autogold.Expect(map[string]interface{}{"additional": "stuff", "audit": map[string]interface{}{
+				"actor": map[string]interface{}{
+					"X-Forwarded-For": "",
+					"actorUID":        "unknown",
+					"ip":              "",
+					"userAgent":       "",
+				},
+				"auditId": "test-audit-id-1234",
+				"entity":  "test entity",
+			}}),
+		},
+		{
+			name:              "nil client & nil actor",
+			actor:             nil,
+			client:            nil,
+			additionalContext: []log.Field{log.String("additional", "stuff")},
+			expectedEntry:     nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -150,6 +173,12 @@ func TestLog(t *testing.T) {
 			Log(ctx, logger, fields)
 
 			logs := exportLogs()
+			if tc.expectedEntry == nil {
+				if len(logs) != 0 {
+					t.Fatal("expected no logs to be captured")
+				}
+				return
+			}
 			if len(logs) != 1 {
 				t.Fatal("expected to capture one log exactly")
 			}
