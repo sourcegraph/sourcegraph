@@ -7,6 +7,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"sync"
 
 	genslices "github.com/life4/genesis/slices"
 	"github.com/sourcegraph/conc"
@@ -51,6 +52,8 @@ type searchArgs struct {
 	commit     api.CommitID
 	identifier string
 	language   string
+	// ignoredFiles has to be sorted
+	ignoredFiles []string
 }
 
 func lineForRange(match result.ChunkMatch, range_ result.Range) string {
@@ -219,12 +222,60 @@ func symbolSearch(
 	return symbolSearchResult{resultMap}, nil
 }
 
-func buildQuery(args searchArgs, queryType string, countLimit int) string {
+func buildQuery(args searchArgs, queryType string) string {
 	repoName := fmt.Sprintf("^%s$", args.repo)
 	wordBoundaryIdentifier := fmt.Sprintf("/\\b%s\\b/", args.identifier)
+	// NOTE: Not setting count at all will set a default limit of 10,000 according to the search-platform
+	// team. As we're setting a limit on the matches we will actually process and will cancel the search
+	// when hitting that limit I'm bumping that by another 10x here.
 	return fmt.Sprintf(
-		"case:yes type:%s repo:%s rev:%s language:%s count:%d %s",
-		queryType, repoName, string(args.commit), args.language, countLimit, wordBoundaryIdentifier)
+		"case:yes type:%s repo:%s rev:%s language:%s count:100000 %s",
+		queryType, repoName, string(args.commit), args.language, wordBoundaryIdentifier)
+}
+
+func NewCandidateStream(
+	filterFiles []string,
+	limit int,
+	limitFunc func(),
+) *CandidateStream {
+	return &CandidateStream{
+		limit: limit,
+		filterFunc: func(matches result.Matches) result.Matches {
+			return genslices.Filter(matches, func(match result.Match) bool {
+				if fileMatch, ok := match.(*result.FileMatch); ok {
+					// We only want to consider complete files for syntactic/search-based usages
+					if fileMatch.LimitHit {
+						return false
+					}
+					if _, found := slices.BinarySearch(filterFiles, fileMatch.Path); found {
+						return false
+					}
+				}
+				return true
+			})
+		},
+		limitFunc: limitFunc,
+	}
+}
+
+type CandidateStream struct {
+	sync.Mutex
+	streaming.SearchEvent
+	limit      int
+	filterFunc func(result.Matches) result.Matches
+	limitFunc  func()
+}
+
+func (c *CandidateStream) Send(event streaming.SearchEvent) {
+	c.Lock()
+	defer c.Unlock()
+	if c.Results.ResultCount() < c.limit {
+		c.Results = append(c.Results, c.filterFunc(event.Results)...)
+		c.Stats.Update(&event.Stats)
+		if c.Results.ResultCount() >= c.limit {
+			c.limitFunc()
+		}
+	}
 }
 
 func executeQuery(
@@ -236,7 +287,7 @@ func executeQuery(
 	countLimit int,
 	surroundingLines int,
 ) (result.Matches, error) {
-	searchQuery := buildQuery(args, queryType, countLimit)
+	searchQuery := buildQuery(args, queryType)
 	patternType := "standard"
 	contextLines := int32(surroundingLines)
 	plan, err := client.Plan(ctx, "V3", &patternType, searchQuery, search.Precise, search.Streaming, &contextLines)
@@ -244,12 +295,23 @@ func executeQuery(
 		return nil, err
 	}
 	trace.Info("Running query", log.String("query", searchQuery))
-	stream := streaming.NewAggregatingStream()
-	_, err = client.Execute(ctx, stream, plan)
+	searchCtx, cancelFn := context.WithCancel(ctx)
+	stream := NewCandidateStream(args.ignoredFiles, countLimit, cancelFn)
+	_, err = client.Execute(searchCtx, stream, plan)
 	if err != nil {
 		return nil, err
 	}
-	return stream.Results, nil
+	resultCount := 0
+	limited := genslices.TakeWhile(stream.Results, func(match result.Match) bool {
+		keepGoing := resultCount < countLimit
+		resultCount += match.ResultCount()
+		return keepGoing
+	})
+	trace.Info("finished search",
+		log.Int("countLimit", countLimit),
+		log.Int("matchCount", stream.Results.ResultCount()),
+		log.Int("limitedTo", limited.ResultCount()))
+	return limited, nil
 }
 
 func nameFromGlobalSymbol(symbol *scip.Symbol) (string, bool) {
@@ -398,6 +460,8 @@ func syntacticUsagesImpl(
 		commit:     args.Commit,
 		identifier: symbolName,
 		language:   language,
+		// TODO:
+		ignoredFiles: make([]string, 0),
 	}
 	candidateMatches, searchErr := findCandidateOccurrencesViaSearch(ctx, trace, searchClient, searchCoords)
 	if searchErr != nil {
@@ -459,6 +523,8 @@ func searchBasedUsagesImpl(
 		commit:     args.Commit,
 		identifier: symbolName,
 		language:   language,
+		// TODO:
+		ignoredFiles: make([]string, 0),
 	}
 
 	var matchResults struct {

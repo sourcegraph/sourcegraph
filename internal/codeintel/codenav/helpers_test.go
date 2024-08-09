@@ -164,7 +164,9 @@ type fakeTranslator struct {
 	shouldFail func(core.RepoRelPath, scip.Range) bool
 }
 
-func (t fakeTranslator) TranslatePosition(ctx context.Context, from, to api.CommitID, path core.RepoRelPath, pos scip.Position) (core.Option[scip.Position], error) {
+func (t fakeTranslator) TranslatePosition(
+	ctx context.Context, from, to api.CommitID, path core.RepoRelPath, pos scip.Position,
+) (core.Option[scip.Position], error) {
 	numLines := t.numLines
 	if from == t.to && to == t.from {
 		numLines = -numLines
@@ -175,15 +177,17 @@ func (t fakeTranslator) TranslatePosition(ctx context.Context, from, to api.Comm
 	return core.Some(shiftPos(pos, int32(numLines))), nil
 }
 
-func (t fakeTranslator) TranslateRange(ctx context.Context, from, to api.CommitID, path core.RepoRelPath, r scip.Range) (core.Option[scip.Range], error) {
+func (t fakeTranslator) TranslateRange(
+	ctx context.Context, from, to api.CommitID, path core.RepoRelPath, range_ scip.Range,
+) (core.Option[scip.Range], error) {
 	numLines := t.numLines
 	if from == t.to && to == t.from {
 		numLines = -numLines
 	}
-	if t.shouldFail(path, r) {
+	if t.shouldFail(path, range_) {
 		return core.None[scip.Range](), nil
 	}
-	return core.Some(shiftSCIPRange(r, numLines)), nil
+	return core.Some(shiftSCIPRange(range_, numLines)), nil
 }
 
 func (t fakeTranslator) Prefetch(ctx context.Context, from api.CommitID, to api.CommitID, paths []core.RepoRelPath) {

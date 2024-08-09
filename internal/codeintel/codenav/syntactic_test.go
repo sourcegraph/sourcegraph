@@ -11,6 +11,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/api"
 	"github.com/sourcegraph/sourcegraph/internal/codeintel/core"
 	"github.com/sourcegraph/sourcegraph/internal/observation"
+	"github.com/sourcegraph/sourcegraph/internal/search/result"
+	"github.com/sourcegraph/sourcegraph/internal/search/streaming"
 )
 
 func TestSearchBasedUsages_ResultWithoutSymbols(t *testing.T) {
@@ -170,4 +172,69 @@ func TestSyntacticUsages_IndexCommitTranslated(t *testing.T) {
 		t.Error(t, err)
 	}
 	expectRanges(t, syntacticUsages.Matches, refRange)
+}
+
+func TestCandidateStream(t *testing.T) {
+	fakeMatches := func(count int, path string) result.Matches {
+		matches := make(result.Matches, count)
+		for i := 0; i < count; i++ {
+			matches[i] = &result.FileMatch{File: result.File{Path: path}}
+		}
+		return matches
+	}
+	testCtx := context.Background()
+	searchCtx, cancelFn := context.WithCancel(testCtx)
+	stream := NewCandidateStream([]string{"a.go"}, 5, cancelFn)
+
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(2, "a.go"),
+		Stats:   streaming.Stats{},
+	})
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(3, "b.go"),
+		Stats:   streaming.Stats{},
+	})
+	require.NoError(t, searchCtx.Err())
+	require.Equal(t, 3, stream.Results.ResultCount())
+
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(4, "c.go"),
+		Stats:   streaming.Stats{},
+	})
+	require.ErrorIs(t, searchCtx.Err(), context.Canceled)
+	require.Equal(t, 7, stream.Results.ResultCount())
+
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(5, "d.go"),
+		Stats:   streaming.Stats{},
+	})
+	require.ErrorIs(t, searchCtx.Err(), context.Canceled)
+	require.Equal(t, 7, stream.Results.ResultCount())
+}
+
+func TestCandidateStream_FiltersFilesWithLimitHit(t *testing.T) {
+	fakeMatches := func(count int, limitHit bool) result.Matches {
+		matches := make(result.Matches, count)
+		for i := 0; i < count; i++ {
+			matches[i] = &result.FileMatch{LimitHit: limitHit}
+		}
+		return matches
+	}
+	testCtx := context.Background()
+	searchCtx, cancelFn := context.WithCancel(testCtx)
+	stream := NewCandidateStream([]string{}, 5, cancelFn)
+
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(10, true),
+		Stats:   streaming.Stats{},
+	})
+	require.NoError(t, searchCtx.Err())
+	require.Equal(t, 0, stream.Results.ResultCount())
+
+	stream.Send(streaming.SearchEvent{
+		Results: fakeMatches(6, false),
+		Stats:   streaming.Stats{},
+	})
+	require.ErrorIs(t, searchCtx.Err(), context.Canceled)
+	require.Equal(t, 6, stream.Results.ResultCount())
 }
