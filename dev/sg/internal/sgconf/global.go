@@ -67,6 +67,31 @@ func GetUnbuffered(confFile, overwriteFile string, disableOverwrite bool) (*Conf
 	return parseConf(confFile, overwriteFile, false)
 }
 
+func GetUnbuffered2(confFile, overwriteFile string, disableOverwrite bool) (*Config2, error) {
+	return parseConf2(confFile, overwriteFile, false)
+}
+
+func parseConf2(confFile, overwriteFile string, noOverwrite bool) (*Config2, error) {
+	// Try to determine root of repository, so we can look for config there
+	repoRoot, err := root.RepositoryRoot()
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to determine repository root location")
+	}
+
+	// If the configFlag/overwriteConfigFlag flags have their default value, we
+	// take the value as relative to the root of the repository.
+	if confFile == DefaultFile {
+		confFile = filepath.Join(repoRoot, confFile)
+	}
+
+	conf, err := parseConfigFile2(confFile, false)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to parse %q as configuration file", confFile)
+	}
+
+	return conf, nil
+}
+
 func parseConf(confFile, overwriteFile string, noOverwrite bool) (*Config, error) {
 	// Try to determine root of repository, so we can look for config there
 	repoRoot, err := root.RepositoryRoot()
