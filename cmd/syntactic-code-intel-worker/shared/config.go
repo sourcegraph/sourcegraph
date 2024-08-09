@@ -27,7 +27,7 @@ type Config struct {
 	ListenAddress string
 }
 
-const DefaultPort = 3188
+const DefaultPort = 3288
 
 func (c *IndexingWorkerConfig) Load() {
 	c.LSIFUploadStoreConfig = &lsifuploadstore.Config{}

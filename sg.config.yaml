@@ -1342,10 +1342,16 @@ bazelCommands:
       SRC_REPOS_DIR: $HOME/.sourcegraph/repos_2
       SRC_PROF_HTTP: 127.0.0.1:3552
 
-  codeintel-worker:
+  precise-codeintel-worker:
     precmd: |
       export SOURCEGRAPH_LICENSE_GENERATION_KEY=$(cat ../dev-private/enterprise/dev/test-license-generation-key.pem)
     target: //cmd/precise-code-intel-worker
+
+  syntactic-codeintel-worker:
+    precmd: |
+      export SOURCEGRAPH_LICENSE_GENERATION_KEY=$(cat ../dev-private/enterprise/dev/test-license-generation-key.pem)
+    target: //cmd/syntactic-code-intel-worker
+
   executor-template: &executor_template_bazel
     target: //cmd/executor
     env:
@@ -1680,7 +1686,8 @@ commandsets:
       - searcher
       - symbols
       - syntax-highlighter
-      - codeintel-worker
+      - precise-codeintel-worker
+      - syntactic-codeintel-worker
       - codeintel-executor
     commands:
       - web
